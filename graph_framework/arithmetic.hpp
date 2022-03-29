@@ -190,7 +190,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return this->left->df(x) + this->right->df(x);
+            return this->left->df(x) - this->right->df(x);
         }
     };
 

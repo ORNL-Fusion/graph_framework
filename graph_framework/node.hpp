@@ -233,15 +233,6 @@ namespace graph {
         data(1, d) {}
 
 //------------------------------------------------------------------------------
-///  @brief Construct a variable node from a scalar.
-///
-///  @param[in] s Size of he data buffer.
-///  @param[in] d Scalar data to initalize.
-//------------------------------------------------------------------------------
-        constant_node(const size_t s, const double &d) :
-        data(s, d) {}
-
-//------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
 ///
 ///  @param[in] d Size of the .
@@ -310,16 +301,6 @@ namespace graph {
 //------------------------------------------------------------------------------
     std::shared_ptr<leaf_node> constant(const double d) {
         return (std::make_shared<constant_node> (1, d))->reduce();
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Construct a variable.
-///
-///  @param[in] s Size of he data buffer.
-///  @param[in] d Scalar data to initalize.
-//------------------------------------------------------------------------------
-    std::shared_ptr<leaf_node> constant(const size_t s, const double d) {
-        return (std::make_shared<constant_node> (s, d))->reduce();
     }
 
 //------------------------------------------------------------------------------
