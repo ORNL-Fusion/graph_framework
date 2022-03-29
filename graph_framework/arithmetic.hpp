@@ -87,7 +87,7 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) {
+        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
             return this->left->df(x) + this->right->df(x);
         }
     };
@@ -189,7 +189,7 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) {
+        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
             return this->left->df(x) + this->right->df(x);
         }
     };
@@ -294,7 +294,7 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) {
+        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
             return this->left->df(x)*this->right +
                    this->left*this->right->df(x);
         }
@@ -391,7 +391,7 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) {
+        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
             return this->left->df(x)/this->right -
                    this->left*this->right->df(x)/(this->right*this->right);
         }
