@@ -300,7 +300,7 @@ namespace graph {
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
     std::shared_ptr<leaf_node> constant(const double d) {
-        return (std::make_shared<constant_node> (1, d))->reduce();
+        return (std::make_shared<constant_node> (d))->reduce();
     }
 
 //------------------------------------------------------------------------------
