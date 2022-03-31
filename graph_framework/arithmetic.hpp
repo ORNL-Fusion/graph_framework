@@ -19,9 +19,11 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief An addition node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class add_node : public branch_node<LN, RN> {
+    class add_node : public branch_node {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct an addition node.
@@ -31,7 +33,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         add_node(std::shared_ptr<LN> l,
                  std::shared_ptr<RN> r) :
-        branch_node<LN, RN> (l, r) {}
+        branch_node(l, r) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of addition.
@@ -67,16 +69,18 @@ namespace graph {
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if constexpr (std::is_same<LN, zero_node>::value) {
+            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
+            auto r = std::dynamic_pointer_cast<constant_node> (this->right);
+
+            if (l.get() && r.get()) {
+                return constant(this->evaluate());
+            } else if (l.get() && l->is(0)) {
                 return this->right;
-            } else if constexpr (std::is_same<RN, zero_node>::value) {
+            } else if (r.get() && r->is(0)) {
                 return this->left;
-            } else if constexpr (std::is_same<LN, constant_node>::value &&
-                                 std::is_same<RN, constant_node>::value) {
-                return std::make_shared<constant_node> (this->evaluate());
-            } else {
-                return this->shared_from_this();
             }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -95,6 +99,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build add node from two leaves.
 ///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -106,6 +113,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Build add node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -121,9 +131,11 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief A subtraction node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class subtract_node : public branch_node<LN, RN> {
+    class subtract_node : public branch_node {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Consruct a subtraction node.
@@ -133,7 +145,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         subtract_node(std::shared_ptr<LN> l,
                       std::shared_ptr<RN> r) :
-        branch_node<LN, RN> (l, r) {}
+        branch_node(l, r) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of subtraction.
@@ -169,16 +181,18 @@ namespace graph {
 ///  @returns A reduced subtraction node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if constexpr (std::is_same<LN, zero_node>::value) {
-                return std::make_shared<variable_node> (1, -1)*this->right;
-            } else if constexpr (std::is_same<RN, zero_node>::value) {
+            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
+            auto r = std::dynamic_pointer_cast<constant_node> (this->right);
+
+            if (l.get() && r.get()) {
+                return constant(this->evaluate());
+            } else if (l.get() && l->is(0)) {
+                return constant(-1)*this->right;
+            } else if (r.get() && r->is(0)) {
                 return this->left;
-            } else if constexpr (std::is_same<LN, constant_node>::value &&
-                                 std::is_same<RN, constant_node>::value) {
-                return std::make_shared<constant_node> (this->evaluate());
-            } else {
-                return this->shared_from_this();
             }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -225,7 +239,7 @@ namespace graph {
 ///  @brief A multiplcation node.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class multiply_node : public branch_node<LN, RN> {
+    class multiply_node : public branch_node {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Consruct a multiplcation node.
@@ -235,7 +249,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         multiply_node(std::shared_ptr<LN> l,
                       std::shared_ptr<RN> r) :
-        branch_node<LN, RN> (l, r) {}
+        branch_node(l, r) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of multiplcation.
@@ -271,19 +285,26 @@ namespace graph {
 ///  @returns A reduced multiplcation node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if constexpr (std::is_same<LN, zero_node>::value ||
-                          std::is_same<RN, zero_node>::value) {
-                return std::make_shared<zero_node> ();
-            } else if constexpr (std::is_same<LN, one_node>::value) {
-                return this->right;
-            } else if constexpr (std::is_same<RN, one_node>::value) {
-                return this->left;
-            } else if constexpr (std::is_same<LN, constant_node>::value &&
-                                 std::is_same<RN, constant_node>::value) {
-                return std::make_shared<constant_node> (this->evaluate());
-            } else {
-                return this->shared_from_this();
+            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
+            auto r = std::dynamic_pointer_cast<constant_node> (this->right);
+
+            if (l.get() && r.get()) {
+                return constant(this->evaluate());
+            } else if (l.get()) {
+                if (l->is(1)) {
+                    return this->right;
+                } else if (l->is(0)) {
+                    return constant(0);
+                }
+            } else if (r.get()) {
+                if (r->is(1)) {
+                    return this->left;
+                } else if (r->is(0)) {
+                    return constant(0);
+                }
             }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -331,11 +352,11 @@ namespace graph {
 ///  @brief A division node.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class divide_node : public branch_node<LN, RN> {
+    class divide_node : public branch_node {
     public:
         divide_node(std::shared_ptr<LN> n,
                     std::shared_ptr<RN> d) :
-        branch_node<LN, RN> (n, d) {}
+        branch_node(n, d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of division.
@@ -371,16 +392,21 @@ namespace graph {
 ///  @returns A reduced division node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if constexpr (std::is_same<RN, one_node>::value) {
-                return this->left;
-            } else if (std::is_same<LN, zero_node>::value) {
-                return std::make_shared<zero_node> ();
-            } else if constexpr (std::is_same<LN, constant_node>::value &&
-                                 std::is_same<RN, constant_node>::value) {
-                return std::make_shared<constant_node> (this->evaluate());
-            } else {
-                return this->shared_from_this();
+            if (this->left.get() == this->right.get()) {
+                return constant(1);
             }
+
+            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
+            auto r = std::dynamic_pointer_cast<constant_node> (this->right);
+
+            if (l.get() && r.get()) {
+                return constant(this->evaluate());
+            } else if ((l.get() && l->is(0)) ||
+                       (r.get() && r->is(1))) {
+                return this->left;
+            }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -406,7 +432,7 @@ namespace graph {
     template<typename LN, typename RN>
     std::shared_ptr<leaf_node> divide(std::shared_ptr<LN> l,
                                       std::shared_ptr<RN> r) {
-        return (std::make_shared<divide_node<LN, RN>> (l, r))->reduce();
+        return std::make_shared<divide_node<LN, RN>> (l, r)->reduce();
     }
 
 //------------------------------------------------------------------------------

@@ -22,7 +22,7 @@ namespace graph {
 ///  @brief Class representing a sine_node leaf.
 //------------------------------------------------------------------------------
     template<typename N>
-    class sine_node final : public straight_node<N> {
+    class sine_node final : public straight_node {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a sine_node node.
@@ -30,7 +30,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         sine_node(std::shared_ptr<N> x) :
-        straight_node<N> (x) {}
+        straight_node(x->reduce()) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sine.
@@ -53,10 +53,8 @@ namespace graph {
 ///  @returns Reduced graph from sine.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if constexpr (std::is_same<N, zero_node>::value) {
-                return this->arg();
-            } else if constexpr (std::is_same<N, constant_node>::value) {
-                return std::make_shared<constant_node> (this->evaluate());
+            if constexpr (std::is_same<N, constant_node>::value) {
+                return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
             }
@@ -93,7 +91,7 @@ namespace graph {
 ///  @brief Class representing a cosine_node leaf.
 //------------------------------------------------------------------------------
     template<typename N>
-    class cosine_node final : public straight_node<N> {
+    class cosine_node final : public straight_node {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a cosine_node node.
@@ -101,7 +99,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         cosine_node(std::shared_ptr<N> x) :
-        straight_node<N> (x) {}
+        straight_node(x) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of cosine.
@@ -124,10 +122,8 @@ namespace graph {
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if constexpr (std::is_same<N, zero_node>::value) {
-                return one;
-            } else if constexpr (std::is_same<N, constant_node>::value) {
-                return std::make_shared<constant_node> (this->evaluate());
+            if constexpr (std::is_same<N, constant_node>::value) {
+                return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
             }

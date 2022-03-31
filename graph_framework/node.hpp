@@ -70,12 +70,11 @@ namespace graph {
 //  Base straight node.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Class representing a node branch.
+///  @brief Class representing a straight node.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<typename N>
     class straight_node : public leaf_node {
     protected:
 ///  Argument
@@ -88,7 +87,7 @@ namespace graph {
 ///
 ///  @param[in] a Argument.
 //------------------------------------------------------------------------------
-        straight_node(std::shared_ptr<N> a) :
+        straight_node(std::shared_ptr<leaf_node> a) :
         arg(a->reduce()) {}
     };
 
@@ -101,7 +100,6 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<typename LN, typename RN>
     class branch_node : public leaf_node {
     protected:
 //  Left branch of the tree.
@@ -117,99 +115,11 @@ namespace graph {
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
-        branch_node(std::shared_ptr<LN> l,
-                    std::shared_ptr<RN> r) :
+        branch_node(std::shared_ptr<leaf_node> l,
+                    std::shared_ptr<leaf_node> r) :
         left(l->reduce()),
         right(r->reduce()) {}
     };
-
-//******************************************************************************
-//  Zero node.
-//******************************************************************************
-//------------------------------------------------------------------------------
-///  @brief Class representing zero.
-//------------------------------------------------------------------------------
-    class zero_node final : public leaf_node {
-    public:
-//------------------------------------------------------------------------------
-///  @brief Evaluate zero.
-///
-///  @returns Zero
-//------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
-            return std::vector<double> (1, 0);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Reduction method.
-///
-///  For basic nodes, there's nothing to reduce.
-///
-///  @returns A reduced representation of the node.
-//------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
-            return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Transform node to derivative.
-///
-///  @param[in] x The variable to take the derivative to.
-///  @returns The derivative of the node.
-//------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return this->shared_from_this();
-        }
-    };
-
-//------------------------------------------------------------------------------
-///  @brief Construct a zero_node.
-//------------------------------------------------------------------------------
-    static const std::shared_ptr<leaf_node> zero = std::make_shared<zero_node> ();
-
-//******************************************************************************
-//  One node.
-//******************************************************************************
-//------------------------------------------------------------------------------
-///  @brief Class representing one.
-//------------------------------------------------------------------------------
-    class one_node final : public leaf_node {
-    public:
-//------------------------------------------------------------------------------
-///  @brief Evaluate one.
-///
-///  @returns One
-//------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
-            return std::vector<double> (1, 1);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Reduction method.
-///
-///  For basic nodes, there's nothing to reduce.
-///
-///  @returns A reduced representation of the node.
-//------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
-            return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Transform node to derivative.
-///
-///  @param[in] x The variable to take the derivative to.
-///  @returns The derivative of the node.
-//------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return zero;
-        }
-    };
-
-//------------------------------------------------------------------------------
-///  @brief Construct a one_node.
-//------------------------------------------------------------------------------
-    static const std::shared_ptr<leaf_node> one = std::make_shared<one_node> ();
 
 //******************************************************************************
 //  Constant node.
@@ -257,26 +167,17 @@ namespace graph {
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            bool is_all_zero = true;
-            bool is_all_one = true;
             bool is_all_same = true;
 
             const double same = data.at(0);
             for (double e: data) {
-                is_all_zero = is_all_zero && e == 0;
-                is_all_one = is_all_one && e == 1;
-                is_all_same = is_all_same && e == same;
-
-                if (!(is_all_zero || is_all_one || is_all_same)) {
+                if (e != same) {
+                    is_all_same = false;
                     break;
                 }
             }
 
-            if (is_all_zero) {
-                return zero;
-            } else if (is_all_one) {
-                return one;
-            } else if (is_all_same) {
+            if (is_all_same) {
                 return std::make_shared<constant_node> (same);
             } else {
                 return this->shared_from_this();
@@ -290,23 +191,32 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return zero;
+            return std::make_shared<constant_node> (0);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the constant is value.
+//------------------------------------------------------------------------------
+        bool is(const double d) {
+            return data.size() == 1 && data.at(0) == d;
         }
     };
 
 //------------------------------------------------------------------------------
-///  @brief Construct a variable.
+///  @brief Construct a constant.
 ///
 ///  @param[in] d Scalar data to initalize.
+///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     std::shared_ptr<leaf_node> constant(const double d) {
         return (std::make_shared<constant_node> (d))->reduce();
     }
 
 //------------------------------------------------------------------------------
-///  @brief Construct a variable.
+///  @brief Construct a constant.
 ///
 ///  @param[in] d Array buffer.
+///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     std::shared_ptr<leaf_node> constant(const std::vector<double> &d) {
         return (std::make_shared<constant_node> (d))->reduce();
@@ -377,11 +287,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            if (x.get() == this) {
-                return one;
-            } else {
-                return zero;
-            }
+            return constant(x.get() == this);
         }
 
 //------------------------------------------------------------------------------
