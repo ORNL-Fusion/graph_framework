@@ -8,7 +8,7 @@
 #ifndef dispersion_h
 #define dispersion_h
 
-#include "arithmetic.hpp"
+#include "vector.hpp"
 
 namespace dispersion {
 //******************************************************************************
@@ -19,93 +19,96 @@ namespace dispersion {
 //------------------------------------------------------------------------------
     class dispersion_interface {
     protected:
+///  Derivative with respect to kx.
+        std::shared_ptr<graph::leaf_node> dxdt;
+///  Derivative with respect to ky.
+        std::shared_ptr<graph::leaf_node> dydt;
+///  Derivative with respect to kz.
+        std::shared_ptr<graph::leaf_node> dzdt;
+///  Derivative with respect to kx.
+        std::shared_ptr<graph::leaf_node> dkxdt;
+///  Derivative with respect to ky.
+        std::shared_ptr<graph::leaf_node> dkydt;
+///  Derivative with respect to kz.
+        std::shared_ptr<graph::leaf_node> dkzdt;
 ///  Derivative with respect to omega.
-        std::shared_ptr<graph::leaf_node> dDdw;
-///  Derivative with respect to kx.
-        std::shared_ptr<graph::leaf_node> dDdkx;
-///  Derivative with respect to ky.
-        std::shared_ptr<graph::leaf_node> dDdky;
-///  Derivative with respect to kz.
-        std::shared_ptr<graph::leaf_node> dDdkz;
-///  Derivative with respect to kx.
-        std::shared_ptr<graph::leaf_node> dDdx;
-///  Derivative with respect to ky.
-        std::shared_ptr<graph::leaf_node> dDdy;
-///  Derivative with respect to kz.
-        std::shared_ptr<graph::leaf_node> dDdz;
+        std::shared_ptr<graph::leaf_node> dsdt;
 
     public:
-        dispersion_interface(std::shared_ptr<graph::leaf_node> dw,
-                             std::shared_ptr<graph::leaf_node> dkx,
-                             std::shared_ptr<graph::leaf_node> dky,
-                             std::shared_ptr<graph::leaf_node> dkz,
-                             std::shared_ptr<graph::leaf_node> dx,
-                             std::shared_ptr<graph::leaf_node> dy,
-                             std::shared_ptr<graph::leaf_node> dz) :
-        dDdw(dw), dDdkx(dkx), dDdky(dky), dDdkz(dkz),
-        dDdx(dx), dDdy(dy), dDdz(dz) {}
+        dispersion_interface(std::shared_ptr<graph::leaf_node> dDdw,
+                             std::shared_ptr<graph::leaf_node> dDdkx,
+                             std::shared_ptr<graph::leaf_node> dDdky,
+                             std::shared_ptr<graph::leaf_node> dDdkz,
+                             std::shared_ptr<graph::leaf_node> dDdx,
+                             std::shared_ptr<graph::leaf_node> dDdy,
+                             std::shared_ptr<graph::leaf_node> dDdz) :
+        dxdt(graph::constant(-1)*dDdkx/dDdw),
+        dydt(graph::constant(-1)*dDdky/dDdw),
+        dzdt(graph::constant(-1)*dDdkz/dDdw),
+        dkxdt(dDdx/dDdw), dkydt(dDdy/dDdw), dkzdt(dDdz/dDdw),
+        dsdt(graph::length(dxdt, dydt, dzdt)) {}
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate derivative with respect to omega.
+///  @brief Provide right hand side for s update.
 ///
-///  @return dD/dw
+///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> dw() final {
-            return dDdw->evaluate();
+        virtual std::vector<double> get_dsdt() final {
+            return this->dsdt->evaluate();
         }
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate derivative with respect to omega.
+///  @brief Provide right hand side for x update.
 ///
-///  @return dD/dkx
+///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> dkx() final {
-            return dDdkx->evaluate();
+        virtual std::vector<double> get_dxdt() final {
+            return this->dxdt->evaluate();
         }
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate derivative with respect to omega.
+///  @brief Provide right hand side for y update.
 ///
-///  @return dD/dky
+///  @return dy/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> dky() final {
-            return dDdky->evaluate();
+        virtual std::vector<double> get_dydt() final {
+            return this->dydt->evaluate();
         }
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate derivative with respect to omega.
+///  @brief Provide right hand side for z update.
 ///
-///  @return dD/dkz
+///  @return dz/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> dkz() final {
-            return dDdkz->evaluate();
+        virtual std::vector<double> get_dzdt() final {
+            return this->dzdt->evaluate();
         }
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate derivative with respect to omega.
+///  @brief Provide right hand side for z update.
 ///
-///  @return dD/dx
+///  @return dkx/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> dx() final {
-            return dDdx->evaluate();
+        virtual std::vector<double> get_dkxdt() final {
+            return this->dkxdt->evaluate();
         }
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate derivative with respect to omega.
+///  @brief Provide right hand side for z update.
 ///
-///  @return dD/dy
+///  @return dky/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> dy() final {
-            return dDdy->evaluate();
+        virtual std::vector<double> get_dkydt() final {
+            return this->dkydt->evaluate();
         }
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate derivative with respect to omega.
+///  @brief Provide right hand side for z update.
 ///
-///  @return dD/dz
+///  @return dkz/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> dz() final {
-            return dDdz->evaluate();
+        virtual std::vector<double> get_dkzdt() final {
+            return this->dkzdt->evaluate();
         }
     };
 

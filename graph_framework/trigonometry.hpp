@@ -30,7 +30,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         sine_node(std::shared_ptr<N> x) :
-        straight_node(x->reduce()) {}
+        straight_node(x) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sine.
@@ -53,7 +53,7 @@ namespace graph {
 ///  @returns Reduced graph from sine.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if constexpr (std::is_same<N, constant_node>::value) {
+            if (std::dynamic_pointer_cast<constant_node> (this->arg)) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
@@ -122,7 +122,7 @@ namespace graph {
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if constexpr (std::is_same<N, constant_node>::value) {
+            if (std::dynamic_pointer_cast<constant_node> (this->arg)) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();

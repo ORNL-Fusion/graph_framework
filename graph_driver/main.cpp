@@ -9,8 +9,7 @@
 #include <iostream>
 #include <chrono>
 
-#include "../graph_framework/trigonometry.hpp"
-#include "../graph_framework/dispersion.hpp"
+#include "../graph_framework/solver.hpp"
 
 void write_time(const std::string &name, const std::chrono::nanoseconds time);
 
@@ -27,9 +26,37 @@ int main(int argc, const char * argv[]) {
 
     dispersion::simple D(omega, kx, ky, kz, x, y, z);
 
-    std::cout << D.dx().at(0) << std::endl;
-    std::cout << D.dy().at(0) << std::endl;
-    std::cout << D.dz().at(0) << std::endl;
+//  Inital conditions.
+    omega->set(1.0);
+    x->set(1.0);
+    y->set(0.0);
+    z->set(0.0);
+    kx->set(1.0);
+    ky->set(0.0);
+    kz->set(0.0);
+
+    solver::rk2<dispersion::simple> solve(D, kx, ky, kz, x, y, z, 1.0);
+
+    for (size_t i = 0; i < 10; i++) {
+        std::cout << "Time Step " << i << " ";
+        std::cout << solve.state.back().x.at(0) << " "
+                  << solve.state.back().y.at(0) << " "
+                  << solve.state.back().z.at(0) << " "
+                  << solve.state.back().kx.at(0) << " "
+                  << solve.state.back().ky.at(0) << " "
+                  << solve.state.back().kz.at(0) << " "
+                  << solve.state.size() << std::endl;
+
+        solve.step();
+    }
+    std::cout << "Time Step " << 10 << " ";
+    std::cout << solve.state.back().x.at(0) << " "
+              << solve.state.back().y.at(0) << " "
+              << solve.state.back().z.at(0) << " "
+              << solve.state.back().kx.at(0) << " "
+              << solve.state.back().ky.at(0) << " "
+              << solve.state.back().kz.at(0) << " "
+              << solve.state.size() << std::endl;
 
     const std::chrono::high_resolution_clock::time_point evaluate = std::chrono::high_resolution_clock::now();
 

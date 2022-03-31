@@ -61,6 +61,15 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
+///  @param[in] index Buffer index to set value.
+///  @param[in] d     Scalar data to set.
+//------------------------------------------------------------------------------
+        virtual void set(const size_t index,
+                         const double d) {}
+
+//------------------------------------------------------------------------------
+///  @brief Set the value of variable data.
+///
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<double> &d) {}
@@ -297,6 +306,16 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void set(const double d) final {
             data.assign(data.size(), d);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Set the value of variable data.
+///
+///  @param[in] index Index to place the value at.
+///  @param[in] d     Scalar data to set.
+//------------------------------------------------------------------------------
+        virtual void set(const size_t index, const double d) final {
+            data[index] = d;
         }
 
 //------------------------------------------------------------------------------

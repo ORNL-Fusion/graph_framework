@@ -1,15 +1,12 @@
-//
-//  arithmetic.hpp
-//  graph_framework
-//
-//  Created by Cianciosa, Mark R. on 7/14/19.
-//  Copyright © 2019 Cianciosa, Mark R. All rights reserved.
-//
+//------------------------------------------------------------------------------
+///  @file arithmetic.hpp
+///  @brief Basic arithmetic operations.
+///
+///  Defines basic operators.
+//------------------------------------------------------------------------------
 
 #ifndef arithmetic_h
 #define arithmetic_h
-
-#include <algorithm>
 
 #include "node.hpp"
 
