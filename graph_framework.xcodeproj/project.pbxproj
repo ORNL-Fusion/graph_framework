@@ -23,6 +23,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C71C1FF527F5379D006997C2 /* dispersion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dispersion.hpp; sourceTree = "<group>"; };
 		C723210222DC0D0A006BBF13 /* arithmetic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arithmetic.hpp; sourceTree = "<group>"; };
 		C77E6DF522DD64E700469621 /* trigonometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trigonometry.hpp; sourceTree = "<group>"; };
 		C79141A622DA9BF200E0BA0D /* libgraph_framework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgraph_framework.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -73,6 +74,7 @@
 				C79141AE22DA9C3000E0BA0D /* node.hpp */,
 				C723210222DC0D0A006BBF13 /* arithmetic.hpp */,
 				C77E6DF522DD64E700469621 /* trigonometry.hpp */,
+				C71C1FF527F5379D006997C2 /* dispersion.hpp */,
 			);
 			path = graph_framework;
 			sourceTree = "<group>";
