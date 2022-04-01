@@ -142,8 +142,8 @@ namespace dispersion {
                                                    std::shared_ptr<graph::leaf_node> z) {
             auto c = graph::constant(1);
 
-            auto npar2 = kz*kz*c/w;
-            auto nperp2 = (kx*kx + ky*ky)*c/w;
+            auto npar2 = kz*kz*c*c/(w*w);
+            auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
             auto D = npar2 + nperp2 - w*w/(c*c);
             return D;
         }
