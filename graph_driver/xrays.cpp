@@ -37,7 +37,9 @@ int main(int argc, const char * argv[]) {
 
     solver::rk2<dispersion::simple> solve(D, kx, ky, kz, x, y, z, 1.0);
 
-    for (size_t i = 0; i < 10; i++) {
+    const size_t num_times = 100;
+
+    for (size_t i = 0; i < num_times; i++) {
         std::cout << "Time Step " << i << " ";
         std::cout << solve.state.back().x.at(0) << " "
                   << solve.state.back().y.at(0) << " "
@@ -49,7 +51,7 @@ int main(int argc, const char * argv[]) {
 
         solve.step();
     }
-    std::cout << "Time Step " << 10 << " ";
+    std::cout << "Time Step " << num_times << " ";
     std::cout << solve.state.back().x.at(0) << " "
               << solve.state.back().y.at(0) << " "
               << solve.state.back().z.at(0) << " "
