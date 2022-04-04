@@ -8,6 +8,8 @@
 #ifndef arithmetic_h
 #define arithmetic_h
 
+#include <numeric>
+
 #include "node.hpp"
 
 namespace graph {
@@ -257,22 +259,31 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual std::vector<double> evaluate() final {
             const std::vector<double> l_result = this->left->evaluate();
-            const std::vector<double> r_result = this->right->evaluate();
 
-            if (l_result.size()*r_result.size() == 1) {
-                return std::vector<double> (1, l_result.at(0)*r_result.at(0));
-            } else if (l_result.size() > 0) {
-                std::vector<double> result(l_result.size());
-                for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(i)*r_result.at(0);
+//  FIXME: Once the libstd supports execution policy, update.
+            const double sum = std::reduce(l_result.cbegin(),
+                                           l_result.cend());
+
+            if (sum != 0) {
+                const std::vector<double> r_result = this->right->evaluate();
+
+                if (l_result.size()*r_result.size() == 1) {
+                    return std::vector<double> (1, l_result.at(0)*r_result.at(0));
+                } else if (l_result.size() > 0) {
+                    std::vector<double> result(l_result.size());
+                    for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
+                        result[i] = l_result.at(i)*r_result.at(0);
+                    }
+                    return result;
+                } else {
+                    std::vector<double> result(r_result.size());
+                    for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                        result[i] = l_result.at(0)*r_result.at(i);
+                    }
+                    return result;
                 }
-                return result;
             } else {
-                std::vector<double> result(r_result.size());
-                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(0)*r_result.at(i);
-                }
-                return result;
+                return l_result;
             }
         }
 
@@ -364,22 +375,32 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual std::vector<double> evaluate() final {
             const std::vector<double> l_result = this->left->evaluate();
-            const std::vector<double> r_result = this->right->evaluate();
 
-            if (l_result.size()*r_result.size() == 1) {
-                return std::vector<double> (1, l_result.at(0)/r_result.at(0));
-            } else if (l_result.size() > 0) {
-                std::vector<double> result(l_result.size());
-                for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(i)/r_result.at(0);
+
+//  FIXME: Once the libstd supports execution policy, update.
+            const double sum = std::reduce(l_result.cbegin(),
+                                           l_result.cend());
+
+            if (sum != 0) {
+                const std::vector<double> r_result = this->right->evaluate();
+
+                if (l_result.size()*r_result.size() == 1) {
+                    return std::vector<double> (1, l_result.at(0)/r_result.at(0));
+                } else if (l_result.size() > 0) {
+                    std::vector<double> result(l_result.size());
+                    for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
+                        result[i] = l_result.at(i)/r_result.at(0);
+                    }
+                    return result;
+                } else {
+                    std::vector<double> result(r_result.size());
+                    for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                        result[i] = l_result.at(0)/r_result.at(i);
+                    }
+                    return result;
                 }
-                return result;
             } else {
-                std::vector<double> result(r_result.size());
-                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(0)/r_result.at(i);
-                }
-                return result;
+                return l_result;
             }
         }
 
