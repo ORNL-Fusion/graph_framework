@@ -30,13 +30,15 @@ int main(int argc, const char * argv[]) {
     dispersion::simple D(omega, kx, ky, kz, x, y, z);
 
 //  Inital conditions.
-    omega->set(1.0);
+    omega->set(0.2);
     x->set(1.0);
     y->set(0.0);
     z->set(0.0);
     kx->set(1.0);
     ky->set(0.0);
     kz->set(0.0);
+
+    D.solve(kx);
 
     solver::rk2<dispersion::simple> solve(D, kx, ky, kz, x, y, z, 1.0);
 

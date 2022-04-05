@@ -98,12 +98,12 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new solver_interface with inital conditions.
 ///
-///  @param[in] kx    Inital kx.
-///  @param[in] ky    Inital ky.
-///  @param[in] kz    Inital kz.
-///  @param[in] x     Inital x.
-///  @param[in] y     Inital y.
-///  @param[in] z     Inital z.
+///  @param[in] kx Inital kx.
+///  @param[in] ky Inital ky.
+///  @param[in] kz Inital kz.
+///  @param[in] x  Inital x.
+///  @param[in] y  Inital y.
+///  @param[in] z  Inital z.
 //------------------------------------------------------------------------------
         solver_interface(std::shared_ptr<graph::leaf_node> kx,
                          std::shared_ptr<graph::leaf_node> ky,
