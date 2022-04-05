@@ -79,3 +79,5 @@ macro (add_test_target target)
               COMMAND ${target}
     )
 endmacro ()
+
+add_subdirectory (graph_tests)

@@ -1,10 +1,7 @@
-//
-//  main.cpp
-//  graph_driver
-//
-//  Created by Cianciosa, Mark R. on 7/13/19.
-//  Copyright © 2019 Cianciosa, Mark R. All rights reserved.
-//
+//------------------------------------------------------------------------------
+///  @file xrays.cpp
+///  @brief Driver program for the rays library.
+//------------------------------------------------------------------------------
 
 #include <iostream>
 #include <chrono>
@@ -13,6 +10,12 @@
 
 void write_time(const std::string &name, const std::chrono::nanoseconds time);
 
+//------------------------------------------------------------------------------
+///  @brief Main program of the driver.
+///
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
+//------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
@@ -72,6 +75,12 @@ int main(int argc, const char * argv[]) {
     std::cout << std::endl;
 }
 
+//------------------------------------------------------------------------------
+///  @brief Print out timings.
+///
+///  @param[in] name Discription of the times.
+///  @param[in] time Elapsed time in nanoseconds.
+//------------------------------------------------------------------------------
 void write_time(const std::string &name, const std::chrono::nanoseconds time) {
     if (time.count() < 1000) {
         std::cout << name << time.count()               << " ns" << std::endl;

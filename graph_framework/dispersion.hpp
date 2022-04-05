@@ -144,7 +144,7 @@ namespace dispersion {
 
             auto npar2 = kz*kz*c*c/(w*w);
             auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
-            auto D = npar2 + nperp2 - w*w/(c*c);
+            auto D = npar2 + nperp2 - c;
             return D;
         }
 

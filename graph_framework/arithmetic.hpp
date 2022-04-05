@@ -47,19 +47,27 @@ namespace graph {
 
             if (l_result.size()*r_result.size() == 1) {
                 return std::vector<double> (1, l_result.at(0) + r_result.at(0));
-            } else if (l_result.size() > 0) {
+            } else if (r_result.size() == 1) {
                 std::vector<double> result(l_result.size());
                 for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
                     result[i] = l_result.at(i) + r_result.at(0);
                 }
                 return result;
-            } else {
+            } else if (l_result.size() == 1) {
                 std::vector<double> result(r_result.size());
                 for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
                     result[i] = l_result.at(0) + r_result.at(i);
                 }
                 return result;
             }
+
+            assert(l_result.size() == r_result.size() &&
+                   "Left and right sizes are incompatable.");
+            std::vector<double> result(l_result.size());
+            for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                result[i] = l_result.at(i) + r_result.at(i);
+            }
+            return result;
         }
 
 //------------------------------------------------------------------------------
@@ -71,12 +79,12 @@ namespace graph {
             auto l = std::dynamic_pointer_cast<constant_node> (this->left);
             auto r = std::dynamic_pointer_cast<constant_node> (this->right);
 
-            if (l.get() && r.get()) {
-                return constant(this->evaluate());
-            } else if (l.get() && l->is(0)) {
+            if (l.get() && l->is(0)) {
                 return this->right;
             } else if (r.get() && r->is(0)) {
                 return this->left;
+            } else if (l.get() && r.get()) {
+                return constant(this->evaluate());
             }
 
             return this->shared_from_this();
@@ -159,19 +167,27 @@ namespace graph {
 
             if (l_result.size()*r_result.size() == 1) {
                 return std::vector<double> (1, l_result.at(0) - r_result.at(0));
-            } else if (l_result.size() > 0) {
+            } else if (r_result.size() == 1) {
                 std::vector<double> result(l_result.size());
                 for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
                     result[i] = l_result.at(i) - r_result.at(0);
                 }
                 return result;
-            } else {
+            } else if (l_result.size() == 1) {
                 std::vector<double> result(r_result.size());
                 for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
                     result[i] = l_result.at(0) - r_result.at(i);
                 }
                 return result;
             }
+
+            assert(l_result.size() == r_result.size() &&
+                   "Left and right sizes are incompatable.");
+            std::vector<double> result(l_result.size());
+            for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                result[i] = l_result.at(i) - r_result.at(i);
+            }
+            return result;
         }
 
 //------------------------------------------------------------------------------
@@ -180,15 +196,19 @@ namespace graph {
 ///  @returns A reduced subtraction node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
+            if (this->left.get() == this->right.get()) {
+                return constant(0);
+            }
+
             auto l = std::dynamic_pointer_cast<constant_node> (this->left);
             auto r = std::dynamic_pointer_cast<constant_node> (this->right);
 
-            if (l.get() && r.get()) {
-                return constant(this->evaluate());
-            } else if (l.get() && l->is(0)) {
+            if (l.get() && l->is(0)) {
                 return constant(-1)*this->right;
             } else if (r.get() && r->is(0)) {
                 return this->left;
+            } else if (l.get() && r.get()) {
+                return constant(this->evaluate());
             }
 
             return this->shared_from_this();
@@ -269,19 +289,27 @@ namespace graph {
 
                 if (l_result.size()*r_result.size() == 1) {
                     return std::vector<double> (1, l_result.at(0)*r_result.at(0));
-                } else if (l_result.size() > 0) {
+                } else if (r_result.size() == 1) {
                     std::vector<double> result(l_result.size());
                     for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
                         result[i] = l_result.at(i)*r_result.at(0);
                     }
                     return result;
-                } else {
+                } else if (l_result.size() == 1) {
                     std::vector<double> result(r_result.size());
                     for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
                         result[i] = l_result.at(0)*r_result.at(i);
                     }
                     return result;
                 }
+
+                assert(l_result.size() == r_result.size() &&
+                       "Left and right sizes are incompatable.");
+                std::vector<double> result(l_result.size());
+                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                    result[i] = l_result.at(i)*r_result.at(i);
+                }
+                return result;
             } else {
                 return l_result;
             }
@@ -296,20 +324,16 @@ namespace graph {
             auto l = std::dynamic_pointer_cast<constant_node> (this->left);
             auto r = std::dynamic_pointer_cast<constant_node> (this->right);
 
-            if (l.get() && r.get()) {
+            if (l.get() && l->is(1)) {
+                return this->right;
+            } else if (l.get() &&  l->is(0)) {
+                return this->left;
+            } else if (r.get() && r->is(1)) {
+                return this->left;
+            } else if (r.get() && r->is(0)) {
+                return this->right;
+            } else if (l.get() && r.get()) {
                 return constant(this->evaluate());
-            } else if (l.get()) {
-                if (l->is(1)) {
-                    return this->right;
-                } else if (l->is(0)) {
-                    return constant(0);
-                }
-            } else if (r.get()) {
-                if (r->is(1)) {
-                    return this->left;
-                } else if (r->is(0)) {
-                    return constant(0);
-                }
             }
 
             return this->shared_from_this();
@@ -376,32 +400,45 @@ namespace graph {
         virtual std::vector<double> evaluate() final {
             const std::vector<double> l_result = this->left->evaluate();
 
-
-//  FIXME: Once the libstd supports execution policy, update.
-            const double sum = std::reduce(l_result.cbegin(),
-                                           l_result.cend());
-
-            if (sum != 0) {
-                const std::vector<double> r_result = this->right->evaluate();
-
-                if (l_result.size()*r_result.size() == 1) {
-                    return std::vector<double> (1, l_result.at(0)/r_result.at(0));
-                } else if (l_result.size() > 0) {
-                    std::vector<double> result(l_result.size());
-                    for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                        result[i] = l_result.at(i)/r_result.at(0);
-                    }
-                    return result;
-                } else {
-                    std::vector<double> result(r_result.size());
-                    for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                        result[i] = l_result.at(0)/r_result.at(i);
-                    }
-                    return result;
-                }
-            } else {
+//  If all the elements on the left are zero, return the leftside without
+//  revaluating the rightside. Stop this loop early once the first non zero
+//  element is encountered.
+            bool all_zero = l_result.at(0) == 0;
+            for (size_t i = 1, ie = l_result.size(); i < ie && all_zero; i++) {
+                all_zero = all_zero && l_result.at(i) == 0;
+            }
+            if (all_zero) {
                 return l_result;
             }
+
+            const std::vector<double> r_result = this->right->evaluate();
+
+// FIXME: In the case where every element of the left is zero, return the left
+//        without evaluating the right.
+
+            if (l_result.size()*r_result.size() == 1) {
+                return std::vector<double> (1, l_result.at(0)/r_result.at(0));
+            } else if (r_result.size() == 1) {
+                std::vector<double> result(l_result.size());
+                for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
+                    result[i] = l_result.at(i)/r_result.at(0);
+                }
+                return result;
+            } else if (l_result.size() == 1) {
+                std::vector<double> result(r_result.size());
+                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                    result[i] = l_result.at(0)/r_result.at(i);
+                }
+                return result;
+            }
+
+            assert(l_result.size() == r_result.size() &&
+                   "Left and right sizes are incompatable.");
+            std::vector<double> result(l_result.size());
+            for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                result[i] = l_result.at(i)/r_result.at(i);
+            }
+            return result;
         }
 
 //------------------------------------------------------------------------------
@@ -410,18 +447,23 @@ namespace graph {
 ///  @returns A reduced division node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
+            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
+
             if (this->left.get() == this->right.get()) {
-                return constant(1);
+                if (l.get() && l->is(1)) {
+                    return this->left;
+                } else {
+                    return constant(1);
+                }
             }
 
-            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
             auto r = std::dynamic_pointer_cast<constant_node> (this->right);
 
-            if (l.get() && r.get()) {
-                return constant(this->evaluate());
-            } else if ((l.get() && l->is(0)) ||
-                       (r.get() && r->is(1))) {
+            if ((l.get() && l->is(0)) ||
+                (r.get() && r->is(1))) {
                 return this->left;
+            } else if (l.get() && r.get()) {
+                return constant(this->evaluate());
             }
 
             return this->shared_from_this();
