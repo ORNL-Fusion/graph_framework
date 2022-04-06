@@ -8,6 +8,7 @@
 #ifndef dispersion_h
 #define dispersion_h
 
+#include <iostream>
 #include <algorithm>
 
 #include "vector.hpp"
