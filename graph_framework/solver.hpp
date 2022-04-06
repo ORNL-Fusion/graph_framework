@@ -202,11 +202,11 @@ namespace solver {
             auto two = graph::constant(2);
 
             kx_next = kx + dt_const*(kx1 + D2.get_dkxdt())/two;
-            ky_next = ky + dt_const*(ky1 + dt_const*D2.get_dkydt())/two;
-            kz_next = kz + dt_const*(kz1 + dt_const*D2.get_dkzdt())/two;
-            x_next = x + dt_const*(x1 + dt_const*D2.get_dxdt())/two;
-            y_next = y + dt_const*(y1 + dt_const*D2.get_dydt())/two;
-            z_next = z + dt_const*(z1 + dt_const*D2.get_dzdt())/two;
+            ky_next = ky + dt_const*(ky1 + D2.get_dkydt())/two;
+            kz_next = kz + dt_const*(kz1 + D2.get_dkzdt())/two;
+            x_next  = x + dt_const*(x1 + D2.get_dxdt())/two;
+            y_next  = y + dt_const*(y1 + D2.get_dydt())/two;
+            z_next  = z + dt_const*(z1 + D2.get_dzdt())/two;
         }
 
 //------------------------------------------------------------------------------
@@ -243,6 +243,7 @@ namespace solver {
                                               this->x->evaluate(),
                                               this->y->evaluate(),
                                               this->z->evaluate()));
+            this->state.pop_front();
         }
     };
 }
