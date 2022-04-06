@@ -76,8 +76,11 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Class interface the solver.
 //------------------------------------------------------------------------------
+    template<class DISPERSION_FUNCTION>
     class solver_interface {
     protected:
+///  w variable.
+        std::shared_ptr<graph::leaf_node> w;
 ///  kx variable.
         std::shared_ptr<graph::leaf_node> kx;
 ///  ky variable.
@@ -91,6 +94,9 @@ namespace solver {
 ///  z variable.
         std::shared_ptr<graph::leaf_node> z;
 
+///  Dispersion function interface.
+       dispersion::dispersion_interface<DISPERSION_FUNCTION> D;
+
     public:
 ///  Ray solution.
         std::list<solve_state> state;
@@ -98,6 +104,7 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new solver_interface with inital conditions.
 ///
+///  @param[in] w  Inital w.
 ///  @param[in] kx Inital kx.
 ///  @param[in] ky Inital ky.
 ///  @param[in] kz Inital kz.
@@ -105,20 +112,23 @@ namespace solver {
 ///  @param[in] y  Inital y.
 ///  @param[in] z  Inital z.
 //------------------------------------------------------------------------------
-        solver_interface(std::shared_ptr<graph::leaf_node> kx,
+        solver_interface(std::shared_ptr<graph::leaf_node> w,
+                         std::shared_ptr<graph::leaf_node> kx,
                          std::shared_ptr<graph::leaf_node> ky,
                          std::shared_ptr<graph::leaf_node> kz,
                          std::shared_ptr<graph::leaf_node> x,
                          std::shared_ptr<graph::leaf_node> y,
                          std::shared_ptr<graph::leaf_node> z) :
-        state(1, solve_state(kx->evaluate(),
-                             ky->evaluate(),
-                             kz->evaluate(),
-                             x->evaluate(),
-                             y->evaluate(),
-                             z->evaluate())),
+        D(w, kx, ky, kz, x, y, z), w(w),
         kx(kx), ky(ky), kz(kz),
         x(x), y(y), z(z) {}
+
+//------------------------------------------------------------------------------
+///  @brief Method to initalize the rays.
+//------------------------------------------------------------------------------
+        virtual void init(std::shared_ptr<graph::leaf_node> x,
+                          const double tolarance=1.0E-30,
+                          const size_t max_iterations = 1000) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Method to step the rays.
@@ -135,58 +145,35 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Class interface the solver.
 //------------------------------------------------------------------------------
-    template<class DISPERSION>
-    class rk2 : public solver_interface {
-///  Time step
-        const double dt;
-
-///  Second order rk 1st intermediate for kx.
-        std::vector<double> kx1;
-///  Second order rk 2nd intermediate for kx.
-        std::vector<double> kx2;
-
-///  Second order rk 1st intermediate for ky.
-        std::vector<double> ky1;
-///  Second order rk 2nd intermediate for ky.
-        std::vector<double> ky2;
-
-///  Second order rk 1st intermediate for kz.
-        std::vector<double> kz1;
-///  Second order rk 2nd intermediate for kz.
-        std::vector<double> kz2;
-
-///  Second order rk 1st intermediate for x.
-        std::vector<double> x1;
-///  Second order rk 2nd intermediate for x.
-        std::vector<double> x2;
-
-///  Second order rk 1st intermediate for y.
-        std::vector<double> y1;
-///  Second order rk 2nd intermediate for y.
-        std::vector<double> y2;
-
-///  Second order rk 1st intermediate for z.
-        std::vector<double> z1;
-///  Second order rk 2nd intermediate for z.
-        std::vector<double> z2;
-
-///  Dispersion function.
-        DISPERSION D;
+    template<class DISPERSION_FUNCTION>
+    class rk2 : public solver_interface<DISPERSION_FUNCTION> {
+///  Next kx value.
+        std::shared_ptr<graph::leaf_node> kx_next;
+///  Next ky value.
+        std::shared_ptr<graph::leaf_node> ky_next;
+///  Next kz value.
+        std::shared_ptr<graph::leaf_node> kz_next;
+///  Next kx value.
+        std::shared_ptr<graph::leaf_node> x_next;
+///  Next ky value.
+        std::shared_ptr<graph::leaf_node> y_next;
+///  Next kz value.
+        std::shared_ptr<graph::leaf_node> z_next;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @param[in] D   Dispersion function.
+///  @param[in] w  Inital omega.
 ///  @param[in] kx Inital kx.
 ///  @param[in] ky Inital ky.
 ///  @param[in] kz Inital kz.
 ///  @param[in] x  Inital x.
 ///  @param[in] y  Inital y.
 ///  @param[in] z  Inital z.
-///  @param[in] dt  Inital dt.
+///  @param[in] dt Inital dt.
 //------------------------------------------------------------------------------
-        rk2(DISPERSION &D,
+        rk2(std::shared_ptr<graph::leaf_node> w,
             std::shared_ptr<graph::leaf_node> kx,
             std::shared_ptr<graph::leaf_node> ky,
             std::shared_ptr<graph::leaf_node> kz,
@@ -194,58 +181,68 @@ namespace solver {
             std::shared_ptr<graph::leaf_node> y,
             std::shared_ptr<graph::leaf_node> z,
             const double dt) :
-        solver_interface(kx, ky, kz, x, y, z),
-        D(D), dt(dt),
-        kx1(state.back().size()), kx2(state.back().size()),
-        ky1(state.back().size()), ky2(state.back().size()),
-        kz1(state.back().size()), kz2(state.back().size()),
-        x1(state.back().size()), x2(state.back().size()),
-        y1(state.back().size()), y2(state.back().size()),
-        z1(state.back().size()), z2(state.back().size()) {}
+        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z) {
+            auto dt_const = graph::constant(dt);
+
+            auto kx1 = this->D.get_dkxdt();
+            auto ky1 = this->D.get_dkydt();
+            auto kz1 = this->D.get_dkzdt();
+            auto x1 = this->D.get_dxdt();
+            auto y1 = this->D.get_dydt();
+            auto z1 = this->D.get_dzdt();
+
+            dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(w,
+                                                                     kx + dt_const*kx1,
+                                                                     ky + dt_const*ky1,
+                                                                     kz + dt_const*kz1,
+                                                                     x + dt_const*x1,
+                                                                     y + dt_const*y1,
+                                                                     z + dt_const*z1);
+
+            auto two = graph::constant(2);
+
+            kx_next = kx + dt_const*(kx1 + D2.get_dkxdt())/two;
+            ky_next = ky + dt_const*(ky1 + dt_const*D2.get_dkydt())/two;
+            kz_next = kz + dt_const*(kz1 + dt_const*D2.get_dkzdt())/two;
+            x_next = x + dt_const*(x1 + dt_const*D2.get_dxdt())/two;
+            y_next = y + dt_const*(y1 + dt_const*D2.get_dydt())/two;
+            z_next = z + dt_const*(z1 + dt_const*D2.get_dzdt())/two;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Method to initalize the rays.
+//------------------------------------------------------------------------------
+        virtual void init(std::shared_ptr<graph::leaf_node> x,
+                          const double tolarance=1.0E-30,
+                          const size_t max_iterations = 1000) final {
+            this->D.solve(x, tolarance, max_iterations);
+
+            this->state.push_back(solve_state(this->kx->evaluate(),
+                                              this->ky->evaluate(),
+                                              this->kz->evaluate(),
+                                              this->x->evaluate(),
+                                              this->y->evaluate(),
+                                              this->z->evaluate()));
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Method to step the rays.
 //------------------------------------------------------------------------------
         virtual void step() final {
 //  First intermedate steps.
-            kx1 = D.get_dkxdt();
-            kz1 = D.get_dkydt();
-            ky1 = D.get_dkzdt();
-            x1 = D.get_dxdt();;
-            y1 = D.get_dydt();;
-            z1 = D.get_dzdt();;
+            this->kx->set(this->kx_next->evaluate());
+            this->ky->set(this->ky_next->evaluate());
+            this->kz->set(this->kz_next->evaluate());
+            this->x->set(this->x_next->evaluate());
+            this->y->set(this->y_next->evaluate());
+            this->z->set(this->z_next->evaluate());
 
-            for (size_t i = 0, ie = state.front().size(); i < ie; i++) {
-                this->kx->set(i, state.back().kx.at(i) + dt*kx1.at(i));
-                this->ky->set(i, state.back().ky.at(i) + dt*ky1.at(i));
-                this->kz->set(i, state.back().kz.at(i) + dt*kz1.at(i));
-                this->x->set(i, state.back().x.at(i) + dt*kx1.at(i));
-                this->y->set(i, state.back().y.at(i) + dt*ky1.at(i));
-                this->z->set(i, state.back().z.at(i) + dt*kz1.at(i));
-            }
-
-            kx2 = D.get_dkxdt();
-            ky2 = D.get_dkydt();
-            kz2 = D.get_dkzdt();
-            x2 = D.get_dxdt();;
-            y2 = D.get_dydt();;
-            z2 = D.get_dzdt();;
-
-            for (size_t i = 0, ie = state.front().size(); i < ie; i++) {
-                this->kx->set(i, state.back().kx.at(i) + dt*(kx1.at(i) + kx2.at(i))/2);
-                this->ky->set(i, state.back().ky.at(i) + dt*(ky1.at(i) + ky2.at(i))/2);
-                this->kz->set(i, state.back().kz.at(i) + dt*(kz1.at(i) + kz2.at(i))/2);
-                this->x->set(i, state.back().x.at(i) + dt*(x1.at(i) + x2.at(i))/2);
-                this->y->set(i, state.back().y.at(i) +  dt*(y1.at(i) + y2.at(i))/2);
-                this->z->set(i, state.back().z.at(i) + dt*(z1.at(i) + z2.at(i))/2);
-            }
-
-            state.push_back(solve_state(this->kx->evaluate(),
-                                        this->ky->evaluate(),
-                                        this->kz->evaluate(),
-                                        this->x->evaluate(),
-                                        this->y->evaluate(),
-                                        this->z->evaluate()));
+            this->state.push_back(solve_state(this->kx->evaluate(),
+                                              this->ky->evaluate(),
+                                              this->kz->evaluate(),
+                                              this->x->evaluate(),
+                                              this->y->evaluate(),
+                                              this->z->evaluate()));
         }
     };
 }

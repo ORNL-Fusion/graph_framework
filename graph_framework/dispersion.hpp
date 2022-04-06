@@ -19,6 +19,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
 //------------------------------------------------------------------------------
+    template<class DISPERSION_FUNCTION>
     class dispersion_interface {
     protected:
 ///  Disperison function.
@@ -43,7 +44,6 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new dispersion_interface.
 ///
-///  @param[in] D  Dispersion function.
 ///  @param[in] w  Wave frequency.
 ///  @param[in] kx Wave number in x.
 ///  @param[in] ky Wave number in y.
@@ -52,22 +52,21 @@ namespace dispersion {
 ///  @param[in] y  Position in y.
 ///  @param[in] z  Position in z.
 //------------------------------------------------------------------------------
-        dispersion_interface(std::shared_ptr<graph::leaf_node> D,
-                             std::shared_ptr<graph::leaf_node> w,
+        dispersion_interface(std::shared_ptr<graph::leaf_node> w,
                              std::shared_ptr<graph::leaf_node> kx,
                              std::shared_ptr<graph::leaf_node> ky,
                              std::shared_ptr<graph::leaf_node> kz,
                              std::shared_ptr<graph::leaf_node> x,
                              std::shared_ptr<graph::leaf_node> y,
                              std::shared_ptr<graph::leaf_node> z) :
-        D(D) {
-            auto dDdw = D->df(w)->reduce();
-            auto dDdkx = D->df(kx)->reduce();
-            auto dDdky = D->df(ky)->reduce();
-            auto dDdkz = D->df(kz)->reduce();
-            auto dDdx = D->df(x)->reduce();
-            auto dDdy = D->df(y)->reduce();
-            auto dDdz = D->df(z)->reduce();
+        D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z)) {
+            auto dDdw = this->D->df(w)->reduce();
+            auto dDdkx = this->D->df(kx)->reduce();
+            auto dDdky = this->D->df(ky)->reduce();
+            auto dDdkz = this->D->df(kz)->reduce();
+            auto dDdx = this->D->df(x)->reduce();
+            auto dDdy = this->D->df(y)->reduce();
+            auto dDdz = this->D->df(z)->reduce();
 
             auto neg_one = graph::constant(-1);
             dxdt = neg_one*dDdkx/dDdw;
@@ -92,7 +91,7 @@ namespace dispersion {
                            const double tolarance=1.0E-30,
                            const size_t max_iterations = 1000) {
             auto loss = D*D;
-            auto x_next = x - loss/loss->df(x);
+            auto x_next = x - loss/(loss->df(x));
 
             std::vector<double> residule_vector = loss->evaluate();
             double max_residule = *std::max_element(residule_vector.cbegin(),
@@ -118,8 +117,8 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> get_dsdt() final {
-            return this->dsdt->evaluate();
+        virtual std::shared_ptr<graph::leaf_node> get_dsdt() final {
+            return this->dsdt->reduce();
         }
 
 //------------------------------------------------------------------------------
@@ -127,8 +126,8 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> get_dxdt() final {
-            return this->dxdt->evaluate();
+        virtual std::shared_ptr<graph::leaf_node> get_dxdt() final {
+            return this->dxdt->reduce();
         }
 
 //------------------------------------------------------------------------------
@@ -136,8 +135,8 @@ namespace dispersion {
 ///
 ///  @return dy/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> get_dydt() final {
-            return this->dydt->evaluate();
+        virtual std::shared_ptr<graph::leaf_node> get_dydt() final {
+            return this->dydt->reduce();
         }
 
 //------------------------------------------------------------------------------
@@ -145,8 +144,8 @@ namespace dispersion {
 ///
 ///  @return dz/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> get_dzdt() final {
-            return this->dzdt->evaluate();
+        virtual std::shared_ptr<graph::leaf_node> get_dzdt() final {
+            return this->dzdt->reduce();
         }
 
 //------------------------------------------------------------------------------
@@ -154,8 +153,8 @@ namespace dispersion {
 ///
 ///  @return dkx/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> get_dkxdt() final {
-            return this->dkxdt->evaluate();
+        virtual std::shared_ptr<graph::leaf_node> get_dkxdt() final {
+            return this->dkxdt->reduce();
         }
 
 //------------------------------------------------------------------------------
@@ -163,8 +162,8 @@ namespace dispersion {
 ///
 ///  @return dky/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> get_dkydt() final {
-            return this->dkydt->evaluate();
+        virtual std::shared_ptr<graph::leaf_node> get_dkydt() final {
+            return this->dkydt->reduce();
         }
 
 //------------------------------------------------------------------------------
@@ -172,19 +171,33 @@ namespace dispersion {
 ///
 ///  @return dkz/dt
 //------------------------------------------------------------------------------
-        virtual std::vector<double> get_dkzdt() final {
-            return this->dkzdt->evaluate();
+        virtual std::shared_ptr<graph::leaf_node> get_dkzdt() final {
+            return this->dkzdt->reduce();
         }
     };
 
 //******************************************************************************
-//  Dispersion interface.
+//  Dispersion function.
 //******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Interface for dispersion functions.
+//------------------------------------------------------------------------------
+    class dispersion_function {
+    public:
+        virtual std::shared_ptr<graph::leaf_node> D(std::shared_ptr<graph::leaf_node> w,
+                                                    std::shared_ptr<graph::leaf_node> kx,
+                                                    std::shared_ptr<graph::leaf_node> ky,
+                                                    std::shared_ptr<graph::leaf_node> kz,
+                                                    std::shared_ptr<graph::leaf_node> x,
+                                                    std::shared_ptr<graph::leaf_node> y,
+                                                    std::shared_ptr<graph::leaf_node> z) = 0;
+    };
+
 //------------------------------------------------------------------------------
 ///  @brief Simple dispersion function.
 //------------------------------------------------------------------------------
-    class simple final : public dispersion_interface {
-    private:
+    class simple final : public dispersion_function {
+    public:
 //------------------------------------------------------------------------------
 ///  @brief Simple dispersion function.
 ///
@@ -198,41 +211,19 @@ namespace dispersion {
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
 //------------------------------------------------------------------------------
-        static std::shared_ptr<graph::leaf_node> D(std::shared_ptr<graph::leaf_node> w,
-                                                   std::shared_ptr<graph::leaf_node> kx,
-                                                   std::shared_ptr<graph::leaf_node> ky,
-                                                   std::shared_ptr<graph::leaf_node> kz,
-                                                   std::shared_ptr<graph::leaf_node> x,
-                                                   std::shared_ptr<graph::leaf_node> y,
-                                                   std::shared_ptr<graph::leaf_node> z) {
+        virtual std::shared_ptr<graph::leaf_node> D(std::shared_ptr<graph::leaf_node> w,
+                                                    std::shared_ptr<graph::leaf_node> kx,
+                                                    std::shared_ptr<graph::leaf_node> ky,
+                                                    std::shared_ptr<graph::leaf_node> kz,
+                                                    std::shared_ptr<graph::leaf_node> x,
+                                                    std::shared_ptr<graph::leaf_node> y,
+                                                    std::shared_ptr<graph::leaf_node> z) final {
             auto c = graph::constant(1);
 
             auto npar2 = kz*kz*c*c/(w*w);
             auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
             return npar2 + nperp2 - c;
         }
-
-    public:
-//------------------------------------------------------------------------------
-///  @brief Construct a simple dispersion function.
-///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-//------------------------------------------------------------------------------
-        simple(std::shared_ptr<graph::leaf_node> w,
-               std::shared_ptr<graph::leaf_node> kx,
-               std::shared_ptr<graph::leaf_node> ky,
-               std::shared_ptr<graph::leaf_node> kz,
-               std::shared_ptr<graph::leaf_node> x,
-               std::shared_ptr<graph::leaf_node> y,
-               std::shared_ptr<graph::leaf_node> z) :
-        dispersion_interface(D(w, kx, ky, kz, x, y, z)->reduce(),
-                             w, kx, ky, kz, x, y, z) {}
     };
 }
 

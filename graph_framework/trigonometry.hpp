@@ -69,7 +69,11 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return cos(this->arg)*this->arg->df(x);
+            if (x.get() == this) {
+                return constant(1);
+            } else {
+                return cos(this->arg)*this->arg->df(x);
+            }
         }
     };
 
@@ -138,7 +142,11 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return std::make_shared<constant_node> (-1)*sin(this->arg)*this->arg->df(x);
+            if (x.get() == this) {
+                return constant(1);
+            } else {
+                return std::make_shared<constant_node> (-1)*sin(this->arg)*this->arg->df(x);
+            }
         }
     };
 

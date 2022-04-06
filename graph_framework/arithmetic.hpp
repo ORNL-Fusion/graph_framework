@@ -99,7 +99,11 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return this->left->df(x) + this->right->df(x);
+            if (x.get() == this) {
+                return constant(1);
+            } else {
+                return this->left->df(x) + this->right->df(x);
+            }
         }
     };
 
@@ -223,7 +227,11 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return this->left->df(x) - this->right->df(x);
+            if (x.get() == this) {
+                return constant(1);
+            } else {
+                return this->left->df(x) - this->right->df(x);
+            }
         }
     };
 
@@ -348,8 +356,12 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return this->left->df(x)*this->right +
-                   this->left*this->right->df(x);
+            if (x.get() == this) {
+                return constant(1);
+            } else {
+                return this->left->df(x)*this->right +
+                       this->left*this->right->df(x);
+            }
         }
     };
 
@@ -478,8 +490,12 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return this->left->df(x)/this->right -
-                   this->left*this->right->df(x)/(this->right*this->right);
+            if (x.get() == this) {
+                return constant(1);
+            } else {
+                return this->left->df(x)/this->right -
+                       this->left*this->right->df(x)/(this->right*this->right);
+            }
         }
     };
 

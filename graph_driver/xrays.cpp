@@ -19,15 +19,13 @@ void write_time(const std::string &name, const std::chrono::nanoseconds time);
 int main(int argc, const char * argv[]) {
     const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
-    auto omega = graph::variable(1);
-    auto kx = graph::variable(1);
-    auto ky = graph::variable(1);
-    auto kz = graph::variable(1);
-    auto x = graph::variable(1);
-    auto y = graph::variable(1);
-    auto z = graph::variable(1);
-
-    dispersion::simple D(omega, kx, ky, kz, x, y, z);
+    auto omega = graph::variable(10);
+    auto kx = graph::variable(10);
+    auto ky = graph::variable(10);
+    auto kz = graph::variable(10);
+    auto x = graph::variable(10);
+    auto y = graph::variable(10);
+    auto z = graph::variable(10);
 
 //  Inital conditions.
     omega->set(0.2);
@@ -38,9 +36,8 @@ int main(int argc, const char * argv[]) {
     ky->set(0.0);
     kz->set(0.0);
 
-    D.solve(kx);
-
-    solver::rk2<dispersion::simple> solve(D, kx, ky, kz, x, y, z, 1.0);
+    solver::rk2<dispersion::simple> solve(omega, kx, ky, kz, x, y, z, 1.0);
+    solve.init(kx);
 
     const size_t num_times = 100;
 

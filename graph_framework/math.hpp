@@ -68,7 +68,11 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return this->arg->df(x)/(constant(2)*this->shared_from_this());
+            if (x.get() == this) {
+                return constant(1);
+            } else {
+                return this->arg->df(x)/(constant(2)*this->shared_from_this());
+            }
         }
     };
 

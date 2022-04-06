@@ -90,7 +90,6 @@ namespace graph {
         std::shared_ptr<leaf_node> arg;
 
     public:
-
 //------------------------------------------------------------------------------
 ///  @brief Class representing a straight node.
 ///
@@ -142,7 +141,6 @@ namespace graph {
         const std::vector<double> data;
 
     public:
-
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a scalar.
 ///
@@ -245,7 +243,6 @@ namespace graph {
         std::vector<double> data;
 
     public:
-
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node with a size.
 ///
