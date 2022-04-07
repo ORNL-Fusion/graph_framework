@@ -92,7 +92,7 @@ namespace dispersion {
                            const double tolarance=1.0E-30,
                            const size_t max_iterations = 1000) {
             auto loss = D*D;
-            auto x_next = x - loss/(loss->df(x));
+            auto x_next = x - loss/(loss->df(x) + graph::constant(tolarance));
 
             std::vector<double> residule_vector = loss->evaluate();
             double max_residule = *std::max_element(residule_vector.cbegin(),

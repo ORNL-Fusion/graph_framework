@@ -128,7 +128,16 @@ namespace solver {
 //------------------------------------------------------------------------------
         virtual void init(std::shared_ptr<graph::leaf_node> x,
                           const double tolarance=1.0E-30,
-                          const size_t max_iterations = 1000) = 0;
+                          const size_t max_iterations = 1000) final {
+            this->D.solve(x, tolarance, max_iterations);
+
+            this->state.push_back(solve_state(this->kx->evaluate(),
+                                              this->ky->evaluate(),
+                                              this->kz->evaluate(),
+                                              this->x->evaluate(),
+                                              this->y->evaluate(),
+                                              this->z->evaluate()));
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Method to step the rays.
@@ -207,22 +216,6 @@ namespace solver {
             x_next  = x + dt_const*(x1 + D2.get_dxdt())/two;
             y_next  = y + dt_const*(y1 + D2.get_dydt())/two;
             z_next  = z + dt_const*(z1 + D2.get_dzdt())/two;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Method to initalize the rays.
-//------------------------------------------------------------------------------
-        virtual void init(std::shared_ptr<graph::leaf_node> x,
-                          const double tolarance=1.0E-30,
-                          const size_t max_iterations = 1000) final {
-            this->D.solve(x, tolarance, max_iterations);
-
-            this->state.push_back(solve_state(this->kx->evaluate(),
-                                              this->ky->evaluate(),
-                                              this->kz->evaluate(),
-                                              this->x->evaluate(),
-                                              this->y->evaluate(),
-                                              this->z->evaluate()));
         }
 
 //------------------------------------------------------------------------------

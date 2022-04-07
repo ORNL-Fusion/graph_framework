@@ -6,6 +6,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <random>
 
 #include "../graph_framework/solver.hpp"
 
@@ -32,6 +33,10 @@ int main(int argc, const char * argv[]) {
             const size_t local_num_rays = num_rays/num_threads
                                         + std::min(thread_number, num_rays%num_threads);
 
+            std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+            std::uniform_real_distribution<double> real_dist(-1.0, 1.0);
+            std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
+
             auto omega = graph::variable(local_num_rays);
             auto kx = graph::variable(local_num_rays);
             auto ky = graph::variable(local_num_rays);
@@ -41,7 +46,9 @@ int main(int argc, const char * argv[]) {
             auto z = graph::variable(local_num_rays);
 
 //  Inital conditions.
-            omega->set(1.0);
+            for (size_t j = 0; j < local_num_rays; j++) {
+                omega->set(j, real_dist(engine));
+            }
             x->set(1.0);
             y->set(0.0);
             z->set(0.0);
@@ -52,28 +59,34 @@ int main(int argc, const char * argv[]) {
             solver::rk2<dispersion::simple> solve(omega, kx, ky, kz, x, y, z, 1.0);
             solve.init(kx);
 
-            for (size_t i = 0; i < num_times; i++) {
-                if (thread_number == 1) {
-                    std::cout << "Time Step " << i << " ";
-                    std::cout << solve.state.back().x.at(0) << " "
-                              << solve.state.back().y.at(0) << " "
-                              << solve.state.back().z.at(0) << " "
-                              << solve.state.back().kx.at(0) << " "
-                              << solve.state.back().ky.at(0) << " "
-                              << solve.state.back().kz.at(0) << " "
+            const size_t sample = int_dist(engine);
+
+            if (thread_number == 1) {
+                std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
+            }
+
+            for (size_t j = 0; j < num_times; j++) {
+                if (thread_number == 0) {
+                    std::cout << "Time Step " << j << " Sample " << sample << " "
+                              << solve.state.back().x.at(sample) << " "
+                              << solve.state.back().y.at(sample) << " "
+                              << solve.state.back().z.at(sample) << " "
+                              << solve.state.back().kx.at(sample) << " "
+                              << solve.state.back().ky.at(sample) << " "
+                              << solve.state.back().kz.at(sample) << " "
                               << solve.state.size() << std::endl;
                 }
 
                 solve.step();
             }
-            if (thread_number == 1) {
-                std::cout << "Time Step " << num_times << " ";
-                std::cout << solve.state.back().x.at(0) << " "
-                          << solve.state.back().y.at(0) << " "
-                          << solve.state.back().z.at(0) << " "
-                          << solve.state.back().kx.at(0) << " "
-                          << solve.state.back().ky.at(0) << " "
-                          << solve.state.back().kz.at(0) << " "
+            if (thread_number == 0) {
+                std::cout << "Time Step " << num_times << " Sample " << sample << " "
+                          << solve.state.back().x.at(sample) << " "
+                          << solve.state.back().y.at(sample) << " "
+                          << solve.state.back().z.at(sample) << " "
+                          << solve.state.back().kx.at(sample) << " "
+                          << solve.state.back().ky.at(sample) << " "
+                          << solve.state.back().kz.at(sample) << " "
                           << solve.state.size() << std::endl;
             }
         }, i, threads.size());

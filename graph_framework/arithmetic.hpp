@@ -288,39 +288,42 @@ namespace graph {
         virtual std::vector<double> evaluate() final {
             const std::vector<double> l_result = this->left->evaluate();
 
-//  FIXME: Once the libstd supports execution policy, update.
-            const double sum = std::reduce(l_result.cbegin(),
-                                           l_result.cend());
-
-            if (sum != 0) {
-                const std::vector<double> r_result = this->right->evaluate();
-
-                if (l_result.size()*r_result.size() == 1) {
-                    return std::vector<double> (1, l_result.at(0)*r_result.at(0));
-                } else if (r_result.size() == 1) {
-                    std::vector<double> result(l_result.size());
-                    for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                        result[i] = l_result.at(i)*r_result.at(0);
-                    }
-                    return result;
-                } else if (l_result.size() == 1) {
-                    std::vector<double> result(r_result.size());
-                    for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                        result[i] = l_result.at(0)*r_result.at(i);
-                    }
-                    return result;
-                }
-
-                assert(l_result.size() == r_result.size() &&
-                       "Left and right sizes are incompatable.");
-                std::vector<double> result(l_result.size());
-                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(i)*r_result.at(i);
-                }
-                return result;
-            } else {
+//  If all the elements on the left are zero, return the leftside without
+//  revaluating the rightside. Stop this loop early once the first non zero
+//  element is encountered.
+            bool all_zero = l_result.at(0) == 0;
+            for (size_t i = 1, ie = l_result.size(); i < ie && all_zero; i++) {
+                all_zero = all_zero && l_result.at(i) == 0;
+            }
+            if (all_zero) {
                 return l_result;
             }
+
+            const std::vector<double> r_result = this->right->evaluate();
+
+            if (l_result.size()*r_result.size() == 1) {
+                return std::vector<double> (1, l_result.at(0)*r_result.at(0));
+            } else if (r_result.size() == 1) {
+                std::vector<double> result(l_result.size());
+                for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
+                    result[i] = l_result.at(i)*r_result.at(0);
+                }
+                return result;
+            } else if (l_result.size() == 1) {
+                std::vector<double> result(r_result.size());
+                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                    result[i] = l_result.at(0)*r_result.at(i);
+                }
+                return result;
+            }
+
+            assert(l_result.size() == r_result.size() &&
+                  "Left and right sizes are incompatable.");
+            std::vector<double> result(l_result.size());
+            for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
+                result[i] = l_result.at(i)*r_result.at(i);
+            }
+            return result;
         }
 
 //------------------------------------------------------------------------------
