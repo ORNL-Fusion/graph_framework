@@ -3,14 +3,14 @@
 ///  @brief Tests for the node interface.
 //------------------------------------------------------------------------------
 
+//  Turn on asserts even in release builds.
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <cassert>
 
 #include "../graph_framework/node.hpp"
-
-//  Turn on asserts even in release builds.
-#ifndef NDEBUG
-#define NDEBUG
-#endif
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for constant nodes.

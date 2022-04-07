@@ -3,14 +3,14 @@
 ///  @brief Tests for arithmetic nodes.
 //------------------------------------------------------------------------------
 
+//  Turn on asserts even in release builds.
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <cassert>
 
 #include "../graph_framework/arithmetic.hpp"
-
-//  Turn on asserts even in release builds.
-#ifndef NDEBUG
-#define NDEBUG
-#endif
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for constant nodes.
@@ -309,6 +309,21 @@ void test_multiply() {
     assert(vec_times_vec_result.at(0) == 16 && "Expected 4*4 for result.");
     assert(vec_times_vec_result.at(1) == 25 && "Expected 5*5 for result.");
 
+//  Test reduction short cut. If all the elements in the numerator are zero, an
+//  denominator does not need to be evaluated. This test makes sure that a sum
+//  or product is not used to avoid cases like {-1, 0, 1} which sum and product
+//  are zero.
+    auto vec_sum_prod = graph::constant({-1,0,1});
+    auto vec_sum_prod_multiply_two = vec_sum_prod*two;
+    const std::vector<double> vec_sum_prod_multiply_two_result =
+        vec_sum_prod_multiply_two->evaluate();
+    assert(vec_sum_prod_multiply_two_result.at(0) == -1.0*2.0 &&
+           "Expected -1/2 for result.");
+    assert(vec_sum_prod_multiply_two_result.at(1) == 0 &&
+           "Expected 0/2 for result.");
+    assert(vec_sum_prod_multiply_two_result.at(2) == 1.0*2.0 &&
+           "Expected 1/2 for result.");
+
 //  Test variable quanities.
 //  Any zero should reduce back to zero.
     auto variable = graph::variable(1);
@@ -356,6 +371,21 @@ void test_multiply() {
            "Size mismatch in result.");
     assert(varvec_times_varvec_result.at(0) == -16 && "Expected 4*-4.");
     assert(varvec_times_varvec_result.at(1) == 4 && "Expected -2*-2.");
+
+//  Test reduction short cut. If all the elements in the numerator are zero, an
+//  denominator does not need to be evaluated. This test makes sure that a sum
+//  or product is not used to avoid cases like {-1, 0, 1} which sum and product
+//  are zero.
+    auto var_sum_prod = graph::variable({-2,2,0});
+    auto var_sum_prod_multiply_two = var_sum_prod*two;
+    const std::vector<double> var_sum_prod_multiply_two_result =
+        var_sum_prod_multiply_two->evaluate();
+    assert(var_sum_prod_multiply_two_result.at(0) == -2.0*2.0 &&
+           "Expected -2/2 for result.");
+    assert(var_sum_prod_multiply_two_result.at(1) == 2.0*2.0 &&
+           "Expected 2/2 for result.");
+    assert(var_sum_prod_multiply_two_result.at(2) == 0 &&
+           "Expected 0/2 for result.");
 
 //  Test derivatives.
 //  d (c*x) / dx = dc/dx*x + c*dx/dx = c*1 = c;
