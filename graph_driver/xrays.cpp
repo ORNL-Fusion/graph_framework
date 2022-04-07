@@ -34,7 +34,7 @@ int main(int argc, const char * argv[]) {
                                         + std::min(thread_number, num_rays%num_threads);
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-            std::uniform_real_distribution<double> real_dist(-1.0, 1.0);
+            std::uniform_real_distribution<double> real_dist(0.0, 1.0);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 
             auto omega = graph::variable(local_num_rays);
