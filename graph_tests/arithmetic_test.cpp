@@ -13,7 +13,7 @@
 #include "../graph_framework/arithmetic.hpp"
 
 //------------------------------------------------------------------------------
-///  @brief Tests for constant nodes.
+///  @brief Tests for addition nodes.
 //------------------------------------------------------------------------------
 void test_add() {
 //  Three constant nodes should reduce to a single constant node with added
@@ -116,7 +116,7 @@ void test_add() {
 }
 
 //------------------------------------------------------------------------------
-///  @brief Tests for constant nodes.
+///  @brief Tests for subtract nodes.
 //------------------------------------------------------------------------------
 void test_subtract() {
 //  Three constant nodes should reduce to a single constant node with added
@@ -237,7 +237,7 @@ void test_subtract() {
 }
 
 //------------------------------------------------------------------------------
-///  @brief Tests for constant nodes.
+///  @brief Tests for multiply nodes.
 //------------------------------------------------------------------------------
 void test_multiply() {
 //  Three constant nodes should reduce to a single constant node with multiplied
@@ -406,7 +406,7 @@ void test_multiply() {
 }
 
 //------------------------------------------------------------------------------
-///  @brief Tests for constant nodes.
+///  @brief Tests for divide nodes.
 //------------------------------------------------------------------------------
 void test_divide() {
 // A zero in the numerator should result in zero.

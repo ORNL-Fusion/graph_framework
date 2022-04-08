@@ -174,23 +174,18 @@ namespace graph {
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> reduce() final {
-            if (data.size() > 1) {
-                bool is_all_same = true;
+            if (data.size() == 1) {
+                return this->shared_from_this();
+            }
 
-                const double same = data.at(0);
-                for (double e: data) {
-                    if (e != same) {
-                        is_all_same = false;
-                        break;
-                    }
-                }
-
-                if (is_all_same) {
-                    return std::make_shared<constant_node> (same);
+            const double same = data.at(0);
+            for (size_t i = 1, ie = data.size(); i < ie; i++) {
+                if (data.at(i) != same) {
+                    return this->shared_from_this();
                 }
             }
 
-            return this->shared_from_this();
+            return std::make_shared<constant_node> (same);
         }
 
 //------------------------------------------------------------------------------
