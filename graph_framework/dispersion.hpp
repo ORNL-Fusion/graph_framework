@@ -114,6 +114,15 @@ namespace dispersion {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Get the disperison function.
+///
+///  @return dx/dt
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<graph::leaf_node> get_d() final {
+            return this->D->reduce();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Provide right hand side for s update.
 ///
 ///  @return dx/dt

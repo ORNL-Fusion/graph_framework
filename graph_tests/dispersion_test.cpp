@@ -1,0 +1,61 @@
+//------------------------------------------------------------------------------
+///  @file dispersion_test.cpp
+///  @brief Tests for math nodes.
+//------------------------------------------------------------------------------
+
+//  Turn on asserts even in release builds.
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
+#include <cassert>
+
+#include "../graph_framework/dispersion.hpp"
+
+//------------------------------------------------------------------------------
+///  @brief The newton solve for dispersion relation.
+//------------------------------------------------------------------------------
+void test_solve() {
+    auto w = graph::variable(1, 0.5);
+    auto kx = graph::variable(1, 0.25);
+    auto ky = graph::variable(1, 0.25);
+    auto kz = graph::variable(1, 0.15);
+    auto x = graph::variable(1, 0.0);
+    auto y = graph::variable(1, 0.0);
+    auto z = graph::variable(1, 0.0);
+
+    dispersion::dispersion_interface<dispersion::simple> D(w,
+                                                           kx, ky, kz,
+                                                           x, y, z);
+
+    auto loss = D.get_d()*D.get_d();
+
+    D.solve(kx);
+    assert(loss->evaluate().at(0) < 1.0E-30 &&
+           "Solve failed to meet expected result for kx.");
+
+    kx->set(0.3);
+    D.solve(ky);
+    assert(loss->evaluate().at(0) < 1.0E-30 &&
+           "Solve failed to meet expected result for ky.");
+
+    ky->set(0.25);
+    D.solve(kz);
+    assert(loss->evaluate().at(0) < 1.0E-30 &&
+           "Solve failed to meet expected result for kz.");
+
+    kz->set(0.15);
+    D.solve(w);
+    assert(loss->evaluate().at(0) < 1.0E-30 &&
+           "Solve failed to meet expected result for w.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Main program of the test.
+///
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
+//------------------------------------------------------------------------------
+int main(int argc, const char * argv[]) {
+    test_solve();
+}
