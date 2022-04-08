@@ -13,10 +13,10 @@
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
-///  @brief The newton solve for dispersion relation.
+///  @brief The second order runga kutta ode solve.
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
-void test_solve() {
+void test_rk2() {
     auto w = graph::variable(1, 0.5);
     auto kx = graph::variable(1, 0.25);
     auto ky = graph::variable(1, 0.25);
@@ -25,28 +25,15 @@ void test_solve() {
     auto y = graph::variable(1, 0.0);
     auto z = graph::variable(1, 0.0);
 
-    dispersion::dispersion_interface<DISPERSION> D(w, kx, ky, kz, x, y, z);
+    solver::rk2<DISPERSION> solve(w, kx, ky, kz, x, y, z, 1.0);
+    solve.init(kx);
+    auto residule = solve.residule();
 
-    auto loss = D.get_d()*D.get_d();
-
-    D.solve(kx);
-    assert(loss->evaluate().at(0) < 1.0E-30 &&
-           "Solve failed to meet expected result for kx.");
-
-    kx->set(0.3);
-    D.solve(ky);
-    assert(loss->evaluate().at(0) < 1.0E-30 &&
-           "Solve failed to meet expected result for ky.");
-
-    ky->set(0.25);
-    D.solve(kz);
-    assert(loss->evaluate().at(0) < 1.0E-30 &&
-           "Solve failed to meet expected result for kz.");
-
-    kz->set(0.15);
-    D.solve(w);
-    assert(loss->evaluate().at(0) < 1.0E-30 &&
-           "Solve failed to meet expected result for w.");
+    for(size_t i = 0; i < 5; i++) {
+        solve.step();
+        assert(residule->evaluate().at(0) < 1.0E-30 &&
+               "Solver failed to retain initial acuracy");
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -56,5 +43,5 @@ void test_solve() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_solve<dispersion::simple> ();
+    test_rk2<dispersion::simple> ();
 }
