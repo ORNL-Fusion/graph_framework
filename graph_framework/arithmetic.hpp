@@ -42,32 +42,30 @@ namespace graph {
 ///  @returns The value of l + r.
 //------------------------------------------------------------------------------
         virtual std::vector<double> evaluate() final {
-            const std::vector<double> l_result = this->left->evaluate();
-            const std::vector<double> r_result = this->right->evaluate();
+            std::vector<double> l_result = this->left->evaluate();
+            std::vector<double> r_result = this->right->evaluate();
 
             if (l_result.size()*r_result.size() == 1) {
-                return std::vector<double> (1, l_result.at(0) + r_result.at(0));
+                l_result[0] = l_result.at(0) + r_result.at(0);
+                return l_result;
             } else if (r_result.size() == 1) {
-                std::vector<double> result(l_result.size());
                 for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(i) + r_result.at(0);
+                    l_result[i] = l_result.at(i) + r_result.at(0);
                 }
-                return result;
+                return l_result;
             } else if (l_result.size() == 1) {
-                std::vector<double> result(r_result.size());
                 for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(0) + r_result.at(i);
+                    r_result[i] = l_result.at(0) + r_result.at(i);
                 }
-                return result;
+                return r_result;
             }
 
             assert(l_result.size() == r_result.size() &&
                    "Left and right sizes are incompatable.");
-            std::vector<double> result(l_result.size());
             for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                result[i] = l_result.at(i) + r_result.at(i);
+                l_result[i] = l_result.at(i) + r_result.at(i);
             }
-            return result;
+            return l_result;
         }
 
 //------------------------------------------------------------------------------
@@ -166,32 +164,30 @@ namespace graph {
 ///  @returns The value of l - r.
 //------------------------------------------------------------------------------
         virtual std::vector<double> evaluate() final {
-            const std::vector<double> l_result = this->left->evaluate();
-            const std::vector<double> r_result = this->right->evaluate();
+            std::vector<double> l_result = this->left->evaluate();
+            std::vector<double> r_result = this->right->evaluate();
 
             if (l_result.size()*r_result.size() == 1) {
-                return std::vector<double> (1, l_result.at(0) - r_result.at(0));
+                l_result[0] = l_result.at(0) - r_result.at(0);
+                return l_result;
             } else if (r_result.size() == 1) {
-                std::vector<double> result(l_result.size());
                 for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(i) - r_result.at(0);
+                    l_result[i] = l_result.at(i) - r_result.at(0);
                 }
-                return result;
+                return l_result;
             } else if (l_result.size() == 1) {
-                std::vector<double> result(r_result.size());
                 for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(0) - r_result.at(i);
+                    r_result[i] = l_result.at(0) - r_result.at(i);
                 }
-                return result;
+                return r_result;
             }
 
             assert(l_result.size() == r_result.size() &&
                    "Left and right sizes are incompatable.");
-            std::vector<double> result(l_result.size());
             for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                result[i] = l_result.at(i) - r_result.at(i);
+                l_result[i] = l_result.at(i) - r_result.at(i);
             }
-            return result;
+            return l_result;
         }
 
 //------------------------------------------------------------------------------
@@ -286,7 +282,7 @@ namespace graph {
 ///  @returns The value of l*r.
 //------------------------------------------------------------------------------
         virtual std::vector<double> evaluate() final {
-            const std::vector<double> l_result = this->left->evaluate();
+            std::vector<double> l_result = this->left->evaluate();
 
 //  If all the elements on the left are zero, return the leftside without
 //  revaluating the rightside. Stop this loop early once the first non zero
@@ -299,31 +295,29 @@ namespace graph {
                 return l_result;
             }
 
-            const std::vector<double> r_result = this->right->evaluate();
+            std::vector<double> r_result = this->right->evaluate();
 
             if (l_result.size()*r_result.size() == 1) {
-                return std::vector<double> (1, l_result.at(0)*r_result.at(0));
+                l_result[0] = l_result.at(0)*r_result.at(0);
+                return l_result;
             } else if (r_result.size() == 1) {
-                std::vector<double> result(l_result.size());
                 for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(i)*r_result.at(0);
+                    l_result[i] = l_result.at(i)*r_result.at(0);
                 }
-                return result;
+                return l_result;
             } else if (l_result.size() == 1) {
-                std::vector<double> result(r_result.size());
                 for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(0)*r_result.at(i);
+                    r_result[i] = l_result.at(0)*r_result.at(i);
                 }
-                return result;
+                return r_result;
             }
 
             assert(l_result.size() == r_result.size() &&
                   "Left and right sizes are incompatable.");
-            std::vector<double> result(l_result.size());
             for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                result[i] = l_result.at(i)*r_result.at(i);
+                l_result[i] = l_result.at(i)*r_result.at(i);
             }
-            return result;
+            return l_result;
         }
 
 //------------------------------------------------------------------------------
@@ -413,7 +407,7 @@ namespace graph {
 ///  @returns The value of n/d.
 //------------------------------------------------------------------------------
         virtual std::vector<double> evaluate() final {
-            const std::vector<double> l_result = this->left->evaluate();
+            std::vector<double> l_result = this->left->evaluate();
 
 //  If all the elements on the left are zero, return the leftside without
 //  revaluating the rightside. Stop this loop early once the first non zero
@@ -426,34 +420,32 @@ namespace graph {
                 return l_result;
             }
 
-            const std::vector<double> r_result = this->right->evaluate();
+            std::vector<double> r_result = this->right->evaluate();
 
 // FIXME: In the case where every element of the left is zero, return the left
 //        without evaluating the right.
 
             if (l_result.size()*r_result.size() == 1) {
-                return std::vector<double> (1, l_result.at(0)/r_result.at(0));
+                l_result[0] = l_result.at(0)/r_result.at(0);
+                return l_result;
             } else if (r_result.size() == 1) {
-                std::vector<double> result(l_result.size());
                 for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(i)/r_result.at(0);
+                    l_result[i] = l_result.at(i)/r_result.at(0);
                 }
-                return result;
+                return l_result;
             } else if (l_result.size() == 1) {
-                std::vector<double> result(r_result.size());
                 for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    result[i] = l_result.at(0)/r_result.at(i);
+                    r_result[i] = l_result.at(0)/r_result.at(i);
                 }
-                return result;
+                return r_result;
             }
 
             assert(l_result.size() == r_result.size() &&
                    "Left and right sizes are incompatable.");
-            std::vector<double> result(l_result.size());
             for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                result[i] = l_result.at(i)/r_result.at(i);
+                l_result[i] = l_result.at(i)/r_result.at(i);
             }
-            return result;
+            return l_result;
         }
 
 //------------------------------------------------------------------------------
