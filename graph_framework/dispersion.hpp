@@ -74,8 +74,8 @@ namespace dispersion {
             dydt = neg_one*dDdky/dDdw;
             dzdt = neg_one*dDdkz/dDdw;
             dkxdt = dDdx/dDdw;
-            dkydt = dDdx/dDdw;
-            dkzdt = dDdx/dDdw;
+            dkydt = dDdy/dDdw;
+            dkzdt = dDdz/dDdw;
             dsdt = graph::length(dxdt, dydt, dzdt);
         }
 
@@ -233,6 +233,39 @@ namespace dispersion {
             auto npar2 = kz*kz*c*c/(w*w);
             auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
             return npar2 + nperp2 - c;
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Guassian Well dispersion function.
+//------------------------------------------------------------------------------
+    class guassian_well final : public dispersion_function {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Simple dispersion function.
+///
+///  D = npar^2 + nperp^2 - (1 - 0.5*Exp(-x^2/0.1)
+///
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<graph::leaf_node> D(std::shared_ptr<graph::leaf_node> w,
+                                                    std::shared_ptr<graph::leaf_node> kx,
+                                                    std::shared_ptr<graph::leaf_node> ky,
+                                                    std::shared_ptr<graph::leaf_node> kz,
+                                                    std::shared_ptr<graph::leaf_node> x,
+                                                    std::shared_ptr<graph::leaf_node> y,
+                                                    std::shared_ptr<graph::leaf_node> z) final {
+            auto c = graph::constant(1);
+            auto well = c - graph::constant(0.5)*exp(graph::constant(-1)*(x*x + y*y)/graph::constant(0.1));
+            auto npar2 = kz*kz*c*c/(w*w);
+            auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
+            return npar2 + nperp2 - well;
         }
     };
 }

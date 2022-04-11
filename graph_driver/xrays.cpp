@@ -49,19 +49,19 @@ int main(int argc, const char * argv[]) {
             for (size_t j = 0; j < local_num_rays; j++) {
                 omega->set(j, real_dist(engine));
             }
-            x->set(1.0);
-            y->set(0.0);
+            x->set(-1.0);
+            y->set(-0.2);
             z->set(0.0);
             kx->set(1.0);
             ky->set(0.0);
             kz->set(0.0);
 
-            solver::rk2<dispersion::simple> solve(omega, kx, ky, kz, x, y, z, 1.0);
+            solver::rk2<dispersion::guassian_well> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
             solve.init(kx);
 
             const size_t sample = int_dist(engine);
 
-            if (thread_number == 1) {
+            if (thread_number == 0) {
                 std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
             }
 

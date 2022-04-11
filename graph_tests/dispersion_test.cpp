@@ -33,7 +33,7 @@ void test_solve() {
     assert(loss->evaluate().at(0) < 1.0E-30 &&
            "Solve failed to meet expected result for kx.");
 
-    kx->set(0.3);
+    kx->set(0.2);
     D.solve(ky);
     assert(loss->evaluate().at(0) < 1.0E-30 &&
            "Solve failed to meet expected result for ky.");
@@ -57,4 +57,5 @@ void test_solve() {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     test_solve<dispersion::simple> ();
+    test_solve<dispersion::guassian_well> ();
 }

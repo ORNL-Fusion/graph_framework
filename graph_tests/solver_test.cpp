@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file dispersion_test.cpp
+///  @file solver_test.cpp
 ///  @brief Tests for math nodes.
 //------------------------------------------------------------------------------
 
@@ -14,9 +14,11 @@
 
 //------------------------------------------------------------------------------
 ///  @brief The second order runga kutta ode solve.
+///
+///  @param[in] dt Timestep for the solver.
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
-void test_rk2() {
+void test_rk2(const double dt) {
     auto w = graph::variable(1, 0.5);
     auto kx = graph::variable(1, 0.25);
     auto ky = graph::variable(1, 0.25);
@@ -25,7 +27,7 @@ void test_rk2() {
     auto y = graph::variable(1, 0.0);
     auto z = graph::variable(1, 0.0);
 
-    solver::rk2<DISPERSION> solve(w, kx, ky, kz, x, y, z, 1.0);
+    solver::rk2<DISPERSION> solve(w, kx, ky, kz, x, y, z, dt);
     solve.init(kx);
     auto residule = solve.residule();
 
@@ -43,5 +45,6 @@ void test_rk2() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_rk2<dispersion::simple> ();
+    test_rk2<dispersion::simple> (1.0);
+    test_rk2<dispersion::guassian_well> (0.00001);
 }
