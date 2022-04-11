@@ -8,6 +8,7 @@
 #include <thread>
 #include <random>
 
+#include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/solver.hpp"
 
 void write_time(const std::string &name, const std::chrono::nanoseconds time);
@@ -37,13 +38,13 @@ int main(int argc, const char * argv[]) {
             std::uniform_real_distribution<double> real_dist(0.0, 1.0);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 
-            auto omega = graph::variable(local_num_rays);
-            auto kx = graph::variable(local_num_rays);
-            auto ky = graph::variable(local_num_rays);
-            auto kz = graph::variable(local_num_rays);
-            auto x = graph::variable(local_num_rays);
-            auto y = graph::variable(local_num_rays);
-            auto z = graph::variable(local_num_rays);
+            auto omega = graph::variable<backend::cpu> (local_num_rays);
+            auto kx = graph::variable<backend::cpu> (local_num_rays);
+            auto ky = graph::variable<backend::cpu> (local_num_rays);
+            auto kz = graph::variable<backend::cpu> (local_num_rays);
+            auto x = graph::variable<backend::cpu> (local_num_rays);
+            auto y = graph::variable<backend::cpu> (local_num_rays);
+            auto z = graph::variable<backend::cpu> (local_num_rays);
 
 //  Inital conditions.
             for (size_t j = 0; j < local_num_rays; j++) {
@@ -56,7 +57,7 @@ int main(int argc, const char * argv[]) {
             ky->set(0.0);
             kz->set(0.0);
 
-            solver::rk2<dispersion::guassian_well> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
+            solver::rk2<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
             solve.init(kx);
 
             const size_t sample = int_dist(engine);

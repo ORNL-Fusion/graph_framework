@@ -8,8 +8,6 @@
 #ifndef arithmetic_h
 #define arithmetic_h
 
-#include <numeric>
-
 #include "node.hpp"
 
 namespace graph {
@@ -22,7 +20,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class add_node : public branch_node {
+    class add_node : public branch_node<typename LN::backend> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct an addition node.
@@ -32,7 +30,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         add_node(std::shared_ptr<LN> l,
                  std::shared_ptr<RN> r) :
-        branch_node(l, r) {}
+        branch_node<typename LN::backend> (l, r) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of addition.
@@ -41,31 +39,8 @@ namespace graph {
 ///
 ///  @returns The value of l + r.
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
-            std::vector<double> l_result = this->left->evaluate();
-            std::vector<double> r_result = this->right->evaluate();
-
-            if (l_result.size()*r_result.size() == 1) {
-                l_result[0] = l_result.at(0) + r_result.at(0);
-                return l_result;
-            } else if (r_result.size() == 1) {
-                for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    l_result[i] = l_result.at(i) + r_result.at(0);
-                }
-                return l_result;
-            } else if (l_result.size() == 1) {
-                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    r_result[i] = l_result.at(0) + r_result.at(i);
-                }
-                return r_result;
-            }
-
-            assert(l_result.size() == r_result.size() &&
-                   "Left and right sizes are incompatable.");
-            for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                l_result[i] = l_result.at(i) + r_result.at(i);
-            }
-            return l_result;
+        virtual typename LN::backend evaluate() final {
+            return this->left->evaluate() + this->right->evaluate();
         }
 
 //------------------------------------------------------------------------------
@@ -73,9 +48,9 @@ namespace graph {
 ///
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
-            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
-            auto r = std::dynamic_pointer_cast<constant_node> (this->right);
+        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+            auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
+            auto r = std::dynamic_pointer_cast<constant_node<typename RN::backend>> (this->right);
 
             if (l.get() && l->is(0)) {
                 return this->right;
@@ -96,9 +71,10 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
+        virtual std::shared_ptr<leaf_node<typename LN::backend>>
+        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
             if (x.get() == this) {
-                return constant(1);
+                return constant<typename LN::backend> (1);
             } else {
                 return this->left->df(x) + this->right->df(x);
             }
@@ -115,8 +91,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node> add(std::shared_ptr<LN> l,
-                                   std::shared_ptr<RN> r) {
+    std::shared_ptr<leaf_node<typename LN::backend> > add(std::shared_ptr<LN> l,
+                                                          std::shared_ptr<RN> r) {
         return (std::make_shared<add_node<LN, RN>> (l, r))->reduce();
     }
 
@@ -130,8 +106,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node> operator+(std::shared_ptr<LN> l,
-                                         std::shared_ptr<RN> r) {
+    std::shared_ptr<leaf_node<typename LN::backend>> operator+(std::shared_ptr<LN> l,
+                                                               std::shared_ptr<RN> r) {
         return add<LN, RN> (l, r);
     }
 
@@ -144,7 +120,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class subtract_node : public branch_node {
+    class subtract_node : public branch_node<typename LN::backend> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Consruct a subtraction node.
@@ -154,7 +130,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         subtract_node(std::shared_ptr<LN> l,
                       std::shared_ptr<RN> r) :
-        branch_node(l, r) {}
+        branch_node<typename LN::backend> (l, r) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of subtraction.
@@ -163,31 +139,8 @@ namespace graph {
 ///
 ///  @returns The value of l - r.
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
-            std::vector<double> l_result = this->left->evaluate();
-            std::vector<double> r_result = this->right->evaluate();
-
-            if (l_result.size()*r_result.size() == 1) {
-                l_result[0] = l_result.at(0) - r_result.at(0);
-                return l_result;
-            } else if (r_result.size() == 1) {
-                for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    l_result[i] = l_result.at(i) - r_result.at(0);
-                }
-                return l_result;
-            } else if (l_result.size() == 1) {
-                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    r_result[i] = l_result.at(0) - r_result.at(i);
-                }
-                return r_result;
-            }
-
-            assert(l_result.size() == r_result.size() &&
-                   "Left and right sizes are incompatable.");
-            for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                l_result[i] = l_result.at(i) - r_result.at(i);
-            }
-            return l_result;
+        virtual typename LN::backend evaluate() final {
+            return this->left->evaluate() - this->right->evaluate();
         }
 
 //------------------------------------------------------------------------------
@@ -195,16 +148,16 @@ namespace graph {
 ///
 ///  @returns A reduced subtraction node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
+        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
             if (this->left.get() == this->right.get()) {
-                return constant(0);
+                return constant<typename LN::backend> (0);
             }
 
-            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
-            auto r = std::dynamic_pointer_cast<constant_node> (this->right);
+            auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
+            auto r = std::dynamic_pointer_cast<constant_node<typename RN::backend>> (this->right);
 
             if (l.get() && l->is(0)) {
-                return constant(-1)*this->right;
+                return constant<typename LN::backend> (-1)*this->right;
             } else if (r.get() && r->is(0)) {
                 return this->left;
             } else if (l.get() && r.get()) {
@@ -222,9 +175,10 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
+        virtual std::shared_ptr<leaf_node<typename LN::backend>>
+        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
             if (x.get() == this) {
-                return constant(1);
+                return constant<typename LN::backend> (1);
             } else {
                 return this->left->df(x) - this->right->df(x);
             }
@@ -238,8 +192,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node> subtract(std::shared_ptr<LN> l,
-                                        std::shared_ptr<RN> r) {
+    std::shared_ptr<leaf_node<typename LN::backend>> subtract(std::shared_ptr<LN> l,
+                                                              std::shared_ptr<RN> r) {
         return (std::make_shared<subtract_node<LN, RN>> (l, r))->reduce();
     }
 
@@ -250,8 +204,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node> operator-(std::shared_ptr<LN> l,
-                                         std::shared_ptr<RN> r) {
+    std::shared_ptr<leaf_node<typename LN::backend>> operator-(std::shared_ptr<LN> l,
+                                                               std::shared_ptr<RN> r) {
         return subtract<LN, RN> (l, r);
     }
 
@@ -262,7 +216,7 @@ namespace graph {
 ///  @brief A multiplcation node.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class multiply_node : public branch_node {
+    class multiply_node : public branch_node<typename LN::backend> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Consruct a multiplcation node.
@@ -272,7 +226,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         multiply_node(std::shared_ptr<LN> l,
                       std::shared_ptr<RN> r) :
-        branch_node(l, r) {}
+        branch_node<typename LN::backend> (l, r) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of multiplcation.
@@ -281,43 +235,17 @@ namespace graph {
 ///
 ///  @returns The value of l*r.
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
-            std::vector<double> l_result = this->left->evaluate();
+        virtual typename LN::backend evaluate() final {
+            typename LN::backend l_result = this->left->evaluate();
 
 //  If all the elements on the left are zero, return the leftside without
 //  revaluating the rightside. Stop this loop early once the first non zero
 //  element is encountered.
-            bool all_zero = l_result.at(0) == 0;
-            for (size_t i = 1, ie = l_result.size(); i < ie && all_zero; i++) {
-                all_zero = all_zero && l_result.at(i) == 0;
-            }
-            if (all_zero) {
+            if (l_result.is_zero()) {
                 return l_result;
             }
 
-            std::vector<double> r_result = this->right->evaluate();
-
-            if (l_result.size()*r_result.size() == 1) {
-                l_result[0] = l_result.at(0)*r_result.at(0);
-                return l_result;
-            } else if (r_result.size() == 1) {
-                for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    l_result[i] = l_result.at(i)*r_result.at(0);
-                }
-                return l_result;
-            } else if (l_result.size() == 1) {
-                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    r_result[i] = l_result.at(0)*r_result.at(i);
-                }
-                return r_result;
-            }
-
-            assert(l_result.size() == r_result.size() &&
-                  "Left and right sizes are incompatable.");
-            for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                l_result[i] = l_result.at(i)*r_result.at(i);
-            }
-            return l_result;
+            return l_result*this->right->evaluate();
         }
 
 //------------------------------------------------------------------------------
@@ -325,9 +253,9 @@ namespace graph {
 ///
 ///  @returns A reduced multiplcation node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
-            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
-            auto r = std::dynamic_pointer_cast<constant_node> (this->right);
+        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+            auto l = std::dynamic_pointer_cast<constant_node <typename LN::backend>> (this->left);
+            auto r = std::dynamic_pointer_cast<constant_node <typename LN::backend>> (this->right);
 
             if (l.get() && l->is(1)) {
                 return this->right;
@@ -352,9 +280,10 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
+        virtual std::shared_ptr<leaf_node<typename LN::backend>>
+        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
             if (x.get() == this) {
-                return constant(1);
+                return constant<typename LN::backend> (1);
             } else {
                 return this->left->df(x)*this->right +
                        this->left*this->right->df(x);
@@ -369,8 +298,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node> multiply(std::shared_ptr<LN> l,
-                                        std::shared_ptr<RN> r) {
+    std::shared_ptr<leaf_node<typename LN::backend>> multiply(std::shared_ptr<LN> l,
+                                                              std::shared_ptr<RN> r) {
         return (std::make_shared<multiply_node<LN, RN>> (l, r))->reduce();
     }
 
@@ -381,8 +310,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node> operator*(std::shared_ptr<LN> l,
-                                         std::shared_ptr<RN> r) {
+    std::shared_ptr<leaf_node<typename LN::backend>> operator*(std::shared_ptr<LN> l,
+                                                               std::shared_ptr<RN> r) {
         return multiply<LN, RN> (l, r);
     }
 
@@ -393,11 +322,11 @@ namespace graph {
 ///  @brief A division node.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class divide_node : public branch_node {
+    class divide_node : public branch_node<typename LN::backend> {
     public:
         divide_node(std::shared_ptr<LN> n,
                     std::shared_ptr<RN> d) :
-        branch_node(n, d) {}
+        branch_node<typename LN::backend> (n, d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of division.
@@ -406,46 +335,17 @@ namespace graph {
 ///
 ///  @returns The value of n/d.
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
-            std::vector<double> l_result = this->left->evaluate();
+        virtual typename LN::backend evaluate() final {
+            typename LN::backend l_result = this->left->evaluate();
 
 //  If all the elements on the left are zero, return the leftside without
 //  revaluating the rightside. Stop this loop early once the first non zero
 //  element is encountered.
-            bool all_zero = l_result.at(0) == 0;
-            for (size_t i = 1, ie = l_result.size(); i < ie && all_zero; i++) {
-                all_zero = all_zero && l_result.at(i) == 0;
-            }
-            if (all_zero) {
+            if (l_result.is_zero()) {
                 return l_result;
             }
 
-            std::vector<double> r_result = this->right->evaluate();
-
-// FIXME: In the case where every element of the left is zero, return the left
-//        without evaluating the right.
-
-            if (l_result.size()*r_result.size() == 1) {
-                l_result[0] = l_result.at(0)/r_result.at(0);
-                return l_result;
-            } else if (r_result.size() == 1) {
-                for (size_t i = 0, ie = l_result.size(); i < ie; i++) {
-                    l_result[i] = l_result.at(i)/r_result.at(0);
-                }
-                return l_result;
-            } else if (l_result.size() == 1) {
-                for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                    r_result[i] = l_result.at(0)/r_result.at(i);
-                }
-                return r_result;
-            }
-
-            assert(l_result.size() == r_result.size() &&
-                   "Left and right sizes are incompatable.");
-            for (size_t i = 0, ie = r_result.size(); i < ie; i++) {
-                l_result[i] = l_result.at(i)/r_result.at(i);
-            }
-            return l_result;
+            return l_result/this->right->evaluate();
         }
 
 //------------------------------------------------------------------------------
@@ -453,18 +353,18 @@ namespace graph {
 ///
 ///  @returns A reduced division node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
-            auto l = std::dynamic_pointer_cast<constant_node> (this->left);
+        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+            auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
 
             if (this->left.get() == this->right.get()) {
                 if (l.get() && l->is(1)) {
                     return this->left;
                 } else {
-                    return constant(1);
+                    return constant<typename LN::backend> (1);
                 }
             }
 
-            auto r = std::dynamic_pointer_cast<constant_node> (this->right);
+            auto r = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->right);
 
             if ((l.get() && l->is(0)) ||
                 (r.get() && r->is(1))) {
@@ -484,9 +384,10 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
+        virtual std::shared_ptr<leaf_node<typename LN::backend>>
+        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
             if (x.get() == this) {
-                return constant(1);
+                return constant<typename LN::backend> (1);
             } else {
                 return this->left->df(x)/this->right -
                        this->left*this->right->df(x)/(this->right*this->right);
@@ -501,8 +402,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node> divide(std::shared_ptr<LN> l,
-                                      std::shared_ptr<RN> r) {
+    std::shared_ptr<leaf_node<typename LN::backend>> divide(std::shared_ptr<LN> l,
+                                                            std::shared_ptr<RN> r) {
         return std::make_shared<divide_node<LN, RN>> (l, r)->reduce();
     }
 
@@ -513,8 +414,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node> operator/(std::shared_ptr<LN> l,
-                                         std::shared_ptr<RN> r) {
+    std::shared_ptr<leaf_node<typename LN::backend>> operator/(std::shared_ptr<LN> l,
+                                                               std::shared_ptr<RN> r) {
         return divide<LN, RN> (l, r);
     }
 }

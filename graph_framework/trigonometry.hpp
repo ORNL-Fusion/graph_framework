@@ -9,8 +9,6 @@
 #ifndef trigonometry_h
 #define trigonometry_h
 
-#include <cmath>
-
 #include "arithmetic.hpp"
 
 namespace graph {
@@ -22,7 +20,7 @@ namespace graph {
 ///  @brief Class representing a sine_node leaf.
 //------------------------------------------------------------------------------
     template<typename N>
-    class sine_node final : public straight_node {
+    class sine_node final : public straight_node<typename N::backend> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a sine_node node.
@@ -30,7 +28,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         sine_node(std::shared_ptr<N> x) :
-        straight_node(x) {}
+        straight_node<typename N::backend> (x) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sine.
@@ -39,11 +37,9 @@ namespace graph {
 ///
 ///  @returns The value of sin(x).
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
-            std::vector<double> result = this->arg->evaluate();
-            for (double &e : result) {
-                e = sin(e);
-            }
+        virtual typename N::backend evaluate() final {
+            typename N::backend result = this->arg->evaluate();
+            result.sin();
             return result;
         }
 
@@ -52,8 +48,8 @@ namespace graph {
 ///
 ///  @returns Reduced graph from sine.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
-            if (std::dynamic_pointer_cast<constant_node> (this->arg)) {
+        virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
+            if (std::dynamic_pointer_cast<constant_node<typename N::backend>> (this->arg)) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
@@ -68,9 +64,10 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
+        virtual std::shared_ptr<leaf_node<typename N::backend>>
+        df(std::shared_ptr<leaf_node<typename N::backend>> x) final {
             if (x.get() == this) {
-                return constant(1);
+                return constant<typename N::backend> (1);
             } else {
                 return cos(this->arg)*this->arg->df(x);
             }
@@ -84,7 +81,7 @@ namespace graph {
 ///  @returns A reduced sin node.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<leaf_node> sin(std::shared_ptr<N> x) {
+    std::shared_ptr<leaf_node<typename N::backend>> sin(std::shared_ptr<N> x) {
         return (std::make_shared<sine_node<N>> (x))->reduce();
     }
 
@@ -95,7 +92,7 @@ namespace graph {
 ///  @brief Class representing a cosine_node leaf.
 //------------------------------------------------------------------------------
     template<typename N>
-    class cosine_node final : public straight_node {
+    class cosine_node final : public straight_node<typename N::backend> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a cosine_node node.
@@ -103,7 +100,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         cosine_node(std::shared_ptr<N> x) :
-        straight_node(x) {}
+        straight_node<typename N::backend> (x) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of cosine.
@@ -112,11 +109,9 @@ namespace graph {
 ///
 ///  @returns The value of cos(x).
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
-            std::vector<double> result = this->arg->evaluate();
-            for (double &e : result) {
-                e = cos(e);
-            }
+        virtual typename N::backend evaluate() final {
+            typename N::backend result = this->arg->evaluate();
+            result.cos();
             return result;
         }
 
@@ -125,8 +120,8 @@ namespace graph {
 ///
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
-            if (std::dynamic_pointer_cast<constant_node> (this->arg)) {
+        virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
+            if (std::dynamic_pointer_cast<constant_node<typename N::backend>> (this->arg)) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
@@ -141,11 +136,12 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
+        virtual std::shared_ptr<leaf_node<typename N::backend>>
+        df(std::shared_ptr<leaf_node<typename N::backend>> x) final {
             if (x.get() == this) {
-                return constant(1);
+                return constant<typename N::backend> (1);
             } else {
-                return std::make_shared<constant_node> (-1)*sin(this->arg)*this->arg->df(x);
+                return constant<typename N::backend> (-1)*sin(this->arg)*this->arg->df(x);
             }
         }
     };
@@ -157,7 +153,7 @@ namespace graph {
 ///  @returns A reduced cos node.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<leaf_node> cos(std::shared_ptr<N> x) {
+    std::shared_ptr<leaf_node<typename N::backend>> cos(std::shared_ptr<N> x) {
         return (std::make_shared<cosine_node<N>> (x))->reduce();
     }
 
@@ -173,7 +169,7 @@ namespace graph {
 ///  @returns A reduced tan node.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<leaf_node> tan(std::shared_ptr<N> x) {
+    std::shared_ptr<leaf_node<typename N::backend>> tan(std::shared_ptr<N> x) {
         return (sin(x)/cos(x))->reduce();
     }
 }

@@ -20,7 +20,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a node leaf.
 //------------------------------------------------------------------------------
-    class leaf_node : public std::enable_shared_from_this<leaf_node> {
+    template<class BACKEND>
+    class leaf_node : public std::enable_shared_from_this<leaf_node<BACKEND>> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Destructor
@@ -32,7 +33,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() = 0;
+        virtual BACKEND evaluate() = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Reduction method.
@@ -49,7 +50,7 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) = 0;
+        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node<BACKEND>> x) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
@@ -73,6 +74,16 @@ namespace graph {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<double> &d) {}
+
+//------------------------------------------------------------------------------
+///  @brief Set the value of variable data.
+///
+///  @param[in] d Backend buffer data to set.
+//------------------------------------------------------------------------------
+        virtual void set(const BACKEND &d) {}
+
+///  Type def to retrieve the backend type.
+        typedef BACKEND backend;
     };
 
 //******************************************************************************
@@ -84,10 +95,11 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    class straight_node : public leaf_node {
+    template<class BACKEND>
+    class straight_node : public leaf_node<BACKEND> {
     protected:
 ///  Argument
-        std::shared_ptr<leaf_node> arg;
+        std::shared_ptr<leaf_node<BACKEND>> arg;
 
     public:
 //------------------------------------------------------------------------------
@@ -95,7 +107,7 @@ namespace graph {
 ///
 ///  @param[in] a Argument.
 //------------------------------------------------------------------------------
-        straight_node(std::shared_ptr<leaf_node> a) :
+        straight_node(std::shared_ptr<leaf_node<BACKEND>> a) :
         arg(a->reduce()) {}
     };
 
@@ -108,12 +120,13 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    class branch_node : public leaf_node {
+    template<class BACKEND>
+    class branch_node : public leaf_node<BACKEND> {
     protected:
 //  Left branch of the tree.
-        std::shared_ptr<leaf_node> left;
+        std::shared_ptr<leaf_node<BACKEND>> left;
 //  Right branch of the tree.
-        std::shared_ptr<leaf_node> right;
+        std::shared_ptr<leaf_node<BACKEND>> right;
 
     public:
 
@@ -123,8 +136,8 @@ namespace graph {
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
-        branch_node(std::shared_ptr<leaf_node> l,
-                    std::shared_ptr<leaf_node> r) :
+        branch_node(std::shared_ptr<leaf_node<BACKEND>> l,
+                    std::shared_ptr<leaf_node<BACKEND>> r) :
         left(l->reduce()),
         right(r->reduce()) {}
     };
@@ -135,10 +148,11 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that cannot change.
 //------------------------------------------------------------------------------
-    class constant_node final : public leaf_node {
+    template<class BACKEND>
+    class constant_node final : public leaf_node<BACKEND> {
     private:
 ///  Storage buffer for the data.
-        const std::vector<double> data;
+        const BACKEND data;
 
     public:
 //------------------------------------------------------------------------------
@@ -146,7 +160,7 @@ namespace graph {
 ///
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
-        constant_node(const double &d) :
+        constant_node(const double d) :
         data(1, d) {}
 
 //------------------------------------------------------------------------------
@@ -158,11 +172,19 @@ namespace graph {
         data(d) {}
 
 //------------------------------------------------------------------------------
+///  @brief Construct a variable node from a vector.
+///
+///  @param[in] d Size of the .
+//------------------------------------------------------------------------------
+        constant_node(const BACKEND &d) :
+        data(d) {}
+
+//------------------------------------------------------------------------------
 ///  @brief Evaluate method.
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
+        virtual BACKEND evaluate() final {
             return data;
         }
 
@@ -173,19 +195,12 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
-            if (data.size() == 1) {
-                return this->shared_from_this();
+        virtual std::shared_ptr<leaf_node<BACKEND>> reduce() final {
+            if (data.size() > 1 && data.is_same()) {
+                return std::make_shared<constant_node<BACKEND>> (data.at(0));
             }
 
-            const double same = data.at(0);
-            for (size_t i = 1, ie = data.size(); i < ie; i++) {
-                if (data.at(i) != same) {
-                    return this->shared_from_this();
-                }
-            }
-
-            return std::make_shared<constant_node> (same);
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -194,7 +209,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
+        virtual std::shared_ptr<leaf_node<BACKEND>>
+        df(std::shared_ptr<leaf_node<BACKEND>> x) final {
             return std::make_shared<constant_node> (0);
         }
 
@@ -212,8 +228,9 @@ namespace graph {
 ///  @param[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
-    std::shared_ptr<leaf_node> constant(const double d) {
-        return (std::make_shared<constant_node> (d))->reduce();
+    template<class BACKEND>
+    std::shared_ptr<leaf_node<BACKEND>> constant(const double d) {
+        return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -222,8 +239,20 @@ namespace graph {
 ///  @param[in] d Array buffer.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
-    std::shared_ptr<leaf_node> constant(const std::vector<double> &d) {
-        return (std::make_shared<constant_node> (d))->reduce();
+    template<class BACKEND>
+    std::shared_ptr<leaf_node<BACKEND>> constant(const std::vector<double> &d) {
+        return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Construct a constant.
+///
+///  @param[in] d Array buffer.
+///  @returns A reduced constant node.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    std::shared_ptr<leaf_node<BACKEND>> constant(const BACKEND &d) {
+        return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
     }
 
 //******************************************************************************
@@ -232,10 +261,11 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that can change.
 //------------------------------------------------------------------------------
-    class variable_node final : public leaf_node {
+    template<class BACKEND>
+    class variable_node final : public leaf_node<BACKEND> {
     private:
 ///  Storage buffer for the data.
-        std::vector<double> data;
+        BACKEND data;
 
     public:
 //------------------------------------------------------------------------------
@@ -252,7 +282,7 @@ namespace graph {
 ///  @param[in] s Size of he data buffer.
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
-        variable_node(const size_t s, const double &d) :
+        variable_node(const size_t s, const double d) :
         data(s, d) {}
 
 //------------------------------------------------------------------------------
@@ -264,11 +294,19 @@ namespace graph {
         data(d) {}
 
 //------------------------------------------------------------------------------
+///  @brief Construct a variable node from backend buffer.
+///
+///  @param[in] d Backend buffer.
+//------------------------------------------------------------------------------
+        variable_node(const BACKEND &d) :
+        data(d) {}
+
+//------------------------------------------------------------------------------
 ///  @brief Evaluate method.
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual std::vector<double> evaluate() final {
+        virtual BACKEND evaluate() final {
             return data;
         }
 
@@ -279,7 +317,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() final {
+        virtual std::shared_ptr<leaf_node<BACKEND>> reduce() final {
             return this->shared_from_this();
         }
 
@@ -289,8 +327,9 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node> x) final {
-            return constant(x.get() == this);
+        virtual std::shared_ptr<leaf_node<BACKEND>>
+        df(std::shared_ptr<leaf_node<BACKEND>> x) final {
+            return constant<BACKEND> (x.get() == this);
         }
 
 //------------------------------------------------------------------------------
@@ -299,7 +338,7 @@ namespace graph {
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const double d) final {
-            data.assign(data.size(), d);
+            data.set(d);
         }
 
 //------------------------------------------------------------------------------
@@ -318,6 +357,15 @@ namespace graph {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<double> &d) final {
+            data = BACKEND(d);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Set the value of variable data.
+///
+///  @param[in] d Vector data to set.
+//------------------------------------------------------------------------------
+        virtual void set(const BACKEND &d) final {
             data = d;
         }
     };
@@ -327,8 +375,9 @@ namespace graph {
 ///
 ///  @param[in] s Size of the data buffer.
 //------------------------------------------------------------------------------
-    std::shared_ptr<leaf_node> variable(const size_t s) {
-        return (std::make_shared<variable_node> (s))->reduce();
+    template<class BACKEND>
+    std::shared_ptr<leaf_node<BACKEND>> variable(const size_t s) {
+        return (std::make_shared<variable_node<BACKEND>> (s))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -337,8 +386,10 @@ namespace graph {
 ///  @param[in] s Size of he data buffer.
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
-    std::shared_ptr<leaf_node> variable(const size_t s, const double d) {
-        return (std::make_shared<variable_node> (s, d))->reduce();
+    template<class BACKEND>
+    std::shared_ptr<leaf_node<BACKEND>>
+    variable(const size_t s, const double d) {
+        return (std::make_shared<variable_node<BACKEND>> (s, d))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -346,8 +397,19 @@ namespace graph {
 ///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
-    std::shared_ptr<leaf_node> variable(const std::vector<double> &d) {
-        return (std::make_shared<variable_node> (d))->reduce();
+    template<class BACKEND>
+    std::shared_ptr<leaf_node<BACKEND>> variable(const std::vector<double> &d) {
+        return (std::make_shared<variable_node<BACKEND>> (d))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Construct a variable.
+///
+///  @param[in] d Array buffer.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    std::shared_ptr<leaf_node<BACKEND>> variable(const BACKEND &d) {
+        return (std::make_shared<variable_node<BACKEND>> (d))->reduce();
     }
 }
 

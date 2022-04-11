@@ -10,6 +10,7 @@
 
 #include <cassert>
 
+#include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
@@ -19,13 +20,13 @@
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
 void test_rk2(const double dt) {
-    auto w = graph::variable(1, 0.5);
-    auto kx = graph::variable(1, 0.25);
-    auto ky = graph::variable(1, 0.25);
-    auto kz = graph::variable(1, 0.15);
-    auto x = graph::variable(1, 0.0);
-    auto y = graph::variable(1, 0.0);
-    auto z = graph::variable(1, 0.0);
+    auto w = graph::variable<typename DISPERSION::backend> (1, 0.5);
+    auto kx = graph::variable<typename DISPERSION::backend> (1, 0.25);
+    auto ky = graph::variable<typename DISPERSION::backend> (1, 0.25);
+    auto kz = graph::variable<typename DISPERSION::backend> (1, 0.15);
+    auto x = graph::variable<typename DISPERSION::backend> (1, 0.0);
+    auto y = graph::variable<typename DISPERSION::backend> (1, 0.0);
+    auto z = graph::variable<typename DISPERSION::backend> (1, 0.0);
 
     solver::rk2<DISPERSION> solve(w, kx, ky, kz, x, y, z, dt);
     solve.init(kx);
@@ -45,6 +46,6 @@ void test_rk2(const double dt) {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_rk2<dispersion::simple> (1.0);
-    test_rk2<dispersion::guassian_well> (0.00001);
+    test_rk2<dispersion::simple<backend::cpu>> (1.0);
+    test_rk2<dispersion::guassian_well<backend::cpu>> (0.00001);
 }

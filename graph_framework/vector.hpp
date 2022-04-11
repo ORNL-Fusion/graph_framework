@@ -25,12 +25,12 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename V1X, typename V1Y, typename V1Z,
              typename V2X, typename V2Y, typename V2Z>
-    std::shared_ptr<leaf_node> dot(std::shared_ptr<V1X> v1x,
-                                   std::shared_ptr<V1Y> v1y,
-                                   std::shared_ptr<V1Z> v1z,
-                                   std::shared_ptr<V2X> v2x,
-                                   std::shared_ptr<V2Y> v2y,
-                                   std::shared_ptr<V2Z> v2z) {
+    std::shared_ptr<leaf_node<typename V1X::backend>> dot(std::shared_ptr<V1X> v1x,
+                                                          std::shared_ptr<V1Y> v1y,
+                                                          std::shared_ptr<V1Z> v1z,
+                                                          std::shared_ptr<V2X> v2x,
+                                                          std::shared_ptr<V2Y> v2y,
+                                                          std::shared_ptr<V2Z> v2z) {
         return v1x*v2x + v1y*v2y + v1z*v2z;
     }
 
@@ -43,9 +43,9 @@ namespace graph {
 ///  @returns v1.v2
 //------------------------------------------------------------------------------
     template<typename VX, typename VY, typename VZ>
-    std::shared_ptr<leaf_node> length(std::shared_ptr<VX> vx,
-                                      std::shared_ptr<VY> vy,
-                                      std::shared_ptr<VZ> vz) {
+    std::shared_ptr<leaf_node<typename VX::backend>> length(std::shared_ptr<VX> vx,
+                                                            std::shared_ptr<VY> vy,
+                                                            std::shared_ptr<VZ> vz) {
         return sqrt(dot(vx, vy, vz, vx, vy, vz));
     }
 }

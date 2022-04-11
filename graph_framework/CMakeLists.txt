@@ -18,6 +18,8 @@ target_link_libraries (rays
 target_precompile_headers (rays
                            INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/arithmetic.hpp>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/backend_protocall.hpp>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpu_backend.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dispersion.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/math.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/node.hpp>

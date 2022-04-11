@@ -19,19 +19,20 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Solve state contains the variables.
 //------------------------------------------------------------------------------
+    template<class BACKEND>
     struct solve_state {
 ///  Current state of the wave number in the x direction.
-        std::vector<double> kx;
+        BACKEND kx;
 ///  Current state of the wave number in the y direction.
-        std::vector<double> ky;
+        BACKEND ky;
 ///  Current state of the wave number in the z direction.
-        std::vector<double> kz;
+        BACKEND kz;
 ///  Current state x position.
-        std::vector<double> x;
+        BACKEND x;
 ///  Current state y position.
-        std::vector<double> y;
+        BACKEND y;
 ///  Current state z position.
-        std::vector<double> z;
+        BACKEND z;
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a new solve_state with inital conditions.
@@ -43,12 +44,12 @@ namespace solver {
 ///  @param[in] y0  Inital y.
 ///  @param[in] z0  Inital z.
 //------------------------------------------------------------------------------
-        solve_state(const std::vector<double> &kx0,
-                    const std::vector<double> &ky0,
-                    const std::vector<double> &kz0,
-                    const std::vector<double> &x0,
-                    const std::vector<double> &y0,
-                    const std::vector<double> &z0) :
+        solve_state(const BACKEND &kx0,
+                    const BACKEND &ky0,
+                    const BACKEND &kz0,
+                    const BACKEND &x0,
+                    const BACKEND &y0,
+                    const BACKEND &z0) :
         kx(kx0), ky(ky0), kz(kz0), x(x0), y(y0), z(z0) {}
 
 //------------------------------------------------------------------------------
@@ -80,26 +81,26 @@ namespace solver {
     class solver_interface {
     protected:
 ///  w variable.
-        std::shared_ptr<graph::leaf_node> w;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> w;
 ///  kx variable.
-        std::shared_ptr<graph::leaf_node> kx;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx;
 ///  ky variable.
-        std::shared_ptr<graph::leaf_node> ky;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky;
 ///  kz variable.
-        std::shared_ptr<graph::leaf_node> kz;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz;
 ///  x variable.
-        std::shared_ptr<graph::leaf_node> x;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x;
 ///  y variable.
-        std::shared_ptr<graph::leaf_node> y;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y;
 ///  z variable.
-        std::shared_ptr<graph::leaf_node> z;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z;
 
 ///  Dispersion function interface.
        dispersion::dispersion_interface<DISPERSION_FUNCTION> D;
 
     public:
 ///  Ray solution.
-        std::list<solve_state> state;
+        std::list<solve_state<typename DISPERSION_FUNCTION::backend>> state;
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a new solver_interface with inital conditions.
@@ -112,13 +113,13 @@ namespace solver {
 ///  @param[in] y  Inital y.
 ///  @param[in] z  Inital z.
 //------------------------------------------------------------------------------
-        solver_interface(std::shared_ptr<graph::leaf_node> w,
-                         std::shared_ptr<graph::leaf_node> kx,
-                         std::shared_ptr<graph::leaf_node> ky,
-                         std::shared_ptr<graph::leaf_node> kz,
-                         std::shared_ptr<graph::leaf_node> x,
-                         std::shared_ptr<graph::leaf_node> y,
-                         std::shared_ptr<graph::leaf_node> z) :
+        solver_interface(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> w,
+                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx,
+                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky,
+                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz,
+                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
+                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y,
+                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z) :
         D(w, kx, ky, kz, x, y, z), w(w),
         kx(kx), ky(ky), kz(kz),
         x(x), y(y), z(z) {}
@@ -126,7 +127,7 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Method to initalize the rays.
 //------------------------------------------------------------------------------
-        virtual void init(std::shared_ptr<graph::leaf_node> x,
+        virtual void init(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
                           const double tolarance=1.0E-30,
                           const size_t max_iterations = 1000) final {
             this->D.solve(x, tolarance, max_iterations);
@@ -142,7 +143,7 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the dispersion relation residule.
 //------------------------------------------------------------------------------
-        std::shared_ptr<graph::leaf_node> residule() {
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> residule() {
             return D.get_d()*D.get_d();
         }
 
@@ -164,17 +165,17 @@ namespace solver {
     template<class DISPERSION_FUNCTION>
     class rk2 : public solver_interface<DISPERSION_FUNCTION> {
 ///  Next kx value.
-        std::shared_ptr<graph::leaf_node> kx_next;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx_next;
 ///  Next ky value.
-        std::shared_ptr<graph::leaf_node> ky_next;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky_next;
 ///  Next kz value.
-        std::shared_ptr<graph::leaf_node> kz_next;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz_next;
 ///  Next kx value.
-        std::shared_ptr<graph::leaf_node> x_next;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x_next;
 ///  Next ky value.
-        std::shared_ptr<graph::leaf_node> y_next;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y_next;
 ///  Next kz value.
-        std::shared_ptr<graph::leaf_node> z_next;
+        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z_next;
 
     public:
 //------------------------------------------------------------------------------
@@ -189,16 +190,16 @@ namespace solver {
 ///  @param[in] z  Inital z.
 ///  @param[in] dt Inital dt.
 //------------------------------------------------------------------------------
-        rk2(std::shared_ptr<graph::leaf_node> w,
-            std::shared_ptr<graph::leaf_node> kx,
-            std::shared_ptr<graph::leaf_node> ky,
-            std::shared_ptr<graph::leaf_node> kz,
-            std::shared_ptr<graph::leaf_node> x,
-            std::shared_ptr<graph::leaf_node> y,
-            std::shared_ptr<graph::leaf_node> z,
+        rk2(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> w,
+            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx,
+            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky,
+            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz,
+            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
+            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y,
+            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z,
             const double dt) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z) {
-            auto dt_const = graph::constant(dt);
+            auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);
 
             auto kx1 = this->D.get_dkxdt();
             auto ky1 = this->D.get_dkydt();
@@ -215,7 +216,7 @@ namespace solver {
                                                                      y + dt_const*y1,
                                                                      z + dt_const*z1);
 
-            auto two = graph::constant(2);
+            auto two = graph::constant<typename DISPERSION_FUNCTION::backend> (2);
 
             kx_next = kx + dt_const*(kx1 + D2.get_dkxdt())/two;
             ky_next = ky + dt_const*(ky1 + D2.get_dkydt())/two;

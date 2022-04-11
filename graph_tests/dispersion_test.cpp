@@ -10,6 +10,7 @@
 
 #include <cassert>
 
+#include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
@@ -17,13 +18,13 @@
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
 void test_solve() {
-    auto w = graph::variable(1, 0.5);
-    auto kx = graph::variable(1, 0.25);
-    auto ky = graph::variable(1, 0.25);
-    auto kz = graph::variable(1, 0.15);
-    auto x = graph::variable(1, 0.0);
-    auto y = graph::variable(1, 0.0);
-    auto z = graph::variable(1, 0.0);
+    auto w = graph::variable<typename DISPERSION::backend> (1, 0.5);
+    auto kx = graph::variable<typename DISPERSION::backend> (1, 0.25);
+    auto ky = graph::variable<typename DISPERSION::backend> (1, 0.25);
+    auto kz = graph::variable<typename DISPERSION::backend> (1, 0.15);
+    auto x = graph::variable<typename DISPERSION::backend> (1, 0.0);
+    auto y = graph::variable<typename DISPERSION::backend> (1, 0.0);
+    auto z = graph::variable<typename DISPERSION::backend> (1, 0.0);
 
     dispersion::dispersion_interface<DISPERSION> D(w, kx, ky, kz, x, y, z);
 
@@ -56,6 +57,6 @@ void test_solve() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_solve<dispersion::simple> ();
-    test_solve<dispersion::guassian_well> ();
+    test_solve<dispersion::simple<backend::cpu>> ();
+    test_solve<dispersion::guassian_well<backend::cpu>> ();
 }
