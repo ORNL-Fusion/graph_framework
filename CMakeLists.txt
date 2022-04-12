@@ -3,6 +3,17 @@ cmake_minimum_required (VERSION 3.21)
 project (rays CXX)
 
 #-------------------------------------------------------------------------------
+#  Build Options
+#-------------------------------------------------------------------------------
+option (USE_FMA "Enable Fused multiply add nodes." OFF)
+
+add_library (options INTERFACE)
+target_compile_definitions (options
+                            INTERFACE
+                            $<$<BOOL:${USE_FMA}>:USE_FMA>
+)
+
+#-------------------------------------------------------------------------------
 #  Setup build types
 #-------------------------------------------------------------------------------
 set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
@@ -27,11 +38,11 @@ macro (register_sanitizer_option name default)
 
     target_compile_options (sanitizer
                             INTERFACE
-                            $<$<CONFIG:Sanitized>:$<$<BOOL:SANITIZE_${upper_name}}>:-fsanitize=${name}>>
+                            $<$<CONFIG:Sanitized>:$<$<BOOL:${SANITIZE_${upper_name}}>:-fsanitize=${name}>>
     )
     target_link_options (sanitizer
                          INTERFACE
-                         $<$<CONFIG:Sanitized>:$<$<BOOL:SANITIZE_${upper_name}}>:-fsanitize=${name}>>
+                         $<$<CONFIG:Sanitized>:$<$<BOOL:${SANITIZE_${upper_name}}>:-fsanitize=${name}>>
     )
 endmacro ()
 

@@ -13,6 +13,7 @@ target_include_directories (rays
 )
 target_link_libraries (rays
                        INTERFACE
+                       options
                        sanitizer
 )
 target_precompile_headers (rays

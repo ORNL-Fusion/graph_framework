@@ -177,15 +177,17 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Add operation.
 //------------------------------------------------------------------------------
-    cpu operator+(cpu a, cpu b) {
-        if (b.size() == 1 && a.size() > 1) {
+    inline cpu operator+(cpu &a, cpu &b) {
+        if (b.size() == 1) {
+            const double right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] = a.at(i) + b.at(0);
+                a[i] += right;
             }
             return a;
-        } else if (a.size() == 1 && b.size() > 1) {
+        } else if (a.size() == 1) {
+            const double left = a.at(0);
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] = a.at(0) + b.at(i);
+                b[i] += left;
             }
             return b;
         }
@@ -193,7 +195,7 @@ namespace backend {
         assert(a.size() == b.size() &&
                "Left and right sizes are incompatable.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            a[i] = a.at(i) + b.at(i);
+            a[i] += b.at(i);
         }
         return a;
     }
@@ -201,15 +203,17 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Subtract operation.
 //------------------------------------------------------------------------------
-    cpu operator-(cpu a, cpu b) {
-        if (b.size() == 1 && a.size() > 1) {
+    inline cpu operator-(cpu &a, cpu &b) {
+        if (b.size() == 1) {
+            const double right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] = a.at(i) - b.at(0);
+                a[i] -= right;
             }
             return a;
-        } else if (a.size() == 1 && b.size() > 1) {
+        } else if (a.size() == 1) {
+            const double left = a.at(0);
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] = a.at(0) - b.at(i);
+                b[i] = left - b.at(i);
             }
             return b;
         }
@@ -217,7 +221,7 @@ namespace backend {
         assert(a.size() == b.size() &&
                "Left and right sizes are incompatable.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            a[i] = a.at(i) - b.at(i);
+            a[i] -= b.at(i);
         }
         return a;
     }
@@ -225,15 +229,17 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Multiply operation.
 //------------------------------------------------------------------------------
-    cpu operator*(cpu a, cpu b) {
-        if (b.size() == 1 && a.size() > 1) {
+    inline cpu operator*(cpu &a, cpu &b) {
+        if (b.size() == 1) {
+            const double right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] = a.at(i)*b.at(0);
+                a[i] *= right;
             }
             return a;
-        } else if (a.size() == 1 && b.size() > 1) {
+        } else if (a.size() == 1) {
+            const double left = a.at(0);
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] = a.at(0)*b.at(i);
+                b[i] *= left;
             }
             return b;
         }
@@ -241,7 +247,7 @@ namespace backend {
         assert(a.size() == b.size() &&
                "Left and right sizes are incompatable.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            a[i] = a.at(i)*b.at(i);
+            a[i] *= b.at(i);
         }
         return a;
     }
@@ -249,15 +255,17 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Multiply operation.
 //------------------------------------------------------------------------------
-    cpu operator/(cpu a, cpu b) {
-        if (b.size() == 1 && a.size() > 1) {
+    inline cpu operator/(cpu &a, cpu &b) {
+        if (b.size() == 1) {
+            const double right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] = a.at(i)/b.at(0);
+                a[i] /= right;
             }
             return a;
-        } else if (a.size() == 1 && b.size() > 1) {
+        } else if (a.size() == 1) {
+            const double left = a.at(0);
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] = a.at(0)/b.at(i);
+                b[i] = left/b.at(i);
             }
             return b;
         }
@@ -265,9 +273,72 @@ namespace backend {
         assert(a.size() == b.size() &&
                "Left and right sizes are incompatable.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            a[i] = a.at(i)/b.at(i);
+            a[i] /= b.at(i);
         }
         return a;
     }
+
+//------------------------------------------------------------------------------
+///  @brief Multiply operation.
+//------------------------------------------------------------------------------
+#ifdef USE_FMA
+    inline cpu fma(cpu &a, cpu &b, cpu &c) {
+        if (a.size() == 1 && b.size() == 1) {
+            const double left = a.at(0);
+            const double middle = b.at(0);
+            for (size_t i = 0, ie = c.size(); i < ie; i++) {
+                c[i] = std::fma(left, middle, c.at(i));
+            }
+            return c;
+        } else if (a.size() == 1 && c.size() == 1) {
+            const double left = a.at(0);
+            const double right = c.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = std::fma(left, b.at(i), right);
+            }
+            return b;
+        } else if (b.size() == 1 && c.size() == 1) {
+            const double middle = b.at(0);
+            const double right = c.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = std::fma(a.at(i), middle, right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            assert(b.size() == c.size() &&
+                  "Middle and right sizes are incompatable.");
+            const double left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = std::fma(left, b.at(i), c.at(i));
+            }
+            return b;
+        } else if (b.size() == 1) {
+            assert(a.size() == c.size() &&
+                  "Left and right sizes are incompatable.");
+            const double middle = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = std::fma(a.at(i), middle, c.at(i));
+            }
+            return a;
+        } else if (c.size() == 1) {
+            assert(a.size() == b.size() &&
+                  "Left and middle sizes are incompatable.");
+            const double right = c.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = std::fma(a.at(i), b.at(i), right);
+            }
+            return a;
+        }
+
+        assert(a.size() == b.size() &&
+               b.size() == c.size() &&
+               a.size() == c.size() &&
+               "Left, middle and right sizes are incompatable.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = std::fma(a.at(i), b.at(i), c.at(i));
+        }
+        return a;
+    }
+#endif
 }
 #endif /* cpu_backend_h */

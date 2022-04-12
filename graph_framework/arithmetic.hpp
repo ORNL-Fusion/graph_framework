@@ -14,6 +14,8 @@ namespace graph {
 //******************************************************************************
 //  Add node.
 //******************************************************************************
+    template<typename LN, typename RN> class multiply_node;
+
 //------------------------------------------------------------------------------
 ///  @brief An addition node.
 ///
@@ -40,7 +42,9 @@ namespace graph {
 ///  @returns The value of l + r.
 //------------------------------------------------------------------------------
         virtual typename LN::backend evaluate() final {
-            return this->left->evaluate() + this->right->evaluate();
+            typename LN::backend l_result = this->left->evaluate();
+            typename RN::backend r_result = this->right->evaluate();
+            return l_result + r_result;
         }
 
 //------------------------------------------------------------------------------
@@ -59,6 +63,20 @@ namespace graph {
             } else if (l.get() && r.get()) {
                 return constant(this->evaluate());
             }
+
+#ifdef USE_FMA
+            auto m = std::dynamic_pointer_cast<
+                        multiply_node<leaf_node<typename LN::backend>,
+                                      leaf_node<typename LN::backend>>> (this->left);
+
+            if (m.get()) {
+                return fma<leaf_node<typename LN::backend>,
+                           leaf_node<typename LN::backend>,
+                           leaf_node<typename RN::backend>> (m->get_left(),
+                                                             m->get_right(),
+                                                             this->right);
+            }
+#endif
 
             return this->shared_from_this();
         }
@@ -140,7 +158,9 @@ namespace graph {
 ///  @returns The value of l - r.
 //------------------------------------------------------------------------------
         virtual typename LN::backend evaluate() final {
-            return this->left->evaluate() - this->right->evaluate();
+            typename LN::backend l_result = this->left->evaluate();
+            typename RN::backend r_result = this->right->evaluate();
+            return l_result - r_result;
         }
 
 //------------------------------------------------------------------------------
@@ -245,7 +265,8 @@ namespace graph {
                 return l_result;
             }
 
-            return l_result*this->right->evaluate();
+            typename LN::backend r_result = this->right->evaluate();
+            return l_result*r_result;
         }
 
 //------------------------------------------------------------------------------
@@ -255,7 +276,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
             auto l = std::dynamic_pointer_cast<constant_node <typename LN::backend>> (this->left);
-            auto r = std::dynamic_pointer_cast<constant_node <typename LN::backend>> (this->right);
+            auto r = std::dynamic_pointer_cast<constant_node <typename RN::backend>> (this->right);
 
             if (l.get() && l->is(1)) {
                 return this->right;
@@ -345,7 +366,8 @@ namespace graph {
                 return l_result;
             }
 
-            return l_result/this->right->evaluate();
+            typename RN::backend r_result = this->right->evaluate();
+            return l_result/r_result;
         }
 
 //------------------------------------------------------------------------------
@@ -417,6 +439,133 @@ namespace graph {
     std::shared_ptr<leaf_node<typename LN::backend>> operator/(std::shared_ptr<LN> l,
                                                                std::shared_ptr<RN> r) {
         return divide<LN, RN> (l, r);
+    }
+
+#ifdef USE_FMA
+//******************************************************************************
+//  fused multiply add node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief An fused multiply add node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
+//------------------------------------------------------------------------------
+    template<typename LN, typename MN, typename RN>
+    class fma_node : public triple_node<typename LN::backend> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a fused multiply add node.
+///
+///  @param[in] l Left branch.
+///  @param[in] m Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+        fma_node(std::shared_ptr<LN> l,
+                 std::shared_ptr<LN> m,
+                 std::shared_ptr<RN> r) :
+        triple_node<typename LN::backend> (l, m, r) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of fused multiply add.
+///
+///  result = l*r + r
+///
+///  @returns The value of l + r.
+//------------------------------------------------------------------------------
+        virtual typename LN::backend evaluate() final {
+            typename LN::backend l_result = this->left->evaluate();
+            typename RN::backend r_result = this->right->evaluate();
+
+//  If all the elements on the left are zero, return the leftside without
+//  revaluating the rightside. Stop this loop early once the first non zero
+//  element is encountered.
+            if (l_result.is_zero()) {
+                return r_result;
+            }
+
+            typename MN::backend m_result = this->middle->evaluate();
+
+//  If all the elements on the left are zero, return the leftside without
+//  revaluating the rightside. Stop this loop early once the first non zero
+//  element is encountered.
+            if (r_result.is_zero()) {
+                return l_result*m_result;
+            }
+
+            return fma(l_result, m_result, r_result);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce an fused multiply add node.
+///
+///  @returns A reduced addition node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+            auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
+            auto m = std::dynamic_pointer_cast<constant_node<typename MN::backend>> (this->middle);
+            auto r = std::dynamic_pointer_cast<constant_node<typename RN::backend>> (this->right);
+
+            if ((l.get() && l->is(0)) ||
+                (m.get() && m->is(0)) ) {
+                return this->right;
+            } else if (r.get() && r->is(0)) {
+                return this->left*this->middle;
+            } else if (l.get() && m.get() && r.get()) {
+                return constant(this->evaluate());
+            } else if (l.get() && m.get()) {
+                typename LN::backend l_result = this->left->evaluate();
+                typename MN::backend m_result = this->middle->evaluate();
+                return constant(l_result*m_result) + this->right;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  d fma(a,b,c)/dx = da*b/dx + dc/dx = da/dx*b + a*db/dx + dc/dx
+///
+///  @param[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<typename LN::backend>>
+        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
+            if (x.get() == this) {
+                return constant<typename LN::backend> (1);
+            } else {
+                auto temp_right = fma<LN,
+                                      leaf_node<typename MN::backend>,
+                                      leaf_node<typename RN::backend>> (this->left,
+                                                                        this->middle->df(x),
+                                                                        this->right->df(x));
+
+                return fma<leaf_node<typename LN::backend>,
+                           MN,
+                           leaf_node<typename RN::backend>> (this->left->df(x),
+                                                             this->middle,
+                                                             temp_right);
+            }
+        }
+    };
+#endif
+
+//------------------------------------------------------------------------------
+///  @brief Build fused multiply add node.
+///
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<typename LN, typename MN, typename RN>
+    std::shared_ptr<leaf_node<typename LN::backend>> fma(std::shared_ptr<LN> l,
+                                                         std::shared_ptr<LN> m,
+                                                         std::shared_ptr<RN> r) {
+#ifdef USE_FMA
+        return std::make_shared<fma_node<LN, MN, RN>> (l, m, r)->reduce();
+#else
+        return l*m + r;
+#endif
     }
 }
 

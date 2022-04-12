@@ -100,7 +100,6 @@ namespace dispersion {
 
             while (max_residule > tolarance && iterations++ < max_iterations) {
                 x->set(x_next->evaluate());
-
                 max_residule = loss->evaluate().max();
             }
 

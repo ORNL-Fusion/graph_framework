@@ -140,6 +140,58 @@ namespace graph {
                     std::shared_ptr<leaf_node<BACKEND>> r) :
         left(l->reduce()),
         right(r->reduce()) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the left branch.
+//------------------------------------------------------------------------------
+        std::shared_ptr<leaf_node<BACKEND>> get_left() {
+            return this->left;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the right branch.
+//------------------------------------------------------------------------------
+        std::shared_ptr<leaf_node<BACKEND>> get_right() {
+            return this->right;
+        }
+    };
+
+//******************************************************************************
+//  Base triple node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a triple branch node.
+///
+///  This ensures that the base leaf type has the common type between the two
+///  template arguments.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class triple_node : public branch_node<BACKEND> {
+    protected:
+//  Middle branch of the tree.
+        std::shared_ptr<leaf_node<BACKEND>> middle;
+
+    public:
+
+//------------------------------------------------------------------------------
+///  @brief Reduces and assigns the left and right branches.
+///
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+        triple_node(std::shared_ptr<leaf_node<BACKEND>> l,
+                    std::shared_ptr<leaf_node<BACKEND>> m,
+                    std::shared_ptr<leaf_node<BACKEND>> r) :
+        branch_node<BACKEND> (l, r),
+        middle(m->reduce()) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the right branch.
+//------------------------------------------------------------------------------
+        std::shared_ptr<leaf_node<BACKEND>> get_middle() {
+            return this->middle;
+        }
     };
 
 //******************************************************************************

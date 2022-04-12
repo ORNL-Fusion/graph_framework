@@ -151,6 +151,9 @@ namespace solver {
 ///  @brief Method to step the rays.
 //------------------------------------------------------------------------------
         virtual void step() = 0;
+
+///  Type def to retrieve the backend type.
+        typedef typename DISPERSION_FUNCTION::backend backend;
     };
 
 //******************************************************************************
