@@ -40,12 +40,26 @@ void test_solver(const double dt) {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Run tests with a specified disperions Relation.
+//------------------------------------------------------------------------------
+template<typename DISPERSION> void run_disperions_tests() {
+    test_solver<solver::rk2<DISPERSION>> (1.0);
+    test_solver<solver::rk2<DISPERSION>> (0.00001);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Run tests with a specified backend.
+//------------------------------------------------------------------------------
+template<typename BACKEND> void run_tests() {
+    run_disperions_tests<dispersion::simple<BACKEND>> ();
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
 ///  @param[in] argc Number of commandline arguments.
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_solver<solver::rk2<dispersion::simple<backend::cpu>>> (1.0);
-    test_solver<solver::rk2<dispersion::guassian_well<backend::cpu>>> (0.00001);
+    run_tests<backend::cpu> ();
 }

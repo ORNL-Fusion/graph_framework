@@ -115,12 +115,19 @@ void test_exp() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Run tests with a specified backend.
+//------------------------------------------------------------------------------
+template<typename BACKEND> void run_tests() {
+    test_sqrt<backend::cpu> ();
+    test_exp<backend::cpu> ();
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
 ///  @param[in] argc Number of commandline arguments.
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_sqrt<backend::cpu> ();
-    test_exp<backend::cpu> ();
+    run_tests<backend::cpu> ();
 }

@@ -105,12 +105,19 @@ void test_variable() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Run tests with a specified backend.
+//------------------------------------------------------------------------------
+template<typename BACKEND> void run_tests() {
+    test_constant<BACKEND> ();
+    test_variable<BACKEND> ();
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
 ///  @param[in] argc Number of commandline arguments.
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_constant<backend::cpu> ();
-    test_variable<backend::cpu> ();
+    run_tests<backend::cpu> ();
 }

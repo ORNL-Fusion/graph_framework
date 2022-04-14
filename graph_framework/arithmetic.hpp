@@ -461,7 +461,7 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
         fma_node(std::shared_ptr<LN> l,
-                 std::shared_ptr<LN> m,
+                 std::shared_ptr<MN> m,
                  std::shared_ptr<RN> r) :
         triple_node<typename LN::backend> (l, m, r) {}
 
@@ -559,7 +559,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename LN, typename MN, typename RN>
     std::shared_ptr<leaf_node<typename LN::backend>> fma(std::shared_ptr<LN> l,
-                                                         std::shared_ptr<LN> m,
+                                                         std::shared_ptr<MN> m,
                                                          std::shared_ptr<RN> r) {
 #ifdef USE_FMA
         return std::make_shared<fma_node<LN, MN, RN>> (l, m, r)->reduce();

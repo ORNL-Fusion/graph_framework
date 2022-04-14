@@ -22,7 +22,7 @@ namespace backend {
 ///  @brief Class representing a generic buffer.
 //------------------------------------------------------------------------------
     class cpu final : public buffer {
-    private:
+    protected:
 ///  The data buffer to hold the data.
         std::vector<double> data;
 
@@ -88,6 +88,15 @@ namespace backend {
 //------------------------------------------------------------------------------
         virtual void set(const double d) final {
             data.assign(data.size(), d);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Assign a vector value.
+///
+///  @param[in] d Vector data to set.
+//------------------------------------------------------------------------------
+        virtual void set(const std::vector<double> &d) final {
+            data.assign(d.cbegin(), d.cend());
         }
 
 //------------------------------------------------------------------------------

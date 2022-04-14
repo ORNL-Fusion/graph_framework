@@ -16,8 +16,7 @@
 //------------------------------------------------------------------------------
 ///  @brief Tests for addition nodes.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_add() {
+template<typename BACKEND> void test_add() {
 //  Three constant nodes should reduce to a single constant node with added
 //  operands.
     auto one = graph::constant<BACKEND> (1);
@@ -38,7 +37,7 @@ void test_add() {
     assert(zero_plus_one.get() == one.get() &&
            "Expected to retrive the right side.");
 
-//  Test vector  scalar quanties.
+//  Test vector scalar quanties.
     auto vec_constant = graph::constant<BACKEND> (std::vector<double> ({3.0, 4.0}));
     auto vec_plus_zero = vec_constant + zero;
     assert(vec_plus_zero.get() == vec_constant.get() &&
@@ -120,8 +119,7 @@ void test_add() {
 //------------------------------------------------------------------------------
 ///  @brief Tests for subtract nodes.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_subtract() {
+template<typename BACKEND> void test_subtract() {
 //  Three constant nodes should reduce to a single constant node with added
 //  operands.
     auto one = graph::constant<BACKEND> (1);
@@ -241,8 +239,7 @@ void test_subtract() {
 //------------------------------------------------------------------------------
 ///  @brief Tests for multiply nodes.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_multiply() {
+template<typename BACKEND> void test_multiply() {
 //  Three constant nodes should reduce to a single constant node with multiplied
 //  operands.
     auto one = graph::constant<BACKEND> (1);
@@ -409,8 +406,7 @@ void test_multiply() {
 //------------------------------------------------------------------------------
 ///  @brief Tests for divide nodes.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_divide() {
+template<typename BACKEND> void test_divide() {
 // A zero in the numerator should result in zero.
     auto zero = graph::constant<BACKEND> (0);
     auto one = graph::constant<BACKEND> (1);
@@ -618,14 +614,136 @@ void test_divide() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests for fma nodes.
+//------------------------------------------------------------------------------
+template<typename BACKEND> void test_fma() {
+//  Three constant nodes should reduce to a single constant node with a*b + c.
+    auto zero = graph::constant<BACKEND> (0);
+    auto one = graph::constant<BACKEND> (1);
+    auto two = graph::constant<BACKEND> (2);
+
+    auto zero_times_one_plus_two = graph::fma(zero, one, two);
+    auto zero_times_one_plus_two_cast =
+        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
+            zero_times_one_plus_two);
+    assert(zero_times_one_plus_two_cast.get() != nullptr &&
+           "Expected a constant type.");
+    assert(zero_times_one_plus_two_cast.get() == two.get() &&
+           "Expected two.");
+
+    auto one_times_zero_plus_two = graph::fma(one, zero, two);
+    auto one_times_zero_plus_two_cast =
+        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
+            one_times_zero_plus_two);
+    assert(one_times_zero_plus_two_cast.get() != nullptr &&
+           "Expected a constant type.");
+    assert(one_times_zero_plus_two_cast.get() == two.get() &&
+           "Expected two.");
+
+    auto one_times_two_plus_zero = graph::fma(one, two, zero);
+    auto one_times_two_plus_zero_cast =
+        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
+            one_times_two_plus_zero);
+    assert(one_times_two_plus_zero_cast.get() != nullptr &&
+           "Expected a constant type.");
+    assert(one_times_two_plus_zero_cast.get() == two.get() &&
+           "Expected two.");
+
+    auto three = graph::constant<BACKEND> (3);
+    auto one_two_three = graph::fma(one, two, three);
+    const BACKEND one_two_three_result = one_two_three->evaluate();
+    assert(one_two_three_result.size() == 1 && "Expected single value.");
+    assert(one_two_three_result.at(0) == 5 && "Expected five for result");
+
+    auto two_three_one = graph::fma(two, three, one);
+    const BACKEND two_three_one_result = two_three_one->evaluate();
+    assert(two_three_one_result.size() == 1 && "Expected single value.");
+    assert(two_three_one_result.at(0) == 7 && "Expected seven for result");
+
+//  Test a variable.
+    auto var = graph::variable<BACKEND> (1);
+    auto zero_times_var_plus_two = graph::fma(zero, var, two);
+    auto zero_times_var_plus_two_cast =
+        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
+            zero_times_var_plus_two);
+    assert(zero_times_var_plus_two_cast.get() != nullptr &&
+           "Expected a constant type.");
+    assert(zero_times_var_plus_two_cast.get() == two.get() &&
+           "Expected two.");
+
+    auto var_times_zero_plus_two = graph::fma(var, zero, two);
+    auto var_times_zero_plus_two_cast =
+        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
+            var_times_zero_plus_two);
+    assert(var_times_zero_plus_two_cast.get() != nullptr &&
+           "Expected a constant type.");
+    assert(var_times_zero_plus_two_cast.get() == two.get() &&
+           "Expected two.");
+
+    auto zero_times_two_plus_var = graph::fma(zero, two, var);
+    auto zero_times_two_plus_var_cast =
+        std::dynamic_pointer_cast<graph::variable_node<BACKEND>> (
+            zero_times_two_plus_var);
+    assert(zero_times_two_plus_var_cast.get() != nullptr &&
+           "Expected a variable type.");
+    assert(zero_times_two_plus_var_cast.get() == var.get() &&
+           "Expected var.");
+
+//  Test derivative.
+    auto constant_df = one_times_two_plus_zero->df(var);
+    auto constant_df_cast =
+        std::dynamic_pointer_cast<
+            graph::constant_node<BACKEND>> (constant_df);
+    assert(constant_df_cast.get() != nullptr &&
+           "Expected a constant node.");
+    assert(constant_df_cast->is(0) &&
+           "Expected zero.");
+
+    auto zero_times_var_plus_two_df = zero_times_var_plus_two->df(var);
+    auto zero_times_var_plus_two_df_cast =
+        std::dynamic_pointer_cast<
+            graph::constant_node<BACKEND>> (zero_times_var_plus_two_df);
+    assert(zero_times_var_plus_two_df_cast.get() != nullptr &&
+           "Expected a constant node.");
+    assert(zero_times_var_plus_two_df_cast->is(0) &&
+           "Expected zero.");
+
+    auto var_times_zero_plus_two_df = zero_times_var_plus_two->df(var);
+    auto var_times_zero_plus_two_df_cast =
+        std::dynamic_pointer_cast<
+            graph::constant_node<BACKEND>> (var_times_zero_plus_two_df);
+    assert(var_times_zero_plus_two_df_cast.get() != nullptr &&
+           "Expected a constant node.");
+    assert(var_times_zero_plus_two_df_cast->is(0) &&
+           "Expected zero.");
+
+    auto zero_times_two_plus_var_df = zero_times_two_plus_var->df(var);
+    auto zero_times_two_plus_var_df_cast =
+        std::dynamic_pointer_cast<
+            graph::constant_node<BACKEND>> (zero_times_two_plus_var_df);
+    assert(zero_times_two_plus_var_df_cast.get() != nullptr &&
+           "Expected a constant node.");
+    assert(zero_times_two_plus_var_df_cast->is(1) &&
+           "Expected one.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Run tests with a specified backend.
+//------------------------------------------------------------------------------
+template<typename BACKEND> void run_tests() {
+    test_add<BACKEND> ();
+    test_subtract<BACKEND> ();
+    test_multiply<BACKEND> ();
+    test_divide<BACKEND> ();
+    test_fma<BACKEND> ();
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
 ///  @param[in] argc Number of commandline arguments.
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_add<backend::cpu> ();
-    test_subtract<backend::cpu> ();
-    test_multiply<backend::cpu> ();
-    test_divide<backend::cpu> ();
+    run_tests<backend::cpu> ();
 }
