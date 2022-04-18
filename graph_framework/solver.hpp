@@ -233,13 +233,21 @@ namespace solver {
 ///  @brief Method to step the rays.
 //------------------------------------------------------------------------------
         virtual void step() final {
-//  First intermedate steps.
-            this->kx->set(this->kx_next->evaluate());
-            this->ky->set(this->ky_next->evaluate());
-            this->kz->set(this->kz_next->evaluate());
-            this->x->set(this->x_next->evaluate());
-            this->y->set(this->y_next->evaluate());
-            this->z->set(this->z_next->evaluate());
+//  Need to evaluate all the steps before setting them otherwise later values
+//  will have the wrong conditions for when earlier values are set.
+            const typename DISPERSION_FUNCTION::backend kx_result = this->kx_next->evaluate();
+            const typename DISPERSION_FUNCTION::backend ky_result = this->ky_next->evaluate();
+            const typename DISPERSION_FUNCTION::backend kz_result = this->kz_next->evaluate();
+            const typename DISPERSION_FUNCTION::backend x_result = this->x_next->evaluate();
+            const typename DISPERSION_FUNCTION::backend y_result = this->y_next->evaluate();
+            const typename DISPERSION_FUNCTION::backend z_result = this->z_next->evaluate();
+
+            this->kx->set(kx_result);
+            this->ky->set(ky_result);
+            this->kz->set(kz_result);
+            this->x->set(x_result);
+            this->y->set(y_result);
+            this->z->set(z_result);
 
             this->state.push_back(solve_state(this->kx->evaluate(),
                                               this->ky->evaluate(),

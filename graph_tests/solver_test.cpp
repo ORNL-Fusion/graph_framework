@@ -41,17 +41,19 @@ void test_solver(const double dt) {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified disperions Relation.
+///
+///  @param[in] dt Timestep for the solver.
 //------------------------------------------------------------------------------
-template<typename DISPERSION> void run_disperions_tests() {
-    test_solver<solver::rk2<DISPERSION>> (1.0);
-    test_solver<solver::rk2<DISPERSION>> (0.00001);
+template<typename DISPERSION> void run_disperions_tests(const double dt) {
+    test_solver<solver::rk2<DISPERSION>> (dt);
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests() {
-    run_disperions_tests<dispersion::simple<BACKEND>> ();
+    run_disperions_tests<dispersion::simple<BACKEND>> (1.0);
+    run_disperions_tests<dispersion::guassian_well<BACKEND>> (0.00001);
 }
 
 //------------------------------------------------------------------------------
