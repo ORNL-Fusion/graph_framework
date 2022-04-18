@@ -76,15 +76,25 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
             if (lm.get() != nullptr && rm.get() != nullptr) {
-                if (lm->get_left() == rm->get_left()) {
+                if (lm->get_left().get() == rm->get_left().get()) {
                     return lm->get_left()*(lm->get_right() + rm->get_right());
-                } else if (lm->get_left() == rm->get_right()) {
+                } else if (lm->get_left().get() == rm->get_right().get()) {
                     return lm->get_left()*(lm->get_right() + rm->get_left());
-                } else if (lm->get_right() == rm->get_left()) {
+                } else if (lm->get_right().get() == rm->get_left().get()) {
                     return lm->get_right()*(lm->get_left() + rm->get_right());
-                } else if (lm->get_right() == rm->get_right()) {
+                } else if (lm->get_right().get() == rm->get_right().get()) {
                     return lm->get_right()*(lm->get_left() + rm->get_left());
                 }
+            }
+
+//  Common denominator reduction. If the left and right are both divide nodes
+//  for a common denominator. So you can change a/b + c/b -> (a + c)/d.
+            auto ld = divide_cast(this->left);
+            auto rd = divide_cast(this->right);
+
+            if (ld.get() != nullptr && rd.get() != nullptr &&
+                ld->get_right().get() == rd->get_right().get()) {
+                return (ld->get_left() + rd->get_left())/ld->get_right();
             }
 
 //  Fused multiply add reductions.
@@ -224,15 +234,25 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
             if (lm.get() != nullptr && rm.get() != nullptr) {
-                if (lm->get_left() == rm->get_left()) {
+                if (lm->get_left().get() == rm->get_left().get()) {
                     return lm->get_left()*(lm->get_right() - rm->get_right());
-                } else if (lm->get_left() == rm->get_right()) {
+                } else if (lm->get_left().get() == rm->get_right().get()) {
                     return lm->get_left()*(lm->get_right() - rm->get_left());
-                } else if (lm->get_right() == rm->get_left()) {
+                } else if (lm->get_right().get() == rm->get_left().get()) {
                     return lm->get_right()*(lm->get_left() - rm->get_right());
-                } else if (lm->get_right() == rm->get_right()) {
+                } else if (lm->get_right().get() == rm->get_right().get()) {
                     return lm->get_right()*(lm->get_left() - rm->get_left());
                 }
+            }
+
+//  Common denominator reduction. If the left and right are both divide nodes
+//  for a common denominator. So you can change a/b - c/b -> (a - c)/d.
+            auto ld = divide_cast(this->left);
+            auto rd = divide_cast(this->right);
+
+            if (ld.get() != nullptr && rd.get() != nullptr &&
+                ld->get_right().get() == rd->get_right().get()) {
+                return (ld->get_left() - rd->get_left())/ld->get_right();
             }
 
             return this->shared_from_this();

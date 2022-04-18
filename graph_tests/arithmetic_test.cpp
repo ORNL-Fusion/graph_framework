@@ -119,6 +119,30 @@ template<typename BACKEND> void test_add() {
     assert(done_plus_var_cast.get() != nullptr && "Expected a constant type.");
     assert(done_plus_var_cast->is(1) &&
            "Expected to reduce to a constant one.");
+
+//  Test common factors.
+    auto var_a = graph::variable<BACKEND> (1);
+    auto var_b = graph::variable<BACKEND> (1);
+    auto var_c = graph::variable<BACKEND> (1);
+    auto common_a = var_a*var_b + var_a*var_c;
+    assert(graph::add_cast(common_a) == nullptr && "Did not expect add node.");
+    assert(graph::multiply_cast(common_a) != nullptr &&
+           "Expected multiply node.");
+
+    auto common_b = var_a*var_b + var_b*var_c;
+    assert(graph::add_cast(common_b) == nullptr && "Did not expect add node.");
+    assert(graph::multiply_cast(common_b) != nullptr &&
+           "Expected multiply node.");
+
+    auto common_c = var_a*var_c + var_b*var_c;
+    assert(graph::add_cast(common_c) == nullptr && "Did not expect add node.");
+    assert(graph::multiply_cast(common_c) != nullptr &&
+           "Expected multiply node.");
+
+//  Test common denominator.
+    auto common_d = var_a/var_b + var_c/var_b;
+    assert(graph::add_cast(common_d) == nullptr && "Did not expect add node.");
+    assert(graph::divide_cast(common_d) != nullptr && "Expected divide node.");
 }
 
 //------------------------------------------------------------------------------
@@ -227,6 +251,31 @@ template<typename BACKEND> void test_subtract() {
     assert(done_minus_var_cast.get() != nullptr && "Expected a constant type.");
     assert(done_minus_var_cast->is(-1) &&
            "Expected to reduce to a constant minus one.");
+
+//  Test common factors.
+    auto var_a = graph::variable<BACKEND> (1);
+    auto var_b = graph::variable<BACKEND> (1);
+    auto var_c = graph::variable<BACKEND> (1);
+    auto common_a = var_a*var_b - var_a*var_c;
+    assert(graph::add_cast(common_a) == nullptr && "Did not expect add node.");
+    assert(graph::multiply_cast(common_a) != nullptr &&
+           "Expected multiply node.");
+
+    auto common_b = var_a*var_b - var_b*var_c;
+    assert(graph::add_cast(common_b) == nullptr && "Did not expect add node.");
+    assert(graph::multiply_cast(common_b) != nullptr &&
+           "Expected multiply node.");
+
+    auto common_c = var_a*var_c - var_b*var_c;
+    assert(graph::add_cast(common_c) == nullptr && "Did not expect add node.");
+    assert(graph::multiply_cast(common_c) != nullptr &&
+           "Expected multiply node.");
+
+//  Test common denominator.
+    auto common_d = var_a/var_b - var_c/var_b;
+    assert(graph::subtract_cast(common_d) == nullptr &&
+           "Did not expect subtract node.");
+    assert(graph::divide_cast(common_d) != nullptr && "Expected divide node.");
 }
 
 //------------------------------------------------------------------------------
