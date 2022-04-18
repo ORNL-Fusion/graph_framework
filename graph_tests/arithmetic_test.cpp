@@ -86,14 +86,28 @@ template<typename BACKEND> void test_add() {
     auto var_plus_var = variable + variable;
     auto var_plus_var_cast =
         std::dynamic_pointer_cast<
-            graph::add_node<graph::leaf_node<BACKEND>,
-                            graph::leaf_node<BACKEND>>> (var_plus_var);
+            graph::multiply_node<graph::leaf_node<BACKEND>,
+                                 graph::leaf_node<BACKEND>>> (var_plus_var);
     assert(var_plus_var_cast.get() != nullptr &&
-           "Expected an add node.");
+           "Expected an multiply node.");
     variable->set(10);
     const BACKEND var_plus_var_result = var_plus_var->evaluate();
     assert(var_plus_var_result.size() == 1 && "Expected single value.");
     assert(var_plus_var_result.at(0) == 20 && "Expected 10 + 10 for result");
+
+//  Variable plus a variable should return an add node.
+    auto variable_b = graph::variable<BACKEND> (1);
+    auto var_plus_varb = variable + variable_b;
+    auto var_plus_varb_cast =
+        std::dynamic_pointer_cast<
+            graph::add_node<graph::leaf_node<BACKEND>,
+                            graph::leaf_node<BACKEND>>> (var_plus_varb);
+    assert(var_plus_varb_cast.get() != nullptr &&
+           "Expected an add node.");
+    variable_b->set(5);
+    const BACKEND var_plus_varb_result = var_plus_varb->evaluate();
+    assert(var_plus_varb_result.size() == 1 && "Expected single value.");
+    assert(var_plus_varb_result.at(0) == 15 && "Expected 10 + 5 for result");
 
 //  Test variable vectors.
     auto varvec = graph::variable<BACKEND> (std::vector<double> ({10.0, 20.0}));
@@ -394,9 +408,9 @@ template<typename BACKEND> void test_multiply() {
     auto dvarvec_sqrd = varvec_sqrd->df(varvec_a);
     auto dvarvec_sqrd_cast =
         std::dynamic_pointer_cast<
-            graph::add_node<graph::leaf_node<BACKEND>,
-                            graph::leaf_node<BACKEND>>> (dvarvec_sqrd);
-    assert(dvarvec_sqrd_cast.get() != nullptr && "Expected add node.");
+            graph::multiply_node<graph::leaf_node<BACKEND>,
+                                 graph::leaf_node<BACKEND>>> (dvarvec_sqrd);
+    assert(dvarvec_sqrd_cast.get() != nullptr && "Expected multiply node.");
     const BACKEND dvarvec_sqrd_result = dvarvec_sqrd->evaluate();
     assert(dvarvec_sqrd_result.size() == 2 && "Size mismatch in result.");
     assert(dvarvec_sqrd_result.at(0) == 8 && "Expected 2*4 for result.");

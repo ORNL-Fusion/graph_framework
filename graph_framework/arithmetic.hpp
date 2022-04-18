@@ -53,6 +53,12 @@ namespace graph {
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+//  Idenity reductions.
+            if (this->left.get() == this->right.get()) {
+                return constant<typename LN::backend> (2)*this->left;
+            }
+
+//  Constant reductions.
             auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
             auto r = std::dynamic_pointer_cast<constant_node<typename RN::backend>> (this->right);
 
@@ -64,6 +70,28 @@ namespace graph {
                 return constant(this->evaluate());
             }
 
+//  Common factor reduction. If the left and right are both muliply nodes check
+//  for a common factor. So you can change a*b + a*c -> a*(b + c).
+            auto lm = std::dynamic_pointer_cast<
+                        multiply_node<leaf_node<typename LN::backend>,
+                                      leaf_node<typename LN::backend>>> (this->left);
+            auto rm = std::dynamic_pointer_cast<
+                        multiply_node<leaf_node<typename LN::backend>,
+                                      leaf_node<typename LN::backend>>> (this->right);
+
+            if (lm.get() != nullptr && rm.get() != nullptr) {
+                if (lm->get_left() == rm->get_left()) {
+                    return lm->get_left()*(lm->get_right() + rm->get_right());
+                } else if (lm->get_left() == rm->get_right()) {
+                    return lm->get_left()*(lm->get_right() + rm->get_left());
+                } else if (lm->get_right() == rm->get_left()) {
+                    return lm->get_right()*(lm->get_left() + rm->get_right());
+                } else if (lm->get_right() == rm->get_right()) {
+                    return lm->get_right()*(lm->get_left() + rm->get_left());
+                }
+            }
+
+//  Fused multiply add reductions.
 #ifdef USE_FMA
             auto m = std::dynamic_pointer_cast<
                         multiply_node<leaf_node<typename LN::backend>,
@@ -169,10 +197,12 @@ namespace graph {
 ///  @returns A reduced subtraction node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+//  Idenity reductions.
             if (this->left.get() == this->right.get()) {
                 return constant<typename LN::backend> (0);
             }
 
+//  Constant reductions.
             auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
             auto r = std::dynamic_pointer_cast<constant_node<typename RN::backend>> (this->right);
 
@@ -182,6 +212,27 @@ namespace graph {
                 return this->left;
             } else if (l.get() && r.get()) {
                 return constant(this->evaluate());
+            }
+
+//  Common factor reduction. If the left and right are both muliply nodes check
+//  for a common factor. So you can change a*b - a*c -> a*(b - c).
+            auto lm = std::dynamic_pointer_cast<
+                        multiply_node<leaf_node<typename LN::backend>,
+                                      leaf_node<typename LN::backend>>> (this->left);
+            auto rm = std::dynamic_pointer_cast<
+                        multiply_node<leaf_node<typename LN::backend>,
+                                      leaf_node<typename LN::backend>>> (this->right);
+
+            if (lm.get() != nullptr && rm.get() != nullptr) {
+                if (lm->get_left() == rm->get_left()) {
+                    return lm->get_left()*(lm->get_right() - rm->get_right());
+                } else if (lm->get_left() == rm->get_right()) {
+                    return lm->get_left()*(lm->get_right() - rm->get_left());
+                } else if (lm->get_right() == rm->get_left()) {
+                    return lm->get_right()*(lm->get_left() - rm->get_right());
+                } else if (lm->get_right() == rm->get_right()) {
+                    return lm->get_right()*(lm->get_left() - rm->get_left());
+                }
             }
 
             return this->shared_from_this();
@@ -468,9 +519,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of fused multiply add.
 ///
-///  result = l*r + r
+///  result = l*m + r
 ///
-///  @returns The value of l + r.
+///  @returns The value of l*m + r.
 //------------------------------------------------------------------------------
         virtual typename LN::backend evaluate() final {
             typename LN::backend l_result = this->left->evaluate();
