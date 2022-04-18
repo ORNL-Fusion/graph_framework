@@ -59,8 +59,8 @@ namespace graph {
             }
 
 //  Constant reductions.
-            auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
-            auto r = std::dynamic_pointer_cast<constant_node<typename RN::backend>> (this->right);
+            auto l = constant_cast(this->left);
+            auto r = constant_cast(this->right);
 
             if (l.get() && l->is(0)) {
                 return this->right;
@@ -72,12 +72,8 @@ namespace graph {
 
 //  Common factor reduction. If the left and right are both muliply nodes check
 //  for a common factor. So you can change a*b + a*c -> a*(b + c).
-            auto lm = std::dynamic_pointer_cast<
-                        multiply_node<leaf_node<typename LN::backend>,
-                                      leaf_node<typename LN::backend>>> (this->left);
-            auto rm = std::dynamic_pointer_cast<
-                        multiply_node<leaf_node<typename LN::backend>,
-                                      leaf_node<typename LN::backend>>> (this->right);
+            auto lm = multiply_cast(this->left);
+            auto rm = multiply_cast(this->right);
 
             if (lm.get() != nullptr && rm.get() != nullptr) {
                 if (lm->get_left() == rm->get_left()) {
@@ -93,9 +89,7 @@ namespace graph {
 
 //  Fused multiply add reductions.
 #ifdef USE_FMA
-            auto m = std::dynamic_pointer_cast<
-                        multiply_node<leaf_node<typename LN::backend>,
-                                      leaf_node<typename LN::backend>>> (this->left);
+            auto m = multiply_cast(this->left);
 
             if (m.get()) {
                 return fma<leaf_node<typename LN::backend>,
@@ -157,6 +151,16 @@ namespace graph {
         return add<LN, RN> (l, r);
     }
 
+//------------------------------------------------------------------------------
+///  @brief Cast to a add node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<add_node<LEAF, LEAF>> add_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<add_node<LEAF, LEAF>> (x);
+    }
+
 //******************************************************************************
 //  Subtract node.
 //******************************************************************************
@@ -203,8 +207,8 @@ namespace graph {
             }
 
 //  Constant reductions.
-            auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
-            auto r = std::dynamic_pointer_cast<constant_node<typename RN::backend>> (this->right);
+            auto l = constant_cast(this->left);
+            auto r = constant_cast(this->right);
 
             if (l.get() && l->is(0)) {
                 return constant<typename LN::backend> (-1)*this->right;
@@ -216,12 +220,8 @@ namespace graph {
 
 //  Common factor reduction. If the left and right are both muliply nodes check
 //  for a common factor. So you can change a*b - a*c -> a*(b - c).
-            auto lm = std::dynamic_pointer_cast<
-                        multiply_node<leaf_node<typename LN::backend>,
-                                      leaf_node<typename LN::backend>>> (this->left);
-            auto rm = std::dynamic_pointer_cast<
-                        multiply_node<leaf_node<typename LN::backend>,
-                                      leaf_node<typename LN::backend>>> (this->right);
+            auto lm = multiply_cast(this->left);
+            auto rm = multiply_cast(this->right);
 
             if (lm.get() != nullptr && rm.get() != nullptr) {
                 if (lm->get_left() == rm->get_left()) {
@@ -280,6 +280,16 @@ namespace graph {
         return subtract<LN, RN> (l, r);
     }
 
+//------------------------------------------------------------------------------
+///  @brief Cast to a subtract node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<subtract_node<LEAF, LEAF>> subtract_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<subtract_node<LEAF, LEAF>> (x);
+    }
+
 //******************************************************************************
 //  Multiply node.
 //******************************************************************************
@@ -326,8 +336,8 @@ namespace graph {
 ///  @returns A reduced multiplcation node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
-            auto l = std::dynamic_pointer_cast<constant_node <typename LN::backend>> (this->left);
-            auto r = std::dynamic_pointer_cast<constant_node <typename RN::backend>> (this->right);
+            auto l = constant_cast(this->left);
+            auto r = constant_cast(this->right);
 
             if (l.get() && l->is(1)) {
                 return this->right;
@@ -387,6 +397,16 @@ namespace graph {
         return multiply<LN, RN> (l, r);
     }
 
+//------------------------------------------------------------------------------
+///  @brief Cast to a multiply node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<multiply_node<LEAF, LEAF>> multiply_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<multiply_node<LEAF, LEAF>> (x);
+    }
+
 //******************************************************************************
 //  Divide node.
 //******************************************************************************
@@ -427,7 +447,7 @@ namespace graph {
 ///  @returns A reduced division node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
-            auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
+            auto l = constant_cast(this->left);
 
             if (this->left.get() == this->right.get()) {
                 if (l.get() && l->is(1)) {
@@ -437,7 +457,7 @@ namespace graph {
                 }
             }
 
-            auto r = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->right);
+            auto r = constant_cast(this->right);
 
             if ((l.get() && l->is(0)) ||
                 (r.get() && r->is(1))) {
@@ -490,6 +510,16 @@ namespace graph {
     std::shared_ptr<leaf_node<typename LN::backend>> operator/(std::shared_ptr<LN> l,
                                                                std::shared_ptr<RN> r) {
         return divide<LN, RN> (l, r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a divide node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<divide_node<LEAF, LEAF>> divide_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<divide_node<LEAF, LEAF>> (x);
     }
 
 #ifdef USE_FMA
@@ -552,9 +582,9 @@ namespace graph {
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
-            auto l = std::dynamic_pointer_cast<constant_node<typename LN::backend>> (this->left);
-            auto m = std::dynamic_pointer_cast<constant_node<typename MN::backend>> (this->middle);
-            auto r = std::dynamic_pointer_cast<constant_node<typename RN::backend>> (this->right);
+            auto l = constant_cast(this->left);
+            auto m = constant_cast(this->middle);
+            auto r = constant_cast(this->right);
 
             if ((l.get() && l->is(0)) ||
                 (m.get() && m->is(0)) ) {
@@ -618,6 +648,18 @@ namespace graph {
         return l*m + r;
 #endif
     }
+
+#ifdef USE_FMA
+//------------------------------------------------------------------------------
+///  @brief Cast to a fma node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<fma_node<LEAF, LEAF, LEAF>> fma_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<fma_node<LEAF, LEAF, LEAF>> (x);
+    }
+#endif
 }
 
 #endif /* arithmetic_h */

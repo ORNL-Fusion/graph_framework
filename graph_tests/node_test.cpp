@@ -19,9 +19,9 @@
 template<typename BACKEND>
 void test_constant() {
     auto zero = graph::constant<BACKEND> (0);
-    auto zero_cast = std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (zero);
+    auto zero_cast = graph::constant_cast(zero);
     assert(zero_cast.get() != nullptr && "Expected a constant type.");
-    assert(std::dynamic_pointer_cast<graph::variable_node<BACKEND>> (zero).get() == nullptr &&
+    assert(graph::variable_cast(zero).get() == nullptr &&
            "Expected a constant type.");
     assert(zero_cast->is(0) && "Constant value expeced zero.");
     assert(!zero_cast->is(1) && "Constant value not expeced one.");
@@ -29,7 +29,7 @@ void test_constant() {
     assert(zero_result.size() == 1 && "Expected single value.");
     assert(zero_result.at(0) == 0 && "Constant value evalute expeced zero.");
     auto dzero = zero->df(zero);
-    auto dzero_cast = std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (dzero);
+    auto dzero_cast = graph::constant_cast(dzero);
     assert(dzero_cast.get() != nullptr  &&
            "Expected a constant type for derivative.");
     assert(dzero_cast->is(0) && "Constant value expeced zero.");
@@ -37,20 +37,20 @@ void test_constant() {
     assert(zero_cast->is(0) && "Constant value expeced zero.");
 
     auto one = graph::constant<BACKEND> (std::vector<double> ({1.0, 1.0}));
-    auto one_cast = std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (one);
+    auto one_cast = graph::constant_cast(one);
     assert(one_cast.get() != nullptr && "Expected a constant type.");
     assert(one_cast->is(1) && "Constant value expeced zero.");
     const BACKEND one_result = one->evaluate();
     assert(one_result.size() == 1 && "Expected single value.");
     assert(one_result.at(0) == 1 && "Constant value evalute expeced one.");
     auto done = one->df(zero);
-    auto done_cast = std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (done);
+    auto done_cast = graph::constant_cast(done);
     assert(done_cast.get() != nullptr &&
            "Expected a constant type for derivative.");
     assert(done_cast->is(0) && "Constant value expeced zero.");
 
     auto one_two = graph::constant<BACKEND> (std::vector<double> ({1.0, 2.0}));
-    auto one_two_cast = std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (one_two);
+    auto one_two_cast = graph::constant_cast(one_two);
     assert(one_two_cast.get() != nullptr && "Expected a constant type.");
     assert(!one_two_cast->is(1) && "Constant expected to not be one.");
     const BACKEND one_two_result = one_two->evaluate();
@@ -66,9 +66,9 @@ template<typename BACKEND>
 void test_variable() {
     auto zero = graph::variable<BACKEND> (1);
     zero->set(0);
-    auto zero_cast = std::dynamic_pointer_cast<graph::variable_node<BACKEND>> (zero);
+    auto zero_cast = graph::variable_cast(zero);
     assert(zero_cast.get() != nullptr && "Expected a variable type.");
-    assert(std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (zero).get() == nullptr &&
+    assert(graph::constant_cast(zero).get() == nullptr &&
            "Expected a variable type.");
     const BACKEND zero_result = zero->evaluate();
     assert(zero_result.size() == 1 && "Expected single value.");
@@ -78,7 +78,7 @@ void test_variable() {
     assert(zero_result2.size() == 1 && "Expected single value.");
     assert(zero_result2.at(0) == 1 && "Variable value evalute expeced zero.");
     auto dzero = zero->df(zero);
-    auto dzero_cast = std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (dzero);
+    auto dzero_cast = graph::constant_cast(dzero);
     assert(zero_cast.get() != nullptr && "Expected a constant type.");
     const BACKEND dzero_result = dzero->evaluate();
     assert(dzero_result.size() == 1 && "Expected single value.");
@@ -86,7 +86,7 @@ void test_variable() {
 
     auto ones = graph::variable<BACKEND> (2, 1);
     auto dzerodone = zero->df(ones);
-    auto dzerodone_cast = std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (dzerodone);
+    auto dzerodone_cast = graph::constant_cast(dzerodone);
     assert(dzerodone.get() != nullptr && "Expected a constant type.");
     const BACKEND dzerodone_result = dzerodone->evaluate();
     assert(dzerodone_result.size() == 1 && "Expected single value.");

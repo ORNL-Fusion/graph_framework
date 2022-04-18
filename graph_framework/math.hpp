@@ -48,7 +48,7 @@ namespace graph {
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
-            if (std::dynamic_pointer_cast<constant_node<typename N::backend>> (this->arg)) {
+            if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
@@ -83,6 +83,16 @@ namespace graph {
     template<typename N>
     std::shared_ptr<leaf_node<typename N::backend>> sqrt(std::shared_ptr<N> x) {
         return (std::make_shared<sqrt_node<N>> (x))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a sqrt node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<sqrt_node<LEAF>> sqrt_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<sqrt_node<LEAF>> (x);
     }
 
 //******************************************************************************
@@ -123,7 +133,7 @@ namespace graph {
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
-            if (std::dynamic_pointer_cast<constant_node<typename N::backend>> (this->arg)) {
+            if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
@@ -157,6 +167,16 @@ namespace graph {
     template<typename N>
     std::shared_ptr<leaf_node<typename N::backend>> exp(std::shared_ptr<N> x) {
         return (std::make_shared<exp_node<N>> (x))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a exp node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<exp_node<LEAF>> exp_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<exp_node<LEAF>> (x);
     }
 }
 

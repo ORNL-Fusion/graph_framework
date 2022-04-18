@@ -21,7 +21,7 @@ template<typename BACKEND> void test_add() {
 //  operands.
     auto one = graph::constant<BACKEND> (1);
     auto three = one + one + one;
-    assert(std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (three).get() !=
+    assert(graph::constant_cast(three).get() !=
            nullptr && "Expected a constant type.");
 
     const BACKEND result_three = three->evaluate();
@@ -47,8 +47,7 @@ template<typename BACKEND> void test_add() {
            "Expected to retrive the right side.");
 
     auto vec_plus_one = vec_constant + one;
-    auto vec_plus_one_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (vec_plus_one);
+    auto vec_plus_one_cast = graph::constant_cast(vec_plus_one);
     assert(vec_plus_one_cast.get() != nullptr && "Expected a constant type.");
     auto vec_plus_one_result = vec_plus_one->evaluate();
     assert(vec_plus_one_result.size() == 2 && "Size mismatch in result.");
@@ -56,8 +55,7 @@ template<typename BACKEND> void test_add() {
     assert(vec_plus_one_result.at(1) == 5 && "Expected 4 + 1.");
 
     auto one_plus_vec = one + vec_constant;
-    auto one_plus_vec_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (one_plus_vec);
+    auto one_plus_vec_cast = graph::constant_cast(one_plus_vec);
     assert(one_plus_vec_cast.get() != nullptr && "Expected a constant type.");
     auto one_plus_vec_result = one_plus_vec->evaluate();
     assert(one_plus_vec_result.size() == 2 && "Size mismatch in result.");
@@ -84,10 +82,7 @@ template<typename BACKEND> void test_add() {
 
 //  Variable plus a variable should return an add node.
     auto var_plus_var = variable + variable;
-    auto var_plus_var_cast =
-        std::dynamic_pointer_cast<
-            graph::multiply_node<graph::leaf_node<BACKEND>,
-                                 graph::leaf_node<BACKEND>>> (var_plus_var);
+    auto var_plus_var_cast = graph::multiply_cast(var_plus_var);
     assert(var_plus_var_cast.get() != nullptr &&
            "Expected an multiply node.");
     variable->set(10);
@@ -98,10 +93,7 @@ template<typename BACKEND> void test_add() {
 //  Variable plus a variable should return an add node.
     auto variable_b = graph::variable<BACKEND> (1);
     auto var_plus_varb = variable + variable_b;
-    auto var_plus_varb_cast =
-        std::dynamic_pointer_cast<
-            graph::add_node<graph::leaf_node<BACKEND>,
-                            graph::leaf_node<BACKEND>>> (var_plus_varb);
+    auto var_plus_varb_cast = graph::add_cast(var_plus_varb);
     assert(var_plus_varb_cast.get() != nullptr &&
            "Expected an add node.");
     variable_b->set(5);
@@ -123,8 +115,7 @@ template<typename BACKEND> void test_add() {
 //  d (1 + x) / dx = d1/dx + dx/dx = 0 + 1 = 1
     auto one_plus_var = one + variable;
     auto done_plus_var = one_plus_var->df(variable);
-    auto done_plus_var_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (done_plus_var);
+    auto done_plus_var_cast = graph::constant_cast(done_plus_var);
     assert(done_plus_var_cast.get() != nullptr && "Expected a constant type.");
     assert(done_plus_var_cast->is(1) &&
            "Expected to reduce to a constant one.");
@@ -138,14 +129,13 @@ template<typename BACKEND> void test_subtract() {
 //  operands.
     auto one = graph::constant<BACKEND> (1);
     auto zero = one - one;
-    auto zero_cast = std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (zero);
+    auto zero_cast = graph::constant_cast(zero);
     assert(zero_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(zero_cast->is(0));
 
     auto neg_one = one - one - one;
-    auto neg_one_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (neg_one);
+    auto neg_one_cast = graph::constant_cast(neg_one);
     assert(neg_one_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(neg_one_cast->is(-1));
@@ -157,8 +147,7 @@ template<typename BACKEND> void test_subtract() {
 
 //  A left side zero node should reduce to a negative right side.
     auto zero_minus_one = zero - one;
-    auto zero_minus_one_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (zero_minus_one);
+    auto zero_minus_one_cast = graph::constant_cast(zero_minus_one);
     assert(zero_minus_one_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(zero_minus_one_cast->is(-1) && "Expected -1 for result");
@@ -166,8 +155,7 @@ template<typename BACKEND> void test_subtract() {
 //  Test vector scalar quantities.
     auto vec_constant_a = graph::constant<BACKEND> (std::vector<double> ({3.0, 4.0}));
     auto vec_minus_one = vec_constant_a - one;
-    auto vec_minus_one_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (vec_minus_one);
+    auto vec_minus_one_cast = graph::constant_cast(vec_minus_one);
     assert(vec_minus_one_cast.get() != nullptr && "Expected a constant type.");
     auto vec_minus_one_result = vec_minus_one->evaluate();
     assert(vec_minus_one_result.size() == 2 && "Size mismatch in result.");
@@ -176,8 +164,7 @@ template<typename BACKEND> void test_subtract() {
 
     auto vec_constant_b = graph::constant<BACKEND> (std::vector<double> ({2.0, 5.0}));
     auto one_minus_vec = one - vec_constant_b;
-    auto one_minus_vec_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (one_minus_vec);
+    auto one_minus_vec_cast = graph::constant_cast(one_minus_vec);
     assert(one_minus_vec_cast.get() != nullptr && "Expected a constant type.");
     auto one_minus_vec_result = one_minus_vec->evaluate();
     assert(one_minus_vec_result.size() == 2 && "Size mismatch in result.");
@@ -186,8 +173,7 @@ template<typename BACKEND> void test_subtract() {
 
 //  Test vector vector quanties.
     auto vec_minus_vec = vec_constant_a - vec_constant_b;
-    auto vec_minus_vec_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (vec_minus_vec);
+    auto vec_minus_vec_cast = graph::constant_cast(vec_minus_vec);
     assert(vec_minus_vec_cast.get() != nullptr && "Expected a constant type.");
     const BACKEND vec_minus_vec_result = vec_minus_vec->evaluate();
     assert(vec_minus_vec_result.size() == 2 && "Expected a constant type.");
@@ -203,10 +189,7 @@ template<typename BACKEND> void test_subtract() {
 
 //  Any right side zero should reduce to a the a multiply node.
     auto zero_minus_var = zero - variable;
-    auto zero_minus_var_cast =
-        std::dynamic_pointer_cast<
-            graph::multiply_node<graph::leaf_node<BACKEND>,
-                                 graph::leaf_node<BACKEND>>> (zero_minus_var);
+    auto zero_minus_var_cast = graph::multiply_cast(zero_minus_var);
     assert(zero_minus_var_cast.get() != nullptr &&
            "Expected multiply node.");
     variable->set(3);
@@ -217,10 +200,7 @@ template<typename BACKEND> void test_subtract() {
 //  Variable minus a variable should return an minus node.
     auto variable_b = graph::variable<BACKEND> (1);
     auto var_minus_var = variable - variable_b;
-    auto var_minus_var_cast =
-        std::dynamic_pointer_cast<
-            graph::subtract_node<graph::leaf_node<BACKEND>,
-                                 graph::leaf_node<BACKEND>>> (var_minus_var);
+    auto var_minus_var_cast = graph::subtract_cast(var_minus_var);
     assert(var_minus_var_cast.get() != nullptr &&
            "Expected a subtraction node.");
     variable_b->set(10);
@@ -243,8 +223,7 @@ template<typename BACKEND> void test_subtract() {
 //  d (1 - x) / dx = d1/dx - dx/dx = 0 - 1 = -1
     auto one_minus_var = one - variable;
     auto done_minus_var = one_minus_var->df(variable);
-    auto done_minus_var_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (done_minus_var);
+    auto done_minus_var_cast = graph::constant_cast(done_minus_var);
     assert(done_minus_var_cast.get() != nullptr && "Expected a constant type.");
     assert(done_minus_var_cast->is(-1) &&
            "Expected to reduce to a constant minus one.");
@@ -269,13 +248,11 @@ template<typename BACKEND> void test_multiply() {
     auto two = graph::constant<BACKEND> (2);
     auto three = graph::constant<BACKEND> (3);
     auto two_times_three = two*three;
-    auto two_times_three_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (two_times_three);
+    auto two_times_three_cast = graph::constant_cast(two_times_three);
     assert(two_times_three_cast.get() != nullptr &&
            "Expected a constant type.");
     auto three_times_two = three*two;
-    auto three_times_two_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (three_times_two);
+    auto three_times_two_cast = graph::constant_cast(three_times_two);
     assert(three_times_two_cast.get() != nullptr &&
            "Expected a constant type.");
     const BACKEND two_times_three_result =
@@ -296,8 +273,7 @@ template<typename BACKEND> void test_multiply() {
     assert((vec*one).get() == vec.get() && "Expected left side vec.");
 
     auto two_times_vec = two*vec;
-    auto two_times_vec_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (two_times_vec);
+    auto two_times_vec_cast = graph::constant_cast(two_times_vec);
     assert(two_times_vec_cast.get() != nullptr && "Expected a constant type.");
     auto vec_times_two = vec*two;
     const BACKEND two_times_vec_result = two_times_vec->evaluate();
@@ -313,8 +289,7 @@ template<typename BACKEND> void test_multiply() {
 
 //  Test vec times vec.
     auto vec_times_vec = vec*vec;
-    auto vec_times_vec_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (vec_times_vec);
+    auto vec_times_vec_cast = graph::constant_cast(vec_times_vec);
     assert(vec_times_vec_cast.get() != nullptr && "Expected a constant type.");
     const BACKEND vec_times_vec_result = vec_times_vec->evaluate();
     assert(vec_times_vec_result.size() == 2 && "Expected two values.");
@@ -351,10 +326,7 @@ template<typename BACKEND> void test_multiply() {
 
 //  Varibale times a non 0 or 1 constant should reduce to a multiply node.
     auto two_times_var = two*variable;
-    auto two_times_var_cast =
-        std::dynamic_pointer_cast<
-            graph::multiply_node<graph::leaf_node<BACKEND>,
-                                 graph::leaf_node<BACKEND>>> (two_times_var);
+    auto two_times_var_cast = graph::multiply_cast(two_times_var);
     assert(two_times_var_cast.get() != nullptr &&
            "Expected multiply node.");
     variable->set(6);
@@ -363,10 +335,7 @@ template<typename BACKEND> void test_multiply() {
     assert(two_times_var_result.at(0) == 12 && "Expected 2*6 for result.");
 
     auto var_times_var = variable*variable;
-    auto var_times_var_cast =
-        std::dynamic_pointer_cast<
-            graph::multiply_node<graph::leaf_node<BACKEND>,
-                                 graph::leaf_node<BACKEND>>> (var_times_var);
+    auto var_times_var_cast = graph::multiply_cast(var_times_var);
     assert(var_times_var_cast.get() != nullptr &&
            "Expected multiply node.");
     const BACKEND var_times_var_result = var_times_var->evaluate();
@@ -406,10 +375,7 @@ template<typename BACKEND> void test_multiply() {
 //  d (x*x) / dx = dx/dx*x + x*dx/dx = x + x = 2*x;
     auto varvec_sqrd = varvec_a*varvec_a;
     auto dvarvec_sqrd = varvec_sqrd->df(varvec_a);
-    auto dvarvec_sqrd_cast =
-        std::dynamic_pointer_cast<
-            graph::multiply_node<graph::leaf_node<BACKEND>,
-                                 graph::leaf_node<BACKEND>>> (dvarvec_sqrd);
+    auto dvarvec_sqrd_cast = graph::multiply_cast(dvarvec_sqrd);
     assert(dvarvec_sqrd_cast.get() != nullptr && "Expected multiply node.");
     const BACKEND dvarvec_sqrd_result = dvarvec_sqrd->evaluate();
     assert(dvarvec_sqrd_result.size() == 2 && "Size mismatch in result.");
@@ -433,8 +399,7 @@ template<typename BACKEND> void test_divide() {
 
 //  A value divided by it self should be a constant one.
     auto two_divided_two = two/two;
-    auto two_divided_two_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (two_divided_two);
+    auto two_divided_two_cast = graph::constant_cast(two_divided_two);
     assert(two_divided_two_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(two_divided_two_cast->is(1) && "Expected 1 for result");
@@ -442,8 +407,7 @@ template<typename BACKEND> void test_divide() {
 //  A constant a divided by constant b should be a constant with value of a/b.
     auto three = graph::constant<BACKEND> (3);
     auto two_divided_three = two/three;
-    auto two_divided_three_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (two_divided_three);
+    auto two_divided_three_cast = graph::constant_cast(two_divided_three);
     assert(two_divided_three_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(two_divided_three_cast->is(2.0/3.0) && "Expected 2/3 for result");
@@ -453,14 +417,12 @@ template<typename BACKEND> void test_divide() {
     assert((zero/vec).get() == zero.get() && "Expected to recover zero.");
     assert((vec/one).get() == vec.get() && "Expected to recover numerator.");
     auto vec_divided_vec = vec/vec;
-    auto vec_divided_vec_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (vec_divided_vec);
+    auto vec_divided_vec_cast = graph::constant_cast(vec_divided_vec);
     assert(vec_divided_vec_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(vec_divided_vec_cast->is(1) && "Expected 1 for result");
     auto two_divided_vec = two/vec;
-    auto two_divided_vec_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (two_divided_vec);
+    auto two_divided_vec_cast = graph::constant_cast(two_divided_vec);
     assert(two_divided_vec_cast.get() != nullptr &&
            "Expected a constant type.");
     const BACKEND two_divided_vec_result =
@@ -493,10 +455,7 @@ template<typename BACKEND> void test_divide() {
            "Expected to recover numerator.");
 
     auto two_divided_var = two/variable;
-    auto two_divided_var_cast =
-        std::dynamic_pointer_cast<
-            graph::divide_node<graph::leaf_node<BACKEND>,
-                               graph::leaf_node<BACKEND>>> (two_divided_var);
+    auto two_divided_var_cast = graph::divide_cast(two_divided_var);
     assert(two_divided_var_cast.get() != nullptr &&
            "Expected divide node.");
     variable->set(3);
@@ -506,10 +465,7 @@ template<typename BACKEND> void test_divide() {
            "Expected 2/3 for result.");
 
     auto var_divided_two = variable/two;
-    auto var_divided_two_cast =
-        std::dynamic_pointer_cast<
-            graph::divide_node<graph::leaf_node<BACKEND>,
-                               graph::leaf_node<BACKEND>>> (var_divided_two);
+    auto var_divided_two_cast = graph::divide_cast(var_divided_two);
     assert(var_divided_two_cast.get() != nullptr &&
            "Expected divide node.");
     const BACKEND var_divided_two_result = var_divided_two->evaluate();
@@ -518,17 +474,13 @@ template<typename BACKEND> void test_divide() {
            "Expected 3/2 for result.");
 
     auto var_divided_var = variable/variable;
-    auto var_divided_var_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (var_divided_var);
+    auto var_divided_var_cast = graph::constant_cast(var_divided_var);
     assert(var_divided_var_cast.get() != nullptr && "Expeced constant node.");
     assert(var_divided_var_cast->is(1) && "Expeced one.");
 
     auto variable_b = graph::variable<BACKEND> (1, 4);
     auto var_divided_varb = variable/variable_b;
-    auto var_divided_varb_cast =
-        std::dynamic_pointer_cast<
-            graph::divide_node<graph::leaf_node<BACKEND>,
-                               graph::leaf_node<BACKEND>>> (var_divided_varb);
+    auto var_divided_varb_cast = graph::divide_cast(var_divided_varb);
     assert(var_divided_varb_cast.get() != nullptr &&
            "Expected divide node.");
     const BACKEND var_divided_varb_result = var_divided_varb->evaluate();
@@ -543,10 +495,7 @@ template<typename BACKEND> void test_divide() {
            "Expected to recover numerator.");
 
     auto varvec_divided_two = varvec/two;
-    auto varvec_divided_two_cast =
-        std::dynamic_pointer_cast<
-            graph::divide_node<graph::leaf_node<BACKEND>,
-                               graph::leaf_node<BACKEND>>> (varvec_divided_two);
+    auto varvec_divided_two_cast = graph::divide_cast(varvec_divided_two);
     assert(varvec_divided_two_cast.get() != nullptr && "Expect divide node.");
     const BACKEND varvec_divided_two_result = varvec_divided_two->evaluate();
     assert(varvec_divided_two_result.size() == 2 && "Size mismatch in result.");
@@ -554,10 +503,7 @@ template<typename BACKEND> void test_divide() {
     assert(varvec_divided_two_result.at(1) == 3 && "Expected 6/2 for result.");
 
     auto two_divided_varvec = two/varvec;
-    auto two_divided_varvec_cast =
-        std::dynamic_pointer_cast<
-            graph::divide_node<graph::leaf_node<BACKEND>,
-                               graph::leaf_node<BACKEND>>> (two_divided_varvec);
+    auto two_divided_varvec_cast = graph::divide_cast(two_divided_varvec);
     assert(two_divided_varvec_cast.get() != nullptr && "Expect divide node.");
     const BACKEND two_divided_varvec_result = two_divided_varvec->evaluate();
     assert(two_divided_varvec_result.size() == 2 && "Size mismatch in result.");
@@ -567,10 +513,7 @@ template<typename BACKEND> void test_divide() {
 
     auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-3.0, 6.0}));
     auto varvec_divided_varvecb = varvec/varvec_b;
-    auto varvec_divided_varvecb_cast =
-        std::dynamic_pointer_cast<
-            graph::divide_node<graph::leaf_node<BACKEND>,
-                               graph::leaf_node<BACKEND>>> (varvec_divided_varvecb);
+    auto varvec_divided_varvecb_cast = graph::divide_cast(varvec_divided_varvecb);
     assert(varvec_divided_varvecb_cast.get() != nullptr &&
            "Expect divide node.");
     const BACKEND varvec_divided_varvecb_result =
@@ -583,10 +526,7 @@ template<typename BACKEND> void test_divide() {
            "Expected 6/6 for result.");
 
     auto varvecb_divided_varvec = varvec_b/varvec;
-    auto varvecb_divided_varvec_cast =
-        std::dynamic_pointer_cast<
-            graph::divide_node<graph::leaf_node<BACKEND>,
-                               graph::leaf_node<BACKEND>>> (varvecb_divided_varvec);
+    auto varvecb_divided_varvec_cast = graph::divide_cast(varvecb_divided_varvec);
     assert(varvecb_divided_varvec_cast.get() != nullptr &&
            "Expect divide node.");
     const BACKEND varvecb_divided_varvec_result =
@@ -638,8 +578,7 @@ template<typename BACKEND> void test_fma() {
 
     auto zero_times_one_plus_two = graph::fma(zero, one, two);
     auto zero_times_one_plus_two_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
-            zero_times_one_plus_two);
+        graph::constant_cast(zero_times_one_plus_two);
     assert(zero_times_one_plus_two_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(zero_times_one_plus_two_cast.get() == two.get() &&
@@ -647,8 +586,7 @@ template<typename BACKEND> void test_fma() {
 
     auto one_times_zero_plus_two = graph::fma(one, zero, two);
     auto one_times_zero_plus_two_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
-            one_times_zero_plus_two);
+        graph::constant_cast(one_times_zero_plus_two);
     assert(one_times_zero_plus_two_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(one_times_zero_plus_two_cast.get() == two.get() &&
@@ -656,8 +594,7 @@ template<typename BACKEND> void test_fma() {
 
     auto one_times_two_plus_zero = graph::fma(one, two, zero);
     auto one_times_two_plus_zero_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
-            one_times_two_plus_zero);
+        graph::constant_cast(one_times_two_plus_zero);
     assert(one_times_two_plus_zero_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(one_times_two_plus_zero_cast.get() == two.get() &&
@@ -678,8 +615,7 @@ template<typename BACKEND> void test_fma() {
     auto var = graph::variable<BACKEND> (1);
     auto zero_times_var_plus_two = graph::fma(zero, var, two);
     auto zero_times_var_plus_two_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
-            zero_times_var_plus_two);
+        graph::constant_cast(zero_times_var_plus_two);
     assert(zero_times_var_plus_two_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(zero_times_var_plus_two_cast.get() == two.get() &&
@@ -687,8 +623,7 @@ template<typename BACKEND> void test_fma() {
 
     auto var_times_zero_plus_two = graph::fma(var, zero, two);
     auto var_times_zero_plus_two_cast =
-        std::dynamic_pointer_cast<graph::constant_node<BACKEND>> (
-            var_times_zero_plus_two);
+        graph::constant_cast(var_times_zero_plus_two);
     assert(var_times_zero_plus_two_cast.get() != nullptr &&
            "Expected a constant type.");
     assert(var_times_zero_plus_two_cast.get() == two.get() &&
@@ -696,8 +631,7 @@ template<typename BACKEND> void test_fma() {
 
     auto zero_times_two_plus_var = graph::fma(zero, two, var);
     auto zero_times_two_plus_var_cast =
-        std::dynamic_pointer_cast<graph::variable_node<BACKEND>> (
-            zero_times_two_plus_var);
+        graph::variable_cast(zero_times_two_plus_var);
     assert(zero_times_two_plus_var_cast.get() != nullptr &&
            "Expected a variable type.");
     assert(zero_times_two_plus_var_cast.get() == var.get() &&
@@ -705,9 +639,7 @@ template<typename BACKEND> void test_fma() {
 
 //  Test derivative.
     auto constant_df = one_times_two_plus_zero->df(var);
-    auto constant_df_cast =
-        std::dynamic_pointer_cast<
-            graph::constant_node<BACKEND>> (constant_df);
+    auto constant_df_cast = graph::constant_cast(constant_df);
     assert(constant_df_cast.get() != nullptr &&
            "Expected a constant node.");
     assert(constant_df_cast->is(0) &&
@@ -715,8 +647,7 @@ template<typename BACKEND> void test_fma() {
 
     auto zero_times_var_plus_two_df = zero_times_var_plus_two->df(var);
     auto zero_times_var_plus_two_df_cast =
-        std::dynamic_pointer_cast<
-            graph::constant_node<BACKEND>> (zero_times_var_plus_two_df);
+        graph::constant_cast(zero_times_var_plus_two_df);
     assert(zero_times_var_plus_two_df_cast.get() != nullptr &&
            "Expected a constant node.");
     assert(zero_times_var_plus_two_df_cast->is(0) &&
@@ -724,8 +655,7 @@ template<typename BACKEND> void test_fma() {
 
     auto var_times_zero_plus_two_df = zero_times_var_plus_two->df(var);
     auto var_times_zero_plus_two_df_cast =
-        std::dynamic_pointer_cast<
-            graph::constant_node<BACKEND>> (var_times_zero_plus_two_df);
+        graph::constant_cast(var_times_zero_plus_two_df);
     assert(var_times_zero_plus_two_df_cast.get() != nullptr &&
            "Expected a constant node.");
     assert(var_times_zero_plus_two_df_cast->is(0) &&
@@ -733,8 +663,7 @@ template<typename BACKEND> void test_fma() {
 
     auto zero_times_two_plus_var_df = zero_times_two_plus_var->df(var);
     auto zero_times_two_plus_var_df_cast =
-        std::dynamic_pointer_cast<
-            graph::constant_node<BACKEND>> (zero_times_two_plus_var_df);
+        graph::constant_cast(zero_times_two_plus_var_df);
     assert(zero_times_two_plus_var_df_cast.get() != nullptr &&
            "Expected a constant node.");
     assert(zero_times_two_plus_var_df_cast->is(1) &&

@@ -49,7 +49,7 @@ namespace graph {
 ///  @returns Reduced graph from sine.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
-            if (std::dynamic_pointer_cast<constant_node<typename N::backend>> (this->arg)) {
+            if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
@@ -83,6 +83,16 @@ namespace graph {
     template<typename N>
     std::shared_ptr<leaf_node<typename N::backend>> sin(std::shared_ptr<N> x) {
         return (std::make_shared<sine_node<N>> (x))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a sine node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<sine_node<LEAF>> sin_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<sine_node<LEAF>> (x);
     }
 
 //******************************************************************************
@@ -121,7 +131,7 @@ namespace graph {
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
-            if (std::dynamic_pointer_cast<constant_node<typename N::backend>> (this->arg)) {
+            if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();
@@ -155,6 +165,16 @@ namespace graph {
     template<typename N>
     std::shared_ptr<leaf_node<typename N::backend>> cos(std::shared_ptr<N> x) {
         return (std::make_shared<cosine_node<N>> (x))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a cosine node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<cosine_node<LEAF>> cos_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<cosine_node<LEAF>> (x);
     }
 
 //******************************************************************************

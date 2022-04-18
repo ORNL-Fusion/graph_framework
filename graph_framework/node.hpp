@@ -307,8 +307,18 @@ namespace graph {
         return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
     }
 
+//------------------------------------------------------------------------------
+///  @brief Cast to a constant node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<constant_node<typename LEAF::backend>> constant_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<constant_node<typename LEAF::backend>> (x);
+    }
+
 //******************************************************************************
-//  Constant node.
+//  Variable node.
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that can change.
@@ -462,6 +472,16 @@ namespace graph {
     template<class BACKEND>
     std::shared_ptr<leaf_node<BACKEND>> variable(const BACKEND &d) {
         return (std::make_shared<variable_node<BACKEND>> (d))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a variable node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename LEAF>
+    std::shared_ptr<variable_node<typename LEAF::backend>> variable_cast(std::shared_ptr<LEAF> x) {
+        return std::dynamic_pointer_cast<variable_node<typename LEAF::backend>> (x);
     }
 }
 
