@@ -371,6 +371,18 @@ namespace graph {
                 return constant(this->evaluate());
             }
 
+//  Common factor reduction. (a/b)*(c/a) = c/b.
+            auto ld = divide_cast(this->left);
+            auto rd = divide_cast(this->right);
+
+            if (ld.get() != nullptr && rd.get() != nullptr) {
+                if (ld->get_left().get() == rd->get_right().get()) {
+                    return ld->get_right()/rd->get_left();
+                } else if (ld->get_right().get() == rd->get_left().get()) {
+                    return ld->get_left()/rd->get_right();
+                }
+            }
+
             return this->shared_from_this();
         }
 
@@ -467,6 +479,7 @@ namespace graph {
 ///  @returns A reduced division node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+//  Constant Reductions.
             auto l = constant_cast(this->left);
 
             if (this->left.get() == this->right.get()) {
@@ -484,6 +497,22 @@ namespace graph {
                 return this->left;
             } else if (l.get() && r.get()) {
                 return constant(this->evaluate());
+            }
+
+//  Common factor reduction. (a*b)/(a*c) = b/c.
+            auto lm = multiply_cast(this->left);
+            auto rm = multiply_cast(this->right);
+
+            if (lm.get() != nullptr && rm.get() != nullptr) {
+                if (lm->get_left().get() == rm->get_left().get()) {
+                    return lm->get_right()/rm->get_right();
+                } else if (lm->get_left().get() == rm->get_right().get()) {
+                    return lm->get_right()/rm->get_left();
+                } else if (lm->get_right().get() == rm->get_left().get()) {
+                    return lm->get_left()/rm->get_right();
+                } else if (lm->get_right().get() == rm->get_right().get()) {
+                    return lm->get_left()/rm->get_left();
+                }
             }
 
             return this->shared_from_this();

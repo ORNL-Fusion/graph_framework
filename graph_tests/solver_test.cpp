@@ -46,6 +46,7 @@ void test_solver(const double dt) {
 //------------------------------------------------------------------------------
 template<typename DISPERSION> void run_disperions_tests(const double dt) {
     test_solver<solver::rk2<DISPERSION>> (dt);
+    test_solver<solver::rk4<DISPERSION>> (dt);
 }
 
 //------------------------------------------------------------------------------
