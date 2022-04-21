@@ -30,7 +30,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Get value at.
 //------------------------------------------------------------------------------
-        virtual const double &at(const size_t index) const = 0;
+        virtual const double at(const size_t index) const = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Assign a constant value.

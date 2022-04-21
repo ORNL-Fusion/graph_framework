@@ -25,8 +25,8 @@ int main(int argc, const char * argv[]) {
     const size_t num_times = 10000;
     const size_t num_rays = 10000;
 
-    std::vector<std::thread> threads(1);//std::max(std::thread::hardware_concurrency(),
-                                        //      static_cast<unsigned int> (1)));
+    std::vector<std::thread> threads(std::max(std::thread::hardware_concurrency(),
+                                              static_cast<unsigned int> (1)));
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         threads[i] = std::thread([num_times, num_rays] (const size_t thread_number,
@@ -77,7 +77,6 @@ int main(int argc, const char * argv[]) {
                               << solve.state.back().kz.at(sample) << " "
                               << solve.state.size() << std::endl;
                 }
-
                 solve.step();
             }
             if (thread_number == 0) {

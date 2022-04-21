@@ -166,9 +166,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<add_node<LEAF, LEAF>> add_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<add_node<LEAF, LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<add_node<N, N>> add_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<add_node<N, N>> (x);
     }
 
 //******************************************************************************
@@ -305,9 +305,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<subtract_node<LEAF, LEAF>> subtract_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<subtract_node<LEAF, LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<subtract_node<N, N>> subtract_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<subtract_node<N, N>> (x);
     }
 
 //******************************************************************************
@@ -434,9 +434,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<multiply_node<LEAF, LEAF>> multiply_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<multiply_node<LEAF, LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<multiply_node<N, N>> multiply_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<multiply_node<N, N>> (x);
     }
 
 //******************************************************************************
@@ -566,9 +566,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<divide_node<LEAF, LEAF>> divide_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<divide_node<LEAF, LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<divide_node<N, N>> divide_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<divide_node<N, N>> (x);
     }
 
 #ifdef USE_FMA
@@ -704,9 +704,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<fma_node<LEAF, LEAF, LEAF>> fma_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<fma_node<LEAF, LEAF, LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<fma_node<N, N, N>> fma_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<fma_node<N, N, N>> (x);
     }
 #endif
 }

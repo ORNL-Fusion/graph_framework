@@ -90,9 +90,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<sqrt_node<LEAF>> sqrt_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<sqrt_node<LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<sqrt_node<N>> sqrt_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<sqrt_node<N>> (x);
     }
 
 //******************************************************************************
@@ -174,9 +174,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<exp_node<LEAF>> exp_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<exp_node<LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<exp_node<N>> exp_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<exp_node<N>> (x);
     }
 }
 

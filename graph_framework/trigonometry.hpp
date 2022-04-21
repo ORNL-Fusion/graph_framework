@@ -40,7 +40,7 @@ namespace graph {
         virtual typename N::backend evaluate() final {
             typename N::backend result = this->arg->evaluate();
             result.sin();
-            return result;
+            return this->save_cache(result);
         }
 
 //------------------------------------------------------------------------------
@@ -90,9 +90,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<sine_node<LEAF>> sin_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<sine_node<LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<sine_node<N>> sin_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<sine_node<N>> (x);
     }
 
 //******************************************************************************
@@ -122,7 +122,7 @@ namespace graph {
         virtual typename N::backend evaluate() final {
             typename N::backend result = this->arg->evaluate();
             result.cos();
-            return result;
+            return this->save_cache(result);
         }
 
 //------------------------------------------------------------------------------
@@ -172,9 +172,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<cosine_node<LEAF>> cos_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<cosine_node<LEAF>> (x);
+    template<typename N>
+    std::shared_ptr<cosine_node<N>> cos_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<cosine_node<N>> (x);
     }
 
 //******************************************************************************

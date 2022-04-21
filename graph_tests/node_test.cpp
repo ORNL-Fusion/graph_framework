@@ -105,11 +105,57 @@ void test_variable() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests for cache nodes.
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_pseudo_variable() {
+    auto five = graph::variable<BACKEND> (1);
+    five->set(5);
+    auto cache_five = graph::cache(five);
+    cache_five->evaluate();
+    five->set(6);
+    assert(cache_five->evaluate().at(0) == 5 && "Expected a value of five.");
+    cache_five->reset_cache();
+    assert(cache_five->evaluate().at(0) == 6 && "Expected a value of six.");
+    assert(graph::cache_cast(cache_five) != nullptr && "Expected cache node.");
+
+    auto three = graph::constant<BACKEND> (3.0);
+    auto cache_three = graph::cache(three);
+    assert(graph::constant_cast(cache_three) != nullptr &&
+           "Expected a constant node.");
+
+    assert(graph::constant_cast(cache_five->df(cache_five))->is(1) &&
+           "Expected the constant 1");
+    assert(graph::constant_cast(cache_five->df(five))->is(1) &&
+           "Expected the constant 1");
+    assert(graph::constant_cast(cache_five->df(three))->is(0) &&
+           "Expected the constant 0");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Tests for cache nodes.
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_cache() {
+    auto a = graph::variable<BACKEND> (1);
+    auto b = graph::variable<BACKEND> (1);
+    auto c = graph::pseudo_variable(a + b);
+    assert(graph::constant_cast(c->df(a))->is(0) && "Expected zero.");
+    assert(graph::constant_cast(c->df(c))->is(1) && "Expected one.");
+
+    a->set(1);
+    b->set(2);
+    assert(c->evaluate().at(0) == 3 && "Expected three.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests() {
     test_constant<BACKEND> ();
     test_variable<BACKEND> ();
+    test_cache<BACKEND> ();
+    test_pseudo_variable<BACKEND> ();
 }
 
 //------------------------------------------------------------------------------

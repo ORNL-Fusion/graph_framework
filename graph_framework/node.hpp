@@ -53,6 +53,13 @@ namespace graph {
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node<BACKEND>> x) = 0;
 
 //------------------------------------------------------------------------------
+///  @brief Reset the cache.
+///
+///  For any nodes that are not a cache node this is a no operation.
+//------------------------------------------------------------------------------
+        virtual void reset_cache() {}
+
+//------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
 ///  @param[in] d Scalar data to set.
@@ -103,12 +110,21 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Class representing a straight node.
+///  @brief Construct a straight node.
 ///
 ///  @param[in] a Argument.
 //------------------------------------------------------------------------------
         straight_node(std::shared_ptr<leaf_node<BACKEND>> a) :
         arg(a->reduce()) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate method.
+///
+///  @returns The evaluated value of the node.
+//------------------------------------------------------------------------------
+        virtual BACKEND evaluate() {
+            return arg->evaluate();
+        }
     };
 
 //******************************************************************************
@@ -312,9 +328,9 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<constant_node<typename LEAF::backend>> constant_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<constant_node<typename LEAF::backend>> (x);
+    template<typename N>
+    std::shared_ptr<constant_node<typename N::backend>> constant_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<constant_node<typename N::backend>> (x);
     }
 
 //******************************************************************************
@@ -479,9 +495,172 @@ namespace graph {
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
-    template<typename LEAF>
-    std::shared_ptr<variable_node<typename LEAF::backend>> variable_cast(std::shared_ptr<LEAF> x) {
-        return std::dynamic_pointer_cast<variable_node<typename LEAF::backend>> (x);
+    template<typename N>
+    std::shared_ptr<variable_node<typename N::backend>> variable_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<variable_node<typename N::backend>> (x);
+    }
+
+//******************************************************************************
+//  Cache node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing data that can be cached.
+///
+///  Cache nodes save the results of evaluate so the subtree does not need to be
+///  revaluated.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class cache_node final : public straight_node<BACKEND> {
+    private:
+///  Storage buffer for the data.
+        BACKEND data;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a cache node.
+///
+///  @param[in] a Argument.
+//------------------------------------------------------------------------------
+        cache_node(std::shared_ptr<leaf_node<BACKEND>> a) :
+        straight_node<BACKEND> (a),
+        data(a->evaluate()) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate method.
+///
+///  Only need to evaluate the sub tree if the cache is not set.
+///
+///  @returns A reduced representation of the node.
+//------------------------------------------------------------------------------
+        virtual BACKEND evaluate() final {
+            return data;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduction method.
+///
+///  When the arg is a constant there's no point to caching anything. Replace
+///  cache node with the constant node. Otherwise do nothing.
+///
+///  @returns A reduced representation of the node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<BACKEND>> reduce() final {
+            if (constant_cast(this->arg).get() == nullptr) {
+                return this->shared_from_this();
+            } else {
+                return this->arg;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  This has the consequence of removing the cache node.
+///
+///  @param[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<BACKEND>>
+        df(std::shared_ptr<leaf_node<BACKEND>> x) final {
+            if (x.get() == this) {
+                return constant<BACKEND> (1);
+            } else {
+                return this->arg->df(x)->reduce();
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reset the cache.
+//------------------------------------------------------------------------------
+        virtual void reset_cache() final {
+            data = this->arg->evaluate();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define cache convience function.
+///
+///  @param[in] x Argument.
+///  @returns A reduced cache node.
+//------------------------------------------------------------------------------
+    template<typename N>
+    std::shared_ptr<leaf_node<typename N::backend>> cache(std::shared_ptr<N> x) {
+        return (std::make_shared<cache_node<typename N::backend>> (x))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a cache node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename N>
+    std::shared_ptr<cache_node<typename N::backend>> cache_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<cache_node<typename N::backend>> (x);
+    }
+
+//******************************************************************************
+//  Pseudo variable node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a subexpression that acts like a variable.
+///
+///  Pseudo variable nodes treat sub trees as if they were a variable. This
+///  ensures that the expression returns zero when taking a derivative with
+///  something that is not itself.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class pseudo_variable_node final : public straight_node<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a cache node.
+///
+///  @param[in] a Argument.
+//------------------------------------------------------------------------------
+        pseudo_variable_node(std::shared_ptr<leaf_node<BACKEND>> a) :
+        straight_node<BACKEND> (a) {}
+
+//------------------------------------------------------------------------------
+///  @brief Reduction method.
+///
+///  For basic nodes, there's nothing to reduce.
+///
+///  @returns A reduced representation of the node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<BACKEND>> reduce() final {
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  @param[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<BACKEND>>
+        df(std::shared_ptr<leaf_node<BACKEND>> x) final {
+            return constant<BACKEND> (x.get() == this);
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define cache convience function.
+///
+///  @param[in] x Argument.
+///  @returns A reduced cache node.
+//------------------------------------------------------------------------------
+    template<typename N>
+    std::shared_ptr<leaf_node<typename N::backend>> pseudo_variable(std::shared_ptr<N> x) {
+        return (std::make_shared<pseudo_variable_node<typename N::backend>> (x))->reduce();
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a cache node.
+///
+///  @param[in] x Leaf node to attempt cast.
+//------------------------------------------------------------------------------
+    template<typename N>
+    std::shared_ptr<pseudo_variable_node<typename N::backend>> pseudo_variable_cast(std::shared_ptr<N> x) {
+        return std::dynamic_pointer_cast<pseudo_variable_node<typename N::backend>> (x);
     }
 }
 

@@ -77,7 +77,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Get value at.
 //------------------------------------------------------------------------------
-        virtual const double &at(const size_t index) const final {
+        virtual const double at(const size_t index) const final {
             return data.at(index);
         }
 
