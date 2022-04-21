@@ -292,46 +292,48 @@ namespace backend {
 //------------------------------------------------------------------------------
 #ifdef USE_FMA
     inline cpu fma(cpu &a, cpu &b, cpu &c) {
-        if (a.size() == 1 && b.size() == 1) {
+        if (a.size() == 1) {
             const double left = a.at(0);
-            const double middle = b.at(0);
-            for (size_t i = 0, ie = c.size(); i < ie; i++) {
-                c[i] = std::fma(left, middle, c.at(i));
+
+            if (b.size() == 1) {
+                const double middle = b.at(0);
+                for (size_t i = 0, ie = c.size(); i < ie; i++) {
+                    c[i] = std::fma(left, middle, c.at(i));
+                }
+                return c;
+            } else if (c.size() == 1) {
+                const double right = c.at(0);
+                for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                    b[i] = std::fma(left, b.at(i), right);
+                }
+                return b;
             }
-            return c;
-        } else if (a.size() == 1 && c.size() == 1) {
-            const double left = a.at(0);
-            const double right = c.at(0);
-            for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] = std::fma(left, b.at(i), right);
-            }
-            return b;
-        } else if (b.size() == 1 && c.size() == 1) {
-            const double middle = b.at(0);
-            const double right = c.at(0);
-            for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] = std::fma(a.at(i), middle, right);
-            }
-            return a;
-        } else if (a.size() == 1) {
+
             assert(b.size() == c.size() &&
-                  "Middle and right sizes are incompatable.");
-            const double left = a.at(0);
+                   "Size mismatch between middle and right.");
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
                 b[i] = std::fma(left, b.at(i), c.at(i));
             }
             return b;
         } else if (b.size() == 1) {
-            assert(a.size() == c.size() &&
-                  "Left and right sizes are incompatable.");
             const double middle = b.at(0);
+            if (c.size() == 1) {
+                const double right = c.at(0);
+                for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                    a[i] = std::fma(a.at(i), middle, right);
+                }
+                return a;
+            }
+
+            assert(a.size() == c.size() &&
+                   "Size mismatch between left and right.");
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
                 a[i] = std::fma(a.at(i), middle, c.at(i));
             }
             return a;
         } else if (c.size() == 1) {
             assert(a.size() == b.size() &&
-                  "Left and middle sizes are incompatable.");
+                   "Size mismatch between left and middle.");
             const double right = c.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
                 a[i] = std::fma(a.at(i), b.at(i), right);

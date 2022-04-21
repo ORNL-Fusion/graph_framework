@@ -89,6 +89,8 @@ macro (add_test_target target)
     add_test (NAME ${target}
               COMMAND ${target}
     )
+
+    target_precompile_headers (${target} REUSE_FROM xrays)
 endmacro ()
 
 add_subdirectory (graph_tests)

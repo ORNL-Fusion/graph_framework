@@ -614,14 +614,6 @@ namespace graph {
             }
 
             typename MN::backend m_result = this->middle->evaluate();
-
-//  If all the elements on the left are zero, return the leftside without
-//  revaluating the rightside. Stop this loop early once the first non zero
-//  element is encountered.
-            if (r_result.is_zero()) {
-                return l_result*m_result;
-            }
-
             return fma(l_result, m_result, r_result);
         }
 
@@ -646,6 +638,22 @@ namespace graph {
                 typename LN::backend l_result = this->left->evaluate();
                 typename MN::backend m_result = this->middle->evaluate();
                 return constant(l_result*m_result) + this->right;
+            }
+
+//  Common factor reduction. If the left and right are both muliply nodes check
+//  for a common factor. So you can change a*b + (a*c) -> a*(b + c).
+            auto rm = multiply_cast(this->right);
+
+            if (rm.get() != nullptr) {
+                if (rm->get_left().get() == this->left.get()) {
+                    return fma(this->left, this->middle, rm->get_right());
+                } else if (rm->get_left().get() == this->middle.get()) {
+                    return fma(this->middle, this->left, rm->get_right());
+                } else if (rm->get_right().get() == this->left.get()) {
+                    return fma(this->left, this->middle, rm->get_left());
+                } else if (rm->get_right().get() == this->middle.get()) {
+                    return fma(this->middle, this->left, rm->get_left());
+                }
             }
 
             return this->shared_from_this();

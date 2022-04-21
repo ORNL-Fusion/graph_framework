@@ -216,6 +216,7 @@ template<typename BACKEND> void test_backend() {
     assert(fma_vec_scale_scale.at(1) == 1.0 && "Expected a value of -1.");
 
     avec.set(std::vector<double> ({1.0, 2.0}));
+    bscalar.set(3.0);
     BACKEND fma_scale_vec_scale = backend::fma(bscalar, avec, cscalar);
     assert(fma_scale_vec_scale.size() == 2 && "Expected a size of 2");
     assert(fma_scale_vec_scale.at(0) == -2.0 && "Expected a value of -2.");
