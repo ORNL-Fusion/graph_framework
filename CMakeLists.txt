@@ -3,17 +3,6 @@ cmake_minimum_required (VERSION 3.21)
 project (rays CXX)
 
 #-------------------------------------------------------------------------------
-#  Build Options
-#-------------------------------------------------------------------------------
-option (USE_FMA "Enable Fused multiply add nodes." OFF)
-
-add_library (options INTERFACE)
-target_compile_definitions (options
-                            INTERFACE
-                            $<$<BOOL:${USE_FMA}>:USE_FMA>
-)
-
-#-------------------------------------------------------------------------------
 #  Setup build types
 #-------------------------------------------------------------------------------
 set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS

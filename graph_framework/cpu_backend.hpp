@@ -262,7 +262,7 @@ namespace backend {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Multiply operation.
+///  @brief Divide operation.
 //------------------------------------------------------------------------------
     inline cpu operator/(cpu &a, cpu &b) {
         if (b.size() == 1) {
@@ -290,7 +290,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Multiply operation.
 //------------------------------------------------------------------------------
-#ifdef USE_FMA
+#ifdef FP_FAST_FMA
     inline cpu fma(cpu &a, cpu &b, cpu &c) {
         if (a.size() == 1) {
             const double left = a.at(0);

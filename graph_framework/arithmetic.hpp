@@ -98,7 +98,7 @@ namespace graph {
             }
 
 //  Fused multiply add reductions.
-#ifdef USE_FMA
+#ifdef FP_FAST_FMA
             auto m = multiply_cast(this->left);
 
             if (m.get()) {
@@ -571,12 +571,12 @@ namespace graph {
         return std::dynamic_pointer_cast<divide_node<N, N>> (x);
     }
 
-#ifdef USE_FMA
+#ifdef FP_FAST_FMA
 //******************************************************************************
 //  fused multiply add node.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief An fused multiply add node.
+///  @brief A fused multiply add node.
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
@@ -699,14 +699,14 @@ namespace graph {
     std::shared_ptr<leaf_node<typename LN::backend>> fma(std::shared_ptr<LN> l,
                                                          std::shared_ptr<MN> m,
                                                          std::shared_ptr<RN> r) {
-#ifdef USE_FMA
+#ifdef FP_FAST_FMA
         return std::make_shared<fma_node<LN, MN, RN>> (l, m, r)->reduce();
 #else
         return l*m + r;
 #endif
     }
 
-#ifdef USE_FMA
+#ifdef FP_FAST_FMA
 //------------------------------------------------------------------------------
 ///  @brief Cast to a fma node.
 ///
