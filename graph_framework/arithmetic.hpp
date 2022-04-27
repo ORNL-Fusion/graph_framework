@@ -52,7 +52,7 @@ namespace graph {
 ///
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+        virtual shared_leaf<typename LN::backend> reduce() final {
 //  Idenity reductions.
             if (this->left.get() == this->right.get()) {
                 return constant<typename LN::backend> (2)*this->left;
@@ -121,8 +121,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>>
-        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
+        virtual shared_leaf<typename LN::backend>
+        df(shared_leaf<typename LN::backend> x) final {
             if (x.get() == this) {
                 return constant<typename LN::backend> (1);
             } else {
@@ -141,8 +141,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend> > add(std::shared_ptr<LN> l,
-                                                          std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> add(std::shared_ptr<LN> l,
+                                          std::shared_ptr<RN> r) {
         return (std::make_shared<add_node<LN, RN>> (l, r))->reduce();
     }
 
@@ -156,10 +156,14 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend>> operator+(std::shared_ptr<LN> l,
-                                                               std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> operator+(std::shared_ptr<LN> l,
+                                                std::shared_ptr<RN> r) {
         return add<LN, RN> (l, r);
     }
+
+///  Convience type alias for shared add nodes.
+    template<typename LN, typename RN>
+    using shared_add = std::shared_ptr<add_node<LN, RN>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a add node.
@@ -167,7 +171,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<add_node<N, N>> add_cast(std::shared_ptr<N> x) {
+    shared_add<N, N> add_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<add_node<N, N>> (x);
     }
 
@@ -210,7 +214,7 @@ namespace graph {
 ///
 ///  @returns A reduced subtraction node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+        virtual shared_leaf<typename LN::backend> reduce() final {
 //  Idenity reductions.
             if (this->left.get() == this->right.get()) {
                 return constant<typename LN::backend> (0);
@@ -266,8 +270,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>>
-        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
+        virtual shared_leaf<typename LN::backend>
+        df(shared_leaf<typename LN::backend> x) final {
             if (x.get() == this) {
                 return constant<typename LN::backend> (1);
             } else {
@@ -283,8 +287,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend>> subtract(std::shared_ptr<LN> l,
-                                                              std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> subtract(std::shared_ptr<LN> l,
+                                               std::shared_ptr<RN> r) {
         return (std::make_shared<subtract_node<LN, RN>> (l, r))->reduce();
     }
 
@@ -295,10 +299,14 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend>> operator-(std::shared_ptr<LN> l,
-                                                               std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> operator-(std::shared_ptr<LN> l,
+                                                std::shared_ptr<RN> r) {
         return subtract<LN, RN> (l, r);
     }
+
+///  Convience type alias for shared subtract nodes.
+    template<typename LN, typename RN>
+    using shared_subtract = std::shared_ptr<subtract_node<LN, RN>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a subtract node.
@@ -306,7 +314,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<subtract_node<N, N>> subtract_cast(std::shared_ptr<N> x) {
+    shared_subtract<N, N> subtract_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<subtract_node<N, N>> (x);
     }
 
@@ -355,7 +363,7 @@ namespace graph {
 ///
 ///  @returns A reduced multiplcation node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+        virtual shared_leaf<typename LN::backend> reduce() final {
             auto l = constant_cast(this->left);
             auto r = constant_cast(this->right);
 
@@ -394,8 +402,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>>
-        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
+        virtual shared_leaf<typename LN::backend>
+        df(shared_leaf<typename LN::backend> x) final {
             if (x.get() == this) {
                 return constant<typename LN::backend> (1);
             } else {
@@ -412,8 +420,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend>> multiply(std::shared_ptr<LN> l,
-                                                              std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> multiply(std::shared_ptr<LN> l,
+                                               std::shared_ptr<RN> r) {
         return (std::make_shared<multiply_node<LN, RN>> (l, r))->reduce();
     }
 
@@ -424,10 +432,14 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend>> operator*(std::shared_ptr<LN> l,
-                                                               std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> operator*(std::shared_ptr<LN> l,
+                                                std::shared_ptr<RN> r) {
         return multiply<LN, RN> (l, r);
     }
+
+///  Convience type alias for shared multiply nodes.
+    template<typename LN, typename RN>
+    using shared_multiply = std::shared_ptr<multiply_node<LN, RN>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a multiply node.
@@ -435,7 +447,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<multiply_node<N, N>> multiply_cast(std::shared_ptr<N> x) {
+    shared_multiply<N, N> multiply_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<multiply_node<N, N>> (x);
     }
 
@@ -478,7 +490,7 @@ namespace graph {
 ///
 ///  @returns A reduced division node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+        virtual shared_leaf<typename LN::backend> reduce() final {
 //  Constant Reductions.
             auto l = constant_cast(this->left);
 
@@ -526,8 +538,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>>
-        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
+        virtual shared_leaf<typename LN::backend>
+        df(shared_leaf<typename LN::backend> x) final {
             if (x.get() == this) {
                 return constant<typename LN::backend> (1);
             } else {
@@ -544,8 +556,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend>> divide(std::shared_ptr<LN> l,
-                                                            std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> divide(std::shared_ptr<LN> l,
+                                             std::shared_ptr<RN> r) {
         return std::make_shared<divide_node<LN, RN>> (l, r)->reduce();
     }
 
@@ -556,10 +568,14 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend>> operator/(std::shared_ptr<LN> l,
-                                                               std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> operator/(std::shared_ptr<LN> l,
+                                                std::shared_ptr<RN> r) {
         return divide<LN, RN> (l, r);
     }
+
+///  Convience type alias for shared divide nodes.
+    template<typename LN, typename RN>
+    using shared_divide = std::shared_ptr<divide_node<LN, RN>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a divide node.
@@ -567,7 +583,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<divide_node<N, N>> divide_cast(std::shared_ptr<N> x) {
+    shared_divide<N, N> divide_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<divide_node<N, N>> (x);
     }
 
@@ -622,7 +638,7 @@ namespace graph {
 ///
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>> reduce() final {
+        virtual shared_leaf<typename LN::backend> reduce() final {
             auto l = constant_cast(this->left);
             auto m = constant_cast(this->middle);
             auto r = constant_cast(this->right);
@@ -667,8 +683,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename LN::backend>>
-        df(std::shared_ptr<leaf_node<typename LN::backend>> x) final {
+        virtual shared_leaf<typename LN::backend>
+        df(shared_leaf<typename LN::backend> x) final {
             if (x.get() == this) {
                 return constant<typename LN::backend> (1);
             } else {
@@ -696,9 +712,9 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename MN, typename RN>
-    std::shared_ptr<leaf_node<typename LN::backend>> fma(std::shared_ptr<LN> l,
-                                                         std::shared_ptr<MN> m,
-                                                         std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::backend> fma(std::shared_ptr<LN> l,
+                                          std::shared_ptr<MN> m,
+                                          std::shared_ptr<RN> r) {
 #ifdef FP_FAST_FMA
         return std::make_shared<fma_node<LN, MN, RN>> (l, m, r)->reduce();
 #else
@@ -707,13 +723,17 @@ namespace graph {
     }
 
 #ifdef FP_FAST_FMA
+///  Convience type alias for shared add nodes.
+    template<typename LN, typename MN, typename RN>
+    using shared_fma = std::shared_ptr<add_node<LN, MN, RN>>;
+
 //------------------------------------------------------------------------------
 ///  @brief Cast to a fma node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<fma_node<N, N, N>> fma_cast(std::shared_ptr<N> x) {
+    shared_fma<fma_node<N, N, N>> fma_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<fma_node<N, N, N>> (x);
     }
 #endif

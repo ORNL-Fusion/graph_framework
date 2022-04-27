@@ -23,22 +23,22 @@ namespace dispersion {
     class dispersion_interface {
     protected:
 ///  Disperison function.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> D;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> D;
 
 ///  Derivative with respect to kx.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> dxdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dxdt;
 ///  Derivative with respect to ky.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> dydt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dydt;
 ///  Derivative with respect to kz.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> dzdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dzdt;
 ///  Derivative with respect to kx.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> dkxdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dkxdt;
 ///  Derivative with respect to ky.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> dkydt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dkydt;
 ///  Derivative with respect to kz.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> dkzdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dkzdt;
 ///  Derivative with respect to omega.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> dsdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dsdt;
 
     public:
 //------------------------------------------------------------------------------
@@ -52,13 +52,13 @@ namespace dispersion {
 ///  @param[in] y  Position in y.
 ///  @param[in] z  Position in z.
 //------------------------------------------------------------------------------
-        dispersion_interface(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> w,
-                             std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx,
-                             std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky,
-                             std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz,
-                             std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
-                             std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y,
-                             std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z) :
+        dispersion_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> w,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z) :
         D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z)) {
             auto dDdw = this->D->df(w)->reduce();
             auto dDdkx = this->D->df(kx)->reduce();
@@ -87,7 +87,7 @@ namespace dispersion {
 ///  @param[in] tolarance      Tolarance to solver the dispersion function to.
 ///  @param[in] max_iterations Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
-        virtual void solve(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
+        virtual void solve(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
                            const double tolarance=1.0E-30,
                            const size_t max_iterations = 1000) {
             auto loss = D*D;
@@ -114,7 +114,7 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>>
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
         get_d() final {
             return this->D->reduce();
         }
@@ -124,7 +124,7 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>>
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
         get_dsdt() final {
             return this->dsdt->reduce();
         }
@@ -134,7 +134,7 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>>
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
         get_dxdt() final {
             return this->dxdt->reduce();
         }
@@ -144,7 +144,7 @@ namespace dispersion {
 ///
 ///  @return dy/dt
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>>
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
         get_dydt() final {
             return this->dydt->reduce();
         }
@@ -154,7 +154,7 @@ namespace dispersion {
 ///
 ///  @return dz/dt
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>>
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
         get_dzdt() final {
             return this->dzdt->reduce();
         }
@@ -164,7 +164,7 @@ namespace dispersion {
 ///
 ///  @return dkx/dt
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>>
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
         get_dkxdt() final {
             return this->dkxdt->reduce();
         }
@@ -174,7 +174,7 @@ namespace dispersion {
 ///
 ///  @return dky/dt
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>>
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
         get_dkydt() final {
             return this->dkydt->reduce();
         }
@@ -184,7 +184,7 @@ namespace dispersion {
 ///
 ///  @return dkz/dt
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>>
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
         get_dkzdt() final {
             return this->dkzdt->reduce();
         }
@@ -210,13 +210,13 @@ namespace dispersion {
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<BACKEND>> D(std::shared_ptr<graph::leaf_node<BACKEND>> w,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> kx,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> ky,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> kz,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> x,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> y,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> z) = 0;
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z) = 0;
 
 ///  Type def to retrieve the backend type.
         typedef BACKEND backend;
@@ -241,13 +241,13 @@ namespace dispersion {
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<BACKEND>> D(std::shared_ptr<graph::leaf_node<BACKEND>> w,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> kx,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> ky,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> kz,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> x,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> y,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> z) final {
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z) final {
             auto c = graph::constant<BACKEND> (1);
 
             auto npar2 = kz*kz*c*c/(w*w);
@@ -275,13 +275,13 @@ namespace dispersion {
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<graph::leaf_node<BACKEND>> D(std::shared_ptr<graph::leaf_node<BACKEND>> w,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> kx,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> ky,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> kz,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> x,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> y,
-                                                             std::shared_ptr<graph::leaf_node<BACKEND>> z) final {
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z) final {
             auto c = graph::constant<BACKEND> (1);
             auto well = c - graph::constant<BACKEND>(0.5)*exp(graph::constant<BACKEND> (-1)*(x*x + y*y)/graph::constant<BACKEND> (0.1));
             auto npar2 = kz*kz*c*c/(w*w);

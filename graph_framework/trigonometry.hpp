@@ -48,7 +48,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from sine.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
+        virtual shared_leaf<typename N::backend> reduce() final {
             if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
             } else {
@@ -64,8 +64,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename N::backend>>
-        df(std::shared_ptr<leaf_node<typename N::backend>> x) final {
+        virtual shared_leaf<typename N::backend>
+        df(shared_leaf<typename N::backend> x) final {
             if (x.get() == this) {
                 return constant<typename N::backend> (1);
             } else {
@@ -81,9 +81,13 @@ namespace graph {
 ///  @returns A reduced sin node.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<leaf_node<typename N::backend>> sin(std::shared_ptr<N> x) {
+    shared_leaf<typename N::backend> sin(std::shared_ptr<N> x) {
         return (std::make_shared<sine_node<N>> (x))->reduce();
     }
+
+///  Convience type alias for shared sine nodes.
+    template<typename N>
+    using shared_sine = std::shared_ptr<sine_node<typename N::backend>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a sine node.
@@ -91,7 +95,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<sine_node<N>> sin_cast(std::shared_ptr<N> x) {
+    shared_sine<N> sin_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<sine_node<N>> (x);
     }
 
@@ -130,7 +134,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
+        virtual shared_leaf<typename N::backend> reduce() final {
             if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
             } else {
@@ -146,8 +150,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename N::backend>>
-        df(std::shared_ptr<leaf_node<typename N::backend>> x) final {
+        virtual shared_leaf<typename N::backend>
+        df(shared_leaf<typename N::backend> x) final {
             if (x.get() == this) {
                 return constant<typename N::backend> (1);
             } else {
@@ -163,9 +167,14 @@ namespace graph {
 ///  @returns A reduced cos node.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<leaf_node<typename N::backend>> cos(std::shared_ptr<N> x) {
+    shared_leaf<typename N::backend> cos(std::shared_ptr<N> x) {
         return (std::make_shared<cosine_node<N>> (x))->reduce();
     }
+
+
+///  Convience type alias for shared cosine nodes.
+    template<typename N>
+    using shared_cosine = std::shared_ptr<sine_node<typename N::backend>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a cosine node.
@@ -173,7 +182,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<cosine_node<N>> cos_cast(std::shared_ptr<N> x) {
+    shared_cosine<N> cos_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<cosine_node<N>> (x);
     }
 

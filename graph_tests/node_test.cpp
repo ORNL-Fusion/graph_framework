@@ -66,8 +66,8 @@ template<typename BACKEND>
 void test_variable() {
     auto zero = graph::variable<BACKEND> (1);
     zero->set(0);
-    auto zero_cast = graph::variable_cast(zero);
-    assert(zero_cast.get() != nullptr && "Expected a variable type.");
+    assert(graph::variable_cast(zero).get() != nullptr &&
+           "Expected a variable type.");
     assert(graph::constant_cast(zero).get() == nullptr &&
            "Expected a variable type.");
     const BACKEND zero_result = zero->evaluate();
@@ -78,16 +78,16 @@ void test_variable() {
     assert(zero_result2.size() == 1 && "Expected single value.");
     assert(zero_result2.at(0) == 1 && "Variable value evalute expeced zero.");
     auto dzero = zero->df(zero);
-    auto dzero_cast = graph::constant_cast(dzero);
-    assert(zero_cast.get() != nullptr && "Expected a constant type.");
+    assert(graph::constant_cast(dzero).get() != nullptr &&
+           "Expected a constant type.");
     const BACKEND dzero_result = dzero->evaluate();
     assert(dzero_result.size() == 1 && "Expected single value.");
     assert(dzero_result.at(0) == 1 && "Constant value evalute expeced one.");
 
     auto ones = graph::variable<BACKEND> (2, 1);
     auto dzerodone = zero->df(ones);
-    auto dzerodone_cast = graph::constant_cast(dzerodone);
-    assert(dzerodone.get() != nullptr && "Expected a constant type.");
+    assert(graph::constant_cast(dzerodone).get() != nullptr &&
+           "Expected a constant type.");
     const BACKEND dzerodone_result = dzerodone->evaluate();
     assert(dzerodone_result.size() == 1 && "Expected single value.");
     assert(dzerodone_result.at(0) == 0 && "Constant value evalute expeced zero.");

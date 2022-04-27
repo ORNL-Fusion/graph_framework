@@ -81,35 +81,35 @@ namespace solver {
     class solver_interface {
     protected:
 ///  w variable.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> w;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> w;
 ///  kx variable.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx;
 ///  ky variable.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky;
 ///  kz variable.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz;
 ///  x variable.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x;
 ///  y variable.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y;
 ///  z variable.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z;
 
 ///  Dispersion function interface.
        dispersion::dispersion_interface<DISPERSION_FUNCTION> D;
 
 ///  Next kx value.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx_next;
 ///  Next ky value.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky_next;
 ///  Next kz value.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz_next;
 ///  Next kx value.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x_next;
 ///  Next ky value.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y_next;
 ///  Next kz value.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z_next;
 
     public:
 ///  Ray solution.
@@ -126,13 +126,13 @@ namespace solver {
 ///  @param[in] y  Inital y.
 ///  @param[in] z  Inital z.
 //------------------------------------------------------------------------------
-        solver_interface(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> w,
-                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx,
-                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky,
-                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz,
-                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
-                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y,
-                         std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z) :
+        solver_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> w,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z) :
         D(w, kx, ky, kz, x, y, z), w(w),
         kx(kx), ky(ky), kz(kz),
         x(x), y(y), z(z) {}
@@ -140,7 +140,7 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Method to initalize the rays.
 //------------------------------------------------------------------------------
-        virtual void init(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
+        virtual void init(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
                           const double tolarance=1.0E-30,
                           const size_t max_iterations = 1000) final {
             this->D.solve(x, tolarance, max_iterations);
@@ -156,7 +156,7 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the dispersion relation residule.
 //------------------------------------------------------------------------------
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> residule() {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> residule() {
             return D.get_d()*D.get_d();
         }
 
@@ -210,30 +210,30 @@ namespace solver {
     class rk2 : public solver_interface<DISPERSION_FUNCTION> {
     protected:
 ///  kx1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx1;
 ///  ky1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky1;
 ///  kz1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz1;
 ///  x1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x1;
 ///  y1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y1;
 ///  z1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z1;
 
 ///  kx2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx2;
 ///  ky2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky2;
 ///  kz2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz2;
 ///  x2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x2;
 ///  y2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y2;
 ///  z2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z2;
 
     public:
 //------------------------------------------------------------------------------
@@ -248,13 +248,13 @@ namespace solver {
 ///  @param[in] z  Inital z.
 ///  @param[in] dt Inital dt.
 //------------------------------------------------------------------------------
-        rk2(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> w,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z,
+        rk2(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> w,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
             const double dt) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z) {
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);
@@ -321,56 +321,56 @@ namespace solver {
     class rk4 : public solver_interface<DISPERSION_FUNCTION> {
     protected:
 ///  kx1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx1;
 ///  ky1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky1;
 ///  kz1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz1;
 ///  x1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x1;
 ///  y1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y1;
 ///  z1 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z1;
 
 ///  kx2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx2;
 ///  ky2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky2;
 ///  kz2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz2;
 ///  x2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x2;
 ///  y2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y2;
 ///  z2 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z2;
 
 ///  kx3 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx3;
 ///  ky3 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky3;
 ///  kz3 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz3;
 ///  x3 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x3;
 ///  y3 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y3;
 ///  z3 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z3;
 
 ///  kx4 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx4;
 ///  ky4 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky4;
 ///  kz4 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz4;
 ///  x4 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x4;
 ///  y4 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y4;
 ///  z4 subexpression.
-        std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z4;
 
     public:
 //------------------------------------------------------------------------------
@@ -385,13 +385,13 @@ namespace solver {
 ///  @param[in] z  Inital z.
 ///  @param[in] dt Inital dt.
 //------------------------------------------------------------------------------
-        rk4(std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> w,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kx,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> ky,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> kz,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> x,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> y,
-            std::shared_ptr<graph::leaf_node<typename DISPERSION_FUNCTION::backend>> z,
+        rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> w,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> ky,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
             const double dt) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z) {
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);

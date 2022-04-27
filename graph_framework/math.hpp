@@ -47,7 +47,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
+        virtual shared_leaf<typename N::backend> reduce() final {
             if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
             } else {
@@ -63,8 +63,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename N::backend>>
-        df(std::shared_ptr<leaf_node<typename N::backend>> x) final {
+        virtual shared_leaf<typename N::backend>
+        df(shared_leaf<typename N::backend> x) final {
             if (x.get() == this) {
                 return constant<typename N::backend> (1);
             } else {
@@ -81,9 +81,13 @@ namespace graph {
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<leaf_node<typename N::backend>> sqrt(std::shared_ptr<N> x) {
+    shared_leaf<typename N::backend> sqrt(std::shared_ptr<N> x) {
         return (std::make_shared<sqrt_node<N>> (x))->reduce();
     }
+
+///  Convience type alias for shared sqrt nodes.
+    template<typename N>
+    using shared_sqrt = std::shared_ptr<sqrt_node<N>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a sqrt node.
@@ -91,7 +95,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<sqrt_node<N>> sqrt_cast(std::shared_ptr<N> x) {
+    shared_sqrt<N> sqrt_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<sqrt_node<N>> (x);
     }
 
@@ -132,7 +136,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename N::backend>> reduce() final {
+        virtual shared_leaf<typename N::backend> reduce() final {
             if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
             } else {
@@ -148,8 +152,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<typename N::backend>>
-        df(std::shared_ptr<leaf_node<typename N::backend>> x) final {
+        virtual shared_leaf<typename N::backend>
+        df(shared_leaf<typename N::backend> x) final {
             if (x.get() == this) {
                 return constant<typename N::backend> (1);
             } else {
@@ -165,9 +169,13 @@ namespace graph {
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<leaf_node<typename N::backend>> exp(std::shared_ptr<N> x) {
+    shared_leaf<typename N::backend> exp(std::shared_ptr<N> x) {
         return (std::make_shared<exp_node<N>> (x))->reduce();
     }
+
+///  Convience type alias for shared exp nodes.
+    template<typename N>
+    using shared_exp = std::shared_ptr<exp_node<N>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a exp node.
@@ -175,7 +183,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<exp_node<N>> exp_cast(std::shared_ptr<N> x) {
+    shared_exp<N> exp_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<exp_node<N>> (x);
     }
 }
