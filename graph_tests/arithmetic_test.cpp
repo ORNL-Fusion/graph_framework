@@ -141,6 +141,12 @@ template<typename BACKEND> void test_add() {
     auto common_d = var_a/var_b + var_c/var_b;
     assert(graph::add_cast(common_d) == nullptr && "Did not expect add node.");
     assert(graph::divide_cast(common_d) != nullptr && "Expected divide node.");
+
+//  Test is_match
+    auto match = graph::constant<BACKEND> (1)*var_a
+               + graph::constant<BACKEND> (1)*var_a;
+    assert(graph::multiply_cast(match).get() != nullptr &&
+           "Expected multiply node.");
 }
 
 //------------------------------------------------------------------------------
@@ -272,6 +278,12 @@ template<typename BACKEND> void test_subtract() {
     assert(graph::subtract_cast(common_d) == nullptr &&
            "Did not expect subtract node.");
     assert(graph::divide_cast(common_d) != nullptr && "Expected divide node.");
+
+//  Test is_match
+    auto match = graph::constant<BACKEND> (1)*var_a
+               - graph::constant<BACKEND> (1)*var_a;
+    auto match_cast = graph::constant_cast(match);
+    assert(match_cast->is(0) && "Expected zero node.");
 }
 
 //------------------------------------------------------------------------------
@@ -422,6 +434,13 @@ template<typename BACKEND> void test_multiply() {
     assert(dvarvec_sqrd_result.size() == 2 && "Size mismatch in result.");
     assert(dvarvec_sqrd_result.at(0) == 8 && "Expected 2*4 for result.");
     assert(dvarvec_sqrd_result.at(1) == -4 && "Expected 2*-2 for result.");
+
+//  Test is_match
+    auto match = (graph::constant<BACKEND> (1) + variable)
+               * (graph::constant<BACKEND> (1) + variable);
+    auto match_cast = graph::multiply_cast(match);
+    assert(match_cast->get_left()->is_match(match_cast->get_right()) &&
+           "Expected left and right to match");
 }
 
 //------------------------------------------------------------------------------
@@ -600,6 +619,13 @@ template<typename BACKEND> void test_divide() {
     const BACKEND dtwo_divided_var_result = dtwo_divided_var->evaluate();
     assert(dtwo_divided_var_result.at(0) == -2.0/(3.0*3.0) &&
            "Expected 2/3^2 for result.");
+
+//  Test is_match
+    auto match = (graph::constant<BACKEND> (1) + variable)
+               / (graph::constant<BACKEND> (1) + variable);
+    auto match_cast = graph::constant_cast(match);
+    assert(match_cast->is(1) &&
+           "Expected one constant for result.");
 }
 
 //------------------------------------------------------------------------------

@@ -54,7 +54,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> reduce() final {
 //  Idenity reductions.
-            if (this->left.get() == this->right.get()) {
+            if (this->left->is_match(this->right)) {
                 return constant<typename LN::backend> (2)*this->left;
             }
 
@@ -76,13 +76,13 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
             if (lm.get() != nullptr && rm.get() != nullptr) {
-                if (lm->get_left().get() == rm->get_left().get()) {
+                if (lm->get_left()->is_match(rm->get_left())) {
                     return lm->get_left()*(lm->get_right() + rm->get_right());
-                } else if (lm->get_left().get() == rm->get_right().get()) {
+                } else if (lm->get_left()->is_match(rm->get_right())) {
                     return lm->get_left()*(lm->get_right() + rm->get_left());
-                } else if (lm->get_right().get() == rm->get_left().get()) {
+                } else if (lm->get_right()->is_match(rm->get_left())) {
                     return lm->get_right()*(lm->get_left() + rm->get_right());
-                } else if (lm->get_right().get() == rm->get_right().get()) {
+                } else if (lm->get_right()->is_match(rm->get_right())) {
                     return lm->get_right()*(lm->get_left() + rm->get_left());
                 }
             }
@@ -93,7 +93,7 @@ namespace graph {
             auto rd = divide_cast(this->right);
 
             if (ld.get() != nullptr && rd.get() != nullptr &&
-                ld->get_right().get() == rd->get_right().get()) {
+                ld->get_right()->is_match(rd->get_right())) {
                 return (ld->get_left() + rd->get_left())/ld->get_right();
             }
 
@@ -123,10 +123,30 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend>
         df(shared_leaf<typename LN::backend> x) final {
-            if (x.get() == this) {
+            if (this->is_match(x)) {
                 return constant<typename LN::backend> (1);
             } else {
                 return this->left->df(x) + this->right->df(x);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<typename LN::backend> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = add_cast(x);
+            if (x_cast != nullptr) {
+                return this->left->is_match(x_cast->get_left()) &&
+                       this->right->is_match(x_cast->get_right());
+            } else {
+                return false;
             }
         }
     };
@@ -216,7 +236,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> reduce() final {
 //  Idenity reductions.
-            if (this->left.get() == this->right.get()) {
+            if (this->left->is_match(this->right)) {
                 return constant<typename LN::backend> (0);
             }
 
@@ -238,13 +258,13 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
             if (lm.get() != nullptr && rm.get() != nullptr) {
-                if (lm->get_left().get() == rm->get_left().get()) {
+                if (lm->get_left()->is_match(rm->get_left())) {
                     return lm->get_left()*(lm->get_right() - rm->get_right());
-                } else if (lm->get_left().get() == rm->get_right().get()) {
+                } else if (lm->get_left()->is_match(rm->get_right())) {
                     return lm->get_left()*(lm->get_right() - rm->get_left());
-                } else if (lm->get_right().get() == rm->get_left().get()) {
+                } else if (lm->get_right()->is_match(rm->get_left())) {
                     return lm->get_right()*(lm->get_left() - rm->get_right());
-                } else if (lm->get_right().get() == rm->get_right().get()) {
+                } else if (lm->get_right()->is_match(rm->get_right())) {
                     return lm->get_right()*(lm->get_left() - rm->get_left());
                 }
             }
@@ -255,7 +275,7 @@ namespace graph {
             auto rd = divide_cast(this->right);
 
             if (ld.get() != nullptr && rd.get() != nullptr &&
-                ld->get_right().get() == rd->get_right().get()) {
+                ld->get_right()->is_match(rd->get_right())) {
                 return (ld->get_left() - rd->get_left())/ld->get_right();
             }
 
@@ -272,10 +292,30 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend>
         df(shared_leaf<typename LN::backend> x) final {
-            if (x.get() == this) {
+            if (this->is_match(x)) {
                 return constant<typename LN::backend> (1);
             } else {
                 return this->left->df(x) - this->right->df(x);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<typename LN::backend> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = subtract_cast(x);
+            if (x_cast != nullptr) {
+                return this->left->is_match(x_cast->get_left()) &&
+                       this->right->is_match(x_cast->get_right());
+            } else {
+                return false;
             }
         }
     };
@@ -347,6 +387,12 @@ namespace graph {
         virtual typename LN::backend evaluate() final {
             typename LN::backend l_result = this->left->evaluate();
 
+//  If the left are right are same don't evaluate the right.
+//  NOTE: Do not use is_match here. Remove once power is implimented.
+            if (this->left.get() == this->right.get()) {
+                return l_result*l_result;
+            }
+
 //  If all the elements on the left are zero, return the leftside without
 //  revaluating the rightside. Stop this loop early once the first non zero
 //  element is encountered.
@@ -384,9 +430,9 @@ namespace graph {
             auto rd = divide_cast(this->right);
 
             if (ld.get() != nullptr && rd.get() != nullptr) {
-                if (ld->get_left().get() == rd->get_right().get()) {
+                if (ld->get_left()->is_match(rd->get_right())) {
                     return ld->get_right()/rd->get_left();
-                } else if (ld->get_right().get() == rd->get_left().get()) {
+                } else if (ld->get_right()->is_match(rd->get_left())) {
                     return ld->get_left()/rd->get_right();
                 }
             }
@@ -404,11 +450,31 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend>
         df(shared_leaf<typename LN::backend> x) final {
-            if (x.get() == this) {
+            if (this->is_match(x)) {
                 return constant<typename LN::backend> (1);
             } else {
                 return this->left->df(x)*this->right +
                        this->left*this->right->df(x);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<typename LN::backend> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = multiply_cast(x);
+            if (x_cast != nullptr) {
+                return this->left->is_match(x_cast->get_left()) &&
+                       this->right->is_match(x_cast->get_right());
+            } else {
+                return false;
             }
         }
     };
@@ -494,7 +560,7 @@ namespace graph {
 //  Constant Reductions.
             auto l = constant_cast(this->left);
 
-            if (this->left.get() == this->right.get()) {
+            if (this->left->is_match(this->right)) {
                 if (l.get() && l->is(1)) {
                     return this->left;
                 } else {
@@ -516,13 +582,13 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
             if (lm.get() != nullptr && rm.get() != nullptr) {
-                if (lm->get_left().get() == rm->get_left().get()) {
+                if (lm->get_left()->is_match(rm->get_left())) {
                     return lm->get_right()/rm->get_right();
-                } else if (lm->get_left().get() == rm->get_right().get()) {
+                } else if (lm->get_left()->is_match(rm->get_right())) {
                     return lm->get_right()/rm->get_left();
-                } else if (lm->get_right().get() == rm->get_left().get()) {
+                } else if (lm->get_right()->is_match(rm->get_left())) {
                     return lm->get_left()/rm->get_right();
-                } else if (lm->get_right().get() == rm->get_right().get()) {
+                } else if (lm->get_right()->is_match(rm->get_right())) {
                     return lm->get_left()/rm->get_left();
                 }
             }
@@ -540,11 +606,31 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend>
         df(shared_leaf<typename LN::backend> x) final {
-            if (x.get() == this) {
+            if (this->is_match(x)) {
                 return constant<typename LN::backend> (1);
             } else {
                 return this->left->df(x)/this->right -
                        this->left*this->right->df(x)/(this->right*this->right);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<typename LN::backend> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = divide_cast(x);
+            if (x_cast != nullptr) {
+                return this->left->is_match(x_cast->get_left()) &&
+                       this->right->is_match(x_cast->get_right());
+            } else {
+                return false;
             }
         }
     };
@@ -661,13 +747,13 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
             if (rm.get() != nullptr) {
-                if (rm->get_left().get() == this->left.get()) {
+                if (rm->get_left()->is_match(this->left)) {
                     return fma(this->left, this->middle, rm->get_right());
-                } else if (rm->get_left().get() == this->middle.get()) {
+                } else if (rm->get_left()->is_match(this->middle)) {
                     return fma(this->middle, this->left, rm->get_right());
-                } else if (rm->get_right().get() == this->left.get()) {
+                } else if (rm->get_right()->is_match(this->left)) {
                     return fma(this->left, this->middle, rm->get_left());
-                } else if (rm->get_right().get() == this->middle.get()) {
+                } else if (rm->get_right()->is_match(this->middle)) {
                     return fma(this->middle, this->left, rm->get_left());
                 }
             }
@@ -685,7 +771,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend>
         df(shared_leaf<typename LN::backend> x) final {
-            if (x.get() == this) {
+            if (this->is_match(x)) {
                 return constant<typename LN::backend> (1);
             } else {
                 auto temp_right = fma<LN,
@@ -699,6 +785,27 @@ namespace graph {
                            leaf_node<typename RN::backend>> (this->left->df(x),
                                                              this->middle,
                                                              temp_right);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<typename LN::backend> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = fma_cast(x);
+            if (x_cast != nullptr) {
+                return this->left->is_match(x_cast->get_left()) &&
+                       this->middle->is_match(x_cast->get_middel()) &&
+                       this->right->is_match(x_cast->get_right());
+            } else {
+                return false;
             }
         }
     };

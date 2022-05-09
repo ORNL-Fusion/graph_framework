@@ -210,6 +210,22 @@ namespace backend {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Equal operation.
+//------------------------------------------------------------------------------
+    inline bool operator==(const cpu &a, const cpu &b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            if (a.at(i) != b.at(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Subtract operation.
 //------------------------------------------------------------------------------
     inline cpu operator-(cpu &a, cpu &b) {

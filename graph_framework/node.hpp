@@ -60,6 +60,14 @@ namespace graph {
         virtual void reset_cache() {}
 
 //------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(std::shared_ptr<leaf_node<BACKEND>> x) = 0;
+
+//------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
 ///  @param[in] d Scalar data to set.
@@ -127,7 +135,14 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual BACKEND evaluate() {
-            return arg->evaluate();
+            return this->arg->evaluate();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the argument.
+//------------------------------------------------------------------------------
+        shared_leaf<BACKEND> get_arg() {
+            return this->arg;
         }
     };
 
@@ -286,6 +301,25 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<BACKEND> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = constant_cast(x);
+            if (x_cast != nullptr) {
+                return this->evaluate() == x_cast->evaluate();
+            } else {
+                return false;
+            }
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Check if the constant is value.
 //------------------------------------------------------------------------------
         bool is(const double d) {
@@ -413,7 +447,17 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            return constant<BACKEND> (x.get() == this);
+            return constant<BACKEND> (this->is_match(x));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<BACKEND> x) final {
+            return this == x.get();
         }
 
 //------------------------------------------------------------------------------
@@ -570,10 +614,29 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            if (x.get() == this) {
+            if (this->is_match(x)) {
                 return constant<BACKEND> (1);
             } else {
                 return this->arg->df(x)->reduce();
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<BACKEND> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = cache_cast(x);
+            if (x_cast != nullptr) {
+                return this->arg->is_match(x_cast->get_arg());
+            } else {
+                return false;
             }
         }
 
@@ -649,7 +712,19 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            return constant<BACKEND> (x.get() == this);
+            return constant<BACKEND> (this->is_match(x));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<BACKEND> x) final {
+            if (this == x.get()) {
+                return true;
+            }
         }
     };
 
@@ -666,7 +741,7 @@ namespace graph {
 
 ///  Convience type alias for shared pseudo variable nodes.
     template<typename N>
-    using shared_pseudo_variable = std::shared_ptr<variable_node<typename N::backend>>;
+    using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<typename N::backend>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a pseudo variable node.

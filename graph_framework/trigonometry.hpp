@@ -66,10 +66,29 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend>
         df(shared_leaf<typename N::backend> x) final {
-            if (x.get() == this) {
+            if (this->is_match(x)) {
                 return constant<typename N::backend> (1);
             } else {
                 return cos(this->arg)*this->arg->df(x);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<typename N::backend> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = sin_cast(x);
+            if (x_cast != nullptr) {
+                return this->arg->is_match(x_cast->get_arg());
+            } else {
+                return false;
             }
         }
     };
@@ -152,10 +171,29 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend>
         df(shared_leaf<typename N::backend> x) final {
-            if (x.get() == this) {
+            if (this->is_match(x)) {
                 return constant<typename N::backend> (1);
             } else {
                 return constant<typename N::backend> (-1)*sin(this->arg)*this->arg->df(x);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<typename N::backend> x) final {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = cos_cast(x);
+            if (x_cast != nullptr) {
+                return this->arg->is_match(x_cast->get_arg());
+            } else {
+                return false;
             }
         }
     };

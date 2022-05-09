@@ -25,7 +25,8 @@ int main(int argc, const char * argv[]) {
     const size_t num_times = 10000;
     const size_t num_rays = 10000;
 
-    std::vector<std::thread> threads(std::max(std::thread::hardware_concurrency(),
+    std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
+                                                       static_cast<unsigned int> (num_rays)),
                                               static_cast<unsigned int> (1)));
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
@@ -48,7 +49,8 @@ int main(int argc, const char * argv[]) {
 
 //  Inital conditions.
             for (size_t j = 0; j < local_num_rays; j++) {
-                omega->set(j, real_dist(engine));
+                omega->set(j, real_dist(engine)*1000.0);
+                //omega->set(j, real_dist(engine));
             }
             x->set(-1.0);
             y->set(-0.2);
@@ -57,7 +59,9 @@ int main(int argc, const char * argv[]) {
             ky->set(0.0);
             kz->set(0.0);
 
-            solver::rk4<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
+            solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times);
+            //solver::rk4<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
+            //solver::rk4<dispersion::simple<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
             solve.init(kx);
 
             const size_t sample = int_dist(engine);

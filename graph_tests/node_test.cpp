@@ -57,6 +57,12 @@ void test_constant() {
     assert(one_two_result.size() == 2 && "Expected two elements in constant");
     assert(one_two_result.at(0) == 1 && "Expected one for first elememt");
     assert(one_two_result.at(1) == 2 && "Expected two for second elememt");
+
+//  Test is_match
+    auto c1 = graph::constant<BACKEND> (5);
+    auto c2 = graph::constant<BACKEND> (5);
+    assert(c1.get() != c2.get() && "Expected different pointers");
+    assert(c1->is_match(c2) && "Expected match.");
 }
 
 //------------------------------------------------------------------------------
@@ -102,6 +108,12 @@ void test_variable() {
     assert(one_two_result2.size() == 2 && "Expected two elements in constant");
     assert(one_two_result2.at(0) == 3 && "Expected three for first elememt");
     assert(one_two_result2.at(1) == 4 && "Expected four for second elememt");
+
+//  Test is_match
+    auto v1 = graph::variable<BACKEND> (1);
+    auto v2 = graph::variable<BACKEND> (1);
+    assert(v1.get() != v2.get() && "Expected different pointers");
+    assert(!v1->is_match(v2) && "Expected no match.");
 }
 
 //------------------------------------------------------------------------------
@@ -130,10 +142,16 @@ void test_pseudo_variable() {
            "Expected the constant 1");
     assert(graph::constant_cast(cache_five->df(three))->is(0) &&
            "Expected the constant 0");
+
+//  Test is_match
+    auto c1 = graph::cache(five);
+    auto c2 = graph::cache(five);
+    assert(c1.get() != c2.get() && "Expected different pointers");
+    assert(c1->is_match(c2) && "Expected match.");
 }
 
 //------------------------------------------------------------------------------
-///  @brief Tests for cache nodes.
+///  @brief Tests for pseudo variable nodes.
 //------------------------------------------------------------------------------
 template<typename BACKEND>
 void test_cache() {
@@ -146,6 +164,10 @@ void test_cache() {
     a->set(1);
     b->set(2);
     assert(c->evaluate().at(0) == 3 && "Expected three.");
+
+    auto v2 = graph::pseudo_variable(a + b);
+    assert(c.get() != v2.get() && "Expected different pointers");
+    assert(!c->is_match(v2) && "Expected no match.");
 }
 
 //------------------------------------------------------------------------------
