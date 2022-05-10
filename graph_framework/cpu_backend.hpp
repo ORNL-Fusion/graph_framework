@@ -306,7 +306,6 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Multiply operation.
 //------------------------------------------------------------------------------
-#ifdef FP_FAST_FMA
     inline cpu fma(cpu &a, cpu &b, cpu &c) {
         if (a.size() == 1) {
             const double left = a.at(0);
@@ -314,13 +313,21 @@ namespace backend {
             if (b.size() == 1) {
                 const double middle = b.at(0);
                 for (size_t i = 0, ie = c.size(); i < ie; i++) {
+#ifdef FP_FAST_FMA
                     c[i] = std::fma(left, middle, c.at(i));
+#else
+                    c[i] = left*middle + c.at(i);
+#endif
                 }
                 return c;
             } else if (c.size() == 1) {
                 const double right = c.at(0);
                 for (size_t i = 0, ie = b.size(); i < ie; i++) {
+#ifdef FP_FAST_FMA
                     b[i] = std::fma(left, b.at(i), right);
+#else
+                    b[i] = left*b.at(i) + right;
+#endif
                 }
                 return b;
             }
@@ -328,7 +335,11 @@ namespace backend {
             assert(b.size() == c.size() &&
                    "Size mismatch between middle and right.");
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
+#ifdef FP_FAST_FMA
                 b[i] = std::fma(left, b.at(i), c.at(i));
+#else
+                b[i] = left*b.at(i) + c.at(i);
+#endif
             }
             return b;
         } else if (b.size() == 1) {
@@ -336,7 +347,11 @@ namespace backend {
             if (c.size() == 1) {
                 const double right = c.at(0);
                 for (size_t i = 0, ie = a.size(); i < ie; i++) {
+#ifdef FP_FAST_FMA
                     a[i] = std::fma(a.at(i), middle, right);
+#else
+                    a[i] = a.at(i)*middle + right;
+#endif
                 }
                 return a;
             }
@@ -344,7 +359,11 @@ namespace backend {
             assert(a.size() == c.size() &&
                    "Size mismatch between left and right.");
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
+#ifdef FP_FAST_FMA
                 a[i] = std::fma(a.at(i), middle, c.at(i));
+#else
+                a[i] = a.at(i)*middle + c.at(i);
+#endif
             }
             return a;
         } else if (c.size() == 1) {
@@ -352,7 +371,11 @@ namespace backend {
                    "Size mismatch between left and middle.");
             const double right = c.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
+#ifdef FP_FAST_FMA
                 a[i] = std::fma(a.at(i), b.at(i), right);
+#else
+                a[i] = a.at(i)*b.at(i) + right;
+#endif
             }
             return a;
         }
@@ -362,10 +385,13 @@ namespace backend {
                a.size() == c.size() &&
                "Left, middle and right sizes are incompatable.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
+#ifdef FP_FAST_FMA
             a[i] = std::fma(a.at(i), b.at(i), c.at(i));
+#else
+            a[i] = a.at(i)*b.at(i) + c.at(i);
+#endif
         }
         return a;
     }
-#endif
 }
 #endif /* cpu_backend_h */

@@ -120,7 +120,7 @@ void test_variable() {
 ///  @brief Tests for cache nodes.
 //------------------------------------------------------------------------------
 template<typename BACKEND>
-void test_pseudo_variable() {
+void test_cache() {
     auto five = graph::variable<BACKEND> (1);
     five->set(5);
     auto cache_five = graph::cache(five);
@@ -154,7 +154,7 @@ void test_pseudo_variable() {
 ///  @brief Tests for pseudo variable nodes.
 //------------------------------------------------------------------------------
 template<typename BACKEND>
-void test_cache() {
+void test_pseudo_variable() {
     auto a = graph::variable<BACKEND> (1);
     auto b = graph::variable<BACKEND> (1);
     auto c = graph::pseudo_variable(a + b);

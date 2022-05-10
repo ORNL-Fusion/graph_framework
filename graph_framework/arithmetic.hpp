@@ -98,7 +98,6 @@ namespace graph {
             }
 
 //  Fused multiply add reductions.
-#ifdef FP_FAST_FMA
             auto m = multiply_cast(this->left);
 
             if (m.get()) {
@@ -108,7 +107,6 @@ namespace graph {
                                                              m->get_right(),
                                                              this->right);
             }
-#endif
 
             return this->shared_from_this();
         }
@@ -673,7 +671,6 @@ namespace graph {
         return std::dynamic_pointer_cast<divide_node<N, N>> (x);
     }
 
-#ifdef FP_FAST_FMA
 //******************************************************************************
 //  fused multiply add node.
 //******************************************************************************
@@ -748,13 +745,13 @@ namespace graph {
 
             if (rm.get() != nullptr) {
                 if (rm->get_left()->is_match(this->left)) {
-                    return fma(this->left, this->middle, rm->get_right());
+                    return this->left*(this->middle + rm->get_right());
                 } else if (rm->get_left()->is_match(this->middle)) {
-                    return fma(this->middle, this->left, rm->get_right());
+                    return this->middle*(this->left + rm->get_right());
                 } else if (rm->get_right()->is_match(this->left)) {
-                    return fma(this->left, this->middle, rm->get_left());
+                    return this->left*(this->middle + rm->get_left());
                 } else if (rm->get_right()->is_match(this->middle)) {
-                    return fma(this->middle, this->left, rm->get_left());
+                    return this->middle*(this->left + rm->get_left());
                 }
             }
 
@@ -802,14 +799,13 @@ namespace graph {
             auto x_cast = fma_cast(x);
             if (x_cast != nullptr) {
                 return this->left->is_match(x_cast->get_left()) &&
-                       this->middle->is_match(x_cast->get_middel()) &&
+                       this->middle->is_match(x_cast->get_middle()) &&
                        this->right->is_match(x_cast->get_right());
-            } else {
-                return false;
             }
+
+            return false;
         }
     };
-#endif
 
 //------------------------------------------------------------------------------
 ///  @brief Build fused multiply add node.
@@ -822,17 +818,12 @@ namespace graph {
     shared_leaf<typename LN::backend> fma(std::shared_ptr<LN> l,
                                           std::shared_ptr<MN> m,
                                           std::shared_ptr<RN> r) {
-#ifdef FP_FAST_FMA
         return std::make_shared<fma_node<LN, MN, RN>> (l, m, r)->reduce();
-#else
-        return l*m + r;
-#endif
     }
 
-#ifdef FP_FAST_FMA
 ///  Convience type alias for shared add nodes.
     template<typename LN, typename MN, typename RN>
-    using shared_fma = std::shared_ptr<add_node<LN, MN, RN>>;
+    using shared_fma = std::shared_ptr<fma_node<LN, MN, RN>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a fma node.
@@ -840,10 +831,9 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 //------------------------------------------------------------------------------
     template<typename N>
-    shared_fma<fma_node<N, N, N>> fma_cast(std::shared_ptr<N> x) {
+    shared_fma<N, N, N> fma_cast(std::shared_ptr<N> x) {
         return std::dynamic_pointer_cast<fma_node<N, N, N>> (x);
     }
-#endif
 }
 
 #endif /* arithmetic_h */

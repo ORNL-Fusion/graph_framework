@@ -365,7 +365,7 @@ namespace dispersion {
             auto denomi = one - ic*ic/w2;
 
             auto e11 = one - (wpe2/w2)/denome - (wpi2/w2)/denomi;
-            auto e12 = none*((ec/w*wpe2/w2)/denome + (ic/w*wpi2/w2)/denomi);
+            auto e12 = none*(((ec/w)*(wpe2/w2))/denome + ((ic/w)*(wpi2/w2))/denomi);
             auto e33 = one - (wpe2 - wpi2)/w2;
 
 //  Wave numbers.

@@ -177,7 +177,6 @@ template<typename BACKEND> void test_backend() {
     assert(div_scale_scale.size() == 1 && "Expected a size of 1");
     assert(div_scale_scale.at(0) == -3.0/5.0 && "Expected a value of -3/5.");
 
-#ifdef FP_FAST_FMA
 //  Fused multiply add tests.
     avec.set(std::vector<double> ({1.0, 2.0}));
     bvec.set(std::vector<double> ({3.0, 4.0}));
@@ -233,7 +232,6 @@ template<typename BACKEND> void test_backend() {
     BACKEND fma_scale_scale_scale = backend::fma(ascalar, bscalar, cscalar);
     assert(fma_scale_scale_scale.size() == 1 && "Expected a size of 1");
     assert(fma_scale_scale_scale.at(0) == -17.0 && "Expected a value of -17.");
-#endif
 }
 
 //------------------------------------------------------------------------------

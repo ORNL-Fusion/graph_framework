@@ -40,6 +40,7 @@ register_sanitizer_option (leak OFF)
 register_sanitizer_option (memory OFF)
 register_sanitizer_option (thread OFF)
 register_sanitizer_option (undefined ON)
+register_sanitizer_option (float-divide-by-zero ON)
 
 #-------------------------------------------------------------------------------
 #  Setup targets

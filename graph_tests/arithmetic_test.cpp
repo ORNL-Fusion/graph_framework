@@ -729,6 +729,35 @@ template<typename BACKEND> void test_fma() {
            "Expected a constant node.");
     assert(zero_times_two_plus_var_df_cast->is(1) &&
            "Expected one.");
+
+//  Test reduction.
+    auto var_a = graph::variable<BACKEND> (1);
+    auto var_b = graph::variable<BACKEND> (1);
+    auto var_c = graph::variable<BACKEND> (1);
+
+    auto reduce1 = graph::fma(var_a, var_b, var_a*var_c);
+    auto reduce1_cast = multiply_cast(reduce1);
+    assert(reduce1_cast.get() != nullptr && "Expected multiply node.");
+    assert(reduce1_cast->get_left()->is_match(var_a) &&
+           "Expected common var_a");
+
+    auto reduce2 = graph::fma(var_a, var_b, var_b*var_c);
+    auto reduce2_cast = multiply_cast(reduce2);
+    assert(reduce2_cast.get() != nullptr && "Expected multiply node.");
+    assert(reduce2_cast->get_left()->is_match(var_b) &&
+           "Expected common var_b");
+
+    auto reduce3 = graph::fma(var_a, var_b, var_c*var_a);
+    auto reduce3_cast = multiply_cast(reduce3);
+    assert(reduce3_cast.get() != nullptr && "Expected multiply node.");
+    assert(reduce3_cast->get_left()->is_match(var_a) &&
+           "Expected common var_a");
+
+    auto reduce4 = graph::fma(var_a, var_b, var_c*var_b);
+    auto reduce4_cast = multiply_cast(reduce4);
+    assert(reduce4_cast.get() != nullptr && "Expected multiply node.");
+    assert(reduce4_cast->get_left()->is_match(var_b) &&
+           "Expected common var_b");
 }
 
 //------------------------------------------------------------------------------

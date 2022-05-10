@@ -722,9 +722,7 @@ namespace graph {
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<BACKEND> x) final {
-            if (this == x.get()) {
-                return true;
-            }
+            return this == x.get();
         }
     };
 
