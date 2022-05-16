@@ -350,7 +350,7 @@ namespace dispersion {
             auto me = graph::constant<BACKEND> (9.1093837015E-31);
             auto mi = graph::constant<BACKEND> (3.34449469E-27);
             auto q = graph::constant<BACKEND> (1.602176634E-19);
-            auto ne = graph::constant<BACKEND> (1.0E19)*graph::exp(none*(x*x + y*y)/graph::constant<BACKEND> (0.2));
+            auto ne = graph::constant<BACKEND> (1.0E19)*graph::exp((x*x + y*y)/graph::constant<BACKEND> (-0.2));
             auto ni = ne;
 
 //  Frequencies
@@ -366,7 +366,7 @@ namespace dispersion {
 
             auto e11 = one - (wpe2/w2)/denome - (wpi2/w2)/denomi;
             auto e12 = none*(((ec/w)*(wpe2/w2))/denome + ((ic/w)*(wpi2/w2))/denomi);
-            auto e33 = one - (wpe2 - wpi2)/w2;
+            auto e33 = one - (wpe2 + wpi2)/w2;
 
 //  Wave numbers.
             auto nx = kx/w;
@@ -385,7 +385,7 @@ namespace dispersion {
             auto m22 = e11 - npara2 - nperp2;
             auto m33 = e33 - nperp2;
 
-            return (m11*m22 + m12*m12)*m33 - m22*m13*m13;
+            return (m11*m22 - m12*m12)*m33 - m22*m13*m13;
         }
     };
 }

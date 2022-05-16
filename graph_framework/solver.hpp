@@ -141,7 +141,7 @@ namespace solver {
 ///  @brief Method to initalize the rays.
 //------------------------------------------------------------------------------
         virtual void init(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
-                          const double tolarance=1.0E-30,
+                          const double tolarance = 1.0E-30,
                           const size_t max_iterations = 1000) final {
             this->D.solve(x, tolarance, max_iterations);
 

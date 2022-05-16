@@ -55,7 +55,7 @@ int main(int argc, const char * argv[]) {
             x->set(-1.0);
             y->set(-0.2);
             z->set(0.0);
-            kx->set(1.0);
+            kx->set(1000.0);
             ky->set(0.0);
             kz->set(0.0);
 
@@ -63,6 +63,8 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
             //solver::rk4<dispersion::simple<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
             solve.init(kx);
+
+            auto residule = solve.residule();
 
             const size_t sample = int_dist(engine);
 
@@ -79,7 +81,8 @@ int main(int argc, const char * argv[]) {
                               << solve.state.back().kx.at(sample) << " "
                               << solve.state.back().ky.at(sample) << " "
                               << solve.state.back().kz.at(sample) << " "
-                              << solve.state.size() << std::endl;
+                              << residule->evaluate().at(sample)
+                              << std::endl;
                 }
                 solve.step();
             }
@@ -91,7 +94,8 @@ int main(int argc, const char * argv[]) {
                           << solve.state.back().kx.at(sample) << " "
                           << solve.state.back().ky.at(sample) << " "
                           << solve.state.back().kz.at(sample) << " "
-                          << solve.state.size() << std::endl;
+                          << residule->evaluate().at(sample)
+                          << std::endl;
             }
         }, i, threads.size());
     }
