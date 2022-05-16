@@ -75,7 +75,7 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
-            if (lm.get() != nullptr && rm.get() != nullptr) {
+            if (lm.get() && rm.get()) {
                 if (lm->get_left()->is_match(rm->get_left())) {
                     return lm->get_left()*(lm->get_right() + rm->get_right());
                 } else if (lm->get_left()->is_match(rm->get_right())) {
@@ -92,7 +92,7 @@ namespace graph {
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
 
-            if (ld.get() != nullptr && rd.get() != nullptr &&
+            if (ld.get() && rd.get() &&
                 ld->get_right()->is_match(rd->get_right())) {
                 return (ld->get_left() + rd->get_left())/ld->get_right();
             }
@@ -255,7 +255,7 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
-            if (lm.get() != nullptr && rm.get() != nullptr) {
+            if (lm.get() && rm.get()) {
                 if (lm->get_left()->is_match(rm->get_left())) {
                     return lm->get_left()*(lm->get_right() - rm->get_right());
                 } else if (lm->get_left()->is_match(rm->get_right())) {
@@ -272,7 +272,7 @@ namespace graph {
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
 
-            if (ld.get() != nullptr && rd.get() != nullptr &&
+            if (ld.get() && rd.get() &&
                 ld->get_right()->is_match(rd->get_right())) {
                 return (ld->get_left() - rd->get_left())/ld->get_right();
             }
@@ -423,11 +423,35 @@ namespace graph {
                 return constant(this->evaluate());
             }
 
+//  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
+//  the second pass.
+            auto lm = multiply_cast(this->left);
+            auto rm = multiply_cast(this->right);
+            if (lm.get() && rm.get()) {
+                if (constant_cast(lm->get_left()).get() &&
+                    constant_cast(rm->get_left()).get()) {
+                    return (lm->get_left()*rm->get_left()) *
+                           (lm->get_right()*rm->get_right());
+                } else if (constant_cast(lm->get_left()).get() &&
+                           constant_cast(rm->get_right()).get()) {
+                    return (lm->get_left()*rm->get_right()) *
+                           (lm->get_right()*rm->get_left());
+                } else if (constant_cast(lm->get_right()).get() &&
+                           constant_cast(rm->get_left()).get()) {
+                    return (lm->get_right()*rm->get_left()) *
+                           (lm->get_left()*rm->get_right());
+                } else if (constant_cast(lm->get_right()).get() &&
+                           constant_cast(rm->get_right()).get()) {
+                    return (lm->get_right()*rm->get_right()) *
+                           (lm->get_left()*rm->get_left());
+                }
+            }
+
 //  Common factor reduction. (a/b)*(c/a) = c/b.
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
 
-            if (ld.get() != nullptr && rd.get() != nullptr) {
+            if (ld.get() && rd.get()) {
                 if (ld->get_left()->is_match(rd->get_right())) {
                     return ld->get_right()/rd->get_left();
                 } else if (ld->get_right()->is_match(rd->get_left())) {
@@ -579,7 +603,22 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
-            if (lm.get() != nullptr && rm.get() != nullptr) {
+            if (lm.get() && rm.get()) {
+//  Test for constants that can be reduced out.
+                if (constant_cast(lm->get_left()).get() &&
+                    constant_cast(rm->get_left()).get()) {
+                    return (lm->get_left()/rm->get_left())*(lm->get_right()/rm->get_right());
+                } else if (constant_cast(lm->get_left()).get() &&
+                           constant_cast(rm->get_right()).get()) {
+                    return (lm->get_left()/rm->get_right())*(lm->get_right()/rm->get_left());
+                } else if (constant_cast(lm->get_right()).get() &&
+                           constant_cast(rm->get_left()).get()) {
+                    return (lm->get_right()/rm->get_left())*(lm->get_left()/rm->get_right());
+                } else if (constant_cast(lm->get_right()).get() &&
+                           constant_cast(rm->get_right()).get()) {
+                    return (lm->get_right()/rm->get_right())*(lm->get_left()/rm->get_left());
+                }
+
                 if (lm->get_left()->is_match(rm->get_left())) {
                     return lm->get_right()/rm->get_right();
                 } else if (lm->get_left()->is_match(rm->get_right())) {

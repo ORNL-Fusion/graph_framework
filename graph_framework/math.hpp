@@ -48,11 +48,38 @@ namespace graph {
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
-            if (constant_cast(this->arg)) {
+            if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
-            } else {
-                return this->shared_from_this();
             }
+
+//  Handle casses like sqrt(a*b).
+            auto am = multiply_cast(this->arg);
+            if (am.get()) {
+                auto lc = constant_cast(am->get_left());
+                if (lc.get() != nullptr) {
+                    return sqrt(lc)*sqrt(am->get_right());
+                }
+
+                auto rc = constant_cast(am->get_right());
+                if (rc.get()) {
+                    return sqrt(rc)*sqrt(am->get_left());
+                }
+
+                if (am->get_left()->is_match(am->get_right())) {
+                    return am->get_left();
+                }
+            }
+
+//  Handle casses like sqrt(x*x/y*y)
+//            auto ad = divide_cast(this->arg);
+//            if (am.get() != nullptr) {
+//                auto dnm = multiply_cast(<#std::shared_ptr<N> x#>)
+//                if () {
+
+//                }
+//            }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -156,7 +183,7 @@ namespace graph {
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
-            if (constant_cast(this->arg)) {
+            if (constant_cast(this->arg).get() != nullptr) {
                 return constant(this->evaluate());
             } else {
                 return this->shared_from_this();

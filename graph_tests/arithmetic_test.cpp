@@ -441,6 +441,50 @@ template<typename BACKEND> void test_multiply() {
     auto match_cast = graph::multiply_cast(match);
     assert(match_cast->get_left()->is_match(match_cast->get_right()) &&
            "Expected left and right to match");
+
+//  Test reduction of common constants c1*x*c2*y = c3*x*y.
+    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
+    auto x2 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x3 = x1*x2;
+    auto x3_cast = graph::multiply_cast(x3);
+    assert(x3_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x3_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::multiply_cast(x3_cast->get_right()).get() != nullptr &&
+           "Expected multipy node.");
+
+//  Test reduction of common constants x*c1*c2*y = c3*x*y.
+    auto x4 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (2);
+    auto x5 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x6 = x4*x5;
+    auto x6_cast = graph::multiply_cast(x6);
+    assert(x6_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x6_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::multiply_cast(x6_cast->get_right()).get() != nullptr &&
+           "Expected multipy node.");
+
+//  Test reduction of common constants c1*x*y*c2 = c3*x*y.
+    auto x7 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
+    auto x8 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (5);
+    auto x9 = x7*x8;
+    auto x9_cast = graph::multiply_cast(x9);
+    assert(x9_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x9_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::multiply_cast(x9_cast->get_right()).get() != nullptr &&
+           "Expected multipy node.");
+
+//  Test reduction of common constants x*c1*y*c2 = c3*x*y.
+    auto x10 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (2);
+    auto x11 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x12 = x10*x11;
+    auto x12_cast = graph::multiply_cast(x12);
+    assert(x12_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x12_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::multiply_cast(x12_cast->get_right()).get() != nullptr &&
+           "Expected multipy node.");
 }
 
 //------------------------------------------------------------------------------
@@ -626,6 +670,50 @@ template<typename BACKEND> void test_divide() {
     auto match_cast = graph::constant_cast(match);
     assert(match_cast->is(1) &&
            "Expected one constant for result.");
+
+//  Test reduction of common constants (c1*x)/(c2*y) = c3*x/y.
+    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
+    auto x2 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x3 = x1/x2;
+    auto x3_cast = graph::multiply_cast(x3);
+    assert(x3_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x3_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::divide_cast(x3_cast->get_right()).get() != nullptr &&
+           "Expected multipy node.");
+
+//  Test reduction of common constants (c1*x)/(y*c2) = c3*x/y.
+    auto x4 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (2);
+    auto x5 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x6 = x4/x5;
+    auto x6_cast = graph::multiply_cast(x6);
+    assert(x6_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x6_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::divide_cast(x6_cast->get_right()).get() != nullptr &&
+           "Expected multipy node.");
+
+//  Test reduction of common constants (x*c1)/(c2*y) = c3*x/y.
+    auto x7 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
+    auto x8 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (5);
+    auto x9 = x7/x8;
+    auto x9_cast = graph::multiply_cast(x9);
+    assert(x9_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x9_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::divide_cast(x9_cast->get_right()).get() != nullptr &&
+           "Expected multipy node.");
+
+//  Test reduction of common constants (x*c1)/(y*c2) = c3*x/y.
+    auto x10 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (2);
+    auto x11 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x12 = x10/x11;
+    auto x12_cast = graph::multiply_cast(x12);
+    assert(x12_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x12_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::divide_cast(x12_cast->get_right()).get() != nullptr &&
+           "Expected multipy node.");
 }
 
 //------------------------------------------------------------------------------

@@ -54,6 +54,22 @@ void test_sqrt() {
     assert(graph::divide_cast(dsqrt_var).get() != nullptr &&
            "Expected a divide type.");
     assert(dsqrt_var->evaluate().at(0) == 1.0/(2.0*sqrt(3.0)));
+
+//  Reduction sqrt(c*x*c*y) = x
+    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
+    auto x2 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
+    auto x = graph::sqrt(x1*x2);
+    auto x_cast = graph::multiply_cast(x);
+    assert(x_cast.get() != nullptr && "Expected a multiply node.");
+    assert(graph::constant_cast(x_cast->get_left()).get() != nullptr &&
+           "Expected a constant coefficent.");
+    assert(graph::sqrt_cast(x_cast->get_right()).get() != nullptr &&
+           "Expected sqrt node.");
+
+//  Reduction Sqrt(x*x) = x
+    auto x_var = graph::variable<BACKEND> (1);
+    auto x2_sqrt = graph::sqrt(x_var*x_var);
+    assert(x2_sqrt.get() == x_var.get() && "Expected to reduce to x_var.");
 }
 
 //------------------------------------------------------------------------------
