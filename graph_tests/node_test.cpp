@@ -20,7 +20,7 @@ template<typename BACKEND>
 void test_constant() {
     auto zero = graph::constant<BACKEND> (0);
     auto zero_cast = graph::constant_cast(zero);
-    assert(zero_cast.get() != nullptr && "Expected a constant type.");
+    assert(zero_cast.get() && "Expected a constant type.");
     assert(graph::variable_cast(zero).get() == nullptr &&
            "Expected a constant type.");
     assert(zero_cast->is(0) && "Constant value expeced zero.");
@@ -30,28 +30,26 @@ void test_constant() {
     assert(zero_result.at(0) == 0 && "Constant value evalute expeced zero.");
     auto dzero = zero->df(zero);
     auto dzero_cast = graph::constant_cast(dzero);
-    assert(dzero_cast.get() != nullptr  &&
-           "Expected a constant type for derivative.");
+    assert(dzero_cast.get() && "Expected a constant type for derivative.");
     assert(dzero_cast->is(0) && "Constant value expeced zero.");
     zero->set(1);
     assert(zero_cast->is(0) && "Constant value expeced zero.");
 
     auto one = graph::constant<BACKEND> (std::vector<double> ({1.0, 1.0}));
     auto one_cast = graph::constant_cast(one);
-    assert(one_cast.get() != nullptr && "Expected a constant type.");
+    assert(one_cast.get() && "Expected a constant type.");
     assert(one_cast->is(1) && "Constant value expeced zero.");
     const BACKEND one_result = one->evaluate();
     assert(one_result.size() == 1 && "Expected single value.");
     assert(one_result.at(0) == 1 && "Constant value evalute expeced one.");
     auto done = one->df(zero);
     auto done_cast = graph::constant_cast(done);
-    assert(done_cast.get() != nullptr &&
-           "Expected a constant type for derivative.");
+    assert(done_cast.get() && "Expected a constant type for derivative.");
     assert(done_cast->is(0) && "Constant value expeced zero.");
 
     auto one_two = graph::constant<BACKEND> (std::vector<double> ({1.0, 2.0}));
     auto one_two_cast = graph::constant_cast(one_two);
-    assert(one_two_cast.get() != nullptr && "Expected a constant type.");
+    assert(one_two_cast.get() && "Expected a constant type.");
     assert(!one_two_cast->is(1) && "Constant expected to not be one.");
     const BACKEND one_two_result = one_two->evaluate();
     assert(one_two_result.size() == 2 && "Expected two elements in constant");
@@ -72,8 +70,7 @@ template<typename BACKEND>
 void test_variable() {
     auto zero = graph::variable<BACKEND> (1);
     zero->set(0);
-    assert(graph::variable_cast(zero).get() != nullptr &&
-           "Expected a variable type.");
+    assert(graph::variable_cast(zero).get() && "Expected a variable type.");
     assert(graph::constant_cast(zero).get() == nullptr &&
            "Expected a variable type.");
     const BACKEND zero_result = zero->evaluate();
@@ -84,19 +81,19 @@ void test_variable() {
     assert(zero_result2.size() == 1 && "Expected single value.");
     assert(zero_result2.at(0) == 1 && "Variable value evalute expeced zero.");
     auto dzero = zero->df(zero);
-    assert(graph::constant_cast(dzero).get() != nullptr &&
-           "Expected a constant type.");
+    assert(graph::constant_cast(dzero).get() && "Expected a constant type.");
     const BACKEND dzero_result = dzero->evaluate();
     assert(dzero_result.size() == 1 && "Expected single value.");
     assert(dzero_result.at(0) == 1 && "Constant value evalute expeced one.");
 
     auto ones = graph::variable<BACKEND> (2, 1);
     auto dzerodone = zero->df(ones);
-    assert(graph::constant_cast(dzerodone).get() != nullptr &&
+    assert(graph::constant_cast(dzerodone).get() &&
            "Expected a constant type.");
     const BACKEND dzerodone_result = dzerodone->evaluate();
     assert(dzerodone_result.size() == 1 && "Expected single value.");
-    assert(dzerodone_result.at(0) == 0 && "Constant value evalute expeced zero.");
+    assert(dzerodone_result.at(0) == 0 &&
+           "Constant value evalute expeced zero.");
 
     auto one_two = graph::variable<BACKEND> (std::vector<double> ({1.0, 2.0}));
     const BACKEND one_two_result = one_two->evaluate();
@@ -129,11 +126,11 @@ void test_cache() {
     assert(cache_five->evaluate().at(0) == 5 && "Expected a value of five.");
     cache_five->reset_cache();
     assert(cache_five->evaluate().at(0) == 6 && "Expected a value of six.");
-    assert(graph::cache_cast(cache_five) != nullptr && "Expected cache node.");
+    assert(graph::cache_cast(cache_five).get() && "Expected cache node.");
 
     auto three = graph::constant<BACKEND> (3.0);
     auto cache_three = graph::cache(three);
-    assert(graph::constant_cast(cache_three) != nullptr &&
+    assert(graph::constant_cast(cache_three).get() &&
            "Expected a constant node.");
 
     assert(graph::constant_cast(cache_five->df(cache_five))->is(1) &&

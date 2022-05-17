@@ -85,11 +85,11 @@ namespace graph {
             }
 
             auto x_cast = sin_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->arg->is_match(x_cast->get_arg());
-            } else {
-                return false;
             }
+
+            return false;
         }
     };
 
@@ -190,11 +190,11 @@ namespace graph {
             }
 
             auto x_cast = cos_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->arg->is_match(x_cast->get_arg());
-            } else {
-                return false;
             }
+
+            return false;
         }
     };
 

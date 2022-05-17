@@ -22,8 +22,7 @@ void test_sqrt() {
     auto sqrt_ten = graph::sqrt(ten);
     assert(sqrt_ten->evaluate().at(0) == sqrt(10.0));
 
-    assert(graph::constant_cast(sqrt_ten).get() != nullptr &&
-           "Expected a constant type.");
+    assert(graph::constant_cast(sqrt_ten).get() && "Expected a constant type.");
 
     auto vec = graph::constant<BACKEND> (std::vector<double> ({5.0, 3.0}));
     auto sqrt_vec = graph::sqrt(vec);
@@ -34,16 +33,14 @@ void test_sqrt() {
 
     auto var = graph::variable<BACKEND> (1);
     auto sqrt_var = graph::sqrt(var);
-    assert(graph::sqrt_cast(sqrt_var).get() != nullptr &&
-           "Expected a variable type.");
+    assert(graph::sqrt_cast(sqrt_var).get() &&"Expected a variable type.");
 
     var->set(3);
     assert(sqrt_var->evaluate().at(0) == sqrt(3.0));
 
     auto var_vec = graph::variable<BACKEND> (std::vector<double> ({4.0, 7.0}));
     auto sqrt_var_vec = graph::sqrt(var_vec);
-    assert(graph::sqrt_cast(sqrt_var_vec).get() != nullptr &&
-           "Expected a variable type.");
+    assert(graph::sqrt_cast(sqrt_var_vec).get() && "Expected a variable type.");
     const BACKEND sqrt_var_vec_result = sqrt_var_vec->evaluate();
     assert(sqrt_var_vec_result.size() == 2);
     assert(sqrt_var_vec_result.at(0) == sqrt(4.0));
@@ -51,8 +48,7 @@ void test_sqrt() {
 
 //  d sqrt(x) / dx = 1/(2 Sqrt(x))
     auto dsqrt_var = sqrt_var->df(var);
-    assert(graph::divide_cast(dsqrt_var).get() != nullptr &&
-           "Expected a divide type.");
+    assert(graph::divide_cast(dsqrt_var).get() && "Expected a divide type.");
     assert(dsqrt_var->evaluate().at(0) == 1.0/(2.0*sqrt(3.0)));
 
 //  Reduction sqrt(c*x*c*y) = x
@@ -60,16 +56,26 @@ void test_sqrt() {
     auto x2 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
     auto x = graph::sqrt(x1*x2);
     auto x_cast = graph::multiply_cast(x);
-    assert(x_cast.get() != nullptr && "Expected a multiply node.");
-    assert(graph::constant_cast(x_cast->get_left()).get() != nullptr &&
+    assert(x_cast.get() && "Expected a multiply node.");
+    assert(graph::constant_cast(x_cast->get_left()).get() &&
            "Expected a constant coefficent.");
-    assert(graph::sqrt_cast(x_cast->get_right()).get() != nullptr &&
+    assert(graph::sqrt_cast(x_cast->get_right()).get() &&
            "Expected sqrt node.");
 
 //  Reduction Sqrt(x*x) = x
     auto x_var = graph::variable<BACKEND> (1);
     auto x2_sqrt = graph::sqrt(x_var*x_var);
     assert(x2_sqrt.get() == x_var.get() && "Expected to reduce to x_var.");
+
+//  Reduction Sqrt(x*x/y*y);
+    auto y_var = graph::variable<BACKEND> (1);
+    auto sq_reduce = graph::sqrt((x_var*x_var)/(y_var*y_var));
+    auto sq_reduce_cast = graph::divide_cast(sq_reduce);
+    assert(sq_reduce_cast.get() && "Expected divide node.");
+    assert(sq_reduce_cast->get_left().get() == x_var.get() &&
+           "Expected x_var.");
+    assert(sq_reduce_cast->get_right().get() == y_var.get() &&
+           "Expected y_var.");
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +86,7 @@ void test_exp() {
     auto ten = graph::constant<BACKEND> (10);
     auto exp_ten = graph::exp(ten);
     assert(exp_ten->evaluate().at(0) == exp(10.0));
-    assert(graph::constant_cast(exp_ten).get() != nullptr &&
+    assert(graph::constant_cast(exp_ten).get() &&
            "Expected a constant type.");
 
     auto vec = graph::constant<BACKEND> (std::vector<double> ({5.0, 3.0}));
@@ -92,16 +98,14 @@ void test_exp() {
 
     auto var = graph::variable<BACKEND> (1);
     auto exp_var = graph::exp(var);
-    assert(graph::exp_cast(exp_var).get() != nullptr &&
-           "Expected a variable type.");
+    assert(graph::exp_cast(exp_var).get() && "Expected a variable type.");
 
     var->set(3);
     assert(exp_var->evaluate().at(0) == exp(3.0));
 
     auto var_vec = graph::variable<BACKEND> (std::vector<double> ({4.0, 7.0}));
     auto exp_var_vec = graph::exp(var_vec);
-    assert(graph::exp_cast(exp_var_vec).get() != nullptr &&
-           "Expected a variable type.");
+    assert(graph::exp_cast(exp_var_vec).get() && "Expected a variable type.");
     const BACKEND exp_var_vec_result = exp_var_vec->evaluate();
     assert(exp_var_vec_result.size() == 2);
     assert(exp_var_vec_result.at(0) == exp(4.0));
@@ -109,8 +113,7 @@ void test_exp() {
 
 //  d exp(x) / dx = exp(x)
     auto dexp_var = exp_var->df(var);
-    assert(graph::exp_cast(dexp_var).get() != nullptr &&
-           "Expected a divide type.");
+    assert(graph::exp_cast(dexp_var).get() && "Expected a divide type.");
     assert(dexp_var->evaluate().at(0) == exp(3.0));
 }
 

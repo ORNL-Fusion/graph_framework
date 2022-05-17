@@ -312,11 +312,11 @@ namespace graph {
             }
 
             auto x_cast = constant_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->evaluate() == x_cast->evaluate();
-            } else {
-                return false;
             }
+
+            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -598,11 +598,11 @@ namespace graph {
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> reduce() final {
-            if (constant_cast(this->arg).get() == nullptr) {
-                return this->shared_from_this();
-            } else {
+            if (constant_cast(this->arg).get()) {
                 return this->arg;
             }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -633,11 +633,11 @@ namespace graph {
             }
 
             auto x_cast = cache_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->arg->is_match(x_cast->get_arg());
-            } else {
-                return false;
             }
+
+            return false;
         }
 
 //------------------------------------------------------------------------------

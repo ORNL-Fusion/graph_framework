@@ -140,12 +140,12 @@ namespace graph {
             }
 
             auto x_cast = add_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->left->is_match(x_cast->get_left()) &&
                        this->right->is_match(x_cast->get_right());
-            } else {
-                return false;
             }
+
+            return false;
         }
     };
 
@@ -309,12 +309,12 @@ namespace graph {
             }
 
             auto x_cast = subtract_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->left->is_match(x_cast->get_left()) &&
                        this->right->is_match(x_cast->get_right());
-            } else {
-                return false;
             }
+
+            return false;
         }
     };
 
@@ -492,12 +492,12 @@ namespace graph {
             }
 
             auto x_cast = multiply_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->left->is_match(x_cast->get_left()) &&
                        this->right->is_match(x_cast->get_right());
-            } else {
-                return false;
             }
+
+            return false;
         }
     };
 
@@ -663,12 +663,12 @@ namespace graph {
             }
 
             auto x_cast = divide_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->left->is_match(x_cast->get_left()) &&
                        this->right->is_match(x_cast->get_right());
-            } else {
-                return false;
             }
+
+            return false;
         }
     };
 
@@ -782,7 +782,7 @@ namespace graph {
 //  for a common factor. So you can change a*b + (a*c) -> a*(b + c).
             auto rm = multiply_cast(this->right);
 
-            if (rm.get() != nullptr) {
+            if (rm.get()) {
                 if (rm->get_left()->is_match(this->left)) {
                     return this->left*(this->middle + rm->get_right());
                 } else if (rm->get_left()->is_match(this->middle)) {
@@ -836,7 +836,7 @@ namespace graph {
             }
 
             auto x_cast = fma_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->left->is_match(x_cast->get_left()) &&
                        this->middle->is_match(x_cast->get_middle()) &&
                        this->right->is_match(x_cast->get_right());

@@ -56,7 +56,7 @@ namespace graph {
             auto am = multiply_cast(this->arg);
             if (am.get()) {
                 auto lc = constant_cast(am->get_left());
-                if (lc.get() != nullptr) {
+                if (lc.get()) {
                     return sqrt(lc)*sqrt(am->get_right());
                 }
 
@@ -71,13 +71,18 @@ namespace graph {
             }
 
 //  Handle casses like sqrt(x*x/y*y)
-//            auto ad = divide_cast(this->arg);
-//            if (am.get() != nullptr) {
-//                auto dnm = multiply_cast(<#std::shared_ptr<N> x#>)
-//                if () {
+            auto ad = divide_cast(this->arg);
+            if (ad.get()) {
+                auto dnm = multiply_cast(ad->get_left());
+                if (dnm->get_left()->is_match(dnm->get_right())) {
+                    return dnm->get_left()/sqrt(ad->get_right());
+                }
 
-//                }
-//            }
+                auto ddm = multiply_cast(ad->get_right());
+                if (ddm->get_left()->is_match(ddm->get_right())) {
+                    return sqrt(ad->get_left())/ddm->get_left();
+                }
+            }
 
             return this->shared_from_this();
         }
@@ -112,7 +117,7 @@ namespace graph {
             }
 
             auto x_cast = sqrt_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->arg->is_match(x_cast->get_arg());
             } else {
                 return false;
@@ -183,11 +188,11 @@ namespace graph {
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
-            if (constant_cast(this->arg).get() != nullptr) {
+            if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
-            } else {
-                return this->shared_from_this();
             }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -202,9 +207,9 @@ namespace graph {
         df(shared_leaf<typename N::backend> x) final {
             if (this->is_match(x)) {
                 return constant<typename N::backend> (1);
-            } else {
-                return this->shared_from_this()*this->arg->df(x);
             }
+
+            return this->shared_from_this()*this->arg->df(x);
         }
 
 //------------------------------------------------------------------------------
@@ -219,11 +224,11 @@ namespace graph {
             }
 
             auto x_cast = exp_cast(x);
-            if (x_cast != nullptr) {
+            if (x_cast.get()) {
                 return this->arg->is_match(x_cast->get_arg());
-            } else {
-                return false;
             }
+
+            return false;
         }
     };
 
