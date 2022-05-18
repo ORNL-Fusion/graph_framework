@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C721EA9A2833FF7800EAFB2D /* equilibrium.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C721EA992833FF7800EAFB2D /* equilibrium.hpp */; };
 		C79141B622DAAD0C00E0BA0D /* xrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C79141B522DAAD0C00E0BA0D /* xrays.cpp */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +28,7 @@
 		C71C1FF627F5F5A8006997C2 /* solver.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = solver.hpp; sourceTree = "<group>"; };
 		C71C1FF727F61DFA006997C2 /* math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = math.hpp; sourceTree = "<group>"; };
 		C71C1FF827F621E7006997C2 /* vector.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vector.hpp; sourceTree = "<group>"; };
+		C721EA992833FF7800EAFB2D /* equilibrium.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = equilibrium.hpp; sourceTree = "<group>"; };
 		C723210222DC0D0A006BBF13 /* arithmetic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arithmetic.hpp; sourceTree = "<group>"; };
 		C72D922D280489D10051BAF2 /* backend_protocall.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = backend_protocall.hpp; sourceTree = "<group>"; };
 		C72D922E28048D720051BAF2 /* cpu_backend.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cpu_backend.hpp; sourceTree = "<group>"; };
@@ -98,6 +100,7 @@
 				C71C1FF627F5F5A8006997C2 /* solver.hpp */,
 				C72D922D280489D10051BAF2 /* backend_protocall.hpp */,
 				C72D922E28048D720051BAF2 /* cpu_backend.hpp */,
+				C721EA992833FF7800EAFB2D /* equilibrium.hpp */,
 			);
 			path = graph_framework;
 			sourceTree = "<group>";
@@ -132,6 +135,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C721EA9A2833FF7800EAFB2D /* equilibrium.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

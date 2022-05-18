@@ -59,9 +59,11 @@ int main(int argc, const char * argv[]) {
             ky->set(0.0);
             kz->set(0.0);
 
-            solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times);
-            //solver::rk4<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
-            //solver::rk4<dispersion::simple<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times);
+            auto eq = equilibrium::make_guassian_density<backend::cpu> ();
+
+            solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            //solver::rk4<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
+            //solver::rk4<dispersion::simple<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             solve.init(kx);
 
             auto residule = solve.residule();

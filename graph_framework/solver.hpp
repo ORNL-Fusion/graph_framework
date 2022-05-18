@@ -11,6 +11,7 @@
 #include <list>
 
 #include "dispersion.hpp"
+#include "equilibrium.hpp"
 
 namespace solver {
 //******************************************************************************
@@ -125,6 +126,7 @@ namespace solver {
 ///  @param[in] x  Inital x.
 ///  @param[in] y  Inital y.
 ///  @param[in] z  Inital z.
+///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         solver_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> w,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx,
@@ -132,8 +134,9 @@ namespace solver {
                          graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z) :
-        D(w, kx, ky, kz, x, y, z), w(w),
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
+                         equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq) :
+        D(w, kx, ky, kz, x, y, z, eq), w(w),
         kx(kx), ky(ky), kz(kz),
         x(x), y(y), z(z) {}
 
@@ -255,8 +258,9 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
-            const double dt) :
-        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z) {
+            const double dt,
+            equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq) :
+        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, eq) {
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);
 
             this->kx1 = graph::cache(dt_const*this->D.get_dkxdt());
@@ -272,7 +276,8 @@ namespace solver {
                                                                      graph::pseudo_variable(this->kz + kz1),
                                                                      graph::pseudo_variable(this->x  + x1),
                                                                      graph::pseudo_variable(this->y  + y1),
-                                                                     graph::pseudo_variable(this->z  + z1));
+                                                                     graph::pseudo_variable(this->z  + z1),
+                                                                     eq);
 
             this->kx2 = graph::cache(dt_const*D2.get_dkxdt());
             this->ky2 = graph::cache(dt_const*D2.get_dkydt());
@@ -392,8 +397,9 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
-            const double dt) :
-        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z) {
+            const double dt,
+            equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq) :
+        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, eq) {
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);
 
             this->kx1 = graph::cache(dt_const*this->D.get_dkxdt());
@@ -411,7 +417,8 @@ namespace solver {
                                                                      graph::pseudo_variable(this->kz + kz1/two),
                                                                      graph::pseudo_variable(this->x  + x1 /two),
                                                                      graph::pseudo_variable(this->y  + y1 /two),
-                                                                     graph::pseudo_variable(this->z  + z1 /two));
+                                                                     graph::pseudo_variable(this->z  + z1 /two),
+                                                                     eq);
 
             this->kx2 = graph::cache(dt_const*D2.get_dkxdt());
             this->ky2 = graph::cache(dt_const*D2.get_dkydt());
@@ -420,13 +427,16 @@ namespace solver {
             this->y2  = graph::cache(dt_const*D2.get_dydt());
             this->z2  = graph::cache(dt_const*D2.get_dzdt());
 
+            auto result = this->kx2->evaluate();
+
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D3(this->w,
                                                                      graph::pseudo_variable(this->kx + kx2/two),
                                                                      graph::pseudo_variable(this->ky + ky2/two),
                                                                      graph::pseudo_variable(this->kz + kz2/two),
                                                                      graph::pseudo_variable(this->x  + x2 /two),
                                                                      graph::pseudo_variable(this->y  + y2 /two),
-                                                                     graph::pseudo_variable(this->z  + z2 /two));
+                                                                     graph::pseudo_variable(this->z  + z2 /two),
+                                                                     eq);
 
             this->kx3 = graph::cache(dt_const*D3.get_dkxdt());
             this->ky3 = graph::cache(dt_const*D3.get_dkydt());
@@ -441,7 +451,8 @@ namespace solver {
                                                                      graph::pseudo_variable(this->kz + kz3),
                                                                      graph::pseudo_variable(this->x  + x3),
                                                                      graph::pseudo_variable(this->y  + y3),
-                                                                     graph::pseudo_variable(this->z  + z3));
+                                                                     graph::pseudo_variable(this->z  + z3),
+                                                                     eq);
 
             this->kx4 = graph::cache(dt_const*D4.get_dkxdt());
             this->ky4 = graph::cache(dt_const*D4.get_dkydt());

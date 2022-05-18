@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "vector.hpp"
+#include "equilibrium.hpp"
 
 namespace dispersion {
 //******************************************************************************
@@ -51,6 +52,7 @@ namespace dispersion {
 ///  @param[in] x  Position in x.
 ///  @param[in] y  Position in y.
 ///  @param[in] z  Position in z.
+///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         dispersion_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> w,
                              graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx,
@@ -58,8 +60,9 @@ namespace dispersion {
                              graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kz,
                              graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
                              graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
-                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z) :
-        D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z)) {
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
+                             equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq) :
+        D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z, eq)) {
             auto dDdw = this->D->df(w)->reduce();
             auto dDdkx = this->D->df(kx)->reduce();
             auto dDdky = this->D->df(ky)->reduce();
@@ -209,6 +212,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
                                               graph::shared_leaf<BACKEND> kx,
@@ -216,7 +220,8 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> kz,
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
-                                              graph::shared_leaf<BACKEND> z) = 0;
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) = 0;
 
 ///  Type def to retrieve the backend type.
         typedef BACKEND backend;
@@ -240,6 +245,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
                                               graph::shared_leaf<BACKEND> kx,
@@ -247,7 +253,8 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> kz,
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
-                                              graph::shared_leaf<BACKEND> z) final {
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
             auto c = graph::constant<BACKEND> (1);
 
             auto npar2 = kz*kz*c*c/(w*w);
@@ -274,6 +281,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
                                               graph::shared_leaf<BACKEND> kx,
@@ -281,7 +289,8 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> kz,
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
-                                              graph::shared_leaf<BACKEND> z) final {
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
             auto c = graph::constant<BACKEND> (1);
             auto well = c - graph::constant<BACKEND>(0.5)*exp(graph::constant<BACKEND> (-1)*(x*x + y*y)/graph::constant<BACKEND> (0.1));
             auto npar2 = kz*kz*c*c/(w*w);
@@ -295,6 +304,28 @@ namespace dispersion {
 //------------------------------------------------------------------------------
     template<class BACKEND>
     class cold_plasma final : public dispersion_function<BACKEND> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Build plasma fequency expression.
+//------------------------------------------------------------------------------
+        static graph::shared_leaf<BACKEND> build_plasma_fequency(graph::shared_leaf<BACKEND> n,
+                                                                 graph::shared_leaf<BACKEND> q,
+                                                                 graph::shared_leaf<BACKEND> m,
+                                                                 graph::shared_leaf<BACKEND> c,
+                                                                 graph::shared_leaf<BACKEND> epsion0) {
+            return n*q*q/(epsion0*m*c*c);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Build cyclotron fequency expression.
+//------------------------------------------------------------------------------
+        static graph::shared_leaf<BACKEND> build_cyclotron_fequency(graph::shared_leaf<BACKEND> q,
+                                                                    graph::shared_leaf<BACKEND> b,
+                                                                    graph::shared_leaf<BACKEND> m,
+                                                                    graph::shared_leaf<BACKEND> c) {
+            return q*b/(m*c);
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Cold Plasma Disperison function.
@@ -330,6 +361,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
                                               graph::shared_leaf<BACKEND> kx,
@@ -337,7 +369,8 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> kz,
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
-                                              graph::shared_leaf<BACKEND> z) final {
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
 //  Constants
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
             auto mu0 = graph::constant<BACKEND> (M_PI*4.0E-7);
@@ -346,27 +379,41 @@ namespace dispersion {
             auto none = graph::constant<BACKEND> (-1);
 
 //  Equilibrium quantities.
-            auto B = one;
             auto me = graph::constant<BACKEND> (9.1093837015E-31);
-            auto mi = graph::constant<BACKEND> (3.34449469E-27);
             auto q = graph::constant<BACKEND> (1.602176634E-19);
-            auto ne = graph::constant<BACKEND> (1.0E19)*graph::exp((x*x + y*y)/graph::constant<BACKEND> (-0.2));
-            auto ni = ne;
-
-//  Frequencies
-            auto wpe2 = ne*q*q/(epsion0*me*c*c);
-            auto wpi2 = ni*q*q/(epsion0*mi*c*c);
-            auto ec = none*q*B/(me*c);
-            auto ic = q*B/(mi*c);
-            auto w2 = w*w;
 
 //  Dielectric terms.
-            auto denome = one - ec*ec/w2;
-            auto denomi = one - ic*ic/w2;
+//  Frequencies
+            auto ne = eq->get_electron_density(x, y, z);
+            auto wpe2 = build_plasma_fequency(ne, q, me, c, epsion0);
+            auto ec = build_cyclotron_fequency(none*q,
+                                               eq->get_magnetic_field(x, y, z),
+                                               me, c);
 
-            auto e11 = one - (wpe2/w2)/denome - (wpi2/w2)/denomi;
-            auto e12 = none*(((ec/w)*(wpe2/w2))/denome + ((ic/w)*(wpi2/w2))/denomi);
-            auto e33 = one - (wpe2 + wpi2)/w2;
+            auto w2 = w*w;
+            auto denome = one - ec*ec/w2;
+            auto e11 = one - (wpe2/w2)/denome;
+            auto e12 = ((ec/w)*(wpe2/w2))/denome;
+            auto e33 = wpe2;
+
+            for (size_t i = 0, ie = eq->get_num_ion_species(); i < ie; i++) {
+                auto mi = graph::constant<BACKEND> (eq->get_ion_mass(i));
+                auto charge = graph::constant<BACKEND> (eq->get_ion_charge(i))*q;
+
+                auto wpi2 = build_plasma_fequency(eq->get_ion_density(i, x, y, z),
+                                                  charge, mi, c, epsion0);
+                auto ic = build_cyclotron_fequency(charge,
+                                                   eq->get_magnetic_field(x, y, z),
+                                                   mi, c);
+
+                auto denomi = one - ic*ic/w2;
+                e11 = e11 - (wpi2/w2)/denomi;
+                e12 = e12 + ((ic/w)*(wpi2/w2))/denomi;
+                e33 = e33 + wpi2;
+            }
+
+            e12 = none*e12;
+            e33 = one - e33/w2;
 
 //  Wave numbers.
             auto nx = kx/w;

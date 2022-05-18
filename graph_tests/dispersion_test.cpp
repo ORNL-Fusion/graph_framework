@@ -30,7 +30,9 @@ void test_solve(const double omega,
     auto y = graph::variable<typename DISPERSION::backend> (1, 0.0);
     auto z = graph::variable<typename DISPERSION::backend> (1, 0.0);
 
-    dispersion::dispersion_interface<DISPERSION> D(w, kx, ky, kz, x, y, z);
+    auto eq = equilibrium::make_guassian_density<typename DISPERSION::backend> ();
+
+    dispersion::dispersion_interface<DISPERSION> D(w, kx, ky, kz, x, y, z, eq);
 
     auto loss = D.get_d()*D.get_d();
 

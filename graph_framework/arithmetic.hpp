@@ -474,10 +474,10 @@ namespace graph {
         df(shared_leaf<typename LN::backend> x) final {
             if (this->is_match(x)) {
                 return constant<typename LN::backend> (1);
-            } else {
-                return this->left->df(x)*this->right +
-                       this->left*this->right->df(x);
             }
+
+            return this->left->df(x)*this->right +
+                   this->left*this->right->df(x);
         }
 
 //------------------------------------------------------------------------------
@@ -585,9 +585,9 @@ namespace graph {
             if (this->left->is_match(this->right)) {
                 if (l.get() && l->is(1)) {
                     return this->left;
-                } else {
-                    return constant<typename LN::backend> (1);
                 }
+
+                return constant<typename LN::backend> (1);
             }
 
             auto r = constant_cast(this->right);
@@ -645,10 +645,10 @@ namespace graph {
         df(shared_leaf<typename LN::backend> x) final {
             if (this->is_match(x)) {
                 return constant<typename LN::backend> (1);
-            } else {
-                return this->left->df(x)/this->right -
-                       this->left*this->right->df(x)/(this->right*this->right);
             }
+
+            return this->left->df(x)/this->right -
+                   this->left*this->right->df(x)/(this->right*this->right);
         }
 
 //------------------------------------------------------------------------------
@@ -809,19 +809,19 @@ namespace graph {
         df(shared_leaf<typename LN::backend> x) final {
             if (this->is_match(x)) {
                 return constant<typename LN::backend> (1);
-            } else {
-                auto temp_right = fma<LN,
-                                      leaf_node<typename MN::backend>,
-                                      leaf_node<typename RN::backend>> (this->left,
-                                                                        this->middle->df(x),
-                                                                        this->right->df(x));
-
-                return fma<leaf_node<typename LN::backend>,
-                           MN,
-                           leaf_node<typename RN::backend>> (this->left->df(x),
-                                                             this->middle,
-                                                             temp_right);
             }
+
+            auto temp_right = fma<LN,
+                                  leaf_node<typename MN::backend>,
+                                  leaf_node<typename RN::backend>> (this->left,
+                                                                    this->middle->df(x),
+                                                                    this->right->df(x));
+
+            return fma<leaf_node<typename LN::backend>,
+                       MN,
+                       leaf_node<typename RN::backend>> (this->left->df(x),
+                                                         this->middle,
+                                                         temp_right);
         }
 
 //------------------------------------------------------------------------------
