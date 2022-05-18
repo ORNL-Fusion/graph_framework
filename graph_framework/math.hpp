@@ -48,7 +48,12 @@ namespace graph {
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
-            if (constant_cast(this->arg).get()) {
+            auto ac = constant_cast(this->arg);
+            if (ac.get()) {
+                if (ac->is(0) || ac->is(1)) {
+                    return this->arg;
+                }
+
                 return constant(this->evaluate());
             }
 

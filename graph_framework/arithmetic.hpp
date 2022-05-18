@@ -235,6 +235,11 @@ namespace graph {
         virtual shared_leaf<typename LN::backend> reduce() final {
 //  Idenity reductions.
             if (this->left->is_match(this->right)) {
+                auto l = constant_cast(this->left);
+                if (l.get() && l->is(0)) {
+                    return this->left;
+                }
+
                 return constant<typename LN::backend> (0);
             }
 
