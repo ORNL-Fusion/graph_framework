@@ -12,41 +12,116 @@
 #include "math.hpp"
 
 namespace graph {
+//******************************************************************************
+//  Vector interface.
+//******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Vector dot product.
+///  @brief Class to represent vector quantities.
+//------------------------------------------------------------------------------
+    template<typename VX, typename VY, typename VZ>
+    class vector_quantity {
+    protected:
+///  X component of the vector.
+        VX x;
+///  Y component of the vector.
+        VY y;
+///  Z component of the vector.
+        VZ z;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a new vector_quantity.
 ///
-///  @param[in] v1x Vector 1 x component.
-///  @param[in] v1y Vector 1 y component.
-///  @param[in] v1z Vector 1 z component.
-///  @param[in] v2x Vector 2 x component.
-///  @param[in] v2y Vector 2 y component.
-///  @param[in] v2z Vector 2 z component.
-///  @returns v1.v2
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 //------------------------------------------------------------------------------
-    template<typename V1X, typename V1Y, typename V1Z,
-             typename V2X, typename V2Y, typename V2Z>
-    shared_leaf<typename V1X::backend> dot(std::shared_ptr<V1X> v1x,
-                                           std::shared_ptr<V1Y> v1y,
-                                           std::shared_ptr<V1Z> v1z,
-                                           std::shared_ptr<V2X> v2x,
-                                           std::shared_ptr<V2Y> v2y,
-                                           std::shared_ptr<V2Z> v2z) {
-        return v1x*v2x + v1y*v2y + v1z*v2z;
-    }
+        vector_quantity(VX x, VY y, VZ z) :
+        x(x), y(y), z(z) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the x component.
+///
+///  @return x
+//------------------------------------------------------------------------------
+        VX get_x() const {
+            return x;
+        }
+
+
+//------------------------------------------------------------------------------
+///  @brief Get the y component.
+///
+///  @return y
+//------------------------------------------------------------------------------
+        VY get_y() const {
+            return y;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the z component.
+///
+///  @return z
+//------------------------------------------------------------------------------
+        VZ get_z() const {
+            return z;
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Vector dot product.
 ///
-///  @param[in] vx Vector x component.
-///  @param[in] vy Vector y component.
-///  @param[in] vz Vector z component.
+///  @param[in] v2 Second vector.
 ///  @returns v1.v2
 //------------------------------------------------------------------------------
+        VX dot(std::shared_ptr<vector_quantity<VX, VY, VZ>> v2) {
+            return x*v2->get_x() +
+                   y*v2->get_y() +
+                   z*v2->get_z();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Vector cross product.
+///
+///  @param[in] v2 Second vector.
+///  @returns v1 X v2
+//------------------------------------------------------------------------------
+        std::shared_ptr<vector_quantity<VX, VY, VZ>>
+        cross(std::shared_ptr<vector_quantity<VX, VY, VZ>> v2) {
+            return std::make_shared<vector_quantity<VX, VY, VZ>> (y*v2->get_z() - z*v2->get_y(),
+                                                                  z*v2->get_x() - x*v2->get_z(),
+                                                                  x*v2->get_y() - y*v2->get_x());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the length of the vector.
+///
+///  @returns |V|
+//------------------------------------------------------------------------------
+        VX length() {
+            return sqrt(x*x + y*y + z*z);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the unit vector.
+///
+///  @returns v_hat
+//------------------------------------------------------------------------------
+        std::shared_ptr<vector_quantity<VX, VY, VZ>> unit() {
+            auto l = length();
+            return std::make_shared<vector_quantity<VX, VY, VZ>> (x/l, y/l, z/l);
+        }
+    };
+
+///  Convience type for shared vector quantities.
     template<typename VX, typename VY, typename VZ>
-    shared_leaf<typename VX::backend> length(std::shared_ptr<VX> vx,
-                                             std::shared_ptr<VY> vy,
-                                             std::shared_ptr<VZ> vz) {
-        return sqrt(dot(vx, vy, vz, vx, vy, vz));
+    using shared_vector = std::shared_ptr<vector_quantity<VX, VY, VZ>>;
+
+//------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+//------------------------------------------------------------------------------
+    template<typename VX, typename VY, typename VZ>
+    shared_vector<VX, VY, VZ> vector(VX x, VY y, VZ z) {
+        return std::make_shared<vector_quantity<VX, VY, VZ>> (x, y, z);
     }
 }
 

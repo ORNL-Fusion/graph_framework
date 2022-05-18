@@ -78,7 +78,8 @@ namespace dispersion {
             dkxdt = dDdx/dDdw;
             dkydt = dDdy/dDdw;
             dkzdt = dDdz/dDdw;
-            dsdt = graph::length(dxdt, dydt, dzdt);
+
+            dsdt = graph::vector(dxdt, dydt, dzdt)->length();
         }
 
 //------------------------------------------------------------------------------
@@ -386,9 +387,9 @@ namespace dispersion {
 //  Frequencies
             auto ne = eq->get_electron_density(x, y, z);
             auto wpe2 = build_plasma_fequency(ne, q, me, c, epsion0);
-            auto ec = build_cyclotron_fequency(none*q,
-                                               eq->get_magnetic_field(x, y, z),
-                                               me, c);
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto b_len = b_vec->length();
+            auto ec = build_cyclotron_fequency(none*q, b_len, me, c);
 
             auto w2 = w*w;
             auto denome = one - ec*ec/w2;
@@ -400,11 +401,9 @@ namespace dispersion {
                 auto mi = graph::constant<BACKEND> (eq->get_ion_mass(i));
                 auto charge = graph::constant<BACKEND> (eq->get_ion_charge(i))*q;
 
-                auto wpi2 = build_plasma_fequency(eq->get_ion_density(i, x, y, z),
-                                                  charge, mi, c, epsion0);
-                auto ic = build_cyclotron_fequency(charge,
-                                                   eq->get_magnetic_field(x, y, z),
-                                                   mi, c);
+                auto ni = eq->get_ion_density(i, x, y, z);
+                auto wpi2 = build_plasma_fequency(ni, charge, mi, c, epsion0);
+                auto ic = build_cyclotron_fequency(charge, b_len, mi, c);
 
                 auto denomi = one - ic*ic/w2;
                 e11 = e11 - (wpi2/w2)/denomi;
@@ -416,13 +415,12 @@ namespace dispersion {
             e33 = one - e33/w2;
 
 //  Wave numbers.
-            auto nx = kx/w;
-            auto ny = ky/w;
-            auto nz = kz/w;
+            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto b_hat = b_vec->unit();
 
-            auto npara = nx;
+            auto npara = b_hat->dot(n);
             auto npara2 = npara*npara;
-            auto nperp = sqrt(ny*ny + nz*nz);
+            auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
 
 //  Determinate matrix elements

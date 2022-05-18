@@ -106,9 +106,12 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_magnetic_field(graph::shared_leaf<BACKEND> x,
-                                                               graph::shared_leaf<BACKEND> y,
-                                                               graph::shared_leaf<BACKEND> z) = 0;
+        virtual graph::shared_vector<graph::shared_leaf<BACKEND>,
+                                     graph::shared_leaf<BACKEND>,
+                                     graph::shared_leaf<BACKEND>>
+        get_magnetic_field(graph::shared_leaf<BACKEND> x,
+                           graph::shared_leaf<BACKEND> y,
+                           graph::shared_leaf<BACKEND> z) = 0;
     };
 
 ///  Convience type alias for unique equilibria.
@@ -166,10 +169,15 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_magnetic_field(graph::shared_leaf<BACKEND> x,
-                                                               graph::shared_leaf<BACKEND> y,
-                                                               graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0);
+        virtual graph::shared_vector<graph::shared_leaf<BACKEND>,
+                                     graph::shared_leaf<BACKEND>,
+                                     graph::shared_leaf<BACKEND>>
+        get_magnetic_field(graph::shared_leaf<BACKEND> x,
+                           graph::shared_leaf<BACKEND> y,
+                           graph::shared_leaf<BACKEND> z) final {
+            return graph::vector(graph::constant<BACKEND> (1.0),
+                                 graph::constant<BACKEND> (0.0),
+                                 graph::constant<BACKEND> (0.0));
         }
     };
 
