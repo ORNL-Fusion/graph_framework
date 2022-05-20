@@ -119,6 +119,75 @@ namespace equilibrium {
     using unique_equilibrium = std::unique_ptr<equilibrium<BACKEND>>;
 
 //******************************************************************************
+//  Slab equilibrium.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Guassian density with uniform magnetic field equilibrium.
+//------------------------------------------------------------------------------
+    template<typename BACKEND>
+    class slab : public equilibrium<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a guassian density with uniform magnetic field.
+//------------------------------------------------------------------------------
+        slab() :
+        equilibrium<BACKEND> ({3.34449469E-27},
+                              {1}) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron density.
+///
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> get_electron_density(graph::shared_leaf<BACKEND> x,
+                                                                 graph::shared_leaf<BACKEND> y,
+                                                                 graph::shared_leaf<BACKEND> z) final {
+            return graph::constant<BACKEND> (1.0E19);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion density.
+///
+///  @param[in] index The species index.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> get_ion_density(const size_t index,
+                                                            graph::shared_leaf<BACKEND> x,
+                                                            graph::shared_leaf<BACKEND> y,
+                                                            graph::shared_leaf<BACKEND> z) final {
+            return graph::constant<BACKEND> (1.0E19);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the magnetic field.
+///
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
+///  @returns Magnetic field expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<graph::shared_leaf<BACKEND>,
+                                     graph::shared_leaf<BACKEND>,
+                                     graph::shared_leaf<BACKEND>>
+        get_magnetic_field(graph::shared_leaf<BACKEND> x,
+                           graph::shared_leaf<BACKEND> y,
+                           graph::shared_leaf<BACKEND> z) final {
+            auto zero = graph::constant<BACKEND> (0.0);
+            return graph::vector(zero, zero,
+                                 graph::constant<BACKEND> (0.1)*x + graph::constant<BACKEND> (1.0));
+        }
+    };
+
+///  Convience type alias for unique equilibria.
+    template<typename BACKEND>
+    std::unique_ptr<equilibrium<BACKEND>> make_slab() {
+        return std::make_unique<slab<BACKEND>> ();
+    }
+
+//******************************************************************************
 //  Guassian density with a uniform magnetic field.
 //******************************************************************************
 //------------------------------------------------------------------------------
@@ -175,9 +244,9 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<BACKEND> x,
                            graph::shared_leaf<BACKEND> y,
                            graph::shared_leaf<BACKEND> z) final {
+            auto zero = graph::constant<BACKEND> (0.0);
             return graph::vector(graph::constant<BACKEND> (1.0),
-                                 graph::constant<BACKEND> (0.0),
-                                 graph::constant<BACKEND> (0.0));
+                                 zero, zero);
         }
     };
 

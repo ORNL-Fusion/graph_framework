@@ -23,7 +23,7 @@ int main(int argc, const char * argv[]) {
     const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
     const size_t num_times = 10000;
-    const size_t num_rays = 10000;
+    const size_t num_rays = 1;//10000;
 
     std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
                                                        static_cast<unsigned int> (num_rays)),
@@ -47,21 +47,29 @@ int main(int argc, const char * argv[]) {
             auto y = graph::variable<backend::cpu> (local_num_rays);
             auto z = graph::variable<backend::cpu> (local_num_rays);
 
+            const double q = 1.602176634E-19;
+            const double me = 9.1093837015E-31;
+            const double mu0 = M_PI*4.0E-7;
+            const double epsilon0 = 8.8541878138E-12;
+            const double c = 1.0/sqrt(mu0*epsilon0);
+            const double OmegaCE = -q*1/(me*c);
+
 //  Inital conditions.
             for (size_t j = 0; j < local_num_rays; j++) {
-                omega->set(j, real_dist(engine)*1000.0);
+                omega->set(j, OmegaCE);
                 //omega->set(j, real_dist(engine));
             }
-            x->set(-1.0);
-            y->set(-0.2);
-            z->set(0.0);
-            kx->set(1000.0);
+            x->set(-0.25);
+            y->set(0.0);
+            z->set(-0.25);
+            kx->set(200.0);
             ky->set(0.0);
-            kz->set(0.0);
+            kz->set(0.7*OmegaCE);
 
-            auto eq = equilibrium::make_guassian_density<backend::cpu> ();
+            //auto eq = equilibrium::make_guassian_density<backend::cpu> ();
+            auto eq = equilibrium::make_slab<backend::cpu> ();
 
-            solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             //solver::rk4<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             //solver::rk4<dispersion::simple<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             solve.init(kx);
