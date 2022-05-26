@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file solver_test.cpp
-///  @brief Tests for math nodes.
+///  @brief Tests for solvers.
 //------------------------------------------------------------------------------
 
 //  Turn on asserts even in release builds.

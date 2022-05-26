@@ -68,7 +68,7 @@ int main(int argc, const char * argv[]) {
             kx->set(22.0);
             ky->set(0.0);
             kz->set(0.7*OmegaCE);
-
+            
             //x->set(-1.0);
             //y->set(-0.2);
             //z->set(0.0);

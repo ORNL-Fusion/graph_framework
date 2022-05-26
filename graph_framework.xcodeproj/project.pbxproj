@@ -30,6 +30,7 @@
 		C71C1FF827F621E7006997C2 /* vector.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vector.hpp; sourceTree = "<group>"; };
 		C721EA992833FF7800EAFB2D /* equilibrium.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = equilibrium.hpp; sourceTree = "<group>"; };
 		C723210222DC0D0A006BBF13 /* arithmetic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arithmetic.hpp; sourceTree = "<group>"; };
+		C725CD792840088000D0EDE2 /* physics_test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = physics_test.cpp; sourceTree = "<group>"; };
 		C72D922D280489D10051BAF2 /* backend_protocall.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = backend_protocall.hpp; sourceTree = "<group>"; };
 		C72D922E28048D720051BAF2 /* cpu_backend.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cpu_backend.hpp; sourceTree = "<group>"; };
 		C77E6DF522DD64E700469621 /* trigonometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trigonometry.hpp; sourceTree = "<group>"; };
@@ -126,6 +127,7 @@
 				C7931E6E28073BCA0033B488 /* math_test.cpp */,
 				C7931E6F28073BCA0033B488 /* node_test.cpp */,
 				C7E7D02F283565A200E09896 /* vector_test.cpp */,
+				C725CD792840088000D0EDE2 /* physics_test.cpp */,
 			);
 			path = graph_tests;
 			sourceTree = SOURCE_ROOT;
