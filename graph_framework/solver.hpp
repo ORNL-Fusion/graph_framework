@@ -199,9 +199,22 @@ namespace solver {
 //------------------------------------------------------------------------------
         virtual void reset_cache() = 0;
 
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the dispersion relation.
+//------------------------------------------------------------------------------
+        void print_dispersion() {
+            D.print_dispersion();
+        }
+
 ///  Type def to retrieve the backend type.
         typedef typename DISPERSION_FUNCTION::backend backend;
     };
+
+//******************************************************************************
+//  Second Order Runge Kutta.
+//******************************************************************************
+//    template<class DISPERSION_FUNCTION>
+//    class leap_frog : public
 
 //******************************************************************************
 //  Second Order Runge Kutta.

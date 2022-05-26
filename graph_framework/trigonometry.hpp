@@ -91,6 +91,15 @@ namespace graph {
 
             return false;
         }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+///
+///  @returns The latex string representing the node.
+//------------------------------------------------------------------------------
+        virtual std::string to_latex() const final {
+            return "\\sin\\left(" + this->arg->to_latex() + "\\right)";
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -195,6 +204,15 @@ namespace graph {
             }
 
             return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+///
+///  @returns The latex string representing the node.
+//------------------------------------------------------------------------------
+        virtual std::string to_latex() const final {
+            return "\\cos\\left(" + this->arg->to_latex() + "\\right)";
         }
     };
 

@@ -91,7 +91,7 @@ namespace dispersion {
 ///  @param[in] tolarance      Tolarance to solver the dispersion function to.
 ///  @param[in] max_iterations Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
-        virtual void solve(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
+        void solve(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
                            const double tolarance=1.0E-30,
                            const size_t max_iterations = 1000) {
             auto loss = D*D;
@@ -118,8 +118,8 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
-        get_d() final {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        get_d() {
             return this->D->reduce();
         }
 
@@ -128,8 +128,8 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
-        get_dsdt() final {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        get_dsdt() {
             return this->dsdt->reduce();
         }
 
@@ -138,8 +138,8 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
-        get_dxdt() final {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        get_dxdt() {
             return this->dxdt->reduce();
         }
 
@@ -148,8 +148,8 @@ namespace dispersion {
 ///
 ///  @return dy/dt
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
-        get_dydt() final {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        get_dydt() {
             return this->dydt->reduce();
         }
 
@@ -158,8 +158,8 @@ namespace dispersion {
 ///
 ///  @return dz/dt
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
-        get_dzdt() final {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        get_dzdt() {
             return this->dzdt->reduce();
         }
 
@@ -168,8 +168,8 @@ namespace dispersion {
 ///
 ///  @return dkx/dt
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
-        get_dkxdt() final {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        get_dkxdt() {
             return this->dkxdt->reduce();
         }
 
@@ -178,8 +178,8 @@ namespace dispersion {
 ///
 ///  @return dky/dt
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
-        get_dkydt() final {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        get_dkydt() {
             return this->dkydt->reduce();
         }
 
@@ -188,9 +188,17 @@ namespace dispersion {
 ///
 ///  @return dkz/dt
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
-        get_dkzdt() final {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        get_dkzdt() {
             return this->dkzdt->reduce();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the dispersion relation.
+//------------------------------------------------------------------------------
+        void print_dispersion() {
+            D->to_latex();
+            std::cout << std::endl;
         }
     };
 
@@ -430,7 +438,7 @@ namespace dispersion {
             auto m22 = e11 - npara2 - nperp2;
             auto m33 = e33 - nperp2;
 
-            return (m11*m22 - m12*m12)*m33 - m22*m13*m13;
+            return (m11*m22 - m12*m12)*m33 - m22*(m13*m13);
         }
     };
 }

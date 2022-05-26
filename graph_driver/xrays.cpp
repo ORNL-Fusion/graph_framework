@@ -23,8 +23,9 @@ int main(int argc, const char * argv[]) {
     const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
     const size_t num_times = 10000;
-    const size_t num_rays = 1;//10000;
-
+    const size_t num_rays = 1;
+    //const size_t num_rays = 10000;
+    
     std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
                                                        static_cast<unsigned int> (num_rays)),
                                               static_cast<unsigned int> (1)));
@@ -36,16 +37,16 @@ int main(int argc, const char * argv[]) {
                                         + std::min(thread_number, num_rays%num_threads);
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-            std::uniform_real_distribution<double> real_dist(0.0, 1.0);
+            std::uniform_real_distribution<double> real_dist(0.6, 1.0);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 
-            auto omega = graph::variable<backend::cpu> (local_num_rays);
-            auto kx = graph::variable<backend::cpu> (local_num_rays);
-            auto ky = graph::variable<backend::cpu> (local_num_rays);
-            auto kz = graph::variable<backend::cpu> (local_num_rays);
-            auto x = graph::variable<backend::cpu> (local_num_rays);
-            auto y = graph::variable<backend::cpu> (local_num_rays);
-            auto z = graph::variable<backend::cpu> (local_num_rays);
+            auto omega = graph::variable<backend::cpu> (local_num_rays, "\\omega");
+            auto kx = graph::variable<backend::cpu> (local_num_rays, "k_{x}");
+            auto ky = graph::variable<backend::cpu> (local_num_rays, "k_{y}");
+            auto kz = graph::variable<backend::cpu> (local_num_rays, "k_{z}");
+            auto x = graph::variable<backend::cpu> (local_num_rays, "x");
+            auto y = graph::variable<backend::cpu> (local_num_rays, "y");
+            auto z = graph::variable<backend::cpu> (local_num_rays, "z");
 
             const double q = 1.602176634E-19;
             const double me = 9.1093837015E-31;
@@ -56,24 +57,37 @@ int main(int argc, const char * argv[]) {
 
 //  Inital conditions.
             for (size_t j = 0; j < local_num_rays; j++) {
+                //omega->set(j, 1000.0*real_dist(engine));
                 omega->set(j, OmegaCE);
                 //omega->set(j, real_dist(engine));
             }
-            x->set(-0.25);
+
+            x->set(0.1);
             y->set(0.0);
             z->set(-0.25);
-            kx->set(200.0);
+            kx->set(22.0);
             ky->set(0.0);
             kz->set(0.7*OmegaCE);
+
+            //x->set(-1.0);
+            //y->set(-0.2);
+            //z->set(0.0);
+            //kx->set(1000.0);
+            //ky->set(0.0);
+            //kz->set(0.0);
 
             //auto eq = equilibrium::make_guassian_density<backend::cpu> ();
             auto eq = equilibrium::make_slab<backend::cpu> ();
 
             solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
+            //solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
             //solver::rk4<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             //solver::rk4<dispersion::simple<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             solve.init(kx);
-
+            if (thread_number == 0) {
+                solve.print_dispersion();
+            }
+                
             auto residule = solve.residule();
 
             const size_t sample = int_dist(engine);

@@ -24,13 +24,13 @@ template<typename SOLVER>
 void test_solver(const double omega0,
                  const double kx0,
                  const double dt) {
-    auto w = graph::variable<typename SOLVER::backend> (1, omega0);
-    auto kx = graph::variable<typename SOLVER::backend> (1, kx0);
-    auto ky = graph::variable<typename SOLVER::backend> (1, 0.25);
-    auto kz = graph::variable<typename SOLVER::backend> (1, 0.15);
-    auto x = graph::variable<typename SOLVER::backend> (1, 0.0);
-    auto y = graph::variable<typename SOLVER::backend> (1, 0.0);
-    auto z = graph::variable<typename SOLVER::backend> (1, 0.0);
+    auto w = graph::variable<typename SOLVER::backend> (1, omega0, "\\omega");
+    auto kx = graph::variable<typename SOLVER::backend> (1, kx0, "k_{x}");
+    auto ky = graph::variable<typename SOLVER::backend> (1, 0.25, "k_{y}");
+    auto kz = graph::variable<typename SOLVER::backend> (1, 0.15, "k_{z}");
+    auto x = graph::variable<typename SOLVER::backend> (1, 0.0, "x");
+    auto y = graph::variable<typename SOLVER::backend> (1, 0.0, "y");
+    auto z = graph::variable<typename SOLVER::backend> (1, 0.0, "z");
 
     auto eq = equilibrium::make_guassian_density<typename SOLVER::backend> ();
 

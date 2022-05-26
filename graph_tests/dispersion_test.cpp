@@ -22,13 +22,13 @@
 template<typename DISPERSION>
 void test_solve(const double omega,
                 const double k_guess) {
-    auto w = graph::variable<typename DISPERSION::backend> (1, omega);
-    auto kx = graph::variable<typename DISPERSION::backend> (1, 0.25);
-    auto ky = graph::variable<typename DISPERSION::backend> (1, 0.25);
-    auto kz = graph::variable<typename DISPERSION::backend> (1, 0.15);
-    auto x = graph::variable<typename DISPERSION::backend> (1, 0.0);
-    auto y = graph::variable<typename DISPERSION::backend> (1, 0.0);
-    auto z = graph::variable<typename DISPERSION::backend> (1, 0.0);
+    auto w = graph::variable<typename DISPERSION::backend> (1, omega, "\\omega");
+    auto kx = graph::variable<typename DISPERSION::backend> (1, 0.25, "k_{x}");
+    auto ky = graph::variable<typename DISPERSION::backend> (1, 0.25, "k_{y}");
+    auto kz = graph::variable<typename DISPERSION::backend> (1, 0.15, "k_{z}");
+    auto x = graph::variable<typename DISPERSION::backend> (1, 0.0, "x");
+    auto y = graph::variable<typename DISPERSION::backend> (1, 0.0, "y");
+    auto z = graph::variable<typename DISPERSION::backend> (1, 0.0, "z");
 
     auto eq = equilibrium::make_guassian_density<typename DISPERSION::backend> ();
 

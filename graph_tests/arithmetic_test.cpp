@@ -71,7 +71,7 @@ template<typename BACKEND> void test_add() {
 
 //  Test variable quanities.
 //  Any zero nodes should reduce to the other operand.
-    auto variable = graph::variable<BACKEND> (1);
+    auto variable = graph::variable<BACKEND> (1, "");
     auto var_plus_zero = variable + zero;
     assert(var_plus_zero.get() == variable.get() &&
            "Expected to retrive the left side.");
@@ -89,7 +89,7 @@ template<typename BACKEND> void test_add() {
     assert(var_plus_var_result.at(0) == 20 && "Expected 10 + 10 for result");
 
 //  Variable plus a variable should return an add node.
-    auto variable_b = graph::variable<BACKEND> (1);
+    auto variable_b = graph::variable<BACKEND> (1, "");
     auto var_plus_varb = variable + variable_b;
     assert(graph::add_cast(var_plus_varb).get() && "Expected an add node.");
     variable_b->set(5);
@@ -98,7 +98,7 @@ template<typename BACKEND> void test_add() {
     assert(var_plus_varb_result.at(0) == 15 && "Expected 10 + 5 for result");
 
 //  Test variable vectors.
-    auto varvec = graph::variable<BACKEND> (std::vector<double> ({10.0, 20.0}));
+    auto varvec = graph::variable<BACKEND> (std::vector<double> ({10.0, 20.0}), "");
     auto varvec_plus_varvec = varvec + varvec;
     const BACKEND varvec_plus_varvec_result =
         varvec_plus_varvec->evaluate();
@@ -117,9 +117,9 @@ template<typename BACKEND> void test_add() {
            "Expected to reduce to a constant one.");
 
 //  Test common factors.
-    auto var_a = graph::variable<BACKEND> (1);
-    auto var_b = graph::variable<BACKEND> (1);
-    auto var_c = graph::variable<BACKEND> (1);
+    auto var_a = graph::variable<BACKEND> (1, "");
+    auto var_b = graph::variable<BACKEND> (1, "");
+    auto var_c = graph::variable<BACKEND> (1, "");
     auto common_a = var_a*var_b + var_a*var_c;
     assert(graph::add_cast(common_a).get() == nullptr && "Did not expect add node.");
     assert(graph::multiply_cast(common_a).get() && "Expected multiply node.");
@@ -201,7 +201,7 @@ template<typename BACKEND> void test_subtract() {
 
 //  Test variable quanities.
 //  Any right side zero nodes should reduce to the other operand.
-    auto variable = graph::variable<BACKEND> (1);
+    auto variable = graph::variable<BACKEND> (1, "");
     auto var_minus_zero = variable - zero;
     assert(var_minus_zero.get() == variable.get() &&
            "Expected to retrive the left side.");
@@ -216,7 +216,7 @@ template<typename BACKEND> void test_subtract() {
     assert(zero_minus_var_result.at(0) == -3 && "Expected 0 - 3 for result.");
 
 //  Variable minus a variable should return an minus node.
-    auto variable_b = graph::variable<BACKEND> (1);
+    auto variable_b = graph::variable<BACKEND> (1, "");
     auto var_minus_var = variable - variable_b;
     assert(graph::subtract_cast(var_minus_var).get() &&
            "Expected a subtraction node.");
@@ -226,8 +226,8 @@ template<typename BACKEND> void test_subtract() {
     assert(var_minus_var_result.at(0) == -7 && "Expected 3 - 10 for result");
 
 //  Test variable vectors.
-    auto varvec_a = graph::variable<BACKEND> (std::vector<double> ({10.0, 20.0}));
-    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-3.0, 5.0}));
+    auto varvec_a = graph::variable<BACKEND> (std::vector<double> ({10.0, 20.0}), "");
+    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-3.0, 5.0}), "");
     auto varvec_minus_varvec = varvec_a - varvec_b;
     const BACKEND varvec_minus_varvec_result =
         varvec_minus_varvec->evaluate();
@@ -246,9 +246,9 @@ template<typename BACKEND> void test_subtract() {
            "Expected to reduce to a constant minus one.");
 
 //  Test common factors.
-    auto var_a = graph::variable<BACKEND> (1);
-    auto var_b = graph::variable<BACKEND> (1);
-    auto var_c = graph::variable<BACKEND> (1);
+    auto var_a = graph::variable<BACKEND> (1, "");
+    auto var_b = graph::variable<BACKEND> (1, "");
+    auto var_c = graph::variable<BACKEND> (1, "");
     auto common_a = var_a*var_b - var_a*var_c;
     assert(graph::add_cast(common_a).get() == nullptr &&
            "Did not expect add node.");
@@ -359,7 +359,7 @@ template<typename BACKEND> void test_multiply() {
 
 //  Test variable quanities.
 //  Any zero should reduce back to zero.
-    auto variable = graph::variable<BACKEND> (1);
+    auto variable = graph::variable<BACKEND> (1, "");
     assert((variable*zero).get() == zero.get() &&
            "Expected to retrive the right side.");
     assert((zero*variable).get() == zero.get() &&
@@ -387,8 +387,8 @@ template<typename BACKEND> void test_multiply() {
     assert(var_times_var_result.at(0) == 36 && "Expected 6*6 for result.");
 
 //  Test variable vectors.
-    auto varvec_a = graph::variable<BACKEND> (std::vector<double> ({4.0, -2.0}));
-    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-4.0, -2.0}));
+    auto varvec_a = graph::variable<BACKEND> (std::vector<double> ({4.0, -2.0}), "");
+    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-4.0, -2.0}), "");
     auto varvec_times_varvec = varvec_a*varvec_b;
     const BACKEND varvec_times_varvec_result =
         varvec_times_varvec->evaluate();
@@ -401,7 +401,7 @@ template<typename BACKEND> void test_multiply() {
 //  denominator does not need to be evaluated. This test makes sure that a sum
 //  or product is not used to avoid cases like {-1, 0, 1} which sum and product
 //  are zero.
-    auto var_sum_prod = graph::variable<BACKEND> (std::vector<double> ({-2.0, 2.0, 0.0}));
+    auto var_sum_prod = graph::variable<BACKEND> (std::vector<double> ({-2.0, 2.0, 0.0}), "");
     auto var_sum_prod_multiply_two = var_sum_prod*two;
     const BACKEND var_sum_prod_multiply_two_result =
         var_sum_prod_multiply_two->evaluate();
@@ -434,8 +434,8 @@ template<typename BACKEND> void test_multiply() {
            "Expected left and right to match");
 
 //  Test reduction of common constants c1*x*c2*y = c3*x*y.
-    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
-    auto x2 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
+    auto x2 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1, "");
     auto x3 = x1*x2;
     auto x3_cast = graph::multiply_cast(x3);
     assert(x3_cast.get() && "Expected a multiply node.");
@@ -445,8 +445,8 @@ template<typename BACKEND> void test_multiply() {
            "Expected multipy node.");
 
 //  Test reduction of common constants x*c1*c2*y = c3*x*y.
-    auto x4 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (2);
-    auto x5 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x4 = graph::variable<BACKEND> (1, "")*graph::constant<BACKEND> (2);
+    auto x5 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1, "");
     auto x6 = x4*x5;
     auto x6_cast = graph::multiply_cast(x6);
     assert(x6_cast.get() && "Expected a multiply node.");
@@ -456,8 +456,8 @@ template<typename BACKEND> void test_multiply() {
            "Expected multipy node.");
 
 //  Test reduction of common constants c1*x*y*c2 = c3*x*y.
-    auto x7 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
-    auto x8 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (5);
+    auto x7 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
+    auto x8 = graph::variable<BACKEND> (1, "")*graph::constant<BACKEND> (5);
     auto x9 = x7*x8;
     auto x9_cast = graph::multiply_cast(x9);
     assert(x9_cast.get() && "Expected a multiply node.");
@@ -467,8 +467,8 @@ template<typename BACKEND> void test_multiply() {
            "Expected multipy node.");
 
 //  Test reduction of common constants x*c1*y*c2 = c3*x*y.
-    auto x10 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (2);
-    auto x11 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x10 = graph::variable<BACKEND> (1, "")*graph::constant<BACKEND> (2);
+    auto x11 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1, "");
     auto x12 = x10*x11;
     auto x12_cast = graph::multiply_cast(x12);
     assert(x12_cast.get() && "Expected a multiply node.");
@@ -476,6 +476,26 @@ template<typename BACKEND> void test_multiply() {
            "Expected a constant coefficent.");
     assert(graph::multiply_cast(x12_cast->get_right()).get() &&
            "Expected multipy node.");
+    
+//  Test reduction of a constant*fma node.
+    auto c = graph::constant<BACKEND> (3);
+    auto fma = graph::fma(graph::variable<BACKEND> (1, ""),
+                          graph::variable<BACKEND> (1, ""),
+                          graph::variable<BACKEND> (1, ""));
+    auto cfma = graph::fma_cast(c*fma);
+    assert(cfma.get() && "Expected fma node.");
+    assert(graph::multiply_cast(cfma->get_right()).get() &&
+           "Expected multiply node in add branch.");
+
+    auto fmac = graph::fma_cast(fma*c);
+    assert(fmac.get() && "Expected fma node.");
+    assert(graph::multiply_cast(fmac->get_right()).get() &&
+           "Expected multiply node in add branch.");
+
+//  Test gather of terms. This test is setup to trigger an infinite recursive
+//  loop if a critical check is not in place no need to check the values.
+    auto a = graph::variable<BACKEND> (1, "");
+    auto aaa = (a*sqrt(a))*(a*sqrt(a));
 }
 
 //------------------------------------------------------------------------------
@@ -541,7 +561,7 @@ template<typename BACKEND> void test_divide() {
            "Expected 1/2 for result.");
 
 //  Test variables.
-    auto variable = graph::variable<BACKEND> (1);
+    auto variable = graph::variable<BACKEND> (1, "");
     assert((zero/variable).get() == zero.get() && "Expected to recover zero.");
     assert((variable/one).get() == variable.get() &&
            "Expected to recover numerator.");
@@ -568,7 +588,7 @@ template<typename BACKEND> void test_divide() {
     assert(var_divided_var_cast.get() && "Expeced constant node.");
     assert(var_divided_var_cast->is(1) && "Expeced one.");
 
-    auto variable_b = graph::variable<BACKEND> (1, 4);
+    auto variable_b = graph::variable<BACKEND> (1, 4, "");
     auto var_divided_varb = variable/variable_b;
     assert(graph::divide_cast(var_divided_varb).get() &&
            "Expected divide node.");
@@ -578,7 +598,7 @@ template<typename BACKEND> void test_divide() {
            "Expected 3/4 for result.");
 
 //  Test vector variables.
-    auto varvec = graph::variable<BACKEND> (std::vector<double> ({2.0, 6.0}));
+    auto varvec = graph::variable<BACKEND> (std::vector<double> ({2.0, 6.0}), "");
     assert((zero/varvec).get() == zero.get() && "Expected to recover zero.");
     assert((varvec/one).get() == varvec.get() &&
            "Expected to recover numerator.");
@@ -600,7 +620,7 @@ template<typename BACKEND> void test_divide() {
     assert(two_divided_varvec_result.at(1) == 2.0/6.0 &&
            "Expected 2/6 for result.");
 
-    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-3.0, 6.0}));
+    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-3.0, 6.0}), "");
     auto varvec_divided_varvecb = varvec/varvec_b;
     assert(graph::divide_cast(varvec_divided_varvecb).get() &&
            "Expect divide node.");
@@ -629,7 +649,7 @@ template<typename BACKEND> void test_divide() {
 //  denominator does not need to be evaluated. This test makes sure that a sum
 //  or product is not used to avoid cases like {-1, 0, 1} which sum and product
 //  are zero.
-    auto var_sum_prod = graph::variable<BACKEND> (std::vector<double> ({-2.0, 2.0, 0.0}));
+    auto var_sum_prod = graph::variable<BACKEND> (std::vector<double> ({-2.0, 2.0, 0.0}), "");
     auto var_sum_prod_divided_two = var_sum_prod/two;
     const BACKEND var_sum_prod_divided_two_result =
         var_sum_prod_divided_two->evaluate();
@@ -661,8 +681,8 @@ template<typename BACKEND> void test_divide() {
            "Expected one constant for result.");
 
 //  Test reduction of common constants (c1*x)/(c2*y) = c3*x/y.
-    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
-    auto x2 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
+    auto x2 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1, "");
     auto x3 = x1/x2;
     auto x3_cast = graph::multiply_cast(x3);
     assert(x3_cast.get() && "Expected a multiply node.");
@@ -672,8 +692,8 @@ template<typename BACKEND> void test_divide() {
            "Expected multipy node.");
 
 //  Test reduction of common constants (c1*x)/(y*c2) = c3*x/y.
-    auto x4 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (2);
-    auto x5 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x4 = graph::variable<BACKEND> (1, "")*graph::constant<BACKEND> (2);
+    auto x5 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1, "");
     auto x6 = x4/x5;
     auto x6_cast = graph::multiply_cast(x6);
     assert(x6_cast.get() && "Expected a multiply node.");
@@ -683,8 +703,8 @@ template<typename BACKEND> void test_divide() {
            "Expected multipy node.");
 
 //  Test reduction of common constants (x*c1)/(c2*y) = c3*x/y.
-    auto x7 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
-    auto x8 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (5);
+    auto x7 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
+    auto x8 = graph::variable<BACKEND> (1, "")*graph::constant<BACKEND> (5);
     auto x9 = x7/x8;
     auto x9_cast = graph::multiply_cast(x9);
     assert(x9_cast.get() && "Expected a multiply node.");
@@ -694,8 +714,8 @@ template<typename BACKEND> void test_divide() {
            "Expected multipy node.");
 
 //  Test reduction of common constants (x*c1)/(y*c2) = c3*x/y.
-    auto x10 = graph::variable<BACKEND> (1)*graph::constant<BACKEND> (2);
-    auto x11 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1);
+    auto x10 = graph::variable<BACKEND> (1, "")*graph::constant<BACKEND> (2);
+    auto x11 = graph::constant<BACKEND> (5)*graph::variable<BACKEND> (1, "");
     auto x12 = x10/x11;
     auto x12_cast = graph::multiply_cast(x12);
     assert(x12_cast.get() && "Expected a multiply node.");
@@ -747,7 +767,7 @@ template<typename BACKEND> void test_fma() {
     assert(two_three_one_result.at(0) == 7 && "Expected seven for result");
 
 //  Test a variable.
-    auto var = graph::variable<BACKEND> (1);
+    auto var = graph::variable<BACKEND> (1, "");
     auto zero_times_var_plus_two = graph::fma(zero, var, two);
     auto zero_times_var_plus_two_cast =
         graph::constant_cast(zero_times_var_plus_two);
@@ -797,9 +817,9 @@ template<typename BACKEND> void test_fma() {
     assert(zero_times_two_plus_var_df_cast->is(1) && "Expected one.");
 
 //  Test reduction.
-    auto var_a = graph::variable<BACKEND> (1);
-    auto var_b = graph::variable<BACKEND> (1);
-    auto var_c = graph::variable<BACKEND> (1);
+    auto var_a = graph::variable<BACKEND> (1, "");
+    auto var_b = graph::variable<BACKEND> (1, "");
+    auto var_c = graph::variable<BACKEND> (1, "");
 
     auto reduce1 = graph::fma(var_a, var_b, var_a*var_c);
     auto reduce1_cast = multiply_cast(reduce1);

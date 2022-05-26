@@ -8,6 +8,8 @@
 #ifndef node_h
 #define node_h
 
+#include <iostream>
+#include <string>
 #include <type_traits>
 #include <cassert>
 #include <memory>
@@ -97,6 +99,11 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void set(const BACKEND &d) {}
 
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const = 0;
+        
 ///  Type def to retrieve the backend type.
         typedef BACKEND backend;
     };
@@ -325,6 +332,13 @@ namespace graph {
         bool is(const double d) {
             return data.size() == 1 && data.at(0) == d;
         }
+        
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            std::cout << data.at(0);
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -385,40 +399,48 @@ namespace graph {
     private:
 ///  Storage buffer for the data.
         BACKEND data;
+///  Latex Symbol for the variable when pretty printing.
+        const std::string symbol;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node with a size.
 ///
-///  @param[in] s Size of the data buffer.
+///  @param[in] s      Size of the data buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-        variable_node(const size_t s) :
-        data(s) {}
+        variable_node(const size_t s,
+                      const std::string &symbol) :
+        data(s), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a scalar.
 ///
-///  @param[in] s Size of he data buffer.
-///  @param[in] d Scalar data to initalize.
+///  @param[in] s      Size of he data buffer.
+///  @param[in] d      Scalar data to initalize.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-        variable_node(const size_t s, const double d) :
-        data(s, d) {}
+        variable_node(const size_t s, const double d,
+                      const std::string &symbol) :
+        data(s, d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
 ///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
-        variable_node(const std::vector<double> &d) :
-        data(d) {}
+        variable_node(const std::vector<double> &d,
+                      const std::string &symbol) :
+        data(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from backend buffer.
 ///
 ///  @param[in] d Backend buffer.
 //------------------------------------------------------------------------------
-        variable_node(const BACKEND &d) :
-        data(d) {}
+        variable_node(const BACKEND &d,
+                      const std::string &symbol) :
+        data(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -496,47 +518,62 @@ namespace graph {
         virtual void set(const BACKEND &d) final {
             data = d;
         }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            std::cout << symbol;
+        }
     };
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
-///  @param[in] s Size of the data buffer.
+///  @param[in] s      Size of the data buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> variable(const size_t s) {
-        return (std::make_shared<variable_node<BACKEND>> (s))->reduce();
+    shared_leaf<BACKEND> variable(const size_t s,
+                                  const std::string &symbol) {
+        return (std::make_shared<variable_node<BACKEND>> (s, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
-///  @param[in] s Size of he data buffer.
-///  @param[in] d Scalar data to initalize.
+///  @param[in] s      Size of he data buffer.
+///  @param[in] d      Scalar data to initalize.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> variable(const size_t s, const double d) {
-        return (std::make_shared<variable_node<BACKEND>> (s, d))->reduce();
+    shared_leaf<BACKEND> variable(const size_t s, const double d,
+                                  const std::string &symbol) {
+        return (std::make_shared<variable_node<BACKEND>> (s, d, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
-///  @param[in] d Array buffer.
+///  @param[in] d      Array buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> variable(const std::vector<double> &d) {
-        return (std::make_shared<variable_node<BACKEND>> (d))->reduce();
+    shared_leaf<BACKEND> variable(const std::vector<double> &d,
+                                  const std::string &symbol) {
+        return (std::make_shared<variable_node<BACKEND>> (d, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
-///  @param[in] d Array buffer.
+///  @param[in] d      Array buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> variable(const BACKEND &d) {
-        return (std::make_shared<variable_node<BACKEND>> (d))->reduce();
+    shared_leaf<BACKEND> variable(const BACKEND &d,
+                                  const std::string &symbol) {
+        return (std::make_shared<variable_node<BACKEND>> (d, symbol))->reduce();
     }
 
 ///  Convience type alias for shared variable nodes.
@@ -646,6 +683,13 @@ namespace graph {
         virtual void reset_cache() final {
             data = this->arg->evaluate();
         }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            return this->arg->to_latex();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -723,6 +767,13 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<BACKEND> x) final {
             return this == x.get();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            this->arg->to_latex();
         }
     };
 

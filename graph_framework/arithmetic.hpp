@@ -14,8 +14,6 @@ namespace graph {
 //******************************************************************************
 //  Add node.
 //******************************************************************************
-    template<typename LN, typename RN> class multiply_node;
-
 //------------------------------------------------------------------------------
 ///  @brief An addition node.
 ///
@@ -146,6 +144,15 @@ namespace graph {
             }
 
             return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            this->left->to_latex();
+            std::cout << "+";
+            this->right->to_latex();
         }
     };
 
@@ -321,6 +328,15 @@ namespace graph {
 
             return false;
         }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            this->left->to_latex();
+            std::cout << "-";
+            this->right->to_latex();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -428,6 +444,20 @@ namespace graph {
                 return constant(this->evaluate());
             }
 
+//  Reduce constants multiplied by fused multiply add nodes.
+            auto rfma = fma_cast(this->right);
+            if (l.get() && rfma.get()) {
+                return fma(this->left*rfma->get_left(),
+                           rfma->get_middle(),
+                           this->left*rfma->get_right());
+            }
+            auto lfma = fma_cast(this->left);
+            if (r.get() && lfma.get()) {
+                return fma(this->right*lfma->get_left(),
+                           lfma->get_middle(),
+                           this->right*lfma->get_right());
+            }
+            
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
 //  the second pass.
             auto lm = multiply_cast(this->left);
@@ -450,6 +480,26 @@ namespace graph {
                     return (lm->get_right()*rm->get_right()) *
                            (lm->get_left()*rm->get_left());
                 }
+
+//  Gather a common terms. This will help reduce sqrt(a)*sqrt(a). But we need to
+//  be careful to avoid cases where a*a*a*a which could cause a infinitely
+//  recursive loop.
+                if (!(lm->get_left()->is_match(lm->get_right()) ||
+                      rm->get_left()->is_match(rm->get_right()))) {
+                    if (lm->get_left()->is_match(rm->get_left())) {
+                        return (lm->get_left()*rm->get_left()) *
+                               (lm->get_right()*rm->get_right());
+                    } else if (lm->get_right()->is_match(rm->get_left())) {
+                        return (lm->get_right()*rm->get_left()) *
+                               (lm->get_left()*rm->get_right());
+                    } else if (lm->get_left()->is_match(rm->get_right())) {
+                        return (lm->get_left()*rm->get_right()) *
+                               (lm->get_right()*rm->get_left());
+                    } else if (lm->get_right()->is_match(rm->get_right())) {
+                        return (lm->get_right()*rm->get_right()) *
+                               (lm->get_left()*rm->get_left());
+                    }
+                }
             }
 
 //  Common factor reduction. (a/b)*(c/a) = c/b.
@@ -462,6 +512,19 @@ namespace graph {
                 } else if (ld->get_right()->is_match(rd->get_left())) {
                     return ld->get_left()/rd->get_right();
                 }
+                
+//  Convert (a/b)*(c/d) -> (a*c)/(b*d). This should help reduce cases like.
+//  (a/b)*(a/b) + (c/b)*(c/b).
+                return (ld->get_left()*rd->get_left()) /
+                       (ld->get_right()*rd->get_right());
+            }
+
+//  Reduced sqrt(a)*sqrt(a);
+            auto sql = sqrt_cast(this->left);
+            auto sqr = sqrt_cast(this->right);
+            if (sql.get() && sqr.get() &&
+                sql->get_arg()->is_match(sqr->get_arg())) {
+                return sql->get_arg();
             }
 
             return this->shared_from_this();
@@ -503,6 +566,29 @@ namespace graph {
             }
 
             return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            if (add_cast(this->left).get() ||
+                subtract_cast(this->left).get()) {
+                std::cout << "\\left(";
+                this->left->to_latex();
+                std::cout << "\\right)";
+            } else {
+                this->left->to_latex();
+            }
+            std::cout << " ";
+            if (add_cast(this->right).get() ||
+                subtract_cast(this->right).get()) {
+                std::cout << "\\left(";
+                this->right->to_latex();
+                std::cout << "\\right)";
+            } else {
+                this->right->to_latex();
+            }
         }
     };
 
@@ -604,6 +690,14 @@ namespace graph {
                 return constant(this->evaluate());
             }
 
+//  Reduce fused multiply divided by constant nodes.
+            auto lfma = fma_cast(this->left);
+            if (r.get() && lfma.get()) {
+                return fma(lfma->get_left()/this->right,
+                           lfma->get_middle(),
+                           lfma->get_right()/this->right);
+            }
+
 //  Common factor reduction. (a*b)/(a*c) = b/c.
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
@@ -674,6 +768,17 @@ namespace graph {
             }
 
             return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            std::cout << "\\frac{";
+            this->left->to_latex();
+            std::cout << "}{";
+            this->right->to_latex();
+            std::cout << "}";
         }
     };
 
@@ -848,6 +953,19 @@ namespace graph {
             }
 
             return false;
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            std::cout << "\\left(";
+            this->left->to_latex();
+            std::cout << " ";
+            this->middle->to_latex();
+            std::cout << "+";
+            this->right->to_latex();
+            std::cout << "\\right)";
         }
     };
 

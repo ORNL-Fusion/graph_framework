@@ -53,7 +53,6 @@ namespace graph {
                 if (ac->is(0) || ac->is(1)) {
                     return this->arg;
                 }
-
                 return constant(this->evaluate());
             }
 
@@ -79,12 +78,12 @@ namespace graph {
             auto ad = divide_cast(this->arg);
             if (ad.get()) {
                 auto dnm = multiply_cast(ad->get_left());
-                if (dnm->get_left()->is_match(dnm->get_right())) {
+                if (dnm.get() && dnm->get_left()->is_match(dnm->get_right())) {
                     return dnm->get_left()/sqrt(ad->get_right());
                 }
 
                 auto ddm = multiply_cast(ad->get_right());
-                if (ddm->get_left()->is_match(ddm->get_right())) {
+                if (ddm.get() && ddm->get_left()->is_match(ddm->get_right())) {
                     return sqrt(ad->get_left())/ddm->get_left();
                 }
             }
@@ -127,6 +126,15 @@ namespace graph {
             } else {
                 return false;
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            std::cout << "\\sqrt{";
+            this->arg->to_latex();
+            std::cout << "}";
         }
     };
 
@@ -234,6 +242,15 @@ namespace graph {
             }
 
             return false;
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const final {
+            std::cout << "e^{";
+            this->arg->to_latex();
+            std::cout << "}";
         }
     };
 

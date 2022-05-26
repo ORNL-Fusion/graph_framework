@@ -31,14 +31,14 @@ void test_sqrt() {
     assert(sqrt_vec_result.at(0) == sqrt(5.0));
     assert(sqrt_vec_result.at(1) == sqrt(3.0));
 
-    auto var = graph::variable<BACKEND> (1);
+    auto var = graph::variable<BACKEND> (1, "");
     auto sqrt_var = graph::sqrt(var);
     assert(graph::sqrt_cast(sqrt_var).get() &&"Expected a variable type.");
 
     var->set(3);
     assert(sqrt_var->evaluate().at(0) == sqrt(3.0));
 
-    auto var_vec = graph::variable<BACKEND> (std::vector<double> ({4.0, 7.0}));
+    auto var_vec = graph::variable<BACKEND> (std::vector<double> ({4.0, 7.0}), "");
     auto sqrt_var_vec = graph::sqrt(var_vec);
     assert(graph::sqrt_cast(sqrt_var_vec).get() && "Expected a variable type.");
     const BACKEND sqrt_var_vec_result = sqrt_var_vec->evaluate();
@@ -52,8 +52,8 @@ void test_sqrt() {
     assert(dsqrt_var->evaluate().at(0) == 1.0/(2.0*sqrt(3.0)));
 
 //  Reduction sqrt(c*x*c*y) = x
-    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
-    auto x2 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1);
+    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
+    auto x2 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
     auto x = graph::sqrt(x1*x2);
     auto x_cast = graph::multiply_cast(x);
     assert(x_cast.get() && "Expected a multiply node.");
@@ -63,12 +63,12 @@ void test_sqrt() {
            "Expected sqrt node.");
 
 //  Reduction Sqrt(x*x) = x
-    auto x_var = graph::variable<BACKEND> (1);
+    auto x_var = graph::variable<BACKEND> (1, "x");
     auto x2_sqrt = graph::sqrt(x_var*x_var);
     assert(x2_sqrt.get() == x_var.get() && "Expected to reduce to x_var.");
 
 //  Reduction Sqrt(x*x/y*y);
-    auto y_var = graph::variable<BACKEND> (1);
+    auto y_var = graph::variable<BACKEND> (1, "y");
     auto sq_reduce = graph::sqrt((x_var*x_var)/(y_var*y_var));
     auto sq_reduce_cast = graph::divide_cast(sq_reduce);
     assert(sq_reduce_cast.get() && "Expected divide node.");
@@ -96,14 +96,14 @@ void test_exp() {
     assert(exp_vec_result.at(0) == exp(5.0));
     assert(exp_vec_result.at(1) == exp(3.0));
 
-    auto var = graph::variable<BACKEND> (1);
+    auto var = graph::variable<BACKEND> (1, "");
     auto exp_var = graph::exp(var);
     assert(graph::exp_cast(exp_var).get() && "Expected a variable type.");
 
     var->set(3);
     assert(exp_var->evaluate().at(0) == exp(3.0));
 
-    auto var_vec = graph::variable<BACKEND> (std::vector<double> ({4.0, 7.0}));
+    auto var_vec = graph::variable<BACKEND> (std::vector<double> ({4.0, 7.0}), "");
     auto exp_var_vec = graph::exp(var_vec);
     assert(graph::exp_cast(exp_var_vec).get() && "Expected a variable type.");
     const BACKEND exp_var_vec_result = exp_var_vec->evaluate();

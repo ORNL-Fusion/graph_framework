@@ -68,7 +68,7 @@ void test_constant() {
 //------------------------------------------------------------------------------
 template<typename BACKEND>
 void test_variable() {
-    auto zero = graph::variable<BACKEND> (1);
+    auto zero = graph::variable<BACKEND> (1, "");
     zero->set(0);
     assert(graph::variable_cast(zero).get() && "Expected a variable type.");
     assert(graph::constant_cast(zero).get() == nullptr &&
@@ -86,7 +86,7 @@ void test_variable() {
     assert(dzero_result.size() == 1 && "Expected single value.");
     assert(dzero_result.at(0) == 1 && "Constant value evalute expeced one.");
 
-    auto ones = graph::variable<BACKEND> (2, 1);
+    auto ones = graph::variable<BACKEND> (2, 1, "");
     auto dzerodone = zero->df(ones);
     assert(graph::constant_cast(dzerodone).get() &&
            "Expected a constant type.");
@@ -95,7 +95,7 @@ void test_variable() {
     assert(dzerodone_result.at(0) == 0 &&
            "Constant value evalute expeced zero.");
 
-    auto one_two = graph::variable<BACKEND> (std::vector<double> ({1.0, 2.0}));
+    auto one_two = graph::variable<BACKEND> (std::vector<double> ({1.0, 2.0}), "");
     const BACKEND one_two_result = one_two->evaluate();
     assert(one_two_result.size() == 2 && "Expected two elements in constant");
     assert(one_two_result.at(0) == 1 && "Expected one for first elememt");
@@ -107,8 +107,8 @@ void test_variable() {
     assert(one_two_result2.at(1) == 4 && "Expected four for second elememt");
 
 //  Test is_match
-    auto v1 = graph::variable<BACKEND> (1);
-    auto v2 = graph::variable<BACKEND> (1);
+    auto v1 = graph::variable<BACKEND> (1, "");
+    auto v2 = graph::variable<BACKEND> (1, "");
     assert(v1.get() != v2.get() && "Expected different pointers");
     assert(!v1->is_match(v2) && "Expected no match.");
 }
@@ -118,7 +118,7 @@ void test_variable() {
 //------------------------------------------------------------------------------
 template<typename BACKEND>
 void test_cache() {
-    auto five = graph::variable<BACKEND> (1);
+    auto five = graph::variable<BACKEND> (1, "");
     five->set(5);
     auto cache_five = graph::cache(five);
     cache_five->evaluate();
@@ -152,8 +152,8 @@ void test_cache() {
 //------------------------------------------------------------------------------
 template<typename BACKEND>
 void test_pseudo_variable() {
-    auto a = graph::variable<BACKEND> (1);
-    auto b = graph::variable<BACKEND> (1);
+    auto a = graph::variable<BACKEND> (1, "");
+    auto b = graph::variable<BACKEND> (1, "");
     auto c = graph::pseudo_variable(a + b);
     assert(graph::constant_cast(c->df(a))->is(0) && "Expected zero.");
     assert(graph::constant_cast(c->df(c))->is(1) && "Expected one.");
