@@ -79,6 +79,17 @@ namespace backend {
 ///  Type def to retrieve the backend base type.
         typedef BASE base;
     };
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a backend base type.
+///
+///  @param[in] arg Value to case.
+///  @returns Cased value.
+//------------------------------------------------------------------------------
+    template<typename BACKEND, typename T>
+    typename BACKEND::base base_cast(const T arg) {
+        return static_cast<typename BACKEND::base> (arg);
+    }
 }
 
 #endif /* backend_protocall_h */

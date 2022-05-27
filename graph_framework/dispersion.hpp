@@ -92,14 +92,15 @@ namespace dispersion {
 ///  @param[in] max_iterations Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
         void solve(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
-                           const double tolarance=1.0E-30,
-                           const size_t max_iterations = 1000) {
+                   const typename DISPERSION_FUNCTION::base tolarance=1.0E-30,
+                   const size_t max_iterations = 1000) {
             auto loss = D*D;
             auto x_next = x
                         - loss/(loss->df(x) +
                                 graph::constant<typename DISPERSION_FUNCTION::backend> (tolarance));
 
-            double max_residule = loss->evaluate().max();
+            typename DISPERSION_FUNCTION::base max_residule =
+                loss->evaluate().max();
             size_t iterations = 0;
 
             while (max_residule > tolarance && iterations++ < max_iterations) {
@@ -234,6 +235,8 @@ namespace dispersion {
 
 ///  Type def to retrieve the backend type.
         typedef BACKEND backend;
+///  Type def to retrieve the backend base type.
+        typedef typename BACKEND::base base;
     };
 
 //------------------------------------------------------------------------------

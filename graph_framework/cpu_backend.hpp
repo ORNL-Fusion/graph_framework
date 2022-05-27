@@ -234,13 +234,13 @@ namespace backend {
     template<typename BASE>
     inline cpu<BASE> operator-(cpu<BASE> &a, cpu<BASE> &b) {
         if (b.size() == 1) {
-            const double right = b.at(0);
+            const BASE right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
                 a[i] -= right;
             }
             return a;
         } else if (a.size() == 1) {
-            const double left = a.at(0);
+            const BASE left = a.at(0);
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
                 b[i] = left - b.at(i);
             }

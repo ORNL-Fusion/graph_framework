@@ -17,15 +17,17 @@
 ///  @brief Reflection test.
 ///
 ///  Given a wave frequency, a wave with zero k will not propagate.
+///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename BACKEND>
-void test_reflection() {
-    const double q = 1.602176634E-19;
-    const double me = 9.1093837015E-31;
-    const double mu0 = M_PI*4.0E-7;
-    const double epsilon0 = 8.8541878138E-12;
-    const double c = 1.0/sqrt(mu0*epsilon0);
-    const double OmegaCE = -q*1/(me*c);
+void test_reflection(const typename BACKEND::base tolarance) {
+    const typename BACKEND::base q = 1.602176634E-19;
+    const typename BACKEND::base me = 9.1093837015E-31;
+    const typename BACKEND::base mu0 = M_PI*4.0E-7;
+    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
+    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
+    const typename BACKEND::base OmegaCE = -q*1/(me*c);
     
     auto w = graph::variable<BACKEND> (1, OmegaCE, "\\omega");
     auto kx = graph::variable<BACKEND> (1, 0.0, "k_{x}");
@@ -39,20 +41,20 @@ void test_reflection() {
     solver::rk4<dispersion::cold_plasma<BACKEND>> solve(w, kx, ky, kz, x, y, z, 0.0001, eq);
 
 // Solve for a location where the wave is cut off.
-    solve.init(x);
-    const double cuttoff_location = x->evaluate().at(0);
+    solve.init(x, tolarance);
+    const typename BACKEND::base cuttoff_location = x->evaluate().at(0);
 
 //  Set the ray starting point close to the cut off to reduce the number of
 //  times steps that need to be taken.
-    x->set(cuttoff_location - 0.00001*cuttoff_location);
+    x->set(cuttoff_location - backend::base_cast<BACKEND> (0.00001)*cuttoff_location);
 
 //  Set an inital guess for kx and solve for the wave number at the new
 //  location.
     kx->set(22.0);
-    solve.init(kx);
+    solve.init(kx, tolarance);
     
-    double max_x = solve.state.back().x.at(0);
-    double new_x = max_x;
+    typename BACKEND::base max_x = solve.state.back().x.at(0);
+    typename BACKEND::base new_x = max_x;
     do {
         solve.step();
         new_x = solve.state.back().x.at(0);
@@ -63,9 +65,11 @@ void test_reflection() {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename BACKEND> void run_tests() {
-    test_reflection<BACKEND> ();
+template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
+    test_reflection<BACKEND> (tolarance);
 }
 
 //------------------------------------------------------------------------------
@@ -75,5 +79,6 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    run_tests<backend::cpu<double>> ();
+//  No there is not enough precision in float to pass the test.
+    run_tests<backend::cpu<double>> (1.0E-30);
 }

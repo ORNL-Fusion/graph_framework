@@ -194,6 +194,7 @@ namespace graph {
 ///  @brief Cast to a add node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_add<N, N> add_cast(std::shared_ptr<N> x) {
@@ -371,6 +372,7 @@ namespace graph {
 ///  @brief Cast to a subtract node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_subtract<N, N> subtract_cast(std::shared_ptr<N> x) {
@@ -624,6 +626,7 @@ namespace graph {
 ///  @brief Cast to a multiply node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_multiply<N, N> multiply_cast(std::shared_ptr<N> x) {
@@ -814,6 +817,7 @@ namespace graph {
 ///  @brief Cast to a divide node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_divide<N, N> divide_cast(std::shared_ptr<N> x) {
@@ -991,6 +995,7 @@ namespace graph {
 ///  @brief Cast to a fma node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_fma<N, N, N> fma_cast(std::shared_ptr<N> x) {

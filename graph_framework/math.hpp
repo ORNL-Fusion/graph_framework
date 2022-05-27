@@ -157,6 +157,7 @@ namespace graph {
 ///  @brief Cast to a sqrt node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_sqrt<N> sqrt_cast(std::shared_ptr<N> x) {
@@ -273,6 +274,7 @@ namespace graph {
 ///  @brief Cast to a exp node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_exp<N> exp_cast(std::shared_ptr<N> x) {

@@ -16,12 +16,14 @@
 //------------------------------------------------------------------------------
 ///  @brief The newton solve for dispersion relation.
 ///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 ///  @param[in] omega   Ray frequency.
 ///  @param[in] k_guess Inital guess for the wave number.
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
-void test_solve(const double omega,
-                const double k_guess) {
+void test_solve(const typename DISPERSION::base tolarance,
+                const typename DISPERSION::base omega,
+                const typename DISPERSION::base k_guess) {
     auto w = graph::variable<typename DISPERSION::backend> (1, omega, "\\omega");
     auto kx = graph::variable<typename DISPERSION::backend> (1, 0.25, "k_{x}");
     auto ky = graph::variable<typename DISPERSION::backend> (1, 0.25, "k_{y}");
@@ -37,36 +39,38 @@ void test_solve(const double omega,
     auto loss = D.get_d()*D.get_d();
 
     kx->set(k_guess);
-    D.solve(kx);
-    assert(loss->evaluate().at(0) < 1.0E-30 &&
+    D.solve(kx, tolarance);
+    assert(loss->evaluate().at(0) < tolarance &&
            "Solve failed to meet expected result for kx.");
 
     kx->set(0.2);
     ky->set(k_guess);
-    D.solve(ky);
-    assert(loss->evaluate().at(0) < 1.0E-30 &&
+    D.solve(ky, tolarance);
+    assert(loss->evaluate().at(0) < tolarance &&
            "Solve failed to meet expected result for ky.");
 
     ky->set(0.25);
     kz->set(k_guess);
-    D.solve(kz);
-    assert(loss->evaluate().at(0) < 1.0E-30 &&
+    D.solve(kz, tolarance);
+    assert(loss->evaluate().at(0) < tolarance &&
            "Solve failed to meet expected result for kz.");
 
     kz->set(0.15);
     kx->set(k_guess);
-    D.solve(w);
-    assert(loss->evaluate().at(0) < 1.0E-30 &&
+    D.solve(w, tolarance);
+    assert(loss->evaluate().at(0) < tolarance &&
            "Solve failed to meet expected result for w.");
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename BACKEND> void run_tests() {
-    test_solve<dispersion::simple<BACKEND>> (0.5, 1.0);
-    test_solve<dispersion::guassian_well<BACKEND>> (0.5, 1.0);
-    test_solve<dispersion::cold_plasma<BACKEND>> (900.0, 1000.0);
+template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
+    test_solve<dispersion::simple<BACKEND>> (tolarance, 0.5, 1.0);
+    test_solve<dispersion::guassian_well<BACKEND>> (tolarance, 0.5, 1.0);
+    test_solve<dispersion::cold_plasma<BACKEND>> (tolarance, 900.0, 1000.0);
 }
 
 //------------------------------------------------------------------------------
@@ -76,5 +80,6 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    run_tests<backend::cpu<double>> ();
+    run_tests<backend::cpu<float>> (1.0E-14);
+    run_tests<backend::cpu<double>> (1.0E-30);
 }

@@ -382,6 +382,7 @@ namespace graph {
 ///  @brief Cast to a constant node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_constant<N> constant_cast(std::shared_ptr<N> x) {
@@ -587,6 +588,7 @@ namespace graph {
 ///  @brief Cast to a variable node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_variable<N> variable_cast(std::shared_ptr<N> x) {
@@ -714,6 +716,7 @@ namespace graph {
 ///  @brief Cast to a cache node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_cache<N> cache_cast(std::shared_ptr<N> x) {
@@ -799,6 +802,7 @@ namespace graph {
 ///  @brief Cast to a pseudo variable node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_pseudo_variable<N> pseudo_variable_cast(std::shared_ptr<N> x) {

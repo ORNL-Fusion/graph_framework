@@ -23,7 +23,7 @@ namespace equilibrium {
     class equilibrium {
     protected:
 ///  Ion masses for each species.
-        const std::vector<double> ion_masses;
+        const std::vector<typename BACKEND::base> ion_masses;
 ///  Ion charge for each species.
         const std::vector<uint8_t> ion_charges;
 
@@ -34,7 +34,7 @@ namespace equilibrium {
 ///  @param[in] masses  Vector of ion masses.
 ///  @param[in] charges Vector of ion charges.
 //------------------------------------------------------------------------------
-        equilibrium(const std::vector<double> &masses,
+        equilibrium(const std::vector<typename BACKEND::base> &masses,
                     const std::vector<uint8_t> &charges) :
         ion_masses(masses), ion_charges(charges) {
             assert(ion_masses.size() == ion_charges.size() &&
@@ -61,7 +61,7 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The mass for the ion at the index.
 //------------------------------------------------------------------------------
-        double get_ion_mass(const size_t index) const {
+        typename BACKEND::base get_ion_mass(const size_t index) const {
             return ion_masses.at(index);
         }
 

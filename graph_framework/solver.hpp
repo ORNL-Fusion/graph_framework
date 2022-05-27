@@ -144,7 +144,7 @@ namespace solver {
 ///  @brief Method to initalize the rays.
 //------------------------------------------------------------------------------
         virtual void init(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
-                          const double tolarance = 1.0E-30,
+                          const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
                           const size_t max_iterations = 1000) final {
             this->D.solve(x, tolarance, max_iterations);
 
@@ -208,6 +208,8 @@ namespace solver {
 
 ///  Type def to retrieve the backend type.
         typedef typename DISPERSION_FUNCTION::backend backend;
+///  Type def to retrieve the backend type.
+        typedef typename DISPERSION_FUNCTION::backend::base base;
     };
 
 //******************************************************************************
@@ -271,7 +273,7 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
-            const double dt,
+            const typename DISPERSION_FUNCTION::base dt,
             equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, eq) {
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);
@@ -410,7 +412,7 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
-            const double dt,
+            const typename DISPERSION_FUNCTION::base dt,
             equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, eq) {
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);

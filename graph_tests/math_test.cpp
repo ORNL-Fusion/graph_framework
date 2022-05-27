@@ -20,36 +20,40 @@ template<typename BACKEND>
 void test_sqrt() {
     auto ten = graph::constant<BACKEND> (10);
     auto sqrt_ten = graph::sqrt(ten);
-    assert(sqrt_ten->evaluate().at(0) == sqrt(10.0));
+    assert(sqrt_ten->evaluate().at(0) == sqrt(backend::base_cast<BACKEND> (10.0)));
 
     assert(graph::constant_cast(sqrt_ten).get() && "Expected a constant type.");
 
-    auto vec = graph::constant<BACKEND> (std::vector<double> ({5.0, 3.0}));
+    auto vec = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({5.0, 3.0}));
     auto sqrt_vec = graph::sqrt(vec);
     const BACKEND sqrt_vec_result = sqrt_vec->evaluate();
     assert(sqrt_vec_result.size() == 2);
-    assert(sqrt_vec_result.at(0) == sqrt(5.0));
-    assert(sqrt_vec_result.at(1) == sqrt(3.0));
+    assert(sqrt_vec_result.at(0) == sqrt(backend::base_cast<BACKEND> (5.0)));
+    assert(sqrt_vec_result.at(1) == sqrt(backend::base_cast<BACKEND> (3.0)));
 
     auto var = graph::variable<BACKEND> (1, "");
     auto sqrt_var = graph::sqrt(var);
     assert(graph::sqrt_cast(sqrt_var).get() &&"Expected a variable type.");
 
     var->set(3);
-    assert(sqrt_var->evaluate().at(0) == sqrt(3.0));
+    assert(sqrt_var->evaluate().at(0) == sqrt(backend::base_cast<BACKEND> (3.0)));
 
-    auto var_vec = graph::variable<BACKEND> (std::vector<double> ({4.0, 7.0}), "");
+    auto var_vec = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({4.0, 7.0}), "");
     auto sqrt_var_vec = graph::sqrt(var_vec);
     assert(graph::sqrt_cast(sqrt_var_vec).get() && "Expected a variable type.");
     const BACKEND sqrt_var_vec_result = sqrt_var_vec->evaluate();
     assert(sqrt_var_vec_result.size() == 2);
-    assert(sqrt_var_vec_result.at(0) == sqrt(4.0));
-    assert(sqrt_var_vec_result.at(1) == sqrt(7.0));
+    assert(sqrt_var_vec_result.at(0) == sqrt(backend::base_cast<BACKEND> (4.0)));
+    assert(sqrt_var_vec_result.at(1) == sqrt(backend::base_cast<BACKEND> (7.0)));
 
 //  d sqrt(x) / dx = 1/(2 Sqrt(x))
     auto dsqrt_var = sqrt_var->df(var);
     assert(graph::divide_cast(dsqrt_var).get() && "Expected a divide type.");
-    assert(dsqrt_var->evaluate().at(0) == 1.0/(2.0*sqrt(3.0)));
+    assert(dsqrt_var->evaluate().at(0) ==
+           backend::base_cast<BACKEND> (1.0) /
+           (backend::base_cast<BACKEND> (2.0) *
+            sqrt(backend::base_cast<BACKEND> (3.0))) &&
+           "Expected 0.5*sqrt(3)");
 
 //  Reduction sqrt(c*x*c*y) = x
     auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
@@ -85,36 +89,36 @@ template<typename BACKEND>
 void test_exp() {
     auto ten = graph::constant<BACKEND> (10);
     auto exp_ten = graph::exp(ten);
-    assert(exp_ten->evaluate().at(0) == exp(10.0));
+    assert(exp_ten->evaluate().at(0) == exp(backend::base_cast<BACKEND> (10.0)));
     assert(graph::constant_cast(exp_ten).get() &&
            "Expected a constant type.");
 
-    auto vec = graph::constant<BACKEND> (std::vector<double> ({5.0, 3.0}));
+    auto vec = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({5.0, 3.0}));
     auto exp_vec = exp(vec);
     const BACKEND exp_vec_result = exp_vec->evaluate();
     assert(exp_vec_result.size() == 2);
-    assert(exp_vec_result.at(0) == exp(5.0));
-    assert(exp_vec_result.at(1) == exp(3.0));
+    assert(exp_vec_result.at(0) == exp(backend::base_cast<BACKEND> (5.0)));
+    assert(exp_vec_result.at(1) == exp(backend::base_cast<BACKEND> (3.0)));
 
     auto var = graph::variable<BACKEND> (1, "");
     auto exp_var = graph::exp(var);
     assert(graph::exp_cast(exp_var).get() && "Expected a variable type.");
 
     var->set(3);
-    assert(exp_var->evaluate().at(0) == exp(3.0));
+    assert(exp_var->evaluate().at(0) == exp(backend::base_cast<BACKEND> (3.0)));
 
-    auto var_vec = graph::variable<BACKEND> (std::vector<double> ({4.0, 7.0}), "");
+    auto var_vec = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({4.0, 7.0}), "");
     auto exp_var_vec = graph::exp(var_vec);
     assert(graph::exp_cast(exp_var_vec).get() && "Expected a variable type.");
     const BACKEND exp_var_vec_result = exp_var_vec->evaluate();
     assert(exp_var_vec_result.size() == 2);
-    assert(exp_var_vec_result.at(0) == exp(4.0));
-    assert(exp_var_vec_result.at(1) == exp(7.0));
+    assert(exp_var_vec_result.at(0) == exp(backend::base_cast<BACKEND> (4.0)));
+    assert(exp_var_vec_result.at(1) == exp(backend::base_cast<BACKEND> (7.0)));
 
 //  d exp(x) / dx = exp(x)
     auto dexp_var = exp_var->df(var);
     assert(graph::exp_cast(dexp_var).get() && "Expected a divide type.");
-    assert(dexp_var->evaluate().at(0) == exp(3.0));
+    assert(dexp_var->evaluate().at(0) == exp(backend::base_cast<BACKEND> (3.0)));
 }
 
 //------------------------------------------------------------------------------
@@ -132,5 +136,6 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    run_tests<backend::cpu<float>> ();
     run_tests<backend::cpu<double>> ();
 }

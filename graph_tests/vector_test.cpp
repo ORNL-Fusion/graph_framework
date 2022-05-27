@@ -49,5 +49,6 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    run_tests<backend::cpu<float>> ();
     run_tests<backend::cpu<double>> ();
 }

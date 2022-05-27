@@ -25,7 +25,8 @@ template<typename BACKEND> void test_add() {
 
     const BACKEND result_three = three->evaluate();
     assert(result_three.size() == 1 && "Expected single value.");
-    assert(result_three.at(0) == 3 && "Expected three for result");
+    assert(result_three.at(0) == backend::base_cast<BACKEND> (3.0) &&
+           "Expected three for result");
 
 //  Any zero nodes should reduce to the other operand.
     auto zero = graph::constant<BACKEND> (0);
@@ -37,7 +38,7 @@ template<typename BACKEND> void test_add() {
            "Expected to retrive the right side.");
 
 //  Test vector scalar quanties.
-    auto vec_constant = graph::constant<BACKEND> (std::vector<double> ({3.0, 4.0}));
+    auto vec_constant = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({3.0, 4.0}));
     auto vec_plus_zero = vec_constant + zero;
     assert(vec_plus_zero.get() == vec_constant.get() &&
            "Expected to retrive the left side.");
@@ -50,24 +51,30 @@ template<typename BACKEND> void test_add() {
            "Expected a constant type.");
     auto vec_plus_one_result = vec_plus_one->evaluate();
     assert(vec_plus_one_result.size() == 2 && "Size mismatch in result.");
-    assert(vec_plus_one_result.at(0) == 4 && "Expected 3 + 1.");
-    assert(vec_plus_one_result.at(1) == 5 && "Expected 4 + 1.");
+    assert(vec_plus_one_result.at(0) == backend::base_cast<BACKEND> (4.0) &&
+           "Expected 3 + 1.");
+    assert(vec_plus_one_result.at(1) == backend::base_cast<BACKEND> (5.0) &&
+           "Expected 4 + 1.");
 
     auto one_plus_vec = one + vec_constant;
     assert(graph::constant_cast(one_plus_vec).get() &&
            "Expected a constant type.");
     auto one_plus_vec_result = one_plus_vec->evaluate();
     assert(one_plus_vec_result.size() == 2 && "Size mismatch in result.");
-    assert(one_plus_vec_result.at(0) == 4 && "Expected 1 + 3.");
-    assert(one_plus_vec_result.at(1) == 5 && "Expected 1 + 4.");
+    assert(one_plus_vec_result.at(0) == backend::base_cast<BACKEND> (4.0) &&
+           "Expected 1 + 3.");
+    assert(one_plus_vec_result.at(1) == backend::base_cast<BACKEND> (5.0) &&
+           "Expected 1 + 4.");
 
 // Test vector vector quaties.
     auto vec_plus_vec = vec_constant + vec_constant;
     const BACKEND vec_plus_vec_result = vec_plus_vec->evaluate();
     assert(vec_plus_vec_result.size() == 2 &&
            "Size mismatch in result.");
-    assert(vec_plus_vec_result.at(0) == 6 && "Expected 3 + 3.");
-    assert(vec_plus_vec_result.at(1) == 8 && "Expected 4 + 4.");
+    assert(vec_plus_vec_result.at(0) == backend::base_cast<BACKEND> (6.0) &&
+           "Expected 3 + 3.");
+    assert(vec_plus_vec_result.at(1) == backend::base_cast<BACKEND> (8.0) &&
+           "Expected 4 + 4.");
 
 //  Test variable quanities.
 //  Any zero nodes should reduce to the other operand.
@@ -86,7 +93,8 @@ template<typename BACKEND> void test_add() {
     variable->set(10);
     const BACKEND var_plus_var_result = var_plus_var->evaluate();
     assert(var_plus_var_result.size() == 1 && "Expected single value.");
-    assert(var_plus_var_result.at(0) == 20 && "Expected 10 + 10 for result");
+    assert(var_plus_var_result.at(0) == backend::base_cast<BACKEND> (20.0) &&
+           "Expected 10 + 10 for result");
 
 //  Variable plus a variable should return an add node.
     auto variable_b = graph::variable<BACKEND> (1, "");
@@ -95,17 +103,20 @@ template<typename BACKEND> void test_add() {
     variable_b->set(5);
     const BACKEND var_plus_varb_result = var_plus_varb->evaluate();
     assert(var_plus_varb_result.size() == 1 && "Expected single value.");
-    assert(var_plus_varb_result.at(0) == 15 && "Expected 10 + 5 for result");
+    assert(var_plus_varb_result.at(0) == backend::base_cast<BACKEND> (15.0) &&
+           "Expected 10 + 5 for result");
 
 //  Test variable vectors.
-    auto varvec = graph::variable<BACKEND> (std::vector<double> ({10.0, 20.0}), "");
+    auto varvec = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({10.0, 20.0}), "");
     auto varvec_plus_varvec = varvec + varvec;
     const BACKEND varvec_plus_varvec_result =
         varvec_plus_varvec->evaluate();
     assert(varvec_plus_varvec_result.size() == 2 &&
            "Size mismatch in result.");
-    assert(varvec_plus_varvec_result.at(0) == 20 && "Expected 10 + 10.");
-    assert(varvec_plus_varvec_result.at(1) == 40 && "Expected 40 + 40.");
+    assert(varvec_plus_varvec_result.at(0) == backend::base_cast<BACKEND> (20.0) &&
+           "Expected 10 + 10.");
+    assert(varvec_plus_varvec_result.at(1) == backend::base_cast<BACKEND> (40.0) &&
+           "Expected 20 + 20.");
 
 //  Test derivatives
 //  d (1 + x) / dx = d1/dx + dx/dx = 0 + 1 = 1
@@ -172,23 +183,27 @@ template<typename BACKEND> void test_subtract() {
     assert(zero_minus_one_cast->is(-1) && "Expected -1 for result");
 
 //  Test vector scalar quantities.
-    auto vec_constant_a = graph::constant<BACKEND> (std::vector<double> ({3.0, 4.0}));
+    auto vec_constant_a = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({3.0, 4.0}));
     auto vec_minus_one = vec_constant_a - one;
     assert(graph::constant_cast(vec_minus_one).get() &&
            "Expected a constant type.");
     auto vec_minus_one_result = vec_minus_one->evaluate();
     assert(vec_minus_one_result.size() == 2 && "Size mismatch in result.");
-    assert(vec_minus_one_result.at(0) == 2 && "Expected 3 - 1.");
-    assert(vec_minus_one_result.at(1) == 3 && "Expected 4 - 1.");
+    assert(vec_minus_one_result.at(0) == backend::base_cast<BACKEND> (2.0) &&
+           "Expected 3 - 1.");
+    assert(vec_minus_one_result.at(1) == backend::base_cast<BACKEND> (3.0) &&
+           "Expected 4 - 1.");
 
-    auto vec_constant_b = graph::constant<BACKEND> (std::vector<double> ({2.0, 5.0}));
+    auto vec_constant_b = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({2.0, 5.0}));
     auto one_minus_vec = one - vec_constant_b;
     assert(graph::constant_cast(one_minus_vec).get() &&
            "Expected a constant type.");
     auto one_minus_vec_result = one_minus_vec->evaluate();
     assert(one_minus_vec_result.size() == 2 && "Size mismatch in result.");
-    assert(one_minus_vec_result.at(0) == -1 && "Expected 1 - 2.");
-    assert(one_minus_vec_result.at(1) == -4 && "Expected 1 - 5.");
+    assert(one_minus_vec_result.at(0) == backend::base_cast<BACKEND> (-1.0) &&
+           "Expected 1 - 2.");
+    assert(one_minus_vec_result.at(1) == backend::base_cast<BACKEND> (-4.0) &&
+           "Expected 1 - 5.");
 
 //  Test vector vector quanties.
     auto vec_minus_vec = vec_constant_a - vec_constant_b;
@@ -196,8 +211,10 @@ template<typename BACKEND> void test_subtract() {
            "Expected a constant type.");
     const BACKEND vec_minus_vec_result = vec_minus_vec->evaluate();
     assert(vec_minus_vec_result.size() == 2 && "Expected a constant type.");
-    assert(vec_minus_vec_result.at(0) == 1 && "Expected 3 - 1 for result.");
-    assert(vec_minus_vec_result.at(1) == -1 && "Expected 4 - 5 for result.");
+    assert(vec_minus_vec_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
+           "Expected 3 - 1 for result.");
+    assert(vec_minus_vec_result.at(1) == backend::base_cast<BACKEND> (-1.0) &&
+           "Expected 4 - 5 for result.");
 
 //  Test variable quanities.
 //  Any right side zero nodes should reduce to the other operand.
@@ -213,7 +230,8 @@ template<typename BACKEND> void test_subtract() {
     variable->set(3);
     const BACKEND zero_minus_var_result = zero_minus_var->evaluate();
     assert(zero_minus_var_result.size() == 1 && "Expected single value.");
-    assert(zero_minus_var_result.at(0) == -3 && "Expected 0 - 3 for result.");
+    assert(zero_minus_var_result.at(0) == backend::base_cast<BACKEND> (-3.0) &&
+           "Expected 0 - 3 for result.");
 
 //  Variable minus a variable should return an minus node.
     auto variable_b = graph::variable<BACKEND> (1, "");
@@ -223,18 +241,21 @@ template<typename BACKEND> void test_subtract() {
     variable_b->set(10);
     const BACKEND var_minus_var_result = var_minus_var->evaluate();
     assert(var_minus_var_result.size() == 1 && "Expected single value.");
-    assert(var_minus_var_result.at(0) == -7 && "Expected 3 - 10 for result");
+    assert(var_minus_var_result.at(0) == backend::base_cast<BACKEND> (-7) &&
+           "Expected 3 - 10 for result");
 
 //  Test variable vectors.
-    auto varvec_a = graph::variable<BACKEND> (std::vector<double> ({10.0, 20.0}), "");
-    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-3.0, 5.0}), "");
+    auto varvec_a = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({10.0, 20.0}), "");
+    auto varvec_b = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({-3.0, 5.0}), "");
     auto varvec_minus_varvec = varvec_a - varvec_b;
     const BACKEND varvec_minus_varvec_result =
         varvec_minus_varvec->evaluate();
     assert(varvec_minus_varvec_result.size() == 2 &&
            "Size mismatch in result.");
-    assert(varvec_minus_varvec_result.at(0) == 13 && "Expected 10 - -3.");
-    assert(varvec_minus_varvec_result.at(1) == 15 && "Expected 20 - 5.");
+    assert(varvec_minus_varvec_result.at(0) == backend::base_cast<BACKEND> (13.0) &&
+           "Expected 10 - -3.");
+    assert(varvec_minus_varvec_result.at(1) == backend::base_cast<BACKEND> (15.0) &&
+           "Expected 20 - 5.");
 
 //  Test derivatives.
 //  d (1 - x) / dx = d1/dx - dx/dx = 0 - 1 = -1
@@ -307,12 +328,13 @@ template<typename BACKEND> void test_multiply() {
         three_times_two->evaluate();
     assert(two_times_three_result.size() == 1 && "Expected single value.");
     assert(three_times_two_result.size() == 1 && "Expected single value.");
-    assert(three_times_two_result.at(0) == 6 && "Expected 3*2 for result.");
+    assert(three_times_two_result.at(0) == backend::base_cast<BACKEND> (6.0) &&
+           "Expected 3*2 for result.");
     assert(three_times_two_result.at(0) == two_times_three_result.at(0) &&
            "Expected 3*2 == 2*3.");
 
 //  Test vec times constant.
-    auto vec = graph::constant<BACKEND> (std::vector<double> ({4.0, 5.0}));
+    auto vec = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({4.0, 5.0}));
     assert((zero*vec).get() == zero.get() && "Expected left side zero.");
     assert((vec*zero).get() == zero.get() && "Expected right side zero.");
     assert((one*vec).get() == vec.get() && "Expected right side vec.");
@@ -326,8 +348,10 @@ template<typename BACKEND> void test_multiply() {
     const BACKEND vec_times_two_result = vec_times_two->evaluate();
     assert(two_times_vec_result.size() == 2 && "Expected two values.");
     assert(vec_times_two_result.size() == 2 && "Expected two values.");
-    assert(two_times_vec_result.at(0) == 8 && "Expected 2*4 for result.");
-    assert(two_times_vec_result.at(1) == 10 && "Expected 2*5 for result.");
+    assert(two_times_vec_result.at(0) == backend::base_cast<BACKEND> (8.0) &&
+           "Expected 2*4 for result.");
+    assert(two_times_vec_result.at(1) == backend::base_cast<BACKEND> (10.0) &&
+           "Expected 2*5 for result.");
     assert(two_times_vec_result.at(0) == vec_times_two_result.at(0) &&
            "Expected 2*4 == 4*2.");
     assert(two_times_vec_result.at(1) == vec_times_two_result.at(1) &&
@@ -339,22 +363,26 @@ template<typename BACKEND> void test_multiply() {
            "Expected a constant type.");
     const BACKEND vec_times_vec_result = vec_times_vec->evaluate();
     assert(vec_times_vec_result.size() == 2 && "Expected two values.");
-    assert(vec_times_vec_result.at(0) == 16 && "Expected 4*4 for result.");
-    assert(vec_times_vec_result.at(1) == 25 && "Expected 5*5 for result.");
+    assert(vec_times_vec_result.at(0) == backend::base_cast<BACKEND> (16.0) &&
+           "Expected 4*4 for result.");
+    assert(vec_times_vec_result.at(1) == backend::base_cast<BACKEND> (25.0) &&
+           "Expected 5*5 for result.");
 
 //  Test reduction short cut. If all the elements in the numerator are zero, an
 //  denominator does not need to be evaluated. This test makes sure that a sum
 //  or product is not used to avoid cases like {-1, 0, 1} which sum and product
 //  are zero.
-    auto vec_sum_prod = graph::constant<BACKEND> (std::vector<double> ({-1.0, 0.0, 1.0}));
+    auto vec_sum_prod = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({-1.0, 0.0, 1.0}));
     auto vec_sum_prod_multiply_two = vec_sum_prod*two;
     const BACKEND vec_sum_prod_multiply_two_result =
         vec_sum_prod_multiply_two->evaluate();
-    assert(vec_sum_prod_multiply_two_result.at(0) == -1.0*2.0 &&
+    assert(vec_sum_prod_multiply_two_result.at(0) == backend::base_cast<BACKEND> (-1.0) *
+                                                     backend::base_cast<BACKEND> (2.0) &&
            "Expected -1/2 for result.");
-    assert(vec_sum_prod_multiply_two_result.at(1) == 0 &&
+    assert(vec_sum_prod_multiply_two_result.at(1) == backend::base_cast<BACKEND> (0.0) &&
            "Expected 0/2 for result.");
-    assert(vec_sum_prod_multiply_two_result.at(2) == 1.0*2.0 &&
+    assert(vec_sum_prod_multiply_two_result.at(2) == backend::base_cast<BACKEND> (1.0) *
+                                                     backend::base_cast<BACKEND> (2.0) &&
            "Expected 1/2 for result.");
 
 //  Test variable quanities.
@@ -377,39 +405,45 @@ template<typename BACKEND> void test_multiply() {
     variable->set(6);
     const BACKEND two_times_var_result = two_times_var->evaluate();
     assert(two_times_var_result.size() == 1 && "Expected single value.");
-    assert(two_times_var_result.at(0) == 12 && "Expected 2*6 for result.");
+    assert(two_times_var_result.at(0) == backend::base_cast<BACKEND> (12.0) &&
+           "Expected 2*6 for result.");
 
     auto var_times_var = variable*variable;
     assert(graph::multiply_cast(var_times_var).get() &&
            "Expected multiply node.");
     const BACKEND var_times_var_result = var_times_var->evaluate();
     assert(var_times_var_result.size() == 1 && "Expected single value.");
-    assert(var_times_var_result.at(0) == 36 && "Expected 6*6 for result.");
+    assert(var_times_var_result.at(0) == backend::base_cast<BACKEND> (36) &&
+           "Expected 6*6 for result.");
 
 //  Test variable vectors.
-    auto varvec_a = graph::variable<BACKEND> (std::vector<double> ({4.0, -2.0}), "");
-    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-4.0, -2.0}), "");
+    auto varvec_a = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({4.0, -2.0}), "");
+    auto varvec_b = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({-4.0, -2.0}), "");
     auto varvec_times_varvec = varvec_a*varvec_b;
     const BACKEND varvec_times_varvec_result =
         varvec_times_varvec->evaluate();
     assert(varvec_times_varvec_result.size() == 2 &&
            "Size mismatch in result.");
-    assert(varvec_times_varvec_result.at(0) == -16 && "Expected 4*-4.");
-    assert(varvec_times_varvec_result.at(1) == 4 && "Expected -2*-2.");
+    assert(varvec_times_varvec_result.at(0) == backend::base_cast<BACKEND> (-16.0) &&
+           "Expected 4*-4.");
+    assert(varvec_times_varvec_result.at(1) == backend::base_cast<BACKEND> (4.0) &&
+           "Expected -2*-2.");
 
 //  Test reduction short cut. If all the elements in the numerator are zero, an
 //  denominator does not need to be evaluated. This test makes sure that a sum
 //  or product is not used to avoid cases like {-1, 0, 1} which sum and product
 //  are zero.
-    auto var_sum_prod = graph::variable<BACKEND> (std::vector<double> ({-2.0, 2.0, 0.0}), "");
+    auto var_sum_prod = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({-2.0, 2.0, 0.0}), "");
     auto var_sum_prod_multiply_two = var_sum_prod*two;
     const BACKEND var_sum_prod_multiply_two_result =
         var_sum_prod_multiply_two->evaluate();
-    assert(var_sum_prod_multiply_two_result.at(0) == -2.0*2.0 &&
+    assert(var_sum_prod_multiply_two_result.at(0) == backend::base_cast<BACKEND> (-2.0) *
+                                                     backend::base_cast<BACKEND> (2.0) &&
            "Expected -2/2 for result.");
-    assert(var_sum_prod_multiply_two_result.at(1) == 2.0*2.0 &&
+    assert(var_sum_prod_multiply_two_result.at(1) == backend::base_cast<BACKEND> (2.0) *
+                                                     backend::base_cast<BACKEND> (2.0) &&
            "Expected 2/2 for result.");
-    assert(var_sum_prod_multiply_two_result.at(2) == 0 &&
+    assert(var_sum_prod_multiply_two_result.at(2) == backend::base_cast<BACKEND> (0.0) &&
            "Expected 0/2 for result.");
 
 //  Test derivatives.
@@ -423,8 +457,10 @@ template<typename BACKEND> void test_multiply() {
            "Expected multiply node.");
     const BACKEND dvarvec_sqrd_result = dvarvec_sqrd->evaluate();
     assert(dvarvec_sqrd_result.size() == 2 && "Size mismatch in result.");
-    assert(dvarvec_sqrd_result.at(0) == 8 && "Expected 2*4 for result.");
-    assert(dvarvec_sqrd_result.at(1) == -4 && "Expected 2*-2 for result.");
+    assert(dvarvec_sqrd_result.at(0) == backend::base_cast<BACKEND> (8.0) &&
+           "Expected 2*4 for result.");
+    assert(dvarvec_sqrd_result.at(1) == backend::base_cast<BACKEND> (-4.0) &&
+           "Expected 2*-2 for result.");
 
 //  Test is_match
     auto match = (graph::constant<BACKEND> (1) + variable)
@@ -527,7 +563,7 @@ template<typename BACKEND> void test_divide() {
     assert(two_divided_three_cast->is(2.0/3.0) && "Expected 2/3 for result");
 
 //  Test vector constants.
-    auto vec = graph::constant<BACKEND>(std::vector<double> ({4.0, 3.0}));
+    auto vec = graph::constant<BACKEND>(std::vector<typename BACKEND::base> ({4.0, 3.0}));
     assert((zero/vec).get() == zero.get() && "Expected to recover zero.");
     assert((vec/one).get() == vec.get() && "Expected to recover numerator.");
     auto vec_divided_vec = vec/vec;
@@ -540,24 +576,28 @@ template<typename BACKEND> void test_divide() {
     const BACKEND two_divided_vec_result =
         two_divided_vec->evaluate();
     assert(two_divided_vec_result.size() == 2 && "Size mismatch in result.");
-    assert(two_divided_vec_result.at(0) == 2.0/4.0 &&
+    assert(two_divided_vec_result.at(0) == backend::base_cast<BACKEND> (2.0) /
+                                           backend::base_cast<BACKEND> (4.0) &&
            "Expected 2/4 for result.");
-    assert(two_divided_vec_result.at(1) == 2.0/3.0 &&
+    assert(two_divided_vec_result.at(1) == backend::base_cast<BACKEND> (2.0) /
+                                           backend::base_cast<BACKEND> (3.0) &&
            "Expected 2/3 for result.");
 
 //  Test reduction short cut. If all the elements in the numerator are zero, an
 //  denominator does not need to be evaluated. This test makes sure that a sum
 //  or product is not used to avoid cases like {-1, 0, 1} which sum and product
 //  are zero.
-    auto vec_sum_prod = graph::constant<BACKEND> (std::vector<double> ({-1.0, 0.0, 1.0}));
+    auto vec_sum_prod = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({-1.0, 0.0, 1.0}));
     auto vec_sum_prod_divided_two = vec_sum_prod/two;
     const BACKEND vec_sum_prod_divided_two_result =
         vec_sum_prod_divided_two->evaluate();
-    assert(vec_sum_prod_divided_two_result.at(0) == -1.0/2.0 &&
+    assert(vec_sum_prod_divided_two_result.at(0) == backend::base_cast<BACKEND> (-1.0) /
+                                                    backend::base_cast<BACKEND> (2.0) &&
            "Expected -1/2 for result.");
-    assert(vec_sum_prod_divided_two_result.at(1) == 0 &&
+    assert(vec_sum_prod_divided_two_result.at(1) == backend::base_cast<BACKEND> (0.0) &&
            "Expected 0/2 for result.");
-    assert(vec_sum_prod_divided_two_result.at(2) == 1.0/2.0 &&
+    assert(vec_sum_prod_divided_two_result.at(2) == backend::base_cast<BACKEND> (1.0) /
+                                                    backend::base_cast<BACKEND> (2.0) &&
            "Expected 1/2 for result.");
 
 //  Test variables.
@@ -572,7 +612,8 @@ template<typename BACKEND> void test_divide() {
     variable->set(3);
     const BACKEND two_divided_var_result = two_divided_var->evaluate();
     assert(two_divided_var_result.size() == 1 && "Expected single value.");
-    assert(two_divided_var_result.at(0) == 2.0/3.0 &&
+    assert(two_divided_var_result.at(0) == backend::base_cast<BACKEND> (2.0) /
+                                           backend::base_cast<BACKEND> (3.0) &&
            "Expected 2/3 for result.");
 
     auto var_divided_two = variable/two;
@@ -580,7 +621,8 @@ template<typename BACKEND> void test_divide() {
            "Expected divide node.");
     const BACKEND var_divided_two_result = var_divided_two->evaluate();
     assert(var_divided_two_result.size() == 1 && "Expected single value.");
-    assert(var_divided_two_result.at(0) == 3.0/2.0 &&
+    assert(var_divided_two_result.at(0) == backend::base_cast<BACKEND> (3.0) /
+                                           backend::base_cast<BACKEND> (2.0) &&
            "Expected 3/2 for result.");
 
     auto var_divided_var = variable/variable;
@@ -594,11 +636,12 @@ template<typename BACKEND> void test_divide() {
            "Expected divide node.");
     const BACKEND var_divided_varb_result = var_divided_varb->evaluate();
     assert(var_divided_varb_result.size() == 1 && "Expected single value.");
-    assert(var_divided_varb_result.at(0) == 3.0/4.0 &&
+    assert(var_divided_varb_result.at(0) == backend::base_cast<BACKEND> (3.0) /
+                                            backend::base_cast<BACKEND> (4.0) &&
            "Expected 3/4 for result.");
 
 //  Test vector variables.
-    auto varvec = graph::variable<BACKEND> (std::vector<double> ({2.0, 6.0}), "");
+    auto varvec = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({2.0, 6.0}), "");
     assert((zero/varvec).get() == zero.get() && "Expected to recover zero.");
     assert((varvec/one).get() == varvec.get() &&
            "Expected to recover numerator.");
@@ -608,19 +651,23 @@ template<typename BACKEND> void test_divide() {
            "Expect divide node.");
     const BACKEND varvec_divided_two_result = varvec_divided_two->evaluate();
     assert(varvec_divided_two_result.size() == 2 && "Size mismatch in result.");
-    assert(varvec_divided_two_result.at(0) == 1 && "Expected 2/2 for result.");
-    assert(varvec_divided_two_result.at(1) == 3 && "Expected 6/2 for result.");
+    assert(varvec_divided_two_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
+           "Expected 2/2 for result.");
+    assert(varvec_divided_two_result.at(1) == backend::base_cast<BACKEND> (3.0) &&
+           "Expected 6/2 for result.");
 
     auto two_divided_varvec = two/varvec;
     assert(graph::divide_cast(two_divided_varvec).get() &&
            "Expect divide node.");
     const BACKEND two_divided_varvec_result = two_divided_varvec->evaluate();
     assert(two_divided_varvec_result.size() == 2 && "Size mismatch in result.");
-    assert(two_divided_varvec_result.at(0) == 1 && "Expected 2/2 for result.");
-    assert(two_divided_varvec_result.at(1) == 2.0/6.0 &&
+    assert(two_divided_varvec_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
+           "Expected 2/2 for result.");
+    assert(two_divided_varvec_result.at(1) == backend::base_cast<BACKEND> (2.0) /
+                                              backend::base_cast<BACKEND> (6.0) &&
            "Expected 2/6 for result.");
 
-    auto varvec_b = graph::variable<BACKEND> (std::vector<double> ({-3.0, 6.0}), "");
+    auto varvec_b = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({-3.0, 6.0}), "");
     auto varvec_divided_varvecb = varvec/varvec_b;
     assert(graph::divide_cast(varvec_divided_varvecb).get() &&
            "Expect divide node.");
@@ -628,9 +675,10 @@ template<typename BACKEND> void test_divide() {
         varvec_divided_varvecb->evaluate();
     assert(varvec_divided_varvecb_result.size() == 2 &&
            "Size mismatch in result.");
-    assert(varvec_divided_varvecb_result.at(0) == 2.0/-3.0 &&
+    assert(varvec_divided_varvecb_result.at(0) == backend::base_cast<BACKEND> (2.0) /
+                                                  backend::base_cast<BACKEND> (-3.0) &&
            "Expected 2/-3 for result.");
-    assert(varvec_divided_varvecb_result.at(1) == 1 &&
+    assert(varvec_divided_varvecb_result.at(1) == backend::base_cast<BACKEND> (1.0) &&
            "Expected 6/6 for result.");
 
     auto varvecb_divided_varvec = varvec_b/varvec;
@@ -640,37 +688,43 @@ template<typename BACKEND> void test_divide() {
         varvecb_divided_varvec->evaluate();
     assert(varvecb_divided_varvec_result.size() == 2 &&
            "Size mismatch in result.");
-    assert(varvecb_divided_varvec_result.at(0) == -3.0/2.0 &&
+    assert(varvecb_divided_varvec_result.at(0) == backend::base_cast<BACKEND> (-3.0) /
+                                                  backend::base_cast<BACKEND> (2.0) &&
            "Expected -3/2 for result.");
-    assert(varvecb_divided_varvec_result.at(1) == 1 &&
+    assert(varvecb_divided_varvec_result.at(1) == backend::base_cast<BACKEND> (1.0) &&
            "Expected 6/6 for result.");
 
 //  Test reduction short cut. If all the elements in the numerator are zero, an
 //  denominator does not need to be evaluated. This test makes sure that a sum
 //  or product is not used to avoid cases like {-1, 0, 1} which sum and product
 //  are zero.
-    auto var_sum_prod = graph::variable<BACKEND> (std::vector<double> ({-2.0, 2.0, 0.0}), "");
+    auto var_sum_prod = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({-2.0, 2.0, 0.0}), "");
     auto var_sum_prod_divided_two = var_sum_prod/two;
     const BACKEND var_sum_prod_divided_two_result =
         var_sum_prod_divided_two->evaluate();
-    assert(var_sum_prod_divided_two_result.at(0) == -2.0/2.0 &&
+    assert(var_sum_prod_divided_two_result.at(0) == backend::base_cast<BACKEND> (-2.0) /
+                                                    backend::base_cast<BACKEND> (2.0) &&
            "Expected -2/2 for result.");
-    assert(var_sum_prod_divided_two_result.at(1) == 2.0/2.0 &&
+    assert(var_sum_prod_divided_two_result.at(1) == backend::base_cast<BACKEND> (2.0) /
+                                                    backend::base_cast<BACKEND> (2.0) &&
            "Expected 2/2 for result.");
-    assert(var_sum_prod_divided_two_result.at(2) == 0 &&
+    assert(var_sum_prod_divided_two_result.at(2) == backend::base_cast<BACKEND> (0.0) &&
            "Expected 0/2 for result.");
 
 //  Test derivatives.
 //  d (x/c) / dx = dxdx/c + x d 1/c /dx = 1/c
     auto dvar_divided_two = var_divided_two->df(variable);
     const BACKEND dvar_divided_two_result = dvar_divided_two->evaluate();
-    assert(dvar_divided_two_result.at(0) == 1.0/2.0 &&
+    assert(dvar_divided_two_result.at(0) == backend::base_cast<BACKEND> (1.0) /
+                                            backend::base_cast<BACKEND> (2.0) &&
            "Expected 1/2 for result.");
 
 //  d (c/x) / dx = dc/dx x - c/x^2 dx/dx = -c/x^2
     auto dtwo_divided_var = two_divided_var->df(variable);
     const BACKEND dtwo_divided_var_result = dtwo_divided_var->evaluate();
-    assert(dtwo_divided_var_result.at(0) == -2.0/(3.0*3.0) &&
+    assert(dtwo_divided_var_result.at(0) == backend::base_cast<BACKEND> (-2.0) /
+                                            (backend::base_cast<BACKEND> (3.0) *
+                                             backend::base_cast<BACKEND> (3.0)) &&
            "Expected 2/3^2 for result.");
 
 //  Test is_match
@@ -759,12 +813,14 @@ template<typename BACKEND> void test_fma() {
     auto one_two_three = graph::fma(one, two, three);
     const BACKEND one_two_three_result = one_two_three->evaluate();
     assert(one_two_three_result.size() == 1 && "Expected single value.");
-    assert(one_two_three_result.at(0) == 5 && "Expected five for result");
+    assert(one_two_three_result.at(0) == backend::base_cast<BACKEND> (5.0) &&
+           "Expected five for result");
 
     auto two_three_one = graph::fma(two, three, one);
     const BACKEND two_three_one_result = two_three_one->evaluate();
     assert(two_three_one_result.size() == 1 && "Expected single value.");
-    assert(two_three_one_result.at(0) == 7 && "Expected seven for result");
+    assert(two_three_one_result.at(0) == backend::base_cast<BACKEND> (7) &&
+           "Expected seven for result");
 
 //  Test a variable.
     auto var = graph::variable<BACKEND> (1, "");
@@ -864,5 +920,6 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    run_tests<backend::cpu<float>> ();
     run_tests<backend::cpu<double>> ();
 }

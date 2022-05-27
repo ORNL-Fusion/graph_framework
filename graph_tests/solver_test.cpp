@@ -16,14 +16,16 @@
 //------------------------------------------------------------------------------
 ///  @brief Test the solver.
 ///
-///  @param[in] omega0 Ray frequency.
-///  @param[in] kx0    Wave number guess.
-///  @param[in] dt     Timestep for the solver.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] omega0    Ray frequency.
+///  @param[in] kx0       Wave number guess.
+///  @param[in] dt        Timestep for the solver.
 //------------------------------------------------------------------------------
 template<typename SOLVER>
-void test_solver(const double omega0,
-                 const double kx0,
-                 const double dt) {
+void test_solver(const typename SOLVER::base tolarance,
+                 const typename SOLVER::base omega0,
+                 const typename SOLVER::base kx0,
+                 const typename SOLVER::base dt) {
     auto w = graph::variable<typename SOLVER::backend> (1, omega0, "\\omega");
     auto kx = graph::variable<typename SOLVER::backend> (1, kx0, "k_{x}");
     auto ky = graph::variable<typename SOLVER::backend> (1, 0.25, "k_{y}");
@@ -35,12 +37,12 @@ void test_solver(const double omega0,
     auto eq = equilibrium::make_guassian_density<typename SOLVER::backend> ();
 
     SOLVER solve(w, kx, ky, kz, x, y, z, dt, eq);
-    solve.init(kx);
+    solve.init(kx, tolarance);
     auto residule = solve.residule();
 
     for (size_t i = 0; i < 5; i++) {
         solve.step();
-        assert(residule->evaluate().at(0) < 1.0E-30 &&
+        assert(residule->evaluate().at(0) < tolarance &&
                "Solver failed to retain initial acuracy");
     }
 }
@@ -48,24 +50,28 @@ void test_solver(const double omega0,
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified disperions Relation.
 ///
-///  @param[in] omega0 Ray frequency.
-///  @param[in] kx0    Wave number guess.
-///  @param[in] dt     Timestep for the solver.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] omega0    Ray frequency.
+///  @param[in] kx0       Wave number guess.
+///  @param[in] dt        Timestep for the solver.
 //------------------------------------------------------------------------------
-template<typename DISPERSION> void run_disperions_tests(const double omega0,
-                                                        const double kx0,
-                                                        const double dt) {
-    test_solver<solver::rk2<DISPERSION>> (omega0, kx0, dt);
-    test_solver<solver::rk4<DISPERSION>> (omega0, kx0, dt);
+template<typename DISPERSION> void run_disperions_tests(const typename DISPERSION::base tolarance,
+                                                        const typename DISPERSION::base omega0,
+                                                        const typename DISPERSION::base kx0,
+                                                        const typename DISPERSION::base dt) {
+    test_solver<solver::rk2<DISPERSION>> (tolarance, omega0, kx0, dt);
+    test_solver<solver::rk4<DISPERSION>> (tolarance, omega0, kx0, dt);
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename BACKEND> void run_tests() {
-    run_disperions_tests<dispersion::simple<BACKEND>> (0.5, 0.25, 1.0);
-    run_disperions_tests<dispersion::guassian_well<BACKEND>> (0.5, 0.25, 0.00001);
-    run_disperions_tests<dispersion::cold_plasma<BACKEND>> (900.0, 1000.0, 0.5/10000.0);
+template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
+    run_disperions_tests<dispersion::simple<BACKEND>> (tolarance, 0.5, 0.25, 1.0);
+    run_disperions_tests<dispersion::guassian_well<BACKEND>> (tolarance, 0.5, 0.25, 0.00001);
+    run_disperions_tests<dispersion::cold_plasma<BACKEND>> (tolarance, 900.0, 1000.0, 0.5/10000.0);
 }
 
 //------------------------------------------------------------------------------
@@ -75,5 +81,6 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    run_tests<backend::cpu<double>> ();
+    run_tests<backend::cpu<float>> (1.0E-14);
+    run_tests<backend::cpu<double>> (1.0E-30);
 }

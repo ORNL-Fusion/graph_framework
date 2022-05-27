@@ -121,6 +121,7 @@ namespace graph {
 ///  @brief Cast to a sine node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_sine<N> sin_cast(std::shared_ptr<N> x) {
@@ -236,6 +237,7 @@ namespace graph {
 ///  @brief Cast to a cosine node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
     shared_cosine<N> cos_cast(std::shared_ptr<N> x) {
