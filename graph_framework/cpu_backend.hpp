@@ -21,10 +21,11 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a generic buffer.
 //------------------------------------------------------------------------------
-    class cpu final : public buffer {
+    template<typename BASE>
+    class cpu final : public buffer<BASE> {
     protected:
 ///  The data buffer to hold the data.
-        std::vector<double> data;
+        std::vector<BASE> data;
 
     public:
 //------------------------------------------------------------------------------
@@ -41,7 +42,7 @@ namespace backend {
 ///  @param[in] s Size of he data buffer.
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
-        cpu(const size_t s, const double d) :
+        cpu(const size_t s, const BASE d) :
         data(s, d) {}
 
 //------------------------------------------------------------------------------
@@ -49,7 +50,7 @@ namespace backend {
 ///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
-        cpu(const std::vector<double> &d) :
+        cpu(const std::vector<BASE> &d) :
         data(d) {}
 
 //------------------------------------------------------------------------------
@@ -63,21 +64,21 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Index operator.
 //------------------------------------------------------------------------------
-        virtual double &operator[] (const size_t index) final {
+        virtual BASE &operator[] (const size_t index) final {
             return data[index];
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Const index operator.
 //------------------------------------------------------------------------------
-        virtual const double &operator[] (const size_t index) const final {
+        virtual const BASE &operator[] (const size_t index) const final {
             return data[index];
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get value at.
 //------------------------------------------------------------------------------
-        virtual const double at(const size_t index) const final {
+        virtual const BASE at(const size_t index) const final {
             return data.at(index);
         }
 
@@ -86,7 +87,7 @@ namespace backend {
 ///
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const double d) final {
+        virtual void set(const BASE d) final {
             data.assign(data.size(), d);
         }
 
@@ -95,7 +96,7 @@ namespace backend {
 ///
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const std::vector<double> &d) final {
+        virtual void set(const std::vector<BASE> &d) final {
             data.assign(d.cbegin(), d.cend());
         }
 
@@ -111,7 +112,7 @@ namespace backend {
 ///
 ///  @returns The maximum value.
 //------------------------------------------------------------------------------
-        virtual double max() const final {
+        virtual BASE max() const final {
             return *std::max_element(data.cbegin(), data.cend());
         }
 
@@ -121,7 +122,7 @@ namespace backend {
 ///  @returns Returns true if every element is the same.
 //------------------------------------------------------------------------------
         virtual bool is_same() const final {
-            const double same = data.at(0);
+            const BASE same = data.at(0);
             for (size_t i = 1, ie = data.size(); i < ie; i++) {
                 if (data.at(i) != same) {
                     return false;
@@ -137,7 +138,7 @@ namespace backend {
 ///  @returns Returns true if every element is zero.
 //------------------------------------------------------------------------------
         virtual bool is_zero() const final {
-            for (double d : data) {
+            for (BASE d : data) {
                 if (d != 0.0) {
                     return false;
                 }
@@ -150,7 +151,7 @@ namespace backend {
 ///  @brief Take sqrt.
 //------------------------------------------------------------------------------
         virtual void sqrt() final {
-            for (double &d : data) {
+            for (BASE &d : data) {
                 d = std::sqrt(d);
             }
         }
@@ -159,7 +160,7 @@ namespace backend {
 ///  @brief Take exp.
 //------------------------------------------------------------------------------
         virtual void exp() final {
-            for (double &d : data) {
+            for (BASE &d : data) {
                 d = std::exp(d);
             }
         }
@@ -168,7 +169,7 @@ namespace backend {
 ///  @brief Take sine.
 //------------------------------------------------------------------------------
         virtual void sin() final {
-            for (double &d : data) {
+            for (BASE &d : data) {
                 d = std::sin(d);
             }
         }
@@ -177,7 +178,7 @@ namespace backend {
 ///  @brief Take cosine.
 //------------------------------------------------------------------------------
         virtual void cos() final {
-            for (double &d : data) {
+            for (BASE &d : data) {
                 d = std::cos(d);
             }
         }
@@ -186,15 +187,16 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Add operation.
 //------------------------------------------------------------------------------
-    inline cpu operator+(cpu &a, cpu &b) {
+    template<typename BASE>
+    inline cpu<BASE> operator+(cpu<BASE> &a, cpu<BASE> &b) {
         if (b.size() == 1) {
-            const double right = b.at(0);
+            const BASE right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
                 a[i] += right;
             }
             return a;
         } else if (a.size() == 1) {
-            const double left = a.at(0);
+            const BASE left = a.at(0);
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
                 b[i] += left;
             }
@@ -212,7 +214,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Equal operation.
 //------------------------------------------------------------------------------
-    inline bool operator==(const cpu &a, const cpu &b) {
+    template<typename BASE>
+    inline bool operator==(const cpu<BASE> &a, const cpu<BASE> &b) {
         if (a.size() != b.size()) {
             return false;
         }
@@ -228,7 +231,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Subtract operation.
 //------------------------------------------------------------------------------
-    inline cpu operator-(cpu &a, cpu &b) {
+    template<typename BASE>
+    inline cpu<BASE> operator-(cpu<BASE> &a, cpu<BASE> &b) {
         if (b.size() == 1) {
             const double right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
@@ -254,15 +258,16 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Multiply operation.
 //------------------------------------------------------------------------------
-    inline cpu operator*(cpu &a, cpu &b) {
+    template<typename BASE>
+    inline cpu<BASE> operator*(cpu<BASE> &a, cpu<BASE> &b) {
         if (b.size() == 1) {
-            const double right = b.at(0);
+            const BASE right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
                 a[i] *= right;
             }
             return a;
         } else if (a.size() == 1) {
-            const double left = a.at(0);
+            const BASE left = a.at(0);
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
                 b[i] *= left;
             }
@@ -280,15 +285,16 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Divide operation.
 //------------------------------------------------------------------------------
-    inline cpu operator/(cpu &a, cpu &b) {
+    template<typename BASE>
+    inline cpu<BASE> operator/(cpu<BASE> &a, cpu<BASE> &b) {
         if (b.size() == 1) {
-            const double right = b.at(0);
+            const BASE right = b.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
                 a[i] /= right;
             }
             return a;
         } else if (a.size() == 1) {
-            const double left = a.at(0);
+            const BASE left = a.at(0);
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
                 b[i] = left/b.at(i);
             }
@@ -306,12 +312,13 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Multiply operation.
 //------------------------------------------------------------------------------
-    inline cpu fma(cpu &a, cpu &b, cpu &c) {
+    template<typename BASE>
+    inline cpu<BASE> fma(cpu<BASE> &a, cpu<BASE> &b, cpu<BASE> &c) {
         if (a.size() == 1) {
-            const double left = a.at(0);
+            const BASE left = a.at(0);
 
             if (b.size() == 1) {
-                const double middle = b.at(0);
+                const BASE middle = b.at(0);
                 for (size_t i = 0, ie = c.size(); i < ie; i++) {
 #ifdef FP_FAST_FMA
                     c[i] = std::fma(left, middle, c.at(i));
@@ -321,7 +328,7 @@ namespace backend {
                 }
                 return c;
             } else if (c.size() == 1) {
-                const double right = c.at(0);
+                const BASE right = c.at(0);
                 for (size_t i = 0, ie = b.size(); i < ie; i++) {
 #ifdef FP_FAST_FMA
                     b[i] = std::fma(left, b.at(i), right);
@@ -343,9 +350,9 @@ namespace backend {
             }
             return b;
         } else if (b.size() == 1) {
-            const double middle = b.at(0);
+            const BASE middle = b.at(0);
             if (c.size() == 1) {
-                const double right = c.at(0);
+                const BASE right = c.at(0);
                 for (size_t i = 0, ie = a.size(); i < ie; i++) {
 #ifdef FP_FAST_FMA
                     a[i] = std::fma(a.at(i), middle, right);
@@ -369,7 +376,7 @@ namespace backend {
         } else if (c.size() == 1) {
             assert(a.size() == b.size() &&
                    "Size mismatch between left and middle.");
-            const double right = c.at(0);
+            const BASE right = c.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
 #ifdef FP_FAST_FMA
                 a[i] = std::fma(a.at(i), b.at(i), right);

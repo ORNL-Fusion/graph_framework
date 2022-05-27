@@ -40,13 +40,13 @@ int main(int argc, const char * argv[]) {
             std::uniform_real_distribution<double> real_dist(0.6, 1.0);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 
-            auto omega = graph::variable<backend::cpu> (local_num_rays, "\\omega");
-            auto kx = graph::variable<backend::cpu> (local_num_rays, "k_{x}");
-            auto ky = graph::variable<backend::cpu> (local_num_rays, "k_{y}");
-            auto kz = graph::variable<backend::cpu> (local_num_rays, "k_{z}");
-            auto x = graph::variable<backend::cpu> (local_num_rays, "x");
-            auto y = graph::variable<backend::cpu> (local_num_rays, "y");
-            auto z = graph::variable<backend::cpu> (local_num_rays, "z");
+            auto omega = graph::variable<backend::cpu<double>> (local_num_rays, "\\omega");
+            auto kx = graph::variable<backend::cpu<double>> (local_num_rays, "k_{x}");
+            auto ky = graph::variable<backend::cpu<double>> (local_num_rays, "k_{y}");
+            auto kz = graph::variable<backend::cpu<double>> (local_num_rays, "k_{z}");
+            auto x = graph::variable<backend::cpu<double>> (local_num_rays, "x");
+            auto y = graph::variable<backend::cpu<double>> (local_num_rays, "y");
+            auto z = graph::variable<backend::cpu<double>> (local_num_rays, "z");
 
             const double q = 1.602176634E-19;
             const double me = 9.1093837015E-31;
@@ -62,12 +62,19 @@ int main(int argc, const char * argv[]) {
                 //omega->set(j, real_dist(engine));
             }
 
-            x->set(0.1);
+            //x->set(0.1);
+            //y->set(0.0);
+            //z->set(-0.25);
+            //kx->set(22.0);
+            //ky->set(0.0);
+            //kz->set(0.7*OmegaCE);
+            
+            x->set(0.2);
             y->set(0.0);
             z->set(-0.25);
-            kx->set(22.0);
+            kx->set(400.0);
             ky->set(0.0);
-            kz->set(0.7*OmegaCE);
+            kz->set(-0.7*OmegaCE);
             
             //x->set(-1.0);
             //y->set(-0.2);
@@ -76,13 +83,13 @@ int main(int argc, const char * argv[]) {
             //ky->set(0.0);
             //kz->set(0.0);
 
-            //auto eq = equilibrium::make_guassian_density<backend::cpu> ();
-            auto eq = equilibrium::make_slab<backend::cpu> ();
+            //auto eq = equilibrium::make_guassian_density<backend::cpu<double>> ();
+            auto eq = equilibrium::make_slab<backend::cpu<double>> ();
 
-            solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
-            //solver::rk4<dispersion::cold_plasma<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
-            //solver::rk4<dispersion::guassian_well<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
-            //solver::rk4<dispersion::simple<backend::cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
+            //solver::rk4<dispersion::cold_plasma<backend::cpu<double>>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
+            solver::rk4<dispersion::cold_plasma<backend::cpu<double>>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            //solver::rk4<dispersion::guassian_well<backend::cpu<double>>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
+            //solver::rk4<dispersion::simple<backend::cpu<double>>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             solve.init(kx);
             if (thread_number == 0) {
                 solve.print_dispersion();

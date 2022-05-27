@@ -9,6 +9,7 @@
 #endif
 
 #include <cassert>
+#include <complex>
 
 #include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/node.hpp"
@@ -27,34 +28,34 @@ void test_constant() {
     assert(!zero_cast->is(1) && "Constant value not expeced one.");
     const BACKEND zero_result = zero->evaluate();
     assert(zero_result.size() == 1 && "Expected single value.");
-    assert(zero_result.at(0) == 0 && "Constant value evalute expeced zero.");
+    assert(zero_result.at(0) == 0.0 && "Constant value evalute expeced zero.");
     auto dzero = zero->df(zero);
     auto dzero_cast = graph::constant_cast(dzero);
     assert(dzero_cast.get() && "Expected a constant type for derivative.");
     assert(dzero_cast->is(0) && "Constant value expeced zero.");
-    zero->set(1);
+    zero->set(1.0);
     assert(zero_cast->is(0) && "Constant value expeced zero.");
 
-    auto one = graph::constant<BACKEND> (std::vector<double> ({1.0, 1.0}));
+    auto one = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({1.0, 1.0}));
     auto one_cast = graph::constant_cast(one);
     assert(one_cast.get() && "Expected a constant type.");
     assert(one_cast->is(1) && "Constant value expeced zero.");
     const BACKEND one_result = one->evaluate();
     assert(one_result.size() == 1 && "Expected single value.");
-    assert(one_result.at(0) == 1 && "Constant value evalute expeced one.");
+    assert(one_result.at(0) == 1.0 && "Constant value evalute expeced one.");
     auto done = one->df(zero);
     auto done_cast = graph::constant_cast(done);
     assert(done_cast.get() && "Expected a constant type for derivative.");
     assert(done_cast->is(0) && "Constant value expeced zero.");
 
-    auto one_two = graph::constant<BACKEND> (std::vector<double> ({1.0, 2.0}));
+    auto one_two = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({1.0, 2.0}));
     auto one_two_cast = graph::constant_cast(one_two);
     assert(one_two_cast.get() && "Expected a constant type.");
     assert(!one_two_cast->is(1) && "Constant expected to not be one.");
     const BACKEND one_two_result = one_two->evaluate();
     assert(one_two_result.size() == 2 && "Expected two elements in constant");
-    assert(one_two_result.at(0) == 1 && "Expected one for first elememt");
-    assert(one_two_result.at(1) == 2 && "Expected two for second elememt");
+    assert(one_two_result.at(0) == 1.0 && "Expected one for first elememt");
+    assert(one_two_result.at(1) == 2.0 && "Expected two for second elememt");
 
 //  Test is_match
     auto c1 = graph::constant<BACKEND> (5);
@@ -75,16 +76,16 @@ void test_variable() {
            "Expected a variable type.");
     const BACKEND zero_result = zero->evaluate();
     assert(zero_result.size() == 1 && "Expected single value.");
-    assert(zero_result.at(0) == 0 && "Variable value evalute expeced zero.");
+    assert(zero_result.at(0) == 0.0 && "Variable value evalute expeced zero.");
     zero->set(1);
     const BACKEND zero_result2 = zero->evaluate();
     assert(zero_result2.size() == 1 && "Expected single value.");
-    assert(zero_result2.at(0) == 1 && "Variable value evalute expeced zero.");
+    assert(zero_result2.at(0) == 1.0 && "Variable value evalute expeced zero.");
     auto dzero = zero->df(zero);
     assert(graph::constant_cast(dzero).get() && "Expected a constant type.");
     const BACKEND dzero_result = dzero->evaluate();
     assert(dzero_result.size() == 1 && "Expected single value.");
-    assert(dzero_result.at(0) == 1 && "Constant value evalute expeced one.");
+    assert(dzero_result.at(0) == 1.0 && "Constant value evalute expeced one.");
 
     auto ones = graph::variable<BACKEND> (2, 1, "");
     auto dzerodone = zero->df(ones);
@@ -92,19 +93,19 @@ void test_variable() {
            "Expected a constant type.");
     const BACKEND dzerodone_result = dzerodone->evaluate();
     assert(dzerodone_result.size() == 1 && "Expected single value.");
-    assert(dzerodone_result.at(0) == 0 &&
+    assert(dzerodone_result.at(0) == 0.0 &&
            "Constant value evalute expeced zero.");
 
-    auto one_two = graph::variable<BACKEND> (std::vector<double> ({1.0, 2.0}), "");
+    auto one_two = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({1.0, 2.0}), "");
     const BACKEND one_two_result = one_two->evaluate();
     assert(one_two_result.size() == 2 && "Expected two elements in constant");
-    assert(one_two_result.at(0) == 1 && "Expected one for first elememt");
-    assert(one_two_result.at(1) == 2 && "Expected two for second elememt");
-    one_two->set(std::vector<double> ({3.0, 4.0}));
+    assert(one_two_result.at(0) == 1.0 && "Expected one for first elememt");
+    assert(one_two_result.at(1) == 2.0 && "Expected two for second elememt");
+    one_two->set(std::vector<typename BACKEND::base> ({3.0, 4.0}));
     const BACKEND one_two_result2 = one_two->evaluate();
     assert(one_two_result2.size() == 2 && "Expected two elements in constant");
-    assert(one_two_result2.at(0) == 3 && "Expected three for first elememt");
-    assert(one_two_result2.at(1) == 4 && "Expected four for second elememt");
+    assert(one_two_result2.at(0) == 3.0 && "Expected three for first elememt");
+    assert(one_two_result2.at(1) == 4.0 && "Expected four for second elememt");
 
 //  Test is_match
     auto v1 = graph::variable<BACKEND> (1, "");
@@ -123,9 +124,9 @@ void test_cache() {
     auto cache_five = graph::cache(five);
     cache_five->evaluate();
     five->set(6);
-    assert(cache_five->evaluate().at(0) == 5 && "Expected a value of five.");
+    assert(cache_five->evaluate().at(0) == 5.0 && "Expected a value of five.");
     cache_five->reset_cache();
-    assert(cache_five->evaluate().at(0) == 6 && "Expected a value of six.");
+    assert(cache_five->evaluate().at(0) == 6.0 && "Expected a value of six.");
     assert(graph::cache_cast(cache_five).get() && "Expected cache node.");
 
     auto three = graph::constant<BACKEND> (3.0);
@@ -160,7 +161,7 @@ void test_pseudo_variable() {
 
     a->set(1);
     b->set(2);
-    assert(c->evaluate().at(0) == 3 && "Expected three.");
+    assert(c->evaluate().at(0) == 3.0 && "Expected three.");
 
     auto v2 = graph::pseudo_variable(a + b);
     assert(c.get() != v2.get() && "Expected different pointers");
@@ -184,5 +185,5 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    run_tests<backend::cpu> ();
+    run_tests<backend::cpu<double>> ();
 }

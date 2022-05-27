@@ -241,5 +241,5 @@ template<typename BACKEND> void test_backend() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    test_backend<backend::cpu> ();
+    test_backend<backend::cpu<double>> ();
 }

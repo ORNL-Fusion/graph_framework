@@ -74,7 +74,7 @@ namespace graph {
 ///
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const double d) {}
+        virtual void set(const typename BACKEND::base d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
@@ -83,14 +83,14 @@ namespace graph {
 ///  @param[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const size_t index,
-                         const double d) {}
+                         const typename BACKEND::base d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const std::vector<double> &d) {}
+        virtual void set(const std::vector<typename BACKEND::base> &d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
@@ -254,7 +254,7 @@ namespace graph {
 ///
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
-        constant_node(const double d) :
+        constant_node(const typename BACKEND::base d) :
         data(1, d) {}
 
 //------------------------------------------------------------------------------
@@ -262,7 +262,7 @@ namespace graph {
 ///
 ///  @param[in] d Size of the .
 //------------------------------------------------------------------------------
-        constant_node(const std::vector<double> &d) :
+        constant_node(const std::vector<typename BACKEND::base> &d) :
         data(d) {}
 
 //------------------------------------------------------------------------------
@@ -329,7 +329,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Check if the constant is value.
 //------------------------------------------------------------------------------
-        bool is(const double d) {
+        bool is(const typename BACKEND::base d) {
             return data.size() == 1 && data.at(0) == d;
         }
         
@@ -348,7 +348,7 @@ namespace graph {
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> constant(const double d) {
+    shared_leaf<BACKEND> constant(const typename BACKEND::base d) {
         return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
     }
 
@@ -359,7 +359,7 @@ namespace graph {
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> constant(const std::vector<double> &d) {
+    shared_leaf<BACKEND> constant(const std::vector<typename BACKEND::base> &d) {
         return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
     }
 
@@ -420,7 +420,8 @@ namespace graph {
 ///  @param[in] d      Scalar data to initalize.
 ///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-        variable_node(const size_t s, const double d,
+        variable_node(const size_t s,
+                      const typename BACKEND::base d,
                       const std::string &symbol) :
         data(s, d), symbol(symbol) {}
 
@@ -429,7 +430,7 @@ namespace graph {
 ///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
-        variable_node(const std::vector<double> &d,
+        variable_node(const std::vector<typename BACKEND::base> &d,
                       const std::string &symbol) :
         data(d), symbol(symbol) {}
 
@@ -487,7 +488,7 @@ namespace graph {
 ///
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const double d) final {
+        virtual void set(const typename BACKEND::base d) final {
             data.set(d);
         }
 
@@ -497,7 +498,8 @@ namespace graph {
 ///  @param[in] index Index to place the value at.
 ///  @param[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const size_t index, const double d) final {
+        virtual void set(const size_t index,
+                         const typename BACKEND::base d) final {
             data[index] = d;
         }
 
@@ -506,7 +508,7 @@ namespace graph {
 ///
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const std::vector<double> &d) final {
+        virtual void set(const std::vector<typename BACKEND::base> &d) final {
             data = BACKEND(d);
         }
 
@@ -547,7 +549,8 @@ namespace graph {
 ///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> variable(const size_t s, const double d,
+    shared_leaf<BACKEND> variable(const size_t s,
+                                  const typename BACKEND::base d,
                                   const std::string &symbol) {
         return (std::make_shared<variable_node<BACKEND>> (s, d, symbol))->reduce();
     }
@@ -559,7 +562,7 @@ namespace graph {
 ///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> variable(const std::vector<double> &d,
+    shared_leaf<BACKEND> variable(const std::vector<typename BACKEND::base> &d,
                                   const std::string &symbol) {
         return (std::make_shared<variable_node<BACKEND>> (d, symbol))->reduce();
     }

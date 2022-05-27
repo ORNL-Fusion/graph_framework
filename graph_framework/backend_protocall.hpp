@@ -15,29 +15,30 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a generic buffer.
 //------------------------------------------------------------------------------
+    template<typename BASE>
     class buffer {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Index operator.
 //------------------------------------------------------------------------------
-        virtual double &operator[] (const size_t index) = 0;
+        virtual BASE &operator[] (const size_t index) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Const index operator.
 //------------------------------------------------------------------------------
-        virtual const double &operator[] (const size_t index) const = 0;
+        virtual const BASE &operator[] (const size_t index) const = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get value at.
 //------------------------------------------------------------------------------
-        virtual const double at(const size_t index) const = 0;
+        virtual const BASE at(const size_t index) const = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Assign a constant value.
 ///
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const double d) = 0;
+        virtual void set(const BASE d) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get size of the buffer.
@@ -49,7 +50,7 @@ namespace backend {
 ///
 ///  @returns The maximum value.
 //------------------------------------------------------------------------------
-        virtual double max() const = 0;
+        virtual BASE max() const = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Is every element the same.
@@ -74,6 +75,9 @@ namespace backend {
 ///  @brief Take exp.
 //------------------------------------------------------------------------------
         virtual void exp() = 0;
+
+///  Type def to retrieve the backend base type.
+        typedef BASE base;
     };
 }
 

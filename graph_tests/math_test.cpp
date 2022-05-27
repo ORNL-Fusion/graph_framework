@@ -121,8 +121,8 @@ void test_exp() {
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests() {
-    test_sqrt<backend::cpu> ();
-    test_exp<backend::cpu> ();
+    test_sqrt<BACKEND> ();
+    test_exp<BACKEND> ();
 }
 
 //------------------------------------------------------------------------------
@@ -132,5 +132,5 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    run_tests<backend::cpu> ();
+    run_tests<backend::cpu<double>> ();
 }
