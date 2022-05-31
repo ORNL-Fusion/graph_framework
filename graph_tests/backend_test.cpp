@@ -288,6 +288,119 @@ template<typename BACKEND> void test_backend() {
     assert(fma_scale_scale_scale.size() == 1 && "Expected a size of 1");
     assert(fma_scale_scale_scale.at(0) == backend::base_cast<BACKEND> (-17.0) &&
            "Expected a value of -17.");
+
+//  Pow tests.
+    BACKEND base_scalar(1, 4.0);
+    BACKEND exp_scalar(1, 0.5);
+    BACKEND sqrt = backend::pow(base_scalar, exp_scalar);
+    assert(sqrt.size() == 1 && "Expected a size of 1");
+    assert(sqrt.at(0) == backend::base_cast<BACKEND> (2.0) && "Expected 2.");
+
+    base_scalar.set(4.0);
+    exp_scalar.set(-0.5);
+    BACKEND one_over_sqrt = backend::pow(base_scalar, exp_scalar);
+    assert(one_over_sqrt.size() == 1 && "Expected a size of 1");
+    assert(one_over_sqrt.at(0) == backend::base_cast<BACKEND> (0.5) &&
+           "Expected 1/2.");
+
+    base_scalar.set(4.0);
+    exp_scalar.set(3.0);
+    BACKEND x_cubed = backend::pow(base_scalar, exp_scalar);
+    assert(x_cubed.size() == 1 && "Expected a size of 1");
+    assert(x_cubed.at(0) == backend::base_cast<BACKEND> (64.0) &&
+           "Expected 64.");
+
+    base_scalar.set(4.0);
+    exp_scalar.set(-2.0);
+    BACKEND x_over_cubed = backend::pow(base_scalar, exp_scalar);
+    assert(x_over_cubed.size() == 1 && "Expected a size of 1");
+    assert(x_over_cubed.at(0) ==
+           backend::base_cast<BACKEND> (1.0) /
+           (backend::base_cast<BACKEND> (4.0)*backend::base_cast<BACKEND> (4.0)) &&
+           "Expected 1/(4*4).");
+
+    base_scalar.set(4.0);
+    exp_scalar.set(-0.23);
+    BACKEND pow_gen = backend::pow(base_scalar, exp_scalar);
+    assert(pow_gen.size() == 1 && "Expected a size of 1");
+    assert(pow_gen.at(0) == std::pow(backend::base_cast<BACKEND> (4.0),
+                                     backend::base_cast<BACKEND> (-0.23)) &&
+           "Expected 4^-0.23.");
+
+    BACKEND base_vec(std::vector<typename BACKEND::base> ({4.0, 2.0}));
+    exp_scalar.set(0.5);
+    BACKEND sqrt_vec = backend::pow(base_vec, exp_scalar);
+    assert(sqrt_vec.size() == 2 && "Expected a size of 2");
+    assert(sqrt_vec.at(0) == backend::base_cast<BACKEND> (2.0) &&
+           "Expected 2.");
+    assert(sqrt_vec.at(1) == std::sqrt(backend::base_cast<BACKEND> (2.0)) &&
+           "Expected sqrt(2).");
+
+    base_vec.set(std::vector<typename BACKEND::base> ({4.0, 2.0}));
+    exp_scalar.set(-0.5);
+    BACKEND one_over_sqrt_vec = backend::pow(base_vec, exp_scalar);
+    assert(one_over_sqrt_vec.size() == 2 && "Expected a size of 2");
+    assert(one_over_sqrt_vec.at(0) == backend::base_cast<BACKEND> (0.5) &&
+           "Expected 2.");
+    assert(one_over_sqrt_vec.at(1) == std::pow(backend::base_cast<BACKEND> (2.0),
+                                               backend::base_cast<BACKEND> (-0.5)) &&
+           "Expected 1/sqrt(2).");
+
+    base_vec.set(std::vector<typename BACKEND::base> ({4.0, 2.0}));
+    exp_scalar.set(3.0);
+    BACKEND x_cubed_vec = backend::pow(base_vec, exp_scalar);
+    assert(x_cubed_vec.size() == 2 && "Expected a size of 2");
+    assert(x_cubed_vec.at(0) == backend::base_cast<BACKEND> (64.0) &&
+           "Expected 64.");
+    assert(x_cubed_vec.at(1) == backend::base_cast<BACKEND> (8.0) &&
+           "Expected 8.");
+
+    base_vec.set(std::vector<typename BACKEND::base> ({4.0, 2.0}));
+    exp_scalar.set(-0.23);
+    BACKEND x_over_cubed_vec = backend::pow(base_vec, exp_scalar);
+    assert(x_over_cubed_vec.size() == 2 && "Expected a size of 2");
+    assert(x_over_cubed_vec.at(0) == std::pow(backend::base_cast<BACKEND> (4.0),
+                                              backend::base_cast<BACKEND> (-0.23)) &&
+           "Expected 4^-0.23.");
+    assert(x_over_cubed_vec.at(1) == std::pow(backend::base_cast<BACKEND> (2.0),
+                                              backend::base_cast<BACKEND> (-0.23)) &&
+           "Expected 2^-0.23.");
+
+    base_scalar.set(4.0);
+    BACKEND exp_vec(std::vector<typename BACKEND::base> ({4.0, 2.0}));
+    BACKEND scale_base = backend::pow(base_scalar, exp_vec);
+    assert(scale_base.size() == 2 && "Expected a size of 2");
+    assert(scale_base.at(0) == std::pow(backend::base_cast<BACKEND> (4.0),
+                                        backend::base_cast<BACKEND> (4.0)) &&
+           "Expected 4^4.");
+    assert(scale_base.at(1) == std::pow(backend::base_cast<BACKEND> (4.0),
+                                        backend::base_cast<BACKEND> (2.0)) &&
+           "Expected 4^2.");
+
+    base_vec.set(std::vector<typename BACKEND::base> ({4.0, 2.0}));
+    exp_vec.set(std::vector<typename BACKEND::base> ({-4.0, 0.30}));
+    BACKEND vec_vec = backend::pow(base_vec, exp_vec);
+    assert(vec_vec.size() == 2 && "Expected a size of 2");
+    assert(vec_vec.at(0) == std::pow(backend::base_cast<BACKEND> (4.0),
+                                     backend::base_cast<BACKEND> (-4.0)) &&
+           "Expected 4^-4.");
+    assert(vec_vec.at(1) == std::pow(backend::base_cast<BACKEND> (2.0),
+                                     backend::base_cast<BACKEND> (0.30)) &&
+           "Expected 2^0.30.");
+
+    base_scalar.set(4.0);
+    base_scalar.log();
+    assert(base_scalar.size() == 1 && "Expected a size of 1");
+    assert(base_scalar.at(0) == std::log(backend::base_cast<BACKEND> (4.0)) &&
+           "Expected ln(4).");
+
+    base_vec.set(std::vector<typename BACKEND::base> ({4.0, 2.0}));
+    base_vec.log();
+    assert(base_vec.size() == 2 && "Expected a size of 2");
+    assert(base_vec.at(0) == std::log(backend::base_cast<BACKEND> (4.0)) &&
+           "Expected ln(4).");
+    assert(base_vec.at(1) == std::log(backend::base_cast<BACKEND> (2.0)) &&
+           "Expected ln(2).");
 }
 
 //------------------------------------------------------------------------------
