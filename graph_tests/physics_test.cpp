@@ -19,9 +19,15 @@
 ///  Given a wave frequency, a wave with zero k will not propagate.
 ///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] n0        Starting nz value.
+///  @param[in] x0        Starting x guess.
+///  @param[in] kx0       Starting kx guess.
 //------------------------------------------------------------------------------
 template<typename BACKEND>
-void test_reflection(const typename BACKEND::base tolarance) {
+void test_reflection(const typename BACKEND::base tolarance,
+                     const typename BACKEND::base n0,
+                     const typename BACKEND::base x0,
+                     const typename BACKEND::base kx0) {
     const typename BACKEND::base q = 1.602176634E-19;
     const typename BACKEND::base me = 9.1093837015E-31;
     const typename BACKEND::base mu0 = M_PI*4.0E-7;
@@ -32,8 +38,8 @@ void test_reflection(const typename BACKEND::base tolarance) {
     auto w = graph::variable<BACKEND> (1, OmegaCE, "\\omega");
     auto kx = graph::variable<BACKEND> (1, 0.0, "k_{x}");
     auto ky = graph::variable<BACKEND> (1, 0.0, "k_{y}");
-    auto kz = graph::variable<BACKEND> (1, 0.7*OmegaCE, "k_{z}");
-    auto x = graph::variable<BACKEND> (1, 0.1, "x");
+    auto kz = graph::variable<BACKEND> (1, n0*OmegaCE, "k_{z}");
+    auto x = graph::variable<BACKEND> (1, x0, "x");
     auto y = graph::variable<BACKEND> (1, 0.0, "y");
     auto z = graph::variable<BACKEND> (1, 0.0, "z");
     
@@ -50,7 +56,7 @@ void test_reflection(const typename BACKEND::base tolarance) {
 
 //  Set an inital guess for kx and solve for the wave number at the new
 //  location.
-    kx->set(22.0);
+    kx->set(kx0);
     solve.init(kx, tolarance);
     
     typename BACKEND::base max_x = solve.state.back().x.at(0);
@@ -69,7 +75,7 @@ void test_reflection(const typename BACKEND::base tolarance) {
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
-    test_reflection<BACKEND> (tolarance);
+    test_reflection<BACKEND> (tolarance, 0.7, 0.1, 22.0);
 }
 
 //------------------------------------------------------------------------------

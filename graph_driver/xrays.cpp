@@ -62,19 +62,33 @@ int main(int argc, const char * argv[]) {
                 //omega->set(j, real_dist(engine));
             }
 
+            x->set(8.58);
+            y->set(0.0);
+            z->set(-0.25);
+            kx->set(16.0);
+            ky->set(0.0);
+            kz->set(0.8*OmegaCE);
+            
             //x->set(0.1);
             //y->set(0.0);
             //z->set(-0.25);
             //kx->set(22.0);
             //ky->set(0.0);
             //kz->set(0.7*OmegaCE);
-            
-            x->set(0.2);
+
+            x->set(-3.95);
             y->set(0.0);
             z->set(-0.25);
-            kx->set(400.0);
+            kx->set(14.0);
             ky->set(0.0);
-            kz->set(-0.7*OmegaCE);
+            kz->set(0.6*OmegaCE);
+            
+            //x->set(-7.75);
+            //y->set(0.0);
+            //z->set(-0.25);
+            //kx->set(25.0);
+            //ky->set(0.0);
+            //kz->set(0.4*OmegaCE);
             
             //x->set(-1.0);
             //y->set(-0.2);

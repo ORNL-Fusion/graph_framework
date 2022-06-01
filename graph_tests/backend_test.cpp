@@ -299,4 +299,5 @@ template<typename BACKEND> void test_backend() {
 int main(int argc, const char * argv[]) {
     test_backend<backend::cpu<float>> ();
     test_backend<backend::cpu<double>> ();
+    test_backend<backend::cpu<double>> ();
 }
