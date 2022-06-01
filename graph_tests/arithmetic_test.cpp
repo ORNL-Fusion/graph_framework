@@ -147,11 +147,25 @@ template<typename BACKEND> void test_add() {
     auto common_d = var_a/var_b + var_c/var_b;
     assert(graph::add_cast(common_d).get() == nullptr && "Did not expect add node.");
     assert(graph::divide_cast(common_d).get() && "Expected divide node.");
-
+    
 //  Test is_match
     auto match = graph::constant<BACKEND> (1)*var_a
                + graph::constant<BACKEND> (1)*var_a;
     assert(graph::multiply_cast(match).get() && "Expected multiply node.");
+    
+//  Reduce (a/y)^e + (b/y)^e -> (a^2 + b^2)/(y^e).
+    auto var_d = graph::variable<BACKEND> (1, "");
+    auto common_power1 = graph::pow(var_a/var_b,var_c) +
+                         graph::pow(var_d/var_b,var_c);
+    assert(graph::divide_cast(common_power1) && "Expected Divide node.");
+//  Reduce (a/y)^e + b/y^e -> (a^2 + b)/(y^e).
+    auto common_power2 = graph::pow(var_a/var_b,var_c) +
+                         var_d/graph::pow(var_b,var_c);
+    assert(graph::divide_cast(common_power2) && "Expected Divide node.");
+    //  Reduce a/y^e + (b/y)^e -> (a + b^2)/(y^e).
+    auto common_power3 = var_a/graph::pow(var_b,var_c) +
+                         graph::pow(var_d/var_b,var_c);
+    assert(graph::divide_cast(common_power3) && "Expected Divide node.");
 }
 
 //------------------------------------------------------------------------------
@@ -296,6 +310,19 @@ template<typename BACKEND> void test_subtract() {
                - graph::constant<BACKEND> (1)*var_a;
     auto match_cast = graph::constant_cast(match);
     assert(match_cast->is(0) && "Expected zero node.");
+
+//  Reduce (a/y)^e - (b/y)^e -> (a^2 - b^2)/(y^e).
+    auto var_d = graph::variable<BACKEND> (1, "");
+    auto common_power1 = graph::pow(var_a/var_b,var_c) -
+                         graph::pow(var_d/var_b,var_c);
+    assert(graph::divide_cast(common_power1) && "Expected Divide node.");
+//  Reduce a/y^e - (b/y)^e -> (a - b^2)/(y^e).
+    auto common_power2 = graph::pow(var_a/var_b,var_c) -
+                         var_d/graph::pow(var_b,var_c);
+    assert(graph::divide_cast(common_power2) && "Expected Divide node.");
+    auto common_power3 = var_d/graph::pow(var_b,var_c) -
+                         graph::pow(var_a/var_b,var_c);
+    assert(graph::divide_cast(common_power3) && "Expected Divide node.");
 }
 
 //------------------------------------------------------------------------------
@@ -506,24 +533,27 @@ template<typename BACKEND> void test_multiply() {
 //  Test gathering of terms.
     auto v1 = graph::variable<BACKEND> (1, "v1");
     auto v2 = graph::variable<BACKEND> (1, "v2");
-    auto v1v2v1v2 = v1*v2*v1*v2;
-    auto v1v2v1v2_cast = graph::multiply_cast(v1v2v1v2);
-    v1v2v1v2_cast->get_left()->to_latex();
-    std::cout << std::endl;
-    v1v2v1v2_cast->get_right()->to_latex();
-    std::cout << std::endl;
-    auto v1v2v2v1 = v1*v2*v2*v1;
-    auto v2v1v2v1 = v2*v1*v2*v1;
-    auto v2v1v1v2 = v2*v1*v1*v2;
+    auto gather_v1 = (v1*v2)*v1;
+    assert(pow_cast(multiply_cast(gather_v1)->get_left()).get() &&
+           "Expected power node.");
+    auto gather_v2 = (v2*v1)*v1;
+    assert(pow_cast(multiply_cast(gather_v2)->get_left()).get() &&
+           "Expected power node.");
+    auto gather_v3 = v1*(v1*v2);
+    assert(pow_cast(multiply_cast(gather_v3)->get_left()).get() &&
+           "Expected power node.");
+    auto gather_v4 = v1*(v2*v1);
+    assert(pow_cast(multiply_cast(gather_v4)->get_left()).get() &&
+           "Expected power node.");
 
-    v1v2v1v2->to_latex();
-    std::cout << std::endl;
-    v1v2v2v1->to_latex();
-    std::cout << std::endl;
-    v2v1v2v1->to_latex();
-    std::cout << std::endl;
-    v2v1v1v2->to_latex();
-    std::cout << std::endl;
+//  Test double multiply cases.
+    auto gather_v5 = (v1*v2)*(v1*v2);
+    auto gather_v5_cast = graph::pow_cast(gather_v5);
+    assert(gather_v5_cast.get() && "Expected power node.");
+    assert(graph::multiply_cast(gather_v5_cast->get_left()).get() &&
+           "Expected multiply inside power.");
+    assert(graph::constant_cast(gather_v5_cast->get_right())->is(2) &&
+           "Expected power of 2.");
 
 //  Test reduction of a constant*fma node.
     auto c = graph::constant<BACKEND> (3);

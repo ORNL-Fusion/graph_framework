@@ -106,6 +106,47 @@ namespace graph {
                                                              this->right);
             }
 
+//  Handel cases like:
+//  (a/y)^e + b/y^e -> (a^2 + b)/(y^e)
+//  b/y^e + (a/y)^e -> (b + a^2)/(y^e)
+//  (a/y)^e + (b/y)^e -> (a^2 + b^2)/(y^e)
+            auto pl = pow_cast(this->left);
+            auto pr = pow_cast(this->right);
+            if (pl.get() && rd.get()) {
+                auto rdp = pow_cast(rd->get_right());
+                if (rdp.get() && pl->get_right()->is_match(rdp->get_right())) {
+                    auto plld = divide_cast(pl->get_left());
+                    if (plld.get() &&
+                        rdp->get_left()->is_match(plld->get_right())) {
+                        return (pow(plld->get_left(), pl->get_right()) +
+                                rd->get_left()) /
+                               pow(rdp->get_left(), pl->get_right());
+                    }
+                }
+            } else if (pr.get() && ld.get()) {
+                auto ldp = pow_cast(ld->get_right());
+                if (ldp.get() && pr->get_right()->is_match(ldp->get_right())) {
+                    auto prld = divide_cast(pr->get_left());
+                    if (prld.get() &&
+                        ldp->get_left()->is_match(prld->get_right())) {
+                        return (pow(prld->get_left(), pr->get_right()) +
+                                ld->get_left()) /
+                               pow(ldp->get_left(), pr->get_right());
+                    }
+                }
+            } else if (pl.get() && pr.get()) {
+                if (pl->get_right()->is_match(pr->get_right())) {
+                    auto pld = divide_cast(pl->get_left());
+                    auto prd = divide_cast(pr->get_left());
+                    if (pld.get() && prd.get() &&
+                        pld->get_right()->is_match(prd->get_right())) {
+                        return (pow(pld->get_left(), pl->get_right()) +
+                                pow(prd->get_left(), pl->get_right())) /
+                               pow(pld->get_right(), pl->get_right());
+                    }
+                }
+            }
+
             return this->shared_from_this();
         }
 
@@ -150,9 +191,25 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const final {
+            bool l_brackets = add_cast(this->left).get() ||
+                              subtract_cast(this->left).get();
+            bool r_brackets = add_cast(this->right).get() ||
+                              subtract_cast(this->right).get();
+            if (l_brackets) {
+                std::cout << "\\left(";
+            }
             this->left->to_latex();
+            if (l_brackets) {
+                std::cout << "\\right)";
+            }
             std::cout << "+";
+            if (r_brackets) {
+                std::cout << "\\left(";
+            }
             this->right->to_latex();
+            if (r_brackets) {
+                std::cout << "\\right)";
+            }
         }
     };
 
@@ -290,6 +347,47 @@ namespace graph {
                 return (ld->get_left() - rd->get_left())/ld->get_right();
             }
 
+//  Handel cases like:
+//  (a/y)^e - b/y^e -> (a^2 - b)/(y^e)
+//  b/y^e - (a/y)^e -> (b - a^2)/(y^e)
+//  (a/y)^e - (b/y)^e -> (a^2 - b^2)/(y^e)
+            auto pl = pow_cast(this->left);
+            auto pr = pow_cast(this->right);
+            if (pl.get() && rd.get()) {
+                auto rdp = pow_cast(rd->get_right());
+                if (rdp.get() && pl->get_right()->is_match(rdp->get_right())) {
+                    auto plld = divide_cast(pl->get_left());
+                    if (plld.get() &&
+                        rdp->get_left()->is_match(plld->get_right())) {
+                        return (pow(plld->get_left(), pl->get_right()) -
+                                rd->get_left()) /
+                               pow(rdp->get_left(), pl->get_right());
+                    }
+                }
+            } else if (pr.get() && ld.get()) {
+                auto ldp = pow_cast(ld->get_right());
+                if (ldp.get() && pr->get_right()->is_match(ldp->get_right())) {
+                    auto prld = divide_cast(pr->get_left());
+                    if (prld.get() &&
+                        ldp->get_left()->is_match(prld->get_right())) {
+                        return (pow(prld->get_left(), pr->get_right()) -
+                                ld->get_left()) /
+                               pow(ldp->get_left(), pr->get_right());
+                    }
+                }
+            } else if (pl.get() && pr.get()) {
+                if (pl->get_right()->is_match(pr->get_right())) {
+                    auto pld = divide_cast(pl->get_left());
+                    auto prd = divide_cast(pr->get_left());
+                    if (pld.get() && prd.get() &&
+                        pld->get_right()->is_match(prd->get_right())) {
+                        return (pow(pld->get_left(), pl->get_right()) -
+                                pow(prd->get_left(), pl->get_right())) /
+                               pow(pld->get_right(), pl->get_right());
+                    }
+                }
+            }
+            
             return this->shared_from_this();
         }
 
@@ -334,9 +432,25 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const final {
+            bool l_brackets = add_cast(this->left).get() ||
+                              subtract_cast(this->left).get();
+            bool r_brackets = add_cast(this->right).get() ||
+                              subtract_cast(this->right).get();
+            if (l_brackets) {
+                std::cout << "\\left(";
+            }
             this->left->to_latex();
+            if (l_brackets) {
+                std::cout << "\\right)";
+            }
             std::cout << "-";
+            if (r_brackets) {
+                std::cout << "\\left(";
+            }
             this->right->to_latex();
+            if (r_brackets) {
+                std::cout << "\\right)";
+            }
         }
     };
 
@@ -465,10 +579,28 @@ namespace graph {
                 return pow(this->left, constant<typename LN::backend> (2.0));
             }
 
+//  Gather common terms. (a*b)*a -> (a*a)*b, (b*a)*a -> (a*a)*b,
+//  a*(a*b) -> (a*a)*b, a*(b*a) -> (a*a)*b
+            auto lm = multiply_cast(this->left);
+            if (lm.get()) {
+                if (this->right->is_match(lm->get_left())) {
+                    return (this->right*lm->get_left())*lm->get_right();
+                } else if (this->right->is_match(lm->get_right())) {
+                    return (this->right*lm->get_right())*lm->get_left();
+                }
+            }
+    
+            auto rm = multiply_cast(this->right);
+            if (rm.get()) {
+                if (this->left->is_match(rm->get_left())) {
+                    return (this->left*rm->get_left())*rm->get_right();
+                } else if (this->left->is_match(rm->get_right())) {
+                    return (this->left*rm->get_right())*rm->get_left();
+                }
+            }
+
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
 //  the second pass.
-            auto lm = multiply_cast(this->left);
-            auto rm = multiply_cast(this->right);
             if (lm.get() && rm.get()) {
                 if (constant_cast(lm->get_left()).get() &&
                     constant_cast(rm->get_left()).get()) {
@@ -488,7 +620,7 @@ namespace graph {
                            (lm->get_left()*rm->get_left());
                 }
 
-//  Gather a common terms. This will help reduce sqrt(a)*sqrt(a). 
+//  Gather common terms. This will help reduce sqrt(a)*sqrt(a). 
                 if (lm->get_left()->is_match(rm->get_left())) {
                     return (lm->get_left()*rm->get_left()) *
                            (lm->get_right()*rm->get_right());
@@ -521,7 +653,7 @@ namespace graph {
                        (ld->get_right()*rd->get_right());
             }
 
-//  Power reductions.
+//  Power reductions. Reduced cases like a^b*a^c == a^b+c.
             auto lp = pow_cast(this->left);
             auto rp = pow_cast(this->right);
             if (lp.get()) {

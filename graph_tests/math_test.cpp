@@ -74,14 +74,14 @@ void test_sqrt() {
 //  Reduction Sqrt(x*y*x*y) = x*y
     auto y_var = graph::variable<BACKEND> (1, "y");
     auto x2y2_sqrt = graph::sqrt(x_var*y_var*x_var*y_var);
-    x2y2_sqrt->to_latex();
-    std::cout << std::endl;
     auto x2y2_sqrt_cast = graph::multiply_cast(x2y2_sqrt);
     assert(x2y2_sqrt_cast.get() && "Expected multiply node");
-    assert(x2y2_sqrt_cast->get_left().get() == x_var.get() &&
-           "Expected x_var.");
-    assert(x2y2_sqrt_cast->get_right().get() == y_var.get() &&
-           "Expected y_var.");
+    assert((x2y2_sqrt_cast->get_left().get() == x_var.get() ||
+            x2y2_sqrt_cast->get_left().get() == y_var.get()) &&
+           "Expected x_var or y_var.");
+    assert((x2y2_sqrt_cast->get_right().get() == x_var.get() ||
+            x2y2_sqrt_cast->get_right().get() == y_var.get()) &&
+           "Expected x_var or y_var.");
 
 //  Reduction Sqrt(x*x/y*y);
     auto sq_reduce = graph::sqrt((x_var*x_var)/(y_var*y_var));
@@ -142,11 +142,115 @@ void test_exp() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests for pow nodes.
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_pow() {
+//  a^0 = 1
+    auto zero = graph::constant<BACKEND> (0);
+    auto ten = graph::variable<BACKEND> (1, "10");
+    ten->set(10.0);
+    auto one = graph::pow(ten, zero);
+    assert(graph::constant_cast(one).get() && "Expected constant");
+    assert(one->evaluate().at(0) == backend::base_cast<BACKEND> (1.0) &&
+           "Expected 1");
+    
+//  a^1 = a
+    assert(graph::pow(ten, one).get() == ten.get() && "Expected ten.");
+
+//  Sqrt(a)^2 = a
+    auto two = graph::constant<BACKEND> (2);
+    assert(graph::pow(graph::sqrt(ten), two)->is_match(ten) &&
+           "Expected ten.");
+
+//  (c*Sqrt(b))^a -> c^a*b^a/2
+    assert(graph::multiply_cast(graph::pow(two*graph::sqrt(ten), ten)).get() &&
+           "Expected multiply node.");
+//  (Sqrt(b)*c)^a -> c^a*b^a/2
+    assert(graph::multiply_cast(graph::pow(graph::sqrt(ten)*two, ten)).get() &&
+           "Expected multiply node.");
+
+//  (c*b^d)^a -> c^a*b^(a*d)
+    assert(graph::multiply_cast(graph::pow(two*graph::pow(ten, two), ten)).get() &&
+           "Expected multiply node.");
+//  ((b^d)*c)^a -> b^(a*d)*c^a
+    assert(graph::multiply_cast(graph::pow(graph::pow(ten, two)*two, ten)).get() &&
+           "Expected multiply node.");
+
+//  (c/Sqrt(b))^a -> c^a/b^a/2
+    assert(graph::divide_cast(graph::pow(two/graph::sqrt(ten), ten)).get() &&
+           "Expected divide node.");
+//  (Sqrt(b)/c)^a -> (b^a/2)/c^a
+    assert(graph::divide_cast(graph::pow(graph::sqrt(ten)/two, ten)).get() &&
+           "Expected divide node.");
+
+//  (c/(b^d))^a -> c^a/(b^(a*d))
+    assert(graph::divide_cast(graph::pow(two/graph::pow(ten, two), ten)).get() &&
+           "Expected divide node.");
+//  ((b^d)/c))^a -> (b^(a*d))/c^a
+    assert(graph::divide_cast(graph::pow(graph::pow(ten, two)/two, ten)).get() &&
+           "Expected divide node.");
+
+//  a^1/2 -> sqrt(a);
+    assert(graph::sqrt_cast(graph::pow(ten, one/two)).get() &&
+           "Expected sqrt node.");
+
+    auto hundred = graph::pow(ten, two);
+    assert(hundred->evaluate().at(0) == backend::base_cast<BACKEND> (100.0) &&
+           "Expected 100");
+    
+    auto three = graph::constant<BACKEND> (2);
+    auto pow_pow1 = graph::pow(graph::pow(ten, three), two);
+    auto pow_pow2 = graph::pow(ten, three*two);
+    assert(pow_pow1->is_match(pow_pow2) &&
+           "Expected ten to the 6.");
+
+    assert(graph::multiply_cast(graph::pow(two*ten, two)).get() &&
+           "Expected multiply node.");
+    assert(graph::multiply_cast(graph::pow(ten*two, two)).get() &&
+           "Expected multiply node.");
+    assert(graph::divide_cast(graph::pow(two/ten, two)).get() &&
+           "Expected divide node.");
+    assert(graph::divide_cast(graph::pow(ten/two, two)).get() &&
+           "Expected divide node.");
+    
+    auto pow_sqrt = graph::pow_cast(graph::pow(graph::sqrt(ten), ten));
+    assert(graph::divide_cast(pow_sqrt->get_right()).get() &&
+           "Expected divide node.");
+    
+//  Test derivatives.
+    auto x2 = graph::pow(ten, two);
+    auto dx2dx = x2->df(ten);
+    assert(graph::multiply_cast(dx2dx).get() && "Expected multiply node.");
+    auto x3 = graph::pow(two, ten);
+    auto dx3dx = x3->df(ten);
+    assert(graph::multiply_cast(dx3dx).get() && "Expected multiply node.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Tests for pow nodes.
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_log() {
+    assert(graph::constant_cast(graph::log(graph::constant<BACKEND> (10))) &&
+           "Expected constant");
+    auto y = graph::variable<BACKEND> (1, "y");
+    auto logy = graph::log(y);
+    assert(graph::log_cast(logy) && "Expected log");
+
+//  Test derivatives.
+    auto dlogy = logy->df(y);
+    assert(graph::divide_cast(dlogy) && "Expected divide node.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests() {
     test_sqrt<BACKEND> ();
     test_exp<BACKEND> ();
+    test_pow<BACKEND> ();
+    test_log<BACKEND> ();
 }
 
 //------------------------------------------------------------------------------

@@ -433,7 +433,7 @@ namespace dispersion {
             auto npara2 = npara*npara;
             auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
-
+            
 //  Determinate matrix elements
             auto m11 = e11 - npara2;
             auto m12 = e12;

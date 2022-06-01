@@ -448,25 +448,58 @@ namespace graph {
                     return constant<typename LN::backend> (1.0);
                 } else if (rc->is(1)) {
                     return this->left;
-                } else if (rc->is(2) && sqrt_cast(this->left).get()) {
-                    return this->left;
+                } else if (rc->is(0.5)) {
+                    return sqrt(this->left);
+                } else if (rc->is(2)){
+                    auto sq = sqrt_cast(this->left);
+                    if (sq.get()) {
+                        return sq->get_arg();
+                    }
                 }
 
-                auto lc = constant_cast(this->left);
-                if (lc.get()) {
+                if (constant_cast(this->left).get()) {
                     return constant(this->evaluate());
-                }
-
-                auto lp = pow_cast(this->left);
-                if (lp.get()) {
-                    return pow(lp->get_left(), lp->get_right()*this->right);
                 }
             }
 
+            auto lp = pow_cast(this->left);
+            if (lp.get()) {
+                return pow(lp->get_left(), lp->get_right()*this->right);
+            }
+
+//  Handle cases where (c*x)^a, (x*c)^a, (a*sqrt(b))^c and (a*b^c)^2.
+            auto lm = multiply_cast(this->left);
+            if (lm.get()) {
+                if (constant_cast(lm->get_left()).get()  ||
+                    constant_cast(lm->get_right()).get() ||
+                    sqrt_cast(lm->get_left()).get()      ||
+                    sqrt_cast(lm->get_right()).get()     ||
+                    pow_cast(lm->get_left()).get()       ||
+                    pow_cast(lm->get_right()).get()) {
+                    return pow(lm->get_left(), this->right) *
+                           pow(lm->get_right(), this->right);
+                }
+            }
+
+//  Handle cases where (c/x)^a, (x/c)^a, (a/sqrt(b))^c and (a/b^c)^2.
+            auto ld = divide_cast(this->left);
+            if (ld.get()) {
+                if (constant_cast(ld->get_left()).get()  ||
+                    constant_cast(ld->get_right()).get() ||
+                    sqrt_cast(ld->get_left()).get()      ||
+                    sqrt_cast(ld->get_right()).get()     ||
+                    pow_cast(ld->get_left()).get()       ||
+                    pow_cast(ld->get_right()).get()) {
+                    return pow(ld->get_left(), this->right) /
+                           pow(ld->get_right(), this->right);
+                }
+            }
+
+//  Reduce sqrt(a)^b
             auto lsq = sqrt_cast(this->left);
             if (lsq.get()) {
-                auto half = constant<typename LN::backend> (0.5);
-                return pow(lsq->get_arg(), this->right*half);
+                auto two = constant<typename LN::backend> (2.0);
+                return pow(lsq->get_arg(), this->right/two);
             }
 
             return this->shared_from_this();
@@ -511,7 +544,16 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const final {
+            auto use_brackets = !constant_cast(this->left).get() &&
+                                !variable_cast(this->left).get();
+            
+            if (use_brackets) {
+                std::cout << "\\left(";
+            }
             this->left->to_latex();
+            if (use_brackets) {
+                std::cout << "\\right)";
+            }
             std::cout << "^{";
             this->right->to_latex();
             std::cout << "}";
