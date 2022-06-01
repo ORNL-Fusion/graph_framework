@@ -166,6 +166,15 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Take the natural log.
+//------------------------------------------------------------------------------
+        virtual void log() final {
+            for (BASE &d : data) {
+                d = std::log(d);
+            }
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Take sine.
 //------------------------------------------------------------------------------
         virtual void sin() final {
@@ -399,6 +408,64 @@ namespace backend {
 #endif
         }
         return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Take the power.
+///
+///  @param[in] base     Raise to the power of.
+///  @param[in] exponent Raise to the power of.
+//------------------------------------------------------------------------------
+    template<typename BASE>
+    inline cpu<BASE> pow(cpu<BASE> &base,
+                         cpu<BASE> &exponent) {
+        if (exponent.size() == 1) {
+            const BASE right = exponent.at(0);
+            const int64_t right_int = static_cast<int64_t> (right);
+            if (right - right_int) {
+                if (right == 0.5) {
+                    base.sqrt();
+                    return base;
+                }
+
+                for (size_t i = 0, ie = base.size(); i < ie; i++) {
+                    base[i] = std::pow(base.at(i), right);
+                }
+                return base;
+            }
+
+            if (right_int > 0) {
+                for (size_t i = 0, ie = base.size(); i < ie; i++) {
+                    const BASE left = base.at(i);
+                    for (size_t j = 0, je = right_int - 1; j < je; j++) {
+                        base[i] *= left;
+                    }
+                }
+                return base;
+            } else {
+                for (size_t i = 0, ie = base.size(); i < ie; i++) {
+                    const BASE left = 1.0/base.at(i);
+                    base[i] = left;
+                    for (size_t j = 0, je = std::abs(right_int) - 1; j < je; j++) {
+                        base[i] *= left;
+                    }
+                }
+                return base;
+            }
+        } else if (base.size() == 1) {
+            const BASE left = base.at(0);
+            for (size_t i = 0, ie = exponent.size(); i < ie; i++) {
+                exponent[i] = std::pow(left, exponent.at(i));
+            }
+            return exponent;
+        }
+
+        assert(base.size() == exponent.size() &&
+               "Left and right sizes are incompatable.");
+        for (size_t i = 0, ie = base.size(); i < ie; i++) {
+            base[i] = std::pow(base.at(i), exponent.at(i));
+        }
+        return base;
     }
 }
 #endif /* cpu_backend_h */

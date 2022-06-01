@@ -56,8 +56,8 @@ void test_sqrt() {
            "Expected 0.5*sqrt(3)");
 
 //  Reduction sqrt(c*x*c*y) = x
-    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
-    auto x2 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
+    auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "x");
+    auto x2 = graph::constant<BACKEND> (3)*graph::variable<BACKEND> (1, "y");
     auto x = graph::sqrt(x1*x2);
     auto x_cast = graph::multiply_cast(x);
     assert(x_cast.get() && "Expected a multiply node.");
@@ -71,8 +71,19 @@ void test_sqrt() {
     auto x2_sqrt = graph::sqrt(x_var*x_var);
     assert(x2_sqrt.get() == x_var.get() && "Expected to reduce to x_var.");
 
-//  Reduction Sqrt(x*x/y*y);
+//  Reduction Sqrt(x*y*x*y) = x*y
     auto y_var = graph::variable<BACKEND> (1, "y");
+    auto x2y2_sqrt = graph::sqrt(x_var*y_var*x_var*y_var);
+    x2y2_sqrt->to_latex();
+    std::cout << std::endl;
+    auto x2y2_sqrt_cast = graph::multiply_cast(x2y2_sqrt);
+    assert(x2y2_sqrt_cast.get() && "Expected multiply node");
+    assert(x2y2_sqrt_cast->get_left().get() == x_var.get() &&
+           "Expected x_var.");
+    assert(x2y2_sqrt_cast->get_right().get() == y_var.get() &&
+           "Expected y_var.");
+
+//  Reduction Sqrt(x*x/y*y);
     auto sq_reduce = graph::sqrt((x_var*x_var)/(y_var*y_var));
     auto sq_reduce_cast = graph::divide_cast(sq_reduce);
     assert(sq_reduce_cast.get() && "Expected divide node.");
@@ -80,6 +91,15 @@ void test_sqrt() {
            "Expected x_var.");
     assert(sq_reduce_cast->get_right().get() == y_var.get() &&
            "Expected y_var.");
+
+//  Reduction Sqrt(c*x/b*y) = d*Sqrt(x/y)
+    auto cxby_sqrt = graph::sqrt(x1/x2);
+    auto cxby_sqrt_cast = graph::multiply_cast(cxby_sqrt);
+    assert(cxby_sqrt_cast.get() && "Expected a multiply node.");
+    assert(graph::constant_cast(cxby_sqrt_cast->get_left()).get() &&
+           "Expected a constant coefficent.");
+    assert(graph::sqrt_cast(cxby_sqrt_cast->get_right()).get() &&
+           "Expected sqrt node.");
 }
 
 //------------------------------------------------------------------------------

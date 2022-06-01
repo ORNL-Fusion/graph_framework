@@ -459,7 +459,12 @@ namespace graph {
                            lfma->get_middle(),
                            this->right*lfma->get_right());
             }
-            
+
+//  Reduce x*x to x^2
+            if (this->left->is_match(this->right)) {
+                return pow(this->left, constant<typename LN::backend> (2.0));
+            }
+
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
 //  the second pass.
             auto lm = multiply_cast(this->left);
@@ -483,24 +488,19 @@ namespace graph {
                            (lm->get_left()*rm->get_left());
                 }
 
-//  Gather a common terms. This will help reduce sqrt(a)*sqrt(a). But we need to
-//  be careful to avoid cases where a*a*a*a which could cause a infinitely
-//  recursive loop.
-                if (!(lm->get_left()->is_match(lm->get_right()) ||
-                      rm->get_left()->is_match(rm->get_right()))) {
-                    if (lm->get_left()->is_match(rm->get_left())) {
-                        return (lm->get_left()*rm->get_left()) *
-                               (lm->get_right()*rm->get_right());
-                    } else if (lm->get_right()->is_match(rm->get_left())) {
-                        return (lm->get_right()*rm->get_left()) *
-                               (lm->get_left()*rm->get_right());
-                    } else if (lm->get_left()->is_match(rm->get_right())) {
-                        return (lm->get_left()*rm->get_right()) *
-                               (lm->get_right()*rm->get_left());
-                    } else if (lm->get_right()->is_match(rm->get_right())) {
-                        return (lm->get_right()*rm->get_right()) *
-                               (lm->get_left()*rm->get_left());
-                    }
+//  Gather a common terms. This will help reduce sqrt(a)*sqrt(a). 
+                if (lm->get_left()->is_match(rm->get_left())) {
+                    return (lm->get_left()*rm->get_left()) *
+                           (lm->get_right()*rm->get_right());
+                } else if (lm->get_right()->is_match(rm->get_left())) {
+                    return (lm->get_right()*rm->get_left()) *
+                           (lm->get_left()*rm->get_right());
+                } else if (lm->get_left()->is_match(rm->get_right())) {
+                    return (lm->get_left()*rm->get_right()) *
+                           (lm->get_right()*rm->get_left());
+                } else if (lm->get_right()->is_match(rm->get_right())) {
+                    return (lm->get_right()*rm->get_right()) *
+                           (lm->get_left()*rm->get_left());
                 }
             }
 
@@ -521,12 +521,25 @@ namespace graph {
                        (ld->get_right()*rd->get_right());
             }
 
-//  Reduced sqrt(a)*sqrt(a);
-            auto sql = sqrt_cast(this->left);
-            auto sqr = sqrt_cast(this->right);
-            if (sql.get() && sqr.get() &&
-                sql->get_arg()->is_match(sqr->get_arg())) {
-                return sql->get_arg();
+//  Power reductions.
+            auto lp = pow_cast(this->left);
+            auto rp = pow_cast(this->right);
+            if (lp.get()) {
+                if (lp->get_left()->is_match(this->right)) {
+                    return pow(lp->get_left(),
+                               lp->get_right() + constant<typename LN::backend> (1.0));
+                }
+
+                if (rp.get() && lp->get_left()->is_match(rp->get_left())) {
+                    return pow(lp->get_left(),
+                               lp->get_right() + rp->get_right());
+                }
+            }
+            if (rp.get()) {
+                if (rp->get_left()->is_match(this->left)) {
+                    return pow(rp->get_left(),
+                               rp->get_right() + constant<typename LN::backend> (1.0));
+                }
             }
 
             return this->shared_from_this();
@@ -859,8 +872,7 @@ namespace graph {
             typename RN::backend r_result = this->right->evaluate();
 
 //  If all the elements on the left are zero, return the leftside without
-//  revaluating the rightside. Stop this loop early once the first non zero
-//  element is encountered.
+//  revaluating the rightside.
             if (l_result.is_zero()) {
                 return r_result;
             }
@@ -870,7 +882,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Reduce an fused multiply add node.
+///  @brief Reduce a fused multiply add node.
 ///
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------

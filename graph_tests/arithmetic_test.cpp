@@ -408,17 +408,9 @@ template<typename BACKEND> void test_multiply() {
     assert(two_times_var_result.at(0) == backend::base_cast<BACKEND> (12.0) &&
            "Expected 2*6 for result.");
 
-    auto var_times_var = variable*variable;
-    assert(graph::multiply_cast(var_times_var).get() &&
-           "Expected multiply node.");
-    const BACKEND var_times_var_result = var_times_var->evaluate();
-    assert(var_times_var_result.size() == 1 && "Expected single value.");
-    assert(var_times_var_result.at(0) == backend::base_cast<BACKEND> (36) &&
-           "Expected 6*6 for result.");
-
 //  Test variable vectors.
-    auto varvec_a = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({4.0, -2.0}), "");
-    auto varvec_b = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({-4.0, -2.0}), "");
+    auto varvec_a = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({4.0, -2.0}), "a");
+    auto varvec_b = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({-4.0, -2.0}), "b");
     auto varvec_times_varvec = varvec_a*varvec_b;
     const BACKEND varvec_times_varvec_result =
         varvec_times_varvec->evaluate();
@@ -463,11 +455,9 @@ template<typename BACKEND> void test_multiply() {
            "Expected 2*-2 for result.");
 
 //  Test is_match
-    auto match = (graph::constant<BACKEND> (1) + variable)
-               * (graph::constant<BACKEND> (1) + variable);
-    auto match_cast = graph::multiply_cast(match);
-    assert(match_cast->get_left()->is_match(match_cast->get_right()) &&
-           "Expected left and right to match");
+    auto match1 = graph::constant<BACKEND> (1) + variable;
+    auto match2 = graph::constant<BACKEND> (1) + variable;
+    assert(match1->is_match(match2) && "Expected match");
 
 //  Test reduction of common constants c1*x*c2*y = c3*x*y.
     auto x1 = graph::constant<BACKEND> (2)*graph::variable<BACKEND> (1, "");
@@ -512,7 +502,29 @@ template<typename BACKEND> void test_multiply() {
            "Expected a constant coefficent.");
     assert(graph::multiply_cast(x12_cast->get_right()).get() &&
            "Expected multipy node.");
-    
+
+//  Test gathering of terms.
+    auto v1 = graph::variable<BACKEND> (1, "v1");
+    auto v2 = graph::variable<BACKEND> (1, "v2");
+    auto v1v2v1v2 = v1*v2*v1*v2;
+    auto v1v2v1v2_cast = graph::multiply_cast(v1v2v1v2);
+    v1v2v1v2_cast->get_left()->to_latex();
+    std::cout << std::endl;
+    v1v2v1v2_cast->get_right()->to_latex();
+    std::cout << std::endl;
+    auto v1v2v2v1 = v1*v2*v2*v1;
+    auto v2v1v2v1 = v2*v1*v2*v1;
+    auto v2v1v1v2 = v2*v1*v1*v2;
+
+    v1v2v1v2->to_latex();
+    std::cout << std::endl;
+    v1v2v2v1->to_latex();
+    std::cout << std::endl;
+    v2v1v2v1->to_latex();
+    std::cout << std::endl;
+    v2v1v1v2->to_latex();
+    std::cout << std::endl;
+
 //  Test reduction of a constant*fma node.
     auto c = graph::constant<BACKEND> (3);
     auto fma = graph::fma(graph::variable<BACKEND> (1, ""),
@@ -532,6 +544,15 @@ template<typename BACKEND> void test_multiply() {
 //  loop if a critical check is not in place no need to check the values.
     auto a = graph::variable<BACKEND> (1, "");
     auto aaa = (a*sqrt(a))*(a*sqrt(a));
+
+//  Test power reduction.
+    auto var_times_var = variable*variable;
+    assert(graph::pow_cast(var_times_var).get() &&
+           "Expected power node.");
+    const BACKEND var_times_var_result = var_times_var->evaluate();
+    assert(var_times_var_result.size() == 1 && "Expected single value.");
+    assert(var_times_var_result.at(0) == backend::base_cast<BACKEND> (36) &&
+           "Expected 6*6 for result.");
 }
 
 //------------------------------------------------------------------------------
