@@ -90,7 +90,7 @@ template<typename BACKEND> void test_add() {
     auto var_plus_var = variable + variable;
     assert(graph::multiply_cast(var_plus_var).get() &&
            "Expected an multiply node.");
-    variable->set(10);
+    variable->set(backend::base_cast<BACKEND> (10.0));
     const BACKEND var_plus_var_result = var_plus_var->evaluate();
     assert(var_plus_var_result.size() == 1 && "Expected single value.");
     assert(var_plus_var_result.at(0) == backend::base_cast<BACKEND> (20.0) &&
@@ -100,7 +100,7 @@ template<typename BACKEND> void test_add() {
     auto variable_b = graph::variable<BACKEND> (1, "");
     auto var_plus_varb = variable + variable_b;
     assert(graph::add_cast(var_plus_varb).get() && "Expected an add node.");
-    variable_b->set(5);
+    variable_b->set(backend::base_cast<BACKEND> (5.0));
     const BACKEND var_plus_varb_result = var_plus_varb->evaluate();
     assert(var_plus_varb_result.size() == 1 && "Expected single value.");
     assert(var_plus_varb_result.at(0) == backend::base_cast<BACKEND> (15.0) &&
@@ -241,7 +241,7 @@ template<typename BACKEND> void test_subtract() {
     auto zero_minus_var = zero - variable;
     assert(graph::multiply_cast(zero_minus_var).get() &&
            "Expected multiply node.");
-    variable->set(3);
+    variable->set(backend::base_cast<BACKEND> (3.0));
     const BACKEND zero_minus_var_result = zero_minus_var->evaluate();
     assert(zero_minus_var_result.size() == 1 && "Expected single value.");
     assert(zero_minus_var_result.at(0) == backend::base_cast<BACKEND> (-3.0) &&
@@ -252,7 +252,7 @@ template<typename BACKEND> void test_subtract() {
     auto var_minus_var = variable - variable_b;
     assert(graph::subtract_cast(var_minus_var).get() &&
            "Expected a subtraction node.");
-    variable_b->set(10);
+    variable_b->set(backend::base_cast<BACKEND> (10.0));
     const BACKEND var_minus_var_result = var_minus_var->evaluate();
     assert(var_minus_var_result.size() == 1 && "Expected single value.");
     assert(var_minus_var_result.at(0) == backend::base_cast<BACKEND> (-7) &&
@@ -429,7 +429,7 @@ template<typename BACKEND> void test_multiply() {
     auto two_times_var = two*variable;
     assert(graph::multiply_cast(two_times_var).get() &&
            "Expected multiply node.");
-    variable->set(6);
+    variable->set(backend::base_cast<BACKEND> (6.0));
     const BACKEND two_times_var_result = two_times_var->evaluate();
     assert(two_times_var_result.size() == 1 && "Expected single value.");
     assert(two_times_var_result.at(0) == backend::base_cast<BACKEND> (12.0) &&
@@ -660,7 +660,7 @@ template<typename BACKEND> void test_divide() {
     auto two_divided_var = two/variable;
     assert(graph::divide_cast(two_divided_var).get() &&
            "Expected divide node.");
-    variable->set(3);
+    variable->set(backend::base_cast<BACKEND> (3.0));
     const BACKEND two_divided_var_result = two_divided_var->evaluate();
     assert(two_divided_var_result.size() == 1 && "Expected single value.");
     assert(two_divided_var_result.at(0) == backend::base_cast<BACKEND> (2.0) /
@@ -973,4 +973,6 @@ template<typename BACKEND> void run_tests() {
 int main(int argc, const char * argv[]) {
     run_tests<backend::cpu<float>> ();
     run_tests<backend::cpu<double>> ();
+    run_tests<backend::cpu<std::complex<float>>> ();
+    run_tests<backend::cpu<std::complex<double>>> ();
 }

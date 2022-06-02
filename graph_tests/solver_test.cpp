@@ -42,7 +42,7 @@ void test_solver(const typename SOLVER::base tolarance,
 
     for (size_t i = 0; i < 5; i++) {
         solve.step();
-        assert(residule->evaluate().at(0) < tolarance &&
+        assert(std::abs(residule->evaluate().at(0)) < std::abs(tolarance) &&
                "Solver failed to retain initial acuracy");
     }
 }
@@ -83,4 +83,6 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 int main(int argc, const char * argv[]) {
     run_tests<backend::cpu<float>> (1.0E-14);
     run_tests<backend::cpu<double>> (1.0E-30);
+    run_tests<backend::cpu<std::complex<float>>> (1.0E-14);
+    run_tests<backend::cpu<std::complex<double>>> (1.0E-30);
 }

@@ -33,7 +33,7 @@ void test_reflection(const typename BACKEND::base tolarance,
     const typename BACKEND::base mu0 = M_PI*4.0E-7;
     const typename BACKEND::base epsilon0 = 8.8541878138E-12;
     const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
-    const typename BACKEND::base OmegaCE = -q*1/(me*c);
+    const typename BACKEND::base OmegaCE = -q/(me*c);
     
     auto w = graph::variable<BACKEND> (1, OmegaCE, "\\omega");
     auto kx = graph::variable<BACKEND> (1, 0.0, "k_{x}");
@@ -59,13 +59,13 @@ void test_reflection(const typename BACKEND::base tolarance,
     kx->set(kx0);
     solve.init(kx, tolarance);
     
-    typename BACKEND::base max_x = solve.state.back().x.at(0);
-    typename BACKEND::base new_x = max_x;
+    auto max_x = std::real(solve.state.back().x.at(0));
+    auto new_x = max_x;
     do {
         solve.step();
-        new_x = solve.state.back().x.at(0);
+        new_x = std::real(solve.state.back().x.at(0));
         max_x = std::max(new_x, max_x);
-        assert(max_x < cuttoff_location && "Ray exceeded cutoff.");
+        assert(max_x < std::abs(cuttoff_location) && "Ray exceeded cutoff.");
     } while (max_x == new_x);
 }
 
@@ -87,4 +87,5 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 int main(int argc, const char * argv[]) {
 //  No there is not enough precision in float to pass the test.
     run_tests<backend::cpu<double>> (1.0E-30);
+    run_tests<backend::cpu<std::complex<double>>> (1.0E-30);
 }

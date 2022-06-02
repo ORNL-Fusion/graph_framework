@@ -40,25 +40,25 @@ void test_solve(const typename DISPERSION::base tolarance,
 
     kx->set(k_guess);
     D.solve(kx, tolarance);
-    assert(loss->evaluate().at(0) < tolarance &&
+    assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for kx.");
 
-    kx->set(0.2);
+    kx->set(backend::base_cast<typename DISPERSION::backend> (0.2));
     ky->set(k_guess);
     D.solve(ky, tolarance);
-    assert(loss->evaluate().at(0) < tolarance &&
+    assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for ky.");
 
-    ky->set(0.25);
+    ky->set(backend::base_cast<typename DISPERSION::backend> (0.25));
     kz->set(k_guess);
     D.solve(kz, tolarance);
-    assert(loss->evaluate().at(0) < tolarance &&
+    assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for kz.");
 
-    kz->set(0.15);
+    kz->set(backend::base_cast<typename DISPERSION::backend> (0.15));
     kx->set(k_guess);
     D.solve(w, tolarance);
-    assert(loss->evaluate().at(0) < tolarance &&
+    assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for w.");
 }
 
@@ -82,4 +82,6 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 int main(int argc, const char * argv[]) {
     run_tests<backend::cpu<float>> (1.0E-14);
     run_tests<backend::cpu<double>> (1.0E-30);
+    run_tests<backend::cpu<std::complex<float>>> (1.0E-14);
+    run_tests<backend::cpu<std::complex<double>>> (1.0E-30);
 }

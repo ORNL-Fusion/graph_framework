@@ -9,7 +9,6 @@
 #endif
 
 #include <cassert>
-#include <complex>
 
 #include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/node.hpp"
@@ -34,7 +33,7 @@ void test_constant() {
     auto dzero_cast = graph::constant_cast(dzero);
     assert(dzero_cast.get() && "Expected a constant type for derivative.");
     assert(dzero_cast->is(0) && "Constant value expeced zero.");
-    zero->set(1.0);
+    zero->set(backend::base_cast<BACKEND> (1.0));
     assert(zero_cast->is(0) && "Constant value expeced zero.");
 
     auto one = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({1.0, 1.0}));
@@ -74,7 +73,7 @@ void test_constant() {
 template<typename BACKEND>
 void test_variable() {
     auto zero = graph::variable<BACKEND> (1, "");
-    zero->set(0);
+    zero->set(backend::base_cast<BACKEND> (0.0));
     assert(graph::variable_cast(zero).get() && "Expected a variable type.");
     assert(graph::constant_cast(zero).get() == nullptr &&
            "Expected a variable type.");
@@ -82,7 +81,7 @@ void test_variable() {
     assert(zero_result.size() == 1 && "Expected single value.");
     assert(zero_result.at(0) == backend::base_cast<BACKEND> (0.0) &&
            "Variable value evalute expeced zero.");
-    zero->set(1);
+    zero->set(backend::base_cast<BACKEND> (1.0));
     const BACKEND zero_result2 = zero->evaluate();
     assert(zero_result2.size() == 1 && "Expected single value.");
     assert(zero_result2.at(0) == backend::base_cast<BACKEND> (1.0) &&
@@ -131,10 +130,10 @@ void test_variable() {
 template<typename BACKEND>
 void test_cache() {
     auto five = graph::variable<BACKEND> (1, "");
-    five->set(5);
+    five->set(backend::base_cast<BACKEND> (5.0));
     auto cache_five = graph::cache(five);
     cache_five->evaluate();
-    five->set(6);
+    five->set(backend::base_cast<BACKEND> (6.0));
     assert(cache_five->evaluate().at(0) == backend::base_cast<BACKEND> (5.0) &&
            "Expected a value of five.");
     cache_five->reset_cache();
@@ -172,8 +171,8 @@ void test_pseudo_variable() {
     assert(graph::constant_cast(c->df(a))->is(0) && "Expected zero.");
     assert(graph::constant_cast(c->df(c))->is(1) && "Expected one.");
 
-    a->set(1);
-    b->set(2);
+    a->set(backend::base_cast<BACKEND> (1.0));
+    b->set(backend::base_cast<BACKEND> (2.0));
     assert(c->evaluate().at(0) == backend::base_cast<BACKEND> (3.0) &&
            "Expected three.");
 
@@ -201,4 +200,6 @@ template<typename BACKEND> void run_tests() {
 int main(int argc, const char * argv[]) {
     run_tests<backend::cpu<float>> ();
     run_tests<backend::cpu<double>> ();
+    run_tests<backend::cpu<std::complex<float>>> ();
+    run_tests<backend::cpu<std::complex<double>>> ();
 }

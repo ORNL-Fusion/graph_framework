@@ -51,4 +51,6 @@ template<typename BACKEND> void run_tests() {
 int main(int argc, const char * argv[]) {
     run_tests<backend::cpu<float>> ();
     run_tests<backend::cpu<double>> ();
+    run_tests<backend::cpu<std::complex<float>>> ();
+    run_tests<backend::cpu<std::complex<double>>> ();
 }

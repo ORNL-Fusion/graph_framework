@@ -15,6 +15,8 @@
 #include <memory>
 #include <vector>
 
+#include "backend_protocall.hpp"
+
 namespace graph {
 //******************************************************************************
 //  Base leaf node.
@@ -304,7 +306,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            return std::make_shared<constant_node> (0);
+            return std::make_shared<constant_node> (backend::base_cast<BACKEND> (0.0));
         }
 
 //------------------------------------------------------------------------------
@@ -471,7 +473,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            return constant<BACKEND> (this->is_match(x));
+            return constant<BACKEND> (backend::base_cast<BACKEND> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------
@@ -510,7 +512,7 @@ namespace graph {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<typename BACKEND::base> &d) final {
-            data = BACKEND(d);
+            data.set(d);
         }
 
 //------------------------------------------------------------------------------
@@ -657,7 +659,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
             if (this->is_match(x)) {
-                return constant<BACKEND> (1);
+                return constant<BACKEND> (backend::base_cast<BACKEND> (1.0));
             } else {
                 return this->arg->df(x)->reduce();
             }
@@ -762,7 +764,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            return constant<BACKEND> (this->is_match(x));
+            return constant<BACKEND> (backend::base_cast<BACKEND> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------

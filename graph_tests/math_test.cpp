@@ -35,7 +35,7 @@ void test_sqrt() {
     auto sqrt_var = graph::sqrt(var);
     assert(graph::sqrt_cast(sqrt_var).get() &&"Expected a variable type.");
 
-    var->set(3);
+    var->set(backend::base_cast<BACKEND> (3.0));
     assert(sqrt_var->evaluate().at(0) == sqrt(backend::base_cast<BACKEND> (3.0)));
 
     auto var_vec = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({4.0, 7.0}), "");
@@ -124,7 +124,7 @@ void test_exp() {
     auto exp_var = graph::exp(var);
     assert(graph::exp_cast(exp_var).get() && "Expected a variable type.");
 
-    var->set(3);
+    var->set(backend::base_cast<BACKEND> (3.0));
     assert(exp_var->evaluate().at(0) == exp(backend::base_cast<BACKEND> (3.0)));
 
     auto var_vec = graph::variable<BACKEND> (std::vector<typename BACKEND::base> ({4.0, 7.0}), "");
@@ -149,7 +149,7 @@ void test_pow() {
 //  a^0 = 1
     auto zero = graph::constant<BACKEND> (0);
     auto ten = graph::variable<BACKEND> (1, "10");
-    ten->set(10.0);
+    ten->set(backend::base_cast<BACKEND> (10.0));
     auto one = graph::pow(ten, zero);
     assert(graph::constant_cast(one).get() && "Expected constant");
     assert(one->evaluate().at(0) == backend::base_cast<BACKEND> (1.0) &&
@@ -262,4 +262,6 @@ template<typename BACKEND> void run_tests() {
 int main(int argc, const char * argv[]) {
     run_tests<backend::cpu<float>> ();
     run_tests<backend::cpu<double>> ();
+    run_tests<backend::cpu<std::complex<float>>> ();
+    run_tests<backend::cpu<std::complex<double>>> ();
 }

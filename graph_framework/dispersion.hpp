@@ -103,9 +103,13 @@ namespace dispersion {
                 loss->evaluate().max();
             size_t iterations = 0;
 
-            while (max_residule > tolarance && iterations++ < max_iterations) {
+            auto df = loss->df(x)->evaluate().at(0);
+            
+            while (std::abs(max_residule) > std::abs(tolarance) &&
+                   iterations++ < max_iterations) {
                 x->set(x_next->evaluate());
                 max_residule = loss->evaluate().max();
+                df = loss->df(x)->evaluate().at(0);
             }
 
             if (iterations > max_iterations) {

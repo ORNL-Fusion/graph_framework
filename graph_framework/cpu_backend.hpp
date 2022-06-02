@@ -11,6 +11,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <complex>
 
 #include "backend_protocall.hpp"
 
@@ -113,7 +114,15 @@ namespace backend {
 ///  @returns The maximum value.
 //------------------------------------------------------------------------------
         virtual BASE max() const final {
-            return *std::max_element(data.cbegin(), data.cend());
+            if constexpr (std::is_same<BASE, std::complex<float>>::value ||
+                          std::is_same<BASE, std::complex<double>>::value) {
+                return *std::max_element(data.cbegin(), data.cend(),
+                                         [] (const BASE a, const BASE b) {
+                    return std::abs(a) < std::abs(b);
+                });
+            } else {
+                return *std::max_element(data.cbegin(), data.cend());
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -139,7 +148,7 @@ namespace backend {
 //------------------------------------------------------------------------------
         virtual bool is_zero() const final {
             for (BASE d : data) {
-                if (d != 0.0) {
+                if (d != static_cast<BASE> (0.0)) {
                     return false;
                 }
             }
@@ -323,27 +332,35 @@ namespace backend {
 //------------------------------------------------------------------------------
     template<typename BASE>
     inline cpu<BASE> fma(cpu<BASE> &a, cpu<BASE> &b, cpu<BASE> &c) {
+        constexpr bool use_fma = !std::is_same<BASE, std::complex<float>>::value  &&
+                                 !std::is_same<BASE, std::complex<double>>::value &&
+#ifdef FP_FAST_FMA
+                                 true;
+#else
+                                 false;
+#endif
+        
         if (a.size() == 1) {
             const BASE left = a.at(0);
 
             if (b.size() == 1) {
                 const BASE middle = b.at(0);
                 for (size_t i = 0, ie = c.size(); i < ie; i++) {
-#ifdef FP_FAST_FMA
-                    c[i] = std::fma(left, middle, c.at(i));
-#else
-                    c[i] = left*middle + c.at(i);
-#endif
+                    if constexpr (use_fma) {
+                        c[i] = std::fma(left, middle, c.at(i));
+                    } else {
+                        c[i] = left*middle + c.at(i);
+                    }
                 }
                 return c;
             } else if (c.size() == 1) {
                 const BASE right = c.at(0);
                 for (size_t i = 0, ie = b.size(); i < ie; i++) {
-#ifdef FP_FAST_FMA
-                    b[i] = std::fma(left, b.at(i), right);
-#else
-                    b[i] = left*b.at(i) + right;
-#endif
+                    if constexpr (use_fma) {
+                        b[i] = std::fma(left, b.at(i), right);
+                    } else {
+                        b[i] = left*b.at(i) + right;
+                    }
                 }
                 return b;
             }
@@ -351,11 +368,11 @@ namespace backend {
             assert(b.size() == c.size() &&
                    "Size mismatch between middle and right.");
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
-#ifdef FP_FAST_FMA
-                b[i] = std::fma(left, b.at(i), c.at(i));
-#else
-                b[i] = left*b.at(i) + c.at(i);
-#endif
+                if constexpr (use_fma) {
+                    b[i] = std::fma(left, b.at(i), c.at(i));
+                } else {
+                    b[i] = left*b.at(i) + c.at(i);
+                }
             }
             return b;
         } else if (b.size() == 1) {
@@ -363,11 +380,11 @@ namespace backend {
             if (c.size() == 1) {
                 const BASE right = c.at(0);
                 for (size_t i = 0, ie = a.size(); i < ie; i++) {
-#ifdef FP_FAST_FMA
-                    a[i] = std::fma(a.at(i), middle, right);
-#else
-                    a[i] = a.at(i)*middle + right;
-#endif
+                    if constexpr (use_fma) {
+                        a[i] = std::fma(a.at(i), middle, right);
+                    } else {
+                        a[i] = a.at(i)*middle + right;
+                    }
                 }
                 return a;
             }
@@ -375,11 +392,11 @@ namespace backend {
             assert(a.size() == c.size() &&
                    "Size mismatch between left and right.");
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
-#ifdef FP_FAST_FMA
-                a[i] = std::fma(a.at(i), middle, c.at(i));
-#else
-                a[i] = a.at(i)*middle + c.at(i);
-#endif
+                if constexpr (use_fma) {
+                    a[i] = std::fma(a.at(i), middle, c.at(i));
+                } else {
+                    a[i] = a.at(i)*middle + c.at(i);
+                }
             }
             return a;
         } else if (c.size() == 1) {
@@ -387,11 +404,11 @@ namespace backend {
                    "Size mismatch between left and middle.");
             const BASE right = c.at(0);
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
-#ifdef FP_FAST_FMA
-                a[i] = std::fma(a.at(i), b.at(i), right);
-#else
-                a[i] = a.at(i)*b.at(i) + right;
-#endif
+                if constexpr (use_fma) {
+                    a[i] = std::fma(a.at(i), b.at(i), right);
+                } else {
+                    a[i] = a.at(i)*b.at(i) + right;
+                }
             }
             return a;
         }
@@ -401,11 +418,11 @@ namespace backend {
                a.size() == c.size() &&
                "Left, middle and right sizes are incompatable.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
-#ifdef FP_FAST_FMA
-            a[i] = std::fma(a.at(i), b.at(i), c.at(i));
-#else
-            a[i] = a.at(i)*b.at(i) + c.at(i);
-#endif
+            if constexpr (use_fma) {
+                a[i] = std::fma(a.at(i), b.at(i), c.at(i));
+            } else {
+                a[i] = a.at(i)*b.at(i) + c.at(i);
+            }
         }
         return a;
     }
@@ -421,36 +438,38 @@ namespace backend {
                          cpu<BASE> &exponent) {
         if (exponent.size() == 1) {
             const BASE right = exponent.at(0);
-            const int64_t right_int = static_cast<int64_t> (right);
-            if (right - right_int) {
-                if (right == 0.5) {
-                    base.sqrt();
+            if (std::imag(right) == 0) {
+                const int64_t right_int = static_cast<int64_t> (std::real(right));
+                if (std::real(right) - right_int) {
+                    if (right == static_cast<BASE> (0.5)) {
+                        base.sqrt();
+                        return base;
+                    }
+
+                    for (size_t i = 0, ie = base.size(); i < ie; i++) {
+                        base[i] = std::pow(base.at(i), right);
+                    }
                     return base;
                 }
 
-                for (size_t i = 0, ie = base.size(); i < ie; i++) {
-                    base[i] = std::pow(base.at(i), right);
-                }
-                return base;
-            }
-
-            if (right_int > 0) {
-                for (size_t i = 0, ie = base.size(); i < ie; i++) {
-                    const BASE left = base.at(i);
-                    for (size_t j = 0, je = right_int - 1; j < je; j++) {
-                        base[i] *= left;
+                if (right_int > 0) {
+                    for (size_t i = 0, ie = base.size(); i < ie; i++) {
+                        const BASE left = base.at(i);
+                        for (size_t j = 0, je = right_int - 1; j < je; j++) {
+                            base[i] *= left;
+                        }
                     }
-                }
-                return base;
-            } else {
-                for (size_t i = 0, ie = base.size(); i < ie; i++) {
-                    const BASE left = 1.0/base.at(i);
-                    base[i] = left;
-                    for (size_t j = 0, je = std::abs(right_int) - 1; j < je; j++) {
-                        base[i] *= left;
+                    return base;
+                } else {
+                    for (size_t i = 0, ie = base.size(); i < ie; i++) {
+                        const BASE left = static_cast<BASE> (1.0)/base.at(i);
+                        base[i] = left;
+                        for (size_t j = 0, je = std::abs(right_int) - 1; j < je; j++) {
+                            base[i] *= left;
+                        }
                     }
+                    return base;
                 }
-                return base;
             }
         } else if (base.size() == 1) {
             const BASE left = base.at(0);
