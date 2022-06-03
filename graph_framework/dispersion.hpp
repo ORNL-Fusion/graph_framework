@@ -9,6 +9,7 @@
 #define dispersion_h
 
 #include <iostream>
+#include <cassert>
 
 #include "vector.hpp"
 #include "equilibrium.hpp"
@@ -98,22 +99,25 @@ namespace dispersion {
             auto x_next = x
                         - loss/(loss->df(x) +
                                 graph::constant<typename DISPERSION_FUNCTION::backend> (tolarance));
-
+            
             typename DISPERSION_FUNCTION::base max_residule =
                 loss->evaluate().max();
             size_t iterations = 0;
-
-            auto df = loss->df(x)->evaluate().at(0);
             
             while (std::abs(max_residule) > std::abs(tolarance) &&
                    iterations++ < max_iterations) {
                 x->set(x_next->evaluate());
                 max_residule = loss->evaluate().max();
-                df = loss->df(x)->evaluate().at(0);
             }
 
+//  In release mode asserts are diaables so write error to standard err. Need to
+//  flip the comparison operator because we want to assert to trip if false.
+            assert(iterations < max_iterations &&
+                   "Newton solve failed to converge with in given iterations.");
             if (iterations > max_iterations) {
                 std::cerr << "Newton solve failed to converge with in given iterations."
+                          << std::endl;
+                std::cerr << "Minimum residule reached: " << max_residule
                           << std::endl;
             }
         }

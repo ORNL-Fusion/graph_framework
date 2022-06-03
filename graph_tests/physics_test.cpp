@@ -8,10 +8,60 @@
 #undef NDEBUG
 #endif
 
+#include <chrono>
+#include <random>
 #include <cassert>
 
 #include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/solver.hpp"
+
+//------------------------------------------------------------------------------
+///  @brief Constant Test
+///
+///  A wave in no medium with a constant phase velocity should propagate such that
+///
+///  k.x - wt = Constant
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_constant() {
+    std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+    std::uniform_real_distribution<double> real_dist(0.1, 1.0);
+
+    auto omega = graph::variable<BACKEND> (1, "\\omega");
+    auto kx = graph::variable<BACKEND> (1, "k_{x}");
+    auto ky = graph::variable<BACKEND> (1, "k_{y}");
+    auto kz = graph::variable<BACKEND> (1, "k_{z}");
+    auto x = graph::variable<BACKEND> (1, "x");
+    auto y = graph::variable<BACKEND> (1, "y");
+    auto z = graph::variable<BACKEND> (1, "z");
+    
+    auto dt = 1.0;
+    auto t = graph::variable<BACKEND> (1, "t");
+    
+    omega->set(backend::base_cast<BACKEND> (real_dist(engine)));
+    kx->set(backend::base_cast<BACKEND> (real_dist(engine)));
+    ky->set(backend::base_cast<BACKEND> (0.0));
+    kz->set(backend::base_cast<BACKEND> (0.0));
+    x->set(backend::base_cast<BACKEND> (real_dist(engine)));
+    y->set(backend::base_cast<BACKEND> (real_dist(engine)));
+    z->set(backend::base_cast<BACKEND> (real_dist(engine)));
+    
+//  The equilibrum isn't used;
+    auto eq = equilibrium::make_slab<BACKEND> ();
+    solver::rk2<dispersion::simple<BACKEND>> solve(omega, kx, ky, kz, x, y, z, dt, eq);
+    solve.init(kx);
+    
+    auto constant = kx*x + ky*y + kz*z - omega*t;
+    t->set(backend::base_cast<BACKEND> (0.0));
+    const auto c0 = constant->evaluate().at(0);
+    for (size_t i = 0; i < 10; i++) {
+        solve.step();
+        t->set(backend::base_cast<BACKEND> ((i + 1)*dt));
+    }
+
+    assert(std::abs(c0 - constant->evaluate().at(0)) < 5.0E-15 &&
+           "Constant expression not preserved.");
+}
 
 //------------------------------------------------------------------------------
 ///  @brief Reflection test.
@@ -75,6 +125,7 @@ void test_reflection(const typename BACKEND::base tolarance,
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
+    test_constant<BACKEND> ();
     test_reflection<BACKEND> (tolarance, 0.7, 0.1, 22.0);
 }
 
@@ -87,5 +138,5 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 int main(int argc, const char * argv[]) {
 //  No there is not enough precision in float to pass the test.
     run_tests<backend::cpu<double>> (1.0E-30);
-    run_tests<backend::cpu<std::complex<double>>> (1.0E-30);
+    run_tests<backend::cpu<std::complex<double>>> (5.0E-29);
 }
