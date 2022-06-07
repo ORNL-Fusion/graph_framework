@@ -64,6 +64,93 @@ void test_constant() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Bohm-Gross Test
+///
+///  In the bohm-gross dispersion relation, the group velocity should be.
+///
+///  vg = 3/2*vth^2*k/⍵                                                        (1)
+///
+///  Where vth is the thermal velocity.
+///
+///  vth = sqrt(2*kb*T/m)                                                      (2)
+///
+///  The wave number varies with time.
+///
+///  k(t) = -⍵pe'(x)/⍵*t + k0                                                  (3)
+///
+///  Where ⍵pe is the plasma frequency.
+///
+///  ⍵pe = sqrt(q^2*n(x))/(ϵ0*m)                                               (4)
+///
+///  For a linear gradient in the density ⍵pe'(x) is a constant. k0 must be a
+///  solution of the dispersion relation.
+///
+///  k0 = sqrt(3/2(⍵^2 - ⍵pe^2)/vth^2)                                         (5)
+///
+///  Putting equation 3 into 1 yields a parabolic ray.
+///
+///  x(t) = -3/2*vth/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth/⍵*k0*t + x0                     (6)
+///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_bohm_gross(const typename BACKEND::base tolarance) {
+    std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+    std::uniform_real_distribution<double> real_dist(0.1, 1.0);
+
+    auto omega = graph::variable<BACKEND> (1, "\\omega");
+    auto kx = graph::variable<BACKEND> (1, "k_{x}");
+    auto ky = graph::variable<BACKEND> (1, "k_{y}");
+    auto kz = graph::variable<BACKEND> (1, "k_{z}");
+    auto x = graph::variable<BACKEND> (1, "x");
+    auto y = graph::variable<BACKEND> (1, "y");
+    auto z = graph::variable<BACKEND> (1, "z");
+
+//  Constants
+    const typename BACKEND::base q = 1.602176634E-19;
+    const typename BACKEND::base me = 9.1093837015E-31;
+    const typename BACKEND::base mu0 = M_PI*4.0E-7;
+    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
+    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
+    const typename BACKEND::base omega0 = 600.0;
+    const typename BACKEND::base ne0 = 1.0E19;
+    const typename BACKEND::base te = 1000.0;
+    
+    const typename BACKEND::base omegap = std::sqrt((ne0*0.9*q*q)/(epsilon0*me*c*c));
+    const typename BACKEND::base vth = std::sqrt(2*1.602176634E-19*te/me)/c;
+    
+    const typename BACKEND::base k0 = std::sqrt(2.0/3.0*(omega0*omega0 - omegap*omegap)/(vth*vth));
+    
+//  Omega must be greater than plasma frequency for the wave to propagate.
+    omega->set(backend::base_cast<BACKEND> (600.0));
+    kx->set(backend::base_cast<BACKEND> (1000.0));
+    ky->set(backend::base_cast<BACKEND> (0.0));
+    kz->set(backend::base_cast<BACKEND> (0.0));
+    x->set(backend::base_cast<BACKEND> (-1.0));
+    y->set(backend::base_cast<BACKEND> (0.0));
+    z->set(backend::base_cast<BACKEND> (0.0));
+
+    auto eq = equilibrium::make_slab_density<BACKEND> ();
+    solver::rk4<dispersion::bohm_gross<BACKEND>> solve(omega, kx, ky, kz, x, y, z, 0.0001, eq);
+    solve.init(kx, tolarance);
+    
+    const auto diff = kx->evaluate().at(0) - k0;
+    assert(std::abs(diff*diff) < 2.0E-24 &&
+           "Failed to reach expected k0.");
+    
+    for (size_t i = 0; i < 20; i++) {
+        solve.step();
+    }
+    const typename BACKEND::base t = 20.0*0.0001;
+    const typename BACKEND::base expected_x = -3.0/2.0*vth*vth*omegap/(omega0*omega0)*t*t
+                                            + 3.0/2.0*vth*vth/omega0*k0*t - 1.0;
+    
+    const auto diff_x = x->evaluate().at(0) - expected_x;
+    assert(std::abs(diff_x*diff_x) < 2.0E-10 &&
+           "Failed to reach expected x.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Reflection test.
 ///
 ///  Given a wave frequency, a wave with zero k will not propagate.
@@ -126,6 +213,7 @@ void test_reflection(const typename BACKEND::base tolarance,
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
     test_constant<BACKEND> ();
+    test_bohm_gross<BACKEND> (tolarance);
     test_reflection<BACKEND> (tolarance, 0.7, 0.1, 22.0);
 }
 

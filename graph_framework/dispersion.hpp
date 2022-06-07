@@ -16,6 +16,22 @@
 
 namespace dispersion {
 //******************************************************************************
+//  Common physics expressions.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Build plasma fequency expression.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    static graph::shared_leaf<BACKEND> build_plasma_fequency(graph::shared_leaf<BACKEND> n,
+                                                             graph::shared_leaf<BACKEND> q,
+                                                             graph::shared_leaf<BACKEND> m,
+                                                             graph::shared_leaf<BACKEND> c,
+                                                             graph::shared_leaf<BACKEND> epsion0) {
+        return n*q*q/(epsion0*m*c*c);
+    }
+
+
+//******************************************************************************
 //  Dispersion interface.
 //******************************************************************************
 //------------------------------------------------------------------------------
@@ -79,7 +95,7 @@ namespace dispersion {
             dkxdt = dDdx/dDdw;
             dkydt = dDdy/dDdw;
             dkzdt = dDdz/dDdw;
-
+            
             dsdt = graph::vector(dxdt, dydt, dzdt)->length();
         }
 
@@ -284,6 +300,58 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
+///  @brief Bohm-Gross dispersion function.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class bohm_gross final : public dispersion_function<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Bohm-Gross function.
+///
+///  D = ⍵_p^2 + 3/2(kx^2 + ky^2 + kz^2)vth^2 - ⍵^2                            (1)
+///
+///  vth = Sqrt(2*ne*te/me)                                                    (2)
+///
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
+//  Constants
+            auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
+            auto mu0 = graph::constant<BACKEND> (M_PI*4.0E-7);
+            auto c = graph::constant<BACKEND> (1)/graph::sqrt(epsion0*mu0);
+
+//  Equilibrium quantities.
+            auto me = graph::constant<BACKEND> (9.1093837015E-31);
+            auto q = graph::constant<BACKEND> (1.602176634E-19);
+
+            auto ne = eq->get_electron_density(x, y, z);
+            auto wpe2 = build_plasma_fequency(ne, q, me, c, epsion0);
+            auto te = eq->get_electron_temperature(x, y, z);
+//  2*1.602176634E-19 to convert eV to J.
+            auto temp = graph::constant<BACKEND> (2.602176634E-19)*te;
+            auto vterm2 = graph::constant<BACKEND> (2*1.602176634E-19)*te/(me*c*c);
+            
+            return wpe2 +
+                   graph::constant<BACKEND> (3.0/2.0)*(kx*kx + ky*ky + kz*kz)*vterm2 -
+                   w*w;
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Guassian Well dispersion function.
 //------------------------------------------------------------------------------
     template<class BACKEND>
@@ -325,17 +393,6 @@ namespace dispersion {
     template<class BACKEND>
     class cold_plasma final : public dispersion_function<BACKEND> {
     private:
-//------------------------------------------------------------------------------
-///  @brief Build plasma fequency expression.
-//------------------------------------------------------------------------------
-        static graph::shared_leaf<BACKEND> build_plasma_fequency(graph::shared_leaf<BACKEND> n,
-                                                                 graph::shared_leaf<BACKEND> q,
-                                                                 graph::shared_leaf<BACKEND> m,
-                                                                 graph::shared_leaf<BACKEND> c,
-                                                                 graph::shared_leaf<BACKEND> epsion0) {
-            return n*q*q/(epsion0*m*c*c);
-        }
-
 //------------------------------------------------------------------------------
 ///  @brief Build cyclotron fequency expression.
 //------------------------------------------------------------------------------
