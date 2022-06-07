@@ -146,7 +146,7 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
                                             + 3.0/2.0*vth*vth/omega0*k0*t - 1.0;
     
     const auto diff_x = x->evaluate().at(0) - expected_x;
-    assert(std::abs(diff_x*diff_x) < 2.0E-10 &&
+    assert(std::abs(diff_x*diff_x) < 3.0E-19 &&
            "Failed to reach expected x.");
 }
 
