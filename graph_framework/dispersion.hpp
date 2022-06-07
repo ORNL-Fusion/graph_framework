@@ -352,6 +352,54 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
+///  @brief Ion wave dispersion function.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class ion_wave final : public dispersion_function<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Ion wave function.
+///
+///  D = (kx^2 + ky^2 + kz^2)vs^2 - ⍵^2                                        (1)
+///
+///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                            (2)
+///
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
+//  Constants
+            auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
+            auto mu0 = graph::constant<BACKEND> (M_PI*4.0E-7);
+            auto c = graph::constant<BACKEND> (1)/graph::sqrt(epsion0*mu0);
+
+//  Equilibrium quantities.
+            auto mi = graph::constant<BACKEND> (eq->get_ion_mass(0));
+            auto q = graph::constant<BACKEND> (1.602176634E-19);
+
+            auto te = eq->get_electron_temperature(x, y, z);
+            auto ti = eq->get_ion_temperature(0, x, y, z);
+            auto gamma = graph::constant<BACKEND> (3.0);
+            auto vs2 = (q*te + gamma*q*ti)/(mi*c*c);
+            
+            return (kx*kx + ky*ky + kz*kz)*vs2 - w*w;
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Guassian Well dispersion function.
 //------------------------------------------------------------------------------
     template<class BACKEND>

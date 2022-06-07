@@ -69,6 +69,7 @@ void test_solve(const typename DISPERSION::base tolarance,
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
     test_solve<dispersion::simple<BACKEND>> (tolarance, 0.5, 1.0);
+    test_solve<dispersion::ion_wave<BACKEND>> (tolarance, 1.0, 600.0);
     test_solve<dispersion::guassian_well<BACKEND>> (tolarance, 0.5, 1.0);
     test_solve<dispersion::cold_plasma<BACKEND>> (tolarance, 900.0, 1000.0);
 }
@@ -82,6 +83,6 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 int main(int argc, const char * argv[]) {
     run_tests<backend::cpu<float>> (1.0E-14);
     run_tests<backend::cpu<double>> (1.0E-30);
-    run_tests<backend::cpu<std::complex<float>>> (1.0E-14);
+    run_tests<backend::cpu<std::complex<float>>> (2.0E-14);
     run_tests<backend::cpu<std::complex<double>>> (1.0E-30);
 }

@@ -89,7 +89,7 @@ void test_constant() {
 ///
 ///  Putting equation 3 into 1 yields a parabolic ray.
 ///
-///  x(t) = -3/2*vth/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth/⍵*k0*t + x0                     (6)
+///  x(t) = -3/2*vth^2/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth^2/⍵*k0*t + x0                 (6)
 ///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
@@ -148,6 +148,82 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
     const auto diff_x = x->evaluate().at(0) - expected_x;
     assert(std::abs(diff_x*diff_x) < 3.0E-19 &&
            "Failed to reach expected x.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Ion wave Test
+///
+///  In the ion-wave dispersion relation, the group velocity should be.
+///
+///  vg = vs^2*k/⍵                                                             (1)
+///
+///  Where vs is the sound speed.
+///
+///  vs = sqrt((kb*Te - ɣ*kb*ti)/mi)                                           (2)
+///
+///  The wave number is constant in time.
+///
+///  k(t) = 0                                                                  (3)
+///
+///  The slope of the wave trajectory is vs
+///
+///  dx/dt = vs^2                                                              (4)
+///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_ion_wave(const typename BACKEND::base tolarance) {
+    std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+    std::uniform_real_distribution<double> real_dist(0.1, 1.0);
+
+    auto omega = graph::variable<BACKEND> (1, "\\omega");
+    auto kx = graph::variable<BACKEND> (1, "k_{x}");
+    auto ky = graph::variable<BACKEND> (1, "k_{y}");
+    auto kz = graph::variable<BACKEND> (1, "k_{z}");
+    auto x = graph::variable<BACKEND> (1, "x");
+    auto y = graph::variable<BACKEND> (1, "y");
+    auto z = graph::variable<BACKEND> (1, "z");
+
+//  Constants
+    const typename BACKEND::base q = 1.602176634E-19;
+    const typename BACKEND::base mi = 3.34449469E-27;
+    const typename BACKEND::base mu0 = M_PI*4.0E-7;
+    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
+    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
+    const typename BACKEND::base omega0 = 1.0;
+    const typename BACKEND::base te = 1000.0;
+    const typename BACKEND::base ti = te;
+    const typename BACKEND::base gamma = 3;
+    
+    const typename BACKEND::base vs = std::sqrt((q*te+gamma*q*ti)/mi)/c;
+    
+    const typename BACKEND::base k0 = omega0/vs;
+    
+//  Omega must be greater than plasma frequency for the wave to propagate.
+    omega->set(backend::base_cast<BACKEND> (omega0));
+    kx->set(backend::base_cast<BACKEND> (600.0));
+    ky->set(backend::base_cast<BACKEND> (0.0));
+    kz->set(backend::base_cast<BACKEND> (0.0));
+    x->set(backend::base_cast<BACKEND> (0.0));
+    y->set(backend::base_cast<BACKEND> (0.0));
+    z->set(backend::base_cast<BACKEND> (0.0));
+
+    auto eq = equilibrium::make_slab_density<BACKEND> ();
+    solver::rk4<dispersion::ion_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, 0.0001, eq);
+    solve.init(kx, tolarance);
+    
+    const auto diff = kx->evaluate().at(0) - k0;
+    assert(std::abs(diff*diff) < 5.0E-24 &&
+           "Failed to reach expected k0.");
+    
+    for (size_t i = 0; i < 20; i++) {
+        solve.step();
+    }
+    const typename BACKEND::base t = 20.0*0.0001;
+    
+    const auto diff_x = x->evaluate().at(0)/t - vs;
+    assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
+           "Ray progated at different speed.");
 }
 
 //------------------------------------------------------------------------------
@@ -214,6 +290,7 @@ void test_reflection(const typename BACKEND::base tolarance,
 template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
     test_constant<BACKEND> ();
     test_bohm_gross<BACKEND> (tolarance);
+    test_ion_wave<BACKEND> (tolarance);
     test_reflection<BACKEND> (tolarance, 0.7, 0.1, 22.0);
 }
 
