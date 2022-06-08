@@ -30,6 +30,16 @@ namespace dispersion {
         return n*q*q/(epsion0*m*c*c);
     }
 
+//------------------------------------------------------------------------------
+///  @brief Build cyclotron fequency expression.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    static graph::shared_leaf<BACKEND> build_cyclotron_fequency(graph::shared_leaf<BACKEND> q,
+                                                                graph::shared_leaf<BACKEND> b,
+                                                                graph::shared_leaf<BACKEND> m,
+                                                                graph::shared_leaf<BACKEND> c) {
+        return q*b/(m*c);
+    }
 
 //******************************************************************************
 //  Dispersion interface.
@@ -436,21 +446,115 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
+///  @brief Ordinary wave dispersion function.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class ordinary_wave final : public dispersion_function<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Disperison relation or the O mode.
+///
+///  D = (kx^2 + ky^2 + kz^2)*c^2/⍵^2 + ⍵pe^2 - ⍵^2
+///
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
+//  Constants
+            auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
+            auto mu0 = graph::constant<BACKEND> (M_PI*4.0E-7);
+            auto c = graph::constant<BACKEND> (1.0)/graph::sqrt(epsion0*mu0);
+
+//  Equilibrium quantities.
+            auto me = graph::constant<BACKEND> (9.1093837015E-31);
+            auto q = graph::constant<BACKEND> (1.602176634E-19);
+
+            auto ne = eq->get_electron_density(x, y, z);
+            auto wpe2 = build_plasma_fequency(ne, q, me, c, epsion0);
+            
+            return (kx*kx + ky*ky + kz*kz) + wpe2 - w*w;
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Extra ordinary wave dispersion function.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class extra_ordinary_wave final : public dispersion_function<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Disperison relation for the X-Mode.
+///
+///  D = 1 - ⍵pe^2/⍵^2(⍵^2 - ⍵pe^2)/(⍵^2 - ⍵h^2)
+///    - c^2/⍵^2*(kx^2 + ky^2 + kz^2)                                          (1)
+///
+///  Where ⍵h is the upper hybrid frequency and defined by
+///
+///  ⍵h = ⍵pe^2 + ⍵ce^2
+///
+///  ⍵pe is the plasma frequency while ⍵ce is the cyclotron frequency.
+///
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
+//  Constants
+            auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
+            auto mu0 = graph::constant<BACKEND> (M_PI*4.0E-7);
+            auto c = graph::constant<BACKEND> (1.0)/graph::sqrt(epsion0*mu0);
+            auto one = graph::constant<BACKEND> (1);
+            auto none = graph::constant<BACKEND> (-1);
+            
+//  Equilibrium quantities.
+            auto me = graph::constant<BACKEND> (9.1093837015E-31);
+            auto q = graph::constant<BACKEND> (1.602176634E-19);
+
+            auto ne = eq->get_electron_density(x, y, z);
+            auto wpe2 = build_plasma_fequency(ne, q, me, c, epsion0);
+            
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto b_len = b_vec->length();
+            auto wec = build_cyclotron_fequency(none*q, b_len, me, c);
+            
+            auto wh = wpe2 + wec*wec;
+            
+            auto w2 = w*w;
+            
+            return one - wpe2/(w2)*(w2 - wpe2)/(w2 - wh) - (kx*kx + ky*ky + kz*kz)/w2;
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Cold Plasma Disperison function.
 //------------------------------------------------------------------------------
     template<class BACKEND>
     class cold_plasma final : public dispersion_function<BACKEND> {
-    private:
-//------------------------------------------------------------------------------
-///  @brief Build cyclotron fequency expression.
-//------------------------------------------------------------------------------
-        static graph::shared_leaf<BACKEND> build_cyclotron_fequency(graph::shared_leaf<BACKEND> q,
-                                                                    graph::shared_leaf<BACKEND> b,
-                                                                    graph::shared_leaf<BACKEND> m,
-                                                                    graph::shared_leaf<BACKEND> c) {
-            return q*b/(m*c);
-        }
-
     public:
 //------------------------------------------------------------------------------
 ///  @brief Cold Plasma Disperison function.

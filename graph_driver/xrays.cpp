@@ -20,9 +20,9 @@ void write_time(const std::string &name, const std::chrono::nanoseconds time);
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    //typedef std::complex<double> base;
+    typedef std::complex<double> base;
     //typedef float base;
-    typedef std::complex<float> base;
+    //typedef std::complex<float> base;
     typedef backend::cpu<base> cpu;
     
     const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
@@ -65,8 +65,8 @@ int main(int argc, const char * argv[]) {
                 //omega->set(j, 1000.0*real_dist(engine));
                 //omega->set(j, OmegaCE);
                 //omega->set(j, real_dist(engine));
-                //omega->set(j, 600.0);
-                omega->set(j, 1.0);
+                omega->set(j, 600.0);
+                //omega->set(j, 1.0);
             }
 
             //x->set(backend::base_cast<cpu> (8.58));
@@ -133,12 +133,14 @@ int main(int argc, const char * argv[]) {
             //ky->set(backend::base_cast<cpu> (0.0));
             //kz->set(backend::base_cast<cpu> (0.0));
 
-            x->set(backend::base_cast<cpu> (-1.0));
+            x->set(backend::base_cast<cpu> (-9.0));
+            //x->set(backend::base_cast<cpu> (-0.0));
             y->set(backend::base_cast<cpu> (0.0));
             z->set(backend::base_cast<cpu> (0.0));
-            kx->set(backend::base_cast<cpu> (0.2));
-            ky->set(backend::base_cast<cpu> (600.0));
-            kz->set(backend::base_cast<cpu> (0.15));
+            kx->set(backend::base_cast<cpu> (600.0));
+            //kx->set(backend::base_cast<cpu> (-600.0));
+            ky->set(backend::base_cast<cpu> (0.0));
+            kz->set(backend::base_cast<cpu> (0.0));
             
             //auto eq = equilibrium::make_guassian_density<cpu> ();
             //auto eq = equilibrium::make_slab<cpu> ();
@@ -146,11 +148,13 @@ int main(int argc, const char * argv[]) {
 
             //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            //solver::rk4<dispersion::ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 500.0/num_times, eq);
             //solver::rk4<dispersion::guassian_well<cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             //solver::rk4<dispersion::bohm_gross<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
-            solver::rk4<dispersion::ion_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            //solver::rk4<dispersion::ion_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
             //solver::rk4<dispersion::simple<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
-            solve.init(ky);
+            solve.init(kx);
             if (thread_number == 0) {
                 solve.print_dispersion();
             }

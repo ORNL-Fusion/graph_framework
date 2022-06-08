@@ -424,6 +424,9 @@ namespace solver {
             this->y1  = graph::cache(dt_const*this->D.get_dydt());
             this->z1  = graph::cache(dt_const*this->D.get_dzdt());
 
+            //this->D.get_dxdt()->to_latex();
+            //std::cout << std::endl;
+            
             auto two = graph::constant<typename DISPERSION_FUNCTION::backend> (2);
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,

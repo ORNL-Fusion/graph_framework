@@ -324,7 +324,8 @@ namespace equilibrium {
                            graph::shared_leaf<BACKEND> y,
                            graph::shared_leaf<BACKEND> z) final {
             auto zero = graph::constant<BACKEND> (0.0);
-            return graph::vector(zero, zero, zero);
+            auto one = graph::constant<BACKEND> (1.0);
+            return graph::vector(zero, zero, one);
         }
     };
 
