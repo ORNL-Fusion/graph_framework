@@ -21,6 +21,7 @@ void write_time(const std::string &name, const std::chrono::nanoseconds time);
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     typedef std::complex<double> base;
+    //typedef double base;
     //typedef float base;
     //typedef std::complex<float> base;
     typedef backend::cpu<base> cpu;
@@ -133,7 +134,7 @@ int main(int argc, const char * argv[]) {
             //ky->set(backend::base_cast<cpu> (0.0));
             //kz->set(backend::base_cast<cpu> (0.0));
 
-            x->set(backend::base_cast<cpu> (-9.0));
+            x->set(backend::base_cast<cpu> (0.0));
             //x->set(backend::base_cast<cpu> (-0.0));
             y->set(backend::base_cast<cpu> (0.0));
             z->set(backend::base_cast<cpu> (0.0));
@@ -149,9 +150,9 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
             //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
             //solver::rk4<dispersion::ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
-            solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 500.0/num_times, eq);
+            //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 500.0/num_times, eq);
             //solver::rk4<dispersion::guassian_well<cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
-            //solver::rk4<dispersion::bohm_gross<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            solver::rk4<dispersion::bohm_gross<cpu>> solve(omega, kx, ky, kz, x, y, z, 70.0/num_times, eq);
             //solver::rk4<dispersion::ion_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
             //solver::rk4<dispersion::simple<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
             solve.init(kx);

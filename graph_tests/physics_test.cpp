@@ -76,20 +76,27 @@ void test_constant() {
 ///
 ///  The wave number varies with time.
 ///
-///  k(t) = -⍵pe'(x)/⍵*t + k0                                                  (3)
+///  k(t) = -⍵pe'(x)/(2⍵)*t + k0                                               (3)
 ///
 ///  Where ⍵pe is the plasma frequency.
 ///
-///  ⍵pe = sqrt(q^2*n(x))/(ϵ0*m)                                               (4)
+///  ⍵pe2 = q^2*n(x))/(ϵ0*m)                                                   (4)
 ///
-///  For a linear gradient in the density ⍵pe'(x) is a constant. k0 must be a
-///  solution of the dispersion relation.
+///  For a linear gradient in the density ⍵pe2'(x) is a constant.
 ///
-///  k0 = sqrt(3/2(⍵^2 - ⍵pe^2)/vth^2)                                         (5)
+///  ⍵pe2' = ne0*q^2*0.1/(ϵ0*m)                                                (5)
 ///
-///  Putting equation 3 into 1 yields a parabolic ray.
+///  k0 must be a solution of the dispersion relation.
 ///
-///  x(t) = -3/2*vth^2/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth^2/⍵*k0*t + x0                 (6)
+///  k0 = sqrt(3/2(⍵^2 - ⍵pe^2)/vth^2)                                         (6)
+///
+///  Putting equation 3 into 1 yields the group velocity as a function of time.
+///
+///  vg(t) = -3/2*vth^2/⍵*⍵pe'(x)/(2⍵)*t + 3/2*vth^2/⍵*k0                      (7)
+///
+///  This expression can be integrated to find a parabolic ray trajectory.
+///
+///  x(t) = -3/8*vth^2/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth^2/⍵*k0*t + x0                 (8)
 ///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
@@ -116,10 +123,11 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
     const typename BACKEND::base ne0 = 1.0E19;
     const typename BACKEND::base te = 1000.0;
     
-    const typename BACKEND::base omegap = std::sqrt((ne0*0.9*q*q)/(epsilon0*me*c*c));
-    const typename BACKEND::base vth = std::sqrt(2*1.602176634E-19*te/me)/c;
+    const typename BACKEND::base omega2 = (ne0*0.9*q*q)/(epsilon0*me*c*c);
+    const typename BACKEND::base omega2p = (ne0*0.1*q*q)/(epsilon0*me*c*c);
+    const typename BACKEND::base vth2 = 2*1.602176634E-19*te/(me*c*c);
     
-    const typename BACKEND::base k0 = std::sqrt(2.0/3.0*(omega0*omega0 - omegap*omegap)/(vth*vth));
+    const typename BACKEND::base k0 = std::sqrt(2.0/3.0*(omega0*omega0 - omega2)/vth2);
     
 //  Omega must be greater than plasma frequency for the wave to propagate.
     omega->set(backend::base_cast<BACKEND> (600.0));
@@ -130,23 +138,25 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
     y->set(backend::base_cast<BACKEND> (0.0));
     z->set(backend::base_cast<BACKEND> (0.0));
 
+    const typename BACKEND::base dt = 0.1;
+    
     auto eq = equilibrium::make_slab_density<BACKEND> ();
-    solver::rk4<dispersion::bohm_gross<BACKEND>> solve(omega, kx, ky, kz, x, y, z, 0.0001, eq);
+    solver::rk4<dispersion::bohm_gross<BACKEND>> solve(omega, kx, ky, kz, x, y, z, dt, eq);
     solve.init(kx, tolarance);
     
     const auto diff = kx->evaluate().at(0) - k0;
-    assert(std::abs(diff*diff) < 2.0E-24 &&
+    assert(std::abs(diff*diff) < 3.0E-25 &&
            "Failed to reach expected k0.");
     
     for (size_t i = 0; i < 20; i++) {
         solve.step();
     }
-    const typename BACKEND::base t = 20.0*0.0001;
-    const typename BACKEND::base expected_x = -3.0/2.0*vth*vth*omegap/(omega0*omega0)*t*t
-                                            + 3.0/2.0*vth*vth/omega0*k0*t - 1.0;
+    const typename BACKEND::base t = 20.0*dt;
+    const typename BACKEND::base expected_x = -3.0/8.0*vth2*omega2p/(omega0*omega0)*t*t
+                                            + 3.0/2.0*vth2/omega0*k0*t - 1.0;
     
     const auto diff_x = x->evaluate().at(0) - expected_x;
-    assert(std::abs(diff_x*diff_x) < 3.0E-19 &&
+    assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
            "Failed to reach expected x.");
 }
 

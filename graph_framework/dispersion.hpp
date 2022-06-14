@@ -454,7 +454,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Disperison relation or the O mode.
 ///
-///  D = (kx^2 + ky^2 + kz^2)*c^2/⍵^2 + ⍵pe^2 - ⍵^2
+///  D = (kx^2 + ky^2 + kz^2)*c^2 + ⍵pe^2 - ⍵^2
 ///
 ///  @param[in] w  Omega variable.
 ///  @param[in] kx Kx variable.
