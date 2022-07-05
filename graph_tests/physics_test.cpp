@@ -395,12 +395,16 @@ void test_o_mode_wave() {
 //------------------------------------------------------------------------------
 ///  @brief Cold Plasma Dispersion Relation Right Cutoff Frequency.
 ///
-///  Above the right cut off frequncy, there are two branches on the dispersion
-///  relation. The O-Mode branch can propagate past the right cuttoff and the upper
-///  hybrid resonance but is cut off at the Plasma frequency.
+///  There are two branches on the dispersion relation. The O-Mode branch can
+///  propagate past the right cuttoff and the upper hybrid resonance but is cut
+///  off at the Plasma frequency. The x-mode is cut off by the right cutoff for
+///  frequencies above and trapped between the left and cutoff and the upper
+///  hybird resonance.
+///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename BACKEND>
-void test_reflection(const typename BACKEND::base tolarance) {
+void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
     const typename BACKEND::base q = 1.602176634E-19;
     const typename BACKEND::base me = 9.1093837015E-31;
     const typename BACKEND::base mu0 = M_PI*4.0E-7;
@@ -414,28 +418,87 @@ void test_reflection(const typename BACKEND::base tolarance) {
     
     const typename BACKEND::base wpe = std::sqrt(ne0*q*q/(epsilon0*me*c*c));
     const typename BACKEND::base wh = wpe + wce;
-    const typename BACKEND::base wr = 0.5*(wce + std::sqrt(wce*wce + 4*wpe*wpe));
+    const typename BACKEND::base wr = 0.5*(wce + std::sqrt(wce*wce + 4.0*wpe*wpe));
     
     const typename BACKEND::base omega0 = 1100.0;
 
-    auto w = graph::variable<BACKEND> (1, omega0, "\\omega");
-    auto kx = graph::variable<BACKEND> (1, 0.0, "k_{x}");
-    auto ky = graph::variable<BACKEND> (1, 0.0, "k_{y}");
-    auto kz = graph::variable<BACKEND> (1, 0.0, "k_{z}");
-    auto x = graph::variable<BACKEND> (1, 0.0, "x");
-    auto y = graph::variable<BACKEND> (1, 0.0, "y");
-    auto z = graph::variable<BACKEND> (1, 0.0, "z");
+    auto w = graph::variable<BACKEND> (2, omega0, "\\omega");
+    auto kx = graph::variable<BACKEND> (2, 0.0, "k_{x}");
+    auto ky = graph::variable<BACKEND> (2, 0.0, "k_{y}");
+    auto kz = graph::variable<BACKEND> (2, 0.0, "k_{z}");
+    auto x = graph::variable<BACKEND> (2, 0.0, "x");
+    auto y = graph::variable<BACKEND> (2, 0.0, "y");
+    auto z = graph::variable<BACKEND> (2, 0.0, "z");
+    
+    const typename BACKEND::base dt = 0.1;
     
     auto eq = equilibrium::make_slab_density<BACKEND> ();
-    solver::rk4<dispersion::cold_plasma<BACKEND>> solve(w, kx, ky, kz, x, y, z, 0.001, eq);
+    solver::rk4<dispersion::cold_plasma<BACKEND>> solve(w, kx, ky, kz, x, y, z, dt, eq);
 
-//  Solve for plasma cut off.
-    x->set(x->set(backend::base_cast<BACKEND> (25.0)));
+//  Solve for plasma frequency and right cutoff..
+    x->set(0, backend::base_cast<BACKEND> (25.0));
+    x->set(1, backend::base_cast<BACKEND> (5.0));
     solve.init(x);
     
-    const typename BACKEND::base wpecut = x->evaluate(0);
+    typename BACKEND::base wpecut_pos = x->evaluate().at(0);
+    const typename BACKEND::base wrcut_pos = x->evaluate().at(1);
+    
+//  Set wave back to zero.
+    x->set(0, backend::base_cast<BACKEND> (0.0));
+    x->set(1, backend::base_cast<BACKEND> (0.0));
+    
+//  Solve for X-Mode and O-Mode wave numbers.
+    kx->set(0, backend::base_cast<BACKEND> (1000.0)); // O-Mode
+    kx->set(1, backend::base_cast<BACKEND> (500.0));  // X-Mode
+    solve.init(kx);
+    
+    typename BACKEND::base t = 0.0;
+    while (std::abs(t) < 30.0) {
+        solve.step();
+        t += dt;
+    }
+    
+    BACKEND result = x->evaluate();
+    assert(std::real(result.at(0)) > std::real(wrcut_pos) &&
+           std::real(result.at(0)) < std::real(wpecut_pos) &&
+           "Expected O-Mode to cross right cuttoff but not plasma cutoff.");
+    assert(std::real(result.at(1)) < std::real(wrcut_pos) &&
+           "Expected X-Mode to stay above right cuttoff.");
 
-//  Solve for right cutoff.
+//  Setup problem for trapped modes.
+    w->set(0, backend::base_cast<BACKEND> (800.0));
+    w->set(1, backend::base_cast<BACKEND> (800.0));
+    
+//  Solve for plasma frequency and left cutoff..
+    x->set(0, backend::base_cast<BACKEND> (25.0));
+    x->set(1, backend::base_cast<BACKEND> (5.0));
+    kx->set(0, backend::base_cast<BACKEND> (0.0)); // O-Mode
+    kx->set(1, backend::base_cast<BACKEND> (0.0));  // X-Mode
+    solve.init(x);
+
+    const typename BACKEND::base wlcut_pos = x->evaluate().at(0);
+    wpecut_pos = x->evaluate().at(1);
+    
+//  Set wave back to zero.
+    x->set(0, backend::base_cast<BACKEND> (0.0));
+    x->set(1, backend::base_cast<BACKEND> (0.0));
+    
+//  Solve for X-Mode and O-Mode wave numbers.
+    kx->set(0, backend::base_cast<BACKEND> (500.0)); // O-Mode
+    kx->set(1, backend::base_cast<BACKEND> (1500.0));  // X-Mode
+    solve.init(kx);
+
+    t = 0.0;
+    while (std::abs(t) < 60.0) {
+        solve.step();
+        t += dt;
+    }
+    
+    result = x->evaluate();
+    assert(std::real(result.at(0)) < std::real(wpecut_pos) &&
+           "Expected O-Mode to stay above plasma cuttoff.");
+    assert(std::real(result.at(1)) > std::real(wpecut_pos) &&
+           "Expected X-Mode to cross plasma cutoff.");
 }
 
 //------------------------------------------------------------------------------
@@ -506,6 +569,7 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
     test_acoustic_wave<BACKEND> (tolarance);
     test_o_mode_wave<BACKEND> ();
     test_reflection<BACKEND> (tolarance, 0.7, 0.1, 22.0);
+    test_cold_plasma_cutoffs<BACKEND> (tolarance);
 }
 
 //------------------------------------------------------------------------------
