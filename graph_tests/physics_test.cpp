@@ -472,8 +472,8 @@ void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
 //  Solve for plasma frequency and left cutoff..
     x->set(0, backend::base_cast<BACKEND> (25.0));
     x->set(1, backend::base_cast<BACKEND> (5.0));
-    kx->set(0, backend::base_cast<BACKEND> (0.0)); // O-Mode
-    kx->set(1, backend::base_cast<BACKEND> (0.0));  // X-Mode
+    kx->set(0, backend::base_cast<BACKEND> (0.0));
+    kx->set(1, backend::base_cast<BACKEND> (0.0));
     solve.init(x);
 
     const typename BACKEND::base wlcut_pos = x->evaluate().at(0);
@@ -484,8 +484,8 @@ void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
     x->set(1, backend::base_cast<BACKEND> (0.0));
     
 //  Solve for X-Mode and O-Mode wave numbers.
-    kx->set(0, backend::base_cast<BACKEND> (500.0)); // O-Mode
-    kx->set(1, backend::base_cast<BACKEND> (1500.0));  // X-Mode
+    kx->set(0, backend::base_cast<BACKEND> (500.0));  // O-Mode
+    kx->set(1, backend::base_cast<BACKEND> (1500.0)); // X-Mode
     solve.init(kx);
 
     t = 0.0;
