@@ -98,6 +98,8 @@ void test_constant() {
 ///
 ///  x(t) = -3/8*vth^2/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth^2/⍵*k0*t + x0                 (8)
 ///
+///  B = 0 or k || B
+///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename BACKEND>
@@ -140,7 +142,7 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
 
     const typename BACKEND::base dt = 0.1;
     
-    auto eq = equilibrium::make_slab_density<BACKEND> ();
+    auto eq = equilibrium::make_no_magnetic_field<BACKEND> ();
     solver::rk4<dispersion::bohm_gross<BACKEND>> solve(omega, kx, ky, kz, x, y, z, dt, eq);
     solve.init(kx, tolarance);
     
@@ -161,7 +163,100 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
 }
 
 //------------------------------------------------------------------------------
-///  @brief Ion wave Test
+///  @brief Light wave Test
+///
+///  In the bohm-gross dispersion relation, the group velocity should be.
+///
+///  vg = c^2*k/⍵                                                              (1)
+///
+///  Where c is the speed of light. The wave number varies with time.
+///
+///  k(t) = -⍵pe'(x)/(2⍵)*t + k0                                               (3)
+///
+///  Where ⍵pe is the plasma frequency.
+///
+///  ⍵pe2 = q^2*n(x))/(ϵ0*m)                                                   (4)
+///
+///  For a linear gradient in the density ⍵pe2'(x) is a constant.
+///
+///  ⍵pe2' = ne0*q^2*0.1/(ϵ0*m)                                                (5)
+///
+///  k0 must be a solution of the dispersion relation.
+///
+///  k0 = sqrt((⍵^2 - ⍵pe^2)/c^2)                                              (6)
+///
+///  Putting equation 3 into 1 yields the group velocity as a function of time.
+///
+///  vg(t) = -c^2/⍵*⍵pe'(x)/(2⍵)*t + c^2/⍵*k0                                  (7)
+///
+///  This expression can be integrated to find a parabolic ray trajectory.
+///
+///  x(t) = -1/4*c^2/⍵*⍵pe'(x)/⍵*t^2 + c^2/⍵*k0*t + x0                         (8)
+///
+///  B = 0
+///
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_light_wave(const typename BACKEND::base tolarance) {
+    std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+    std::uniform_real_distribution<double> real_dist(0.1, 1.0);
+
+    auto omega = graph::variable<BACKEND> (1, "\\omega");
+    auto kx = graph::variable<BACKEND> (1, "k_{x}");
+    auto ky = graph::variable<BACKEND> (1, "k_{y}");
+    auto kz = graph::variable<BACKEND> (1, "k_{z}");
+    auto x = graph::variable<BACKEND> (1, "x");
+    auto y = graph::variable<BACKEND> (1, "y");
+    auto z = graph::variable<BACKEND> (1, "z");
+
+//  Constants
+    const typename BACKEND::base q = 1.602176634E-19;
+    const typename BACKEND::base me = 9.1093837015E-31;
+    const typename BACKEND::base mu0 = M_PI*4.0E-7;
+    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
+    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
+    const typename BACKEND::base omega0 = 600.0;
+    const typename BACKEND::base ne0 = 1.0E19;
+    
+    const typename BACKEND::base omega2 = (ne0*0.9*q*q)/(epsilon0*me*c*c);
+    const typename BACKEND::base omega2p = (ne0*0.1*q*q)/(epsilon0*me*c*c);
+    
+    const typename BACKEND::base k0 = std::sqrt(omega0*omega0 - omega2);
+    
+//  Omega must be greater than plasma frequency for the wave to propagate.
+    omega->set(backend::base_cast<BACKEND> (600.0));
+    kx->set(backend::base_cast<BACKEND> (100.0));
+    ky->set(backend::base_cast<BACKEND> (0.0));
+    kz->set(backend::base_cast<BACKEND> (0.0));
+    x->set(backend::base_cast<BACKEND> (-1.0));
+    y->set(backend::base_cast<BACKEND> (0.0));
+    z->set(backend::base_cast<BACKEND> (0.0));
+
+    const typename BACKEND::base dt = 0.1;
+    
+    auto eq = equilibrium::make_no_magnetic_field<BACKEND> ();
+    solver::rk4<dispersion::light_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, dt, eq);
+    solve.init(kx, tolarance);
+    
+    const auto diff = kx->evaluate().at(0) - k0;
+    assert(std::abs(diff*diff) < 3.0E-25 &&
+           "Failed to reach expected k0.");
+    
+    for (size_t i = 0; i < 20; i++) {
+        solve.step();
+    }
+    const typename BACKEND::base t = 20.0*dt;
+    const typename BACKEND::base expected_x = -omega2p/(4.0*omega0*omega0)*t*t
+                                            + k0/omega0*t - 1.0;
+    
+    const auto diff_x = x->evaluate().at(0) - expected_x;
+    assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
+           "Failed to reach expected x.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Ion acoustic wave Test
 ///
 ///  In the ion-wave dispersion relation, the group velocity should be.
 ///
@@ -182,7 +277,7 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename BACKEND>
-void test_ion_wave(const typename BACKEND::base tolarance) {
+void test_acoustic_wave(const typename BACKEND::base tolarance) {
     std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     std::uniform_real_distribution<double> real_dist(0.1, 1.0);
 
@@ -218,8 +313,8 @@ void test_ion_wave(const typename BACKEND::base tolarance) {
     y->set(backend::base_cast<BACKEND> (0.0));
     z->set(backend::base_cast<BACKEND> (0.0));
 
-    auto eq = equilibrium::make_slab_density<BACKEND> ();
-    solver::rk4<dispersion::ion_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, 0.0001, eq);
+    auto eq = equilibrium::make_no_magnetic_field<BACKEND> ();
+    solver::rk4<dispersion::acoustic_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, 0.0001, eq);
     solve.init(kx, tolarance);
     
     const auto diff = kx->evaluate().at(0) - k0;
@@ -234,6 +329,113 @@ void test_ion_wave(const typename BACKEND::base tolarance) {
     const auto diff_x = x->evaluate().at(0)/t - vs;
     assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
            "Ray progated at different speed.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief O Mode Test.
+///
+///  For a linear density gradient, the O-Mode cut off should be located at
+///
+///  1 - ⍵pe^2(x)/⍵^2 = 0                                                      (1)
+///
+///  ⍵^2 - 1 = ⍵pe^2                                                           (2)
+///
+///  The plasma frequency is defined as
+///
+///  ⍵pe^2 = ne0*q^2/(ϵ0*m)*(0.1*x + 1)                                        (3)
+///
+///  Putting equation 3 into 2 yields
+///
+///  ⍵^2 - 1 = ne0*q^2/(ϵ0*m)*(0.1*x + 1)                                      (4)
+///
+///  Solving for x
+///
+///  (⍵^2 - 1 - ne0*q^2/(ϵ0*m))/(ne0*q^2/(ϵ0*m)*0.1) = x                       (5)
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_o_mode_wave() {
+    auto omega = graph::variable<BACKEND> (1, "\\omega");
+    auto kx = graph::variable<BACKEND> (1, "k_{x}");
+    auto ky = graph::variable<BACKEND> (1, "k_{y}");
+    auto kz = graph::variable<BACKEND> (1, "k_{z}");
+    auto x = graph::variable<BACKEND> (1, "x");
+    auto y = graph::variable<BACKEND> (1, "y");
+    auto z = graph::variable<BACKEND> (1, "z");
+    
+    auto eq = equilibrium::make_slab_density<BACKEND> ();
+    solver::rk4<dispersion::ordinary_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, 0.0001, eq);
+    
+    const typename BACKEND::base q = 1.602176634E-19;
+    const typename BACKEND::base me = 9.1093837015E-31;
+    const typename BACKEND::base mu0 = M_PI*4.0E-7;
+    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
+    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
+    const typename BACKEND::base ne0 = 1.0E19;
+    const typename BACKEND::base omega2 = (ne0*q*q)/(epsilon0*me*c*c);
+    const typename BACKEND::base omega0 = 1000.0;
+    
+    const typename BACKEND::base x_cut = (omega0*omega0 - 1.0 - omega2)/(omega2*0.1);
+    
+//  Omega must be greater than plasma frequency for the wave to propagate.
+    omega->set(backend::base_cast<BACKEND> (omega0));
+    kx->set(backend::base_cast<BACKEND> (0.0));
+    ky->set(backend::base_cast<BACKEND> (0.0));
+    kz->set(backend::base_cast<BACKEND> (0.0));
+    x->set(backend::base_cast<BACKEND> (0.0));
+    y->set(backend::base_cast<BACKEND> (0.0));
+    z->set(backend::base_cast<BACKEND> (0.0));
+    
+    solve.init(x);
+    
+    const auto diff = x->evaluate().at(0) - x_cut;
+    assert(std::abs(diff*diff) < 8.0E-10 &&
+           "Failed to reach expected tolarance.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Cold Plasma Dispersion Relation Right Cutoff Frequency.
+///
+///  Above the right cut off frequncy, there are two branches on the dispersion
+///  relation. The O-Mode branch can propagate past the right cuttoff and the upper
+///  hybrid resonance but is cut off at the Plasma frequency.
+//------------------------------------------------------------------------------
+template<typename BACKEND>
+void test_reflection(const typename BACKEND::base tolarance) {
+    const typename BACKEND::base q = 1.602176634E-19;
+    const typename BACKEND::base me = 9.1093837015E-31;
+    const typename BACKEND::base mu0 = M_PI*4.0E-7;
+    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
+    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
+    const typename BACKEND::base OmegaCE = -q/(me*c);
+    
+    const typename BACKEND::base ne0 = 1.0E19;
+    
+    const typename BACKEND::base wce = -q/(me*c);
+    
+    const typename BACKEND::base wpe = std::sqrt(ne0*q*q/(epsilon0*me*c*c));
+    const typename BACKEND::base wh = wpe + wce;
+    const typename BACKEND::base wr = 0.5*(wce + std::sqrt(wce*wce + 4*wpe*wpe));
+    
+    const typename BACKEND::base omega0 = 1100.0;
+
+    auto w = graph::variable<BACKEND> (1, omega0, "\\omega");
+    auto kx = graph::variable<BACKEND> (1, 0.0, "k_{x}");
+    auto ky = graph::variable<BACKEND> (1, 0.0, "k_{y}");
+    auto kz = graph::variable<BACKEND> (1, 0.0, "k_{z}");
+    auto x = graph::variable<BACKEND> (1, 0.0, "x");
+    auto y = graph::variable<BACKEND> (1, 0.0, "y");
+    auto z = graph::variable<BACKEND> (1, 0.0, "z");
+    
+    auto eq = equilibrium::make_slab_density<BACKEND> ();
+    solver::rk4<dispersion::cold_plasma<BACKEND>> solve(w, kx, ky, kz, x, y, z, 0.001, eq);
+
+//  Solve for plasma cut off.
+    x->set(x->set(backend::base_cast<BACKEND> (25.0)));
+    solve.init(x);
+    
+    const typename BACKEND::base wpecut = x->evaluate(0);
+
+//  Solve for right cutoff.
 }
 
 //------------------------------------------------------------------------------
@@ -300,7 +502,9 @@ void test_reflection(const typename BACKEND::base tolarance,
 template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
     test_constant<BACKEND> ();
     test_bohm_gross<BACKEND> (tolarance);
-    test_ion_wave<BACKEND> (tolarance);
+    test_light_wave<BACKEND> (tolarance);
+    test_acoustic_wave<BACKEND> (tolarance);
+    test_o_mode_wave<BACKEND> ();
     test_reflection<BACKEND> (tolarance, 0.7, 0.1, 22.0);
 }
 

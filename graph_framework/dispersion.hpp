@@ -354,10 +354,79 @@ namespace dispersion {
 //  2*1.602176634E-19 to convert eV to J.
             auto temp = graph::constant<BACKEND> (2.602176634E-19)*te;
             auto vterm2 = graph::constant<BACKEND> (2*1.602176634E-19)*te/(me*c*c);
+
+//  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
+//  B should be zero.
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto k = graph::vector(kx, ky, kz);
+            graph::shared_leaf<BACKEND> kpara2;
+            auto zero = graph::constant<BACKEND> (0.0);
+            if (b_vec->length()->is_match(zero)) {
+                kpara2 = k->dot(k);
+            } else {
+                auto b_hat = b_vec->unit();
+                auto kpara = b_hat->dot(k);
+                kpara2 = kpara*kpara;
+            }
             
             return wpe2 +
-                   graph::constant<BACKEND> (3.0/2.0)*(kx*kx + ky*ky + kz*kz)*vterm2 -
+                   graph::constant<BACKEND> (3.0/2.0)*kpara2*vterm2 -
                    w*w;
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Light Wave dispersion function.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class light_wave final : public dispersion_function<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Bohm-Gross function.
+///
+///  D = ⍵_p^2 + 3/2(kx^2 + ky^2 + kz^2)c^2 - ⍵^2                              (1)
+///
+///  B = 0.
+///
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
+//  Constants
+            auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
+            auto mu0 = graph::constant<BACKEND> (M_PI*4.0E-7);
+            auto c = graph::constant<BACKEND> (1)/graph::sqrt(epsion0*mu0);
+
+//  Equilibrium quantities.
+            auto me = graph::constant<BACKEND> (9.1093837015E-31);
+            auto q = graph::constant<BACKEND> (1.602176634E-19);
+
+            auto ne = eq->get_electron_density(x, y, z);
+            auto wpe2 = build_plasma_fequency(ne, q, me, c, epsion0);
+
+//  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
+//  B should be zero.
+            auto zero = graph::constant<BACKEND> (0.0);
+            assert(eq->get_magnetic_field(x, y, z)->length()->is_match(zero) &&
+                   "Expected equilibrium with no magnetic field.");
+                   
+            auto k = graph::vector(kx, ky, kz);
+            auto k2 = k->dot(k);
+            
+            return wpe2 + k2 - w*w;
         }
     };
 
@@ -365,10 +434,10 @@ namespace dispersion {
 ///  @brief Ion wave dispersion function.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    class ion_wave final : public dispersion_function<BACKEND> {
+    class acoustic_wave final : public dispersion_function<BACKEND> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Ion wave function.
+///  @brief Ion acoustic wave function.
 ///
 ///  D = (kx^2 + ky^2 + kz^2)vs^2 - ⍵^2                                        (1)
 ///
@@ -404,8 +473,22 @@ namespace dispersion {
             auto ti = eq->get_ion_temperature(0, x, y, z);
             auto gamma = graph::constant<BACKEND> (3.0);
             auto vs2 = (q*te + gamma*q*ti)/(mi*c*c);
+
+//  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
+//  B should be zero.
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto k = graph::vector(kx, ky, kz);
+            graph::shared_leaf<BACKEND> kpara2;
+            auto zero = graph::constant<BACKEND> (0.0);
+            if (b_vec->length()->is_match(zero)) {
+                kpara2 = k->dot(k);
+            } else {
+                auto b_hat = b_vec->unit();
+                auto kpara = b_hat->dot(k);
+                kpara2 = kpara*kpara;
+            }
             
-            return (kx*kx + ky*ky + kz*kz)*vs2 - w*w;
+            return kpara2*vs2 - w*w;
         }
     };
 
@@ -446,15 +529,19 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Ordinary wave dispersion function.
+///  @brief Electrostatic ion cyclotron wave dispersion function.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    class ordinary_wave final : public dispersion_function<BACKEND> {
+    class ion_cyclotron final : public dispersion_function<BACKEND> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Disperison relation or the O mode.
+///  @brief Disperison relation for the O mode.
 ///
-///  D = (kx^2 + ky^2 + kz^2)*c^2 + ⍵pe^2 - ⍵^2
+///  D = ⍵ce^2 + k^2*vs^2 - ⍵^2                                                (1)
+///
+///  ⍵ce is the electron cyclotron frequency and vs
+///
+///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                            (2)
 ///
 ///  @param[in] w  Omega variable.
 ///  @param[in] kx Kx variable.
@@ -477,15 +564,88 @@ namespace dispersion {
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
             auto mu0 = graph::constant<BACKEND> (M_PI*4.0E-7);
             auto c = graph::constant<BACKEND> (1.0)/graph::sqrt(epsion0*mu0);
+            auto one = graph::constant<BACKEND> (1);
+            auto none = graph::constant<BACKEND> (-1);
+                        
+//  Equilibrium quantities.
+            auto me = graph::constant<BACKEND> (eq->get_electron_mass(0));
+            auto mi = graph::constant<BACKEND> (eq->get_ion_mass(0));
+            auto q = graph::constant<BACKEND> (1.602176634E-19);
 
+            auto te = eq->get_electron_temperature(x, y, z);
+            auto ti = eq->get_ion_temperature(0, x, y, z);
+            auto gamma = graph::constant<BACKEND> (3.0);
+            auto vs2 = (q*te + gamma*q*ti)/(mi*c*c);
+            
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto wce = build_cyclotron_fequency(none*q, b_vec->length(), me, c);
+
+//  Wave numbers.
+            auto k = graph::vector(kx, ky, kz);
+            auto b_hat = b_vec->unit();
+            auto kperp = b_hat->cross(k)->length();
+            auto kperp2 = kperp*kperp;
+
+            auto w2 = w*w;
+                        
+            return wce - kperp2*vs2 - w*w;
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Ordinary wave dispersion function.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class ordinary_wave final : public dispersion_function<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Disperison relation for the O mode.
+///
+///  D = 1 - ⍵pe^2/⍵^2 - c^2/⍵^2*(kx^2 + ky^2 + kz^2)                          (1)
+///
+///  ⍵pe is the plasma frequency.
+///
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
+//  Constants
+            auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
+            auto mu0 = graph::constant<BACKEND> (M_PI*4.0E-7);
+            auto c = graph::constant<BACKEND> (1.0)/graph::sqrt(epsion0*mu0);
+            auto one = graph::constant<BACKEND> (1);
+            auto none = graph::constant<BACKEND> (-1);
+                        
 //  Equilibrium quantities.
             auto me = graph::constant<BACKEND> (9.1093837015E-31);
             auto q = graph::constant<BACKEND> (1.602176634E-19);
 
             auto ne = eq->get_electron_density(x, y, z);
             auto wpe2 = build_plasma_fequency(ne, q, me, c, epsion0);
-            
-            return (kx*kx + ky*ky + kz*kz) + wpe2 - w*w;
+
+//  Wave numbers.
+            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto b_hat = b_vec->unit();
+            auto nperp = b_hat->cross(n)->length();
+            auto nperp2 = nperp*nperp;
+
+            auto w2 = w*w;
+                        
+            return one - wpe2/w2 - nperp2;
         }
     };
 
@@ -542,11 +702,17 @@ namespace dispersion {
             auto b_len = b_vec->length();
             auto wec = build_cyclotron_fequency(none*q, b_len, me, c);
             
+//  Wave numbers.
+            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto b_hat = b_vec->unit();
+            auto nperp = b_hat->cross(n)->length();
+            auto nperp2 = nperp*nperp;
+        
             auto wh = wpe2 + wec*wec;
             
             auto w2 = w*w;
             
-            return one - wpe2/(w2)*(w2 - wpe2)/(w2 - wh) - (kx*kx + ky*ky + kz*kz)/w2;
+            return one - wpe2/(w2)*(w2 - wpe2)/(w2 - wh) - nperp;
         }
     };
 

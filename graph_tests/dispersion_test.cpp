@@ -23,7 +23,8 @@
 template<typename DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,
                 const typename DISPERSION::base omega,
-                const typename DISPERSION::base k_guess) {
+                const typename DISPERSION::base k_guess,
+                equilibrium::unique_equilibrium<typename DISPERSION::backend> &eq) {
     auto w = graph::variable<typename DISPERSION::backend> (1, omega, "\\omega");
     auto kx = graph::variable<typename DISPERSION::backend> (1, 0.25, "k_{x}");
     auto ky = graph::variable<typename DISPERSION::backend> (1, 0.25, "k_{y}");
@@ -31,8 +32,6 @@ void test_solve(const typename DISPERSION::base tolarance,
     auto x = graph::variable<typename DISPERSION::backend> (1, 0.0, "x");
     auto y = graph::variable<typename DISPERSION::backend> (1, 0.0, "y");
     auto z = graph::variable<typename DISPERSION::backend> (1, 0.0, "z");
-
-    auto eq = equilibrium::make_guassian_density<typename DISPERSION::backend> ();
 
     dispersion::dispersion_interface<DISPERSION> D(w, kx, ky, kz, x, y, z, eq);
 
@@ -68,10 +67,13 @@ void test_solve(const typename DISPERSION::base tolarance,
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
-    test_solve<dispersion::simple<BACKEND>> (tolarance, 0.5, 1.0);
-    test_solve<dispersion::ion_wave<BACKEND>> (tolarance, 1.0, 600.0);
-    test_solve<dispersion::guassian_well<BACKEND>> (tolarance, 0.5, 1.0);
-    test_solve<dispersion::cold_plasma<BACKEND>> (tolarance, 900.0, 1000.0);
+    auto eq_den = equilibrium::make_guassian_density<BACKEND> ();
+    auto eq_no = equilibrium::make_no_magnetic_field<BACKEND> ();
+    
+    test_solve<dispersion::simple<BACKEND>> (tolarance, 0.5, 1.0, eq_den);
+    test_solve<dispersion::acoustic_wave<BACKEND>> (tolarance, 1.0, 600.0, eq_no);
+    test_solve<dispersion::guassian_well<BACKEND>> (tolarance, 0.5, 1.0, eq_den);
+    test_solve<dispersion::cold_plasma<BACKEND>> (tolarance, 900.0, 1000.0, eq_den);
 }
 
 //------------------------------------------------------------------------------

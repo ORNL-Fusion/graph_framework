@@ -66,7 +66,10 @@ int main(int argc, const char * argv[]) {
                 //omega->set(j, 1000.0*real_dist(engine));
                 //omega->set(j, OmegaCE);
                 //omega->set(j, real_dist(engine));
-                omega->set(j, 600.0);
+                //omega->set(j, 600.0);
+                //omega->set(j, 1000.0);
+                //omega->set(j, 1100.0);
+                omega->set(j, 800.0);
                 //omega->set(j, 1.0);
             }
 
@@ -134,12 +137,24 @@ int main(int argc, const char * argv[]) {
             //ky->set(backend::base_cast<cpu> (0.0));
             //kz->set(backend::base_cast<cpu> (0.0));
 
-            x->set(backend::base_cast<cpu> (0.0));
-            //x->set(backend::base_cast<cpu> (-0.0));
+            //x->set(backend::base_cast<cpu> (10.0));
+            //x->set(backend::base_cast<cpu> (-10.0));
+            //x->set(backend::base_cast<cpu> (-35.0));
+            //y->set(backend::base_cast<cpu> (0.0));
+            //z->set(backend::base_cast<cpu> (0.0));
+            //kx->set(backend::base_cast<cpu> (-600.0));
+            //kx->set(backend::base_cast<cpu> (600.0));
+            //ky->set(backend::base_cast<cpu> (0.0));
+            //kz->set(backend::base_cast<cpu> (0.0));
+
+            //x->set(backend::base_cast<cpu> (0.0));
+            x->set(backend::base_cast<cpu> (10.0));
             y->set(backend::base_cast<cpu> (0.0));
             z->set(backend::base_cast<cpu> (0.0));
-            kx->set(backend::base_cast<cpu> (600.0));
-            //kx->set(backend::base_cast<cpu> (-600.0));
+            //kx->set(backend::base_cast<cpu> (600.0));
+            //kx->set(backend::base_cast<cpu> (1000.0));
+            //kx->set(backend::base_cast<cpu> (500.0));
+            kx->set(backend::base_cast<cpu> (1500.0));
             ky->set(backend::base_cast<cpu> (0.0));
             kz->set(backend::base_cast<cpu> (0.0));
             
@@ -147,13 +162,15 @@ int main(int argc, const char * argv[]) {
             //auto eq = equilibrium::make_slab<cpu> ();
             auto eq = equilibrium::make_slab_density<cpu> ();
 
-            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
-            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
-            //solver::rk4<dispersion::ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
-            //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 500.0/num_times, eq);
+            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 60.0/num_times, eq);
+            solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 200.0/num_times, eq);
+            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 70.0/num_times, eq);
+            //solver::rk4<dispersion::ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 100.0/num_times, eq);
+            //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 300.0/num_times, eq);
+            //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 80.0/num_times, eq);
             //solver::rk4<dispersion::guassian_well<cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
-            solver::rk4<dispersion::bohm_gross<cpu>> solve(omega, kx, ky, kz, x, y, z, 70.0/num_times, eq);
-            //solver::rk4<dispersion::ion_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            //solver::rk4<dispersion::bohm_gross<cpu>> solve(omega, kx, ky, kz, x, y, z, 70.0/num_times, eq);
+            //solver::rk4<dispersion::acoustic_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
             //solver::rk4<dispersion::simple<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
             solve.init(kx);
             if (thread_number == 0) {
