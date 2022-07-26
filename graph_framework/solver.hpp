@@ -220,6 +220,48 @@ namespace solver {
             D.print_dispersion();
         }
 
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the dkxdt.
+//------------------------------------------------------------------------------
+        void print_dkxdt() {
+            D.print_dkxdt();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the dkydt.
+//------------------------------------------------------------------------------
+        void print_dkydt() {
+            D.print_dkydt();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the dkzdt.
+//------------------------------------------------------------------------------
+        void print_dkzdt() {
+            D.print_dkzdt();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the dxdt.
+//------------------------------------------------------------------------------
+        void print_dxdt() {
+            D.print_dxdt();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the dydt.
+//------------------------------------------------------------------------------
+        void print_dydt() {
+            D.print_dydt();
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the dzdt.
+//------------------------------------------------------------------------------
+        void print_dzdt() {
+            D.print_dzdt();
+        }
+        
 ///  Type def to retrieve the backend type.
         typedef typename DISPERSION_FUNCTION::backend backend;
 ///  Type def to retrieve the backend type.

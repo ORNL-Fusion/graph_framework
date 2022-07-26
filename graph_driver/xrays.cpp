@@ -16,12 +16,22 @@ void write_time(const std::string &name, const std::chrono::nanoseconds time);
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
 ///
+///  @param[in] t Current Time.
+//------------------------------------------------------------------------------
+template<typename base>
+static base solution(const base t) {
+    return std::exp(-t) - std::exp(-1000.0*t);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Main program of the driver.
+///
 ///  @param[in] argc Number of commandline arguments.
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    typedef std::complex<double> base;
-    //typedef double base;
+    //typedef std::complex<double> base;
+    typedef double base;
     //typedef float base;
     //typedef std::complex<float> base;
     typedef backend::cpu<base> cpu;
@@ -29,8 +39,8 @@ int main(int argc, const char * argv[]) {
     const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
     const size_t num_times = 10000;
-    //const size_t num_rays = 1;
-    const size_t num_rays = 10000;
+    const size_t num_rays = 1;
+    //const size_t num_rays = 10000;
     
     std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
                                                        static_cast<unsigned int> (num_rays)),
@@ -135,11 +145,11 @@ int main(int argc, const char * argv[]) {
             //x->set(backend::base_cast<cpu> (-35.0));
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (0.0));
-            kx->set(backend::base_cast<cpu> (base(0.0,1.0)));
-            //kx->set(backend::base_cast<cpu> (0.0));
+            //kx->set(backend::base_cast<cpu> (base(0.0,1.0)));
+            kx->set(backend::base_cast<cpu> (1.0));
 
-            //x->set(backend::base_cast<cpu> (0.0));
-            x->set(backend::base_cast<cpu> (10.0));
+            x->set(backend::base_cast<cpu> (0.0));
+            //x->set(backend::base_cast<cpu> (10.0));
             y->set(backend::base_cast<cpu> (0.0));
             z->set(backend::base_cast<cpu> (0.0));
             //kx->set(backend::base_cast<cpu> (600.0));
@@ -153,9 +163,10 @@ int main(int argc, const char * argv[]) {
             auto eq = equilibrium::make_slab<cpu> ();
             //auto eq = equilibrium::make_slab_density<cpu> ();
 
+            solver::rk4<dispersion::stiff<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 1.0/num_times, eq);
             //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
             //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 200.0/num_times, eq);
-            solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 70.0/num_times, eq);
+            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 70.0/num_times, eq);
             //solver::rk4<dispersion::ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 100.0/num_times, eq);
             //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 300.0/num_times, eq);
             //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 80.0/num_times, eq);
@@ -166,43 +177,66 @@ int main(int argc, const char * argv[]) {
             solve.init(kx);
             if (thread_number == 0) {
                 solve.print_dispersion();
+                std::cout << std::endl;
+                solve.print_dkxdt();
+                std::cout << std::endl;
+                solve.print_dkydt();
+                std::cout << std::endl;
+                solve.print_dkzdt();
+                std::cout << std::endl;
+                solve.print_dxdt();
+                std::cout << std::endl;
+                solve.print_dydt();
+                std::cout << std::endl;
+                solve.print_dzdt();
             }
                 
-            auto residule = solve.residule();
+            //auto residule = solve.residule();
 
             const size_t sample = int_dist(engine);
 
             if (thread_number == 0) {
-                std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
+                //std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
+                std::cout << "t = " << 0.0 << " ";
+                std::cout << solve.state.back().x.at(sample) << std::endl;
             }
 
             for (size_t j = 0; j < num_times; j++) {
-                if (thread_number == 0) {
-                    std::cout << "Time Step " << j << " Sample " << sample << " "
-                              << solve.state.back().t.at(sample) << " "
-                              << solve.state.back().x.at(sample) << " "
-                              << solve.state.back().y.at(sample) << " "
-                              << solve.state.back().z.at(sample) << " "
-                              << solve.state.back().kx.at(sample) << " "
-                              << solve.state.back().ky.at(sample) << " "
-                              << solve.state.back().kz.at(sample) << " "
-                              << residule->evaluate().at(sample)
-                              << std::endl;
-                }
+                //if (thread_number == 0) {
+                    //std::cout << "Time Step " << j << " Sample " << sample << " "
+                    //          << solve.state.back().t.at(sample) << " "
+                    //          << solve.state.back().x.at(sample) << " "
+                    //          << solve.state.back().y.at(sample) << " "
+                    //          << solve.state.back().z.at(sample) << " "
+                    //          << solve.state.back().kx.at(sample) << " "
+                    //          << solve.state.back().ky.at(sample) << " "
+                    //          << solve.state.back().kz.at(sample) << " "
+                    //          << residule->evaluate().at(sample)
+                    //          << std::endl;
+                //}
                 solve.step();
+                
+                if (thread_number == 0) {
+                    const base time = solve.state.back().t.at(sample);
+                    const base numeric = solve.state.back().x.at(sample);
+                
+                    std::cout << "t = " << time << " ";
+                    std::cout << numeric << " ";
+                    std::cout << std::abs(numeric - solution(time)) << std::endl;
+                }
             }
-            if (thread_number == 0) {
-                std::cout << "Time Step " << num_times << " Sample " << sample << " "
-                          << solve.state.back().t.at(sample) << " "
-                          << solve.state.back().x.at(sample) << " "
-                          << solve.state.back().y.at(sample) << " "
-                          << solve.state.back().z.at(sample) << " "
-                          << solve.state.back().kx.at(sample) << " "
-                          << solve.state.back().ky.at(sample) << " "
-                          << solve.state.back().kz.at(sample) << " "
-                          << residule->evaluate().at(sample)
-                          << std::endl;
-            }
+            //if (thread_number == 0) {
+            //    std::cout << "Time Step " << num_times << " Sample " << sample << " "
+            //              << solve.state.back().t.at(sample) << " "
+            //              << solve.state.back().x.at(sample) << " "
+            //              << solve.state.back().y.at(sample) << " "
+            //              << solve.state.back().z.at(sample) << " "
+            //              << solve.state.back().kx.at(sample) << " "
+            //              << solve.state.back().ky.at(sample) << " "
+            //              << solve.state.back().kz.at(sample) << " "
+            //              << residule->evaluate().at(sample)
+            //              << std::endl;
+            //}
         }, i, threads.size());
     }
 
