@@ -33,10 +33,11 @@ void test_solver(const typename SOLVER::base tolarance,
     auto x = graph::variable<typename SOLVER::backend> (1, 0.0, "x");
     auto y = graph::variable<typename SOLVER::backend> (1, 0.0, "y");
     auto z = graph::variable<typename SOLVER::backend> (1, 0.0, "z");
+    auto t = graph::variable<typename SOLVER::backend> (1, 0.0, "t");
 
     auto eq = equilibrium::make_guassian_density<typename SOLVER::backend> ();
 
-    SOLVER solve(w, kx, ky, kz, x, y, z, dt, eq);
+    SOLVER solve(w, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx, tolarance);
     auto residule = solve.residule();
 

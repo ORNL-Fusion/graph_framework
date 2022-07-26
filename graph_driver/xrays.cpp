@@ -29,8 +29,8 @@ int main(int argc, const char * argv[]) {
     const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
     const size_t num_times = 10000;
-    const size_t num_rays = 1;
-    //const size_t num_rays = 10000;
+    //const size_t num_rays = 1;
+    const size_t num_rays = 10000;
     
     std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
                                                        static_cast<unsigned int> (num_rays)),
@@ -53,7 +53,10 @@ int main(int argc, const char * argv[]) {
             auto x = graph::variable<cpu> (local_num_rays, "x");
             auto y = graph::variable<cpu> (local_num_rays, "y");
             auto z = graph::variable<cpu> (local_num_rays, "z");
+            auto t = graph::variable<cpu> (local_num_rays, "t");
 
+            t->set(backend::base_cast<cpu> (0.0));
+            
             //const double q = 1.602176634E-19;
             //const double me = 9.1093837015E-31;
             //const double mu0 = M_PI*4.0E-7;
@@ -67,9 +70,9 @@ int main(int argc, const char * argv[]) {
                 //omega->set(j, OmegaCE);
                 //omega->set(j, real_dist(engine));
                 //omega->set(j, 600.0);
-                //omega->set(j, 1000.0);
+                omega->set(j, 1000.0);
                 //omega->set(j, 1100.0);
-                omega->set(j, 800.0);
+                //omega->set(j, 800.0);
                 //omega->set(j, 1.0);
             }
 
@@ -77,50 +80,42 @@ int main(int argc, const char * argv[]) {
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (-0.25));
             //kx->set(backend::base_cast<cpu> (16.0));
-            //ky->set(backend::base_cast<cpu> (0.0));
             //kz->set(backend::base_cast<cpu> (0.8*OmegaCE));
 
             //x->set(backend::base_cast<cpu> (-11.0));
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (-0.25));
             //kx->set(backend::base_cast<cpu> (std::complex<double> (149.0, 450.0)));
-            //ky->set(backend::base_cast<cpu> (0.0));
             //kz->set(backend::base_cast<cpu> (0.8*OmegaCE));
             
             //x->set(backend::base_cast<cpu> (0.2));
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (-0.25));
             //kx->set(backend::base_cast<cpu> (std::complex<double> (22.0, 1.0)));
-            //ky->set(backend::base_cast<cpu> (0.0));
             //kz->set(backend::base_cast<cpu> (0.7*OmegaCE));
 
             //x->set(backend::base_cast<cpu> (0.1));
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (-0.25));
             //kx->set(backend::base_cast<cpu> (22.0));
-            //ky->set(backend::base_cast<cpu> (0.0));
             //kz->set(backend::base_cast<cpu> (0.7*OmegaCE));
             
             //x->set(backend::base_cast<cpu> (-3.95));
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (-0.25));
-            //kx->set(backend::base_cast<cpu> (14.0));
-            //ky->set(backend::base_cast<cpu> (0.0));
+            //kx->set(backend::base_cast<cpu> (14.0));=
             //kz->set(backend::base_cast<cpu> (0.6*OmegaCE));
             
             //x->set(backend::base_cast<cpu> (-7.75));
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (-0.25));
             //kx->set(backend::base_cast<cpu> (25.0));
-            //ky->set(backend::base_cast<cpu> (0.0));
             //kz->set(backend::base_cast<cpu> (0.4*OmegaCE));
             
             //x->set(backend::base_cast<cpu> (-1.0));
             //y->set(backend::base_cast<cpu> (-0.2));
             //z->set(backend::base_cast<cpu> (0.0));
             //kx->set(backend::base_cast<cpu> (1000.0));
-            //ky->set(backend::base_cast<cpu> (0.0));
-            //kz->set(backend::base_cast<cpu> (0.0));
 
             //x->set(backend::base_cast<cpu> (real_dist(engine)));
             //y->set(backend::base_cast<cpu> (real_dist(engine)));
@@ -134,18 +129,14 @@ int main(int argc, const char * argv[]) {
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (0.0));
             //kx->set(backend::base_cast<cpu> (1000.0));
-            //ky->set(backend::base_cast<cpu> (0.0));
-            //kz->set(backend::base_cast<cpu> (0.0));
 
             //x->set(backend::base_cast<cpu> (10.0));
             //x->set(backend::base_cast<cpu> (-10.0));
             //x->set(backend::base_cast<cpu> (-35.0));
             //y->set(backend::base_cast<cpu> (0.0));
             //z->set(backend::base_cast<cpu> (0.0));
-            //kx->set(backend::base_cast<cpu> (-600.0));
-            //kx->set(backend::base_cast<cpu> (600.0));
-            //ky->set(backend::base_cast<cpu> (0.0));
-            //kz->set(backend::base_cast<cpu> (0.0));
+            kx->set(backend::base_cast<cpu> (base(0.0,1.0)));
+            //kx->set(backend::base_cast<cpu> (0.0));
 
             //x->set(backend::base_cast<cpu> (0.0));
             x->set(backend::base_cast<cpu> (10.0));
@@ -154,24 +145,24 @@ int main(int argc, const char * argv[]) {
             //kx->set(backend::base_cast<cpu> (600.0));
             //kx->set(backend::base_cast<cpu> (1000.0));
             //kx->set(backend::base_cast<cpu> (500.0));
-            kx->set(backend::base_cast<cpu> (1500.0));
+            //kx->set(backend::base_cast<cpu> (1500.0));
             ky->set(backend::base_cast<cpu> (0.0));
             kz->set(backend::base_cast<cpu> (0.0));
             
             //auto eq = equilibrium::make_guassian_density<cpu> ();
-            //auto eq = equilibrium::make_slab<cpu> ();
-            auto eq = equilibrium::make_slab_density<cpu> ();
+            auto eq = equilibrium::make_slab<cpu> ();
+            //auto eq = equilibrium::make_slab_density<cpu> ();
 
-            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 60.0/num_times, eq);
-            solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 200.0/num_times, eq);
-            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 70.0/num_times, eq);
-            //solver::rk4<dispersion::ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 100.0/num_times, eq);
-            //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 300.0/num_times, eq);
-            //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 80.0/num_times, eq);
-            //solver::rk4<dispersion::guassian_well<cpu>> solve(omega, kx, ky, kz, x, y, z, 2.0/num_times, eq);
-            //solver::rk4<dispersion::bohm_gross<cpu>> solve(omega, kx, ky, kz, x, y, z, 70.0/num_times, eq);
-            //solver::rk4<dispersion::acoustic_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
-            //solver::rk4<dispersion::simple<cpu>> solve(omega, kx, ky, kz, x, y, z, 1.0/num_times, eq);
+            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
+            //solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, 200.0/num_times, eq);
+            solver::rk4<dispersion::cold_plasma<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 70.0/num_times, eq);
+            //solver::rk4<dispersion::ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 100.0/num_times, eq);
+            //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 300.0/num_times, eq);
+            //solver::rk4<dispersion::extra_ordinary_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 80.0/num_times, eq);
+            //solver::rk4<dispersion::guassian_well<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 2.0/num_times, eq);
+            //solver::rk4<dispersion::bohm_gross<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 70.0/num_times, eq);
+            //solver::rk4<dispersion::acoustic_wave<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 1.0/num_times, eq);
+            //solver::rk4<dispersion::simple<cpu>> solve(omega, kx, ky, kz, x, y, z, t, 1.0/num_times, eq);
             solve.init(kx);
             if (thread_number == 0) {
                 solve.print_dispersion();
@@ -188,6 +179,7 @@ int main(int argc, const char * argv[]) {
             for (size_t j = 0; j < num_times; j++) {
                 if (thread_number == 0) {
                     std::cout << "Time Step " << j << " Sample " << sample << " "
+                              << solve.state.back().t.at(sample) << " "
                               << solve.state.back().x.at(sample) << " "
                               << solve.state.back().y.at(sample) << " "
                               << solve.state.back().z.at(sample) << " "
@@ -201,6 +193,7 @@ int main(int argc, const char * argv[]) {
             }
             if (thread_number == 0) {
                 std::cout << "Time Step " << num_times << " Sample " << sample << " "
+                          << solve.state.back().t.at(sample) << " "
                           << solve.state.back().x.at(sample) << " "
                           << solve.state.back().y.at(sample) << " "
                           << solve.state.back().z.at(sample) << " "

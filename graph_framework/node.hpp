@@ -262,7 +262,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
 ///
-///  @param[in] d Size of the .
+///  @param[in] d Array buffer to initalize.
 //------------------------------------------------------------------------------
         constant_node(const std::vector<typename BACKEND::base> &d) :
         data(d) {}
@@ -270,7 +270,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
 ///
-///  @param[in] d Size of the .
+///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
         constant_node(const BACKEND &d) :
         data(d) {}

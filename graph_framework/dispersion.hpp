@@ -79,6 +79,7 @@ namespace dispersion {
 ///  @param[in] x  Position in x.
 ///  @param[in] y  Position in y.
 ///  @param[in] z  Position in z.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         dispersion_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> w,
@@ -88,8 +89,9 @@ namespace dispersion {
                              graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
                              graph::shared_leaf<typename DISPERSION_FUNCTION::backend> y,
                              graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::backend> t,
                              equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq) :
-        D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z, eq)) {
+        D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z, t, eq)) {
             auto dDdw = this->D->df(w)->reduce();
             auto dDdkx = this->D->df(kx)->reduce();
             auto dDdky = this->D->df(ky)->reduce();
@@ -256,6 +258,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -265,12 +268,65 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) = 0;
 
 ///  Type def to retrieve the backend type.
         typedef BACKEND backend;
 ///  Type def to retrieve the backend base type.
         typedef typename BACKEND::base base;
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Stiff dispersion function.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    class stiff final : public dispersion_function<BACKEND> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Stiff function.
+///
+///  This is not really a dispersion function but is an example of a stiff system.
+///
+///  dx/dt = -1.0E3*(x - Exp(-t)) - Exp(-t)                                    (1)
+///
+///  We need to figure out a disperison function D(w,k,x) such that
+///
+///  dx/dt = -(dD/dk)/(dD/dw) = -1.0E3*(x - Exp(-t)) - Exp(-t).                (2)
+///
+///  If we assume,
+///
+///  D = (1.0E3*(x - Exp(-t)) - Exp(-t))*kx + w                                (3)
+///
+///  dD/dw = 1                                                                 (4)
+///
+///  dD/dkx = (1.0E3*(x - Exp(-t)) - Exp(-t))                                  (5)
+///
+///  This satisfies equations 1.
+///
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] t  Current time.
+///  @param[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
+                                              graph::shared_leaf<BACKEND> kx,
+                                              graph::shared_leaf<BACKEND> ky,
+                                              graph::shared_leaf<BACKEND> kz,
+                                              graph::shared_leaf<BACKEND> x,
+                                              graph::shared_leaf<BACKEND> y,
+                                              graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
+                                              equilibrium::unique_equilibrium<BACKEND> &eq) final {
+            auto none = graph::constant<BACKEND> (-1);
+            auto c = graph::constant<BACKEND> (1.0E3);
+            return (c*(x - graph::exp(none*t)) - graph::exp(none*t))*kx + w;
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -291,6 +347,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -300,6 +357,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
             auto c = graph::constant<BACKEND> (1);
 
@@ -329,6 +387,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -338,6 +397,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
 //  Constants
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
@@ -395,6 +455,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -404,6 +465,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
 //  Constants
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
@@ -450,6 +512,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -459,6 +522,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
 //  Constants
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
@@ -510,6 +574,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -519,6 +584,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
             auto c = graph::constant<BACKEND> (1);
             auto well = c - graph::constant<BACKEND>(0.5)*exp(graph::constant<BACKEND> (-1)*(x*x + y*y)/graph::constant<BACKEND> (0.1));
@@ -550,6 +616,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -559,6 +626,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
 //  Constants
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
@@ -612,6 +680,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -621,6 +690,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
 //  Constants
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
@@ -674,6 +744,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -683,6 +754,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
 //  Constants
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);
@@ -756,6 +828,7 @@ namespace dispersion {
 ///  @param[in] x  x variable.
 ///  @param[in] y  y variable.
 ///  @param[in] z  z variable.
+///  @param[in] t  Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<BACKEND> D(graph::shared_leaf<BACKEND> w,
@@ -765,6 +838,7 @@ namespace dispersion {
                                               graph::shared_leaf<BACKEND> x,
                                               graph::shared_leaf<BACKEND> y,
                                               graph::shared_leaf<BACKEND> z,
+                                              graph::shared_leaf<BACKEND> t,
                                               equilibrium::unique_equilibrium<BACKEND> &eq) final {
 //  Constants
             auto epsion0 = graph::constant<BACKEND> (8.8541878138E-12);

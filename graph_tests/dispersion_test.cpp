@@ -32,8 +32,9 @@ void test_solve(const typename DISPERSION::base tolarance,
     auto x = graph::variable<typename DISPERSION::backend> (1, 0.0, "x");
     auto y = graph::variable<typename DISPERSION::backend> (1, 0.0, "y");
     auto z = graph::variable<typename DISPERSION::backend> (1, 0.0, "z");
-
-    dispersion::dispersion_interface<DISPERSION> D(w, kx, ky, kz, x, y, z, eq);
+    auto t = graph::variable<typename DISPERSION::backend> (1, 0.0, "t");
+    
+    dispersion::dispersion_interface<DISPERSION> D(w, kx, ky, kz, x, y, z, t, eq);
 
     auto loss = D.get_d()*D.get_d();
 
