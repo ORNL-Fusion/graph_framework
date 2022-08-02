@@ -204,6 +204,10 @@ namespace backend {
 
 //------------------------------------------------------------------------------
 ///  @brief Add operation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns a + b.
 //------------------------------------------------------------------------------
     template<typename BASE>
     inline cpu<BASE> operator+(cpu<BASE> &a, cpu<BASE> &b) {
@@ -231,6 +235,11 @@ namespace backend {
 
 //------------------------------------------------------------------------------
 ///  @brief Equal operation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns a == b.
+//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
     template<typename BASE>
     inline bool operator==(const cpu<BASE> &a, const cpu<BASE> &b) {
@@ -248,6 +257,10 @@ namespace backend {
 
 //------------------------------------------------------------------------------
 ///  @brief Subtract operation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns a - b.
 //------------------------------------------------------------------------------
     template<typename BASE>
     inline cpu<BASE> operator-(cpu<BASE> &a, cpu<BASE> &b) {
@@ -275,6 +288,10 @@ namespace backend {
 
 //------------------------------------------------------------------------------
 ///  @brief Multiply operation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns a * b.
 //------------------------------------------------------------------------------
     template<typename BASE>
     inline cpu<BASE> operator*(cpu<BASE> &a, cpu<BASE> &b) {
@@ -302,6 +319,10 @@ namespace backend {
 
 //------------------------------------------------------------------------------
 ///  @brief Divide operation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a / b.
 //------------------------------------------------------------------------------
     template<typename BASE>
     inline cpu<BASE> operator/(cpu<BASE> &a, cpu<BASE> &b) {
@@ -328,7 +349,12 @@ namespace backend {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Multiply operation.
+///  @brief Fused multiply add operation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Middle operand.
+///  @param[in] c Right operand.
+///  @returns a*b + c.
 //------------------------------------------------------------------------------
     template<typename BASE>
     inline cpu<BASE> fma(cpu<BASE> &a, cpu<BASE> &b, cpu<BASE> &c) {
@@ -430,8 +456,9 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Take the power.
 ///
-///  @param[in] base     Raise to the power of.
-///  @param[in] exponent Raise to the power of.
+///  @param[in] base     Base to raise to the power of.
+///  @param[in] exponent Power to apply to the base.
+///  @returns base^exponent.
 //------------------------------------------------------------------------------
     template<typename BASE>
     inline cpu<BASE> pow(cpu<BASE> &base,
