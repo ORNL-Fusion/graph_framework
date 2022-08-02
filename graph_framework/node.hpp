@@ -252,7 +252,7 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a variable node from a scalar.
+///  @brief Construct a constant node from a scalar.
 ///
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
@@ -260,7 +260,7 @@ namespace graph {
         data(1, d) {}
 
 //------------------------------------------------------------------------------
-///  @brief Construct a variable node from a vector.
+///  @brief Construct a constant node from a vector.
 ///
 ///  @param[in] d Array buffer to initalize.
 //------------------------------------------------------------------------------
@@ -268,7 +268,7 @@ namespace graph {
         data(d) {}
 
 //------------------------------------------------------------------------------
-///  @brief Construct a variable node from a vector.
+///  @brief Construct a constant node from a vector.
 ///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------

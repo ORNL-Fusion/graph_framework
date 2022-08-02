@@ -494,12 +494,12 @@ namespace solver {
             this->t_sub = graph::cache(this->t  + dt_const/two);
             
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
-                                                                     graph::pseudo_variable(this->kx + kx1     /two),
-                                                                     graph::pseudo_variable(this->ky + ky1     /two),
-                                                                     graph::pseudo_variable(this->kz + kz1     /two),
-                                                                     graph::pseudo_variable(this->x  + x1      /two),
-                                                                     graph::pseudo_variable(this->y  + y1      /two),
-                                                                     graph::pseudo_variable(this->z  + z1      /two),
+                                                                     graph::pseudo_variable(this->kx + kx1/two),
+                                                                     graph::pseudo_variable(this->ky + ky1/two),
+                                                                     graph::pseudo_variable(this->kz + kz1/two),
+                                                                     graph::pseudo_variable(this->x  +  x1/two),
+                                                                     graph::pseudo_variable(this->y  +  y1/two),
+                                                                     graph::pseudo_variable(this->z  +  z1/two),
                                                                      graph::pseudo_variable(this->t_sub),
                                                                      eq);
 
@@ -511,12 +511,12 @@ namespace solver {
             this->z2  = graph::cache(dt_const*D2.get_dzdt());
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D3(this->w,
-                                                                     graph::pseudo_variable(this->kx + kx2     /two),
-                                                                     graph::pseudo_variable(this->ky + ky2     /two),
-                                                                     graph::pseudo_variable(this->kz + kz2     /two),
-                                                                     graph::pseudo_variable(this->x  + x2      /two),
-                                                                     graph::pseudo_variable(this->y  + y2      /two),
-                                                                     graph::pseudo_variable(this->z  + z2      /two),
+                                                                     graph::pseudo_variable(this->kx + kx2/two),
+                                                                     graph::pseudo_variable(this->ky + ky2/two),
+                                                                     graph::pseudo_variable(this->kz + kz2/two),
+                                                                     graph::pseudo_variable(this->x  +  x2/two),
+                                                                     graph::pseudo_variable(this->y  +  y2/two),
+                                                                     graph::pseudo_variable(this->z  +  z2/two),
                                                                      graph::pseudo_variable(this->t_sub),
                                                                      eq);
 
