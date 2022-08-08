@@ -323,6 +323,14 @@ template<typename BACKEND> void test_subtract() {
     auto common_power3 = var_d/graph::pow(var_b,var_c) -
                          graph::pow(var_a/var_b,var_c);
     assert(graph::divide_cast(common_power3) && "Expected Divide node.");
+    
+//  Variables should always go to the right and constant to he left.
+    auto two = graph::constant<BACKEND> (2);
+    auto swap = multiply_cast(var_a*two);
+    assert(constant_cast(swap->get_left()).get() &&
+           "Expected a constant on he left");
+    assert(variable_cast(swap->get_right()).get() &&
+           "Expected a variable on he right");
 }
 
 //------------------------------------------------------------------------------
@@ -931,25 +939,25 @@ template<typename BACKEND> void test_fma() {
     auto reduce1 = graph::fma(var_a, var_b, var_a*var_c);
     auto reduce1_cast = multiply_cast(reduce1);
     assert(reduce1_cast.get() && "Expected multiply node.");
-    assert(reduce1_cast->get_left()->is_match(var_a) &&
+    assert(reduce1_cast->get_right()->is_match(var_a) &&
            "Expected common var_a");
 
     auto reduce2 = graph::fma(var_a, var_b, var_b*var_c);
     auto reduce2_cast = multiply_cast(reduce2);
     assert(reduce2_cast.get() && "Expected multiply node.");
-    assert(reduce2_cast->get_left()->is_match(var_b) &&
+    assert(reduce2_cast->get_right()->is_match(var_b) &&
            "Expected common var_b");
 
     auto reduce3 = graph::fma(var_a, var_b, var_c*var_a);
     auto reduce3_cast = multiply_cast(reduce3);
     assert(reduce3_cast.get() && "Expected multiply node.");
-    assert(reduce3_cast->get_left()->is_match(var_a) &&
+    assert(reduce3_cast->get_right()->is_match(var_a) &&
            "Expected common var_a");
 
     auto reduce4 = graph::fma(var_a, var_b, var_c*var_b);
     auto reduce4_cast = multiply_cast(reduce4);
     assert(reduce4_cast.get() && "Expected multiply node.");
-    assert(reduce4_cast->get_left()->is_match(var_b) &&
+    assert(reduce4_cast->get_right()->is_match(var_b) &&
            "Expected common var_b");
 }
 

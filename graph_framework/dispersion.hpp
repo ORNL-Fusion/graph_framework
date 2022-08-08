@@ -116,9 +116,9 @@ namespace dispersion {
 ///
 ///  This uses newtons methods to solver for D(x) = 0.
 ///
-///  @param[in] x              The unknown to solver for.
-///  @param[in] tolarance      Tolarance to solver the dispersion function to.
-///  @param[in] max_iterations Maximum number of iterations before giving up.
+///  @param[in,out] x              The unknown to solver for.
+///  @param[in]     tolarance      Tolarance to solve the dispersion function to.
+///  @param[in]     max_iterations Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
         void solve(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
                    const typename DISPERSION_FUNCTION::base tolarance=1.0E-30,

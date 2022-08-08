@@ -560,6 +560,18 @@ namespace graph {
                 return constant(this->evaluate());
             }
 
+//  Move constants to the left.
+            if (r.get() && !l.get()) {
+                return this->right*this->left;
+            }
+
+//  Move variables to the right.
+            auto lv = variable_cast(this->left);
+            auto rv = variable_cast(this->right);
+            if (lv.get() && !rv.get()) {
+                return this->right*this->left;
+            }
+
 //  Reduce constants multiplied by fused multiply add nodes.
             auto rfma = fma_cast(this->right);
             if (l.get() && rfma.get()) {
@@ -589,7 +601,7 @@ namespace graph {
                     return (this->right*lm->get_right())*lm->get_left();
                 }
             }
-    
+
             auto rm = multiply_cast(this->right);
             if (rm.get()) {
                 if (this->left->is_match(rm->get_left())) {
