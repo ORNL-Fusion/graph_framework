@@ -8,7 +8,7 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "DDA86B24-81EF-41A2-B076-AB331D4BC30B"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "graph_framework/solver.hpp"
@@ -17,22 +17,6 @@
             startingLineNumber = "865"
             endingLineNumber = "865"
             landmarkName = "split_simplextic(w, kx, ky, kz, x, y, z, t, dt, eq)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "48B2C76F-A1AE-4241-A4A5-7FABE88A4A9C"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "graph_framework/vector.hpp"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "101"
-            endingLineNumber = "101"
-            landmarkName = "length()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
