@@ -11,7 +11,7 @@
 #include <cassert>
 
 #include "../graph_framework/cpu_backend.hpp"
-#include "../graph_framework/arithmetic.hpp"
+#include "../graph_framework/math.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for addition nodes.
@@ -591,6 +591,60 @@ template<typename BACKEND> void test_multiply() {
     assert(var_times_var_result.size() == 1 && "Expected single value.");
     assert(var_times_var_result.at(0) == backend::base_cast<BACKEND> (36) &&
            "Expected 6*6 for result.");
+    
+//  Test c1*(c2*v) -> c3*v
+    auto c3 = two*(three*a);
+    auto c3_cast = multiply_cast(c3);
+    assert(c3_cast.get() && "Expected multiply node.");
+    assert(constant_cast(c3_cast->get_left()) &&
+           "Expected constant on the left.");
+    assert(variable_cast(c3_cast->get_right()) &&
+           "Expected variable on the right.");
+
+//  Test c1*(c2*v) -> c4*v
+    auto c4 = (three*a)*two;
+    auto c4_cast = multiply_cast(c4);
+    assert(c4_cast.get() && "Expected multiply node.");
+    assert(constant_cast(c4_cast->get_left()) &&
+           "Expected constant on the left.");
+    assert(variable_cast(c4_cast->get_right()) &&
+           "Expected variable on the right.");
+
+//  Test c1*(c2/v) -> c5*v
+    auto c5 = two*(three/a);
+    auto c5_cast = divide_cast(c5);
+    assert(c5_cast.get() && "Expected divide node.");
+    assert(constant_cast(c5_cast->get_left()) &&
+           "Expected constant in the numerator.");
+    assert(variable_cast(c5_cast->get_right()) &&
+           "Expected variable in the denominator.");
+
+//  Test c1*(v/c2) -> c6*v
+    auto c6 = two*(a/three);
+    auto c6_cast = divide_cast(c6);
+    assert(c6_cast.get() && "Expected divide node.");
+    assert(constant_cast(c6_cast->get_right()) &&
+           "Expected constant in the denominator.");
+    assert(variable_cast(c6_cast->get_left()) &&
+           "Expected variable in the numerator.");
+
+//  Test (c2/v)*c1 -> c7*v
+    auto c7 = (three/a)*two;
+    auto c7_cast = divide_cast(c7);
+    assert(c7_cast.get() && "Expected divide node.");
+    assert(constant_cast(c7_cast->get_left()) &&
+           "Expected constant in the numerator.");
+    assert(variable_cast(c7_cast->get_right()) &&
+           "Expected variable in the denominator.");
+
+//  Test (v/c2)*c1 -> c8*v
+    auto c8 = two*(a/three);
+    auto c8_cast = divide_cast(c8);
+    assert(c8_cast.get() && "Expected divide node.");
+    assert(constant_cast(c8_cast->get_right()) &&
+           "Expected constant in the denominator.");
+    assert(variable_cast(c8_cast->get_left()) &&
+           "Expected variable in the numerator.");
 }
 
 //------------------------------------------------------------------------------
@@ -836,6 +890,42 @@ template<typename BACKEND> void test_divide() {
            "Expected a constant coefficent.");
     assert(graph::divide_cast(x12_cast->get_right()).get() &&
            "Expected multipy node.");
+
+//  c1/(c2*v) -> c3/v
+    auto c3 = two/(three*variable);
+    auto c3_cast = divide_cast(c3);
+    assert(c3_cast.get() && "Expected divide node");
+    assert(constant_cast(c3_cast->get_left()) &&
+           "Expected a constant in numerator.");
+    assert(variable_cast(c3_cast->get_right()) &&
+           "Expected a variable in the denominator");
+
+//  c1/(v*c2) -> c4/v
+    auto c4 = two/(three*variable);
+    auto c4_cast = divide_cast(c4);
+    assert(c4_cast.get() && "Expected divide node");
+    assert(constant_cast(c4_cast->get_left()) &&
+           "Expected a constant in numerator.");
+    assert(variable_cast(c4_cast->get_right()) &&
+           "Expected a variable in the denominator");
+
+//  (c1*v)/c2 -> v/c5
+    auto c5 = (two*variable)/three;
+    auto c5_cast = divide_cast(c5);
+    assert(c5_cast.get() && "Expected divide node");
+    assert(variable_cast(c5_cast->get_left()) &&
+           "Expected a variable in numerator.");
+    assert(constant_cast(c5_cast->get_right()) &&
+           "Expected a constant in the denominator");
+
+//  (v*c1)/c2 -> v/c5
+    auto c6 = (variable*two)/three;
+    auto c6_cast = divide_cast(c6);
+    assert(c6_cast.get() && "Expected divide node");
+    assert(variable_cast(c6_cast->get_left()) &&
+           "Expected a variable in numerator.");
+    assert(constant_cast(c6_cast->get_right()) &&
+           "Expected a constant in the denominator");
 }
 
 //------------------------------------------------------------------------------

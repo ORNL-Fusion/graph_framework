@@ -50,9 +50,8 @@ void test_sqrt() {
     auto dsqrt_var = sqrt_var->df(var);
     assert(graph::divide_cast(dsqrt_var).get() && "Expected a divide type.");
     assert(dsqrt_var->evaluate().at(0) ==
-           backend::base_cast<BACKEND> (1.0) /
-           (backend::base_cast<BACKEND> (2.0) *
-            sqrt(backend::base_cast<BACKEND> (3.0))) &&
+           backend::base_cast<BACKEND> (1.0/2.0) /
+           sqrt(backend::base_cast<BACKEND> (3.0)) &&
            "Expected 0.5*sqrt(3)");
 
 //  Reduction sqrt(c*x*c*y) = x

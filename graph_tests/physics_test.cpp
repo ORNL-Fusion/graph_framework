@@ -145,10 +145,10 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
     
     auto eq = equilibrium::make_no_magnetic_field<BACKEND> ();
     solver::rk4<dispersion::bohm_gross<BACKEND>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
-    solve.init(kx, tolarance);
+    solve.init(kx);
     
     const auto diff = kx->evaluate().at(0) - k0;
-    assert(std::abs(diff*diff) < 3.0E-25 &&
+    assert(std::abs(diff*diff) < 1.0E-24 &&
            "Failed to reach expected k0.");
     
     for (size_t i = 0; i < 20; i++) {

@@ -604,6 +604,12 @@ namespace graph {
 
             auto rm = multiply_cast(this->right);
             if (rm.get()) {
+//  Assume constants are on the left.
+//  c1*(c2*v) -> c3*v
+                if (constant_cast(rm->get_left()).get() && l.get()) {
+                    return (this->left*rm->get_left())*rm->get_right();
+                }
+
                 if (this->left->is_match(rm->get_left())) {
                     return (this->left*rm->get_left())*rm->get_right();
                 } else if (this->left->is_match(rm->get_right())) {
@@ -651,6 +657,16 @@ namespace graph {
 //  Common factor reduction. (a/b)*(c/a) = c/b.
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
+
+//  c1*(c2/v) -> c3/v
+//  c1*(v/c2) -> v/c3
+            if (rd.get() && l.get()) {
+                if (constant_cast(rd->get_left()).get()) {
+                    return (this->left*rd->get_left())/rd->get_right();
+                } else if (constant_cast(rd->get_right()).get()) {
+                    return rd->get_left()/(this->left*rd->get_right());
+                }
+            }
 
             if (ld.get() && rd.get()) {
                 if (ld->get_left()->is_match(rd->get_right())) {
@@ -861,6 +877,19 @@ namespace graph {
 //  Common factor reduction. (a*b)/(a*c) = b/c.
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
+
+//  Assume constants are always on the left.
+//  c1/(c2*v) -> c3/v
+//  (c1*v)/c2 -> v/c3
+            if (rm.get() && l.get()) {
+                if (constant_cast(rm->get_left()).get()) {
+                    return (this->left/rm->get_left())/rm->get_right();
+                }
+            } else if (lm.get() && r.get()) {
+                if (constant_cast(lm->get_left()).get()) {
+                    return lm->get_right()/(this->right/lm->get_left());
+                }
+            }
 
             if (lm.get() && rm.get()) {
 //  Test for constants that can be reduced out.
