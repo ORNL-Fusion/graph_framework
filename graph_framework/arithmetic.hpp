@@ -617,6 +617,14 @@ namespace graph {
                 }
             }
 
+//  v1*(c*v2) -> c*(v1*v2)
+//  (c*v1)*v2 -> c*(v1*v2)
+            if (rm.get() && constant_cast(rm->get_left()).get()) {
+                return rm->get_left()*(this->left*rm->get_right());
+            } else if (lm.get() && constant_cast(lm->get_left()).get()) {
+                return lm->get_left()*(lm->get_right()*this->right);
+            }
+
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
 //  the second pass.
             if (lm.get() && rm.get()) {
@@ -916,6 +924,11 @@ namespace graph {
                 } else if (lm->get_right()->is_match(rm->get_right())) {
                     return lm->get_left()/rm->get_left();
                 }
+            }
+
+//  (c*v1)/v2 -> c*(v1/v2)
+            if (lm.get() && constant_cast(lm->get_left()).get()) {
+                return lm->get_left()*(lm->get_right()/this->right);
             }
 
             return this->shared_from_this();

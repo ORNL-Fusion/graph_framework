@@ -82,8 +82,9 @@ int main(int argc, const char * argv[]) {
             //auto eq = equilibrium::make_slab_density<cpu> ();
             auto eq = equilibrium::make_no_magnetic_field<cpu> ();
 
-            solver::split_simplextic<dispersion::bohm_gross<cpu>>
+            //solver::split_simplextic<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::bohm_gross<cpu>>
+            solver::rk4<dispersion::simple<cpu>>
                 solve(omega, kx, ky, kz, x, y, z, t, 30.0/num_times, eq);
             solve.init(kx);
             if (thread_number == 0) {
