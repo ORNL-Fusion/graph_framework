@@ -693,32 +693,49 @@ namespace graph {
             auto lp = pow_cast(this->left);
             auto rp = pow_cast(this->right);
             if (lp.get()) {
+//  a^b*a -> a^(b + 1)
                 if (lp->get_left()->is_match(this->right)) {
                     return pow(lp->get_left(),
                                lp->get_right() + constant<typename LN::backend> (1.0));
                 }
 
+//  a^b*a^c -> a^(b + c)
                 if (rp.get() && lp->get_left()->is_match(rp->get_left())) {
                     return pow(lp->get_left(),
                                lp->get_right() + rp->get_right());
                 }
-                
+
+//  a^b*sqrt(a) -> a^(b + 1/2)
                 auto rsq = sqrt_cast(this->right);
                 if (rsq.get() && lp->get_left()->is_match(rsq->get_arg())) {
                     return pow(lp->get_left(),
                                lp->get_right() + constant<typename LN::backend> (0.5));
                 }
+            } else {
+//  a*sqrt(a) -> a^(1 + 1/2)
+                auto rsq = sqrt_cast(this->right);
+                if (rsq.get() && this->left->is_match(rsq->get_arg())) {
+                    return pow(this->left, constant<typename LN::backend> (1.5));
+                }
             }
             if (rp.get()) {
+//  a*a^b -> a^(1 + b)
                 if (rp->get_left()->is_match(this->left)) {
                     return pow(rp->get_left(),
                                rp->get_right() + constant<typename LN::backend> (1.0));
                 }
-                
+
+//  sqrt(a)*a^b -> a^(b + 1)
                 auto lsq = sqrt_cast(this->left);
                 if (lsq.get() && rp->get_left()->is_match(lsq->get_arg())) {
                     return pow(rp->get_left(),
                                rp->get_right() + constant<typename LN::backend> (0.5));
+                }
+            } else {
+//  sqrt(a)*a -> a^(1/2 + 1)
+                auto lsq = sqrt_cast(this->left);
+                if (lsq.get() && this->right->is_match(lsq->get_arg())) {
+                    return pow(this->right, constant<typename LN::backend> (1.5));
                 }
             }
 
@@ -947,32 +964,49 @@ namespace graph {
             auto lp = pow_cast(this->left);
             auto rp = pow_cast(this->right);
             if (lp.get()) {
+//  a^b/a -> a^(b - 1)
                 if (lp->get_left()->is_match(this->right)) {
                     return pow(lp->get_left(),
                                lp->get_right() - constant<typename LN::backend> (1.0));
                 }
 
+//  a^b/a^c -> a^(b - c)
                 if (rp.get() && lp->get_left()->is_match(rp->get_left())) {
                     return pow(lp->get_left(),
                                lp->get_right() - rp->get_right());
                 }
-                            
+
+//  a^b/sqrt(a) -> a^(b - 1/2)
                 auto rsq = sqrt_cast(this->right);
                 if (rsq.get() && lp->get_left()->is_match(rsq->get_arg())) {
                     return pow(lp->get_left(),
                                lp->get_right() - constant<typename LN::backend> (0.5));
                 }
+            } else {
+//  a/sqrt(a) -> sqrt(a)
+                auto rsq = sqrt_cast(this->right);
+                if (rsq.get() && this->left->is_match(rsq->get_arg())) {
+                    return this->right;
+                }
             }
             if (rp.get()) {
+//  a/a^b -> a^(1 - b)
                 if (rp->get_left()->is_match(this->left)) {
                     return pow(rp->get_left(),
                                constant<typename LN::backend> (1.0) - rp->get_right());
                 }
-                            
+
+//  sqrt(a)/a^b -> a^(1/2 - b)
                 auto lsq = sqrt_cast(this->left);
                 if (lsq.get() && rp->get_left()->is_match(lsq->get_arg())) {
                     return pow(rp->get_left(),
                                constant<typename LN::backend> (0.5) - rp->get_right());
+                }
+            } else {
+//  sqrt(a)/a -> 1.0/sqrt(a)
+                auto lsq = sqrt_cast(this->left);
+                if (lsq.get() && this->right->is_match(lsq->get_arg())) {
+                    return constant<typename LN::backend> (1.0)/this->left;
                 }
             }
             

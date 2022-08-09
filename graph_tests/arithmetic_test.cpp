@@ -716,6 +716,19 @@ template<typename BACKEND> void test_multiply() {
            "Expected constant exponent.");
     assert(graph::constant_cast(pow_sqc_cast->get_right())->is(3.5) &&
            "Expected constant exponent equal to 3.5.");
+
+//  Test a*sqrt(a) -> a^(1.5)
+    auto pow_asqa = a*graph::sqrt(a);
+    auto pow_asqa_cast = graph::pow_cast(pow_asqa);
+    assert(pow_asqa_cast.get() && "Expected power node.");
+    assert(graph::constant_cast(pow_asqa_cast->get_right()).get() &&
+           "Expected constant exponent.");
+    assert(graph::constant_cast(pow_asqa_cast->get_right())->is(1.5) &&
+           "Expected constant exponent equal to 1.5.");
+
+//  Test a*sqrt(a) -> a^(1.5)
+    auto pow_sqaa = graph::sqrt(a)*a;
+    assert(pow_sqaa->is_match(pow_asqa) && "Expected to match.");
 }
 
 //------------------------------------------------------------------------------
@@ -1050,6 +1063,18 @@ template<typename BACKEND> void test_divide() {
            "Expected constant exponent.");
     assert(graph::constant_cast(pow_sqc_cast->get_right())->is(-2.5) &&
            "Expected constant exponent equal to -2.5.");
+    
+//  Test a/sqrt(a) -> sqrt(a)
+    auto pow_asqa = a/graph::sqrt(a);
+    auto pow_asqa_cast = graph::sqrt_cast(pow_asqa);
+    assert(pow_asqa_cast.get() && "Expected sqrt node.");
+
+//  Test sqrt(a)/a -> 1.0/sqrt(a)
+    auto pow_sqaa = graph::sqrt(a)/a;
+    auto pow_sqaa_cast = graph::divide_cast(pow_sqaa);
+    assert(pow_sqaa_cast.get() && "Expected divide node.");
+    assert(graph::sqrt_cast(pow_sqaa_cast->get_right()).get() &&
+           "Expected sqrt in denominator.");
 }
 
 //------------------------------------------------------------------------------
