@@ -689,7 +689,7 @@ namespace graph {
                        (ld->get_right()*rd->get_right());
             }
 
-//  Power reductions. Reduced cases like a^b*a^c == a^b+c.
+//  Power reductions. Reduced cases like a^b*a^c == a^(b+c).
             auto lp = pow_cast(this->left);
             auto rp = pow_cast(this->right);
             if (lp.get()) {
@@ -702,11 +702,23 @@ namespace graph {
                     return pow(lp->get_left(),
                                lp->get_right() + rp->get_right());
                 }
+                
+                auto rsq = sqrt_cast(this->right);
+                if (rsq.get() && lp->get_left()->is_match(rsq->get_arg())) {
+                    return pow(lp->get_left(),
+                               lp->get_right() + constant<typename LN::backend> (0.5));
+                }
             }
             if (rp.get()) {
                 if (rp->get_left()->is_match(this->left)) {
                     return pow(rp->get_left(),
                                rp->get_right() + constant<typename LN::backend> (1.0));
+                }
+                
+                auto lsq = sqrt_cast(this->left);
+                if (lsq.get() && rp->get_left()->is_match(lsq->get_arg())) {
+                    return pow(rp->get_left(),
+                               rp->get_right() + constant<typename LN::backend> (0.5));
                 }
             }
 
@@ -931,6 +943,39 @@ namespace graph {
                 return lm->get_left()*(lm->get_right()/this->right);
             }
 
+//  Power reductions. Reduced cases like a^b/a^c == a^(b - c).
+            auto lp = pow_cast(this->left);
+            auto rp = pow_cast(this->right);
+            if (lp.get()) {
+                if (lp->get_left()->is_match(this->right)) {
+                    return pow(lp->get_left(),
+                               lp->get_right() - constant<typename LN::backend> (1.0));
+                }
+
+                if (rp.get() && lp->get_left()->is_match(rp->get_left())) {
+                    return pow(lp->get_left(),
+                               lp->get_right() - rp->get_right());
+                }
+                            
+                auto rsq = sqrt_cast(this->right);
+                if (rsq.get() && lp->get_left()->is_match(rsq->get_arg())) {
+                    return pow(lp->get_left(),
+                               lp->get_right() - constant<typename LN::backend> (0.5));
+                }
+            }
+            if (rp.get()) {
+                if (rp->get_left()->is_match(this->left)) {
+                    return pow(rp->get_left(),
+                               constant<typename LN::backend> (1.0) - rp->get_right());
+                }
+                            
+                auto lsq = sqrt_cast(this->left);
+                if (lsq.get() && rp->get_left()->is_match(lsq->get_arg())) {
+                    return pow(rp->get_left(),
+                               constant<typename LN::backend> (0.5) - rp->get_right());
+                }
+            }
+            
             return this->shared_from_this();
         }
 
@@ -1090,7 +1135,7 @@ namespace graph {
                 return constant(l_result*m_result) + this->right;
             }
 
-//  Common factor reduction. If the left and right are both muliply nodes check
+//  Common factor reduction. If the left and right are both multiply nodes check
 //  for a common factor. So you can change a*b + (a*c) -> a*(b + c).
             auto rm = multiply_cast(this->right);
 
