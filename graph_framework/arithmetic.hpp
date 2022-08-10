@@ -11,6 +11,21 @@
 #include "node.hpp"
 
 namespace graph {
+//------------------------------------------------------------------------------
+///  @brief Check if an expression is variable like.
+///
+///  Variable like quantities can be a variable or sqrt and power of one.
+///
+///  @param[in] a Expression to check.
+///  @returns True if a is variable like.
+//------------------------------------------------------------------------------
+    template<typename N>
+    bool is_variable_like(std::shared_ptr<N> a) {
+        return variable_cast(a).get() ||
+               (sqrt_cast(a).get() && variable_cast(sqrt_cast(a)->get_arg()).get()) ||
+               (pow_cast(a).get()  && variable_cast(pow_cast(a)->get_left()).get());
+    }
+
 //******************************************************************************
 //  Add node.
 //******************************************************************************
@@ -550,7 +565,7 @@ namespace graph {
 
             if (l.get() && l->is(1)) {
                 return this->right;
-            } else if (l.get() &&  l->is(0)) {
+            } else if (l.get() && l->is(0)) {
                 return this->left;
             } else if (r.get() && r->is(1)) {
                 return this->left;
@@ -565,10 +580,9 @@ namespace graph {
                 return this->right*this->left;
             }
 
-//  Move variables to the right.
-            auto lv = variable_cast(this->left);
-            auto rv = variable_cast(this->right);
-            if (lv.get() && !rv.get()) {
+//  Move variables, sqrt of variables, and powers of variables to the right.
+            if (is_variable_like(this->left) &&
+                !is_variable_like(this->right)) {
                 return this->right*this->left;
             }
 
@@ -591,14 +605,25 @@ namespace graph {
                 return pow(this->left, constant<typename LN::backend> (2.0));
             }
 
-//  Gather common terms. (a*b)*a -> (a*a)*b, (b*a)*a -> (a*a)*b,
-//  a*(a*b) -> (a*a)*b, a*(b*a) -> (a*a)*b
+//  Gather common terms.
+//  (a*b)*a -> (a*a)*b
+//  (b*a)*a -> (a*a)*b
+//  a*(a*b) -> (a*a)*b
+//  a*(b*a) -> (a*a)*b
             auto lm = multiply_cast(this->left);
             if (lm.get()) {
                 if (this->right->is_match(lm->get_left())) {
                     return (this->right*lm->get_left())*lm->get_right();
                 } else if (this->right->is_match(lm->get_right())) {
                     return (this->right*lm->get_right())*lm->get_left();
+                }
+
+//  Assume variables, sqrt of variables, and powers of variables are on the
+//  right.
+//  (a*v)*b -> a*(v*b)
+                if (is_variable_like(lm->get_right()) &&
+                    !is_variable_like(lm->get_left())) {
+                    return lm->get_left()*(lm->get_right()*this->right);
                 }
             }
 
@@ -953,6 +978,20 @@ namespace graph {
                 } else if (lm->get_right()->is_match(rm->get_right())) {
                     return lm->get_left()/rm->get_left();
                 }
+            }
+
+//  (a/b)/c -> a/(b*c)
+            auto ld = divide_cast(this->left);
+            if (ld.get()) {
+                return ld->get_left()/(ld->get_right()*this->right);
+            }
+            
+//  Assume variables, sqrt of variables, and powers of variables are on the
+//  right.
+//  (a*v)/c -> a*(v/c)
+            if (lm.get() && is_variable_like(lm->get_right()) &&
+                !is_variable_like(lm->get_left())) {
+                return lm->get_left()*(lm->get_right()/this->right);
             }
 
 //  (c*v1)/v2 -> c*(v1/v2)

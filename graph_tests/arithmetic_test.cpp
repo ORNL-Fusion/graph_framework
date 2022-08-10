@@ -729,6 +729,21 @@ template<typename BACKEND> void test_multiply() {
 //  Test a*sqrt(a) -> a^(1.5)
     auto pow_sqaa = graph::sqrt(a)*a;
     assert(pow_sqaa->is_match(pow_asqa) && "Expected to match.");
+
+    //  (c*v)*v -> c*v^2
+    auto test_var_move = [two](graph::shared_leaf<BACKEND> x) {
+        auto var_move = (two*x)*x;
+        auto var_move_cast = graph::multiply_cast(var_move);
+        assert(var_move_cast.get() && "Expected multiply.");
+        assert(!graph::is_variable_like(var_move_cast->get_left()) &&
+               "Expected Non variable like in the left side.");
+        assert(graph::is_variable_like(var_move_cast->get_right()) &&
+               "Expected variable like in the right side.");
+    };
+
+    test_var_move(a);
+    test_var_move(pow_sqaa);
+    test_var_move(graph::sqrt(a));
 }
 
 //------------------------------------------------------------------------------
@@ -1075,6 +1090,31 @@ template<typename BACKEND> void test_divide() {
     assert(pow_sqaa_cast.get() && "Expected divide node.");
     assert(graph::sqrt_cast(pow_sqaa_cast->get_right()).get() &&
            "Expected sqrt in denominator.");
+
+//  (c*v)/v -> c*v
+//  (c/v)/v -> c/v
+    auto test_var_move = [two](graph::shared_leaf<BACKEND> x,
+                               graph::shared_leaf<BACKEND> y) {
+        auto var_move = (two*x)/y;
+        auto var_move_cast = graph::multiply_cast(var_move);
+        assert(var_move_cast.get() && "Expected multiply.");
+        assert(!graph::is_variable_like(var_move_cast->get_left()) &&
+               "Expected Non variable like in the left side.");
+        assert(graph::is_variable_like(var_move_cast->get_right()) &&
+               "Expected variable like in the right side.");
+        
+        auto var_move2 = (two/x)/y;
+        auto var_move2_cast = graph::divide_cast(var_move2);
+        assert(var_move2_cast.get() && "Expected multiply.");
+        assert(!graph::is_variable_like(var_move2_cast->get_left()) &&
+               "Expected Non variable like in the left side.");
+        assert(graph::is_variable_like(var_move2_cast->get_right()) &&
+               "Expected variable like in the right side.");
+    };
+
+    test_var_move(a, pow_sqc);
+    test_var_move(pow_sqc, a);
+    test_var_move(pow_asqa, pow_sqc);
 }
 
 //------------------------------------------------------------------------------
@@ -1201,9 +1241,31 @@ template<typename BACKEND> void test_fma() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests function for variable like expressions.
+//------------------------------------------------------------------------------
+template<typename BACKEND> void test_variable_like() {
+    auto a = graph::variable<BACKEND> (1, "");
+    auto c = graph::constant<BACKEND> (1);
+    
+    assert(graph::is_variable_like(a) && "Expected a to be variable like.");
+    assert(graph::is_variable_like(graph::sqrt(a)) &&
+           "Expected sqrt(a) to be variable like.");
+    assert(graph::is_variable_like(graph::pow(a, c)) &&
+           "Expected a^c to be variable like.");
+    
+    assert(!graph::is_variable_like(c) &&
+           "Expected c to not be variable like.");
+    assert(!graph::is_variable_like(graph::sqrt(c)) &&
+           "Expected sqrt(c) to not be variable like.");
+    assert(!graph::is_variable_like(graph::pow(c, a)) &&
+           "Expected c^a to not be variable like.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests() {
+    test_variable_like<BACKEND> ();
     test_add<BACKEND> ();
     test_subtract<BACKEND> ();
     test_multiply<BACKEND> ();
