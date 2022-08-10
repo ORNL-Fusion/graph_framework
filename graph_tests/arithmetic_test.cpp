@@ -132,20 +132,25 @@ template<typename BACKEND> void test_add() {
     auto var_b = graph::variable<BACKEND> (1, "");
     auto var_c = graph::variable<BACKEND> (1, "");
     auto common_a = var_a*var_b + var_a*var_c;
-    assert(graph::add_cast(common_a).get() == nullptr && "Did not expect add node.");
-    assert(graph::multiply_cast(common_a).get() && "Expected multiply node.");
+    assert(graph::add_cast(common_a).get() == nullptr &&
+           "Did not expect add node.");
+    assert(graph::multiply_cast(common_a).get() &&
+           "Expected multiply node.");
 
     auto common_b = var_a*var_b + var_b*var_c;
-    assert(graph::add_cast(common_b).get() == nullptr && "Did not expect add node.");
+    assert(graph::add_cast(common_b).get() == nullptr &&
+           "Did not expect add node.");
     assert(graph::multiply_cast(common_b).get() && "Expected multiply node.");
 
     auto common_c = var_a*var_c + var_b*var_c;
     assert(graph::add_cast(common_c).get() == nullptr && "Did not expect add node.");
-    assert(graph::multiply_cast(common_c).get() && "Expected multiply node.");
+    assert(graph::multiply_cast(common_c).get() &&
+           "Expected multiply node.");
 
 //  Test common denominator.
     auto common_d = var_a/var_b + var_c/var_b;
-    assert(graph::add_cast(common_d).get() == nullptr && "Did not expect add node.");
+    assert(graph::add_cast(common_d).get() == nullptr &&
+           "Did not expect add node.");
     assert(graph::divide_cast(common_d).get() && "Expected divide node.");
     
 //  Test is_match
@@ -166,6 +171,17 @@ template<typename BACKEND> void test_add() {
     auto common_power3 = var_a/graph::pow(var_b,var_c) +
                          graph::pow(var_d/var_b,var_c);
     assert(graph::divide_cast(common_power3) && "Expected Divide node.");
+    
+//  v1 + -c*v2 -> v1 - c*v2
+    auto negate = var_a + graph::constant<BACKEND> (-2)*var_b;
+    auto negate_cast = subtract_cast(negate);
+    assert(negate_cast.get() && "Expected subtract node.");
+
+//  -c1*v1 + v2 -> v2 - c*v1
+    auto negate2 = graph::constant<BACKEND> (-2)*var_a + var_b;
+    auto negate2_cast = subtract_cast(negate2);
+    assert(negate2_cast.get() && "Expected subtract node.");
+    assert(negate2_cast->get_left()->is_match(var_b) && "Expected var_b.");
 }
 
 //------------------------------------------------------------------------------
@@ -331,6 +347,11 @@ template<typename BACKEND> void test_subtract() {
            "Expected a constant on he left");
     assert(variable_cast(swap->get_right()).get() &&
            "Expected a variable on he right");
+
+//  v1 - -c*v2 -> v1 + c*v2
+    auto negate = var_a - graph::constant<BACKEND> (-2)*var_b;
+    auto negate_cast = add_cast(negate);
+    assert(negate_cast.get() && "Expected addition node.");
 }
 
 //------------------------------------------------------------------------------

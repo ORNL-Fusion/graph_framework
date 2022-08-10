@@ -88,6 +88,22 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
+//  Assume constants are on the left.
+//  v1 + -c*v2 -> v1 - c*v2
+//  -c*v1 + v2 -> v2 - c*v1
+            auto none = constant<typename LN::backend> (-1);
+            if (rm.get()) {
+                auto rmc = constant_cast(rm->get_left());
+                if (rmc.get() && rmc->evaluate().is_negative()) {
+                    return this->left - none*rm->get_left()*rm->get_right();
+                }
+            } else if (lm.get()) {
+                auto lmc = constant_cast(lm->get_left());
+                if (lmc.get() && lmc->evaluate().is_negative()) {
+                    return this->right - none*lm->get_left()*lm->get_right();
+                }
+            }
+
             if (lm.get() && rm.get()) {
                 if (lm->get_left()->is_match(rm->get_left())) {
                     return lm->get_left()*(lm->get_right() + rm->get_right());
@@ -339,6 +355,16 @@ namespace graph {
 //  for a common factor. So you can change a*b - a*c -> a*(b - c).
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
+
+//  Assume constants are on the left.
+//  v1 - -c*v2 -> v1 + c*v2
+            auto none = constant<typename LN::backend> (-1);
+            if (rm.get()) {
+                auto rmc = constant_cast(rm->get_left());
+                if (rmc.get() && rmc->evaluate().is_negative()) {
+                    return this->left + none*rm->get_left()*rm->get_right();
+                }
+            }
 
             if (lm.get() && rm.get()) {
                 if (lm->get_left()->is_match(rm->get_left())) {

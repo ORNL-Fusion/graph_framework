@@ -401,6 +401,11 @@ template<typename BACKEND> void test_backend() {
            "Expected ln(4).");
     assert(base_vec.at(1) == std::log(backend::base_cast<BACKEND> (2.0)) &&
            "Expected ln(2).");
+    
+    base_vec.set(std::vector<typename BACKEND::base> ({-4.0, -2.0}));
+    assert(base_vec.is_negative() && "Expected true.");
+    base_vec.set(std::vector<typename BACKEND::base> ({-4.0, 2.0}));
+    assert(!base_vec.is_negative() && "Expected false.");
 }
 
 //------------------------------------------------------------------------------

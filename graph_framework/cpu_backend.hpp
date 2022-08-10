@@ -157,6 +157,21 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Is every element negative.
+///
+///  @returns Returns true if every element is negative.
+//------------------------------------------------------------------------------
+        virtual bool is_negative() const final {
+            for (BASE d : data) {
+                if (std::real(d) > std::real(static_cast<BASE> (0.0))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Take sqrt.
 //------------------------------------------------------------------------------
         virtual void sqrt() final {
