@@ -130,11 +130,9 @@ namespace graph {
             auto m = multiply_cast(this->left);
 
             if (m.get()) {
-                return fma<leaf_node<typename LN::backend>,
-                           leaf_node<typename LN::backend>,
-                           leaf_node<typename RN::backend>> (m->get_left(),
-                                                             m->get_right(),
-                                                             this->right);
+                return fma(m->get_left(),
+                           m->get_right(),
+                           this->right);
             }
 
 //  Handel cases like:
@@ -178,6 +176,17 @@ namespace graph {
                 }
             }
 
+            auto lfma = fma_cast(this->left);
+            auto rfma = fma_cast(this->right);
+            
+            if (lfma.get() && rfma.get()) {
+                if (lfma->get_middle()->is_match(rfma->get_middle())) {
+                    return fma(lfma->get_left() + rfma->get_left(),
+                               lfma->get_middle(),
+                               lfma->get_right() + rfma->get_right());
+                }
+            }
+            
             return this->shared_from_this();
         }
 
@@ -426,6 +435,17 @@ namespace graph {
                                 pow(prd->get_left(), pl->get_right())) /
                                pow(pld->get_right(), pl->get_right());
                     }
+                }
+            }
+            
+            auto lfma = fma_cast(this->left);
+            auto rfma = fma_cast(this->right);
+            
+            if (lfma.get() && rfma.get()) {
+                if (lfma->get_middle()->is_match(rfma->get_middle())) {
+                    return fma(lfma->get_left() - rfma->get_left(),
+                               lfma->get_middle(),
+                               lfma->get_right() - rfma->get_right());
                 }
             }
             
@@ -1267,17 +1287,13 @@ namespace graph {
                 return constant<typename LN::backend> (1);
             }
 
-            auto temp_right = fma<LN,
-                                  leaf_node<typename MN::backend>,
-                                  leaf_node<typename RN::backend>> (this->left,
-                                                                    this->middle->df(x),
-                                                                    this->right->df(x));
+            auto temp_right = fma(this->left,
+                                  this->middle->df(x),
+                                  this->right->df(x));
 
-            return fma<leaf_node<typename LN::backend>,
-                       MN,
-                       leaf_node<typename RN::backend>> (this->left->df(x),
-                                                         this->middle,
-                                                         temp_right);
+            return fma(this->left->df(x),
+                       this->middle,
+                       temp_right);
         }
 
 //------------------------------------------------------------------------------

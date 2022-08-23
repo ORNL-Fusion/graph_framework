@@ -79,8 +79,8 @@ int main(int argc, const char * argv[]) {
             ky->set(backend::base_cast<cpu> (0.0));
             kz->set(backend::base_cast<cpu> (0.0));
             
-            auto eq = equilibrium::make_slab_density<cpu> ();
-            //auto eq = equilibrium::make_no_magnetic_field<cpu> ();
+            //auto eq = equilibrium::make_slab_density<cpu> ();
+            auto eq = equilibrium::make_no_magnetic_field<cpu> ();
 
             //solver::split_simplextic<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::bohm_gross<cpu>>

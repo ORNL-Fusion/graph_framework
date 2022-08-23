@@ -182,6 +182,12 @@ template<typename BACKEND> void test_add() {
     auto negate2_cast = subtract_cast(negate2);
     assert(negate2_cast.get() && "Expected subtract node.");
     assert(negate2_cast->get_left()->is_match(var_b) && "Expected var_b.");
+
+//  (c1*v1 + c2) + (c3*v1 + c4) -> c5*v1 + c6
+    auto addfma = graph::fma(three, var_a, one)
+                + graph::fma(three, var_a, one);
+    auto addfma_cast = graph::fma_cast(addfma);
+    assert(addfma_cast.get() && "Expected fused multiply add node.");
 }
 
 //------------------------------------------------------------------------------
@@ -352,6 +358,13 @@ template<typename BACKEND> void test_subtract() {
     auto negate = var_a - graph::constant<BACKEND> (-2)*var_b;
     auto negate_cast = add_cast(negate);
     assert(negate_cast.get() && "Expected addition node.");
+
+//  (c1*v1 + c2) - (c3*v1 + c4) -> c5*v1 - c6
+    auto three = graph::constant<BACKEND> (3);
+    auto subfma = graph::fma(three, var_a, two)
+                + graph::fma(two, var_a, three);
+    auto subfma_cast = graph::fma_cast(subfma);
+        assert(subfma_cast.get() && "Expected fused multiply add node.");
 }
 
 //------------------------------------------------------------------------------
