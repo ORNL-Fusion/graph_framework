@@ -39,8 +39,8 @@ int main(int argc, const char * argv[]) {
     const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
     const size_t num_times = 10000;
-    //const size_t num_rays = 1;
-    const size_t num_rays = 10000;
+    const size_t num_rays = 1;
+    //const size_t num_rays = 10000;
     
     std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
                                                        static_cast<unsigned int> (num_rays)),
@@ -85,8 +85,9 @@ int main(int argc, const char * argv[]) {
             //solver::split_simplextic<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::simple<cpu>>
-            solver::rk4<dispersion::ordinary_wave<cpu>>
-            //solver::rk4<dispersion::cold_plasma<cpu>>
+            //solver::rk4<dispersion::ordinary_wave<cpu>>
+            //solver::rk4<dispersion::extra_ordinary_wave<cpu>>
+            solver::rk4<dispersion::cold_plasma<cpu>>
                 solve(omega, kx, ky, kz, x, y, z, t, 30.0/num_times, eq);
             solve.init(kx);
             if (thread_number == 0) {

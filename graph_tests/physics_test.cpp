@@ -101,50 +101,50 @@ void test_constant() {
 ///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_bohm_gross(const typename BACKEND::base tolarance) {
+template<typename SOLVER>
+void test_bohm_gross(const typename SOLVER::base tolarance) {
     std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     std::uniform_real_distribution<double> real_dist(0.1, 1.0);
 
-    auto omega = graph::variable<BACKEND> (1, "\\omega");
-    auto kx = graph::variable<BACKEND> (1, "k_{x}");
-    auto ky = graph::variable<BACKEND> (1, "k_{y}");
-    auto kz = graph::variable<BACKEND> (1, "k_{z}");
-    auto x = graph::variable<BACKEND> (1, "x");
-    auto y = graph::variable<BACKEND> (1, "y");
-    auto z = graph::variable<BACKEND> (1, "z");
-    auto t = graph::variable<BACKEND> (1, "t");
+    auto omega = graph::variable<typename SOLVER::backend> (1, "\\omega");
+    auto kx = graph::variable<typename SOLVER::backend> (1, "k_{x}");
+    auto ky = graph::variable<typename SOLVER::backend> (1, "k_{y}");
+    auto kz = graph::variable<typename SOLVER::backend> (1, "k_{z}");
+    auto x = graph::variable<typename SOLVER::backend> (1, "x");
+    auto y = graph::variable<typename SOLVER::backend> (1, "y");
+    auto z = graph::variable<typename SOLVER::backend> (1, "z");
+    auto t = graph::variable<typename SOLVER::backend> (1, "t");
 
 //  Constants
-    const typename BACKEND::base q = 1.602176634E-19;
-    const typename BACKEND::base me = 9.1093837015E-31;
-    const typename BACKEND::base mu0 = M_PI*4.0E-7;
-    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
-    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
-    const typename BACKEND::base omega0 = 600.0;
-    const typename BACKEND::base ne0 = 1.0E19;
-    const typename BACKEND::base te = 1000.0;
+    const typename SOLVER::base q = 1.602176634E-19;
+    const typename SOLVER::base me = 9.1093837015E-31;
+    const typename SOLVER::base mu0 = M_PI*4.0E-7;
+    const typename SOLVER::base epsilon0 = 8.8541878138E-12;
+    const typename SOLVER::base c = 1.0/sqrt(mu0*epsilon0);
+    const typename SOLVER::base omega0 = 600.0;
+    const typename SOLVER::base ne0 = 1.0E19;
+    const typename SOLVER::base te = 1000.0;
     
-    const typename BACKEND::base omega2 = (ne0*0.9*q*q)/(epsilon0*me*c*c);
-    const typename BACKEND::base omega2p = (ne0*0.1*q*q)/(epsilon0*me*c*c);
-    const typename BACKEND::base vth2 = 2*1.602176634E-19*te/(me*c*c);
+    const typename SOLVER::base omega2 = (ne0*0.9*q*q)/(epsilon0*me*c*c);
+    const typename SOLVER::base omega2p = (ne0*0.1*q*q)/(epsilon0*me*c*c);
+    const typename SOLVER::base vth2 = 2*1.602176634E-19*te/(me*c*c);
     
-    const typename BACKEND::base k0 = std::sqrt(2.0/3.0*(omega0*omega0 - omega2)/vth2);
+    const typename SOLVER::base k0 = std::sqrt(2.0/3.0*(omega0*omega0 - omega2)/vth2);
     
 //  Omega must be greater than plasma frequency for the wave to propagate.
-    omega->set(backend::base_cast<BACKEND> (600.0));
-    kx->set(backend::base_cast<BACKEND> (1000.0));
-    ky->set(backend::base_cast<BACKEND> (0.0));
-    kz->set(backend::base_cast<BACKEND> (0.0));
-    x->set(backend::base_cast<BACKEND> (-1.0));
-    y->set(backend::base_cast<BACKEND> (0.0));
-    z->set(backend::base_cast<BACKEND> (0.0));
-    t->set(backend::base_cast<BACKEND> (0.0));
+    omega->set(backend::base_cast<typename SOLVER::backend> (600.0));
+    kx->set(backend::base_cast<typename SOLVER::backend> (1000.0));
+    ky->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    kz->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    x->set(backend::base_cast<typename SOLVER::backend> (-1.0));
+    y->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    z->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    t->set(backend::base_cast<typename SOLVER::backend> (0.0));
 
-    const typename BACKEND::base dt = 0.1;
+    const typename SOLVER::base dt = 0.1;
     
-    auto eq = equilibrium::make_no_magnetic_field<BACKEND> ();
-    solver::rk4<dispersion::bohm_gross<BACKEND>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
+    auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::backend> ();
+    SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx);
     
     const auto diff = kx->evaluate().at(0) - k0;
@@ -154,9 +154,9 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
     for (size_t i = 0; i < 20; i++) {
         solve.step();
     }
-    const typename BACKEND::base time = t->evaluate().at(0);
-    const typename BACKEND::base expected_x = -3.0/8.0*vth2*omega2p/(omega0*omega0)*time*time
-                                            + 3.0/2.0*vth2/omega0*k0*time - 1.0;
+    const typename SOLVER::base time = t->evaluate().at(0);
+    const typename SOLVER::base expected_x = -3.0/8.0*vth2*omega2p/(omega0*omega0)*time*time
+                                           + 3.0/2.0*vth2/omega0*k0*time - 1.0;
     
     const auto diff_x = x->evaluate().at(0) - expected_x;
     assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
@@ -198,48 +198,48 @@ void test_bohm_gross(const typename BACKEND::base tolarance) {
 ///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_light_wave(const typename BACKEND::base tolarance) {
+template<typename SOLVER>
+void test_light_wave(const typename SOLVER::base tolarance) {
     std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     std::uniform_real_distribution<double> real_dist(0.1, 1.0);
 
-    auto omega = graph::variable<BACKEND> (1, "\\omega");
-    auto kx = graph::variable<BACKEND> (1, "k_{x}");
-    auto ky = graph::variable<BACKEND> (1, "k_{y}");
-    auto kz = graph::variable<BACKEND> (1, "k_{z}");
-    auto x = graph::variable<BACKEND> (1, "x");
-    auto y = graph::variable<BACKEND> (1, "y");
-    auto z = graph::variable<BACKEND> (1, "z");
-    auto t = graph::variable<BACKEND> (1, "t");
+    auto omega = graph::variable<typename SOLVER::backend> (1, "\\omega");
+    auto kx = graph::variable<typename SOLVER::backend> (1, "k_{x}");
+    auto ky = graph::variable<typename SOLVER::backend> (1, "k_{y}");
+    auto kz = graph::variable<typename SOLVER::backend> (1, "k_{z}");
+    auto x = graph::variable<typename SOLVER::backend> (1, "x");
+    auto y = graph::variable<typename SOLVER::backend> (1, "y");
+    auto z = graph::variable<typename SOLVER::backend> (1, "z");
+    auto t = graph::variable<typename SOLVER::backend> (1, "t");
 
 //  Constants
-    const typename BACKEND::base q = 1.602176634E-19;
-    const typename BACKEND::base me = 9.1093837015E-31;
-    const typename BACKEND::base mu0 = M_PI*4.0E-7;
-    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
-    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
-    const typename BACKEND::base omega0 = 600.0;
-    const typename BACKEND::base ne0 = 1.0E19;
+    const typename SOLVER::base q = 1.602176634E-19;
+    const typename SOLVER::base me = 9.1093837015E-31;
+    const typename SOLVER::base mu0 = M_PI*4.0E-7;
+    const typename SOLVER::base epsilon0 = 8.8541878138E-12;
+    const typename SOLVER::base c = 1.0/sqrt(mu0*epsilon0);
+    const typename SOLVER::base omega0 = 600.0;
+    const typename SOLVER::base ne0 = 1.0E19;
     
-    const typename BACKEND::base omega2 = (ne0*0.9*q*q)/(epsilon0*me*c*c);
-    const typename BACKEND::base omega2p = (ne0*0.1*q*q)/(epsilon0*me*c*c);
+    const typename SOLVER::base omega2 = (ne0*0.9*q*q)/(epsilon0*me*c*c);
+    const typename SOLVER::base omega2p = (ne0*0.1*q*q)/(epsilon0*me*c*c);
     
-    const typename BACKEND::base k0 = std::sqrt(omega0*omega0 - omega2);
+    const typename SOLVER::base k0 = std::sqrt(omega0*omega0 - omega2);
     
 //  Omega must be greater than plasma frequency for the wave to propagate.
-    omega->set(backend::base_cast<BACKEND> (600.0));
-    kx->set(backend::base_cast<BACKEND> (100.0));
-    ky->set(backend::base_cast<BACKEND> (0.0));
-    kz->set(backend::base_cast<BACKEND> (0.0));
-    x->set(backend::base_cast<BACKEND> (-1.0));
-    y->set(backend::base_cast<BACKEND> (0.0));
-    z->set(backend::base_cast<BACKEND> (0.0));
-    t->set(backend::base_cast<BACKEND> (0.0));
+    omega->set(backend::base_cast<typename SOLVER::backend> (600.0));
+    kx->set(backend::base_cast<typename SOLVER::backend> (100.0));
+    ky->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    kz->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    x->set(backend::base_cast<typename SOLVER::backend> (-1.0));
+    y->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    z->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    t->set(backend::base_cast<typename SOLVER::backend> (0.0));
 
-    const typename BACKEND::base dt = 0.1;
+    const typename SOLVER::base dt = 0.1;
     
-    auto eq = equilibrium::make_no_magnetic_field<BACKEND> ();
-    solver::rk4<dispersion::light_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
+    auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::backend> ();
+    SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx, tolarance);
     
     const auto diff = kx->evaluate().at(0) - k0;
@@ -249,9 +249,9 @@ void test_light_wave(const typename BACKEND::base tolarance) {
     for (size_t i = 0; i < 20; i++) {
         solve.step();
     }
-    const typename BACKEND::base time = t->evaluate().at(0);
-    const typename BACKEND::base expected_x = -omega2p/(4.0*omega0*omega0)*time*time
-                                            + k0/omega0*time - 1.0;
+    const typename SOLVER::base time = t->evaluate().at(0);
+    const typename SOLVER::base expected_x = -omega2p/(4.0*omega0*omega0)*time*time
+                                           + k0/omega0*time - 1.0;
     
     const auto diff_x = x->evaluate().at(0) - expected_x;
     assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
@@ -570,8 +570,10 @@ void test_reflection(const typename BACKEND::base tolarance,
 //------------------------------------------------------------------------------
 template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
     test_constant<BACKEND> ();
-    test_bohm_gross<BACKEND> (tolarance);
-    test_light_wave<BACKEND> (tolarance);
+    test_bohm_gross<solver::rk4<dispersion::bohm_gross<BACKEND>>> (tolarance);
+    test_bohm_gross<solver::split_simplextic<dispersion::bohm_gross<BACKEND>>> (tolarance);
+    test_light_wave<solver::rk4<dispersion::light_wave<BACKEND>>> (tolarance);
+    test_light_wave<solver::split_simplextic<dispersion::light_wave<BACKEND>>> (tolarance);
     test_acoustic_wave<BACKEND> (tolarance);
     test_o_mode_wave<BACKEND> ();
     test_reflection<BACKEND> (tolarance, 0.7, 0.1, 22.0);

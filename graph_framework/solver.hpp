@@ -846,15 +846,15 @@ namespace solver {
                    zero->is_match(this->D.get_dkzdt()->df(kx)) &&
                    zero->is_match(this->D.get_dkzdt()->df(ky)) &&
                    zero->is_match(this->D.get_dkzdt()->df(kz)) &&
-                   zero->is_match(this->D.get_dxdt()->df(x)) &&
-                   zero->is_match(this->D.get_dxdt()->df(y)) &&
-                   zero->is_match(this->D.get_dxdt()->df(z)) &&
-                   zero->is_match(this->D.get_dydt()->df(x)) &&
-                   zero->is_match(this->D.get_dydt()->df(y)) &&
-                   zero->is_match(this->D.get_dydt()->df(z)) &&
-                   zero->is_match(this->D.get_dzdt()->df(x)) &&
-                   zero->is_match(this->D.get_dzdt()->df(y)) &&
-                   zero->is_match(this->D.get_dzdt()->df(z)) &&
+                   zero->is_match(this->D.get_dxdt()->df(x))   &&
+                   zero->is_match(this->D.get_dxdt()->df(y))   &&
+                   zero->is_match(this->D.get_dxdt()->df(z))   &&
+                   zero->is_match(this->D.get_dydt()->df(x))   &&
+                   zero->is_match(this->D.get_dydt()->df(y))   &&
+                   zero->is_match(this->D.get_dydt()->df(z))   &&
+                   zero->is_match(this->D.get_dzdt()->df(x))   &&
+                   zero->is_match(this->D.get_dzdt()->df(y))   &&
+                   zero->is_match(this->D.get_dzdt()->df(z))   &&
                    "Hamiltonian is not separable.");
             
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);
