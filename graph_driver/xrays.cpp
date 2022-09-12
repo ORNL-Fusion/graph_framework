@@ -79,15 +79,15 @@ int main(int argc, const char * argv[]) {
             ky->set(backend::base_cast<cpu> (0.0));
             kz->set(backend::base_cast<cpu> (0.0));
             
-            //auto eq = equilibrium::make_slab_density<cpu> ();
-            auto eq = equilibrium::make_no_magnetic_field<cpu> ();
+            auto eq = equilibrium::make_slab_density<cpu> ();
+            //auto eq = equilibrium::make_no_magnetic_field<cpu> ();
 
             //solver::split_simplextic<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::simple<cpu>>
             //solver::rk4<dispersion::ordinary_wave<cpu>>
-            //solver::rk4<dispersion::extra_ordinary_wave<cpu>>
-            solver::rk4<dispersion::cold_plasma<cpu>>
+            solver::rk4<dispersion::extra_ordinary_wave<cpu>>
+            //solver::rk4<dispersion::cold_plasma<cpu>>
                 solve(omega, kx, ky, kz, x, y, z, t, 30.0/num_times, eq);
             solve.init(kx);
             if (thread_number == 0) {

@@ -184,10 +184,25 @@ template<typename BACKEND> void test_add() {
     assert(negate2_cast->get_left()->is_match(var_b) && "Expected var_b.");
 
 //  (c1*v1 + c2) + (c3*v1 + c4) -> c5*v1 + c6
-    auto addfma = graph::fma(three, var_a, one)
-                + graph::fma(three, var_a, one);
-    auto addfma_cast = graph::fma_cast(addfma);
-    assert(addfma_cast.get() && "Expected fused multiply add node.");
+    auto addfma = graph::fma(var_b, var_a, var_d)
+                + graph::fma(var_c, var_a, var_d);
+    assert(graph::fma_cast(addfma).get() &&
+           "Expected fused multiply add node.");
+
+//  Test cases like
+//  (c1 + c2/x) + c3/x -> c1 + c4/x
+//  (c1 - c2/x) + c3/x -> c1 + c4/x
+    common_d = (one + three/var_a) + (one/var_a);
+    auto common_d_acast = graph::add_cast(common_d);
+    assert(common_d_acast.get() && "Expected add node.");
+    assert(graph::constant_cast(common_d_acast->get_left()).get() &&
+           "Expected constant on the left.");
+    
+    common_d = (one - three/var_a) + (one/var_a);
+    common_d_acast = graph::add_cast(common_d);
+    assert(common_d_acast.get() && "Expected add node.");
+    assert(graph::constant_cast(common_d_acast->get_left()).get() &&
+           "Expected constant on the left.");
 }
 
 //------------------------------------------------------------------------------
@@ -363,8 +378,22 @@ template<typename BACKEND> void test_subtract() {
     auto three = graph::constant<BACKEND> (3);
     auto subfma = graph::fma(three, var_a, two)
                 + graph::fma(two, var_a, three);
-    auto subfma_cast = graph::fma_cast(subfma);
-        assert(subfma_cast.get() && "Expected fused multiply add node.");
+    assert(graph::fma_cast(subfma).get() && "Expected fused multiply add node.");
+
+//  Test cases like
+//  (c1 + c2/x) - c3/x -> c1 + c4/x
+//  (c1 - c2/x) - c3/x -> c1 - c4/x
+    common_d = (one + three/var_a) - (one/var_a);
+    auto common_d_acast = graph::add_cast(common_d);
+    assert(common_d_acast.get() && "Expected add node.");
+    assert(graph::constant_cast(common_d_acast->get_left()).get() &&
+           "Expected constant on the left.");
+        
+    common_d = (one - three/var_a) - (one/var_a);
+    auto common_d_scast = graph::subtract_cast(common_d);
+    assert(common_d_scast.get() && "Expected subtract node.");
+    assert(graph::constant_cast(common_d_scast->get_left()).get() &&
+           "Expected constant on the left.");
 }
 
 //------------------------------------------------------------------------------
@@ -1272,6 +1301,9 @@ template<typename BACKEND> void test_fma() {
     assert(reduce4_cast.get() && "Expected multiply node.");
     assert(reduce4_cast->get_right()->is_match(var_b) &&
            "Expected common var_b");
+
+    assert(graph::multiply_cast(graph::fma(two, var_a, one)).get() &&
+           "Expected multiply node.");
 }
 
 //------------------------------------------------------------------------------

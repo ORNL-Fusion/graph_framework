@@ -148,7 +148,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
     solve.init(kx);
     
     const auto diff = kx->evaluate().at(0) - k0;
-    assert(std::abs(diff*diff) < 1.0E-24 &&
+    assert(std::abs(diff*diff) < 8.0E-24 &&
            "Failed to reach expected k0.");
     
     for (size_t i = 0; i < 20; i++) {
@@ -481,9 +481,8 @@ void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
     kx->set(1, backend::base_cast<BACKEND> (0.0));
     t->set(0, backend::base_cast<BACKEND> (0.0));
     t->set(1, backend::base_cast<BACKEND> (0.0));
-    solve.init(x);
+    solve.init(x, 5.0E-30);
 
-    const typename BACKEND::base wlcut_pos = x->evaluate().at(0);
     wpecut_pos = x->evaluate().at(1);
     
 //  Set wave back to zero.

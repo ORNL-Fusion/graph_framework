@@ -126,6 +126,22 @@ namespace graph {
                 return (ld->get_left() + rd->get_left())/ld->get_right();
             }
 
+//  Move cases like
+//  (c1 + c2/x) + c3/y -> c1 + (c2/x + c3/y)
+//  (c1 - c2/x) + c3/y -> c1 + (c3/y - c2/x)
+//  in case of common denominators.
+            if (rd.get()) {
+                auto la = add_cast(this->left);
+                if (la.get() && divide_cast(la->get_right()).get()) {
+                    return la->get_left() + (la->get_right() + this->right);
+                }
+                            
+                auto ls = subtract_cast(this->left);
+                if (ls.get() && divide_cast(ls->get_right()).get()) {
+                    return ls->get_left() + (this->right - ls->get_right());
+                }
+            }
+
 //  Fused multiply add reductions.
             auto m = multiply_cast(this->left);
 
@@ -135,7 +151,7 @@ namespace graph {
                            this->right);
             }
 
-//  Handel cases like:
+//  Handle cases like:
 //  (a/y)^e + b/y^e -> (a^2 + b)/(y^e)
 //  b/y^e + (a/y)^e -> (b + a^2)/(y^e)
 //  (a/y)^e + (b/y)^e -> (a^2 + b^2)/(y^e)
@@ -185,6 +201,12 @@ namespace graph {
                                lfma->get_middle(),
                                lfma->get_right() + rfma->get_right());
                 }
+            }
+
+            if (lfma.get()) {
+                return fma(lfma->get_left(),
+                           lfma->get_middle(),
+                           lfma->get_right() + this->right);
             }
             
             return this->shared_from_this();
@@ -397,7 +419,23 @@ namespace graph {
                 return (ld->get_left() - rd->get_left())/ld->get_right();
             }
 
-//  Handel cases like:
+//  Move cases like
+//  (c1 + c2/x) - c3/y -> c1 + (c2/x - c3/y)
+//  (c1 - c2/x) - c3/y -> c1 - (c2/x + c3/y)
+//  in case of common denominators.
+            if (rd.get()) {
+                auto la = add_cast(this->left);
+                if (la.get() && divide_cast(la->get_right()).get()) {
+                    return la->get_left() + (la->get_right() - this->right);
+                }
+                
+                auto ls = subtract_cast(this->left);
+                if (ls.get() && divide_cast(ls->get_right()).get()) {
+                    return ls->get_left() - (this->right + ls->get_right());
+                }
+            }
+
+//  Handle cases like:
 //  (a/y)^e - b/y^e -> (a^2 - b)/(y^e)
 //  b/y^e - (a/y)^e -> (b - a^2)/(y^e)
 //  (a/y)^e - (b/y)^e -> (a^2 - b^2)/(y^e)
@@ -437,7 +475,7 @@ namespace graph {
                     }
                 }
             }
-            
+
             auto lfma = fma_cast(this->left);
             auto rfma = fma_cast(this->right);
             
@@ -448,7 +486,7 @@ namespace graph {
                                lfma->get_right() - rfma->get_right());
                 }
             }
-            
+
             return this->shared_from_this();
         }
 
@@ -1270,6 +1308,11 @@ namespace graph {
                 }
             }
 
+//  Promote constants out to the left.
+            if (l.get() && r.get()) {
+                return this->left*(this->middle + this->right/this->left);
+            }
+            
             return this->shared_from_this();
         }
 
