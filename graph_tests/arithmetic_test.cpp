@@ -203,6 +203,10 @@ template<typename BACKEND> void test_add() {
     assert(common_d_acast.get() && "Expected add node.");
     assert(graph::constant_cast(common_d_acast->get_left()).get() &&
            "Expected constant on the left.");
+
+//  c1*a + c2*b -> c1*(a + c2*b)
+    assert(graph::multiply_cast(three*variable + (one + one)*var_b).get() &&
+           "Expected multilpy node.");
 }
 
 //------------------------------------------------------------------------------
@@ -374,11 +378,11 @@ template<typename BACKEND> void test_subtract() {
     auto negate_cast = add_cast(negate);
     assert(negate_cast.get() && "Expected addition node.");
 
-//  (c1*v1 + c2) - (c3*v1 + c4) -> c5*v1 - c6
+//  (c1*v1 + c2) - (c3*v1 + c4) -> c5*(v1 - c6)
     auto three = graph::constant<BACKEND> (3);
     auto subfma = graph::fma(three, var_a, two)
                 + graph::fma(two, var_a, three);
-    assert(graph::fma_cast(subfma).get() && "Expected fused multiply add node.");
+    assert(graph::multiply_cast(subfma).get() && "Expected a multiply node.");
 
 //  Test cases like
 //  (c1 + c2/x) - c3/x -> c1 + c4/x
@@ -394,6 +398,10 @@ template<typename BACKEND> void test_subtract() {
     assert(common_d_scast.get() && "Expected subtract node.");
     assert(graph::constant_cast(common_d_scast->get_left()).get() &&
            "Expected constant on the left.");
+    
+//  c1*a - c2*b -> c1*(a - c2*b)
+    assert(graph::multiply_cast(three*var_a - (one + one)*var_b).get() &&
+           "Expected multilpy node.");
 }
 
 //------------------------------------------------------------------------------
@@ -626,21 +634,6 @@ template<typename BACKEND> void test_multiply() {
     assert(graph::constant_cast(gather_v5_cast->get_right())->is(2) &&
            "Expected power of 2.");
 
-//  Test reduction of a constant*fma node.
-    auto c = graph::constant<BACKEND> (3);
-    auto fma = graph::fma(graph::variable<BACKEND> (1, ""),
-                          graph::variable<BACKEND> (1, ""),
-                          graph::variable<BACKEND> (1, ""));
-    auto cfma = graph::fma_cast(c*fma);
-    assert(cfma.get() && "Expected fma node.");
-    assert(graph::multiply_cast(cfma->get_right()).get() &&
-           "Expected multiply node in add branch.");
-
-    auto fmac = graph::fma_cast(fma*c);
-    assert(fmac.get() && "Expected fma node.");
-    assert(graph::multiply_cast(fmac->get_right()).get() &&
-           "Expected multiply node in add branch.");
-
 //  Test gather of terms. This test is setup to trigger an infinite recursive
 //  loop if a critical check is not in place no need to check the values.
     auto a = graph::variable<BACKEND> (1, "");
@@ -684,30 +677,30 @@ template<typename BACKEND> void test_multiply() {
 
 //  Test c1*(v/c2) -> c6*v
     auto c6 = two*(a/three);
-    auto c6_cast = graph::divide_cast(c6);
-    assert(c6_cast.get() && "Expected divide node.");
-    assert(graph::constant_cast(c6_cast->get_right()) &&
-           "Expected constant in the denominator.");
-    assert(graph::variable_cast(c6_cast->get_left()) &&
-           "Expected variable in the numerator.");
+    auto c6_cast = graph::multiply_cast(c6);
+    assert(c6_cast.get() && "Expected multiply node.");
+    assert(graph::constant_cast(c6_cast->get_left()) &&
+           "Expected constant for the left.");
+    assert(graph::variable_cast(c6_cast->get_right()) &&
+           "Expected variable for the right.");
 
-//  Test (c2/v)*c1 -> c7*v
+//  Test (c2/v)*c1 -> c7/v
     auto c7 = (three/a)*two;
     auto c7_cast = graph::divide_cast(c7);
     assert(c7_cast.get() && "Expected divide node.");
     assert(graph::constant_cast(c7_cast->get_left()) &&
-           "Expected constant in the numerator.");
+           "Expected constant for the numerator.");
     assert(graph::variable_cast(c7_cast->get_right()) &&
-           "Expected variable in the denominator.");
+           "Expected variable for the denominator.");
 
 //  Test (v/c2)*c1 -> c8*v
     auto c8 = two*(a/three);
-    auto c8_cast = graph::divide_cast(c8);
+    auto c8_cast = graph::multiply_cast(c8);
     assert(c8_cast.get() && "Expected divide node.");
-    assert(graph::constant_cast(c8_cast->get_right()) &&
-           "Expected constant in the denominator.");
-    assert(graph::variable_cast(c8_cast->get_left()) &&
-           "Expected variable in the numerator.");
+    assert(graph::constant_cast(c8_cast->get_left()) &&
+           "Expected constant for the left.");
+    assert(graph::variable_cast(c8_cast->get_right()) &&
+           "Expected variable for the right.");
 
 //  Test v1*(c*v2) -> c*(v1*v2)
     auto c9 = a*(three*variable);
@@ -891,9 +884,10 @@ template<typename BACKEND> void test_divide() {
                                            backend::base_cast<BACKEND> (3.0) &&
            "Expected 2/3 for result.");
 
+//  v/c1 -> (1/c1)*v -> c2*v
     auto var_divided_two = variable/two;
-    assert(graph::divide_cast(var_divided_two).get() &&
-           "Expected divide node.");
+    assert(graph::multiply_cast(var_divided_two).get() &&
+           "Expected multiply node.");
     const BACKEND var_divided_two_result = var_divided_two->evaluate();
     assert(var_divided_two_result.size() == 1 && "Expected single value.");
     assert(var_divided_two_result.at(0) == backend::base_cast<BACKEND> (3.0) /
@@ -922,8 +916,8 @@ template<typename BACKEND> void test_divide() {
            "Expected to recover numerator.");
 
     auto varvec_divided_two = varvec/two;
-    assert(graph::divide_cast(varvec_divided_two).get() &&
-           "Expect divide node.");
+    assert(graph::multiply_cast(varvec_divided_two).get() &&
+           "Expect mutliply node.");
     const BACKEND varvec_divided_two_result = varvec_divided_two->evaluate();
     assert(varvec_divided_two_result.size() == 2 && "Size mismatch in result.");
     assert(varvec_divided_two_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
@@ -1071,23 +1065,23 @@ template<typename BACKEND> void test_divide() {
     assert(graph::variable_cast(c4_cast->get_right()).get() &&
            "Expected a variable in the denominator");
 
-//  (c1*v)/c2 -> v/c5
+//  (c1*v)/c2 -> c5*v
     auto c5 = (two*variable)/three;
-    auto c5_cast = graph::divide_cast(c5);
-    assert(c5_cast.get() && "Expected divide node");
-    assert(graph::variable_cast(c5_cast->get_left()).get() &&
-           "Expected a variable in numerator.");
-    assert(graph::constant_cast(c5_cast->get_right()).get() &&
-           "Expected a constant in the denominator");
+    auto c5_cast = graph::multiply_cast(c5);
+    assert(c5_cast.get() && "Expected multiply node");
+    assert(graph::constant_cast(c5_cast->get_left()).get() &&
+           "Expected a constant in the numerator");
+    assert(graph::variable_cast(c5_cast->get_right()).get() &&
+           "Expected a variable in the denominator.");
 
-//  (v*c1)/c2 -> v/c5
+//  (v*c1)/c2 -> c5*v
     auto c6 = (variable*two)/three;
-    auto c6_cast = graph::divide_cast(c6);
-    assert(c6_cast.get() && "Expected divide node");
-    assert(graph::variable_cast(c6_cast->get_left()).get() &&
-           "Expected a variable in numerator.");
-    assert(graph::constant_cast(c6_cast->get_right()).get() &&
-           "Expected a constant in the denominator");
+    auto c6_cast = graph::multiply_cast(c6);
+    assert(c6_cast.get() && "Expected multiply node");
+    assert(graph::constant_cast(c6_cast->get_left()).get() &&
+           "Expected a constant in the numerator");
+    assert(graph::variable_cast(c6_cast->get_right()).get() &&
+           "Expected a variable in the denominator.");
 
 //  (c*v1)/v2 -> c*(v1/v2)
     auto a = graph::variable<BACKEND> (1, "");
@@ -1304,6 +1298,34 @@ template<typename BACKEND> void test_fma() {
 
     assert(graph::multiply_cast(graph::fma(two, var_a, one)).get() &&
            "Expected multiply node.");
+    
+//  fma(c1*a,b,c2*d) -> c1*(a*b + c2/c1*d)
+    assert(graph::multiply_cast(graph::fma(two*var_b,
+                                           var_a,
+                                           two*two*var_b)).get() &&
+           "Expected multiply node.");
+
+//  fma(c1*a,b,c2/d) -> c1*(a*b + c1/(c2*d))
+//  fma(c1*a,b,d/c2) -> c1*(a*b + d/(c1*c2))
+    assert(graph::multiply_cast(graph::fma(two*var_b,
+                                           var_a,
+                                           two*two/var_b)).get() &&
+           "Expected multiply node.");
+    assert(graph::multiply_cast(graph::fma(two*var_b,
+                                           var_a,
+                                           var_b/(two*two))).get() &&
+           "Expected multiply node.");
+
+//  fma(a,v1,b*v2) -> (a + b*v1/v2)*v1
+//  fma(a,v1,c*b*v2) -> (a + c*b*v1/v2)*v1
+    assert(graph::multiply_cast(graph::fma(two,
+                                           var_a,
+                                           two*sqrt(var_a))).get() &&
+           "Expected multiply node.");
+    assert(graph::multiply_cast(graph::fma(two,
+                                           var_a,
+                                           two*(var_b*sqrt(var_a)))).get() &&
+           "Expected multiply node.");
 }
 
 //------------------------------------------------------------------------------
@@ -1325,6 +1347,47 @@ template<typename BACKEND> void test_variable_like() {
            "Expected sqrt(c) to not be variable like.");
     assert(!graph::is_variable_like(graph::pow(c, a)) &&
            "Expected c^a to not be variable like.");
+    
+    assert(graph::get_argument(a)->is_match(a) &&
+           "Expected argument of a.");
+    assert(graph::get_argument(graph::sqrt(a))->is_match(a) &&
+           "Expected argument of a.");
+    assert(graph::get_argument(graph::pow(a, c))->is_match(a) &&
+           "Expected argument of a.");
+    
+    assert(graph::is_same_variable_like(a, graph::sqrt(a)) &&
+           "Expected same.");
+    assert(graph::is_same_variable_like(graph::sqrt(a), a) &&
+           "Expected same.");
+    assert(graph::is_same_variable_like(a, graph::pow(a, c)) &&
+           "Expected same.");
+    assert(graph::is_same_variable_like(graph::pow(a, c), a) &&
+           "Expected same.");
+    assert(graph::is_same_variable_like(graph::sqrt(a),
+                                        graph::pow(a, c)) &&
+           "Expected same.");
+    assert(graph::is_same_variable_like(graph::pow(a, c),
+                                        graph::sqrt(a)) &&
+           "Expected same.");
+    assert(!graph::is_same_variable_like(graph::pow(c, a),
+                                         graph::sqrt(a)) &&
+           "Expected different.");
+    
+    auto b = graph::variable<BACKEND> (1, "");
+    assert(!graph::is_same_variable_like(a, graph::sqrt(b)) &&
+           "Expected different.");
+    assert(!graph::is_same_variable_like(graph::sqrt(a), b) &&
+           "Expected different.");
+    assert(!graph::is_same_variable_like(a, graph::pow(b, c)) &&
+           "Expected different.");
+    assert(!graph::is_same_variable_like(graph::pow(a, c), b) &&
+           "Expected different.");
+    assert(!graph::is_same_variable_like(graph::sqrt(a),
+                                         graph::pow(b, c)) &&
+           "Expected different.");
+    assert(!graph::is_same_variable_like(graph::pow(a, c),
+                                         graph::sqrt(b)) &&
+           "Expected different.");
 }
 
 //------------------------------------------------------------------------------

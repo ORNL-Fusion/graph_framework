@@ -11,7 +11,7 @@
 #include <cassert>
 
 #include "../graph_framework/cpu_backend.hpp"
-#include "../graph_framework/dispersion.hpp"
+#include "../graph_framework/solver.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Test the solver.
@@ -84,6 +84,6 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 int main(int argc, const char * argv[]) {
     run_tests<backend::cpu<float>> (1.0E-14);
     run_tests<backend::cpu<double>> (1.0E-30);
-    run_tests<backend::cpu<std::complex<float>>> (1.0E-14);
+    run_tests<backend::cpu<std::complex<float>>> (2.0E-14);
     run_tests<backend::cpu<std::complex<double>>> (1.0E-30);
 }

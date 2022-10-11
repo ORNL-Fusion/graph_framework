@@ -26,6 +26,43 @@ namespace graph {
                (pow_cast(a).get()  && variable_cast(pow_cast(a)->get_left()).get());
     }
 
+//------------------------------------------------------------------------------
+///  @brief Get the argument of a variable like object.
+///
+///  @param[in] a Expression to check.
+///  @returns The agument of a.
+//------------------------------------------------------------------------------
+    template<typename N>
+    std::shared_ptr<N> get_argument(std::shared_ptr<N> a) {
+        if (variable_cast(a).get()) {
+            return a;
+        } else if (sqrt_cast(a).get() &&
+                   variable_cast(sqrt_cast(a)->get_arg()).get()) {
+            return sqrt_cast(a)->get_arg();
+        } else if (pow_cast(a).get()  &&
+                   variable_cast(pow_cast(a)->get_left()).get()) {
+            return pow_cast(a)->get_left();
+        }
+        assert(false && "Should never reach this point.");
+        return nullptr;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Check variable like objects are the same.
+///
+///  @param[in] a Expression to check.
+///  @param[in] b Expression to check.
+///  @returns True if a is variable like.
+//------------------------------------------------------------------------------
+    template<typename N>
+    bool is_same_variable_like(std::shared_ptr<N> a,
+                               std::shared_ptr<N> b) {
+        return is_variable_like(a) &&
+               is_variable_like(b) &&
+               get_argument(a)->is_match(get_argument(b));
+        
+    }
+
 //******************************************************************************
 //  Add node.
 //******************************************************************************
@@ -113,6 +150,14 @@ namespace graph {
                     return lm->get_right()*(lm->get_left() + rm->get_right());
                 } else if (lm->get_right()->is_match(rm->get_right())) {
                     return lm->get_right()*(lm->get_left() + rm->get_left());
+                }
+
+//  Change cases like c1*a + c2*b -> c1*(a + c2*b)
+                auto lmc = constant_cast(lm->get_left());
+                auto rmc = constant_cast(rm->get_left());
+                if (lmc.get() && rmc.get()) {
+                    return lm->get_left()*(lm->get_right() +
+                                           (rm->get_left()/lm->get_left())*rm->get_right());
                 }
             }
 
@@ -407,6 +452,14 @@ namespace graph {
                 } else if (lm->get_right()->is_match(rm->get_right())) {
                     return lm->get_right()*(lm->get_left() - rm->get_left());
                 }
+
+//  Change cases like c1*a - c2*b -> c1*(a - c2*b)
+                auto lmc = constant_cast(lm->get_left());
+                auto rmc = constant_cast(rm->get_left());
+                if (lmc.get() && rmc.get()) {
+                    return lm->get_left()*(lm->get_right() -
+                                           (rm->get_left()/lm->get_left())*rm->get_right());
+                }
             }
 
 //  Common denominator reduction. If the left and right are both divide nodes
@@ -670,20 +723,6 @@ namespace graph {
                 return this->right*this->left;
             }
 
-//  Reduce constants multiplied by fused multiply add nodes.
-            auto rfma = fma_cast(this->right);
-            if (l.get() && rfma.get()) {
-                return fma(this->left*rfma->get_left(),
-                           rfma->get_middle(),
-                           this->left*rfma->get_right());
-            }
-            auto lfma = fma_cast(this->left);
-            if (r.get() && lfma.get()) {
-                return fma(this->right*lfma->get_left(),
-                           lfma->get_middle(),
-                           this->right*lfma->get_right());
-            }
-
 //  Reduce x*x to x^2
             if (this->left->is_match(this->right)) {
                 return pow(this->left, constant<typename LN::backend> (2.0));
@@ -700,6 +739,12 @@ namespace graph {
                     return (this->right*lm->get_left())*lm->get_right();
                 } else if (this->right->is_match(lm->get_right())) {
                     return (this->right*lm->get_right())*lm->get_left();
+                }
+
+//  Promote constants before variables.
+//  (c*v1)*v2 -> c*(v1*v2)
+                if (constant_cast(lm->get_left()).get()) {
+                    return lm->get_left()*(lm->get_right()*this->right);
                 }
 
 //  Assume variables, sqrt of variables, and powers of variables are on the
@@ -727,11 +772,8 @@ namespace graph {
             }
 
 //  v1*(c*v2) -> c*(v1*v2)
-//  (c*v1)*v2 -> c*(v1*v2)
             if (rm.get() && constant_cast(rm->get_left()).get()) {
                 return rm->get_left()*(this->left*rm->get_right());
-            } else if (lm.get() && constant_cast(lm->get_left()).get()) {
-                return lm->get_left()*(lm->get_right()*this->right);
             }
 
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
@@ -1012,6 +1054,12 @@ namespace graph {
                 return constant(this->evaluate());
             }
 
+//  Reduce cases of a/c1 -> c2*a
+            if (r.get()) {
+                return (constant<typename LN::backend> (1)/this->right) *
+                       this->left;
+            }
+
 //  Reduce fused multiply divided by constant nodes.
             auto lfma = fma_cast(this->left);
             if (r.get() && lfma.get()) {
@@ -1026,14 +1074,14 @@ namespace graph {
 
 //  Assume constants are always on the left.
 //  c1/(c2*v) -> c3/v
-//  (c1*v)/c2 -> v/c3
+//  (c1*v)/c2 -> c3*v
             if (rm.get() && l.get()) {
                 if (constant_cast(rm->get_left()).get()) {
                     return (this->left/rm->get_left())/rm->get_right();
                 }
             } else if (lm.get() && r.get()) {
                 if (constant_cast(lm->get_left()).get()) {
-                    return lm->get_right()/(this->right/lm->get_left());
+                    return (lm->get_left()/this->right)*lm->get_right();
                 }
             }
 
@@ -1295,7 +1343,6 @@ namespace graph {
 //  Common factor reduction. If the left and right are both multiply nodes check
 //  for a common factor. So you can change a*b + (a*c) -> a*(b + c).
             auto rm = multiply_cast(this->right);
-
             if (rm.get()) {
                 if (rm->get_left()->is_match(this->left)) {
                     return this->left*(this->middle + rm->get_right());
@@ -1305,6 +1352,45 @@ namespace graph {
                     return this->left*(this->middle + rm->get_left());
                 } else if (rm->get_right()->is_match(this->middle)) {
                     return this->middle*(this->left + rm->get_left());
+                }
+            }
+
+//  Handle cases like.
+//  fma(c1*a,b,c2*d) -> c1*(a*b + c2/c1*d)
+            auto lm = multiply_cast(this->left);
+            if (lm.get() && rm.get()) {
+                auto rmc = constant_cast(rm->get_left());
+                if (rmc.get()) {
+                    return lm->get_left()*fma(lm->get_right(),
+                                              this->middle,
+                                              (rm->get_left()/lm->get_left())*rm->get_right());
+                }
+            }
+//  fma(c1*a,b,c2/d) -> c1*(a*b + c1/(c2*d))
+//  fma(c1*a,b,d/c2) -> c1*(a*b + d/(c1*c2))
+            auto rd = divide_cast(this->right);
+            if (lm.get() && rd.get()) {
+                if (constant_cast(rd->get_left()).get() ||
+                    constant_cast(rd->get_right()).get()) {
+                    return lm->get_left()*fma(lm->get_right(),
+                                              this->middle,
+                                              rd->get_left()/(lm->get_left()*rd->get_right()));
+                }
+            }
+
+//  Handle cases like.
+//  fma(a,v1,b*v2) -> (a + b*v1/v2)*v1
+//  fma(a,v1,c*b*v2) -> (a + c*b*v1/v2)*v1
+            if (rm.get()) {
+                if (is_same_variable_like(this->middle, rm->get_right())) {
+                    return (this->left + rm->get_left()*this->middle/rm->get_right()) *
+                           this->middle*rm->get_right();
+                }
+                auto rmm = multiply_cast(rm->get_right());
+                if (rmm.get() &&
+                    is_same_variable_like(this->middle, rmm->get_right())) {
+                    return (this->left + rm->get_left()*rmm->get_left()*this->middle/rmm->get_right()) *
+                           this->middle;
                 }
             }
 
@@ -1365,9 +1451,23 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const final {
             std::cout << "\\left(";
-            this->left->to_latex();
+            if (add_cast(this->left).get() ||
+                subtract_cast(this->left).get()) {
+                std::cout << "\\left(";
+                this->left->to_latex();
+                std::cout << "\\right)";
+            } else {
+                this->left->to_latex();
+            }
             std::cout << " ";
-            this->middle->to_latex();
+            if (add_cast(this->right).get() ||
+                subtract_cast(this->right).get()) {
+                std::cout << "\\left(";
+                this->middle->to_latex();
+                std::cout << "\\right)";
+            } else {
+                this->middle->to_latex();
+            }
             std::cout << "+";
             this->right->to_latex();
             std::cout << "\\right)";

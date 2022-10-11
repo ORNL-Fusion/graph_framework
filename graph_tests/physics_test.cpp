@@ -148,7 +148,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
     solve.init(kx);
     
     const auto diff = kx->evaluate().at(0) - k0;
-    assert(std::abs(diff*diff) < 8.0E-24 &&
+    assert(std::abs(diff*diff) < 3.0E-23 &&
            "Failed to reach expected k0.");
     
     for (size_t i = 0; i < 20; i++) {
@@ -411,21 +411,6 @@ void test_o_mode_wave() {
 //------------------------------------------------------------------------------
 template<typename BACKEND>
 void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
-    const typename BACKEND::base q = 1.602176634E-19;
-    const typename BACKEND::base me = 9.1093837015E-31;
-    const typename BACKEND::base mu0 = M_PI*4.0E-7;
-    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
-    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
-    const typename BACKEND::base OmegaCE = -q/(me*c);
-    
-    const typename BACKEND::base ne0 = 1.0E19;
-    
-    const typename BACKEND::base wce = -q/(me*c);
-    
-    const typename BACKEND::base wpe = std::sqrt(ne0*q*q/(epsilon0*me*c*c));
-    const typename BACKEND::base wh = wpe + wce;
-    const typename BACKEND::base wr = 0.5*(wce + std::sqrt(wce*wce + 4.0*wpe*wpe));
-    
     const typename BACKEND::base omega0 = 1100.0;
 
     auto w = graph::variable<BACKEND> (2, omega0, "\\omega");
@@ -588,5 +573,5 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 int main(int argc, const char * argv[]) {
 //  No there is not enough precision in float to pass the test.
     run_tests<backend::cpu<double>> (1.0E-30);
-    run_tests<backend::cpu<std::complex<double>>> (5.0E-29);
+    run_tests<backend::cpu<std::complex<double>>> (2.0E-30);
 }

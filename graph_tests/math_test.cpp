@@ -179,16 +179,16 @@ void test_pow() {
 //  (c/Sqrt(b))^a -> c^a/b^a/2
     assert(graph::divide_cast(graph::pow(two/graph::sqrt(ten), ten)).get() &&
            "Expected divide node.");
-//  (Sqrt(b)/c)^a -> (b^a/2)/c^a
-    assert(graph::divide_cast(graph::pow(graph::sqrt(ten)/two, ten)).get() &&
-           "Expected divide node.");
+//  (Sqrt(b)/c)^a -> (b^a/2)/c^a -> c2*b^a
+    assert(graph::multiply_cast(graph::pow(graph::sqrt(ten)/two, ten)).get() &&
+           "Expected multiply node.");
 
 //  (c/(b^d))^a -> c^a/(b^(a*d))
     assert(graph::divide_cast(graph::pow(two/graph::pow(ten, two), ten)).get() &&
            "Expected divide node.");
-//  ((b^d)/c))^a -> (b^(a*d))/c^a
-    assert(graph::divide_cast(graph::pow(graph::pow(ten, two)/two, ten)).get() &&
-           "Expected divide node.");
+//  ((b^d)/c))^a -> (b^(a*d))/c^a -> c2*b^a
+    assert(graph::multiply_cast(graph::pow(graph::pow(ten, two)/two, ten)).get() &&
+           "Expected multiply node.");
 
 //  a^1/2 -> sqrt(a);
     assert(graph::sqrt_cast(graph::pow(ten, one/two)).get() &&
@@ -210,12 +210,14 @@ void test_pow() {
            "Expected multiply node.");
     assert(graph::divide_cast(graph::pow(two/ten, two)).get() &&
            "Expected divide node.");
-    assert(graph::divide_cast(graph::pow(ten/two, two)).get() &&
-           "Expected divide node.");
-    
+// (v/c)^a -> v^a/c^a -> c2*v^a
+    assert(graph::multiply_cast(graph::pow(ten/two, two)).get() &&
+           "Expected multiply node.");
+
+//  sqrt(a)^a -> a^(b/c) -> a^(c2*b)
     auto pow_sqrt = graph::pow_cast(graph::pow(graph::sqrt(ten), ten));
-    assert(graph::divide_cast(pow_sqrt->get_right()).get() &&
-           "Expected divide node.");
+    assert(graph::multiply_cast(pow_sqrt->get_right()).get() &&
+           "Expected mutliply node.");
     
 //  Test derivatives.
     auto x2 = graph::pow(ten, two);
