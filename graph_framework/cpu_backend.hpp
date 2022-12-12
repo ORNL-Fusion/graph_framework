@@ -20,7 +20,7 @@ namespace backend {
 //  CPU Data buffer.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Class representing a generic buffer.
+///  @brief Class representing a cpu backend.
 //------------------------------------------------------------------------------
     template<typename BASE>
     class cpu final : public buffer<BASE> {

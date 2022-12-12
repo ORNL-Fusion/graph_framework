@@ -14,6 +14,38 @@ set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
 option (USE_REDUCE "Enable the graph reduction" ON)
 
 #-------------------------------------------------------------------------------
+#  GPU config
+#-------------------------------------------------------------------------------
+
+option (USE_METAL "Enable the metal backend" OFF)
+
+if (${USE_METAL})
+    enable_language (OBJCXX)
+    
+    add_library (metal_lib INTERFACE)
+    target_link_libraries (metal_lib
+                           INTERFACE
+                           "-framework Metal"
+                           "-framework Foundation"
+    )
+    
+    target_compile_definitions (metal_lib
+                                INTERFACE
+                                USE_METAL
+    )
+    target_compile_options (metal_lib
+                            INTERFACE
+                            -fobjc-arc
+    )
+endif ()
+
+add_library (gpu_lib INTERFACE)
+target_link_libraries (gpu_lib
+                       INTERFACE
+                       $<$<BOOL:${USE_METAL}>:metal_lib>
+)
+
+#-------------------------------------------------------------------------------
 #  Sanitizer options
 #-------------------------------------------------------------------------------
 add_library (sanitizer INTERFACE)
@@ -59,6 +91,14 @@ macro (add_tool_target target)
                     PRIVATE
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp>
     )
+    
+    if (${USE_METAL})
+        set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp
+                                     PROPERTIES
+                                     LANGUAGE OBJCXX
+        )
+    endif ()
+    
     target_link_libraries (${target}
                            PUBLIC
                            rays

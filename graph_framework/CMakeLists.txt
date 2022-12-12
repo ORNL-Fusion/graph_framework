@@ -15,6 +15,7 @@ target_include_directories (rays
 target_link_libraries (rays
                        INTERFACE
                        sanitizer
+                       gpu_lib
 )
 target_precompile_headers (rays
                            INTERFACE
@@ -28,4 +29,7 @@ target_precompile_headers (rays
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/trigonometry.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vector.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/equilibrium.hpp>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jit.hpp>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/register.hpp>
+                           
 )

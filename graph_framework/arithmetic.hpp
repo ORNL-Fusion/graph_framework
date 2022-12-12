@@ -276,6 +276,30 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "    const ";
+                jit::add_type<LN> (stream);
+                stream << " " << registers[this] << " = "
+                       << registers[l.get()] << " + "
+                       << registers[r.get()] << ";"
+                       << std::endl;
+            }
+            
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -560,6 +584,30 @@ namespace graph {
             } else {
                 return this->left->df(x) - this->right->df(x);
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "    const ";
+                jit::add_type<LN> (stream);
+                stream << " " << registers[this] << " = "
+                       << registers[l.get()] << " - "
+                       << registers[r.get()] << ";"
+                       << std::endl;
+            }
+            
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -915,6 +963,30 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                             jit::register_map<LN> &registers) final {
+            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "    const ";
+                jit::add_type<LN> (stream);
+                stream << " " << registers[this] << " = "
+                       << registers[l.get()] << "*"
+                       << registers[r.get()] << ";"
+                       << std::endl;
+            }
+            
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -1206,6 +1278,32 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "    const ";
+                jit::add_type<LN> (stream);
+                //std::cout << ((registers.find(r.get()) == registers.end()) ? "True" : registers[r.get()])
+                //          << std::endl;
+                stream << " " << registers[this] << " = "
+                       << registers[l.get()] << "/"
+                       << registers[r.get()] << ";"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -1427,6 +1525,32 @@ namespace graph {
             return fma(this->left->df(x),
                        this->middle,
                        temp_right);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+            shared_leaf<typename MN::backend> m = this->middle->compile(stream, registers);
+            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "    const ";
+                jit::add_type<LN> (stream);
+                stream << " " << registers[this] << " = fma("
+                       << registers[l.get()] << ", "
+                       << registers[m.get()] << ", "
+                       << registers[r.get()] << ");"
+                       << std::endl;
+            }
+            
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------

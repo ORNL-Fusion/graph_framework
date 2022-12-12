@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 
+#include "register.hpp"
 #include "backend_protocall.hpp"
 
 namespace graph {
@@ -55,6 +56,15 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node<BACKEND>> x) = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node> compile(std::stringstream &stream,
+                                                   jit::register_map<leaf_node<BACKEND>> &registers) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Reset the cache.
@@ -147,6 +157,17 @@ namespace graph {
             return this->arg->evaluate();
         }
 
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
+                                             jit::register_map<leaf_node<BACKEND>> &registers) {
+            return this->arg->compile(stream, registers);
+        }
+        
 //------------------------------------------------------------------------------
 ///  @brief Get the argument.
 //------------------------------------------------------------------------------
@@ -265,7 +286,9 @@ namespace graph {
 ///  @param[in] d Array buffer to initalize.
 //------------------------------------------------------------------------------
         constant_node(const std::vector<typename BACKEND::base> &d) :
-        data(d) {}
+        data(d) {
+            assert(d->size() == 1 && "Constants need to be scalar functions.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
@@ -308,6 +331,25 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
             return std::make_shared<constant_node> (backend::base_cast<BACKEND> (0.0));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
+                                             jit::register_map<leaf_node<BACKEND>> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "    const ";
+                jit::add_type<constant_node<BACKEND>> (stream);
+                stream << " " << registers[this] << " = "
+                       << this->evaluate()[0] << ";" << std::endl;
+            }
+            
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -478,6 +520,17 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
+                                             jit::register_map<leaf_node<BACKEND>> &registers) final {
+           return this->shared_from_this();
+        }
+        
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -530,6 +583,13 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const final {
             std::cout << symbol;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the size of the variable buffer.
+//------------------------------------------------------------------------------
+        size_t size() {
+            return data.size();
         }
     };
 

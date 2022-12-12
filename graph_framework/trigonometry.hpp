@@ -75,6 +75,28 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
+                                                         jit::register_map<N> &registers) final {
+            shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "    const ";
+                jit::add_type<N> (stream);
+                stream << " " << registers[this] << " = sin("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+            
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -190,6 +212,28 @@ namespace graph {
             }
         }
 
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
+                                                         jit::register_map<N> &registers) final {
+            shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "    const ";
+                jit::add_type<N> (stream);
+                stream << " " << registers[this] << " = cos("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+            
+            return this->shared_from_this();
+        }
+        
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///

@@ -31,8 +31,8 @@ static base solution(const base t) {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     //typedef std::complex<double> base;
-    typedef double base;
-    //typedef float base;
+    //typedef double base;
+    typedef float base;
     //typedef std::complex<float> base;
     typedef backend::cpu<base> cpu;
     
@@ -42,9 +42,9 @@ int main(int argc, const char * argv[]) {
     //const size_t num_rays = 1;
     const size_t num_rays = 10000;
     
-    std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
-                                                       static_cast<unsigned int> (num_rays)),
-                                              static_cast<unsigned int> (1)));
+    std::vector<std::thread> threads(1);//std::max(std::min(std::thread::hardware_concurrency(),
+    //                                                   static_cast<unsigned int> (num_rays)),
+    //                                          static_cast<unsigned int> (1)));
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         threads[i] = std::thread([num_times, num_rays] (const size_t thread_number,
@@ -69,7 +69,7 @@ int main(int argc, const char * argv[]) {
 
 //  Inital conditions.
             for (size_t j = 0; j < local_num_rays; j++) {
-                omega->set(j, 500.0);
+                omega->set(j, 600.0);
             }
 
             x->set(backend::base_cast<cpu> (0.0));
@@ -79,17 +79,18 @@ int main(int argc, const char * argv[]) {
             ky->set(backend::base_cast<cpu> (0.0));
             kz->set(backend::base_cast<cpu> (0.0));
             
-            auto eq = equilibrium::make_slab_density<cpu> ();
-            //auto eq = equilibrium::make_no_magnetic_field<cpu> ();
+            //auto eq = equilibrium::make_slab_density<cpu> ();
+            auto eq = equilibrium::make_no_magnetic_field<cpu> ();
 
             //solver::split_simplextic<dispersion::bohm_gross<cpu>>
-            //solver::rk4<dispersion::bohm_gross<cpu>>
+            solver::rk4<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::simple<cpu>>
-            solver::rk4<dispersion::ordinary_wave<cpu>>
+            //solver::rk4<dispersion::ordinary_wave<cpu>>
             //solver::rk4<dispersion::extra_ordinary_wave<cpu>>
             //solver::rk4<dispersion::cold_plasma<cpu>>
                 solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
             solve.init(kx);
+            solve.compile();
             if (thread_number == 0) {
                 solve.print_dispersion();
                 std::cout << std::endl;
@@ -117,7 +118,7 @@ int main(int argc, const char * argv[]) {
             }
 
             for (size_t j = 0; j < num_times; j++) {
-                if (thread_number == 0) {
+                if (thread_number == 0 && false) {
                     std::cout << "Time Step " << j << " Sample " << sample << " "
                               << solve.state.back().t.at(sample) << " "
                               << solve.state.back().x.at(sample) << " "
@@ -131,7 +132,7 @@ int main(int argc, const char * argv[]) {
                 }
                 solve.step();
             }
-            if (thread_number == 0) {
+            if (thread_number == 0 && false) {
                 std::cout << "Time Step " << num_times << " Sample " << sample << " "
                           << solve.state.back().t.at(sample) << " "
                           << solve.state.back().x.at(sample) << " "
