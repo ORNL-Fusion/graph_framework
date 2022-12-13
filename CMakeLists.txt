@@ -28,7 +28,7 @@ if (${USE_METAL})
                            "-framework Metal"
                            "-framework Foundation"
     )
-    
+
     target_compile_definitions (metal_lib
                                 INTERFACE
                                 USE_METAL

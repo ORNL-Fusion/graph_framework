@@ -182,7 +182,8 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Compile the solver function.
 //------------------------------------------------------------------------------
-        void compile() {
+        void compile(const size_t num_steps,
+                     const size_t num_rays) {
             jit::kernel<typename DISPERSION_FUNCTION::backend> source("test",
                                                                       {graph::variable_cast(this->w),
                                                                        graph::variable_cast(this->kx),
@@ -200,9 +201,18 @@ namespace solver {
                                                                        {this->z_next, graph::variable_cast(this->z)},
                                                                        {this->t_next, graph::variable_cast(this->t)}});
             
-            source.print();
+            source.compile("test",
+                           {graph::variable_cast(this->w),
+                            graph::variable_cast(this->kx),
+                            graph::variable_cast(this->ky),
+                            graph::variable_cast(this->kz),
+                            graph::variable_cast(this->x),
+                            graph::variable_cast(this->y),
+                            graph::variable_cast(this->z),
+                            graph::variable_cast(this->t)},
+                           num_steps, num_rays);
         }
-
+        
 //------------------------------------------------------------------------------
 ///  @brief Method to step the rays.
 //------------------------------------------------------------------------------

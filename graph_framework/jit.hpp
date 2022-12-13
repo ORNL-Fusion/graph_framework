@@ -8,7 +8,29 @@
 #ifndef jit_h
 #define jit_h
 
+#include <chrono>
+
+#ifdef USE_METAL
+#include "metal_context.hpp"
+#endif
+
 #include "node.hpp"
+
+void write_time(const std::string &name, const std::chrono::nanoseconds time) {
+    if (time.count() < 1000) {
+        std::cout << name << time.count()               << " ns" << std::endl;
+    } else if (time.count() < 1000000) {
+        std::cout << name << time.count()/1000.0        << " μs" << std::endl;
+    } else if (time.count() < 1000000000) {
+        std::cout << name << time.count()/1000000.0     << " ms" << std::endl;
+    } else if (time.count() < 60000000000) {
+        std::cout << name << time.count()/1000000000.0  << " s" << std::endl;
+    } else if (time.count() < 3600000000000) {
+        std::cout << name << time.count()/60000000000.0 << " min" << std::endl;
+    } else {
+        std::cout << name << time.count()/3600000000000 << " h" << std::endl;
+    }
+}
 
 namespace jit {
 //------------------------------------------------------------------------------
@@ -138,13 +160,13 @@ namespace jit {
             source_buffer << ") {" << std::endl;
             source_buffer << "    const size_t index = ";
 #ifdef USE_METAL
-            source_buffer << "min(i, ";
+            source_buffer << "metal::min(i, uint(";
 #elif defined (USE_CUDA)
-            source_buffer << "min(blockIdx.x*blockDim.x + threadIdx.x, ";
+            source_buffer << "min(blockIdx.x*blockDim.x + threadIdx.x, (";
 #elif defined (USE_HIP)
             source_buffer << "min(hipBlockIdx_x*hipBlockDim_x + hipThreadIdx_x, ";
 #endif
-            source_buffer << size - 1 << ");" << std::endl;
+            source_buffer << size - 1 << "));" << std::endl;
         }
 
 //------------------------------------------------------------------------------
@@ -178,6 +200,30 @@ namespace jit {
 //------------------------------------------------------------------------------
         void print() {
             std::cout << std::endl << source_buffer.str() << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the kernel.
+///
+///  @param[in] inputs Input variables of the kernel.
+//------------------------------------------------------------------------------
+        void compile(const std::string                                                 name,
+                     const std::vector<std::shared_ptr<graph::variable_node<BACKEND>>> inputs,
+                     const size_t                                                      num_steps,
+                     const size_t                                                      num_rays) {
+            gpu::metal_context context;
+            context.create_pipline(source_buffer.str(), name, inputs, num_rays);
+            const std::chrono::high_resolution_clock::time_point gpu_start = std::chrono::high_resolution_clock::now();
+            for (size_t i = 0; i < num_steps; i++) {
+                context.step();
+            }
+            context.wait();
+            const std::chrono::high_resolution_clock::time_point gpu_end = std::chrono::high_resolution_clock::now();
+            const auto gpu_time = gpu_end - gpu_start;
+            const std::chrono::nanoseconds gpu_total_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds> (gpu_time);
+            std::cout << std::endl;
+            write_time("  GPU time : ", gpu_total_time_ns);
+            std::cout << std::endl;
         }
     };
 }

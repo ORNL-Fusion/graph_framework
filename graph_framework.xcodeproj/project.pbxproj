@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C71342662947D57900672AD4 /* metal_context.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C71342652947D57900672AD4 /* metal_context.hpp */; };
+		C713426A2947F39400672AD4 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C721EA9A2833FF7800EAFB2D /* equilibrium.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C721EA992833FF7800EAFB2D /* equilibrium.hpp */; };
 		C79141B622DAAD0C00E0BA0D /* xrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C79141B522DAAD0C00E0BA0D /* xrays.cpp */; };
 		C7E5644528A2A1AA000F31A2 /* backend_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E7328074F540033B488 /* backend_test.cpp */; };
@@ -106,6 +108,8 @@
 /* Begin PBXFileReference section */
 		C713425B29413F0500672AD4 /* jit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jit.hpp; sourceTree = "<group>"; };
 		C713425C2942665300672AD4 /* register.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = register.hpp; sourceTree = "<group>"; };
+		C71342652947D57900672AD4 /* metal_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = metal_context.hpp; sourceTree = "<group>"; };
+		C71342682947F36100672AD4 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		C71C1FF527F5379D006997C2 /* dispersion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dispersion.hpp; sourceTree = "<group>"; };
 		C71C1FF627F5F5A8006997C2 /* solver.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = solver.hpp; sourceTree = "<group>"; };
 		C71C1FF727F61DFA006997C2 /* math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = math.hpp; sourceTree = "<group>"; };
@@ -153,6 +157,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C713426A2947F39400672AD4 /* Metal.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -215,6 +220,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C71342672947F36100672AD4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C71342682947F36100672AD4 /* Metal.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		C791419D22DA9BF200E0BA0D = {
 			isa = PBXGroup;
 			children = (
@@ -223,6 +236,7 @@
 				C7931E6928073BCA0033B488 /* graph_tests */,
 				C79141B422DAAD0C00E0BA0D /* graph_driver */,
 				C79141A722DA9BF200E0BA0D /* Products */,
+				C71342672947F36100672AD4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -259,6 +273,7 @@
 				C721EA992833FF7800EAFB2D /* equilibrium.hpp */,
 				C713425B29413F0500672AD4 /* jit.hpp */,
 				C713425C2942665300672AD4 /* register.hpp */,
+				C71342652947D57900672AD4 /* metal_context.hpp */,
 			);
 			path = graph_framework;
 			sourceTree = "<group>";
@@ -295,6 +310,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C71342662947D57900672AD4 /* metal_context.hpp in Headers */,
 				C721EA9A2833FF7800EAFB2D /* equilibrium.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

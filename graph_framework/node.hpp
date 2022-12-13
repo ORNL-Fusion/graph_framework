@@ -287,7 +287,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         constant_node(const std::vector<typename BACKEND::base> &d) :
         data(d) {
-            assert(d->size() == 1 && "Constants need to be scalar functions.");
+            assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
 
 //------------------------------------------------------------------------------

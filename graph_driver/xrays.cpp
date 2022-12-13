@@ -40,9 +40,10 @@ int main(int argc, const char * argv[]) {
 
     const size_t num_times = 10000;
     //const size_t num_rays = 1;
-    const size_t num_rays = 10000;
+    const size_t num_rays = 1000000;
     
-    std::vector<std::thread> threads(1);//std::max(std::min(std::thread::hardware_concurrency(),
+    std::vector<std::thread> threads(1);
+    //std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
     //                                                   static_cast<unsigned int> (num_rays)),
     //                                          static_cast<unsigned int> (1)));
 
@@ -90,7 +91,7 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::cold_plasma<cpu>>
                 solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
             solve.init(kx);
-            solve.compile();
+            solve.compile(num_times, num_rays);
             if (thread_number == 0) {
                 solve.print_dispersion();
                 std::cout << std::endl;
@@ -117,6 +118,7 @@ int main(int argc, const char * argv[]) {
                 std::cout << solve.state.back().x.at(sample) << std::endl;
             }
 
+            const std::chrono::high_resolution_clock::time_point cpu_start = std::chrono::high_resolution_clock::now();
             for (size_t j = 0; j < num_times; j++) {
                 if (thread_number == 0 && false) {
                     std::cout << "Time Step " << j << " Sample " << sample << " "
@@ -130,8 +132,15 @@ int main(int argc, const char * argv[]) {
                               << residule->evaluate().at(sample)
                               << std::endl;
                 }
-                solve.step();
+                //solve.step();
             }
+            const std::chrono::high_resolution_clock::time_point cpu_end = std::chrono::high_resolution_clock::now();
+            const auto cpu_time = cpu_end - cpu_start;
+            const std::chrono::nanoseconds cpu_total_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds> (cpu_time);
+            std::cout << std::endl;
+            write_time("  CPU time : ", cpu_total_time_ns);
+            std::cout << std::endl;
+
             if (thread_number == 0 && false) {
                 std::cout << "Time Step " << num_times << " Sample " << sample << " "
                           << solve.state.back().t.at(sample) << " "
@@ -163,6 +172,7 @@ int main(int argc, const char * argv[]) {
     std::cout << std::endl;
 }
 
+/*
 //------------------------------------------------------------------------------
 ///  @brief Print out timings.
 ///
@@ -184,4 +194,4 @@ void write_time(const std::string &name, const std::chrono::nanoseconds time) {
         std::cout << name << time.count()/3600000000000 << " h" << std::endl;
     }
 }
-
+*/
