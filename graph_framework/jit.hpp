@@ -12,25 +12,20 @@
 
 #ifdef USE_METAL
 #include "metal_context.hpp"
+#elif defined(USE_CUDA)
+#include "cuda_context.hpp"
 #endif
 
 #include "node.hpp"
+#include "timing.hpp"
 
-void write_time(const std::string &name, const std::chrono::nanoseconds time) {
-    if (time.count() < 1000) {
-        std::cout << name << time.count()               << " ns" << std::endl;
-    } else if (time.count() < 1000000) {
-        std::cout << name << time.count()/1000.0        << " μs" << std::endl;
-    } else if (time.count() < 1000000000) {
-        std::cout << name << time.count()/1000000.0     << " ms" << std::endl;
-    } else if (time.count() < 60000000000) {
-        std::cout << name << time.count()/1000000000.0  << " s" << std::endl;
-    } else if (time.count() < 3600000000000) {
-        std::cout << name << time.count()/60000000000.0 << " min" << std::endl;
-    } else {
-        std::cout << name << time.count()/3600000000000 << " h" << std::endl;
-    }
-}
+#ifdef USE_METAL
+#define GPU_CONTEXT gpu::metal_context
+#elif defined(USE_CUDA)
+#define GPU_CONTEXT gpu::cuda_context
+#elif defined(USE_HIP)
+#define GPU_CONTEXT gpu::hip_context
+#endif
 
 namespace jit {
 //------------------------------------------------------------------------------
@@ -54,10 +49,9 @@ namespace jit {
 ///  @param[in] inputs  Input variables of the kernel.
 ///  @param[in] setters Map outputs back to input values.
 //------------------------------------------------------------------------------
-        kernel(const std::string                                           name,
-               std::vector<std::shared_ptr<graph::variable_node<BACKEND>>> inputs,
-               std::map<graph::shared_leaf<BACKEND>,
-                        std::shared_ptr<graph::variable_node<BACKEND>>>    setters) {
+        kernel(const std::string name,
+               graph::input_nodes<BACKEND> inputs,
+               graph::map_nodes<BACKEND> setters) {
             const size_t test_size = inputs[0]->size();
             
             create_preamble(name);
@@ -71,7 +65,7 @@ namespace jit {
             
             add_argument_index(test_size);
             
-            for (std::shared_ptr<graph::variable_node<BACKEND>> &input : inputs) {
+            for (graph::shared_variable<BACKEND> &input : inputs) {
                 load_variable(input.get());
             }
             
@@ -207,23 +201,21 @@ namespace jit {
 ///
 ///  @param[in] inputs Input variables of the kernel.
 //------------------------------------------------------------------------------
-        void compile(const std::string                                                 name,
-                     const std::vector<std::shared_ptr<graph::variable_node<BACKEND>>> inputs,
-                     const size_t                                                      num_steps,
-                     const size_t                                                      num_rays) {
-            gpu::metal_context context;
+        void compile(const std::string name,
+                     graph::input_nodes<BACKEND> inputs,
+                     const size_t num_steps,
+                     const size_t num_rays) {
+            GPU_CONTEXT context;
             context.create_pipline(source_buffer.str(), name, inputs, num_rays);
-            const std::chrono::high_resolution_clock::time_point gpu_start = std::chrono::high_resolution_clock::now();
+            
+            const timeing::measure_diagnostic gpu_time("GPU Time");
+
             for (size_t i = 0; i < num_steps; i++) {
                 context.step();
             }
             context.wait();
-            const std::chrono::high_resolution_clock::time_point gpu_end = std::chrono::high_resolution_clock::now();
-            const auto gpu_time = gpu_end - gpu_start;
-            const std::chrono::nanoseconds gpu_total_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds> (gpu_time);
-            std::cout << std::endl;
-            write_time("  GPU time : ", gpu_total_time_ns);
-            std::cout << std::endl;
+
+            gpu_time.stop();
         }
     };
 }

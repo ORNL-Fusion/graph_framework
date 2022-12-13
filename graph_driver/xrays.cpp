@@ -10,6 +10,7 @@
 
 #include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/solver.hpp"
+#include "../graph_framework/timing.hpp"
 
 void write_time(const std::string &name, const std::chrono::nanoseconds time);
 
@@ -36,7 +37,7 @@ int main(int argc, const char * argv[]) {
     //typedef std::complex<float> base;
     typedef backend::cpu<base> cpu;
     
-    const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+    const timeing::measure_diagnostic total("Total Time");
 
     const size_t num_times = 10000;
     //const size_t num_rays = 1;
@@ -118,7 +119,7 @@ int main(int argc, const char * argv[]) {
                 std::cout << solve.state.back().x.at(sample) << std::endl;
             }
 
-            const std::chrono::high_resolution_clock::time_point cpu_start = std::chrono::high_resolution_clock::now();
+            const timeing::measure_diagnostic cpu_time("CPU Time");
             for (size_t j = 0; j < num_times; j++) {
                 if (thread_number == 0 && false) {
                     std::cout << "Time Step " << j << " Sample " << sample << " "
@@ -134,12 +135,7 @@ int main(int argc, const char * argv[]) {
                 }
                 //solve.step();
             }
-            const std::chrono::high_resolution_clock::time_point cpu_end = std::chrono::high_resolution_clock::now();
-            const auto cpu_time = cpu_end - cpu_start;
-            const std::chrono::nanoseconds cpu_total_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds> (cpu_time);
-            std::cout << std::endl;
-            write_time("  CPU time : ", cpu_total_time_ns);
-            std::cout << std::endl;
+            cpu_time.stop();
 
             if (thread_number == 0 && false) {
                 std::cout << "Time Step " << num_times << " Sample " << sample << " "
@@ -160,16 +156,8 @@ int main(int argc, const char * argv[]) {
         t.join();
     }
 
-    const std::chrono::high_resolution_clock::time_point evaluate = std::chrono::high_resolution_clock::now();
-
-    const auto total_time = evaluate - start;
-
-    const std::chrono::nanoseconds total_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds> (total_time);
-
     std::cout << std::endl << "Timing:" << std::endl;
-    std::cout << std::endl;
-    write_time("  Total time : ", total_time_ns);
-    std::cout << std::endl;
+    total.stop();
 }
 
 /*

@@ -28,8 +28,11 @@ namespace gpu {
         std::vector<id<MTLBuffer>> buffers;
 ///  Compute pipeline discriptor.
         id<MTLComputePipelineState> state;
+///  Metal command buffer.
         id<MTLCommandBuffer> command_buffer;
+///  Number of thread groups.
         NSUInteger thread_groups;
+///  Number of threads in a group.
         NSUInteger threads_per_group;
         
     public:
@@ -41,12 +44,17 @@ namespace gpu {
         queue([device newCommandQueue]) {}
         
 //------------------------------------------------------------------------------
-///  @brief Create a compute pipline.
+///  @brief Create a compute pipeline.
+///
+///  @param[in] kernel_source Source code buffer for the kernel.
+///  @param[in] kernel_name   Name of the kernel for later reference.
+///  @param[in] inputs        Input nodes of the kernel.
+///  @param[in] num_rays      Number of rays to trace.
 //------------------------------------------------------------------------------
         template<class BACKEND>
         void create_pipline(const std::string kernel_source,
                             const std::string kernel_name,
-                            std::vector<std::shared_ptr<graph::variable_node<BACKEND>>> inputs,
+                            graph::input_nodes<BACKEND> inputs,
                             const size_t num_rays) {
             @autoreleasepool {
                 MTLCompileOptions *options = [MTLCompileOptions new];
@@ -78,7 +86,7 @@ namespace gpu {
                     NSLog(@"%@", error);
                 }
                 
-                for (std::shared_ptr<graph::variable_node<BACKEND>> &input : inputs) {
+                for (graph::shared_variable<BACKEND> &input : inputs) {
                     const BACKEND backend = input->evaluate();
                     buffers.push_back([device newBufferWithBytes:&backend[0]
                                                           length:backend.size()*sizeof(typename BACKEND::base)
@@ -87,10 +95,19 @@ namespace gpu {
                 
                 threads_per_group = state.maxTotalThreadsPerThreadgroup;
                 thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
-                std::cout << threads_per_group << " " << thread_groups << std::endl;
+                std::cout << "Metal GPU info." << std::endl;
+                std::cout << "  Threads per group  : " << threads_per_group << std::endl;
+                std::cout << "  Number of groups   : " << thread_groups << std::endl;
+                std::cout << "  Total problem size : " << threads_per_group*thread_groups << std::endl;
             }
         }
-        
+
+//------------------------------------------------------------------------------
+///  @brief Perform a time step.
+///
+///  This calls dispatches a kernel instance to the command buffer and the commits
+///  the job. This method is asyncronus.
+//------------------------------------------------------------------------------
         void step() {
             @autoreleasepool {
                 command_buffer = [queue commandBuffer];
@@ -108,7 +125,10 @@ namespace gpu {
                 [command_buffer commit];
             }
         }
-        
+
+//------------------------------------------------------------------------------
+///  @brief Hold the current thread until the current command buffer has complete.
+//------------------------------------------------------------------------------
         void wait() {
             [command_buffer waitUntilCompleted];
         }

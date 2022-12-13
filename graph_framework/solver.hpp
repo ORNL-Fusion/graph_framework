@@ -181,10 +181,15 @@ namespace solver {
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the solver function.
+///
+///  FIXME: For now this compiles and run the kernel for all time steps.
+///
+///  @param[in] num_steps Number of time steps to run the kernel for.
+///  @param[in] num_rays  Number of rays in the solution.
 //------------------------------------------------------------------------------
         void compile(const size_t num_steps,
                      const size_t num_rays) {
-            jit::kernel<typename DISPERSION_FUNCTION::backend> source("test",
+            jit::kernel<typename DISPERSION_FUNCTION::backend> source("solver_kernel",
                                                                       {graph::variable_cast(this->w),
                                                                        graph::variable_cast(this->kx),
                                                                        graph::variable_cast(this->ky),
@@ -201,7 +206,7 @@ namespace solver {
                                                                        {this->z_next, graph::variable_cast(this->z)},
                                                                        {this->t_next, graph::variable_cast(this->t)}});
             
-            source.compile("test",
+            source.compile("solver_kernel",
                            {graph::variable_cast(this->w),
                             graph::variable_cast(this->kx),
                             graph::variable_cast(this->ky),

@@ -644,8 +644,15 @@ namespace graph {
     }
 
 ///  Convience type alias for shared variable nodes.
-    template<typename N>
-    using shared_variable = std::shared_ptr<variable_node<typename N::backend>>;
+    template<class BACKEND>
+    using shared_variable = std::shared_ptr<variable_node<BACKEND>>;
+///  Convinence type alias for a vector of inputs.
+    template<class BACKEND>
+    using input_nodes = std::vector<shared_variable<BACKEND>>;
+///  Convinence type alias for maping end codes back to inputs.
+    template<class BACKEND>
+    using map_nodes = std::map<graph::shared_leaf<BACKEND>,
+                               shared_variable<BACKEND>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.
@@ -653,9 +660,9 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_variable<N> variable_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<variable_node<typename N::backend>> (x);
+    template<class BACKEND>
+    shared_variable<BACKEND> variable_cast(shared_leaf<BACKEND> x) {
+        return std::dynamic_pointer_cast<variable_node<BACKEND>> (x);
     }
 
 //******************************************************************************
