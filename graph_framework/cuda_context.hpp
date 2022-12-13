@@ -11,6 +11,7 @@
 #import <vector>
 
 #import <cuda.h>
+#import <nvrtc.h>
 
 #include "node.hpp"
 
@@ -25,7 +26,7 @@ namespace gpu {
 ///  The cuda context.
         CUcontext context;
 ///  The cuda code library.
-        CULibrary library;
+        CUlibrary library;
 ///  The cuda kernel;
         CUkernel kernel;
 ///  Buffer objects.
@@ -58,7 +59,7 @@ namespace gpu {
             }
             
             cuStreamDestroy(stream);
-            cuDevicePrimaryCtxRelease(context);
+            cuDevicePrimaryCtxRelease(device);
         }
 
 //------------------------------------------------------------------------------
