@@ -98,7 +98,8 @@ namespace jit {
 //------------------------------------------------------------------------------
         void create_preamble(const std::string name) {
 #ifdef USE_METAL
-            source_buffer << "kernel ";
+            source_buffer << "using namespace metal;" << std::endl
+                          << "kernel ";
 #else
             source_buffer << "__global__ ";
 #endif
@@ -152,13 +153,13 @@ namespace jit {
             source_buffer << "    uint i [[thread_position_in_grid]]";
 #endif
             source_buffer << ") {" << std::endl;
-            source_buffer << "    const size_t index = ";
+            source_buffer << "    const size_t index = min(";
 #ifdef USE_METAL
-            source_buffer << "metal::min(i, uint(";
+            source_buffer << "i, uint(";
 #elif defined (USE_CUDA)
-            source_buffer << "min(blockIdx.x*blockDim.x + threadIdx.x, (";
+            source_buffer << "blockIdx.x*blockDim.x + threadIdx.x, (";
 #elif defined (USE_HIP)
-            source_buffer << "min(hipBlockIdx_x*hipBlockDim_x + hipThreadIdx_x, ";
+            source_buffer << "hipBlockIdx_x*hipBlockDim_x + hipThreadIdx_x, ";
 #endif
             source_buffer << size - 1 << "));" << std::endl;
         }
@@ -206,7 +207,7 @@ namespace jit {
                      const size_t num_steps,
                      const size_t num_rays) {
             GPU_CONTEXT context;
-            context.create_pipline(source_buffer.str(), name, inputs, num_rays);
+            context.create_pipeline(source_buffer.str(), name, inputs, num_rays);
             
             const timeing::measure_diagnostic gpu_time("GPU Time");
 

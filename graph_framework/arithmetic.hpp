@@ -1010,7 +1010,8 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const final {
-            if (add_cast(this->left).get() ||
+            if (constant_cast(this->left).get() ||
+                add_cast(this->left).get()      ||
                 subtract_cast(this->left).get()) {
                 std::cout << "\\left(";
                 this->left->to_latex();
@@ -1019,7 +1020,8 @@ namespace graph {
                 this->left->to_latex();
             }
             std::cout << " ";
-            if (add_cast(this->right).get() ||
+            if (constant_cast(this->right).get() ||
+                add_cast(this->right).get()     ||
                 subtract_cast(this->right).get()) {
                 std::cout << "\\left(";
                 this->right->to_latex();

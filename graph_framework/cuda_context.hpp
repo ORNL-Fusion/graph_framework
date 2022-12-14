@@ -71,10 +71,10 @@ namespace gpu {
 ///  @param[in] num_rays      Number of rays to trace.
 //------------------------------------------------------------------------------
         template<class BACKEND>
-        void create_pipline(const std::string kernel_source,
-                            const std::string kernel_name,
-                            graph::input_nodes<BACKEND> inputs,
-                            const size_t num_rays) {
+        void create_pipeline(const std::string kernel_source,
+                             const std::string kernel_name,
+                             graph::input_nodes<BACKEND> inputs,
+                             const size_t num_rays) {
             nvrtcProgram kernel_program;
             nvrtcCreateProgram(&kernel_program,
                                kernel_source.c_str(),

@@ -586,8 +586,9 @@ namespace graph {
         virtual shared_leaf<typename LN::backend>
         df(shared_leaf<typename LN::backend> x) final {
             auto one = constant<typename LN::backend> (1.0);
-            return this->right*pow(this->left, this->right - one)*this->left->df(x) +
-                   log(this->left)*this->shared_from_this()*this->right->df(x);
+            return pow(this->left, this->right - one) *
+                   (this->right*this->left->df(x) +
+                    this->left*log(this->left)*this->right->df(x));
         }
 
 //------------------------------------------------------------------------------
