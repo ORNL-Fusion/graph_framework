@@ -469,7 +469,12 @@ namespace dispersion {
             auto k = graph::vector(kx, ky, kz);
             graph::shared_leaf<BACKEND> kpara2;
             auto zero = graph::constant<BACKEND> (0.0);
+#ifdef USE_REDUCE
             if (b_vec->length()->is_match(zero)) {
+#else
+            if (b_vec->length()->evaluate()[0] ==
+                backend::base_cast<BACKEND> (0.0)) {
+#endif
                 kpara2 = k->dot(k);
             } else {
                 auto b_hat = b_vec->unit();
@@ -530,9 +535,15 @@ namespace dispersion {
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
             auto zero = graph::constant<BACKEND> (0.0);
+#ifdef USE_REDUCE
             assert(eq->get_magnetic_field(x, y, z)->length()->is_match(zero) &&
                    "Expected equilibrium with no magnetic field.");
-                   
+#else
+            assert(eq->get_magnetic_field(x, y, z)->length()->evaluate()[0] ==
+                   backend::base_cast<BACKEND> (0.0) &&
+                   "Expected equilibrium with no magnetic field.");
+#endif
+
             auto k = graph::vector(kx, ky, kz);
             auto k2 = k->dot(k);
             
@@ -592,7 +603,12 @@ namespace dispersion {
             auto k = graph::vector(kx, ky, kz);
             graph::shared_leaf<BACKEND> kpara2;
             auto zero = graph::constant<BACKEND> (0.0);
+#ifdef USE_REDUCE
             if (b_vec->length()->is_match(zero)) {
+#else
+            if (b_vec->length()->evaluate()[0] ==
+                backend::base_cast<BACKEND> (0.0)) {
+#endif
                 kpara2 = k->dot(k);
             } else {
                 auto b_hat = b_vec->unit();

@@ -84,7 +84,11 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+#ifdef USE_REDUCE
     run_tests<backend::cpu<float>> (1.0E-14);
+#else
+    run_tests<backend::cpu<float>> (1.5E-14);
+#endif
     run_tests<backend::cpu<double>> (1.0E-30);
     run_tests<backend::cpu<std::complex<float>>> (2.0E-14);
     run_tests<backend::cpu<std::complex<double>>> (1.0E-30);

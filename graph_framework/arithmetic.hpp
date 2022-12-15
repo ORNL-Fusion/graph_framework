@@ -103,6 +103,7 @@ namespace graph {
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> reduce() final {
+#ifdef USE_REDUCE
 //  Idenity reductions.
             if (this->left->is_match(this->right)) {
                 return constant<typename LN::backend> (2)*this->left;
@@ -253,7 +254,7 @@ namespace graph {
                            lfma->get_middle(),
                            lfma->get_right() + this->right);
             }
-            
+#endif
             return this->shared_from_this();
         }
 
@@ -405,6 +406,7 @@ namespace graph {
 ///  @returns A reduced subtraction node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> reduce() final {
+#ifdef USE_REDUCE
 //  Idenity reductions.
             if (this->left->is_match(this->right)) {
                 auto l = constant_cast(this->left);
@@ -539,7 +541,7 @@ namespace graph {
                                lfma->get_right() - rfma->get_right());
                 }
             }
-
+#endif
             return this->shared_from_this();
         }
 
@@ -697,6 +699,7 @@ namespace graph {
 ///  @returns A reduced multiplcation node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> reduce() final {
+#ifdef USE_REDUCE
             auto l = constant_cast(this->left);
             auto r = constant_cast(this->right);
 
@@ -889,7 +892,7 @@ namespace graph {
                     return pow(this->right, constant<typename LN::backend> (1.5));
                 }
             }
-
+#endif
             return this->shared_from_this();
         }
 
@@ -1034,17 +1037,9 @@ namespace graph {
 ///  @returns A reduced division node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> reduce() final {
+#ifdef USE_REDUCE
 //  Constant Reductions.
             auto l = constant_cast(this->left);
-
-            if (this->left->is_match(this->right)) {
-                if (l.get() && l->is(1)) {
-                    return this->left;
-                }
-
-                return constant<typename LN::backend> (1);
-            }
-
             auto r = constant_cast(this->right);
 
             if ((l.get() && l->is(0)) ||
@@ -1054,6 +1049,14 @@ namespace graph {
                 return constant(this->evaluate());
             }
 
+            if (this->left->is_match(this->right)) {
+                if (l.get() && l->is(1)) {
+                    return this->left;
+                }
+
+                return constant<typename LN::backend> (1);
+            }
+            
 //  Reduce cases of a/c1 -> c2*a
             if (r.get()) {
                 return (constant<typename LN::backend> (1)/this->right) *
@@ -1180,7 +1183,7 @@ namespace graph {
                     return constant<typename LN::backend> (1.0)/this->left;
                 }
             }
-            
+#endif
             return this->shared_from_this();
         }
 
@@ -1323,6 +1326,7 @@ namespace graph {
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> reduce() final {
+#ifdef USE_REDUCE
             auto l = constant_cast(this->left);
             auto m = constant_cast(this->middle);
             auto r = constant_cast(this->right);
@@ -1398,7 +1402,7 @@ namespace graph {
             if (l.get() && r.get()) {
                 return this->left*(this->middle + this->right/this->left);
             }
-            
+#endif
             return this->shared_from_this();
         }
 

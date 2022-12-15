@@ -14,9 +14,6 @@
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
-///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 template<typename BACKEND> void test_backend() {
     BACKEND size_one(1);
@@ -376,6 +373,13 @@ template<typename BACKEND> void test_backend() {
     assert(scale_base.at(1) == std::pow(backend::base_cast<BACKEND> (4.0),
                                         backend::base_cast<BACKEND> (2.0)) &&
            "Expected 4^2.");
+
+    base_scalar.set(10.0);
+    exp_scalar.set(0.0);
+    BACKEND pow_zero = backend::pow(base_scalar, exp_scalar);
+    assert(pow_zero.at(0) == std::pow(backend::base_cast<BACKEND> (10.0),
+                                      backend::base_cast<BACKEND> (0.0)) &&
+           "Expected 10^0.");
 
     base_vec.set(std::vector<typename BACKEND::base> ({4.0, 2.0}));
     exp_vec.set(std::vector<typename BACKEND::base> ({-4.0, 0.30}));

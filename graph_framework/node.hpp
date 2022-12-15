@@ -292,10 +292,11 @@ namespace graph {
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> reduce() final {
+#ifdef USE_REDUCE
             if (data.size() > 1 && data.is_same()) {
                 return std::make_shared<constant_node<BACKEND>> (data.at(0));
             }
-
+#endif
             return this->shared_from_this();
         }
 
@@ -642,10 +643,11 @@ namespace graph {
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<BACKEND> reduce() final {
+#ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return this->arg;
             }
-
+#endif
             return this->shared_from_this();
         }
 

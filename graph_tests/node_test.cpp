@@ -39,11 +39,21 @@ void test_constant() {
     auto one = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({1.0, 1.0}));
     auto one_cast = graph::constant_cast(one);
     assert(one_cast.get() && "Expected a constant type.");
+#ifdef USE_REDUCE
     assert(one_cast->is(1) && "Constant value expeced zero.");
+#endif
     const BACKEND one_result = one->evaluate();
+#ifdef USE_REDUCE
     assert(one_result.size() == 1 && "Expected single value.");
     assert(one_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
            "Constant value evalute expeced one.");
+#else
+    assert(one_result.size() == 2 && "Expected two values.");
+    assert(one_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
+           "Constant value evalute expeced one.");
+    assert(one_result.at(1) == backend::base_cast<BACKEND> (1.0) &&
+           "Constant value evalute expeced one.");
+#endif
     auto done = one->df(zero);
     auto done_cast = graph::constant_cast(done);
     assert(done_cast.get() && "Expected a constant type for derivative.");
@@ -143,8 +153,12 @@ void test_cache() {
 
     auto three = graph::constant<BACKEND> (3.0);
     auto cache_three = graph::cache(three);
+#ifdef USE_REDUCE
     assert(graph::constant_cast(cache_three).get() &&
            "Expected a constant node.");
+#else
+    assert(graph::cache_cast(cache_three).get() && "Expected a constant node.");
+#endif
 
     assert(graph::constant_cast(cache_five->df(cache_five))->is(1) &&
            "Expected the constant 1");

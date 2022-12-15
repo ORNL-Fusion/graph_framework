@@ -6,6 +6,7 @@ target_compile_features (rays
 target_compile_definitions (rays
                             INTERFACE
                             $<$<CONFIG:Release>:NDEBUG>
+                            $<$<BOOL:${USE_REDUCE}>:USE_REDUCE>
 )
 target_include_directories (rays
                             INTERFACE
