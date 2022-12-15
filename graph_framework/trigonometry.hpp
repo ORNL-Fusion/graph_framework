@@ -49,11 +49,12 @@ namespace graph {
 ///  @returns Reduced graph from sine.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
+#ifdef USE_REDUCE
             if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
-            } else {
-                return this->shared_from_this();
             }
+#endif
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -164,11 +165,12 @@ namespace graph {
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
+#ifdef USE_REDUCE
             if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
-            } else {
-                return this->shared_from_this();
             }
+#endif
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------

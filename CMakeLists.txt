@@ -11,6 +11,8 @@ set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
               Sanitized
 )
 
+option (USE_REDUCE "Enable the graph reduction" ON)
+
 #-------------------------------------------------------------------------------
 #  Sanitizer options
 #-------------------------------------------------------------------------------

@@ -48,6 +48,7 @@ namespace graph {
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
+#ifdef USE_REDUCE
             auto ac = constant_cast(this->arg);
             if (ac.get()) {
                 if (ac->is(0) || ac->is(1)) {
@@ -94,7 +95,7 @@ namespace graph {
                            sqrt(ad->get_right());
                 }
             }
-
+#endif
             return this->shared_from_this();
         }
 
@@ -209,10 +210,11 @@ namespace graph {
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
+#ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
             }
-
+#endif
             return this->shared_from_this();
         }
 
@@ -326,10 +328,11 @@ namespace graph {
 ///  @returns Reduced graph from log.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> reduce() final {
+#ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
             }
-
+#endif
             return this->shared_from_this();
         }
 
@@ -441,6 +444,7 @@ namespace graph {
 ///  @returns A reduced power node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> reduce() final {
+#ifdef USE_REDUCE
             auto rc = constant_cast(this->right);
 
             if (rc.get()) {
@@ -501,7 +505,7 @@ namespace graph {
                 auto two = constant<typename LN::backend> (2.0);
                 return pow(lsq->get_arg(), this->right/two);
             }
-
+#endif
             return this->shared_from_this();
         }
 

@@ -502,6 +502,11 @@ namespace backend {
                         }
                     }
                     return base;
+                } else if (right_int == 0) {
+                    for (size_t i = 0, ie = base.size(); i < ie; i++) {
+                        base[i] = 1.0;
+                    }
+                    return base;
                 } else {
                     for (size_t i = 0, ie = base.size(); i < ie; i++) {
                         const BASE left = static_cast<BASE> (1.0)/base.at(i);
