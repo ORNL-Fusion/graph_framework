@@ -35,8 +35,3 @@ target_precompile_headers (rays
                            $<$<BOOL:${USE_METAL}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/metal_context.hpp>>
                            $<$<BOOL:${USE_CUDA}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cuda_context.hpp>>
 )
-target_compile_definitions (metal_lib
-                            INTERFACE
-                            $<$<BOOL:${USE_REDUCE}>:USE_REDUCE>
-)
-        

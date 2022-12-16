@@ -205,7 +205,7 @@ namespace solver {
                                                                        {this->y_next, graph::variable_cast(this->y)},
                                                                        {this->z_next, graph::variable_cast(this->z)},
                                                                        {this->t_next, graph::variable_cast(this->t)}});
-            
+
             source.compile("solver_kernel",
                            {graph::variable_cast(this->w),
                             graph::variable_cast(this->kx),
