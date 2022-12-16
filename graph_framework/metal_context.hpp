@@ -34,7 +34,15 @@ namespace gpu {
         NSUInteger thread_groups;
 ///  Number of threads in a group.
         NSUInteger threads_per_group;
-        
+///  Result buffers.
+        std::vector<id<MTLBuffer>> result_buffers;
+///  Index offset.
+        size_t buffer_offset;
+///  Buffer element size.
+        size_t buffer_element_size;
+///  Time offset.
+        size_t time_offset;
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a metal context.
@@ -50,12 +58,16 @@ namespace gpu {
 ///  @param[in] kernel_name   Name of the kernel for later reference.
 ///  @param[in] inputs        Input nodes of the kernel.
 ///  @param[in] num_rays      Number of rays to trace.
+///  @param[in] num_times     Number of times to record.
+///  @param[in] ray_index     Index of the ray to save.
 //------------------------------------------------------------------------------
         template<class BACKEND>
         void create_pipeline(const std::string kernel_source,
                              const std::string kernel_name,
                              graph::input_nodes<BACKEND> inputs,
-                             const size_t num_rays) {
+                             const size_t num_rays,
+                             const size_t num_times,
+                             const size_t ray_index) {
             @autoreleasepool {
                 MTLCompileOptions *options = [MTLCompileOptions new];
                 options.fastMathEnabled = NO;
@@ -86,11 +98,16 @@ namespace gpu {
                     NSLog(@"%@", error);
                 }
                 
+                buffer_element_size = sizeof(typename BACKEND::base);
+                buffer_offset = ray_index*buffer_element_size;
+                time_offset = 0;
                 for (graph::shared_variable<BACKEND> &input : inputs) {
                     const BACKEND backend = input->evaluate();
                     buffers.push_back([device newBufferWithBytes:&backend[0]
-                                                          length:backend.size()*sizeof(typename BACKEND::base)
+                                                          length:backend.size()*buffer_element_size
                                                          options:MTLResourceStorageModeManaged]);
+                    result_buffers.push_back([device newBufferWithLength:num_times*buffer_element_size
+                                                                 options:MTLResourceStorageModeManaged]);
                 }
                 
                 threads_per_group = state.maxTotalThreadsPerThreadgroup;
@@ -99,7 +116,27 @@ namespace gpu {
                 std::cout << "  Threads per group  : " << threads_per_group << std::endl;
                 std::cout << "  Number of groups   : " << thread_groups << std::endl;
                 std::cout << "  Total problem size : " << threads_per_group*thread_groups << std::endl;
+                
+                encode_blit();
+                [command_buffer commit];
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Encode a blit command.
+//------------------------------------------------------------------------------
+        void encode_blit() {
+            id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
+            for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                [blit copyFromBuffer:buffers[i]
+                        sourceOffset:buffer_offset
+                            toBuffer:result_buffers[i]
+                   destinationOffset:time_offset
+                                size:buffer_element_size];
+            }
+            [blit endEncoding];
+
+            time_offset += buffer_element_size;
         }
 
 //------------------------------------------------------------------------------
@@ -122,6 +159,9 @@ namespace gpu {
                 [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                         threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                 [encoder endEncoding];
+                
+                encode_blit();
+                
                 [command_buffer commit];
             }
         }
@@ -130,7 +170,33 @@ namespace gpu {
 ///  @brief Hold the current thread until the current command buffer has complete.
 //------------------------------------------------------------------------------
         void wait() {
+            command_buffer = [queue commandBuffer];
+            id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
+            for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                [blit synchronizeResource:result_buffers[i]];
+            }
+            [blit endEncoding];
+            
+            [command_buffer commit];
             [command_buffer waitUntilCompleted];
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the results.
+///
+///  @param[in] num_times Number of times to record.
+//------------------------------------------------------------------------------
+        template<class BACKEND>
+        void print_results(const size_t num_times) {
+            for (size_t i = 0, ie = num_times + 1; i < ie; i++) {
+                std::cout << i << " ";
+                for (id<MTLBuffer> buffer : result_buffers) {
+                    const typename BACKEND::base *contents = static_cast<typename BACKEND::base *> ([buffer contents]);
+                    std::cout << contents[i] << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
         }
     };
 }

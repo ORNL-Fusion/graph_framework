@@ -207,7 +207,8 @@ namespace jit {
                      const size_t num_steps,
                      const size_t num_rays) {
             GPU_CONTEXT context;
-            context.create_pipeline(source_buffer.str(), name, inputs, num_rays);
+            context.create_pipeline(source_buffer.str(), name, inputs, num_rays,
+                                    num_steps, 0);
             
             const timeing::measure_diagnostic gpu_time("GPU Time");
 
@@ -215,8 +216,9 @@ namespace jit {
                 context.step();
             }
             context.wait();
-
             gpu_time.stop();
+            
+            context.print_results<BACKEND> (num_steps);
         }
     };
 }
