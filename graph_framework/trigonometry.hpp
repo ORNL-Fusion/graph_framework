@@ -136,7 +136,7 @@ namespace graph {
         return (std::make_shared<sine_node<N>> (x))->reduce();
     }
 
-///  Convience type alias for shared sine nodes.
+///  Convenience type alias for shared sine nodes.
     template<typename N>
     using shared_sine = std::shared_ptr<sine_node<typename N::backend>>;
 
@@ -275,7 +275,7 @@ namespace graph {
     }
 
 
-///  Convience type alias for shared cosine nodes.
+///  Convenience type alias for shared cosine nodes.
     template<typename N>
     using shared_cosine = std::shared_ptr<sine_node<typename N::backend>>;
 

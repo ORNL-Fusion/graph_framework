@@ -179,7 +179,7 @@ namespace graph {
         return (std::make_shared<sqrt_node<N>> (x))->reduce();
     }
 
-///  Convience type alias for shared sqrt nodes.
+///  Convenience type alias for shared sqrt nodes.
     template<typename N>
     using shared_sqrt = std::shared_ptr<sqrt_node<N>>;
 
@@ -319,7 +319,7 @@ namespace graph {
         return (std::make_shared<exp_node<N>> (x))->reduce();
     }
 
-///  Convience type alias for shared exp nodes.
+///  Convenience type alias for shared exp nodes.
     template<typename N>
     using shared_exp = std::shared_ptr<exp_node<N>>;
 
@@ -455,7 +455,7 @@ namespace graph {
         return (std::make_shared<log_node<N>> (x))->reduce();
     }
 
-///  Convience type alias for shared exp nodes.
+///  Convenience type alias for shared exp nodes.
     template<typename N>
     using shared_log = std::shared_ptr<log_node<N>>;
 
@@ -667,7 +667,7 @@ namespace graph {
         return std::make_shared<pow_node<LN, RN>> (l, r)->reduce();
     }
 
-///  Convience type alias for shared add nodes.
+///  Convenience type alias for shared add nodes.
     template<typename LN, typename RN>
     using shared_pow = std::shared_ptr<pow_node<LN, RN>>;
 

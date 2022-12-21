@@ -47,22 +47,29 @@ namespace jit {
 ///
 ///  @param[in] name    Name to call the kernel.
 ///  @param[in] inputs  Input variables of the kernel.
+///  @param[in] outputs Output nodes of the graph to compute.
 ///  @param[in] setters Map outputs back to input values.
 //------------------------------------------------------------------------------
         kernel(const std::string name,
                graph::input_nodes<BACKEND> inputs,
+               graph::output_nodes<BACKEND> outputs,
                graph::map_nodes<BACKEND> setters) {
             const size_t test_size = inputs[0]->size();
             
             create_preamble(name);
+            
             add_kernel_argument(to_string('v', inputs[0].get()), 0);
-
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
                 assert(test_size == inputs[i]->size() &&
                        "Kernel input variables all need to be the same size.");
                 add_kernel_argument(to_string('v', inputs[i].get()), i);
             }
             
+            for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
+                add_kernel_argument(to_string('o', outputs[i].get()),
+                                    i + inputs.size());
+            }
+
             add_argument_index(test_size);
             
             for (graph::shared_variable<BACKEND> &input : inputs) {
@@ -72,12 +79,20 @@ namespace jit {
             for (auto &[out, in] : setters) {
                 out->compile(source_buffer, registers);
             }
-            
+            for (auto &out : outputs) {
+                out->compile(source_buffer, registers);
+            }
+
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<BACKEND> a = out->compile(source_buffer, registers);
                 store_variable(in.get(), registers[a.get()]);
             }
             
+            for (auto &out : outputs) {
+                graph::shared_leaf<BACKEND> a = out->compile(source_buffer, registers);
+                store_node(out.get(), registers[a.get()]);
+            }
+
             source_buffer << "}" << std::endl;
         }
 
@@ -191,6 +206,18 @@ namespace jit {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Store the final buffer.
+///
+///  @param[in] pointer Pointer to the result node.
+///  @param[in] result  Name of the result reguster.
+//------------------------------------------------------------------------------
+        void store_node(graph::leaf_node<BACKEND> *pointer,
+                        const std::string result) {
+            source_buffer << "    " << to_string('o',  pointer)
+                          << "[index] = " << result << ";" << std::endl;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Print the kernel source.
 //------------------------------------------------------------------------------
         void print() {
@@ -200,15 +227,21 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Compile the kernel.
 ///
-///  @param[in] inputs Input variables of the kernel.
+///  @param[in] name      Name of the kernel for reference.
+///  @param[in] inputs    Input variables of the kernel.
+///  @param[in] outputs   Output nodes to calculate results of.
+///  @param[in] num_steps Number of time steps.
+///  @param[in] num_rays  Number of rays.
 //------------------------------------------------------------------------------
         void compile(const std::string name,
                      graph::input_nodes<BACKEND> inputs,
+                     graph::output_nodes<BACKEND> outputs,
                      const size_t num_steps,
                      const size_t num_rays) {
             GPU_CONTEXT context;
-            context.create_pipeline(source_buffer.str(), name, inputs, num_rays,
-                                    num_steps, 0);
+            context.create_pipeline(source_buffer.str(), name,
+                                    inputs, outputs,
+                                    num_rays, num_steps, 0);
             
             const timeing::measure_diagnostic gpu_time("GPU Time");
 

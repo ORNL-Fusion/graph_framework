@@ -189,15 +189,17 @@ namespace solver {
 //------------------------------------------------------------------------------
         void compile(const size_t num_steps,
                      const size_t num_rays) {
+            auto result = residule();
             jit::kernel<typename DISPERSION_FUNCTION::backend> source("solver_kernel",
-                                                                      {graph::variable_cast(this->w),
-                                                                       graph::variable_cast(this->kx),
-                                                                       graph::variable_cast(this->ky),
-                                                                       graph::variable_cast(this->kz),
+                                                                      {graph::variable_cast(this->t),
+                                                                       graph::variable_cast(this->w),
                                                                        graph::variable_cast(this->x),
                                                                        graph::variable_cast(this->y),
                                                                        graph::variable_cast(this->z),
-                                                                       graph::variable_cast(this->t)},
+                                                                       graph::variable_cast(this->kx),
+                                                                       graph::variable_cast(this->ky),
+                                                                       graph::variable_cast(this->kz)},
+                                                                      {result},
                                                                       {{this->kx_next, graph::variable_cast(this->kx)},
                                                                        {this->ky_next, graph::variable_cast(this->ky)},
                                                                        {this->kz_next, graph::variable_cast(this->kz)},
@@ -207,15 +209,18 @@ namespace solver {
                                                                        {this->t_next, graph::variable_cast(this->t)}});
 
             source.compile("solver_kernel",
-                           {graph::variable_cast(this->w),
-                            graph::variable_cast(this->kx),
-                            graph::variable_cast(this->ky),
-                            graph::variable_cast(this->kz),
+                           {graph::variable_cast(this->t),
+                            graph::variable_cast(this->w),
                             graph::variable_cast(this->x),
                             graph::variable_cast(this->y),
                             graph::variable_cast(this->z),
-                            graph::variable_cast(this->t)},
+                            graph::variable_cast(this->kx),
+                            graph::variable_cast(this->ky),
+                            graph::variable_cast(this->kz)},
+                           {result},
                            num_steps, num_rays);
+            
+            source.print();
         }
         
 //------------------------------------------------------------------------------

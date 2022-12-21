@@ -120,9 +120,12 @@ namespace graph {
         typedef BACKEND backend;
     };
 
-///  Convience type alias for shared leaf nodes.
+///  Convenience type alias for shared leaf nodes.
     template<typename BACKEND>
     using shared_leaf = std::shared_ptr<leaf_node<BACKEND>>;
+///  Convenience type alias for a vector of output nodes.
+    template<class BACKEND>
+    using output_nodes = std::vector<shared_leaf<BACKEND>>;
 
 //******************************************************************************
 //  Base straight node.
@@ -419,7 +422,7 @@ namespace graph {
         return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
     }
 
-///  Convience type alias for shared constant nodes.
+///  Convenience type alias for shared constant nodes.
     template<typename N>
     using shared_constant = std::shared_ptr<constant_node<typename N::backend>>;
 
@@ -643,16 +646,16 @@ namespace graph {
         return (std::make_shared<variable_node<BACKEND>> (d, symbol))->reduce();
     }
 
-///  Convience type alias for shared variable nodes.
+///  Convenience type alias for shared variable nodes.
     template<class BACKEND>
     using shared_variable = std::shared_ptr<variable_node<BACKEND>>;
-///  Convinence type alias for a vector of inputs.
+///  Convenience type alias for a vector of inputs.
     template<class BACKEND>
     using input_nodes = std::vector<shared_variable<BACKEND>>;
-///  Convinence type alias for maping end codes back to inputs.
+///  Convenience type alias for maping end codes back to inputs.
     template<class BACKEND>
-    using map_nodes = std::map<graph::shared_leaf<BACKEND>,
-                               shared_variable<BACKEND>>;
+    using map_nodes = std::vector<std::pair<graph::shared_leaf<BACKEND>,
+                                            shared_variable<BACKEND>>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.
@@ -779,7 +782,7 @@ namespace graph {
         return (std::make_shared<cache_node<typename N::backend>> (x))->reduce();
     }
 
-///  Convience type alias for shared cache nodes.
+///  Convenience type alias for shared cache nodes.
     template<typename N>
     using shared_cache = std::shared_ptr<cache_node<typename N::backend>>;
 
@@ -865,7 +868,7 @@ namespace graph {
         return (std::make_shared<pseudo_variable_node<typename N::backend>> (x))->reduce();
     }
 
-///  Convience type alias for shared pseudo variable nodes.
+///  Convenience type alias for shared pseudo variable nodes.
     template<typename N>
     using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<typename N::backend>>;
 

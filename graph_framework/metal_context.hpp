@@ -57,6 +57,7 @@ namespace gpu {
 ///  @param[in] kernel_source Source code buffer for the kernel.
 ///  @param[in] kernel_name   Name of the kernel for later reference.
 ///  @param[in] inputs        Input nodes of the kernel.
+///  @param[in] outputs       Output nodes of the kernel.
 ///  @param[in] num_rays      Number of rays to trace.
 ///  @param[in] num_times     Number of times to record.
 ///  @param[in] ray_index     Index of the ray to save.
@@ -65,17 +66,15 @@ namespace gpu {
         void create_pipeline(const std::string kernel_source,
                              const std::string kernel_name,
                              graph::input_nodes<BACKEND> inputs,
+                             graph::output_nodes<BACKEND> outputs,
                              const size_t num_rays,
                              const size_t num_times,
                              const size_t ray_index) {
             @autoreleasepool {
-                MTLCompileOptions *options = [MTLCompileOptions new];
-                options.fastMathEnabled = NO;
-                
                 NSError *error;
                 id<MTLLibrary> library = [device newLibraryWithSource:[NSString stringWithCString:kernel_source.c_str()
                                                                                          encoding:NSUTF8StringEncoding]
-                                                              options:options
+                                                              options:compile_options()
                                                                 error:&error];
                 
                 if (error) {
@@ -109,6 +108,14 @@ namespace gpu {
                     result_buffers.push_back([device newBufferWithLength:num_times*buffer_element_size
                                                                  options:MTLResourceStorageModeManaged]);
                 }
+                for (graph::shared_leaf<BACKEND> &output : outputs) {
+                    const BACKEND backend = output->evaluate();
+                    buffers.push_back([device newBufferWithBytes:&backend[0]
+                                                          length:backend.size()*buffer_element_size
+                                                         options:MTLResourceStorageModeManaged]);
+                    result_buffers.push_back([device newBufferWithLength:num_times*buffer_element_size
+                                                                 options:MTLResourceStorageModeManaged]);
+                }
                 
                 threads_per_group = state.maxTotalThreadsPerThreadgroup;
                 thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
@@ -117,9 +124,19 @@ namespace gpu {
                 std::cout << "  Number of groups   : " << thread_groups << std::endl;
                 std::cout << "  Total problem size : " << threads_per_group*thread_groups << std::endl;
                 
+                command_buffer = [queue commandBuffer];
                 encode_blit();
                 [command_buffer commit];
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the compile options.
+//------------------------------------------------------------------------------
+        MTLCompileOptions *compile_options() {
+            MTLCompileOptions *options = [MTLCompileOptions new];
+            options.fastMathEnabled = NO;
+            return options;
         }
 
 //------------------------------------------------------------------------------

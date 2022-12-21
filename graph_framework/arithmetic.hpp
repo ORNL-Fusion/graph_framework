@@ -375,7 +375,7 @@ namespace graph {
         return add<LN, RN> (l, r);
     }
 
-///  Convience type alias for shared add nodes.
+///  Convenience type alias for shared add nodes.
     template<typename LN, typename RN>
     using shared_add = std::shared_ptr<add_node<LN, RN>>;
 
@@ -680,7 +680,7 @@ namespace graph {
         return subtract<LN, RN> (l, r);
     }
 
-///  Convience type alias for shared subtract nodes.
+///  Convenience type alias for shared subtract nodes.
     template<typename LN, typename RN>
     using shared_subtract = std::shared_ptr<subtract_node<LN, RN>>;
 
@@ -1056,7 +1056,7 @@ namespace graph {
         return multiply<LN, RN> (l, r);
     }
 
-///  Convience type alias for shared multiply nodes.
+///  Convenience type alias for shared multiply nodes.
     template<typename LN, typename RN>
     using shared_multiply = std::shared_ptr<multiply_node<LN, RN>>;
 
@@ -1361,7 +1361,7 @@ namespace graph {
         return divide<LN, RN> (l, r);
     }
 
-///  Convience type alias for shared divide nodes.
+///  Convenience type alias for shared divide nodes.
     template<typename LN, typename RN>
     using shared_divide = std::shared_ptr<divide_node<LN, RN>>;
 
@@ -1618,7 +1618,7 @@ namespace graph {
         return std::make_shared<fma_node<LN, MN, RN>> (l, m, r)->reduce();
     }
 
-///  Convience type alias for shared add nodes.
+///  Convenience type alias for shared add nodes.
     template<typename LN, typename MN, typename RN>
     using shared_fma = std::shared_ptr<fma_node<LN, MN, RN>>;
 
