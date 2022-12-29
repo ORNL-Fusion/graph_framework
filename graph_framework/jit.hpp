@@ -241,7 +241,7 @@ namespace jit {
             GPU_CONTEXT context;
             context.create_pipeline(source_buffer.str(), name,
                                     inputs, outputs,
-                                    num_rays, num_steps, 0);
+                                    num_rays, num_steps + 1, 0);
             
             const timeing::measure_diagnostic gpu_time("GPU Time");
 

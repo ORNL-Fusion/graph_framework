@@ -31,7 +31,7 @@ namespace jit {
     template<class NODE>
     std::string to_string(const char prefix,
                           const NODE *pointer) {
-        assert(prefix == 'r' || prefix == 'v' &&
+        assert((prefix == 'r' || prefix == 'v' || prefix == 'o' ) &&
                "Expected a variable (v) or register (r) prefix.");
         std::stringstream stream;
         stream << prefix << "_" << reinterpret_cast<size_t> (pointer);

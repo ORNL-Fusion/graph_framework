@@ -141,7 +141,7 @@ namespace gpu {
                 cuMemcpyHtoD(ptr, &backend[0], backend.size()*buffer_element_size);
                 buffers.push_back(ptr);
 
-		void *hptr;
+                void *hptr;
                 cuMemHostAlloc(&hptr, result_size, 0);
                 result_buffers.push_back(hptr);
             }

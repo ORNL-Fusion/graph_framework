@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-///  @file node_test.cpp
-///  @brief Tests for the node interface.
+///  @file vector_test.cpp
+///  @brief Tests for the vector interface.
 //------------------------------------------------------------------------------
 
 //  Turn on asserts even in release builds.
@@ -10,7 +10,7 @@
 
 #include <cassert>
 
-#include "vector.hpp"
+#include "../graph_framework/vector.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
