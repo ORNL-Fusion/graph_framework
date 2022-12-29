@@ -17,6 +17,9 @@
 #include "node.hpp"
 
 namespace gpu {
+//  Initialize the cuda driver.
+    static const CUresult init = cuInit(0);
+
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
 //------------------------------------------------------------------------------
@@ -104,17 +107,32 @@ namespace gpu {
             std::cout << "CUDA GPU info." << std::endl;
             std::cout << "  Major compute capability : " << compute_version << std::endl;
 
-//  FIXME: Hardcoded for ada gpus for now.
-            std::array<char *, 2> options({
-                "--gpu-architecture=compute_90",
-                "--std=c++20"
-            });
-            nvrtcCompileProgram(kernel_program, 2, options.data());
+            cuDeviceGetAttribute(&compute_version,
+                                 CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
+                                 device);
 
-            char *mangled_kernel_name;
+            std::cout << "  Minor compute capability : " << compute_version << std::endl;
+
+//  FIXME: Hardcoded for ada gpus for now.
+            std::array<const char *, 2> options({
+                "--gpu-architecture=compute_70",
+                "--std=c++17"
+            });
+
+            if (nvrtcCompileProgram(kernel_program, 2, options.data())) {
+                size_t log_size;
+                nvrtcGetProgramLogSize(kernel_program, &log_size);
+
+                char *log = static_cast<char *> (malloc(log_size));
+                nvrtcGetProgramLog(kernel_program, log);
+                std::cout << log << std::endl;
+                free(log);
+            }
+
+            const char *mangled_kernel_name;
             nvrtcGetLoweredName(kernel_program,
                                 kernel_name.c_str(),
-                                const_cast<const char **> (&mangled_kernel_name));
+                                &mangled_kernel_name);
 
             std::cout << "  Mangled Kernel Name      : " << mangled_kernel_name << std::endl;
 
