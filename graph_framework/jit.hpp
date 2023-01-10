@@ -93,7 +93,7 @@ namespace jit {
                 store_node(out.get(), registers[a.get()]);
             }
 
-            source_buffer << "}" << std::endl;
+            source_buffer << "    }" << std::endl << "}" << std::endl;
         }
 
 //------------------------------------------------------------------------------
@@ -116,7 +116,7 @@ namespace jit {
             source_buffer << "using namespace metal;" << std::endl
                           << "kernel ";
 #else
-            source_buffer << "__global__ ";
+            source_buffer << "extern \"C\" __global__ ";
 #endif
             source_buffer << "void " << name << "(";
         }
@@ -168,15 +168,15 @@ namespace jit {
             source_buffer << "    uint i [[thread_position_in_grid]]";
 #endif
             source_buffer << ") {" << std::endl;
-            source_buffer << "    const size_t index = min(";
+            source_buffer << "    const size_t index = ";//min(";
 #ifdef USE_METAL
-            source_buffer << "i, uint(";
+            source_buffer << "i;";//, uint(";
 #elif defined (USE_CUDA)
-            source_buffer << "blockIdx.x*blockDim.x + threadIdx.x, (";
+            source_buffer << "blockIdx.x*blockDim.x + threadIdx.x;";//, (";
 #elif defined (USE_HIP)
-            source_buffer << "hipBlockIdx_x*hipBlockDim_x + hipThreadIdx_x, ";
+            source_buffer << "hipBlockIdx_x*hipBlockDim_x + hipThreadIdx_x;";//, (";
 #endif
-            source_buffer << size - 1 << "));" << std::endl;
+            source_buffer << std::endl << "    if (index < " << size << ") {" << std::endl;
         }
 
 //------------------------------------------------------------------------------

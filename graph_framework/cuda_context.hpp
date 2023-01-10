@@ -42,7 +42,7 @@ namespace gpu {
 ///  Number of threads in a group.
         unsigned int threads_per_group;
 ///  Result buffers.
-        std::vector<void *> result_buffers;
+        std::vector<CUdeviceptr> result_buffers;
 ///  Index offset.
         size_t buffer_offset;
 ///  Buffer element size.
@@ -51,29 +51,66 @@ namespace gpu {
         size_t time_offset;
 ///  Result buffer size;
         size_t result_size;
+///  Kernel arguments.
+        std::vector<void *> kernel_arguments;
+
+//------------------------------------------------------------------------------
+///  @brief  Check Results of cuda functions.
+///
+///  @param[in] result Result code of the operation.
+///  @param[in] name   Name of the operation.
+//------------------------------------------------------------------------------
+        void check_error(CUresult result,
+                         const std::string &name) {
+#ifndef NDEBUG
+            const char *error;
+            cuGetErrorString(result, &error);
+            std::cout << name << " "
+                      << result << " " << error << std::endl;
+#endif
+        }
+
+//------------------------------------------------------------------------------
+///  @brief  Check results of async cuda functions.
+///
+///  @param[in] result Result code of the operation.
+///  @param[in] name   Name of the operation.
+//------------------------------------------------------------------------------
+        void check_error_async(CUresult result,
+                               const std::string &name) {
+            check_error(result, name);
+#ifndef NDEBUG
+            std::string async_name = name + "_async";
+            check_error(cuStreamSynchronize(stream), async_name);
+#endif
+        }
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Cuda context constructor.
 //------------------------------------------------------------------------------
         cuda_context() {
-            cuDeviceGet(&device, 0);
-            cuDevicePrimaryCtxRetain(&context, device);
-            cuStreamCreate(&stream, CU_STREAM_DEFAULT);
+            check_error(cuDeviceGet(&device, 0), "cuDeviceGet");
+            check_error(cuDevicePrimaryCtxRetain(&context, device), "cuDevicePrimaryCtxRetain");
+            check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
+            check_error(cuStreamCreate(&stream, CU_STREAM_DEFAULT), "cuStreamCreate");
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Cuda context destructor.
 //------------------------------------------------------------------------------
         ~cuda_context() {
-            cuModuleUnload(module);
+            check_error(cuModuleUnload(module), "cuModuleUnload");
 
             for (CUdeviceptr &ptr : buffers) {
-                cuMemFree(ptr);
+                check_error(cuMemFree(ptr), "cuMemFree");
+            }
+            for (CUdeviceptr &ptr : result_buffers) {
+                check_error(cuMemFree(ptr), "cuMemFree");
             }
 
-            cuStreamDestroy(stream);
-            cuDevicePrimaryCtxRelease(device);
+            check_error(cuStreamDestroy(stream), "cuStreamDestroy");
+            check_error(cuDevicePrimaryCtxRelease(device), "cuDevicePrimaryCtxRelease");
         }
 
 //------------------------------------------------------------------------------
@@ -100,22 +137,28 @@ namespace gpu {
                                kernel_source.c_str(),
                                NULL, 0, NULL, NULL);
 
+            nvrtcAddNameExpression(kernel_program, kernel_name.c_str());
+
             int compute_version;
-            cuDeviceGetAttribute(&compute_version,
-                                 CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR,
-                                 device);
+            check_error(cuDeviceGetAttribute(&compute_version,
+                                             CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR,
+                                             device), "cuDeviceGetAttribute");
             std::cout << "CUDA GPU info." << std::endl;
             std::cout << "  Major compute capability : " << compute_version << std::endl;
 
-            cuDeviceGetAttribute(&compute_version,
-                                 CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
-                                 device);
+            check_error(cuDeviceGetAttribute(&compute_version,
+                                             CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
+                                             device), "cuDeviceGetAttribute");
 
             std::cout << "  Minor compute capability : " << compute_version << std::endl;
 
+            char device_name[100];
+            check_error(cuDeviceGetName(device_name, 100, device), "cuDeviceGetName");
+            std::cout << "  Device name              : " << device_name << std::endl;
+
 //  FIXME: Hardcoded for ada gpus for now.
             std::array<const char *, 2> options({
-                "--gpu-architecture=compute_70",
+                "--gpu-architecture=compute_80",
                 "--std=c++17"
             });
 
@@ -136,54 +179,56 @@ namespace gpu {
 
             std::cout << "  Mangled Kernel Name      : " << mangled_kernel_name << std::endl;
 
+            check_error(cuDeviceGetAttribute(&compute_version,
+                                             CU_DEVICE_ATTRIBUTE_MANAGED_MEMORY,
+                                             device), "cuDeviceGetAttribute");
+            std::cout << "  Managed Memory           : " << compute_version << std::endl;
+
             size_t ptx_size;
             nvrtcGetPTXSize(kernel_program, &ptx_size);
 
             char *ptx = static_cast<char *> (malloc(ptx_size));
             nvrtcGetPTX(kernel_program, ptx);
 
-            cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL);
-            cuModuleGetFunction(&function, module, mangled_kernel_name);
+            check_error(cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL), "cuModuleLoadDataEx");
+            check_error(cuModuleGetFunction(&function, module, mangled_kernel_name), "cuModuleGetFunction");
 
             free(ptx);
 
+            buffers.resize(inputs.size() + outputs.size());
+            result_buffers.resize(inputs.size() + outputs.size());
+
             buffer_element_size = sizeof(typename BACKEND::base);
-            buffer_offset = ray_index*buffer_element_size;
+            buffer_offset = ray_index;
             time_offset = 0;
             result_size = num_times*buffer_element_size;
-            for (graph::shared_variable<BACKEND> &input : inputs) {
-                const BACKEND backend = input->evaluate();
+	    for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                const BACKEND backend = inputs[i]->evaluate();
 
-                CUdeviceptr ptr;
-                cuMemAlloc(&ptr, backend.size()*buffer_element_size);
-                cuMemcpyHtoD(ptr, &backend[0], backend.size()*buffer_element_size);
-                buffers.push_back(ptr);
+                check_error(cuMemAlloc(&buffers[i], backend.size()*buffer_element_size), "cuMemAlloc");
+                check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), "cuMemcpyHtoD");
+                kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
 
-                void *hptr;
-                cuMemHostAlloc(&hptr, result_size, 0);
-                result_buffers.push_back(hptr);
+                check_error(cuMemAllocManaged(&result_buffers[i], result_size, CU_MEM_ATTACH_GLOBAL), "cuMemAllocManaged");
             }
-            for (graph::shared_leaf<BACKEND> &output : outputs) {
-                const BACKEND backend = output->evaluate();
+	    for	(size_t i = inputs.size(), ie = buffers.size(), j = 0; i < ie; i++, j++)	{
+                const BACKEND backend = outputs[j]->evaluate();
 
-                CUdeviceptr ptr;
-                cuMemAlloc(&ptr, backend.size()*buffer_element_size);
-                cuMemcpyHtoD(ptr, &backend[0], backend.size()*buffer_element_size);
-                buffers.push_back(ptr);
+                check_error(cuMemAlloc(&buffers[i], backend.size()*buffer_element_size), "cuMemAlloc");
+                check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), "cuMemcpyHtoD");
+                kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
 
-                void *hptr;
-                cuMemHostAlloc(&hptr, result_size, 0);
-                result_buffers.push_back(hptr);
+                check_error(cuMemAllocManaged(&result_buffers[i], result_size, CU_MEM_ATTACH_GLOBAL), "cuMemAllocManaged");
             }
 
             int value;
-            cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
-                               function);
+            check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
+                                           function), "cuFuncGetAttribute");
             threads_per_group = value;
             thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
-            std::cout << "  Threads per group  : " << threads_per_group << std::endl;
-            std::cout << "  Number of groups   : " << thread_groups << std::endl;
-            std::cout << "  Total problem size : " << threads_per_group*thread_groups << std::endl;
+            std::cout << "  Threads per group        : " << threads_per_group << std::endl;
+            std::cout << "  Number of groups         : " << thread_groups << std::endl;
+            std::cout << "  Total problem size       : " << threads_per_group*thread_groups << std::endl;
 
             encode_blit();
         }
@@ -196,12 +241,13 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void encode_blit() {
             for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
-                CUdeviceptr hdptr;
-                cuMemHostGetDevicePointer(&hdptr, result_buffers[i], 0);
-                cuMemcpyDtoDAsync(hdptr + time_offset,
-                                  buffers[i] + buffer_offset,
-                                  buffer_element_size, stream);
+                check_error_async(cuMemcpyDtoDAsync(result_buffers[i] + time_offset,
+                                                    buffers[i] + buffer_offset,
+                                                    buffer_element_size, stream),
+                                  "check_error_async");
             }
+
+            time_offset += buffer_element_size;
         }
 
 //------------------------------------------------------------------------------
@@ -211,8 +257,10 @@ namespace gpu {
 ///  commits the job. This method is asynchronous.
 //------------------------------------------------------------------------------
         void step() {
-            cuLaunchKernel(function, threads_per_group, 0, 0, thread_groups, 0, 0,
-                           NULL, stream, reinterpret_cast<void**> (buffers.data()), NULL);
+            check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
+                                             threads_per_group, 1, 1, 0, stream,
+                                             kernel_arguments.data(), NULL),
+                              "cuLaunchKernel");
             encode_blit();
         }
 
@@ -220,14 +268,7 @@ namespace gpu {
 ///  @brief Hold the current thread until the stream has completed.
 //------------------------------------------------------------------------------
         void wait() {
-
-            for (void *hptr : result_buffers) {
-                CUdeviceptr hdptr;
-                cuMemHostGetDevicePointer(&hdptr, hptr, 0);
-                cuMemcpyDtoHAsync(hptr, hdptr,
-                                  result_size, stream);
-            }
-            cuStreamSynchronize(stream);
+            check_error_async(cuStreamSynchronize(stream), "cuStreamSynchronize");
         }
 
 //------------------------------------------------------------------------------
@@ -237,10 +278,11 @@ namespace gpu {
 //------------------------------------------------------------------------------
         template<class BACKEND>
         void print_results(const size_t num_times) {
+            check_error(cuCtxSynchronize(), "cuCtxSynchronize");
             for (size_t i = 0, ie = num_times + 1; i < ie; i++) {
                 std::cout << i << " ";
-                for (void *buffer : result_buffers) {
-                    std::cout << *(static_cast<typename BACKEND::base *> (buffer) + i) << " ";
+                for (CUdeviceptr &buffer : result_buffers) {
+                    std::cout << reinterpret_cast<typename BACKEND::base *> (buffer)[i] << " ";
                 }
                 std::cout << std::endl;
             }
