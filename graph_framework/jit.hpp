@@ -244,14 +244,15 @@ namespace jit {
                                     num_rays, num_steps + 1, 0);
             
             const timeing::measure_diagnostic gpu_time("GPU Time");
-
+            
+            context.print_results<BACKEND> (0);
             for (size_t i = 0; i < num_steps; i++) {
                 context.step();
+                context.print_results<BACKEND> (0);
             }
             context.wait();
+
             gpu_time.stop();
-            
-            context.print_results<BACKEND> (num_steps);
         }
     };
 }

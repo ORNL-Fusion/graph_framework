@@ -41,8 +41,6 @@ namespace gpu {
         unsigned int thread_groups;
 ///  Number of threads in a group.
         unsigned int threads_per_group;
-///  Result buffers.
-        std::vector<CUdeviceptr> result_buffers;
 ///  Index offset.
         size_t buffer_offset;
 ///  Buffer element size.
@@ -202,23 +200,19 @@ namespace gpu {
             buffer_offset = ray_index;
             time_offset = 0;
             result_size = num_times*buffer_element_size;
-	    for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 const BACKEND backend = inputs[i]->evaluate();
 
                 check_error(cuMemAlloc(&buffers[i], backend.size()*buffer_element_size), "cuMemAlloc");
                 check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), "cuMemcpyHtoD");
                 kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
-
-                check_error(cuMemAllocManaged(&result_buffers[i], result_size, CU_MEM_ATTACH_GLOBAL), "cuMemAllocManaged");
             }
-	    for	(size_t i = inputs.size(), ie = buffers.size(), j = 0; i < ie; i++, j++)	{
+            for (size_t i = inputs.size(), ie = buffers.size(), j = 0; i < ie; i++, j++)	{
                 const BACKEND backend = outputs[j]->evaluate();
 
                 check_error(cuMemAlloc(&buffers[i], backend.size()*buffer_element_size), "cuMemAlloc");
                 check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), "cuMemcpyHtoD");
                 kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
-
-                check_error(cuMemAllocManaged(&result_buffers[i], result_size, CU_MEM_ATTACH_GLOBAL), "cuMemAllocManaged");
             }
 
             int value;
@@ -229,25 +223,6 @@ namespace gpu {
             std::cout << "  Threads per group        : " << threads_per_group << std::endl;
             std::cout << "  Number of groups         : " << thread_groups << std::endl;
             std::cout << "  Total problem size       : " << threads_per_group*thread_groups << std::endl;
-
-            encode_blit();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief  Encode a blit command to the stream.
-///
-///  blit is the metal terminology for a memcopy operation added to the command
-///  stream. Don't know what the cuda term is.
-//------------------------------------------------------------------------------
-        void encode_blit() {
-            for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
-                check_error_async(cuMemcpyDtoDAsync(result_buffers[i] + time_offset,
-                                                    buffers[i] + buffer_offset,
-                                                    buffer_element_size, stream),
-                                  "check_error_async");
-            }
-
-            time_offset += buffer_element_size;
         }
 
 //------------------------------------------------------------------------------
@@ -261,7 +236,6 @@ namespace gpu {
                                              threads_per_group, 1, 1, 0, stream,
                                              kernel_arguments.data(), NULL),
                               "cuLaunchKernel");
-            encode_blit();
         }
 
 //------------------------------------------------------------------------------
@@ -269,22 +243,19 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void wait() {
             check_error_async(cuStreamSynchronize(stream), "cuStreamSynchronize");
+            check_error(cuCtxSynchronize(), "cuCtxSynchronize");
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @param[in] num_times Number of times to record.
+///  @param[in] index Number of times to record.
 //------------------------------------------------------------------------------
         template<class BACKEND>
-        void print_results(const size_t num_times) {
-            check_error(cuCtxSynchronize(), "cuCtxSynchronize");
-            for (size_t i = 0, ie = num_times + 1; i < ie; i++) {
-                std::cout << i << " ";
-                for (CUdeviceptr &buffer : result_buffers) {
-                    std::cout << reinterpret_cast<typename BACKEND::base *> (buffer)[i] << " ";
-                }
-                std::cout << std::endl;
+        void print_results(const size_t index) {
+            wait();
+            for (CUdeviceptr &buffer : buffers) {
+                std::cout << reinterpret_cast<typename BACKEND::base *> (buffer)[index] << " ";
             }
             std::cout << std::endl;
         }

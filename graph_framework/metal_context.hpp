@@ -34,8 +34,6 @@ namespace gpu {
         NSUInteger thread_groups;
 ///  Number of threads in a group.
         NSUInteger threads_per_group;
-///  Result buffers.
-        std::vector<id<MTLBuffer>> result_buffers;
 ///  Index offset.
         size_t buffer_offset;
 ///  Buffer element size.
@@ -105,16 +103,12 @@ namespace gpu {
                     buffers.push_back([device newBufferWithBytes:&backend[0]
                                                           length:backend.size()*buffer_element_size
                                                          options:MTLResourceStorageModeManaged]);
-                    result_buffers.push_back([device newBufferWithLength:num_times*buffer_element_size
-                                                                 options:MTLResourceStorageModeManaged]);
                 }
                 for (graph::shared_leaf<BACKEND> &output : outputs) {
                     const BACKEND backend = output->evaluate();
                     buffers.push_back([device newBufferWithBytes:&backend[0]
                                                           length:backend.size()*buffer_element_size
                                                          options:MTLResourceStorageModeManaged]);
-                    result_buffers.push_back([device newBufferWithLength:num_times*buffer_element_size
-                                                                 options:MTLResourceStorageModeManaged]);
                 }
                 
                 threads_per_group = state.maxTotalThreadsPerThreadgroup;
@@ -123,10 +117,6 @@ namespace gpu {
                 std::cout << "  Threads per group  : " << threads_per_group << std::endl;
                 std::cout << "  Number of groups   : " << thread_groups << std::endl;
                 std::cout << "  Total problem size : " << threads_per_group*thread_groups << std::endl;
-                
-                command_buffer = [queue commandBuffer];
-                encode_blit();
-                [command_buffer commit];
             }
         }
 
@@ -137,23 +127,6 @@ namespace gpu {
             MTLCompileOptions *options = [MTLCompileOptions new];
             options.fastMathEnabled = NO;
             return options;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Encode a blit command.
-//------------------------------------------------------------------------------
-        void encode_blit() {
-            id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
-            for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
-                [blit copyFromBuffer:buffers[i]
-                        sourceOffset:buffer_offset
-                            toBuffer:result_buffers[i]
-                   destinationOffset:time_offset
-                                size:buffer_element_size];
-            }
-            [blit endEncoding];
-
-            time_offset += buffer_element_size;
         }
 
 //------------------------------------------------------------------------------
@@ -177,8 +150,6 @@ namespace gpu {
                         threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                 [encoder endEncoding];
                 
-                encode_blit();
-                
                 [command_buffer commit];
             }
         }
@@ -189,8 +160,8 @@ namespace gpu {
         void wait() {
             command_buffer = [queue commandBuffer];
             id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
-            for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
-                [blit synchronizeResource:result_buffers[i]];
+            for (id<MTLBuffer> buffer : buffers) {
+                [blit synchronizeResource:buffer];
             }
             [blit endEncoding];
             
@@ -201,17 +172,14 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @param[in] num_times Number of times to record.
+///  @param[in] index Particle index to print.
 //------------------------------------------------------------------------------
         template<class BACKEND>
-        void print_results(const size_t num_times) {
-            for (size_t i = 0, ie = num_times + 1; i < ie; i++) {
-                std::cout << i << " ";
-                for (id<MTLBuffer> buffer : result_buffers) {
-                    const typename BACKEND::base *contents = static_cast<typename BACKEND::base *> ([buffer contents]);
-                    std::cout << contents[i] << " ";
-                }
-                std::cout << std::endl;
+        void print_results(const size_t index) {
+            wait();
+            for (id<MTLBuffer> buffer : buffers) {
+                const typename BACKEND::base *contents = static_cast<typename BACKEND::base *> ([buffer contents]);
+                std::cout << contents[index] << " ";
             }
             std::cout << std::endl;
         }
