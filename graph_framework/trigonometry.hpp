@@ -86,7 +86,7 @@ namespace graph {
 
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
-                stream << "    const ";
+                stream << "        const ";
                 jit::add_type<N> (stream);
                 stream << " " << registers[this] << " = sin("
                        << registers[a.get()] << ");"
@@ -224,7 +224,7 @@ namespace graph {
 
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
-                stream << "    const ";
+                stream << "        const ";
                 jit::add_type<N> (stream);
                 stream << " " << registers[this] << " = cos("
                        << registers[a.get()] << ");"

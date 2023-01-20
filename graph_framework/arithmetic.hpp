@@ -288,7 +288,7 @@ namespace graph {
 
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
-                stream << "    const ";
+                stream << "        const ";
                 jit::add_type<LN> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[l.get()] << " + "
@@ -599,7 +599,7 @@ namespace graph {
 
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
-                stream << "    const ";
+                stream << "        const ";
                 jit::add_type<LN> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[l.get()] << " - "
@@ -975,7 +975,7 @@ namespace graph {
 
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
-                stream << "    const ";
+                stream << "        const ";
                 jit::add_type<LN> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[l.get()] << "*"
@@ -1292,7 +1292,7 @@ namespace graph {
 
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
-                stream << "    const ";
+                stream << "        const ";
                 jit::add_type<LN> (stream);
                 //std::cout << ((registers.find(r.get()) == registers.end()) ? "True" : registers[r.get()])
                 //          << std::endl;
@@ -1543,7 +1543,7 @@ namespace graph {
 
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
-                stream << "    const ";
+                stream << "        const ";
                 jit::add_type<LN> (stream);
                 stream << " " << registers[this] << " = fma("
                        << registers[l.get()] << ", "

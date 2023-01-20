@@ -186,7 +186,7 @@ namespace jit {
 //------------------------------------------------------------------------------
         void load_variable(graph::variable_node<BACKEND> *pointer) {
             registers[pointer] = to_string('r', pointer);
-            source_buffer << "    const ";
+            source_buffer << "        const ";
             add_type<graph::leaf_node<BACKEND>> (source_buffer);
             source_buffer << " " << registers[pointer] << " = "
                           << to_string('v', pointer) << "[index];"
@@ -201,7 +201,7 @@ namespace jit {
 //------------------------------------------------------------------------------
         void store_variable(graph::variable_node<BACKEND> *pointer,
                             const std::string result) {
-            source_buffer << "    " << to_string('v',  pointer)
+            source_buffer << "        " << to_string('v',  pointer)
                           << "[index] = " << result << ";" << std::endl;
         }
 
@@ -213,7 +213,7 @@ namespace jit {
 //------------------------------------------------------------------------------
         void store_node(graph::leaf_node<BACKEND> *pointer,
                         const std::string result) {
-            source_buffer << "    " << to_string('o',  pointer)
+            source_buffer << "        " << to_string('o',  pointer)
                           << "[index] = " << result << ";" << std::endl;
         }
 

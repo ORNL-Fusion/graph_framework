@@ -286,20 +286,12 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
 ///
-///  @param[in] d Array buffer to initalize.
-//------------------------------------------------------------------------------
-        constant_node(const std::vector<typename BACKEND::base> &d) :
-        data(d) {
-            assert(d.size() == 1 && "Constants need to be scalar functions.");
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Construct a constant node from a vector.
-///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
         constant_node(const BACKEND &d) :
-        data(d) {}
+        data(d) {
+            assert(d.size() == 1 && "Constants need to be scalar functions.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -346,7 +338,7 @@ namespace graph {
                                              jit::register_map<leaf_node<BACKEND>> &registers) final {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
-                stream << "    const ";
+                stream << "        const ";
                 jit::add_type<constant_node<BACKEND>> (stream);
                 stream << " " << registers[this] << " = "
                        << this->evaluate()[0] << ";" << std::endl;
@@ -397,17 +389,6 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<class BACKEND>
     shared_leaf<BACKEND> constant(const typename BACKEND::base d) {
-        return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Construct a constant.
-///
-///  @param[in] d Array buffer.
-///  @returns A reduced constant node.
-//------------------------------------------------------------------------------
-    template<class BACKEND>
-    shared_leaf<BACKEND> constant(const std::vector<typename BACKEND::base> &d) {
         return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
     }
 
