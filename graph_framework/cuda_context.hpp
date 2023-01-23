@@ -103,9 +103,6 @@ namespace gpu {
             for (CUdeviceptr &ptr : buffers) {
                 check_error(cuMemFree(ptr), "cuMemFree");
             }
-            for (CUdeviceptr &ptr : result_buffers) {
-                check_error(cuMemFree(ptr), "cuMemFree");
-            }
 
             check_error(cuStreamDestroy(stream), "cuStreamDestroy");
             check_error(cuDevicePrimaryCtxRelease(device), "cuDevicePrimaryCtxRelease");
@@ -194,7 +191,6 @@ namespace gpu {
             free(ptx);
 
             buffers.resize(inputs.size() + outputs.size());
-            result_buffers.resize(inputs.size() + outputs.size());
 
             buffer_element_size = sizeof(typename BACKEND::base);
             buffer_offset = ray_index;
@@ -203,14 +199,14 @@ namespace gpu {
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 const BACKEND backend = inputs[i]->evaluate();
 
-                check_error(cuMemAlloc(&buffers[i], backend.size()*buffer_element_size), "cuMemAlloc");
+                check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size, CU_MEM_ATTACH_GLOBAL), "cuMemAllocManaged");
                 check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), "cuMemcpyHtoD");
                 kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
             }
             for (size_t i = inputs.size(), ie = buffers.size(), j = 0; i < ie; i++, j++)	{
                 const BACKEND backend = outputs[j]->evaluate();
 
-                check_error(cuMemAlloc(&buffers[i], backend.size()*buffer_element_size), "cuMemAlloc");
+                check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size, CU_MEM_ATTACH_GLOBAL), "cuMemAllocManaged");
                 check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), "cuMemcpyHtoD");
                 kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
             }
