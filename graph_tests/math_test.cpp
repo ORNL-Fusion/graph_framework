@@ -273,6 +273,10 @@ void test_pow() {
     auto hundred = graph::pow(ten, two);
     assert(hundred->evaluate().at(0) == backend::base_cast<BACKEND> (100.0) &&
            "Expected 100");
+    const auto non_int = backend::base_cast<BACKEND> (0.438763);
+    auto sqrd = graph::pow(graph::constant<BACKEND> (non_int), two);
+    assert(sqrd->evaluate().at(0) == backend::base_cast<BACKEND> (non_int*non_int) &&
+           "Expected x*x");
 
     auto three = graph::constant<BACKEND> (2);
     auto pow_pow1 = graph::pow(graph::pow(ten, three), two);
@@ -318,18 +322,11 @@ void test_pow() {
 //  Test derivatives.
     auto x2 = graph::pow(ten, two);
     auto dx2dx = x2->df(ten);
-#ifdef USE_REDUCE
     assert(graph::multiply_cast(dx2dx).get() && "Expected multiply node.");
-#else
-    assert(graph::add_cast(dx2dx).get() && "Expected an add node.");
-#endif
+
     auto x3 = graph::pow(two, ten);
     auto dx3dx = x3->df(ten);
-#ifdef USE_REDUCE
     assert(graph::multiply_cast(dx3dx).get() && "Expected multiply node.");
-#else
-    assert(graph::add_cast(dx3dx).get() && "Expected an add node.");
-#endif
 }
 
 //------------------------------------------------------------------------------

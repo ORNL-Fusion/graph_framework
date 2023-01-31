@@ -14,6 +14,7 @@
 #include <cassert>
 #include <memory>
 #include <vector>
+#include <iomanip>
 
 #include "register.hpp"
 #include "backend_protocall.hpp"
@@ -115,7 +116,7 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const = 0;
-        
+
 ///  Type def to retrieve the backend type.
         typedef BACKEND backend;
     };
@@ -341,6 +342,7 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<constant_node<BACKEND>> (stream);
                 stream << " " << registers[this] << " = "
+                       << std::setprecision(std::numeric_limits<typename BACKEND::base>::max_digits10)
                        << this->evaluate()[0] << ";" << std::endl;
             }
             
@@ -428,7 +430,7 @@ namespace graph {
     class variable_node final : public leaf_node<BACKEND> {
     private:
 ///  Storage buffer for the data.
-        BACKEND data;
+        BACKEND buffer;
 ///  Latex Symbol for the variable when pretty printing.
         const std::string symbol;
 
@@ -441,7 +443,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s,
                       const std::string &symbol) :
-        data(s), symbol(symbol) {}
+        buffer(s), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a scalar.
@@ -453,7 +455,7 @@ namespace graph {
         variable_node(const size_t s,
                       const typename BACKEND::base d,
                       const std::string &symbol) :
-        data(s, d), symbol(symbol) {}
+        buffer(s, d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
@@ -462,7 +464,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const std::vector<typename BACKEND::base> &d,
                       const std::string &symbol) :
-        data(d), symbol(symbol) {}
+        buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from backend buffer.
@@ -471,7 +473,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const BACKEND &d,
                       const std::string &symbol) :
-        data(d), symbol(symbol) {}
+        buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -479,7 +481,7 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual BACKEND evaluate() final {
-            return data;
+            return buffer;
         }
 
 //------------------------------------------------------------------------------
@@ -530,7 +532,7 @@ namespace graph {
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const typename BACKEND::base d) final {
-            data.set(d);
+            buffer.set(d);
         }
 
 //------------------------------------------------------------------------------
@@ -541,7 +543,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void set(const size_t index,
                          const typename BACKEND::base d) final {
-            data[index] = d;
+            buffer[index] = d;
         }
 
 //------------------------------------------------------------------------------
@@ -550,7 +552,7 @@ namespace graph {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<typename BACKEND::base> &d) final {
-            data.set(d);
+            buffer.set(d);
         }
 
 //------------------------------------------------------------------------------
@@ -559,7 +561,7 @@ namespace graph {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const BACKEND &d) final {
-            data = d;
+            buffer = d;
         }
 
 //------------------------------------------------------------------------------
@@ -573,7 +575,16 @@ namespace graph {
 ///  @brief Get the size of the variable buffer.
 //------------------------------------------------------------------------------
         size_t size() {
-            return data.size();
+            return buffer.size();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get a pointer to raw buffer.
+///
+///  @returns A buffer to the underlying data.
+//------------------------------------------------------------------------------
+        typename BACKEND::base *data() {
+            return buffer.data();
         }
     };
 

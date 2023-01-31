@@ -2,7 +2,7 @@
 ///  @file jit.hpp
 ///  @brief Class to just in time compile a kernel.
 ///
-///  Defines a tree of operations that allows automatic differentiation.
+///  Just in time compiles kernels.
 //------------------------------------------------------------------------------
 
 #ifndef jit_h
@@ -29,6 +29,28 @@
 
 namespace jit {
 //------------------------------------------------------------------------------
+///  @brief Tests if the backend can be jit'ed.
+///
+///  Metal contexts only support float. Cuda contexts support everthing.
+///  FIXME: HIP support is missing.
+///
+///  @returns True if the backend is compatable with JIT.
+//------------------------------------------------------------------------------
+    template<class BACKEND>
+    constexpr bool can_jit() {
+#ifdef USE_GPU
+#ifdef USE_METAL
+        return std::is_same<typename BACKEND::base, float>::value;
+#endif
+#ifdef USE_CUDA
+        return true;
+#endif
+#else
+        return false;
+#endif
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Class for JIT compile of the GPU kernels.
 //------------------------------------------------------------------------------
     template<class BACKEND>
@@ -38,6 +60,10 @@ namespace jit {
         std::stringstream source_buffer;
 ///  Nodes that have been jitted.
         register_map<graph::leaf_node<BACKEND>> registers;
+#ifdef USE_GPU
+///  GPU Context;
+        GPU_CONTEXT context;
+#endif
 
     public:
 //------------------------------------------------------------------------------
@@ -97,6 +123,46 @@ namespace jit {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Add max reduction.
+//------------------------------------------------------------------------------
+        void add_max_reduction(graph::shared_variable<BACKEND> input) {
+            source_buffer << std::endl;
+#ifdef USE_METAL
+            source_buffer << "kernel ";
+#else
+            source_buffer << "extern \"C\" __global__ ";
+#endif
+            source_buffer << "void max_reduction(";
+            
+            add_kernel_argument("input", 0);
+            add_kernel_argument("result", 1);
+            
+#ifdef USE_METAL
+            source_buffer << "," << std::endl;
+            source_buffer << "    uint i [[thread_position_in_grid]]," << std::endl;
+            source_buffer << "    uint j [[simdgroup_index_in_threadgroup]]," << std::endl;
+            source_buffer << "    uint k [[thread_index_in_simdgroup]]) {" << std::endl;
+            
+            source_buffer << "    if (i < " << input->size() << ") {" << std::endl;
+            source_buffer << "        float sub_max = input[i];" << std::endl;
+            source_buffer << "        for (size_t index = i + 1024; index < " << input->size() << "; index += 1024) {" << std::endl;
+            source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
+            source_buffer << "        }" << std::endl;
+
+            source_buffer << "        threadgroup float thread_max[32];" << std::endl;
+            source_buffer << "        thread_max[j] = simd_max(sub_max);" << std::endl;
+
+            source_buffer << "        threadgroup_barrier(mem_flags::mem_threadgroup);" << std::endl;
+
+            source_buffer << "        if (j == 0) {"  << std::endl;
+            source_buffer << "            *result = simd_max(thread_max[k]);"  << std::endl;
+            source_buffer << "        }"  << std::endl;
+            source_buffer << "    }"  << std::endl;
+            source_buffer << "}" << std::endl << std::endl;
+#endif
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Create the kernel preamble.
 ///
 ///  Defines the kernel signature for what ever GPU type we are using.
@@ -113,6 +179,8 @@ namespace jit {
 //------------------------------------------------------------------------------
         void create_preamble(const std::string name) {
 #ifdef USE_METAL
+            source_buffer << "#include <metal_stdlib>" << std::endl;
+            source_buffer << "#include <metal_simdgroup>" << std::endl;
             source_buffer << "using namespace metal;" << std::endl
                           << "kernel ";
 #else
@@ -220,7 +288,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Print the kernel source.
 //------------------------------------------------------------------------------
-        void print() {
+        void print_source() {
             std::cout << std::endl << source_buffer.str() << std::endl;
         }
 
@@ -230,29 +298,78 @@ namespace jit {
 ///  @param[in] name      Name of the kernel for reference.
 ///  @param[in] inputs    Input variables of the kernel.
 ///  @param[in] outputs   Output nodes to calculate results of.
-///  @param[in] num_steps Number of time steps.
 ///  @param[in] num_rays  Number of rays.
 //------------------------------------------------------------------------------
         void compile(const std::string name,
                      graph::input_nodes<BACKEND> inputs,
                      graph::output_nodes<BACKEND> outputs,
-                     const size_t num_steps,
                      const size_t num_rays) {
-            GPU_CONTEXT context;
+#ifdef USE_GPU
             context.create_pipeline(source_buffer.str(), name,
-                                    inputs, outputs,
-                                    num_rays, num_steps + 1, 0);
-            
-            const timeing::measure_diagnostic gpu_time("GPU Time");
-            
-            context.print_results<BACKEND> (0);
-            for (size_t i = 0; i < num_steps; i++) {
-                context.step();
-                context.print_results<BACKEND> (0);
-            }
-            context.wait();
+                                    inputs, outputs, num_rays);
+#endif
+        }
 
-            gpu_time.stop();
+//------------------------------------------------------------------------------
+///  @brief Compile the max kernel.
+//------------------------------------------------------------------------------
+        void compile_max() {
+#ifdef USE_GPU
+            context.create_max_pipeline<BACKEND> ();
+#endif
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run the kernel.
+//------------------------------------------------------------------------------
+        void run() {
+#ifdef USE_GPU
+            context.run();
+#endif
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Max reduction.
+///
+///  @returns The maximum value from the input buffer.
+//------------------------------------------------------------------------------
+        typename BACKEND::base max_reduction() {
+#ifdef USE_GPU
+            return context.max_reduction<BACKEND> ();
+#endif
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print output.
+///
+///  @param[in] index Particle index to print.
+//------------------------------------------------------------------------------
+        void print(const size_t index) {
+#ifdef USE_GPU
+            context.print_results<BACKEND> (index);
+#endif
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Wait for kernel to finish.
+//------------------------------------------------------------------------------
+        void wait() {
+#ifdef USE_GPU
+            context.wait();
+#endif
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Copy contexts of buffer.
+///
+///  @param[in]     source_index Index of the GPU buffer.
+///  @param[in,out] destination  Host side buffer to copy to.
+//------------------------------------------------------------------------------
+        void copy_buffer(const size_t source_index,
+                         typename BACKEND::base *destination) {
+#ifdef USE_GPU
+            context.copy_buffer(source_index, destination);
+#endif
         }
     };
 }

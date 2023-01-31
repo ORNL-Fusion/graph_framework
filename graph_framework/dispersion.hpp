@@ -13,6 +13,7 @@
 
 #include "vector.hpp"
 #include "equilibrium.hpp"
+#include "jit.hpp"
 
 namespace dispersion {
 //******************************************************************************
@@ -117,25 +118,63 @@ namespace dispersion {
 ///  This uses newtons methods to solver for D(x) = 0.
 ///
 ///  @param[in,out] x              The unknown to solver for.
+///  @param[in]     inputs         Inputs for jit compile.
 ///  @param[in]     tolarance      Tolarance to solve the dispersion function to.
 ///  @param[in]     max_iterations Maximum number of iterations before giving up.
+///  @returns The residule graph.
 //------------------------------------------------------------------------------
-        void solve(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
-                   const typename DISPERSION_FUNCTION::base tolarance=1.0E-30,
-                   const size_t max_iterations = 1000) {
+        graph::shared_leaf<typename DISPERSION_FUNCTION::backend>
+        solve(graph::shared_leaf<typename DISPERSION_FUNCTION::backend> x,
+              graph::input_nodes<typename DISPERSION_FUNCTION::backend> inputs,
+              const typename DISPERSION_FUNCTION::base tolarance=1.0E-30,
+              const size_t max_iterations = 1000) {
             auto loss = D*D;
             auto x_next = x
                         - loss/(loss->df(x) +
                                 graph::constant<typename DISPERSION_FUNCTION::backend> (tolarance));
-            
-            typename DISPERSION_FUNCTION::base max_residule =
-                loss->evaluate().max();
+
+            typename DISPERSION_FUNCTION::base max_residule;
             size_t iterations = 0;
-            
+            std::unique_ptr<jit::kernel<typename DISPERSION_FUNCTION::backend>> source;
+            if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::backend> ()) {
+                auto x_var = graph::variable_cast(x);
+                inputs.push_back(x_var);
+                
+                graph::output_nodes<typename DISPERSION_FUNCTION::backend> outputs = {
+                    loss
+                };
+
+                graph::map_nodes<typename DISPERSION_FUNCTION::backend> setters = {
+                    {x_next, x_var}
+                };
+                
+                source = std::make_unique<jit::kernel<typename DISPERSION_FUNCTION::backend>> ("loss_kernel",
+                                                                                               inputs,
+                                                                                               outputs,
+                                                                                               setters);
+                source->add_max_reduction(x_var);
+
+                source->compile("loss_kernel", inputs, outputs, x_var->size());
+                source->compile_max();
+
+                max_residule = source->max_reduction();
+            } else {
+                max_residule = loss->evaluate().max();
+            }
+
             while (std::abs(max_residule) > std::abs(tolarance) &&
                    iterations++ < max_iterations) {
-                x->set(x_next->evaluate());
-                max_residule = loss->evaluate().max();
+                if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::backend> ()) {
+                    max_residule = source->max_reduction();
+               } else {
+                    x->set(x_next->evaluate());
+                    max_residule = loss->evaluate().max();
+                }
+            }
+
+            if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::backend> ()) {
+                source->copy_buffer(inputs.size() - 1,
+                                    inputs.back()->data());
             }
 
 //  In release mode asserts are diaables so write error to standard err. Need to
@@ -148,6 +187,8 @@ namespace dispersion {
                 std::cerr << "Minimum residule reached: " << max_residule
                           << std::endl;
             }
+
+            return loss;
         }
 
 //------------------------------------------------------------------------------

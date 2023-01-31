@@ -39,23 +39,39 @@ namespace jit {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Write out the node base type to a general stream.
+///
+///  @param[in, out] stream Generic stream.
+//------------------------------------------------------------------------------
+    template<typename BASE>
+    void add_type_base(std::basic_ostream<char> &stream) {
+        if constexpr (std::is_same<BASE, float>::value) {
+            stream << "float";
+        } else if constexpr (std::is_same<BASE, double>::value) {
+            stream << "double";
+        } else if constexpr (std::is_same<BASE, std::complex<float>>::value) {
+#ifdef USE_CUDA
+            stream << "cuda::std::complex<float>";
+#else
+            stream << "std::complex<float>";
+#endif
+        } else if constexpr (std::is_same<BASE, std::complex<double>>::value) {
+#ifdef USE_CUDA
+            stream << "cuda::std::complex<double>";
+#else
+            stream << "std::complex<double>";
+#endif
+        }
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Write out the node base type to the string buffer.
 ///
 ///  @param[in,out] stream String buffer stream.
 //------------------------------------------------------------------------------
     template<class NODE>
     void add_type(std::stringstream &stream) {
-        if constexpr (std::is_same<typename NODE::backend::base, float>::value) {
-            stream << "float";
-        } else if constexpr (std::is_same<typename NODE::backend::base, double>::value) {
-            stream << "double";
-        } else if constexpr (std::is_same<typename NODE::backend::base,
-                                          std::complex<float>>::value) {
-            stream << "cuda::std::complex<float>";
-        } else if constexpr (std::is_same<typename NODE::backend::base,
-                                          std::complex<double>>::value) {
-            stream << "cuda::std::complex<double>";
-        }
+        add_type_base<typename NODE::backend::base> (stream);
     }
 
 ///  Type alias for mapping node pointers to register names.

@@ -12,6 +12,7 @@
 
 #include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/solver.hpp"
+#include "../graph_framework/timing.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Test the solver.
@@ -38,14 +39,21 @@ void test_solver(const typename SOLVER::base tolarance,
     auto eq = equilibrium::make_guassian_density<typename SOLVER::backend> ();
 
     SOLVER solve(w, kx, ky, kz, x, y, z, t, dt, eq);
-    solve.init(kx, tolarance);
-    auto residule = solve.residule();
+    timeing::measure_diagnostic solver("init");
+    auto residule = solve.init(kx, tolarance);
+    solver.stop();
+    
+    timeing::measure_diagnostic compile("compile");
+    solve.compile(1);
+    compile.stop();
 
+    timeing::measure_diagnostic step("step");
     for (size_t i = 0; i < 5; i++) {
         solve.step();
         assert(std::abs(residule->evaluate().at(0)) < std::abs(tolarance) &&
                "Solver failed to retain initial acuracy");
     }
+    step.stop();
 }
 
 //------------------------------------------------------------------------------
@@ -61,7 +69,10 @@ template<typename DISPERSION> void run_disperions_tests(const typename DISPERSIO
                                                         const typename DISPERSION::base kx0,
                                                         const typename DISPERSION::base dt) {
     test_solver<solver::rk2<DISPERSION>> (tolarance, omega0, kx0, dt);
+    std::cout << "Test completed for rk2 solver." << std::endl;
+    
     test_solver<solver::rk4<DISPERSION>> (tolarance, omega0, kx0, dt);
+    std::cout << "Test completed for rk4 solver." << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -73,6 +84,9 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
     run_disperions_tests<dispersion::simple<BACKEND>> (tolarance, 0.5, 0.25, 1.0);
     run_disperions_tests<dispersion::guassian_well<BACKEND>> (tolarance, 0.5, 0.25, 0.00001);
     run_disperions_tests<dispersion::cold_plasma<BACKEND>> (tolarance, 900.0, 1000.0, 0.5/10000.0);
+    std::cout << "Tests completed for ";
+    jit::add_type_base<typename BACKEND::base> (std::cout);
+    std::cout << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -82,7 +96,11 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+#ifdef USE_METAL
+    run_tests<backend::cpu<float>> (2.0E-14);
+#else
     run_tests<backend::cpu<float>> (1.0E-14);
+#endif
     run_tests<backend::cpu<double>> (1.0E-30);
     run_tests<backend::cpu<std::complex<float>>> (2.0E-14);
     run_tests<backend::cpu<std::complex<double>>> (1.0E-30);

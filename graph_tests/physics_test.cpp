@@ -51,6 +51,7 @@ void test_constant() {
     auto eq = equilibrium::make_slab<BACKEND> ();
     solver::rk2<dispersion::simple<BACKEND>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx);
+    solve.compile(1);
 
     auto constant = kx*x + ky*y + kz*z - omega*t;
     const auto c0 = constant->evaluate().at(0);
@@ -146,6 +147,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
     auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::backend> ();
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx);
+    solve.compile(1);
 
     const auto diff = kx->evaluate().at(0) - k0;
     assert(std::abs(diff*diff) < 3.0E-23 &&
@@ -241,6 +243,7 @@ void test_light_wave(const typename SOLVER::base tolarance) {
     auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::backend> ();
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx, tolarance);
+    solve.compile(1);
 
     const auto diff = kx->evaluate().at(0) - k0;
     assert(std::abs(diff*diff) < 3.0E-25 &&
@@ -321,6 +324,7 @@ void test_acoustic_wave(const typename BACKEND::base tolarance) {
     auto eq = equilibrium::make_no_magnetic_field<BACKEND> ();
     solver::rk4<dispersion::acoustic_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
     solve.init(kx, tolarance);
+    solve.compile(1);
 
     const auto diff = kx->evaluate().at(0) - k0;
     assert(std::abs(diff*diff) < 5.0E-24 &&
@@ -367,9 +371,6 @@ void test_o_mode_wave() {
     auto z = graph::variable<BACKEND> (1, "z");
     auto t = graph::variable<BACKEND> (1, "t");
 
-    auto eq = equilibrium::make_slab_density<BACKEND> ();
-    solver::rk4<dispersion::ordinary_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
-
     const typename BACKEND::base q = 1.602176634E-19;
     const typename BACKEND::base me = 9.1093837015E-31;
     const typename BACKEND::base mu0 = M_PI*4.0E-7;
@@ -391,7 +392,12 @@ void test_o_mode_wave() {
     z->set(backend::base_cast<BACKEND> (0.0));
     t->set(backend::base_cast<BACKEND> (0.0));
 
+    auto eq = equilibrium::make_slab_density<BACKEND> ();
+    solver::rk4<dispersion::ordinary_wave<BACKEND>>
+        solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
+
     solve.init(x);
+    solve.compile(1);
 
     const auto diff = x->evaluate().at(0) - x_cut;
     assert(std::abs(diff*diff) < 8.0E-10 &&
@@ -431,6 +437,7 @@ void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
     x->set(0, backend::base_cast<BACKEND> (25.0));
     x->set(1, backend::base_cast<BACKEND> (5.0));
     solve.init(x);
+    solve.compile(1);
 
     typename BACKEND::base wpecut_pos = x->evaluate().at(0);
     const typename BACKEND::base wrcut_pos = x->evaluate().at(1);
@@ -536,12 +543,15 @@ void test_reflection(const typename BACKEND::base tolarance,
 //  location.
     kx->set(kx0);
     solve.init(kx, tolarance);
+    solve.compile(1);
+    solve.sync();
 
-    auto max_x = std::real(solve.state.back().x.at(0));
+    auto max_x = std::real(x->evaluate().at(0));
     auto new_x = max_x;
     do {
         solve.step();
-        new_x = std::real(solve.state.back().x.at(0));
+        solve.sync();
+        new_x = std::real(x->evaluate().at(0));
         max_x = std::max(new_x, max_x);
         assert(max_x < std::abs(cuttoff_location) && "Ray exceeded cutoff.");
     } while (max_x == new_x);

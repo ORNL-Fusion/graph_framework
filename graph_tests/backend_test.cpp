@@ -374,6 +374,15 @@ template<typename BACKEND> void test_backend() {
                                         backend::base_cast<BACKEND> (2.0)) &&
            "Expected 4^2.");
 
+    const auto non_int = backend::base_cast<BACKEND> (0.438763);
+    base_scalar.set(non_int);
+    exp_scalar.set(2.0);
+    scale_base = backend::pow(base_scalar, exp_scalar);
+    assert(scale_base.at(0) == std::pow(non_int,
+                                        backend::base_cast<BACKEND> (2.0)) &&
+           "Expected x*x.");
+    assert(scale_base.at(0) == non_int*non_int && "Expected x*x.");
+
     base_scalar.set(10.0);
     exp_scalar.set(0.0);
     BACKEND pow_zero = backend::pow(base_scalar, exp_scalar);

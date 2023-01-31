@@ -26,7 +26,7 @@ namespace backend {
     class cpu final : public buffer<BASE> {
     protected:
 ///  The data buffer to hold the data.
-        std::vector<BASE> data;
+        std::vector<BASE> buffer;
 
     public:
 //------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ namespace backend {
 ///  @param[in] s Size of he data buffer.
 //------------------------------------------------------------------------------
         cpu(const size_t s) :
-        data(s) {}
+        buffer(s) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a cpu backend with a size.
@@ -44,7 +44,7 @@ namespace backend {
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
         cpu(const size_t s, const BASE d) :
-        data(s, d) {}
+        buffer(s, d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a cpu backend from a vector.
@@ -52,7 +52,7 @@ namespace backend {
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
         cpu(const std::vector<BASE> &d) :
-        data(d) {}
+        buffer(d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a cpu backend from a cpu backend.
@@ -60,27 +60,27 @@ namespace backend {
 ///  @param[in] d Backend buffer.
 //------------------------------------------------------------------------------
         cpu(const cpu &d) :
-        data(d.data) {}
+        buffer(d.buffer) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Index operator.
 //------------------------------------------------------------------------------
         virtual BASE &operator[] (const size_t index) final {
-            return data[index];
+            return buffer[index];
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Const index operator.
 //------------------------------------------------------------------------------
         virtual const BASE &operator[] (const size_t index) const final {
-            return data[index];
+            return buffer[index];
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get value at.
 //------------------------------------------------------------------------------
         virtual const BASE at(const size_t index) const final {
-            return data.at(index);
+            return buffer.at(index);
         }
 
 //------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ namespace backend {
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const BASE d) final {
-            data.assign(data.size(), d);
+            buffer.assign(buffer.size(), d);
         }
 
 //------------------------------------------------------------------------------
@@ -98,14 +98,14 @@ namespace backend {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<BASE> &d) final {
-            data.assign(d.cbegin(), d.cend());
+            buffer.assign(d.cbegin(), d.cend());
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get size of the buffer.
 //------------------------------------------------------------------------------
         virtual size_t size() const final {
-            return data.size();
+            return buffer.size();
         }
 
 //------------------------------------------------------------------------------
@@ -116,12 +116,12 @@ namespace backend {
         virtual BASE max() const final {
             if constexpr (std::is_same<BASE, std::complex<float>>::value ||
                           std::is_same<BASE, std::complex<double>>::value) {
-                return *std::max_element(data.cbegin(), data.cend(),
+                return *std::max_element(buffer.cbegin(), buffer.cend(),
                                          [] (const BASE a, const BASE b) {
                     return std::abs(a) < std::abs(b);
                 });
             } else {
-                return *std::max_element(data.cbegin(), data.cend());
+                return *std::max_element(buffer.cbegin(), buffer.cend());
             }
         }
 
@@ -131,9 +131,9 @@ namespace backend {
 ///  @returns Returns true if every element is the same.
 //------------------------------------------------------------------------------
         virtual bool is_same() const final {
-            const BASE same = data.at(0);
-            for (size_t i = 1, ie = data.size(); i < ie; i++) {
-                if (data.at(i) != same) {
+            const BASE same = buffer.at(0);
+            for (size_t i = 1, ie = buffer.size(); i < ie; i++) {
+                if (buffer.at(i) != same) {
                     return false;
                 }
             }
@@ -147,7 +147,7 @@ namespace backend {
 ///  @returns Returns true if every element is zero.
 //------------------------------------------------------------------------------
         virtual bool is_zero() const final {
-            for (BASE d : data) {
+            for (BASE d : buffer) {
                 if (d != static_cast<BASE> (0.0)) {
                     return false;
                 }
@@ -162,7 +162,7 @@ namespace backend {
 ///  @returns Returns true if every element is negative.
 //------------------------------------------------------------------------------
         virtual bool is_negative() const final {
-            for (BASE d : data) {
+            for (BASE d : buffer) {
                 if (std::real(d) > std::real(static_cast<BASE> (0.0))) {
                     return false;
                 }
@@ -175,7 +175,7 @@ namespace backend {
 ///  @brief Take sqrt.
 //------------------------------------------------------------------------------
         virtual void sqrt() final {
-            for (BASE &d : data) {
+            for (BASE &d : buffer) {
                 d = std::sqrt(d);
             }
         }
@@ -184,7 +184,7 @@ namespace backend {
 ///  @brief Take exp.
 //------------------------------------------------------------------------------
         virtual void exp() final {
-            for (BASE &d : data) {
+            for (BASE &d : buffer) {
                 d = std::exp(d);
             }
         }
@@ -193,7 +193,7 @@ namespace backend {
 ///  @brief Take the natural log.
 //------------------------------------------------------------------------------
         virtual void log() final {
-            for (BASE &d : data) {
+            for (BASE &d : buffer) {
                 d = std::log(d);
             }
         }
@@ -202,7 +202,7 @@ namespace backend {
 ///  @brief Take sine.
 //------------------------------------------------------------------------------
         virtual void sin() final {
-            for (BASE &d : data) {
+            for (BASE &d : buffer) {
                 d = std::sin(d);
             }
         }
@@ -211,9 +211,18 @@ namespace backend {
 ///  @brief Take cosine.
 //------------------------------------------------------------------------------
         virtual void cos() final {
-            for (BASE &d : data) {
+            for (BASE &d : buffer) {
                 d = std::cos(d);
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get a pointer to the basic memory buffer.
+///
+///  @returns The pointer to the buffer memory.
+//------------------------------------------------------------------------------
+        virtual BASE *data() final {
+            return buffer.data();
         }
     };
 
@@ -517,6 +526,11 @@ namespace backend {
                     }
                     return base;
                 }
+            } else {
+                for (size_t i = 0, ie = base.size(); i < ie; i++) {
+                    base[i] = std::pow(base.at(i), right);
+                }
+                return base;
             }
         } else if (base.size() == 1) {
             const BASE left = base.at(0);

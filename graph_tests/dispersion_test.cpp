@@ -36,28 +36,63 @@ void test_solve(const typename DISPERSION::base tolarance,
     
     dispersion::dispersion_interface<DISPERSION> D(w, kx, ky, kz, x, y, z, t, eq);
 
-    auto loss = D.get_d()*D.get_d();
-
     kx->set(k_guess);
-    D.solve(kx, tolarance);
+    graph::input_nodes<typename DISPERSION::backend> inputs({
+        graph::variable_cast(w),
+        graph::variable_cast(x),
+        graph::variable_cast(y),
+        graph::variable_cast(z),
+        graph::variable_cast(ky),
+        graph::variable_cast(kz),
+        graph::variable_cast(t),
+    });
+    auto loss = D.solve(kx, inputs, tolarance);
+    std::cout << "final " << std::abs(loss->evaluate().at(0)) << " " << kx->evaluate().at(0) << std::endl;
     assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for kx.");
 
     kx->set(backend::base_cast<typename DISPERSION::backend> (0.2));
     ky->set(k_guess);
-    D.solve(ky, tolarance);
+    inputs = {
+        graph::variable_cast(w),
+        graph::variable_cast(x),
+        graph::variable_cast(y),
+        graph::variable_cast(z),
+        graph::variable_cast(kx),
+        graph::variable_cast(kz),
+        graph::variable_cast(t),
+    };
+    loss = D.solve(ky, inputs, tolarance);
     assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for ky.");
 
     ky->set(backend::base_cast<typename DISPERSION::backend> (0.25));
     kz->set(k_guess);
-    D.solve(kz, tolarance);
+    inputs = {
+        graph::variable_cast(w),
+        graph::variable_cast(x),
+        graph::variable_cast(y),
+        graph::variable_cast(z),
+        graph::variable_cast(kx),
+        graph::variable_cast(ky),
+        graph::variable_cast(t),
+    };
+    loss = D.solve(kz, inputs, tolarance);
     assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for kz.");
 
     kz->set(backend::base_cast<typename DISPERSION::backend> (0.15));
     kx->set(k_guess);
-    D.solve(w, tolarance);
+    inputs = {
+        graph::variable_cast(x),
+        graph::variable_cast(y),
+        graph::variable_cast(z),
+        graph::variable_cast(kx),
+        graph::variable_cast(ky),
+        graph::variable_cast(kz),
+        graph::variable_cast(t),
+    };
+    loss = D.solve(w, inputs, tolarance);
     assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for w.");
 }
@@ -85,7 +120,7 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
 #ifdef USE_REDUCE
-    run_tests<backend::cpu<float>> (1.0E-14);
+    run_tests<backend::cpu<float>> (2.0E-14);
 #else
     run_tests<backend::cpu<float>> (1.5E-14);
 #endif

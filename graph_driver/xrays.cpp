@@ -42,11 +42,19 @@ int main(int argc, const char * argv[]) {
     const size_t num_times = 10000;
     //const size_t num_rays = 1;
     const size_t num_rays = 1000000;
-    
-    std::vector<std::thread> threads(1);
-    //std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
-    //                                                   static_cast<unsigned int> (num_rays)),
-    //                                          static_cast<unsigned int> (1)));
+
+    std::vector<std::thread> threads(0);
+#if USE_GPU
+    if constexpr (jit::can_jit<cpu> ()) {
+        threads.resize(1);
+    } else {
+#endif
+        threads.resize(std::max(std::min(std::thread::hardware_concurrency(),
+                                         static_cast<unsigned int> (num_rays)),
+                                static_cast<unsigned int> (1)));
+#if USE_GPU
+    }
+#endif
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         threads[i] = std::thread([num_times, num_rays] (const size_t thread_number,
@@ -92,7 +100,7 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::cold_plasma<cpu>>
                 solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
             solve.init(kx);
-            solve.compile(num_times, num_rays);
+            solve.compile(num_rays);
             if (thread_number == 0) {
                 solve.print_dispersion();
                 std::cout << std::endl;
@@ -108,46 +116,22 @@ int main(int argc, const char * argv[]) {
                 std::cout << std::endl;
                 solve.print_dzdt();
             }
-                
-            auto residule = solve.residule();
 
             const size_t sample = int_dist(engine);
 
-            if (thread_number == 0) {
+            if (thread_number == 0 && false) {
                 std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
-                std::cout << "t = " << 0.0 << " ";
-                std::cout << solve.state.back().x.at(sample) << std::endl;
             }
 
-            const timeing::measure_diagnostic cpu_time("CPU Time");
             for (size_t j = 0; j < num_times; j++) {
                 if (thread_number == 0 && false) {
-                    std::cout << "Time Step " << j << " Sample " << sample << " "
-                              << solve.state.back().t.at(sample) << " "
-                              << solve.state.back().x.at(sample) << " "
-                              << solve.state.back().y.at(sample) << " "
-                              << solve.state.back().z.at(sample) << " "
-                              << solve.state.back().kx.at(sample) << " "
-                              << solve.state.back().ky.at(sample) << " "
-                              << solve.state.back().kz.at(sample) << " "
-                              << residule->evaluate().at(sample)
-                              << std::endl;
+                    solve.print(sample);
                 }
-                //solve.step();
+                solve.step();
             }
-            cpu_time.stop();
 
             if (thread_number == 0 && false) {
-                std::cout << "Time Step " << num_times << " Sample " << sample << " "
-                          << solve.state.back().t.at(sample) << " "
-                          << solve.state.back().x.at(sample) << " "
-                          << solve.state.back().y.at(sample) << " "
-                          << solve.state.back().z.at(sample) << " "
-                          << solve.state.back().kx.at(sample) << " "
-                          << solve.state.back().ky.at(sample) << " "
-                          << solve.state.back().kz.at(sample) << " "
-                          << residule->evaluate().at(sample)
-                          << std::endl;
+                solve.print(sample);
             }
         }, i, threads.size());
     }
@@ -159,27 +143,3 @@ int main(int argc, const char * argv[]) {
     std::cout << std::endl << "Timing:" << std::endl;
     total.stop();
 }
-
-/*
-//------------------------------------------------------------------------------
-///  @brief Print out timings.
-///
-///  @param[in] name Discription of the times.
-///  @param[in] time Elapsed time in nanoseconds.
-//------------------------------------------------------------------------------
-void write_time(const std::string &name, const std::chrono::nanoseconds time) {
-    if (time.count() < 1000) {
-        std::cout << name << time.count()               << " ns" << std::endl;
-    } else if (time.count() < 1000000) {
-        std::cout << name << time.count()/1000.0        << " μs" << std::endl;
-    } else if (time.count() < 1000000000) {
-        std::cout << name << time.count()/1000000.0     << " ms" << std::endl;
-    } else if (time.count() < 60000000000) {
-        std::cout << name << time.count()/1000000000.0  << " s" << std::endl;
-    } else if (time.count() < 3600000000000) {
-        std::cout << name << time.count()/60000000000.0 << " min" << std::endl;
-    } else {
-        std::cout << name << time.count()/3600000000000 << " h" << std::endl;
-    }
-}
-*/
