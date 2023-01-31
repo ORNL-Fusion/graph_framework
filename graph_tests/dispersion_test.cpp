@@ -47,7 +47,6 @@ void test_solve(const typename DISPERSION::base tolarance,
         graph::variable_cast(t),
     });
     auto loss = D.solve(kx, inputs, tolarance);
-    std::cout << "final " << std::abs(loss->evaluate().at(0)) << " " << kx->evaluate().at(0) << std::endl;
     assert(std::abs(loss->evaluate().at(0)) < std::abs(tolarance) &&
            "Solve failed to meet expected result for kx.");
 
