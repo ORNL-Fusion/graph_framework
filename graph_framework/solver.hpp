@@ -41,7 +41,7 @@ namespace solver {
         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> z;
 ///  t variable.
         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> t;
-        
+
 ///  Dispersion function interface.
         dispersion::dispersion_interface<DISPERSION_FUNCTION> D;
 
@@ -172,7 +172,7 @@ namespace solver {
                 inputs.push_back(graph::variable_cast(this->kz));
             }
             residule = this->D.solve(x, inputs, tolarance, max_iterations);
-            
+
             return residule;
         }
 
@@ -195,11 +195,11 @@ namespace solver {
                     graph::variable_cast(this->ky),
                     graph::variable_cast(this->kz)
                 };
-                
+
                 graph::output_nodes<typename DISPERSION_FUNCTION::backend> outputs = {
                     this->residule
                 };
-                
+
                 graph::map_nodes<typename DISPERSION_FUNCTION::backend> setters = {
                     {this->kx_next, graph::variable_cast(this->kx)},
                     {this->ky_next, graph::variable_cast(this->ky)},
@@ -209,7 +209,7 @@ namespace solver {
                     {this->z_next, graph::variable_cast(this->z)},
                     {this->t_next, graph::variable_cast(this->t)}
                 };
-                
+
                 this->source = std::make_unique<jit::kernel<typename DISPERSION_FUNCTION::backend>> ("solver_kernel",
                                                                                                      inputs, outputs, setters);
 
@@ -219,7 +219,7 @@ namespace solver {
                 //this->source->print_source();
             }
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Syncronize results between host and gpu.
 //------------------------------------------------------------------------------
@@ -235,7 +235,7 @@ namespace solver {
                 this->source->copy_buffer(7, graph::variable_cast(this->kz)->data());
             }
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Method to step the rays.
 //------------------------------------------------------------------------------
@@ -332,14 +332,14 @@ namespace solver {
         void print_dydt() {
             D.print_dydt();
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Print out the latex expression for the dzdt.
 //------------------------------------------------------------------------------
         void print_dzdt() {
             D.print_dzdt();
         }
-        
+
 ///  Type def to retrieve the backend type.
         typedef typename DISPERSION_FUNCTION::backend backend;
 ///  Type def to retrieve the backend type.
@@ -570,7 +570,7 @@ namespace solver {
             auto two = graph::constant<typename DISPERSION_FUNCTION::backend> (2);
 
             this->t_sub = graph::cache(this->t + dt_const/two);
-            
+
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
                                                                      graph::pseudo_variable(this->kx + kx1/two),
                                                                      graph::pseudo_variable(this->ky + ky1/two),
@@ -606,7 +606,7 @@ namespace solver {
             this->z3  = graph::cache(dt_const*D3.get_dzdt());
 
             this->t_next = graph::cache(this->t + dt_const);
-            
+
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D4(this->w,
                                                                      graph::pseudo_variable(this->kx + kx3),
                                                                      graph::pseudo_variable(this->ky + ky3),
@@ -640,7 +640,7 @@ namespace solver {
         virtual void reset_cache() final {
             this->t_sub->reset_cache();
             this->t_next->reset_cache();
-            
+
             this->kx1->reset_cache();
             this->ky1->reset_cache();
             this->kz1->reset_cache();
@@ -692,7 +692,7 @@ namespace solver {
         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dydt;
 ///  First z Predictor.
         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> dzdt;
-        
+
 ///  First kx Predictor.
         graph::shared_leaf<typename DISPERSION_FUNCTION::backend> kx0_pred;
 ///  First ky Predictor.
@@ -725,7 +725,7 @@ namespace solver {
 
 ///  Convergence tolarance.
         const typename DISPERSION_FUNCTION::base tolarance;
-        
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a predictor corrector solver.
@@ -755,23 +755,23 @@ namespace solver {
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq),
         tolarance(tolarance) {
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);
-            
+
             this->dkxdt = graph::cache(dt_const*this->D.get_dkxdt());
             this->dkydt = graph::cache(dt_const*this->D.get_dkydt());
             this->dkzdt = graph::cache(dt_const*this->D.get_dkzdt());
             this->dxdt  = graph::cache(dt_const*this->D.get_dxdt());
             this->dydt  = graph::cache(dt_const*this->D.get_dydt());
             this->dzdt  = graph::cache(dt_const*this->D.get_dzdt());
-            
+
             this->kx0_pred = kx + this->dkxdt;
             this->ky0_pred = ky + this->dkydt;
             this->kz0_pred = kz + this->dkzdt;
             this->x0_pred  = x  + this->dxdt;
             this->y0_pred  = y  + this->dydt;
             this->z0_pred  = z  + this->dzdt;
-            
+
             const size_t size = x->evaluate().size();
-            
+
             this->kx1_var = graph::variable<typename DISPERSION_FUNCTION::backend> (size, "\tilde{k_{x}}");
             this->ky1_var = graph::variable<typename DISPERSION_FUNCTION::backend> (size, "\tilde{k_{y}}");
             this->kz1_var = graph::variable<typename DISPERSION_FUNCTION::backend> (size, "\tilde{k_{z}}");
@@ -780,7 +780,7 @@ namespace solver {
             this->z1_var  = graph::variable<typename DISPERSION_FUNCTION::backend> (size, "\tilde{z}");
 
             this->t_next = graph::cache(this->t + dt_const);
-            
+
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
                                                                      this->kx1_var,
                                                                      this->ky1_var,
@@ -790,11 +790,11 @@ namespace solver {
                                                                      this->z1_var,
                                                                      graph::pseudo_variable(this->t_next),
                                                                      eq);
-            
+
             this->residule_pred = D2.get_d()*D2.get_d();
-            
+
             auto two = graph::constant<typename DISPERSION_FUNCTION::backend> (2);
-            
+
             this->kx_next = graph::cache(kx + (this->dkxdt + dt_const*D2.get_dkxdt())/two);
             this->ky_next = graph::cache(ky + (this->dkydt + dt_const*D2.get_dkydt())/two);
             this->kz_next = graph::cache(kz + (this->dkzdt + dt_const*D2.get_dkzdt())/two);
@@ -808,28 +808,28 @@ namespace solver {
 //------------------------------------------------------------------------------
         virtual void reset_cache() final {
             this->t_next->reset_cache();
-                    
+
             this->dkxdt->reset_cache();
             this->dkydt->reset_cache();
             this->dkzdt->reset_cache();
             this->dxdt->reset_cache();
             this->dydt->reset_cache();
             this->dzdt->reset_cache();
-            
+
             typename DISPERSION_FUNCTION::backend kx_result = this->kx0_pred->evaluate();
             typename DISPERSION_FUNCTION::backend ky_result = this->ky0_pred->evaluate();
             typename DISPERSION_FUNCTION::backend kz_result = this->kz0_pred->evaluate();
             typename DISPERSION_FUNCTION::backend x_result  = this->x0_pred->evaluate();
             typename DISPERSION_FUNCTION::backend y_result  = this->y0_pred->evaluate();
             typename DISPERSION_FUNCTION::backend z_result  = this->z0_pred->evaluate();
-            
+
             this->kx1_var->set(kx_result);
             this->ky1_var->set(ky_result);
             this->kz1_var->set(kz_result);
             this->x1_var->set(x_result);
             this->y1_var->set(y_result);
             this->z1_var->set(z_result);
-            
+
             this->kx_next->reset_cache();
             this->ky_next->reset_cache();
             this->kz_next->reset_cache();
@@ -840,7 +840,7 @@ namespace solver {
             typename DISPERSION_FUNCTION::base max_residule =
                 this->residule_pred->evaluate().max();
             typename DISPERSION_FUNCTION::base d_residule = 1000.0;
-            
+
             while (std::abs(max_residule) > std::abs(this->tolarance) &&
                    std::real(d_residule) > 0) {
                 kx_result = this->kx_next->evaluate();
@@ -849,21 +849,21 @@ namespace solver {
                 x_result  = this->x_next->evaluate();
                 y_result  = this->y_next->evaluate();
                 z_result  = this->z_next->evaluate();
-                
+
                 this->kx1_var->set(kx_result);
                 this->ky1_var->set(ky_result);
                 this->kz1_var->set(kz_result);
                 this->x1_var->set(x_result);
                 this->y1_var->set(y_result);
                 this->z1_var->set(z_result);
-                
+
                 this->kx_next->reset_cache();
                 this->ky_next->reset_cache();
                 this->kz_next->reset_cache();
                 this->x_next->reset_cache();
                 this->y_next->reset_cache();
                 this->z_next->reset_cache();
-                
+
                 typename DISPERSION_FUNCTION::base temp_residule =
                     this->residule_pred->evaluate().max();
                 d_residule = std::abs(max_residule) - std::abs(temp_residule);
@@ -913,9 +913,9 @@ namespace solver {
                          const typename DISPERSION_FUNCTION::base dt,
                          equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq) {
-            
+
             auto zero = graph::constant<typename DISPERSION_FUNCTION::backend> (0);
-            
+
 //  Test if the function is separatable.
 #ifdef USE_REDUCE
             assert(zero->is_match(this->D.get_dkxdt()->df(kx)) &&
@@ -959,10 +959,10 @@ namespace solver {
                    this->D.get_dzdt()->df(z)->evaluate()[0] == check_zero   &&
                    "Hamiltonian is not separable.");
 #endif
-            
+
             auto dt_const = graph::constant<typename DISPERSION_FUNCTION::backend> (dt);
             auto two = graph::constant<typename DISPERSION_FUNCTION::backend> (2);
-            
+
             this->t_next = graph::cache(this->t + dt_const);
 
             this->x1 = graph::cache(this->x + dt_const*this->D.get_dxdt()/two);
@@ -978,11 +978,11 @@ namespace solver {
                                                                      graph::pseudo_variable(this->z1),
                                                                      graph::pseudo_variable(this->t),
                                                                      eq);
-            
+
             this->kx_next = graph::cache(this->kx + dt_const*D2.get_dkxdt());
             this->ky_next = graph::cache(this->ky + dt_const*D2.get_dkydt());
             this->kz_next = graph::cache(this->kz + dt_const*D2.get_dkzdt());
-            
+
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D3(this->w,
                                                                      graph::pseudo_variable(this->kx_next),
                                                                      graph::pseudo_variable(this->ky_next),
@@ -997,7 +997,7 @@ namespace solver {
             this->y_next  = graph::cache(this->y1 + dt_const*D3.get_dydt()/two);
             this->z_next  = graph::cache(this->z1 + dt_const*D3.get_dzdt()/two);
         }
-    
+
 //------------------------------------------------------------------------------
 ///  @brief Reset Cache.
 //------------------------------------------------------------------------------
@@ -1007,15 +1007,15 @@ namespace solver {
             this->x1->reset_cache();
             this->y1->reset_cache();
             this->z1->reset_cache();
-            
+
             this->kx_next->reset_cache();
             this->ky_next->reset_cache();
             this->kz_next->reset_cache();
-            
+
             this->kx->set(this->kx_next->evaluate());
             this->ky->set(this->ky_next->evaluate());
             this->kz->set(this->kz_next->evaluate());
-            
+
             this->x_next->reset_cache();
             this->y_next->reset_cache();
             this->z_next->reset_cache();

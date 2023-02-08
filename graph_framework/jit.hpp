@@ -149,7 +149,12 @@ namespace jit {
             source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
 #endif
             source_buffer << "    if (i < " << input->size() << ") {" << std::endl;
-            source_buffer << "        " << jit::type_to_string<typename BACKEND::base> () << " sub_max = input[i];" << std::endl;
+            source_buffer << "        " << jit::type_to_string<typename BACKEND::base> () << " sub_max = ";
+            if constexpr (jit::is_complex<typename BACKEND::base> ()) {
+                source_buffer << "abs(input[i]);" << std::endl;
+            } else {
+                source_buffer << "input[i];" << std::endl;
+            }
             source_buffer << "        for (size_t index = i + 1024; index < " << input->size() << "; index += 1024) {" << std::endl;
             if constexpr (jit::is_complex<typename BACKEND::base> ()) {
                 source_buffer << "            sub_max = max(abs(sub_max), abs(input[index]));" << std::endl;

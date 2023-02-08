@@ -132,7 +132,10 @@ int main(int argc, const char * argv[]) {
 
             if (thread_number == 0 && false) {
                 solve.print(sample);
+            } else {
+                solve.sync();
             }
+
         }, i, threads.size());
     }
 

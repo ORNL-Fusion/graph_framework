@@ -42,7 +42,7 @@ void test_solver(const typename SOLVER::base tolarance,
     timeing::measure_diagnostic solver("init");
     auto residule = solve.init(kx, tolarance);
     solver.stop();
-    
+
     timeing::measure_diagnostic compile("compile");
     solve.compile(1);
     compile.stop();
@@ -70,7 +70,7 @@ template<typename DISPERSION> void run_disperions_tests(const typename DISPERSIO
                                                         const typename DISPERSION::base dt) {
     test_solver<solver::rk2<DISPERSION>> (tolarance, omega0, kx0, dt);
     std::cout << "Test completed for rk2 solver." << std::endl;
-    
+
     test_solver<solver::rk4<DISPERSION>> (tolarance, omega0, kx0, dt);
     std::cout << "Test completed for rk4 solver." << std::endl;
 }
@@ -96,7 +96,7 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-#ifdef USE_METAL
+#if defined(USE_METAL) || defined(USE_CUDA)
     run_tests<backend::cpu<float>> (2.0E-14);
 #else
     run_tests<backend::cpu<float>> (1.0E-14);

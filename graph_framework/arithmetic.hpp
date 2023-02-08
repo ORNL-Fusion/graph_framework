@@ -283,10 +283,10 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
                                                           jit::register_map<LN> &registers) final {
-            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
-            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
-
             if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<typename LN::backend> (stream);
@@ -594,10 +594,10 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
                                                           jit::register_map<LN> &registers) final {
-            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
-            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
-
             if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<typename LN::backend> (stream);
@@ -969,11 +969,11 @@ namespace graph {
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
-                             jit::register_map<LN> &registers) final {
-            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
-            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
-
+                                                          jit::register_map<LN> &registers) final {
             if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<typename LN::backend> (stream);
@@ -1287,10 +1287,10 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
                                                           jit::register_map<LN> &registers) final {
-            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
-            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
-
             if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<typename LN::backend> (stream);
@@ -1537,11 +1537,11 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
                                                           jit::register_map<LN> &registers) final {
-            shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
-            shared_leaf<typename MN::backend> m = this->middle->compile(stream, registers);
-            shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
-
             if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename MN::backend> m = this->middle->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<typename LN::backend> (stream);

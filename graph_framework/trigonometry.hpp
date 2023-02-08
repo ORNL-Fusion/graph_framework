@@ -82,9 +82,9 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
                                                          jit::register_map<N> &registers) final {
-            shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
-
             if (registers.find(this) == registers.end()) {
+                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<typename N::backend> (stream);
@@ -220,9 +220,9 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
                                                          jit::register_map<N> &registers) final {
-            shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
-
             if (registers.find(this) == registers.end()) {
+                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<typename N::backend> (stream);
