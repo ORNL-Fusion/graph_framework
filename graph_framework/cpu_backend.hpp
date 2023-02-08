@@ -14,6 +14,7 @@
 #include <complex>
 
 #include "backend_protocall.hpp"
+#include "register.hpp"
 
 namespace backend {
 //******************************************************************************
@@ -114,8 +115,7 @@ namespace backend {
 ///  @returns The maximum value.
 //------------------------------------------------------------------------------
         virtual BASE max() const final {
-            if constexpr (std::is_same<BASE, std::complex<float>>::value ||
-                          std::is_same<BASE, std::complex<double>>::value) {
+            if constexpr (jit::is_complex<BASE> ()) {
                 return *std::max_element(buffer.cbegin(), buffer.cend(),
                                          [] (const BASE a, const BASE b) {
                     return std::abs(a) < std::abs(b);

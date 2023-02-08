@@ -9,6 +9,7 @@
 #define arithmetic_h
 
 #include "node.hpp"
+#include "register.hpp"
 
 namespace graph {
 //------------------------------------------------------------------------------
@@ -1545,8 +1546,7 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<typename LN::backend> (stream);
                 stream << " " << registers[this] << " = ";
-                if constexpr (std::is_same<std::complex<float>, typename LN::backend::base>::value ||
-                              std::is_same<std::complex<double>, typename LN::backend::base>::value) {
+                if constexpr (jit::is_complex<typename LN::backend::base> ()) {
                     stream << registers[l.get()] << "*"
                            << registers[m.get()] << " + "
                            << registers[r.get()] << ";"

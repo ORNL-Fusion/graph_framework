@@ -144,8 +144,6 @@ namespace gpu {
                              graph::output_nodes<BACKEND> outputs,
                              const size_t num_rays,
                              const bool add_reduction=false) {
-//            std::vector<const char *> headers_path({"/opt/nvidia/hpc_sdk/Linux_x86_64/22.5/cuda/11.7/include/cuda/std/"});
-//            std::vector<const char *> headers({"complex"});
             check_nvrtc_error(nvrtcCreateProgram(&kernel_program,
                                                  kernel_source.c_str(),
                                                  NULL, 0, NULL, NULL),
@@ -178,7 +176,7 @@ namespace gpu {
             check_error(cuDeviceGetName(device_name, 100, device), "cuDeviceGetName");
             std::cout << "  Device name              : " << device_name << std::endl;
 
-//  FIXME: Hardcoded for ada gpus for now.
+//  FIXME: Hardcoded for ada gpus for now. Also hardcoded for perlmutter.
             std::array<const char *, 3> options({
                 "--gpu-architecture=compute_80",
                 "--std=c++17",

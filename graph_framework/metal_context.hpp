@@ -99,7 +99,6 @@ namespace gpu {
                 }
 
                 const size_t buffer_element_size = sizeof(typename BACKEND::base);
-                time_offset = 0;
                 for (graph::shared_variable<BACKEND> &input : inputs) {
                     BACKEND buffer = input->evaluate();
                     buffers.push_back([device newBufferWithBytes:buffer.data()

@@ -26,14 +26,13 @@
 //------------------------------------------------------------------------------
 template<typename BASE> void check(const BASE test,
                                    const BASE tolarance) {
-    if constexpr (std::is_same<BASE, float>::value ||
-                  std::is_same<BASE, double>::value) {
-        assert(test <= tolarance && "GPU and CPU values differ.");
-    } else {
+    if constexpr (jit::is_complex<BASE> ()) {
         assert(std::real(test) <= std::real(tolarance) &&
                "Real GPU and CPU values differ.");
         assert(std::imag(test) <= std::imag(tolarance) &&
                "Imaginary GPU and CPU values differ.");
+    } else {
+        assert(test <= tolarance && "GPU and CPU values differ.");
     }
 }
 

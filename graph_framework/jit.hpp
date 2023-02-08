@@ -149,10 +149,9 @@ namespace jit {
             source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
 #endif
             source_buffer << "    if (i < " << input->size() << ") {" << std::endl;
-            source_buffer << "        float sub_max = input[i];" << std::endl;
+            source_buffer << "        " << jit::type_to_string<typename BACKEND::base> () << " sub_max = input[i];" << std::endl;
             source_buffer << "        for (size_t index = i + 1024; index < " << input->size() << "; index += 1024) {" << std::endl;
-            if constexpr (std::is_same<std::complex<float>, typename BACKEND::base>::value ||
-                          std::is_same<std::complex<double>, typename BACKEND::base>:: value) {
+            if constexpr (jit::is_complex<typename BACKEND::base> ()) {
                 source_buffer << "            sub_max = max(abs(sub_max), abs(input[index]));" << std::endl;
             } else {
                 source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
@@ -172,8 +171,7 @@ namespace jit {
             source_buffer << "        threadgroup_barrier(mem_flags::mem_threadgroup);" << std::endl;
 #elif defined(USE_CUDA)
             source_buffer << "        for (int index = 16; index > 0; index /= 2) {" << std::endl;
-            if constexpr (std::is_same<std::complex<float>, typename BACKEND::base>::value ||
-                          std::is_same<std::complex<double>, typename BACKEND::base>:: value) {
+            if constexpr (jit::is_complex<typename BACKEND::base> ()) {
                 source_buffer << "            sub_max = max(abs(sub_max), abs(__shfl_down_sync(__activemask(), sub_max, index)));" << std::endl;
             } else {
                 source_buffer << "            sub_max = max(sub_max, __shfl_down_sync(__activemask(), sub_max, index));" << std::endl;
@@ -188,8 +186,7 @@ namespace jit {
             source_buffer << "            *result = simd_max(thread_max[k]);"  << std::endl;
 #elif defined(USE_CUDA)
             source_buffer << "            for (int index = 16; index > 0; index /= 2) {" << std::endl;
-            if constexpr (std::is_same<std::complex<float>, typename BACKEND::base>::value ||
-                          std::is_same<std::complex<double>, typename BACKEND::base>:: value) {
+            if constexpr (jit::is_complex<typename BACKEND::base> ()) {
                 source_buffer << "                thread_max[k] = max(abs(thread_max[k]), abs(__shfl_down_sync(__activemask(), thread_max[k], index)));" << std::endl;
             } else {
                 source_buffer << "                thread_max[k] = max(thread_max[k], __shfl_down_sync(__activemask(), thread_max[k], index));" << std::endl;

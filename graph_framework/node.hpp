@@ -343,21 +343,17 @@ namespace graph {
                 jit::add_type<BACKEND> (stream);
                 const auto temp = this->evaluate()[0];
 
-                if constexpr (std::is_same<std::complex<float>, typename BACKEND::base>::value) {
-                    stream << " " << registers[this] << " = "
-                           << std::setprecision(std::numeric_limits<float>::max_digits10)
-                           << "cuda::std::complex<float>(" << std::real(temp) << ","
-                                                           << std::imag(temp) << ");" << std::endl;
-                } else if constexpr (std::is_same<std::complex<double>, typename BACKEND::base>::value) {
-                    stream << " " << registers[this] << " = "
-                           << std::setprecision(std::numeric_limits<double>::max_digits10)
-                           << "cuda::std::complex<double> (" << std::real(temp) << ","
-                                                             << std::imag(temp) << ");" << std::endl;
+                stream << " " << registers[this] << " = ";
+                if constexpr (jit::is_complex<typename BACKEND::base> ()) {
+                    jit::add_type<BACKEND> (stream);
+                    stream << std::setprecision(jit::max_digits10<typename BACKEND::base> ())
+                           << " (" << std::real(temp) << ","
+                                   << std::imag(temp) << ")";
                 } else {
-                    stream << " " << registers[this] << " = "
-                           << std::setprecision(std::numeric_limits<typename BACKEND::base>::max_digits10)
-                           << temp << ";" << std::endl;
+                    stream << std::setprecision(jit::max_digits10<typename BACKEND::base> ())
+                           << temp;
                 }
+                stream << ";" << std::endl;
             }
 
             return this->shared_from_this();
