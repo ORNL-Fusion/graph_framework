@@ -130,12 +130,12 @@ namespace graph {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<N> (stream);
+                jit::add_type<typename N::backend> (stream);
                 stream << " " << registers[this] << " = sqrt("
                        << registers[a.get()] << ");"
                        << std::endl;
             }
-            
+
             return this->shared_from_this();
         }
 
@@ -270,12 +270,12 @@ namespace graph {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<N> (stream);
+                jit::add_type<typename N::backend> (stream);
                 stream << " " << registers[this] << " = exp("
                        << registers[a.get()] << ");"
                        << std::endl;
             }
-            
+
             return this->shared_from_this();
         }
 
@@ -297,7 +297,7 @@ namespace graph {
 
             return false;
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
@@ -406,15 +406,15 @@ namespace graph {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<N> (stream);
+                jit::add_type<typename N::backend> (stream);
                 stream << " " << registers[this] << " = log("
                        << registers[a.get()] << ");"
                        << std::endl;
             }
-            
+
             return this->shared_from_this();
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
@@ -605,16 +605,16 @@ namespace graph {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<LN> (stream);
+                jit::add_type<typename LN::backend> (stream);
                 stream << " " << registers[this] << " = pow("
                        << registers[l.get()] << ", "
                        << registers[r.get()] << ");"
                        << std::endl;
             }
-            
+
             return this->shared_from_this();
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
@@ -641,7 +641,7 @@ namespace graph {
         virtual void to_latex() const final {
             auto use_brackets = !constant_cast(this->left).get() &&
                                 !variable_cast(this->left).get();
-            
+
             if (use_brackets) {
                 std::cout << "\\left(";
             }

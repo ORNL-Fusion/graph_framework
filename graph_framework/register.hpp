@@ -69,9 +69,9 @@ namespace jit {
 ///
 ///  @param[in,out] stream String buffer stream.
 //------------------------------------------------------------------------------
-    template<class NODE>
+    template<class BACKEND>
     void add_type(std::stringstream &stream) {
-        add_type_base<typename NODE::backend::base> (stream);
+        add_type_base<typename BACKEND::base> (stream);
     }
 
 ///  Type alias for mapping node pointers to register names.

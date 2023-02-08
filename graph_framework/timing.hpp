@@ -18,7 +18,7 @@ namespace timeing {
         const std::string label;
 ///  Starting time of the measure.
         const std::chrono::high_resolution_clock::time_point start;
-        
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a time diagnostic object.
@@ -27,7 +27,7 @@ namespace timeing {
 //------------------------------------------------------------------------------
         measure_diagnostic(const std::string message) :
         label(message), start(std::chrono::high_resolution_clock::now()) {}
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Stop the timer.
 //------------------------------------------------------------------------------
@@ -37,9 +37,9 @@ namespace timeing {
             const auto total_time = end - start;
             const std::chrono::nanoseconds total_time_ns =
                       std::chrono::duration_cast<std::chrono::nanoseconds> (total_time);
-            
+
             std::cout << std::endl << "  " << label << " : ";
-            
+
             if (total_time_ns.count() < 1000) {
                 std::cout << total_time_ns.count()               << " ns"  << std::endl;
             } else if (total_time_ns.count() < 1000000) {

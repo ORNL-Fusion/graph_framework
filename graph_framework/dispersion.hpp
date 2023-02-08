@@ -108,7 +108,7 @@ namespace dispersion {
             dkxdt = dDdx/dDdw;
             dkydt = dDdy/dDdw;
             dkzdt = dDdz/dDdw;
-            
+
             dsdt = graph::vector(dxdt, dydt, dzdt)->length();
         }
 
@@ -139,7 +139,7 @@ namespace dispersion {
             if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::backend> ()) {
                 auto x_var = graph::variable_cast(x);
                 inputs.push_back(x_var);
-                
+
                 graph::output_nodes<typename DISPERSION_FUNCTION::backend> outputs = {
                     loss
                 };
@@ -147,14 +147,14 @@ namespace dispersion {
                 graph::map_nodes<typename DISPERSION_FUNCTION::backend> setters = {
                     {x_next, x_var}
                 };
-                
+
                 source = std::make_unique<jit::kernel<typename DISPERSION_FUNCTION::backend>> ("loss_kernel",
                                                                                                inputs,
                                                                                                outputs,
                                                                                                setters);
                 source->add_max_reduction(x_var);
 
-                source->compile("loss_kernel", inputs, outputs, x_var->size());
+                source->compile("loss_kernel", inputs, outputs, x_var->size(), true);
                 source->compile_max();
 
                 max_residule = source->max_reduction();

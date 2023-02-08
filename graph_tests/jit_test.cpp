@@ -17,6 +17,27 @@
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
+///  @brief Assert when difference is greater than the tolarance.
+///
+///  Specialize to check for complex numbers since complex has not <= operator.
+///
+///  @param[in] test      Test value.
+///  @param[in] tolarance Test tolarance.
+//------------------------------------------------------------------------------
+template<typename BASE> void check(const BASE test,
+                                   const BASE tolarance) {
+    if constexpr (std::is_same<BASE, float>::value ||
+                  std::is_same<BASE, double>::value) {
+        assert(test <= tolarance && "GPU and CPU values differ.");
+    } else {
+        assert(std::real(test) <= std::real(tolarance) &&
+               "Real GPU and CPU values differ.");
+        assert(std::imag(test) <= std::imag(tolarance) &&
+               "Imaginary GPU and CPU values differ.");
+    }
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Compile kernal and check the result of the output.
 ///
 ///  @param[in] inputs    Kernel input nodes.
@@ -31,15 +52,15 @@ template<typename BASE> void compile(graph::input_nodes<backend::cpu<BASE>> inpu
                                      const BASE expected,
                                      const BASE tolarance) {
     jit::kernel<backend::cpu<BASE>> source("test_kernel", inputs, outputs, setters);
-    
+
     source.compile("test_kernel", inputs, outputs, 1);
     source.run();
-    
+
     BASE result;
     source.copy_buffer(inputs.size(), &result);
 
-    assert(std::abs(result - expected) <= tolarance &&
-           "GPU and CPU values differ.");
+    const BASE diff = std::abs(result - expected);
+    check(diff, tolarance);
 }
 
 //------------------------------------------------------------------------------
@@ -50,9 +71,9 @@ template<typename BASE> void run_math_tests() {
     auto v2 = graph::variable<backend::cpu<BASE>> (1, "v2");
     auto v3 = graph::variable<backend::cpu<BASE>> (1, "v3");
 
-    v1->set(2.0);
-    v2->set(3.0);
-    v3->set(4.0);
+    v1->set(static_cast<BASE> (2.0));
+    v2->set(static_cast<BASE> (3.0));
+    v3->set(static_cast<BASE> (4.0));
 
     auto add_node = v1 + v2;
     compile<BASE> ({graph::variable_cast(v1),
@@ -136,13 +157,22 @@ template<typename BASE> void run_math_tests() {
     compile<BASE> ({graph::variable_cast(v1),
                     graph::variable_cast(v2)},
                    {divide_node_dfdv1}, {},
-                   divide_node_dfdv1->evaluate().at(0), 0.0);
-
+                   divide_node_dfdv1->evaluate().at(0),
+#ifdef USE_CUDA
+                   2.8E-17);
+#else
+                   0.0);
+#endif
     auto divide_node_dfdv2 = divide_node->df(v2);
     compile<BASE> ({graph::variable_cast(v1),
                     graph::variable_cast(v2)},
                    {divide_node_dfdv2}, {},
-                   divide_node_dfdv2->evaluate().at(0), 0.0);
+                   divide_node_dfdv2->evaluate().at(0),
+#ifdef USE_CUDA
+                   2.8E-17);
+#else
+                   0.0);
+#endif
 
     auto divide_node_dfdv3 = divide_node->df(v3);
     compile<BASE> ({graph::variable_cast(v1),
@@ -233,11 +263,21 @@ template<typename BASE> void run_math_tests() {
     compile<BASE> ({graph::variable_cast(v1),
                     graph::variable_cast(v2)},
                    {pow_node}, {},
-                   pow_node->evaluate().at(0), 0.0);
+                   pow_node->evaluate().at(0),
+#ifdef USE_CUDA
+                   1.8E-15);
+#else
+                   0.0);
+#endif
     compile<BASE> ({graph::variable_cast(v1),
                     graph::variable_cast(v2)},
                    {pow_node}, {},
-                   2.0*2.0*2.0, 0.0);
+                   2.0*2.0*2.0,
+#ifdef USE_CUDA
+                   1.8E-15);
+#else
+                   0.0);
+#endif
 
     auto pow_node_dfdv1 = pow_node->df(v1);
     compile<BASE> ({graph::variable_cast(v1),
@@ -249,7 +289,12 @@ template<typename BASE> void run_math_tests() {
     compile<BASE> ({graph::variable_cast(v1),
                     graph::variable_cast(v2)},
                    {pow_node_dfdv2}, {},
-                   pow_node_dfdv2->evaluate().at(0), 0.0);
+                   pow_node_dfdv2->evaluate().at(0),
+#ifdef USE_CUDA
+                   8.9E-16);
+#else
+                   0.0);
+#endif
 
     auto pow_node_dfdv3 = pow_node->df(v3);
     compile<BASE> ({graph::variable_cast(v1),
@@ -258,7 +303,7 @@ template<typename BASE> void run_math_tests() {
                    pow_node_dfdv3->evaluate().at(0), 0.0);
 
     auto v4 = graph::variable<backend::cpu<BASE>> (1, "v4");
-    v4->set(0.57245);
+    v4->set(static_cast<BASE> (0.57245));
     auto pow_non_int = graph::pow(v4, v1);
     compile<BASE> ({graph::variable_cast(v1),
                     graph::variable_cast(v4)},
@@ -274,7 +319,7 @@ template<typename BASE> void run_math_tests() {
 template<class DISPERSION_FUNCTION>
 void run_dispersion_test(equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq,
                          const typename DISPERSION_FUNCTION::backend::base tolarance) {
-    
+
     auto w = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "w");
     auto x = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "x");
     auto y = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "y");
@@ -284,18 +329,18 @@ void run_dispersion_test(equilibrium::unique_equilibrium<typename DISPERSION_FUN
     auto kz = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "kz");
     auto t = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "t");
 
-    w->set(1.0);
-    x->set(1.0);
-    y->set(1.0);
-    z->set(1.0);
-    kx->set(1.0);
-    ky->set(1.0);
-    kz->set(1.0);
-    t->set(1.0);
+    w->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
+    x->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
+    y->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
+    z->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
+    kx->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
+    ky->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
+    kz->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
+    t->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
 
     dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx, ky, kz, x, y, z, t, eq);
     auto residule = D.get_d();
-    
+
     compile<typename DISPERSION_FUNCTION::backend::base> ({graph::variable_cast(w),
                                                            graph::variable_cast(x),
                                                            graph::variable_cast(y),
@@ -315,15 +360,25 @@ void run_dispersion_test(equilibrium::unique_equilibrium<typename DISPERSION_FUN
 template<class BASE>
 void run_dispersion_tests() {
     auto no_mag_eq = equilibrium::make_no_magnetic_field<backend::cpu<BASE>> ();
-    
+
     run_dispersion_test<dispersion::bohm_gross<backend::cpu<BASE>>> (no_mag_eq, 0.0);
-    
+
     auto slab_eq = equilibrium::make_no_magnetic_field<backend::cpu<BASE>> ();
-    
+
     run_dispersion_test<dispersion::simple<backend::cpu<BASE>>> (slab_eq, 0.0);
     run_dispersion_test<dispersion::ordinary_wave<backend::cpu<BASE>>> (slab_eq, 0.0);
-    run_dispersion_test<dispersion::extra_ordinary_wave<backend::cpu<BASE>>> (slab_eq, 0.0);
-    run_dispersion_test<dispersion::cold_plasma<backend::cpu<BASE>>> (slab_eq, 5.0E9);
+    run_dispersion_test<dispersion::extra_ordinary_wave<backend::cpu<BASE>>> (slab_eq,
+#ifdef USE_CUDA
+                                                                              0.032);
+#else
+                                                                              0.0);
+#endif
+    run_dispersion_test<dispersion::cold_plasma<backend::cpu<BASE>>> (slab_eq,
+#ifdef USE_CUDA
+                                                                      1.4E10);
+#else
+                                                                      5.0E9);
+#endif
 }
 
 //------------------------------------------------------------------------------

@@ -44,10 +44,6 @@ namespace gpu {
         NSUInteger thread_groups;
 ///  Number of threads in a group.
         NSUInteger threads_per_group;
-///  Buffer element size.
-        size_t buffer_element_size;
-///  Time offset.
-        size_t time_offset;
 
     public:
 //------------------------------------------------------------------------------
@@ -56,7 +52,7 @@ namespace gpu {
         metal_context() :
         device(MTLCopyAllDevices().firstObject),
         queue([device newCommandQueue]) {}
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Create a compute pipeline.
 ///
@@ -65,13 +61,16 @@ namespace gpu {
 ///  @param[in] inputs        Input nodes of the kernel.
 ///  @param[in] outputs       Output nodes of the kernel.
 ///  @param[in] num_rays      Number of rays to trace.
+///  @param[in] add_reduction Optional argument to generate the reduction
+///                           kernel.
 //------------------------------------------------------------------------------
         template<class BACKEND>
         void create_pipeline(const std::string kernel_source,
                              const std::string kernel_name,
                              graph::input_nodes<BACKEND> inputs,
                              graph::output_nodes<BACKEND> outputs,
-                             const size_t num_rays) {
+                             const size_t num_rays,
+                             const bool add_reduction=false) {
             @autoreleasepool {
                 NSError *error;
                 library = [device newLibraryWithSource:[NSString stringWithCString:kernel_source.c_str()
@@ -99,7 +98,7 @@ namespace gpu {
                     NSLog(@"%@", error);
                 }
 
-                buffer_element_size = sizeof(typename BACKEND::base);
+                const size_t buffer_element_size = sizeof(typename BACKEND::base);
                 time_offset = 0;
                 for (graph::shared_variable<BACKEND> &input : inputs) {
                     BACKEND buffer = input->evaluate();
@@ -134,17 +133,17 @@ namespace gpu {
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
             compute.computeFunction = [library newFunctionWithName:@"max_reduction"];
-            
+
             NSError *error;
             max_state = [device newComputePipelineStateWithDescriptor:compute
                                                               options:MTLPipelineOptionNone
                                                            reflection:NULL
                                                                 error:&error];
-            
+
             if (error) {
                 NSLog(@"%@", error);
             }
-            
+
             result = [device newBufferWithLength:sizeof(typename BACKEND::base)
                                          options:MTLResourceStorageModeManaged];
         }
@@ -168,7 +167,7 @@ namespace gpu {
             @autoreleasepool {
                 command_buffer = [queue commandBuffer];
                 id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
-                
+
                 [encoder setComputePipelineState:state];
                 [encoder setBuffers:buffers.data()
                             offsets:offsets.data()
@@ -177,7 +176,7 @@ namespace gpu {
                 [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                         threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                 [encoder endEncoding];
-                
+
                 [command_buffer commit];
             }
         }
@@ -191,9 +190,9 @@ namespace gpu {
         typename BACKEND::base max_reduction() {
             run();
             command_buffer = [queue commandBuffer];
-            
+
             id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
-            
+
             [encoder setComputePipelineState:max_state];
             [encoder setBuffer:buffers.back() offset:0 atIndex:0];
             [encoder setBuffer:result offset:0 atIndex:1];
@@ -207,10 +206,10 @@ namespace gpu {
 
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
-            
+
             return static_cast<typename BACKEND::base *> ([result contents])[0];
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Hold the current thread until the current command buffer has complete.
 //------------------------------------------------------------------------------
@@ -221,7 +220,7 @@ namespace gpu {
                 [blit synchronizeResource:buffer];
             }
             [blit endEncoding];
-            
+
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
         }
@@ -254,10 +253,10 @@ namespace gpu {
             id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
             [blit synchronizeResource:buffers[source_index]];
             [blit endEncoding];
-            
+
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
-            
+
             memcpy(destination,
                    [buffers[source_index] contents],
                    [buffers[source_index] length]);

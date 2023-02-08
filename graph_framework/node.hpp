@@ -171,7 +171,7 @@ namespace graph {
                                              jit::register_map<leaf_node<BACKEND>> &registers) {
             return this->arg->compile(stream, registers);
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Get the argument.
 //------------------------------------------------------------------------------
@@ -340,12 +340,26 @@ namespace graph {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<constant_node<BACKEND>> (stream);
-                stream << " " << registers[this] << " = "
-                       << std::setprecision(std::numeric_limits<typename BACKEND::base>::max_digits10)
-                       << this->evaluate()[0] << ";" << std::endl;
+                jit::add_type<BACKEND> (stream);
+                const auto temp = this->evaluate()[0];
+
+                if constexpr (std::is_same<std::complex<float>, typename BACKEND::base>::value) {
+                    stream << " " << registers[this] << " = "
+                           << std::setprecision(std::numeric_limits<float>::max_digits10)
+                           << "cuda::std::complex<float>(" << std::real(temp) << ","
+                                                           << std::imag(temp) << ");" << std::endl;
+                } else if constexpr (std::is_same<std::complex<double>, typename BACKEND::base>::value) {
+                    stream << " " << registers[this] << " = "
+                           << std::setprecision(std::numeric_limits<double>::max_digits10)
+                           << "cuda::std::complex<double> (" << std::real(temp) << ","
+                                                             << std::imag(temp) << ");" << std::endl;
+                } else {
+                    stream << " " << registers[this] << " = "
+                           << std::setprecision(std::numeric_limits<typename BACKEND::base>::max_digits10)
+                           << temp << ";" << std::endl;
+                }
             }
-            
+
             return this->shared_from_this();
         }
 
@@ -374,7 +388,7 @@ namespace graph {
         bool is(const typename BACKEND::base d) {
             return data.size() == 1 && data.at(0) == d;
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
@@ -515,7 +529,7 @@ namespace graph {
                                              jit::register_map<leaf_node<BACKEND>> &registers) final {
            return this->shared_from_this();
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///

@@ -87,12 +87,12 @@ namespace graph {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<N> (stream);
+                jit::add_type<typename N::backend> (stream);
                 stream << " " << registers[this] << " = sin("
                        << registers[a.get()] << ");"
                        << std::endl;
             }
-            
+
             return this->shared_from_this();
         }
 
@@ -225,15 +225,15 @@ namespace graph {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<N> (stream);
+                jit::add_type<typename N::backend> (stream);
                 stream << " " << registers[this] << " = cos("
                        << registers[a.get()] << ");"
                        << std::endl;
             }
-            
+
             return this->shared_from_this();
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
