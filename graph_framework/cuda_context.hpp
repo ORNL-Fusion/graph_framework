@@ -159,28 +159,30 @@ namespace gpu {
                                   "nvrtcAddNameExpression");
             }
 
+            std::stringstream arch;
             int compute_version;
             check_error(cuDeviceGetAttribute(&compute_version,
                                              CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR,
                                              device), "cuDeviceGetAttribute");
+            arch << "--gpu-architecture=compute_";
+            arch << compute_version;
             std::cout << "CUDA GPU info." << std::endl;
             std::cout << "  Major compute capability : " << compute_version << std::endl;
 
             check_error(cuDeviceGetAttribute(&compute_version,
                                              CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
                                              device), "cuDeviceGetAttribute");
-
+            arch << compute_version;
             std::cout << "  Minor compute capability : " << compute_version << std::endl;
 
             char device_name[100];
             check_error(cuDeviceGetName(device_name, 100, device), "cuDeviceGetName");
             std::cout << "  Device name              : " << device_name << std::endl;
 
-//  FIXME: Hardcoded for ada gpus for now. Also hardcoded for perlmutter.
             std::array<const char *, 3> options({
-                "--gpu-architecture=compute_80",
+                arch.str().c_str(),
                 "--std=c++17",
-                "--include-path=/opt/nvidia/hpc_sdk/Linux_x86_64/22.5/cuda/11.7/include"
+                "--include-path=" CUDA_INCLUDE
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {

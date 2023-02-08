@@ -22,7 +22,7 @@ if (${APPLE})
 
     if (${USE_METAL})
         enable_language (OBJCXX)
-        
+
         add_library (metal_lib INTERFACE)
         target_link_libraries (metal_lib
                                INTERFACE
@@ -50,6 +50,7 @@ else ()
         target_compile_definitions (cuda_lib
                                     INTERFACE
                                     USE_CUDA
+                                    CUDA_INCLUDE="${CUDAToolkit_INCLUDE_DIRS}"
         )
         target_link_libraries (cuda_lib
                                INTERFACE
