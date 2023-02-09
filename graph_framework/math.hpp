@@ -118,6 +118,28 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
+                                                         jit::register_map<N> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename N::backend> (stream);
+                stream << " " << registers[this] << " = sqrt("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -157,7 +179,7 @@ namespace graph {
         return (std::make_shared<sqrt_node<N>> (x))->reduce();
     }
 
-///  Convience type alias for shared sqrt nodes.
+///  Convenience type alias for shared sqrt nodes.
     template<typename N>
     using shared_sqrt = std::shared_ptr<sqrt_node<N>>;
 
@@ -236,6 +258,28 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
+                                                         jit::register_map<N> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename N::backend> (stream);
+                stream << " " << registers[this] << " = exp("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -253,7 +297,7 @@ namespace graph {
 
             return false;
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
@@ -275,7 +319,7 @@ namespace graph {
         return (std::make_shared<exp_node<N>> (x))->reduce();
     }
 
-///  Convience type alias for shared exp nodes.
+///  Convenience type alias for shared exp nodes.
     template<typename N>
     using shared_exp = std::shared_ptr<exp_node<N>>;
 
@@ -350,6 +394,28 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
+                                                         jit::register_map<N> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename N::backend> (stream);
+                stream << " " << registers[this] << " = log("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -389,7 +455,7 @@ namespace graph {
         return (std::make_shared<log_node<N>> (x))->reduce();
     }
 
-///  Convience type alias for shared exp nodes.
+///  Convenience type alias for shared exp nodes.
     template<typename N>
     using shared_log = std::shared_ptr<log_node<N>>;
 
@@ -520,8 +586,33 @@ namespace graph {
         virtual shared_leaf<typename LN::backend>
         df(shared_leaf<typename LN::backend> x) final {
             auto one = constant<typename LN::backend> (1.0);
-            return this->right*pow(this->left, this->right - one)*this->left->df(x) +
-                   log(this->left)*this->shared_from_this()*this->right->df(x);
+            return pow(this->left, this->right - one) *
+                   (this->right*this->left->df(x) +
+                    this->left*log(this->left)*this->right->df(x));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename LN::backend> (stream);
+                stream << " " << registers[this] << " = pow("
+                       << registers[l.get()] << ", "
+                       << registers[r.get()] << ");"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -550,7 +641,7 @@ namespace graph {
         virtual void to_latex() const final {
             auto use_brackets = !constant_cast(this->left).get() &&
                                 !variable_cast(this->left).get();
-            
+
             if (use_brackets) {
                 std::cout << "\\left(";
             }
@@ -576,7 +667,7 @@ namespace graph {
         return std::make_shared<pow_node<LN, RN>> (l, r)->reduce();
     }
 
-///  Convience type alias for shared add nodes.
+///  Convenience type alias for shared add nodes.
     template<typename LN, typename RN>
     using shared_pow = std::shared_ptr<pow_node<LN, RN>>;
 

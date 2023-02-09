@@ -10,6 +10,7 @@
 
 #include "../graph_framework/cpu_backend.hpp"
 #include "../graph_framework/solver.hpp"
+#include "../graph_framework/timing.hpp"
 
 void write_time(const std::string &name, const std::chrono::nanoseconds time);
 
@@ -30,21 +31,32 @@ static base solution(const base t) {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    START_GPU
+
     //typedef std::complex<double> base;
-    typedef double base;
-    //typedef float base;
+    //typedef double base;
+    typedef float base;
     //typedef std::complex<float> base;
     typedef backend::cpu<base> cpu;
     
-    const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+    const timeing::measure_diagnostic total("Total Time");
 
     const size_t num_times = 10000;
     //const size_t num_rays = 1;
-    const size_t num_rays = 10000;
-    
-    std::vector<std::thread> threads(std::max(std::min(std::thread::hardware_concurrency(),
-                                                       static_cast<unsigned int> (num_rays)),
-                                              static_cast<unsigned int> (1)));
+    const size_t num_rays = 1000000;
+
+    std::vector<std::thread> threads(0);
+#if USE_GPU
+    if constexpr (jit::can_jit<cpu> ()) {
+        threads.resize(1);
+    } else {
+#endif
+        threads.resize(std::max(std::min(std::thread::hardware_concurrency(),
+                                         static_cast<unsigned int> (num_rays)),
+                                static_cast<unsigned int> (1)));
+#if USE_GPU
+    }
+#endif
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         threads[i] = std::thread([num_times, num_rays] (const size_t thread_number,
@@ -53,9 +65,10 @@ int main(int argc, const char * argv[]) {
                                         + std::min(thread_number, num_rays%num_threads);
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-            std::uniform_real_distribution<double> real_dist(0.6, 1.0);
+            std::uniform_real_distribution<base> real_dist(0.6, 1.0);
+            std::normal_distribution<base> norm_dist(600.0, 10.0);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
-
+            
             auto omega = graph::variable<cpu> (local_num_rays, "\\omega");
             auto kx = graph::variable<cpu> (local_num_rays, "k_{x}");
             auto ky = graph::variable<cpu> (local_num_rays, "k_{y}");
@@ -69,7 +82,7 @@ int main(int argc, const char * argv[]) {
 
 //  Inital conditions.
             for (size_t j = 0; j < local_num_rays; j++) {
-                omega->set(j, 500.0);
+                omega->set(j, norm_dist(engine));
             }
 
             x->set(backend::base_cast<cpu> (0.0));
@@ -78,18 +91,19 @@ int main(int argc, const char * argv[]) {
             kx->set(backend::base_cast<cpu> (600.0));
             ky->set(backend::base_cast<cpu> (0.0));
             kz->set(backend::base_cast<cpu> (0.0));
-            
+
             auto eq = equilibrium::make_slab_density<cpu> ();
             //auto eq = equilibrium::make_no_magnetic_field<cpu> ();
 
             //solver::split_simplextic<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::simple<cpu>>
-            solver::rk4<dispersion::ordinary_wave<cpu>>
+            //solver::rk4<dispersion::ordinary_wave<cpu>>
             //solver::rk4<dispersion::extra_ordinary_wave<cpu>>
-            //solver::rk4<dispersion::cold_plasma<cpu>>
+            solver::rk4<dispersion::cold_plasma<cpu>>
                 solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
             solve.init(kx);
+            solve.compile(num_rays);
             if (thread_number == 0) {
                 solve.print_dispersion();
                 std::cout << std::endl;
@@ -105,44 +119,26 @@ int main(int argc, const char * argv[]) {
                 std::cout << std::endl;
                 solve.print_dzdt();
             }
-                
-            auto residule = solve.residule();
 
             const size_t sample = int_dist(engine);
 
             if (thread_number == 0) {
                 std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
-                std::cout << "t = " << 0.0 << " ";
-                std::cout << solve.state.back().x.at(sample) << std::endl;
             }
 
             for (size_t j = 0; j < num_times; j++) {
                 if (thread_number == 0) {
-                    std::cout << "Time Step " << j << " Sample " << sample << " "
-                              << solve.state.back().t.at(sample) << " "
-                              << solve.state.back().x.at(sample) << " "
-                              << solve.state.back().y.at(sample) << " "
-                              << solve.state.back().z.at(sample) << " "
-                              << solve.state.back().kx.at(sample) << " "
-                              << solve.state.back().ky.at(sample) << " "
-                              << solve.state.back().kz.at(sample) << " "
-                              << residule->evaluate().at(sample)
-                              << std::endl;
+                    solve.print(sample);
                 }
                 solve.step();
             }
+
             if (thread_number == 0) {
-                std::cout << "Time Step " << num_times << " Sample " << sample << " "
-                          << solve.state.back().t.at(sample) << " "
-                          << solve.state.back().x.at(sample) << " "
-                          << solve.state.back().y.at(sample) << " "
-                          << solve.state.back().z.at(sample) << " "
-                          << solve.state.back().kx.at(sample) << " "
-                          << solve.state.back().ky.at(sample) << " "
-                          << solve.state.back().kz.at(sample) << " "
-                          << residule->evaluate().at(sample)
-                          << std::endl;
+                solve.print(sample);
+            } else {
+                solve.sync();
             }
+
         }, i, threads.size());
     }
 
@@ -150,37 +146,8 @@ int main(int argc, const char * argv[]) {
         t.join();
     }
 
-    const std::chrono::high_resolution_clock::time_point evaluate = std::chrono::high_resolution_clock::now();
-
-    const auto total_time = evaluate - start;
-
-    const std::chrono::nanoseconds total_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds> (total_time);
-
     std::cout << std::endl << "Timing:" << std::endl;
-    std::cout << std::endl;
-    write_time("  Total time : ", total_time_ns);
-    std::cout << std::endl;
-}
+    total.stop();
 
-//------------------------------------------------------------------------------
-///  @brief Print out timings.
-///
-///  @param[in] name Discription of the times.
-///  @param[in] time Elapsed time in nanoseconds.
-//------------------------------------------------------------------------------
-void write_time(const std::string &name, const std::chrono::nanoseconds time) {
-    if (time.count() < 1000) {
-        std::cout << name << time.count()               << " ns" << std::endl;
-    } else if (time.count() < 1000000) {
-        std::cout << name << time.count()/1000.0        << " μs" << std::endl;
-    } else if (time.count() < 1000000000) {
-        std::cout << name << time.count()/1000000.0     << " ms" << std::endl;
-    } else if (time.count() < 60000000000) {
-        std::cout << name << time.count()/1000000000.0  << " s" << std::endl;
-    } else if (time.count() < 3600000000000) {
-        std::cout << name << time.count()/60000000000.0 << " min" << std::endl;
-    } else {
-        std::cout << name << time.count()/3600000000000 << " h" << std::endl;
-    }
+    END_GPU
 }
-

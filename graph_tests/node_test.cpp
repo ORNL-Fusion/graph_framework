@@ -36,39 +36,19 @@ void test_constant() {
     zero->set(backend::base_cast<BACKEND> (1.0));
     assert(zero_cast->is(0) && "Constant value expeced zero.");
 
-    auto one = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({1.0, 1.0}));
+    auto one = graph::constant<BACKEND> (1.0);
     auto one_cast = graph::constant_cast(one);
     assert(one_cast.get() && "Expected a constant type.");
-#ifdef USE_REDUCE
     assert(one_cast->is(1) && "Constant value expeced zero.");
-#endif
     const BACKEND one_result = one->evaluate();
-#ifdef USE_REDUCE
     assert(one_result.size() == 1 && "Expected single value.");
     assert(one_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
            "Constant value evalute expeced one.");
-#else
-    assert(one_result.size() == 2 && "Expected two values.");
-    assert(one_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
-           "Constant value evalute expeced one.");
-    assert(one_result.at(1) == backend::base_cast<BACKEND> (1.0) &&
-           "Constant value evalute expeced one.");
-#endif
+
     auto done = one->df(zero);
     auto done_cast = graph::constant_cast(done);
     assert(done_cast.get() && "Expected a constant type for derivative.");
     assert(done_cast->is(0) && "Constant value expeced zero.");
-
-    auto one_two = graph::constant<BACKEND> (std::vector<typename BACKEND::base> ({1.0, 2.0}));
-    auto one_two_cast = graph::constant_cast(one_two);
-    assert(one_two_cast.get() && "Expected a constant type.");
-    assert(!one_two_cast->is(1) && "Constant expected to not be one.");
-    const BACKEND one_two_result = one_two->evaluate();
-    assert(one_two_result.size() == 2 && "Expected two elements in constant");
-    assert(one_two_result.at(0) == backend::base_cast<BACKEND> (1.0) &&
-           "Expected one for first elememt");
-    assert(one_two_result.at(1) == backend::base_cast<BACKEND> (2.0) &&
-           "Expected two for second elememt");
 
 //  Test is_match
     auto c1 = graph::constant<BACKEND> (5);

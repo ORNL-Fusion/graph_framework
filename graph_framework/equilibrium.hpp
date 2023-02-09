@@ -137,7 +137,7 @@ namespace equilibrium {
                            graph::shared_leaf<BACKEND> z) = 0;
     };
 
-///  Convience type alias for unique equilibria.
+///  Convenience type alias for unique equilibria.
     template<typename BACKEND>
     using unique_equilibrium = std::unique_ptr<equilibrium<BACKEND>>;
 
@@ -232,7 +232,7 @@ namespace equilibrium {
         }
     };
 
-///  Convience type alias for unique equilibria.
+///  Convenience type alias for unique equilibria.
     template<typename BACKEND>
     std::unique_ptr<equilibrium<BACKEND>> make_no_magnetic_field() {
         return std::make_unique<no_magnetic_field<BACKEND>> ();
@@ -328,7 +328,7 @@ namespace equilibrium {
         }
     };
 
-///  Convience type alias for unique equilibria.
+///  Convenience type alias for unique equilibria.
     template<typename BACKEND>
     std::unique_ptr<equilibrium<BACKEND>> make_slab() {
         return std::make_unique<slab<BACKEND>> ();
@@ -426,7 +426,7 @@ namespace equilibrium {
         }
     };
 
-///  Convience type alias for unique equilibria.
+///  Convenience type alias for unique equilibria.
     template<typename BACKEND>
     std::unique_ptr<equilibrium<BACKEND>> make_slab_density() {
         return std::make_unique<slab_density<BACKEND>> ();
@@ -522,7 +522,7 @@ namespace equilibrium {
         }
     };
 
-///  Convience type alias for unique equilibria.
+///  Convenience type alias for unique equilibria.
     template<typename BACKEND>
     std::unique_ptr<equilibrium<BACKEND>> make_guassian_density() {
         return std::make_unique<guassian_density<BACKEND>> ();

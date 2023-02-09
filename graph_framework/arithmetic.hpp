@@ -9,6 +9,7 @@
 #define arithmetic_h
 
 #include "node.hpp"
+#include "register.hpp"
 
 namespace graph {
 //------------------------------------------------------------------------------
@@ -60,7 +61,6 @@ namespace graph {
         return is_variable_like(a) &&
                is_variable_like(b) &&
                get_argument(a)->is_match(get_argument(b));
-        
     }
 
 //******************************************************************************
@@ -181,7 +181,7 @@ namespace graph {
                 if (la.get() && divide_cast(la->get_right()).get()) {
                     return la->get_left() + (la->get_right() + this->right);
                 }
-                            
+
                 auto ls = subtract_cast(this->left);
                 if (ls.get() && divide_cast(ls->get_right()).get()) {
                     return ls->get_left() + (this->right - ls->get_right());
@@ -240,7 +240,7 @@ namespace graph {
 
             auto lfma = fma_cast(this->left);
             auto rfma = fma_cast(this->right);
-            
+
             if (lfma.get() && rfma.get()) {
                 if (lfma->get_middle()->is_match(rfma->get_middle())) {
                     return fma(lfma->get_left() + rfma->get_left(),
@@ -273,6 +273,30 @@ namespace graph {
             } else {
                 return this->left->df(x) + this->right->df(x);
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename LN::backend> (stream);
+                stream << " " << registers[this] << " = "
+                       << registers[l.get()] << " + "
+                       << registers[r.get()] << ";"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -351,7 +375,7 @@ namespace graph {
         return add<LN, RN> (l, r);
     }
 
-///  Convience type alias for shared add nodes.
+///  Convenience type alias for shared add nodes.
     template<typename LN, typename RN>
     using shared_add = std::shared_ptr<add_node<LN, RN>>;
 
@@ -483,7 +507,7 @@ namespace graph {
                 if (la.get() && divide_cast(la->get_right()).get()) {
                     return la->get_left() + (la->get_right() - this->right);
                 }
-                
+
                 auto ls = subtract_cast(this->left);
                 if (ls.get() && divide_cast(ls->get_right()).get()) {
                     return ls->get_left() - (this->right + ls->get_right());
@@ -533,7 +557,7 @@ namespace graph {
 
             auto lfma = fma_cast(this->left);
             auto rfma = fma_cast(this->right);
-            
+
             if (lfma.get() && rfma.get()) {
                 if (lfma->get_middle()->is_match(rfma->get_middle())) {
                     return fma(lfma->get_left() - rfma->get_left(),
@@ -560,6 +584,30 @@ namespace graph {
             } else {
                 return this->left->df(x) - this->right->df(x);
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename LN::backend> (stream);
+                stream << " " << registers[this] << " = "
+                       << registers[l.get()] << " - "
+                       << registers[r.get()] << ";"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -632,7 +680,7 @@ namespace graph {
         return subtract<LN, RN> (l, r);
     }
 
-///  Convience type alias for shared subtract nodes.
+///  Convenience type alias for shared subtract nodes.
     template<typename LN, typename RN>
     using shared_subtract = std::shared_ptr<subtract_node<LN, RN>>;
 
@@ -800,7 +848,7 @@ namespace graph {
                            (lm->get_left()*rm->get_left());
                 }
 
-//  Gather common terms. This will help reduce sqrt(a)*sqrt(a). 
+//  Gather common terms. This will help reduce sqrt(a)*sqrt(a).
                 if (lm->get_left()->is_match(rm->get_left())) {
                     return (lm->get_left()*rm->get_left()) *
                            (lm->get_right()*rm->get_right());
@@ -836,7 +884,7 @@ namespace graph {
                 } else if (ld->get_right()->is_match(rd->get_left())) {
                     return ld->get_left()/rd->get_right();
                 }
-                
+
 //  Convert (a/b)*(c/d) -> (a*c)/(b*d). This should help reduce cases like.
 //  (a/b)*(a/b) + (c/b)*(c/b).
                 return (ld->get_left()*rd->get_left()) /
@@ -915,6 +963,30 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename LN::backend> (stream);
+                stream << " " << registers[this] << " = "
+                       << registers[l.get()] << "*"
+                       << registers[r.get()] << ";"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -938,7 +1010,8 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const final {
-            if (add_cast(this->left).get() ||
+            if (constant_cast(this->left).get() ||
+                add_cast(this->left).get()      ||
                 subtract_cast(this->left).get()) {
                 std::cout << "\\left(";
                 this->left->to_latex();
@@ -947,7 +1020,8 @@ namespace graph {
                 this->left->to_latex();
             }
             std::cout << " ";
-            if (add_cast(this->right).get() ||
+            if (constant_cast(this->right).get() ||
+                add_cast(this->right).get()     ||
                 subtract_cast(this->right).get()) {
                 std::cout << "\\left(";
                 this->right->to_latex();
@@ -982,7 +1056,7 @@ namespace graph {
         return multiply<LN, RN> (l, r);
     }
 
-///  Convience type alias for shared multiply nodes.
+///  Convenience type alias for shared multiply nodes.
     template<typename LN, typename RN>
     using shared_multiply = std::shared_ptr<multiply_node<LN, RN>>;
 
@@ -1056,7 +1130,7 @@ namespace graph {
 
                 return constant<typename LN::backend> (1);
             }
-            
+
 //  Reduce cases of a/c1 -> c2*a
             if (r.get()) {
                 return (constant<typename LN::backend> (1)/this->right) *
@@ -1120,7 +1194,7 @@ namespace graph {
             if (ld.get()) {
                 return ld->get_left()/(ld->get_right()*this->right);
             }
-            
+
 //  Assume variables, sqrt of variables, and powers of variables are on the
 //  right.
 //  (a*v)/c -> a*(v/c)
@@ -1206,6 +1280,32 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename LN::backend> (stream);
+                //std::cout << ((registers.find(r.get()) == registers.end()) ? "True" : registers[r.get()])
+                //          << std::endl;
+                stream << " " << registers[this] << " = "
+                       << registers[l.get()] << "/"
+                       << registers[r.get()] << ";"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -1261,7 +1361,7 @@ namespace graph {
         return divide<LN, RN> (l, r);
     }
 
-///  Convience type alias for shared divide nodes.
+///  Convenience type alias for shared divide nodes.
     template<typename LN, typename RN>
     using shared_divide = std::shared_ptr<divide_node<LN, RN>>;
 
@@ -1430,6 +1530,40 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
+                                                          jit::register_map<LN> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
+                shared_leaf<typename MN::backend> m = this->middle->compile(stream, registers);
+                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename LN::backend> (stream);
+                stream << " " << registers[this] << " = ";
+                if constexpr (jit::is_complex<typename LN::backend::base> ()) {
+                    stream << registers[l.get()] << "*"
+                           << registers[m.get()] << " + "
+                           << registers[r.get()] << ";"
+                           << std::endl;
+                } else {
+                    stream << "fma("
+                           << registers[l.get()] << ", "
+                           << registers[m.get()] << ", "
+                           << registers[r.get()] << ");"
+                           << std::endl;
+                }
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -1449,7 +1583,7 @@ namespace graph {
 
             return false;
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
@@ -1492,7 +1626,7 @@ namespace graph {
         return std::make_shared<fma_node<LN, MN, RN>> (l, m, r)->reduce();
     }
 
-///  Convience type alias for shared add nodes.
+///  Convenience type alias for shared add nodes.
     template<typename LN, typename MN, typename RN>
     using shared_fma = std::shared_ptr<fma_node<LN, MN, RN>>;
 

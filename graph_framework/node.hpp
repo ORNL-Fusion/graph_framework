@@ -14,7 +14,9 @@
 #include <cassert>
 #include <memory>
 #include <vector>
+#include <iomanip>
 
+#include "register.hpp"
 #include "backend_protocall.hpp"
 
 namespace graph {
@@ -55,6 +57,15 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node<BACKEND>> x) = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node> compile(std::stringstream &stream,
+                                                   jit::register_map<leaf_node<BACKEND>> &registers) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Reset the cache.
@@ -105,14 +116,17 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const = 0;
-        
+
 ///  Type def to retrieve the backend type.
         typedef BACKEND backend;
     };
 
-///  Convience type alias for shared leaf nodes.
+///  Convenience type alias for shared leaf nodes.
     template<typename BACKEND>
     using shared_leaf = std::shared_ptr<leaf_node<BACKEND>>;
+///  Convenience type alias for a vector of output nodes.
+    template<class BACKEND>
+    using output_nodes = std::vector<shared_leaf<BACKEND>>;
 
 //******************************************************************************
 //  Base straight node.
@@ -145,6 +159,17 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual BACKEND evaluate() {
             return this->arg->evaluate();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
+                                             jit::register_map<leaf_node<BACKEND>> &registers) {
+            return this->arg->compile(stream, registers);
         }
 
 //------------------------------------------------------------------------------
@@ -262,18 +287,12 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
 ///
-///  @param[in] d Array buffer to initalize.
-//------------------------------------------------------------------------------
-        constant_node(const std::vector<typename BACKEND::base> &d) :
-        data(d) {}
-
-//------------------------------------------------------------------------------
-///  @brief Construct a constant node from a vector.
-///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
         constant_node(const BACKEND &d) :
-        data(d) {}
+        data(d) {
+            assert(d.size() == 1 && "Constants need to be scalar functions.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -311,6 +330,34 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
+                                             jit::register_map<leaf_node<BACKEND>> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<BACKEND> (stream);
+                const auto temp = this->evaluate()[0];
+
+                stream << " " << registers[this] << " = ";
+                if constexpr (jit::is_complex<typename BACKEND::base> ()) {
+                    jit::add_type<BACKEND> (stream);
+                    stream << " (" << std::real(temp) << ","
+                                   << std::imag(temp) << ")";
+                } else {
+                    stream << temp;
+                }
+                stream << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -335,7 +382,7 @@ namespace graph {
         bool is(const typename BACKEND::base d) {
             return data.size() == 1 && data.at(0) == d;
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
@@ -362,22 +409,11 @@ namespace graph {
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     template<class BACKEND>
-    shared_leaf<BACKEND> constant(const std::vector<typename BACKEND::base> &d) {
-        return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Construct a constant.
-///
-///  @param[in] d Array buffer.
-///  @returns A reduced constant node.
-//------------------------------------------------------------------------------
-    template<class BACKEND>
     shared_leaf<BACKEND> constant(const BACKEND &d) {
         return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
     }
 
-///  Convience type alias for shared constant nodes.
+///  Convenience type alias for shared constant nodes.
     template<typename N>
     using shared_constant = std::shared_ptr<constant_node<typename N::backend>>;
 
@@ -402,7 +438,7 @@ namespace graph {
     class variable_node final : public leaf_node<BACKEND> {
     private:
 ///  Storage buffer for the data.
-        BACKEND data;
+        BACKEND buffer;
 ///  Latex Symbol for the variable when pretty printing.
         const std::string symbol;
 
@@ -415,7 +451,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s,
                       const std::string &symbol) :
-        data(s), symbol(symbol) {}
+        buffer(s), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a scalar.
@@ -427,7 +463,7 @@ namespace graph {
         variable_node(const size_t s,
                       const typename BACKEND::base d,
                       const std::string &symbol) :
-        data(s, d), symbol(symbol) {}
+        buffer(s, d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
@@ -436,7 +472,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const std::vector<typename BACKEND::base> &d,
                       const std::string &symbol) :
-        data(d), symbol(symbol) {}
+        buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from backend buffer.
@@ -445,7 +481,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const BACKEND &d,
                       const std::string &symbol) :
-        data(d), symbol(symbol) {}
+        buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -453,7 +489,7 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual BACKEND evaluate() final {
-            return data;
+            return buffer;
         }
 
 //------------------------------------------------------------------------------
@@ -478,6 +514,17 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
+                                             jit::register_map<leaf_node<BACKEND>> &registers) final {
+           return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -493,7 +540,7 @@ namespace graph {
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const typename BACKEND::base d) final {
-            data.set(d);
+            buffer.set(d);
         }
 
 //------------------------------------------------------------------------------
@@ -504,7 +551,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void set(const size_t index,
                          const typename BACKEND::base d) final {
-            data[index] = d;
+            buffer[index] = d;
         }
 
 //------------------------------------------------------------------------------
@@ -513,7 +560,7 @@ namespace graph {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<typename BACKEND::base> &d) final {
-            data.set(d);
+            buffer.set(d);
         }
 
 //------------------------------------------------------------------------------
@@ -522,7 +569,7 @@ namespace graph {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const BACKEND &d) final {
-            data = d;
+            buffer = d;
         }
 
 //------------------------------------------------------------------------------
@@ -530,6 +577,22 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const final {
             std::cout << symbol;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the size of the variable buffer.
+//------------------------------------------------------------------------------
+        size_t size() {
+            return buffer.size();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get a pointer to raw buffer.
+///
+///  @returns A buffer to the underlying data.
+//------------------------------------------------------------------------------
+        typename BACKEND::base *data() {
+            return buffer.data();
         }
     };
 
@@ -583,9 +646,16 @@ namespace graph {
         return (std::make_shared<variable_node<BACKEND>> (d, symbol))->reduce();
     }
 
-///  Convience type alias for shared variable nodes.
-    template<typename N>
-    using shared_variable = std::shared_ptr<variable_node<typename N::backend>>;
+///  Convenience type alias for shared variable nodes.
+    template<class BACKEND>
+    using shared_variable = std::shared_ptr<variable_node<BACKEND>>;
+///  Convenience type alias for a vector of inputs.
+    template<class BACKEND>
+    using input_nodes = std::vector<shared_variable<BACKEND>>;
+///  Convenience type alias for maping end codes back to inputs.
+    template<class BACKEND>
+    using map_nodes = std::vector<std::pair<graph::shared_leaf<BACKEND>,
+                                            shared_variable<BACKEND>>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.
@@ -593,9 +663,9 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_variable<N> variable_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<variable_node<typename N::backend>> (x);
+    template<class BACKEND>
+    shared_variable<BACKEND> variable_cast(shared_leaf<BACKEND> x) {
+        return std::dynamic_pointer_cast<variable_node<BACKEND>> (x);
     }
 
 //******************************************************************************
@@ -712,7 +782,7 @@ namespace graph {
         return (std::make_shared<cache_node<typename N::backend>> (x))->reduce();
     }
 
-///  Convience type alias for shared cache nodes.
+///  Convenience type alias for shared cache nodes.
     template<typename N>
     using shared_cache = std::shared_ptr<cache_node<typename N::backend>>;
 
@@ -798,7 +868,7 @@ namespace graph {
         return (std::make_shared<pseudo_variable_node<typename N::backend>> (x))->reduce();
     }
 
-///  Convience type alias for shared pseudo variable nodes.
+///  Convenience type alias for shared pseudo variable nodes.
     template<typename N>
     using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<typename N::backend>>;
 

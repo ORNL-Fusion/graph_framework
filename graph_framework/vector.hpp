@@ -112,7 +112,7 @@ namespace graph {
         }
     };
 
-///  Convience type for shared vector quantities.
+///  Convenience type for shared vector quantities.
     template<typename VX, typename VY, typename VZ>
     using shared_vector = std::shared_ptr<vector_quantity<VX, VY, VZ>>;
 

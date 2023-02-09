@@ -75,6 +75,28 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
+                                                         jit::register_map<N> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename N::backend> (stream);
+                stream << " " << registers[this] << " = sin("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -114,7 +136,7 @@ namespace graph {
         return (std::make_shared<sine_node<N>> (x))->reduce();
     }
 
-///  Convience type alias for shared sine nodes.
+///  Convenience type alias for shared sine nodes.
     template<typename N>
     using shared_sine = std::shared_ptr<sine_node<typename N::backend>>;
 
@@ -191,6 +213,28 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in] stream    String buffer stream.
+///  @param[in] registers List of defined registers.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
+                                                         jit::register_map<N> &registers) final {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<typename N::backend> (stream);
+                stream << " " << registers[this] << " = cos("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -231,7 +275,7 @@ namespace graph {
     }
 
 
-///  Convience type alias for shared cosine nodes.
+///  Convenience type alias for shared cosine nodes.
     template<typename N>
     using shared_cosine = std::shared_ptr<sine_node<typename N::backend>>;
 

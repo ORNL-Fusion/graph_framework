@@ -98,6 +98,13 @@ namespace backend {
 //------------------------------------------------------------------------------
         virtual void cos() = 0;
 
+//------------------------------------------------------------------------------
+///  @brief Get a pointer to the basic memory buffer.
+///
+///  @returns The pointer to the buffer memory.
+//------------------------------------------------------------------------------
+        virtual BASE *data() = 0;
+
 ///  Type def to retrieve the backend base type.
         typedef BASE base;
     };
