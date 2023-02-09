@@ -82,6 +82,8 @@ namespace jit {
                graph::map_nodes<BACKEND> setters) {
             const size_t test_size = inputs[0]->size();
 
+                source_buffer << std::setprecision(jit::max_digits10<typename BACKEND::base> ());
+            
             create_preamble(name);
 
             add_kernel_argument(to_string('v', inputs[0].get()), 0);

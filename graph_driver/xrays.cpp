@@ -63,9 +63,10 @@ int main(int argc, const char * argv[]) {
                                         + std::min(thread_number, num_rays%num_threads);
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-            std::uniform_real_distribution<double> real_dist(0.6, 1.0);
+            std::uniform_real_distribution<base> real_dist(0.6, 1.0);
+            std::normal_distribution<base> norm_dist(600.0, 10.0);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
-
+            
             auto omega = graph::variable<cpu> (local_num_rays, "\\omega");
             auto kx = graph::variable<cpu> (local_num_rays, "k_{x}");
             auto ky = graph::variable<cpu> (local_num_rays, "k_{y}");
@@ -79,7 +80,7 @@ int main(int argc, const char * argv[]) {
 
 //  Inital conditions.
             for (size_t j = 0; j < local_num_rays; j++) {
-                omega->set(j, 600.0);
+                omega->set(j, norm_dist(engine));
             }
 
             x->set(backend::base_cast<cpu> (0.0));
@@ -89,15 +90,15 @@ int main(int argc, const char * argv[]) {
             ky->set(backend::base_cast<cpu> (0.0));
             kz->set(backend::base_cast<cpu> (0.0));
 
-            //auto eq = equilibrium::make_slab_density<cpu> ();
-            auto eq = equilibrium::make_no_magnetic_field<cpu> ();
+            auto eq = equilibrium::make_slab_density<cpu> ();
+            //auto eq = equilibrium::make_no_magnetic_field<cpu> ();
 
-            solver::split_simplextic<dispersion::bohm_gross<cpu>>
+            //solver::split_simplextic<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::bohm_gross<cpu>>
             //solver::rk4<dispersion::simple<cpu>>
             //solver::rk4<dispersion::ordinary_wave<cpu>>
             //solver::rk4<dispersion::extra_ordinary_wave<cpu>>
-            //solver::rk4<dispersion::cold_plasma<cpu>>
+            solver::rk4<dispersion::cold_plasma<cpu>>
                 solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
             solve.init(kx);
             solve.compile(num_rays);
@@ -119,18 +120,18 @@ int main(int argc, const char * argv[]) {
 
             const size_t sample = int_dist(engine);
 
-            if (thread_number == 0 && false) {
+            if (thread_number == 0) {
                 std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
             }
 
             for (size_t j = 0; j < num_times; j++) {
-                if (thread_number == 0 && false) {
+                if (thread_number == 0) {
                     solve.print(sample);
                 }
                 solve.step();
             }
 
-            if (thread_number == 0 && false) {
+            if (thread_number == 0) {
                 solve.print(sample);
             } else {
                 solve.sync();

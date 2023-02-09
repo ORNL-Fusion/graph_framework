@@ -346,12 +346,10 @@ namespace graph {
                 stream << " " << registers[this] << " = ";
                 if constexpr (jit::is_complex<typename BACKEND::base> ()) {
                     jit::add_type<BACKEND> (stream);
-                    stream << std::setprecision(jit::max_digits10<typename BACKEND::base> ())
-                           << " (" << std::real(temp) << ","
+                    stream << " (" << std::real(temp) << ","
                                    << std::imag(temp) << ")";
                 } else {
-                    stream << std::setprecision(jit::max_digits10<typename BACKEND::base> ())
-                           << temp;
+                    stream << temp;
                 }
                 stream << ";" << std::endl;
             }
