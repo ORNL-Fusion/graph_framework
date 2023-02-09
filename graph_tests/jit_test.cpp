@@ -397,8 +397,10 @@ template<typename BASE> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    START_GPU
     run_tests<float> ();
     run_tests<double> ();
     run_tests<std::complex<float>> ();
     run_tests<std::complex<double>> ();
+    END_GPU
 }

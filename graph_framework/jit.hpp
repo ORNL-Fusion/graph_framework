@@ -27,6 +27,14 @@
 #define GPU_CONTEXT gpu::hip_context
 #endif
 
+#ifdef USE_METAL
+#define START_GPU @autoreleasepool {
+#define END_GPU }
+#else
+#define START_GPU
+#define END_GPU
+#endif
+
 namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Tests if the backend can be jit'ed.

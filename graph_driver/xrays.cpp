@@ -31,6 +31,8 @@ static base solution(const base t) {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    START_GPU
+
     //typedef std::complex<double> base;
     //typedef double base;
     typedef float base;
@@ -146,4 +148,6 @@ int main(int argc, const char * argv[]) {
 
     std::cout << std::endl << "Timing:" << std::endl;
     total.stop();
+
+    END_GPU
 }

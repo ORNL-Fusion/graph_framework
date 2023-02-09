@@ -597,11 +597,13 @@ template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-//  No there is not enough precision in float to pass the test.
+    START_GPU
+//  There is not enough precision in float to pass the test.
 #ifdef USE_CUDA
     run_tests<backend::cpu<double>> (1.6E-21);
 #else
     run_tests<backend::cpu<double>> (2.0E-29);
 #endif
     run_tests<backend::cpu<std::complex<double>>> (2.0E-29);
+    END_GPU
 }

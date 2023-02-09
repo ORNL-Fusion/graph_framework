@@ -71,57 +71,55 @@ namespace gpu {
                              graph::output_nodes<BACKEND> outputs,
                              const size_t num_rays,
                              const bool add_reduction=false) {
-            @autoreleasepool {
-                NSError *error;
-                library = [device newLibraryWithSource:[NSString stringWithCString:kernel_source.c_str()
-                                                                          encoding:NSUTF8StringEncoding]
-                                               options:compile_options()
-                                                 error:&error];
+            NSError *error;
+            library = [device newLibraryWithSource:[NSString stringWithCString:kernel_source.c_str()
+                                                                      encoding:NSUTF8StringEncoding]
+                                           options:compile_options()
+                                             error:&error];
 
-                if (error) {
-                    NSLog(@"%@", error);
-                }
-
-                id<MTLFunction> function = [library newFunctionWithName:[NSString stringWithCString:kernel_name.c_str()
-                                                                                           encoding:NSUTF8StringEncoding]];
-
-                MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
-                compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
-                compute.computeFunction = function;
-
-                state = [device newComputePipelineStateWithDescriptor:compute
-                                                              options:MTLPipelineOptionNone
-                                                           reflection:NULL
-                                                                error:&error];
-
-                if (error) {
-                    NSLog(@"%@", error);
-                }
-
-                const size_t buffer_element_size = sizeof(typename BACKEND::base);
-                for (graph::shared_variable<BACKEND> &input : inputs) {
-                    BACKEND buffer = input->evaluate();
-                    buffers.push_back([device newBufferWithBytes:buffer.data()
-                                                          length:buffer.size()*buffer_element_size
-                                                         options:MTLResourceStorageModeManaged]);
-                }
-                for (graph::shared_leaf<BACKEND> &output : outputs) {
-                    BACKEND buffer = output->evaluate();
-                    buffers.push_back([device newBufferWithBytes:&buffer[0]
-                                                          length:buffer.size()*buffer_element_size
-                                                         options:MTLResourceStorageModeManaged]);
-                }
-
-                offsets.assign(buffers.size(), 0);
-                range = NSMakeRange(0, buffers.size());
-
-                threads_per_group = state.maxTotalThreadsPerThreadgroup;
-                thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
-                std::cout << "Metal GPU info." << std::endl;
-                std::cout << "  Threads per group  : " << threads_per_group << std::endl;
-                std::cout << "  Number of groups   : " << thread_groups << std::endl;
-                std::cout << "  Total problem size : " << threads_per_group*thread_groups << std::endl;
+            if (error) {
+                NSLog(@"%@", error);
             }
+
+            id<MTLFunction> function = [library newFunctionWithName:[NSString stringWithCString:kernel_name.c_str()
+                                                                                        encoding:NSUTF8StringEncoding]];
+
+            MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
+            compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
+            compute.computeFunction = function;
+
+            state = [device newComputePipelineStateWithDescriptor:compute
+                                                          options:MTLPipelineOptionNone
+                                                       reflection:NULL
+                                                            error:&error];
+
+            if (error) {
+                NSLog(@"%@", error);
+            }
+
+            const size_t buffer_element_size = sizeof(typename BACKEND::base);
+            for (graph::shared_variable<BACKEND> &input : inputs) {
+                BACKEND buffer = input->evaluate();
+                buffers.push_back([device newBufferWithBytes:buffer.data()
+                                                      length:buffer.size()*buffer_element_size
+                                                     options:MTLResourceStorageModeManaged]);
+            }
+            for (graph::shared_leaf<BACKEND> &output : outputs) {
+                BACKEND buffer = output->evaluate();
+                buffers.push_back([device newBufferWithBytes:&buffer[0]
+                                                      length:buffer.size()*buffer_element_size
+                                                     options:MTLResourceStorageModeManaged]);
+            }
+
+            offsets.assign(buffers.size(), 0);
+            range = NSMakeRange(0, buffers.size());
+
+            threads_per_group = state.maxTotalThreadsPerThreadgroup;
+            thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+            std::cout << "Metal GPU info." << std::endl;
+            std::cout << "  Threads per group  : " << threads_per_group << std::endl;
+            std::cout << "  Number of groups   : " << thread_groups << std::endl;
+            std::cout << "  Total problem size : " << threads_per_group*thread_groups << std::endl;
         }
 
 //------------------------------------------------------------------------------
@@ -163,21 +161,19 @@ namespace gpu {
 ///  the job. This method is asyncronus.
 //------------------------------------------------------------------------------
         void run() {
-            @autoreleasepool {
-                command_buffer = [queue commandBuffer];
-                id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
+            command_buffer = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
-                [encoder setComputePipelineState:state];
-                [encoder setBuffers:buffers.data()
-                            offsets:offsets.data()
-                          withRange:range];
+            [encoder setComputePipelineState:state];
+            [encoder setBuffers:buffers.data()
+                        offsets:offsets.data()
+                      withRange:range];
 
-                [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
-                        threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
-                [encoder endEncoding];
+            [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
+                    threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
+            [encoder endEncoding];
 
-                [command_buffer commit];
-            }
+            [command_buffer commit];
         }
 
 //------------------------------------------------------------------------------
