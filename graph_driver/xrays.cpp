@@ -37,7 +37,6 @@ int main(int argc, const char * argv[]) {
     //typedef double base;
     typedef float base;
     //typedef std::complex<float> base;
-    typedef backend::cpu<base> cpu;
     
     const timeing::measure_diagnostic total("Total Time");
 
@@ -47,7 +46,7 @@ int main(int argc, const char * argv[]) {
 
     std::vector<std::thread> threads(0);
 #if USE_GPU
-    if constexpr (jit::can_jit<cpu> ()) {
+    if constexpr (jit::can_jit<base> ()) {
         threads.resize(1);
     } else {
 #endif
@@ -69,38 +68,38 @@ int main(int argc, const char * argv[]) {
             std::normal_distribution<base> norm_dist(600.0, 10.0);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
             
-            auto omega = graph::variable<cpu> (local_num_rays, "\\omega");
-            auto kx = graph::variable<cpu> (local_num_rays, "k_{x}");
-            auto ky = graph::variable<cpu> (local_num_rays, "k_{y}");
-            auto kz = graph::variable<cpu> (local_num_rays, "k_{z}");
-            auto x = graph::variable<cpu> (local_num_rays, "x");
-            auto y = graph::variable<cpu> (local_num_rays, "y");
-            auto z = graph::variable<cpu> (local_num_rays, "z");
-            auto t = graph::variable<cpu> (local_num_rays, "t");
+            auto omega = graph::variable<base> (local_num_rays, "\\omega");
+            auto kx = graph::variable<base> (local_num_rays, "k_{x}");
+            auto ky = graph::variable<base> (local_num_rays, "k_{y}");
+            auto kz = graph::variable<base> (local_num_rays, "k_{z}");
+            auto x = graph::variable<base> (local_num_rays, "x");
+            auto y = graph::variable<base> (local_num_rays, "y");
+            auto z = graph::variable<base> (local_num_rays, "z");
+            auto t = graph::variable<base> (local_num_rays, "t");
 
-            t->set(backend::base_cast<cpu> (0.0));
+            t->set(static_cast<base> (0.0));
 
 //  Inital conditions.
             for (size_t j = 0; j < local_num_rays; j++) {
                 omega->set(j, norm_dist(engine));
             }
 
-            x->set(backend::base_cast<cpu> (0.0));
-            y->set(backend::base_cast<cpu> (0.0));
-            z->set(backend::base_cast<cpu> (0.0));
-            kx->set(backend::base_cast<cpu> (600.0));
-            ky->set(backend::base_cast<cpu> (0.0));
-            kz->set(backend::base_cast<cpu> (0.0));
+            x->set(static_cast<base> (0.0));
+            y->set(static_cast<base> (0.0));
+            z->set(static_cast<base> (0.0));
+            kx->set(static_cast<base> (600.0));
+            ky->set(static_cast<base> (0.0));
+            kz->set(static_cast<base> (0.0));
 
-            auto eq = equilibrium::make_slab_density<cpu> ();
-            //auto eq = equilibrium::make_no_magnetic_field<cpu> ();
+            auto eq = equilibrium::make_slab_density<base> ();
+            //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
-            //solver::split_simplextic<dispersion::bohm_gross<cpu>>
-            //solver::rk4<dispersion::bohm_gross<cpu>>
-            //solver::rk4<dispersion::simple<cpu>>
-            //solver::rk4<dispersion::ordinary_wave<cpu>>
-            //solver::rk4<dispersion::extra_ordinary_wave<cpu>>
-            solver::rk4<dispersion::cold_plasma<cpu>>
+            //solver::split_simplextic<dispersion::bohm_gross<base>>
+            //solver::rk4<dispersion::bohm_gross<base>>
+            //solver::rk4<dispersion::simple<base>>
+            //solver::rk4<dispersion::ordinary_wave<base>>
+            //solver::rk4<dispersion::extra_ordinary_wave<base>>
+            solver::rk4<dispersion::cold_plasma<base>>
                 solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
             solve.init(kx);
             solve.compile(num_rays);

@@ -40,9 +40,9 @@ namespace jit {
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
-    template<typename BASE>
+    template<typename T>
     constexpr bool is_float() {
-        return is_base<BASE, float> ();
+        return is_base<T, float> ();
     }
 
 //------------------------------------------------------------------------------
@@ -50,9 +50,9 @@ namespace jit {
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
-    template<typename BASE>
+    template<typename T>
     constexpr bool is_double() {
-        return is_base<BASE, double> ();
+        return is_base<T, double> ();
     }
 
 //------------------------------------------------------------------------------
@@ -60,10 +60,10 @@ namespace jit {
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
-    template<typename BASE>
+    template<typename T>
     constexpr bool is_complex() {
-        return is_complex<BASE, float> () ||
-               is_complex<BASE, double> ();
+        return is_complex<T, float> () ||
+               is_complex<T, double> ();
     }
 
 //------------------------------------------------------------------------------
@@ -93,15 +93,15 @@ namespace jit {
 ///
 ///  @returns A constant string literal of the type.
 //------------------------------------------------------------------------------
-    template<typename BASE>
+    template<typename T>
     std::string type_to_string() {
-        if constexpr (is_float<BASE> ()) {
+        if constexpr (is_float<T> ()) {
             return "float";
-        } else if constexpr (is_double<BASE> ()) {
+        } else if constexpr (is_double<T> ()) {
             return "double";
         } else {
-            static_assert(!is_float<BASE> () &&
-                          !is_double<BASE> (), "Unsupported base type.");
+            static_assert(!is_float<T> () &&
+                          !is_double<T> (), "Unsupported base type.");
         }
     }
 
@@ -110,28 +110,18 @@ namespace jit {
 ///
 ///  @param[in, out] stream Generic stream.
 //------------------------------------------------------------------------------
-    template<typename BASE>
-    void add_type_base(std::basic_ostream<char> &stream) {
-        if constexpr (is_complex<BASE> ()) {
+    template<typename T>
+    void add_type(std::basic_ostream<char> &stream) {
+        if constexpr (is_complex<T> ()) {
 #ifdef USE_CUDA
             stream << "cuda::";
 #endif
             stream << "std::complex<";
         }
-        stream << type_to_string<BASE> ();
-        if constexpr (is_complex<BASE> ()) {
+        stream << type_to_string<T> ();
+        if constexpr (is_complex<T> ()) {
             stream << ">";
         }
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Write out the node base type to the string buffer.
-///
-///  @param[in,out] stream String buffer stream.
-//------------------------------------------------------------------------------
-    template<class BACKEND>
-    void add_type(std::stringstream &stream) {
-        add_type_base<typename BACKEND::base> (stream);
     }
 
 //------------------------------------------------------------------------------
@@ -139,9 +129,9 @@ namespace jit {
 ///
 ///  @returns The maximum number of digits needed.
 //------------------------------------------------------------------------------
-    template<typename BASE>
+    template<typename T>
     constexpr int max_digits10() {
-        if constexpr (is_float<BASE> ()) {
+        if constexpr (is_float<T> ()) {
             return std::numeric_limits<float>::max_digits10;
         } else {
             return std::numeric_limits<double>::max_digits10;;

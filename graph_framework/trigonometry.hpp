@@ -20,7 +20,7 @@ namespace graph {
 ///  @brief Class representing a sine_node leaf.
 //------------------------------------------------------------------------------
     template<typename N>
-    class sine_node final : public straight_node<typename N::backend> {
+    class sine_node final : public straight_node<typename N::base> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a sine_node node.
@@ -28,7 +28,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         sine_node(std::shared_ptr<N> x) :
-        straight_node<typename N::backend> (x) {}
+        straight_node<typename N::base> (x) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sine.
@@ -37,8 +37,8 @@ namespace graph {
 ///
 ///  @returns The value of sin(x).
 //------------------------------------------------------------------------------
-        virtual typename N::backend evaluate() final {
-            typename N::backend result = this->arg->evaluate();
+        virtual backend::cpu<typename N::base> evaluate() final {
+            backend::cpu<typename N::base> result = this->arg->evaluate();
             result.sin();
             return this->save_cache(result);
         }
@@ -48,7 +48,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from sine.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> reduce() final {
+        virtual shared_leaf<typename N::base> reduce() final {
 #ifdef USE_REDUCE
             if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
@@ -65,10 +65,10 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend>
-        df(shared_leaf<typename N::backend> x) final {
+        virtual shared_leaf<typename N::base>
+        df(shared_leaf<typename N::base> x) final {
             if (this->is_match(x)) {
-                return constant<typename N::backend> (1);
+                return constant_node<typename N::base>::one();
             } else {
                 return cos(this->arg)*this->arg->df(x);
             }
@@ -80,14 +80,14 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
-                                                         jit::register_map<N> &registers) final {
+        virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
+                                                      jit::register_map<N> &registers) final {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+                shared_leaf<typename N::base> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename N::backend> (stream);
+                jit::add_type<typename N::base> (stream);
                 stream << " " << registers[this] << " = sin("
                        << registers[a.get()] << ");"
                        << std::endl;
@@ -102,7 +102,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename N::backend> x) final {
+        virtual bool is_match(shared_leaf<typename N::base> x) final {
             if (this == x.get()) {
                 return true;
             }
@@ -132,13 +132,13 @@ namespace graph {
 ///  @returns A reduced sin node.
 //------------------------------------------------------------------------------
     template<typename N>
-    shared_leaf<typename N::backend> sin(std::shared_ptr<N> x) {
+    shared_leaf<typename N::base> sin(std::shared_ptr<N> x) {
         return (std::make_shared<sine_node<N>> (x))->reduce();
     }
 
 ///  Convenience type alias for shared sine nodes.
     template<typename N>
-    using shared_sine = std::shared_ptr<sine_node<typename N::backend>>;
+    using shared_sine = std::shared_ptr<sine_node<typename N::base>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a sine node.
@@ -158,7 +158,7 @@ namespace graph {
 ///  @brief Class representing a cosine_node leaf.
 //------------------------------------------------------------------------------
     template<typename N>
-    class cosine_node final : public straight_node<typename N::backend> {
+    class cosine_node final : public straight_node<typename N::base> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a cosine_node node.
@@ -166,7 +166,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         cosine_node(std::shared_ptr<N> x) :
-        straight_node<typename N::backend> (x) {}
+        straight_node<typename N::base> (x) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of cosine.
@@ -175,8 +175,8 @@ namespace graph {
 ///
 ///  @returns The value of cos(x).
 //------------------------------------------------------------------------------
-        virtual typename N::backend evaluate() final {
-            typename N::backend result = this->arg->evaluate();
+        virtual backend::cpu<typename N::base> evaluate() final {
+            backend::cpu<typename N::base> result = this->arg->evaluate();
             result.cos();
             return this->save_cache(result);
         }
@@ -186,7 +186,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> reduce() final {
+        virtual shared_leaf<typename N::base> reduce() final {
 #ifdef USE_REDUCE
             if (constant_cast(this->arg)) {
                 return constant(this->evaluate());
@@ -203,12 +203,12 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend>
-        df(shared_leaf<typename N::backend> x) final {
+        virtual shared_leaf<typename N::base>
+        df(shared_leaf<typename N::base> x) final {
             if (this->is_match(x)) {
-                return constant<typename N::backend> (1);
+                return constant_node<typename N::base>::one();
             } else {
-                return constant<typename N::backend> (-1)*sin(this->arg)*this->arg->df(x);
+                return constant_node<typename N::base>::none()*sin(this->arg)*this->arg->df(x);
             }
         }
 
@@ -218,14 +218,14 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
-                                                         jit::register_map<N> &registers) final {
+        virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
+                                                      jit::register_map<N> &registers) final {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+                shared_leaf<typename N::base> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename N::backend> (stream);
+                jit::add_type<typename N::base> (stream);
                 stream << " " << registers[this] << " = cos("
                        << registers[a.get()] << ");"
                        << std::endl;
@@ -240,7 +240,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename N::backend> x) final {
+        virtual bool is_match(shared_leaf<typename N::base> x) final {
             if (this == x.get()) {
                 return true;
             }
@@ -270,14 +270,14 @@ namespace graph {
 ///  @returns A reduced cos node.
 //------------------------------------------------------------------------------
     template<typename N>
-    shared_leaf<typename N::backend> cos(std::shared_ptr<N> x) {
+    shared_leaf<typename N::base> cos(std::shared_ptr<N> x) {
         return (std::make_shared<cosine_node<N>> (x))->reduce();
     }
 
 
 ///  Convenience type alias for shared cosine nodes.
     template<typename N>
-    using shared_cosine = std::shared_ptr<sine_node<typename N::backend>>;
+    using shared_cosine = std::shared_ptr<sine_node<typename N::base>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a cosine node.
@@ -302,7 +302,7 @@ namespace graph {
 ///  @returns A reduced tan node.
 //------------------------------------------------------------------------------
     template<typename N>
-    std::shared_ptr<leaf_node<typename N::backend>> tan(std::shared_ptr<N> x) {
+    std::shared_ptr<leaf_node<typename N::base>> tan(std::shared_ptr<N> x) {
         return (sin(x)/cos(x))->reduce();
     }
 }

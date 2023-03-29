@@ -137,11 +137,11 @@ namespace gpu {
 ///  @param[in] add_reduction Optional argument to generate the reduction
 ///                           kernel.
 //------------------------------------------------------------------------------
-        template<class BACKEND>
+        template<typename T>
         void create_pipeline(const std::string kernel_source,
                              const std::string kernel_name,
-                             graph::input_nodes<BACKEND> inputs,
-                             graph::output_nodes<BACKEND> outputs,
+                             graph::input_nodes<T> inputs,
+                             graph::output_nodes<T> outputs,
                              const size_t num_rays,
                              const bool add_reduction=false) {
             check_nvrtc_error(nvrtcCreateProgram(&kernel_program,
@@ -224,9 +224,9 @@ namespace gpu {
 
             buffers.resize(inputs.size() + outputs.size());
 
-            const size_t buffer_element_size = sizeof(typename BACKEND::base);
+            const size_t buffer_element_size = sizeof(T);
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                const BACKEND backend = inputs[i]->evaluate();
+                const backend::cpu<T> backend = inputs[i]->evaluate();
 
                 check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size,
                                               CU_MEM_ATTACH_GLOBAL),
@@ -236,7 +236,7 @@ namespace gpu {
                 kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
             }
             for (size_t i = inputs.size(), ie = buffers.size(), j = 0; i < ie; i++, j++) {
-                const BACKEND backend = outputs[j]->evaluate();
+                const backend::cpu<T> backend = outputs[j]->evaluate();
 
                 check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size,
                                               CU_MEM_ATTACH_GLOBAL), 
@@ -259,7 +259,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a max compute pipeline.
 //------------------------------------------------------------------------------
-        template<class BACKEND>
+        template<typename T>
         void create_max_pipeline() {
             const char *mangled_kernel_name;
             check_nvrtc_error(nvrtcGetLoweredName(kernel_program,
@@ -269,7 +269,7 @@ namespace gpu {
 
             std::cout << "  Mangled Kernel Name      : " << mangled_kernel_name << std::endl;
 
-            check_error(cuMemAllocManaged(&result_buffer, sizeof(typename BACKEND::base),
+            check_error(cuMemAllocManaged(&result_buffer, sizeof(T),
                                           CU_MEM_ATTACH_GLOBAL),
                         "cuMemAllocManaged");
 
@@ -298,8 +298,8 @@ namespace gpu {
 ///
 ///  @returns The maximum value from the input buffer.
 //------------------------------------------------------------------------------
-        template<class BACKEND>
-        typename BACKEND::base max_reduction() {
+        template<typename T>
+        T max_reduction() {
             run();
             check_error_async(cuLaunchKernel(max_function, 1, 1, 1,
                                              threads_per_group, 1, 1, 0, stream,
@@ -307,7 +307,7 @@ namespace gpu {
                               "cuLaunchKernel");
             wait();
 
-            return reinterpret_cast<typename BACKEND::base *> (result_buffer)[0];
+            return reinterpret_cast<T *> (result_buffer)[0];
         }
 
 //------------------------------------------------------------------------------
@@ -323,11 +323,11 @@ namespace gpu {
 ///
 ///  @param[in] index Number of times to record.
 //------------------------------------------------------------------------------
-        template<class BACKEND>
+        template<typename T>
         void print_results(const size_t index) {
             wait();
             for (CUdeviceptr &buffer : buffers) {
-                std::cout << reinterpret_cast<typename BACKEND::base *> (buffer)[index] << " ";
+                std::cout << reinterpret_cast<T *> (buffer)[index] << " ";
             }
             std::cout << std::endl;
         }
@@ -338,9 +338,9 @@ namespace gpu {
 ///  @param[in]     source_index Index of the GPU buffer.
 ///  @param[in,out] destination  Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        template<typename BASE>
+        template<typename T>
         void copy_buffer(const size_t source_index,
-			 BASE *destination) {
+                         T *destination) {
 	    size_t size;
 	    check_error(cuMemGetAddressRange(NULL, &size, buffers[source_index]), "cuMemGetAddressRange");
             check_error_async(cuMemcpyDtoHAsync(destination, buffers[source_index], size, stream), "cuMemcpyDtoHAsync");

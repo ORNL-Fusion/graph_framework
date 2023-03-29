@@ -44,11 +44,11 @@ namespace jit {
 ///
 ///  @returns True if the backend is compatable with JIT.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
+    template<typename T>
     constexpr bool can_jit() {
 #ifdef USE_GPU
 #ifdef USE_METAL
-        return std::is_same<typename BACKEND::base, float>::value;
+        return std::is_same<T, float>::value;
 #endif
 #ifdef USE_CUDA
         return true;
@@ -61,13 +61,13 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Class for JIT compile of the GPU kernels.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
+    template<typename T>
     class kernel {
     private:
 ///  String stream to build the kernel source.
         std::stringstream source_buffer;
 ///  Nodes that have been jitted.
-        register_map<graph::leaf_node<BACKEND>> registers;
+        register_map<graph::leaf_node<T>> registers;
 #ifdef USE_GPU
 ///  GPU Context;
         GPU_CONTEXT context;
@@ -85,12 +85,12 @@ namespace jit {
 ///  @param[in] setters Map outputs back to input values.
 //------------------------------------------------------------------------------
         kernel(const std::string name,
-               graph::input_nodes<BACKEND> inputs,
-               graph::output_nodes<BACKEND> outputs,
-               graph::map_nodes<BACKEND> setters) {
+               graph::input_nodes<T> inputs,
+               graph::output_nodes<T> outputs,
+               graph::map_nodes<T> setters) {
             const size_t test_size = inputs[0]->size();
 
-                source_buffer << std::setprecision(jit::max_digits10<typename BACKEND::base> ());
+            source_buffer << std::setprecision(jit::max_digits10<T> ());
             
             create_preamble(name);
 
@@ -108,7 +108,7 @@ namespace jit {
 
             add_argument_index(test_size);
 
-            for (graph::shared_variable<BACKEND> &input : inputs) {
+            for (graph::shared_variable<T> &input : inputs) {
                 load_variable(input.get());
             }
 
@@ -120,12 +120,12 @@ namespace jit {
             }
 
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<BACKEND> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
                 store_variable(in.get(), registers[a.get()]);
             }
 
             for (auto &out : outputs) {
-                graph::shared_leaf<BACKEND> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
                 store_node(out.get(), registers[a.get()]);
             }
 
@@ -135,7 +135,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Add max reduction.
 //------------------------------------------------------------------------------
-        void add_max_reduction(graph::shared_variable<BACKEND> input) {
+        void add_max_reduction(graph::shared_variable<T> input) {
             source_buffer << std::endl;
 #ifdef USE_METAL
             source_buffer << "kernel ";
@@ -159,14 +159,14 @@ namespace jit {
             source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
 #endif
             source_buffer << "    if (i < " << input->size() << ") {" << std::endl;
-            source_buffer << "        " << jit::type_to_string<typename BACKEND::base> () << " sub_max = ";
-            if constexpr (jit::is_complex<typename BACKEND::base> ()) {
+            source_buffer << "        " << jit::type_to_string<T> () << " sub_max = ";
+            if constexpr (jit::is_complex<T> ()) {
                 source_buffer << "abs(input[i]);" << std::endl;
             } else {
                 source_buffer << "input[i];" << std::endl;
             }
             source_buffer << "        for (size_t index = i + 1024; index < " << input->size() << "; index += 1024) {" << std::endl;
-            if constexpr (jit::is_complex<typename BACKEND::base> ()) {
+            if constexpr (jit::is_complex<T> ()) {
                 source_buffer << "            sub_max = max(abs(sub_max), abs(input[index]));" << std::endl;
             } else {
                 source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
@@ -178,14 +178,14 @@ namespace jit {
 #elif defined(USE_CUDA)
             source_buffer << "        __shared__ ";
 #endif
-            source_buffer << jit::type_to_string<typename BACKEND::base> () << " thread_max[32];" << std::endl;
+            source_buffer << jit::type_to_string<T> () << " thread_max[32];" << std::endl;
 #ifdef USE_METAL
             source_buffer << "        thread_max[j] = simd_max(sub_max);" << std::endl;
 
             source_buffer << "        threadgroup_barrier(mem_flags::mem_threadgroup);" << std::endl;
 #elif defined(USE_CUDA)
             source_buffer << "        for (int index = 16; index > 0; index /= 2) {" << std::endl;
-            if constexpr (jit::is_complex<typename BACKEND::base> ()) {
+            if constexpr (jit::is_complex<T> ()) {
                 source_buffer << "            sub_max = max(abs(sub_max), abs(__shfl_down_sync(__activemask(), sub_max, index)));" << std::endl;
             } else {
                 source_buffer << "            sub_max = max(sub_max, __shfl_down_sync(__activemask(), sub_max, index));" << std::endl;
@@ -266,7 +266,7 @@ namespace jit {
 #ifdef USE_METAL
             source_buffer << "device ";
 #endif
-            add_type<BACKEND> (source_buffer);
+            add_type<T> (source_buffer);
             source_buffer << " *" << name;
 #ifdef USE_METAL
             source_buffer << " [[buffer("<< index <<")]]";
@@ -300,10 +300,10 @@ namespace jit {
 ///
 ///  @param[in] pointer Pointer to the variable node.
 //------------------------------------------------------------------------------
-        void load_variable(graph::variable_node<BACKEND> *pointer) {
+        void load_variable(graph::variable_node<T> *pointer) {
             registers[pointer] = to_string('r', pointer);
             source_buffer << "        const ";
-            add_type<BACKEND> (source_buffer);
+            add_type<T> (source_buffer);
             source_buffer << " " << registers[pointer] << " = "
                           << to_string('v', pointer) << "[index];"
                           << std::endl;
@@ -315,7 +315,7 @@ namespace jit {
 ///  @param[in] pointer Pointer to the variable node.
 ///  @param[in] result  Name of the result reguster.
 //------------------------------------------------------------------------------
-        void store_variable(graph::variable_node<BACKEND> *pointer,
+        void store_variable(graph::variable_node<T> *pointer,
                             const std::string result) {
             source_buffer << "        " << to_string('v',  pointer)
                           << "[index] = " << result << ";" << std::endl;
@@ -327,7 +327,7 @@ namespace jit {
 ///  @param[in] pointer Pointer to the result node.
 ///  @param[in] result  Name of the result reguster.
 //------------------------------------------------------------------------------
-        void store_node(graph::leaf_node<BACKEND> *pointer,
+        void store_node(graph::leaf_node<T> *pointer,
                         const std::string result) {
             source_buffer << "        " << to_string('o',  pointer)
                           << "[index] = " << result << ";" << std::endl;
@@ -351,8 +351,8 @@ namespace jit {
 ///                           kernel.
 //------------------------------------------------------------------------------
         void compile(const std::string name,
-                     graph::input_nodes<BACKEND> inputs,
-                     graph::output_nodes<BACKEND> outputs,
+                     graph::input_nodes<T> inputs,
+                     graph::output_nodes<T> outputs,
                      const size_t num_rays,
                      const bool add_reduction=false) {
 #ifdef USE_GPU
@@ -367,7 +367,7 @@ namespace jit {
 //------------------------------------------------------------------------------
         void compile_max() {
 #ifdef USE_GPU
-            context.create_max_pipeline<BACKEND> ();
+            context.create_max_pipeline<T> ();
 #endif
         }
 
@@ -385,9 +385,9 @@ namespace jit {
 ///
 ///  @returns The maximum value from the input buffer.
 //------------------------------------------------------------------------------
-        typename BACKEND::base max_reduction() {
+        T max_reduction() {
 #ifdef USE_GPU
-            return context.max_reduction<BACKEND> ();
+            return context.max_reduction<T> ();
 #endif
         }
 
@@ -398,7 +398,7 @@ namespace jit {
 //------------------------------------------------------------------------------
         void print(const size_t index) {
 #ifdef USE_GPU
-            context.print_results<BACKEND> (index);
+            context.print_results<T> (index);
 #endif
         }
 
@@ -418,7 +418,7 @@ namespace jit {
 ///  @param[in,out] destination  Host side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_buffer(const size_t source_index,
-                         typename BACKEND::base *destination) {
+                         T *destination) {
 #ifdef USE_GPU
             context.copy_buffer(source_index, destination);
 #endif

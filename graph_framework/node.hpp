@@ -17,7 +17,7 @@
 #include <iomanip>
 
 #include "register.hpp"
-#include "backend_protocall.hpp"
+#include "cpu_backend.hpp"
 
 namespace graph {
 //******************************************************************************
@@ -26,8 +26,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a node leaf.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    class leaf_node : public std::enable_shared_from_this<leaf_node<BACKEND>> {
+    template<typename T>
+    class leaf_node : public std::enable_shared_from_this<leaf_node<T>> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Destructor
@@ -39,7 +39,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual BACKEND evaluate() = 0;
+        virtual backend::cpu<T> evaluate() = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Reduction method.
@@ -56,7 +56,7 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> df(std::shared_ptr<leaf_node<BACKEND>> x) = 0;
+        virtual std::shared_ptr<leaf_node<T>> df(std::shared_ptr<leaf_node<T>> x) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
@@ -64,8 +64,8 @@ namespace graph {
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> compile(std::stringstream &stream,
-                                                   jit::register_map<leaf_node<BACKEND>> &registers) = 0;
+        virtual std::shared_ptr<leaf_node<T>> compile(std::stringstream &stream,
+                                                      jit::register_map<leaf_node<T>> &registers) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Reset the cache.
@@ -80,14 +80,14 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(std::shared_ptr<leaf_node<BACKEND>> x) = 0;
+        virtual bool is_match(std::shared_ptr<leaf_node<T>> x) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const typename BACKEND::base d) {}
+        virtual void set(const T d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
@@ -96,21 +96,21 @@ namespace graph {
 ///  @param[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const size_t index,
-                         const typename BACKEND::base d) {}
+                         const T d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const std::vector<typename BACKEND::base> &d) {}
+        virtual void set(const std::vector<T> &d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
 ///  @param[in] d Backend buffer data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const BACKEND &d) {}
+        virtual void set(const backend::cpu<T> &d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
@@ -118,15 +118,15 @@ namespace graph {
         virtual void to_latex() const = 0;
 
 ///  Type def to retrieve the backend type.
-        typedef BACKEND backend;
+        typedef T base;
     };
 
 ///  Convenience type alias for shared leaf nodes.
-    template<typename BACKEND>
-    using shared_leaf = std::shared_ptr<leaf_node<BACKEND>>;
+    template<typename T>
+    using shared_leaf = std::shared_ptr<leaf_node<T>>;
 ///  Convenience type alias for a vector of output nodes.
-    template<class BACKEND>
-    using output_nodes = std::vector<shared_leaf<BACKEND>>;
+    template<typename T>
+    using output_nodes = std::vector<shared_leaf<T>>;
 
 //******************************************************************************
 //  Base straight node.
@@ -137,11 +137,11 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    class straight_node : public leaf_node<BACKEND> {
+    template<typename T>
+    class straight_node : public leaf_node<T> {
     protected:
 ///  Argument
-        shared_leaf<BACKEND> arg;
+        shared_leaf<T> arg;
 
     public:
 //------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ namespace graph {
 ///
 ///  @param[in] a Argument.
 //------------------------------------------------------------------------------
-        straight_node(shared_leaf<BACKEND> a) :
+        straight_node(shared_leaf<T> a) :
         arg(a->reduce()) {}
 
 //------------------------------------------------------------------------------
@@ -157,7 +157,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual BACKEND evaluate() {
+        virtual backend::cpu<T> evaluate() {
             return this->arg->evaluate();
         }
 
@@ -167,15 +167,15 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
-                                             jit::register_map<leaf_node<BACKEND>> &registers) {
+        virtual shared_leaf<T> compile(std::stringstream &stream,
+                                       jit::register_map<leaf_node<T>> &registers) {
             return this->arg->compile(stream, registers);
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the argument.
 //------------------------------------------------------------------------------
-        shared_leaf<BACKEND> get_arg() {
+        shared_leaf<T> get_arg() {
             return this->arg;
         }
     };
@@ -189,13 +189,13 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    class branch_node : public leaf_node<BACKEND> {
+    template<typename T>
+    class branch_node : public leaf_node<T> {
     protected:
 //  Left branch of the tree.
-        shared_leaf<BACKEND> left;
+        shared_leaf<T> left;
 //  Right branch of the tree.
-        shared_leaf<BACKEND> right;
+        shared_leaf<T> right;
 
     public:
 
@@ -205,22 +205,22 @@ namespace graph {
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
-        branch_node(shared_leaf<BACKEND> l,
-                    shared_leaf<BACKEND> r) :
+        branch_node(shared_leaf<T> l,
+                    shared_leaf<T> r) :
         left(l->reduce()),
         right(r->reduce()) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the left branch.
 //------------------------------------------------------------------------------
-        shared_leaf<BACKEND> get_left() {
+        shared_leaf<T> get_left() {
             return this->left;
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the right branch.
 //------------------------------------------------------------------------------
-        shared_leaf<BACKEND> get_right() {
+        shared_leaf<T> get_right() {
             return this->right;
         }
     };
@@ -234,11 +234,11 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    class triple_node : public branch_node<BACKEND> {
+    template<typename T>
+    class triple_node : public branch_node<T> {
     protected:
 //  Middle branch of the tree.
-        shared_leaf<BACKEND> middle;
+        shared_leaf<T> middle;
 
     public:
 
@@ -249,16 +249,16 @@ namespace graph {
 ///  @param[in] m Middle branch.
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
-        triple_node(shared_leaf<BACKEND> l,
-                    shared_leaf<BACKEND> m,
-                    shared_leaf<BACKEND> r) :
-        branch_node<BACKEND> (l, r),
+        triple_node(shared_leaf<T> l,
+                    shared_leaf<T> m,
+                    shared_leaf<T> r) :
+        branch_node<T> (l, r),
         middle(m->reduce()) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the right branch.
 //------------------------------------------------------------------------------
-        shared_leaf<BACKEND> get_middle() {
+        shared_leaf<T> get_middle() {
             return this->middle;
         }
     };
@@ -269,11 +269,11 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that cannot change.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    class constant_node final : public leaf_node<BACKEND> {
+    template<typename T>
+    class constant_node final : public leaf_node<T> {
     private:
 ///  Storage buffer for the data.
-        const BACKEND data;
+        const backend::cpu<T> data;
 
     public:
 //------------------------------------------------------------------------------
@@ -281,7 +281,7 @@ namespace graph {
 ///
 ///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
-        constant_node(const typename BACKEND::base d) :
+        constant_node(const T d) :
         data(1, d) {}
 
 //------------------------------------------------------------------------------
@@ -289,7 +289,7 @@ namespace graph {
 ///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
-        constant_node(const BACKEND &d) :
+        constant_node(const backend::cpu<T> &d) :
         data(d) {
             assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
@@ -299,7 +299,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual BACKEND evaluate() final {
+        virtual backend::cpu<T> evaluate() final {
             return data;
         }
 
@@ -310,10 +310,10 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> reduce() final {
+        virtual shared_leaf<T> reduce() final {
 #ifdef USE_REDUCE
             if (data.size() > 1 && data.is_same()) {
-                return std::make_shared<constant_node<BACKEND>> (data.at(0));
+                return std::make_shared<constant_node<T>> (data.at(0));
             }
 #endif
             return this->shared_from_this();
@@ -325,8 +325,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            return std::make_shared<constant_node> (backend::base_cast<BACKEND> (0.0));
+        virtual shared_leaf<T> df(shared_leaf<T> x) final {
+            return zero();
         }
 
 //------------------------------------------------------------------------------
@@ -335,17 +335,17 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
-                                             jit::register_map<leaf_node<BACKEND>> &registers) final {
+        virtual shared_leaf<T> compile(std::stringstream &stream,
+                                       jit::register_map<leaf_node<T>> &registers) final {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<BACKEND> (stream);
-                const auto temp = this->evaluate()[0];
+                jit::add_type<T> (stream);
+                const T temp = this->evaluate()[0];
 
                 stream << " " << registers[this] << " = ";
-                if constexpr (jit::is_complex<typename BACKEND::base> ()) {
-                    jit::add_type<BACKEND> (stream);
+                if constexpr (jit::is_complex<T> ()) {
+                    jit::add_type<T> (stream);
                     stream << " (" << std::real(temp) << ","
                                    << std::imag(temp) << ")";
                 } else {
@@ -363,7 +363,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<BACKEND> x) final {
+        virtual bool is_match(shared_leaf<T> x) final {
             if (this == x.get()) {
                 return true;
             }
@@ -379,7 +379,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Check if the constant is value.
 //------------------------------------------------------------------------------
-        bool is(const typename BACKEND::base d) {
+        bool is(const T d) {
             return data.size() == 1 && data.at(0) == d;
         }
 
@@ -389,6 +389,43 @@ namespace graph {
         virtual void to_latex() const final {
             std::cout << data.at(0);
         }
+
+//  Define some common constants.
+//------------------------------------------------------------------------------
+///  @brief Create a zero constant.
+///
+///  @returns A zero constant.
+//------------------------------------------------------------------------------
+        static shared_leaf<T> zero() {
+            return std::make_shared<constant_node<T>> (static_cast<T> (0.0));
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Create a one constant.
+///
+///  @returns A one constant.
+//------------------------------------------------------------------------------
+        static shared_leaf<T> one() {
+            return std::make_shared<constant_node<T>> (static_cast<T> (1.0));
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Create a negative one constant.
+///
+///  @returns A negative one constant.
+//------------------------------------------------------------------------------
+        static shared_leaf<T> none() {
+            return std::make_shared<constant_node<T>> (static_cast<T> (-1.0));
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Create a two constant.
+///
+///  @returns A two constant.
+//------------------------------------------------------------------------------
+        static shared_leaf<T> two() {
+            return std::make_shared<constant_node<T>> (static_cast<T> (2.0));
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -397,9 +434,9 @@ namespace graph {
 ///  @param[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    shared_leaf<BACKEND> constant(const typename BACKEND::base d) {
-        return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
+    template<typename T>
+    shared_leaf<T> constant(const T d) {
+        return (std::make_shared<constant_node<T>> (d))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -408,14 +445,14 @@ namespace graph {
 ///  @param[in] d Array buffer.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    shared_leaf<BACKEND> constant(const BACKEND &d) {
-        return (std::make_shared<constant_node<BACKEND>> (d))->reduce();
+    template<typename T>
+    shared_leaf<T> constant(const backend::cpu<T> &d) {
+        return (std::make_shared<constant_node<T>> (d))->reduce();
     }
 
 ///  Convenience type alias for shared constant nodes.
     template<typename N>
-    using shared_constant = std::shared_ptr<constant_node<typename N::backend>>;
+    using shared_constant = std::shared_ptr<constant_node<typename N::base>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a constant node.
@@ -425,7 +462,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename N>
     shared_constant<N> constant_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<constant_node<typename N::backend>> (x);
+        return std::dynamic_pointer_cast<constant_node<typename N::base>> (x);
     }
 
 //******************************************************************************
@@ -434,11 +471,11 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that can change.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    class variable_node final : public leaf_node<BACKEND> {
+    template<typename T>
+    class variable_node final : public leaf_node<T> {
     private:
 ///  Storage buffer for the data.
-        BACKEND buffer;
+        backend::cpu<T> buffer;
 ///  Latex Symbol for the variable when pretty printing.
         const std::string symbol;
 
@@ -460,8 +497,7 @@ namespace graph {
 ///  @param[in] d      Scalar data to initalize.
 ///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-        variable_node(const size_t s,
-                      const typename BACKEND::base d,
+        variable_node(const size_t s, const T d,
                       const std::string &symbol) :
         buffer(s, d), symbol(symbol) {}
 
@@ -470,7 +506,7 @@ namespace graph {
 ///
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
-        variable_node(const std::vector<typename BACKEND::base> &d,
+        variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
         buffer(d), symbol(symbol) {}
 
@@ -479,7 +515,7 @@ namespace graph {
 ///
 ///  @param[in] d Backend buffer.
 //------------------------------------------------------------------------------
-        variable_node(const BACKEND &d,
+        variable_node(const backend::cpu<T> &d,
                       const std::string &symbol) :
         buffer(d), symbol(symbol) {}
 
@@ -488,7 +524,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual BACKEND evaluate() final {
+        virtual backend::cpu<T> evaluate() final {
             return buffer;
         }
 
@@ -499,7 +535,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> reduce() final {
+        virtual shared_leaf<T> reduce() final {
             return this->shared_from_this();
         }
 
@@ -509,8 +545,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            return constant<BACKEND> (backend::base_cast<BACKEND> (this->is_match(x)));
+        virtual shared_leaf<T> df(shared_leaf<T> x) final {
+            return constant(static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------
@@ -519,8 +555,8 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> compile(std::stringstream &stream,
-                                             jit::register_map<leaf_node<BACKEND>> &registers) final {
+        virtual shared_leaf<T> compile(std::stringstream &stream,
+                                       jit::register_map<leaf_node<T>> &registers) final {
            return this->shared_from_this();
         }
 
@@ -530,7 +566,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<BACKEND> x) final {
+        virtual bool is_match(shared_leaf<T> x) final {
             return this == x.get();
         }
 
@@ -539,7 +575,7 @@ namespace graph {
 ///
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const typename BACKEND::base d) final {
+        virtual void set(const T d) final {
             buffer.set(d);
         }
 
@@ -549,8 +585,7 @@ namespace graph {
 ///  @param[in] index Index to place the value at.
 ///  @param[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const size_t index,
-                         const typename BACKEND::base d) final {
+        virtual void set(const size_t index, const T d) final {
             buffer[index] = d;
         }
 
@@ -559,7 +594,7 @@ namespace graph {
 ///
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const std::vector<typename BACKEND::base> &d) final {
+        virtual void set(const std::vector<T> &d) final {
             buffer.set(d);
         }
 
@@ -568,7 +603,7 @@ namespace graph {
 ///
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const BACKEND &d) final {
+        virtual void set(const backend::cpu<T> &d) final {
             buffer = d;
         }
 
@@ -591,7 +626,7 @@ namespace graph {
 ///
 ///  @returns A buffer to the underlying data.
 //------------------------------------------------------------------------------
-        typename BACKEND::base *data() {
+        T *data() {
             return buffer.data();
         }
     };
@@ -602,10 +637,10 @@ namespace graph {
 ///  @param[in] s      Size of the data buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    shared_leaf<BACKEND> variable(const size_t s,
-                                  const std::string &symbol) {
-        return (std::make_shared<variable_node<BACKEND>> (s, symbol))->reduce();
+    template<typename T>
+    shared_leaf<T> variable(const size_t s,
+                            const std::string &symbol) {
+        return (std::make_shared<variable_node<T>> (s, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -615,11 +650,10 @@ namespace graph {
 ///  @param[in] d      Scalar data to initalize.
 ///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    shared_leaf<BACKEND> variable(const size_t s,
-                                  const typename BACKEND::base d,
-                                  const std::string &symbol) {
-        return (std::make_shared<variable_node<BACKEND>> (s, d, symbol))->reduce();
+    template<typename T>
+    shared_leaf<T> variable(const size_t s, const T d,
+                            const std::string &symbol) {
+        return (std::make_shared<variable_node<T>> (s, d, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -628,10 +662,10 @@ namespace graph {
 ///  @param[in] d      Array buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    shared_leaf<BACKEND> variable(const std::vector<typename BACKEND::base> &d,
-                                  const std::string &symbol) {
-        return (std::make_shared<variable_node<BACKEND>> (d, symbol))->reduce();
+    template<typename T>
+    shared_leaf<T> variable(const std::vector<T> &d,
+                            const std::string &symbol) {
+        return (std::make_shared<variable_node<T>> (d, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -640,22 +674,22 @@ namespace graph {
 ///  @param[in] d      Array buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    shared_leaf<BACKEND> variable(const BACKEND &d,
-                                  const std::string &symbol) {
-        return (std::make_shared<variable_node<BACKEND>> (d, symbol))->reduce();
+    template<typename T>
+    shared_leaf<T> variable(const backend::cpu<T> &d,
+                            const std::string &symbol) {
+        return (std::make_shared<variable_node<T>> (d, symbol))->reduce();
     }
 
 ///  Convenience type alias for shared variable nodes.
-    template<class BACKEND>
-    using shared_variable = std::shared_ptr<variable_node<BACKEND>>;
+    template<typename T>
+    using shared_variable = std::shared_ptr<variable_node<T>>;
 ///  Convenience type alias for a vector of inputs.
-    template<class BACKEND>
-    using input_nodes = std::vector<shared_variable<BACKEND>>;
+    template<typename T>
+    using input_nodes = std::vector<shared_variable<T>>;
 ///  Convenience type alias for maping end codes back to inputs.
-    template<class BACKEND>
-    using map_nodes = std::vector<std::pair<graph::shared_leaf<BACKEND>,
-                                            shared_variable<BACKEND>>>;
+    template<typename T>
+    using map_nodes = std::vector<std::pair<graph::shared_leaf<T>,
+                                            shared_variable<T>>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.
@@ -663,9 +697,9 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    shared_variable<BACKEND> variable_cast(shared_leaf<BACKEND> x) {
-        return std::dynamic_pointer_cast<variable_node<BACKEND>> (x);
+    template<typename T>
+    shared_variable<T> variable_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<variable_node<T>> (x);
     }
 
 //******************************************************************************
@@ -677,11 +711,11 @@ namespace graph {
 ///  Cache nodes save the results of evaluate so the subtree does not need to be
 ///  revaluated.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    class cache_node final : public straight_node<BACKEND> {
+    template<typename T>
+    class cache_node final : public straight_node<T> {
     private:
 ///  Storage buffer for the data.
-        BACKEND data;
+        backend::cpu<T> data;
 
     public:
 //------------------------------------------------------------------------------
@@ -689,8 +723,8 @@ namespace graph {
 ///
 ///  @param[in] a Argument.
 //------------------------------------------------------------------------------
-        cache_node(shared_leaf<BACKEND> a) :
-        straight_node<BACKEND> (a),
+        cache_node(shared_leaf<T> a) :
+        straight_node<T> (a),
         data(a->evaluate()) {}
 
 //------------------------------------------------------------------------------
@@ -700,7 +734,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual BACKEND evaluate() final {
+        virtual backend::cpu<T> evaluate() final {
             return data;
         }
 
@@ -712,7 +746,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> reduce() final {
+        virtual shared_leaf<T> reduce() final {
 #ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return this->arg;
@@ -729,9 +763,9 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
+        virtual shared_leaf<T> df(shared_leaf<T> x) final {
             if (this->is_match(x)) {
-                return constant<BACKEND> (backend::base_cast<BACKEND> (1.0));
+                return graph::constant_node<T>::one();
             } else {
                 return this->arg->df(x)->reduce();
             }
@@ -743,7 +777,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<BACKEND> x) final {
+        virtual bool is_match(shared_leaf<T> x) final {
             if (this == x.get()) {
                 return true;
             }
@@ -778,13 +812,13 @@ namespace graph {
 ///  @returns A reduced cache node.
 //------------------------------------------------------------------------------
     template<typename N>
-    shared_leaf<typename N::backend> cache(std::shared_ptr<N> x) {
-        return (std::make_shared<cache_node<typename N::backend>> (x))->reduce();
+    shared_leaf<typename N::base> cache(std::shared_ptr<N> x) {
+        return (std::make_shared<cache_node<typename N::base>> (x))->reduce();
     }
 
 ///  Convenience type alias for shared cache nodes.
     template<typename N>
-    using shared_cache = std::shared_ptr<cache_node<typename N::backend>>;
+    using shared_cache = std::shared_ptr<cache_node<typename N::base>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a cache node.
@@ -794,7 +828,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename N>
     shared_cache<N> cache_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<cache_node<typename N::backend>> (x);
+        return std::dynamic_pointer_cast<cache_node<typename N::base>> (x);
     }
 
 //******************************************************************************
@@ -807,16 +841,16 @@ namespace graph {
 ///  ensures that the expression returns zero when taking a derivative with
 ///  something that is not itself.
 //------------------------------------------------------------------------------
-    template<class BACKEND>
-    class pseudo_variable_node final : public straight_node<BACKEND> {
+    template<typename T>
+    class pseudo_variable_node final : public straight_node<T> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a cache node.
 ///
 ///  @param[in] a Argument.
 //------------------------------------------------------------------------------
-        pseudo_variable_node(shared_leaf<BACKEND> a) :
-        straight_node<BACKEND> (a) {}
+        pseudo_variable_node(shared_leaf<T> a) :
+        straight_node<T> (a) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Reduction method.
@@ -825,7 +859,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> reduce() final {
+        virtual shared_leaf<T> reduce() final {
             return this->shared_from_this();
         }
 
@@ -835,8 +869,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<BACKEND> df(shared_leaf<BACKEND> x) final {
-            return constant<BACKEND> (backend::base_cast<BACKEND> (this->is_match(x)));
+        virtual shared_leaf<T> df(shared_leaf<T> x) final {
+            return constant(static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------
@@ -845,7 +879,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<BACKEND> x) final {
+        virtual bool is_match(shared_leaf<T> x) final {
             return this == x.get();
         }
 
@@ -864,13 +898,13 @@ namespace graph {
 ///  @returns A reduced cache node.
 //------------------------------------------------------------------------------
     template<typename N>
-    shared_leaf<typename N::backend> pseudo_variable(std::shared_ptr<N> x) {
-        return (std::make_shared<pseudo_variable_node<typename N::backend>> (x))->reduce();
+    shared_leaf<typename N::base> pseudo_variable(std::shared_ptr<N> x) {
+        return (std::make_shared<pseudo_variable_node<typename N::base>> (x))->reduce();
     }
 
 ///  Convenience type alias for shared pseudo variable nodes.
     template<typename N>
-    using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<typename N::backend>>;
+    using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<typename N::base>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a pseudo variable node.
@@ -880,7 +914,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename N>
     shared_pseudo_variable<N> pseudo_variable_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<pseudo_variable_node<typename N::backend>> (x);
+        return std::dynamic_pointer_cast<pseudo_variable_node<typename N::base>> (x);
     }
 }
 

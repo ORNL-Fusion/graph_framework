@@ -22,34 +22,34 @@
 ///
 ///  k.x - wt = Constant
 //------------------------------------------------------------------------------
-template<typename BACKEND>
+template<typename T>
 void test_constant() {
     std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     std::uniform_real_distribution<double> real_dist(0.1, 1.0);
 
-    auto omega = graph::variable<BACKEND> (1, "\\omega");
-    auto kx = graph::variable<BACKEND> (1, "k_{x}");
-    auto ky = graph::variable<BACKEND> (1, "k_{y}");
-    auto kz = graph::variable<BACKEND> (1, "k_{z}");
-    auto x = graph::variable<BACKEND> (1, "x");
-    auto y = graph::variable<BACKEND> (1, "y");
-    auto z = graph::variable<BACKEND> (1, "z");
+    auto omega = graph::variable<T> (1, "\\omega");
+    auto kx = graph::variable<T> (1, "k_{x}");
+    auto ky = graph::variable<T> (1, "k_{y}");
+    auto kz = graph::variable<T> (1, "k_{z}");
+    auto x = graph::variable<T> (1, "x");
+    auto y = graph::variable<T> (1, "y");
+    auto z = graph::variable<T> (1, "z");
 
     auto dt = 1.0;
-    auto t = graph::variable<BACKEND> (1, "t");
+    auto t = graph::variable<T> (1, "t");
 
-    omega->set(backend::base_cast<BACKEND> (real_dist(engine)));
-    kx->set(backend::base_cast<BACKEND> (real_dist(engine)));
-    ky->set(backend::base_cast<BACKEND> (0.0));
-    kz->set(backend::base_cast<BACKEND> (0.0));
-    x->set(backend::base_cast<BACKEND> (real_dist(engine)));
-    y->set(backend::base_cast<BACKEND> (real_dist(engine)));
-    z->set(backend::base_cast<BACKEND> (real_dist(engine)));
-    t->set(backend::base_cast<BACKEND> (0.0));
+    omega->set(static_cast<T> (real_dist(engine)));
+    kx->set(static_cast<T> (real_dist(engine)));
+    ky->set(static_cast<T> (0.0));
+    kz->set(static_cast<T> (0.0));
+    x->set(static_cast<T> (real_dist(engine)));
+    y->set(static_cast<T> (real_dist(engine)));
+    z->set(static_cast<T> (real_dist(engine)));
+    t->set(static_cast<T> (0.0));
 
 //  The equilibrum isn't used;
-    auto eq = equilibrium::make_slab<BACKEND> ();
-    solver::rk2<dispersion::simple<BACKEND>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
+    auto eq = equilibrium::make_slab<T> ();
+    solver::rk2<dispersion::simple<T>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx);
     solve.compile(1);
 
@@ -108,14 +108,14 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
     std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     std::uniform_real_distribution<double> real_dist(0.1, 1.0);
 
-    auto omega = graph::variable<typename SOLVER::backend> (1, "\\omega");
-    auto kx = graph::variable<typename SOLVER::backend> (1, "k_{x}");
-    auto ky = graph::variable<typename SOLVER::backend> (1, "k_{y}");
-    auto kz = graph::variable<typename SOLVER::backend> (1, "k_{z}");
-    auto x = graph::variable<typename SOLVER::backend> (1, "x");
-    auto y = graph::variable<typename SOLVER::backend> (1, "y");
-    auto z = graph::variable<typename SOLVER::backend> (1, "z");
-    auto t = graph::variable<typename SOLVER::backend> (1, "t");
+    auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
+    auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
+    auto ky = graph::variable<typename SOLVER::base> (1, "k_{y}");
+    auto kz = graph::variable<typename SOLVER::base> (1, "k_{z}");
+    auto x = graph::variable<typename SOLVER::base> (1, "x");
+    auto y = graph::variable<typename SOLVER::base> (1, "y");
+    auto z = graph::variable<typename SOLVER::base> (1, "z");
+    auto t = graph::variable<typename SOLVER::base> (1, "t");
 
 //  Constants
     const typename SOLVER::base q = 1.602176634E-19;
@@ -134,18 +134,18 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
     const typename SOLVER::base k0 = std::sqrt(2.0/3.0*(omega0*omega0 - omega2)/vth2);
 
 //  Omega must be greater than plasma frequency for the wave to propagate.
-    omega->set(backend::base_cast<typename SOLVER::backend> (600.0));
-    kx->set(backend::base_cast<typename SOLVER::backend> (1000.0));
-    ky->set(backend::base_cast<typename SOLVER::backend> (0.0));
-    kz->set(backend::base_cast<typename SOLVER::backend> (0.0));
-    x->set(backend::base_cast<typename SOLVER::backend> (-1.0));
-    y->set(backend::base_cast<typename SOLVER::backend> (0.0));
-    z->set(backend::base_cast<typename SOLVER::backend> (0.0));
-    t->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    omega->set(static_cast<typename SOLVER::base> (600.0));
+    kx->set(static_cast<typename SOLVER::base> (1000.0));
+    ky->set(static_cast<typename SOLVER::base> (0.0));
+    kz->set(static_cast<typename SOLVER::base> (0.0));
+    x->set(static_cast<typename SOLVER::base> (-1.0));
+    y->set(static_cast<typename SOLVER::base> (0.0));
+    z->set(static_cast<typename SOLVER::base> (0.0));
+    t->set(static_cast<typename SOLVER::base> (0.0));
 
     const typename SOLVER::base dt = 0.1;
 
-    auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::backend> ();
+    auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::base> ();
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
 #if USE_CUDA
     solve.init(kx, tolarance);
@@ -207,14 +207,14 @@ void test_light_wave(const typename SOLVER::base tolarance) {
     std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     std::uniform_real_distribution<double> real_dist(0.1, 1.0);
 
-    auto omega = graph::variable<typename SOLVER::backend> (1, "\\omega");
-    auto kx = graph::variable<typename SOLVER::backend> (1, "k_{x}");
-    auto ky = graph::variable<typename SOLVER::backend> (1, "k_{y}");
-    auto kz = graph::variable<typename SOLVER::backend> (1, "k_{z}");
-    auto x = graph::variable<typename SOLVER::backend> (1, "x");
-    auto y = graph::variable<typename SOLVER::backend> (1, "y");
-    auto z = graph::variable<typename SOLVER::backend> (1, "z");
-    auto t = graph::variable<typename SOLVER::backend> (1, "t");
+    auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
+    auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
+    auto ky = graph::variable<typename SOLVER::base> (1, "k_{y}");
+    auto kz = graph::variable<typename SOLVER::base> (1, "k_{z}");
+    auto x = graph::variable<typename SOLVER::base> (1, "x");
+    auto y = graph::variable<typename SOLVER::base> (1, "y");
+    auto z = graph::variable<typename SOLVER::base> (1, "z");
+    auto t = graph::variable<typename SOLVER::base> (1, "t");
 
 //  Constants
     const typename SOLVER::base q = 1.602176634E-19;
@@ -231,18 +231,18 @@ void test_light_wave(const typename SOLVER::base tolarance) {
     const typename SOLVER::base k0 = std::sqrt(omega0*omega0 - omega2);
 
 //  Omega must be greater than plasma frequency for the wave to propagate.
-    omega->set(backend::base_cast<typename SOLVER::backend> (600.0));
-    kx->set(backend::base_cast<typename SOLVER::backend> (100.0));
-    ky->set(backend::base_cast<typename SOLVER::backend> (0.0));
-    kz->set(backend::base_cast<typename SOLVER::backend> (0.0));
-    x->set(backend::base_cast<typename SOLVER::backend> (-1.0));
-    y->set(backend::base_cast<typename SOLVER::backend> (0.0));
-    z->set(backend::base_cast<typename SOLVER::backend> (0.0));
-    t->set(backend::base_cast<typename SOLVER::backend> (0.0));
+    omega->set(static_cast<typename SOLVER::base> (600.0));
+    kx->set(static_cast<typename SOLVER::base> (100.0));
+    ky->set(static_cast<typename SOLVER::base> (0.0));
+    kz->set(static_cast<typename SOLVER::base> (0.0));
+    x->set(static_cast<typename SOLVER::base> (-1.0));
+    y->set(static_cast<typename SOLVER::base> (0.0));
+    z->set(static_cast<typename SOLVER::base> (0.0));
+    t->set(static_cast<typename SOLVER::base> (0.0));
 
     const typename SOLVER::base dt = 0.1;
 
-    auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::backend> ();
+    auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::base> ();
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx, tolarance);
     solve.compile(1);
@@ -281,47 +281,47 @@ void test_light_wave(const typename SOLVER::base tolarance) {
 ///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_acoustic_wave(const typename BACKEND::base tolarance) {
+template<typename T>
+void test_acoustic_wave(const T tolarance) {
     std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     std::uniform_real_distribution<double> real_dist(0.1, 1.0);
 
-    auto omega = graph::variable<BACKEND> (1, "\\omega");
-    auto kx = graph::variable<BACKEND> (1, "k_{x}");
-    auto ky = graph::variable<BACKEND> (1, "k_{y}");
-    auto kz = graph::variable<BACKEND> (1, "k_{z}");
-    auto x = graph::variable<BACKEND> (1, "x");
-    auto y = graph::variable<BACKEND> (1, "y");
-    auto z = graph::variable<BACKEND> (1, "z");
-    auto t = graph::variable<BACKEND> (1, "t");
+    auto omega = graph::variable<T> (1, "\\omega");
+    auto kx = graph::variable<T> (1, "k_{x}");
+    auto ky = graph::variable<T> (1, "k_{y}");
+    auto kz = graph::variable<T> (1, "k_{z}");
+    auto x = graph::variable<T> (1, "x");
+    auto y = graph::variable<T> (1, "y");
+    auto z = graph::variable<T> (1, "z");
+    auto t = graph::variable<T> (1, "t");
 
 //  Constants
-    const typename BACKEND::base q = 1.602176634E-19;
-    const typename BACKEND::base mi = 3.34449469E-27;
-    const typename BACKEND::base mu0 = M_PI*4.0E-7;
-    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
-    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
-    const typename BACKEND::base omega0 = 1.0;
-    const typename BACKEND::base te = 1000.0;
-    const typename BACKEND::base ti = te;
-    const typename BACKEND::base gamma = 3;
+    const T q = 1.602176634E-19;
+    const T mi = 3.34449469E-27;
+    const T mu0 = M_PI*4.0E-7;
+    const T epsilon0 = 8.8541878138E-12;
+    const T c = 1.0/sqrt(mu0*epsilon0);
+    const T omega0 = 1.0;
+    const T te = 1000.0;
+    const T ti = te;
+    const T gamma = 3;
 
-    const typename BACKEND::base vs = std::sqrt((q*te+gamma*q*ti)/mi)/c;
+    const T vs = std::sqrt((q*te+gamma*q*ti)/mi)/c;
 
-    const typename BACKEND::base k0 = omega0/vs;
+    const T k0 = omega0/vs;
 
 //  Omega must be greater than plasma frequency for the wave to propagate.
-    omega->set(backend::base_cast<BACKEND> (omega0));
-    kx->set(backend::base_cast<BACKEND> (600.0));
-    ky->set(backend::base_cast<BACKEND> (0.0));
-    kz->set(backend::base_cast<BACKEND> (0.0));
-    x->set(backend::base_cast<BACKEND> (0.0));
-    y->set(backend::base_cast<BACKEND> (0.0));
-    z->set(backend::base_cast<BACKEND> (0.0));
-    t->set(backend::base_cast<BACKEND> (0.0));
+    omega->set(static_cast<T> (omega0));
+    kx->set(static_cast<T> (600.0));
+    ky->set(static_cast<T> (0.0));
+    kz->set(static_cast<T> (0.0));
+    x->set(static_cast<T> (0.0));
+    y->set(static_cast<T> (0.0));
+    z->set(static_cast<T> (0.0));
+    t->set(static_cast<T> (0.0));
 
-    auto eq = equilibrium::make_no_magnetic_field<BACKEND> ();
-    solver::rk4<dispersion::acoustic_wave<BACKEND>> solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
+    auto eq = equilibrium::make_no_magnetic_field<T> ();
+    solver::rk4<dispersion::acoustic_wave<T>> solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
     solve.init(kx, tolarance);
     solve.compile(1);
 
@@ -356,40 +356,40 @@ void test_acoustic_wave(const typename BACKEND::base tolarance) {
 ///
 ///  (⍵^2 - 1 - ne0*q^2/(ϵ0*m))/(ne0*q^2/(ϵ0*m)*0.1) = x                       (5)
 //------------------------------------------------------------------------------
-template<typename BACKEND>
+template<typename T>
 void test_o_mode_wave() {
-    auto omega = graph::variable<BACKEND> (1, "\\omega");
-    auto kx = graph::variable<BACKEND> (1, "k_{x}");
-    auto ky = graph::variable<BACKEND> (1, "k_{y}");
-    auto kz = graph::variable<BACKEND> (1, "k_{z}");
-    auto x = graph::variable<BACKEND> (1, "x");
-    auto y = graph::variable<BACKEND> (1, "y");
-    auto z = graph::variable<BACKEND> (1, "z");
-    auto t = graph::variable<BACKEND> (1, "t");
+    auto omega = graph::variable<T> (1, "\\omega");
+    auto kx = graph::variable<T> (1, "k_{x}");
+    auto ky = graph::variable<T> (1, "k_{y}");
+    auto kz = graph::variable<T> (1, "k_{z}");
+    auto x = graph::variable<T> (1, "x");
+    auto y = graph::variable<T> (1, "y");
+    auto z = graph::variable<T> (1, "z");
+    auto t = graph::variable<T> (1, "t");
 
-    const typename BACKEND::base q = 1.602176634E-19;
-    const typename BACKEND::base me = 9.1093837015E-31;
-    const typename BACKEND::base mu0 = M_PI*4.0E-7;
-    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
-    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
-    const typename BACKEND::base ne0 = 1.0E19;
-    const typename BACKEND::base omega2 = (ne0*q*q)/(epsilon0*me*c*c);
-    const typename BACKEND::base omega0 = 1000.0;
+    const T q = 1.602176634E-19;
+    const T me = 9.1093837015E-31;
+    const T mu0 = M_PI*4.0E-7;
+    const T epsilon0 = 8.8541878138E-12;
+    const T c = 1.0/sqrt(mu0*epsilon0);
+    const T ne0 = 1.0E19;
+    const T omega2 = (ne0*q*q)/(epsilon0*me*c*c);
+    const T omega0 = 1000.0;
 
-    const typename BACKEND::base x_cut = (omega0*omega0 - 1.0 - omega2)/(omega2*0.1);
+    const T x_cut = (omega0*omega0 - 1.0 - omega2)/(omega2*0.1);
 
 //  Omega must be greater than plasma frequency for the wave to propagate.
-    omega->set(backend::base_cast<BACKEND> (omega0));
-    kx->set(backend::base_cast<BACKEND> (0.0));
-    ky->set(backend::base_cast<BACKEND> (0.0));
-    kz->set(backend::base_cast<BACKEND> (0.0));
-    x->set(backend::base_cast<BACKEND> (0.0));
-    y->set(backend::base_cast<BACKEND> (0.0));
-    z->set(backend::base_cast<BACKEND> (0.0));
-    t->set(backend::base_cast<BACKEND> (0.0));
+    omega->set(static_cast<T> (omega0));
+    kx->set(static_cast<T> (0.0));
+    ky->set(static_cast<T> (0.0));
+    kz->set(static_cast<T> (0.0));
+    x->set(static_cast<T> (0.0));
+    y->set(static_cast<T> (0.0));
+    z->set(static_cast<T> (0.0));
+    t->set(static_cast<T> (0.0));
 
-    auto eq = equilibrium::make_slab_density<BACKEND> ();
-    solver::rk4<dispersion::ordinary_wave<BACKEND>>
+    auto eq = equilibrium::make_slab_density<T> ();
+    solver::rk4<dispersion::ordinary_wave<T>>
         solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
 
     solve.init(x);
@@ -410,40 +410,40 @@ void test_o_mode_wave() {
 ///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
-    const typename BACKEND::base omega0 = 1100.0;
+template<typename T>
+void test_cold_plasma_cutoffs(const T tolarance) {
+    const T omega0 = 1100.0;
 
-    auto w = graph::variable<BACKEND> (2, omega0, "\\omega");
-    auto kx = graph::variable<BACKEND> (2, 0.0, "k_{x}");
-    auto ky = graph::variable<BACKEND> (2, 0.0, "k_{y}");
-    auto kz = graph::variable<BACKEND> (2, 0.0, "k_{z}");
-    auto x = graph::variable<BACKEND> (2, 0.0, "x");
-    auto y = graph::variable<BACKEND> (2, 0.0, "y");
-    auto z = graph::variable<BACKEND> (2, 0.0, "z");
-    auto t = graph::variable<BACKEND> (2, 0.0, "t");
+    auto w = graph::variable<T> (2, omega0, "\\omega");
+    auto kx = graph::variable<T> (2, 0.0, "k_{x}");
+    auto ky = graph::variable<T> (2, 0.0, "k_{y}");
+    auto kz = graph::variable<T> (2, 0.0, "k_{z}");
+    auto x = graph::variable<T> (2, 0.0, "x");
+    auto y = graph::variable<T> (2, 0.0, "y");
+    auto z = graph::variable<T> (2, 0.0, "z");
+    auto t = graph::variable<T> (2, 0.0, "t");
 
-    const typename BACKEND::base dt = 0.1;
+    const T dt = 0.1;
 
-    auto eq = equilibrium::make_slab_density<BACKEND> ();
-    solver::rk4<dispersion::cold_plasma<BACKEND>> solve(w, kx, ky, kz, x, y, z, t, dt, eq);
+    auto eq = equilibrium::make_slab_density<T> ();
+    solver::rk4<dispersion::cold_plasma<T>> solve(w, kx, ky, kz, x, y, z, t, dt, eq);
 
 //  Solve for plasma frequency and right cutoff..
-    x->set(0, backend::base_cast<BACKEND> (25.0));
-    x->set(1, backend::base_cast<BACKEND> (5.0));
+    x->set(0, static_cast<T> (25.0));
+    x->set(1, static_cast<T> (5.0));
     solve.init(x);
     solve.compile(1);
 
-    typename BACKEND::base wpecut_pos = x->evaluate().at(0);
-    const typename BACKEND::base wrcut_pos = x->evaluate().at(1);
+    T wpecut_pos = x->evaluate().at(0);
+    const T wrcut_pos = x->evaluate().at(1);
 
 //  Set wave back to zero.
-    x->set(0, backend::base_cast<BACKEND> (0.0));
-    x->set(1, backend::base_cast<BACKEND> (0.0));
+    x->set(0, static_cast<T> (0.0));
+    x->set(1, static_cast<T> (0.0));
 
 //  Solve for X-Mode and O-Mode wave numbers.
-    kx->set(0, backend::base_cast<BACKEND> (1000.0)); // O-Mode
-    kx->set(1, backend::base_cast<BACKEND> (500.0));  // X-Mode
+    kx->set(0, static_cast<T> (1000.0)); // O-Mode
+    kx->set(1, static_cast<T> (500.0));  // X-Mode
     solve.init(kx);
 
     while (std::abs(t->evaluate().at(0)) < 30.0) {
@@ -451,7 +451,7 @@ void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
         solve.sync();
     }
 
-    BACKEND result = x->evaluate();
+    backend::cpu<T> result = x->evaluate();
     assert(std::real(result.at(0)) > std::real(wrcut_pos) &&
            std::real(result.at(0)) < std::real(wpecut_pos) &&
            "Expected O-Mode to cross right cuttoff but not plasma cutoff.");
@@ -459,18 +459,18 @@ void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
            "Expected X-Mode to stay above right cuttoff.");
 
 //  Setup problem for trapped modes.
-    w->set(0, backend::base_cast<BACKEND> (800.0));
-    w->set(1, backend::base_cast<BACKEND> (800.0));
+    w->set(0, static_cast<T> (800.0));
+    w->set(1, static_cast<T> (800.0));
 
 //  Solve for plasma frequency and left cutoff..
-    x->set(0, backend::base_cast<BACKEND> (25.0));
-    x->set(1, backend::base_cast<BACKEND> (5.0));
-    kx->set(0, backend::base_cast<BACKEND> (0.0));
-    kx->set(1, backend::base_cast<BACKEND> (0.0));
-    t->set(0, backend::base_cast<BACKEND> (0.0));
-    t->set(1, backend::base_cast<BACKEND> (0.0));
+    x->set(0, static_cast<T> (25.0));
+    x->set(1, static_cast<T> (5.0));
+    kx->set(0, static_cast<T> (0.0));
+    kx->set(1, static_cast<T> (0.0));
+    t->set(0, static_cast<T> (0.0));
+    t->set(1, static_cast<T> (0.0));
 #ifdef USE_CUDA
-    if constexpr (jit::is_complex<typename BACKEND::base> ()) {
+    if constexpr (jit::is_complex<T> ()) {
         solve.init(x, 1.6E-29);
     } else {
         solve.init(x, 5.0E-30);
@@ -482,14 +482,14 @@ void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
     wpecut_pos = x->evaluate().at(1);
 
 //  Set wave back to zero.
-    x->set(0, backend::base_cast<BACKEND> (0.0));
-    x->set(1, backend::base_cast<BACKEND> (0.0));
+    x->set(0, static_cast<T> (0.0));
+    x->set(1, static_cast<T> (0.0));
 
 //  Solve for X-Mode and O-Mode wave numbers.
-    kx->set(0, backend::base_cast<BACKEND> (500.0));  // O-Mode
-    kx->set(1, backend::base_cast<BACKEND> (1500.0)); // X-Mode
+    kx->set(0, static_cast<T> (500.0));  // O-Mode
+    kx->set(1, static_cast<T> (1500.0)); // X-Mode
 #ifdef USE_CUDA
-    if constexpr (jit::is_complex<typename BACKEND::base> ()) {
+    if constexpr (jit::is_complex<T> ()) {
         solve.init(kx, 2.2E-30);
     } else {
         solve.init(kx);
@@ -519,37 +519,37 @@ void test_cold_plasma_cutoffs(const typename BACKEND::base tolarance) {
 ///  @param[in] x0        Starting x guess.
 ///  @param[in] kx0       Starting kx guess.
 //------------------------------------------------------------------------------
-template<typename BACKEND>
-void test_reflection(const typename BACKEND::base tolarance,
-                     const typename BACKEND::base n0,
-                     const typename BACKEND::base x0,
-                     const typename BACKEND::base kx0) {
-    const typename BACKEND::base q = 1.602176634E-19;
-    const typename BACKEND::base me = 9.1093837015E-31;
-    const typename BACKEND::base mu0 = M_PI*4.0E-7;
-    const typename BACKEND::base epsilon0 = 8.8541878138E-12;
-    const typename BACKEND::base c = 1.0/sqrt(mu0*epsilon0);
-    const typename BACKEND::base OmegaCE = -q/(me*c);
+template<typename T>
+void test_reflection(const T tolarance,
+                     const T n0,
+                     const T x0,
+                     const T kx0) {
+    const T q = 1.602176634E-19;
+    const T me = 9.1093837015E-31;
+    const T mu0 = M_PI*4.0E-7;
+    const T epsilon0 = 8.8541878138E-12;
+    const T c = 1.0/sqrt(mu0*epsilon0);
+    const T OmegaCE = -q/(me*c);
 
-    auto w = graph::variable<BACKEND> (1, OmegaCE, "\\omega");
-    auto kx = graph::variable<BACKEND> (1, 0.0, "k_{x}");
-    auto ky = graph::variable<BACKEND> (1, 0.0, "k_{y}");
-    auto kz = graph::variable<BACKEND> (1, n0*OmegaCE, "k_{z}");
-    auto x = graph::variable<BACKEND> (1, x0, "x");
-    auto y = graph::variable<BACKEND> (1, 0.0, "y");
-    auto z = graph::variable<BACKEND> (1, 0.0, "z");
-    auto t = graph::variable<BACKEND> (1, 0.0, "t");
+    auto w = graph::variable<T> (1, OmegaCE, "\\omega");
+    auto kx = graph::variable<T> (1, 0.0, "k_{x}");
+    auto ky = graph::variable<T> (1, 0.0, "k_{y}");
+    auto kz = graph::variable<T> (1, n0*OmegaCE, "k_{z}");
+    auto x = graph::variable<T> (1, x0, "x");
+    auto y = graph::variable<T> (1, 0.0, "y");
+    auto z = graph::variable<T> (1, 0.0, "z");
+    auto t = graph::variable<T> (1, 0.0, "t");
 
-    auto eq = equilibrium::make_slab<BACKEND> ();
-    solver::rk4<dispersion::cold_plasma<BACKEND>> solve(w, kx, ky, kz, x, y, z, t, 0.0001, eq);
+    auto eq = equilibrium::make_slab<T> ();
+    solver::rk4<dispersion::cold_plasma<T>> solve(w, kx, ky, kz, x, y, z, t, 0.0001, eq);
 
 // Solve for a location where the wave is cut off.
     solve.init(x, tolarance);
-    const typename BACKEND::base cuttoff_location = x->evaluate().at(0);
+    const T cuttoff_location = x->evaluate().at(0);
 
 //  Set the ray starting point close to the cut off to reduce the number of
 //  times steps that need to be taken.
-    x->set(cuttoff_location - backend::base_cast<BACKEND> (0.00001)*cuttoff_location);
+    x->set(cuttoff_location - static_cast<T> (0.00001)*cuttoff_location);
 
 //  Set an inital guess for kx and solve for the wave number at the new
 //  location.
@@ -578,16 +578,16 @@ void test_reflection(const typename BACKEND::base tolarance,
 ///
 ///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename BACKEND> void run_tests(const typename BACKEND::base tolarance) {
-    test_constant<BACKEND> ();
-    test_bohm_gross<solver::rk4<dispersion::bohm_gross<BACKEND>>> (tolarance);
-    test_bohm_gross<solver::split_simplextic<dispersion::bohm_gross<BACKEND>>> (tolarance);
-    test_light_wave<solver::rk4<dispersion::light_wave<BACKEND>>> (tolarance);
-    test_light_wave<solver::split_simplextic<dispersion::light_wave<BACKEND>>> (tolarance);
-    test_acoustic_wave<BACKEND> (tolarance);
-    test_o_mode_wave<BACKEND> ();
-    test_reflection<BACKEND> (tolarance, 0.7, 0.1, 22.0);
-    test_cold_plasma_cutoffs<BACKEND> (tolarance);
+template<typename T> void run_tests(const T tolarance) {
+    test_constant<T> ();
+    test_bohm_gross<solver::rk4<dispersion::bohm_gross<T>>> (tolarance);
+    test_bohm_gross<solver::split_simplextic<dispersion::bohm_gross<T>>> (tolarance);
+    test_light_wave<solver::rk4<dispersion::light_wave<T>>> (tolarance);
+    test_light_wave<solver::split_simplextic<dispersion::light_wave<T>>> (tolarance);
+    test_acoustic_wave<T> (tolarance);
+    test_o_mode_wave<T> ();
+    test_reflection<T> (tolarance, 0.7, 0.1, 22.0);
+    test_cold_plasma_cutoffs<T> (tolarance);
 }
 
 //------------------------------------------------------------------------------
@@ -600,10 +600,10 @@ int main(int argc, const char * argv[]) {
     START_GPU
 //  There is not enough precision in float to pass the test.
 #ifdef USE_CUDA
-    run_tests<backend::cpu<double>> (1.6E-21);
+    run_tests<double> (1.6E-21);
 #else
-    run_tests<backend::cpu<double>> (2.0E-29);
+    run_tests<double> (2.0E-29);
 #endif
-    run_tests<backend::cpu<std::complex<double>>> (2.0E-29);
+    run_tests<std::complex<double>> (2.0E-29);
     END_GPU
 }
