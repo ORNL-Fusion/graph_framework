@@ -101,7 +101,7 @@ namespace dispersion {
             auto dDdy = this->D->df(y)->reduce();
             auto dDdz = this->D->df(z)->reduce();
 
-            auto neg_one = graph::constant_node<typename DISPERSION_FUNCTION::base>::none();
+            auto neg_one = graph::none<typename DISPERSION_FUNCTION::base> ();
             dxdt = neg_one*dDdkx/dDdw;
             dydt = neg_one*dDdky/dDdw;
             dzdt = neg_one*dDdkz/dDdw;
@@ -410,7 +410,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
                                         equilibrium::unique_equilibrium<T> &eq) final {
-            auto none = graph::constant_node<T>::none();
+            auto none = graph::none<T> ();
             auto c = graph::constant(static_cast<T> (1.0E3));
             return (c*(x - graph::exp(none*t)) - graph::exp(none*t))*kx + w;
         }
@@ -446,7 +446,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
                                         equilibrium::unique_equilibrium<T> &eq) final {
-            auto c = graph::constant_node<T>::one();
+            auto c = graph::one<T> ();
 
             auto npar2 = kz*kz*c*c/(w*w);
             auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
@@ -470,8 +470,7 @@ namespace dispersion {
 ///  Electron mass.
         graph::shared_leaf<T> me = graph::constant(static_cast<T> (9.1093837015E-31));
 /// Speed of light.
-        graph::shared_leaf<T> c = graph::constant_node<T>::one()
-                                / graph::sqrt(epsion0*mu0);
+        graph::shared_leaf<T> c = graph::one<T> ()/graph::sqrt(epsion0*mu0);
     };
 
 //------------------------------------------------------------------------------
@@ -514,7 +513,7 @@ namespace dispersion {
             auto te = eq->get_electron_temperature(x, y, z);
 //  2*1.602176634E-19 to convert eV to J.
             
-            auto temp = graph::constant_node<T>::two()*physics<T>::q*te;
+            auto temp = graph::two<T> ()*physics<T>::q*te;
             auto vterm2 = temp/(physics<T>::me*physics<T>::c*physics<T>::c);
 
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
@@ -523,7 +522,7 @@ namespace dispersion {
             auto k = graph::vector(kx, ky, kz);
             graph::shared_leaf<T> kpara2;
 #ifdef USE_REDUCE
-            if (b_vec->length()->is_match(graph::constant_node<T>::zero())) {
+            if (b_vec->length()->is_match(graph::zero<T> ())) {
 #else
             if (b_vec->length()->evaluate()[0] == static_cast<T> (0.0)) {
 #endif
@@ -581,7 +580,7 @@ namespace dispersion {
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
 #ifdef USE_REDUCE
-            assert(eq->get_magnetic_field(x, y, z)->length()->is_match(graph::constant_node<T>::zero()) &&
+            assert(eq->get_magnetic_field(x, y, z)->length()->is_match(graph::zero<T> ()) &&
                    "Expected equilibrium with no magnetic field.");
 #else
             assert(eq->get_magnetic_field(x, y, z)->length()->evaluate()[0] ==
@@ -643,7 +642,7 @@ namespace dispersion {
             auto k = graph::vector(kx, ky, kz);
             graph::shared_leaf<T> kpara2;
 #ifdef USE_REDUCE
-            if (b_vec->length()->is_match(graph::constant_node<T>::zero())) {
+            if (b_vec->length()->is_match(graph::zero<T> ())) {
 #else
             if (b_vec->length()->evaluate()[0] ==
                 static_cast<T> (0.0)) {
@@ -689,7 +688,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
                                         equilibrium::unique_equilibrium<T> &eq) final {
-            auto c = graph::constant_node<T>::one();
+            auto c = graph::one<T> ();
             auto well = c - graph::constant(static_cast<T> (0.5))*exp(graph::constant(static_cast<T> (-1.0))*(x*x + y*y)/graph::constant(static_cast<T> (0.1)));
             auto npar2 = kz*kz*c*c/(w*w);
             auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
@@ -793,7 +792,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> t,
                                         equilibrium::unique_equilibrium<T> &eq) final {
 //  Constants
-            auto one = graph::constant_node<T>::one();
+            auto one = graph::one<T> ();
 
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
@@ -851,7 +850,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> t,
                                         equilibrium::unique_equilibrium<T> &eq) final {
 //  Constants
-            auto one = graph::constant_node<T>::one();
+            auto one = graph::one<T> ();
             auto none = graph::constant(static_cast<T> (-1.0));
             
 //  Equilibrium quantities.
@@ -932,7 +931,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> t,
                                         equilibrium::unique_equilibrium<T> &eq) final {
 //  Constants
-            auto one = graph::constant_node<T>::one();
+            auto one = graph::one<T> ();
             auto none = graph::constant(static_cast<T> (-1.0));
 
 //  Dielectric terms.

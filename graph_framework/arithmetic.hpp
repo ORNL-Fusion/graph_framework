@@ -106,7 +106,7 @@ namespace graph {
 #ifdef USE_REDUCE
 //  Idenity reductions.
             if (this->left->is_match(this->right)) {
-                return constant_node<typename LN::base>::two()*this->left;
+                return two<typename LN::base> ()*this->left;
             }
 
 //  Constant reductions.
@@ -129,7 +129,7 @@ namespace graph {
 //  Assume constants are on the left.
 //  v1 + -c*v2 -> v1 - c*v2
 //  -c*v1 + v2 -> v2 - c*v1
-            auto none = constant_node<typename LN::base>::none();
+            auto none = graph::none<typename LN::base> ();
             if (rm.get()) {
                 auto rmc = constant_cast(rm->get_left());
                 if (rmc.get() && rmc->evaluate().is_negative()) {
@@ -269,7 +269,7 @@ namespace graph {
         virtual shared_leaf<typename LN::base>
         df(shared_leaf<typename LN::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename LN::base>::one();
+                return one<typename LN::base> ();
             } else {
                 return this->left->df(x) + this->right->df(x);
             }
@@ -438,7 +438,7 @@ namespace graph {
                     return this->left;
                 }
 
-                return constant_node<typename LN::base>::zero();
+                return zero<typename LN::base> ();
             }
 
 //  Constant reductions.
@@ -446,7 +446,7 @@ namespace graph {
             auto r = constant_cast(this->right);
 
             if (l.get() && l->is(0)) {
-                return constant_node<typename LN::base>::none()*this->right;
+                return none<typename LN::base> ()*this->right;
             } else if (r.get() && r->is(0)) {
                 return this->left;
             } else if (l.get() && r.get()) {
@@ -463,8 +463,8 @@ namespace graph {
             if (rm.get()) {
                 auto rmc = constant_cast(rm->get_left());
                 if (rmc.get() && rmc->evaluate().is_negative()) {
-                    auto none = constant_node<typename LN::base>::none();
-                    return this->left + none*rm->get_left()*rm->get_right();
+                    return this->left +
+                           none<typename LN::base> ()*rm->get_left()*rm->get_right();
                 }
             }
 
@@ -580,7 +580,7 @@ namespace graph {
         virtual shared_leaf<typename LN::base>
         df(shared_leaf<typename LN::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename LN::base>::one();
+                return one<typename LN::base> ();
             } else {
                 return this->left->df(x) - this->right->df(x);
             }
@@ -776,7 +776,7 @@ namespace graph {
 
 //  Reduce x*x to x^2
             if (this->left->is_match(this->right)) {
-                return pow(this->left, constant_node<typename LN::base>::two());
+                return pow(this->left, two<typename LN::base> ());
             }
 
 //  Gather common terms.
@@ -898,7 +898,7 @@ namespace graph {
 //  a^b*a -> a^(b + 1)
                 if (lp->get_left()->is_match(this->right)) {
                     return pow(lp->get_left(),
-                               lp->get_right() + constant_node<typename LN::base>::one());
+                               lp->get_right() + one<typename LN::base> ());
                 }
 
 //  a^b*a^c -> a^(b + c)
@@ -924,7 +924,7 @@ namespace graph {
 //  a*a^b -> a^(1 + b)
                 if (rp->get_left()->is_match(this->left)) {
                     return pow(rp->get_left(),
-                               rp->get_right() + constant_node<typename LN::base>::one());
+                               rp->get_right() + one<typename LN::base> ());
                 }
 
 //  sqrt(a)*a^b -> a^(b + 1)
@@ -955,7 +955,7 @@ namespace graph {
         virtual shared_leaf<typename LN::base>
         df(shared_leaf<typename LN::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename LN::base>::one();
+                return one<typename LN::base> ();
             }
 
             return this->left->df(x)*this->right +
@@ -1128,12 +1128,12 @@ namespace graph {
                     return this->left;
                 }
 
-                return constant_node<typename LN::base>::one();
+                return one<typename LN::base> ();
             }
 
 //  Reduce cases of a/c1 -> c2*a
             if (r.get()) {
-                return (constant_node<typename LN::base>::one()/this->right) *
+                return (one<typename LN::base> ()/this->right) *
                        this->left;
             }
 
@@ -1215,7 +1215,7 @@ namespace graph {
 //  a^b/a -> a^(b - 1)
                 if (lp->get_left()->is_match(this->right)) {
                     return pow(lp->get_left(),
-                               lp->get_right() - constant_node<typename LN::base>::one());
+                               lp->get_right() - one<typename LN::base> ());
                 }
 
 //  a^b/a^c -> a^(b - c)
@@ -1241,7 +1241,7 @@ namespace graph {
 //  a/a^b -> a^(1 - b)
                 if (rp->get_left()->is_match(this->left)) {
                     return pow(rp->get_left(),
-                               constant_node<typename LN::base>::one() - rp->get_right());
+                               one<typename LN::base> () - rp->get_right());
                 }
 
 //  sqrt(a)/a^b -> a^(1/2 - b)
@@ -1254,7 +1254,7 @@ namespace graph {
 //  sqrt(a)/a -> 1.0/sqrt(a)
                 auto lsq = sqrt_cast(this->left);
                 if (lsq.get() && this->right->is_match(lsq->get_arg())) {
-                    return constant_node<typename LN::base>::one()/this->left;
+                    return one<typename LN::base> ()/this->left;
                 }
             }
 #endif
@@ -1272,7 +1272,7 @@ namespace graph {
         virtual shared_leaf<typename LN::base>
         df(shared_leaf<typename LN::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename LN::base>::one();
+                return one<typename LN::base> ();
             }
 
             return this->left->df(x)/this->right -
@@ -1517,7 +1517,7 @@ namespace graph {
         virtual shared_leaf<typename LN::base>
         df(shared_leaf<typename LN::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename LN::base>::one();
+                return one<typename LN::base> ();
             }
 
             auto temp_right = fma(this->left,

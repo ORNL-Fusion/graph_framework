@@ -16,8 +16,8 @@
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
-    auto one = graph::constant_node<T>::one();
-    auto zero = graph::constant_node<T>::zero();
+    auto one = graph::one<T> ();
+    auto zero = graph::zero<T> ();
 
 //  test a zero vector length.
     auto v0 = graph::vector(zero, zero, zero);

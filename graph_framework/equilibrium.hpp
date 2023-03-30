@@ -170,7 +170,7 @@ namespace equilibrium {
                                                            graph::shared_leaf<T> y,
                                                            graph::shared_leaf<T> z) final {
             return graph::constant(static_cast<T> (1.0E19)) *
-                   (graph::constant(static_cast<T> (0.1))*x + graph::constant_node<T>::one());
+                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
 
 //------------------------------------------------------------------------------
@@ -184,7 +184,7 @@ namespace equilibrium {
                                                       graph::shared_leaf<T> y,
                                                       graph::shared_leaf<T> z) final {
             return graph::constant(static_cast<T> (1.0E19)) *
-                   (graph::constant(static_cast<T> (0.1))*x + graph::constant_node<T>::one());
+                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
 
 //------------------------------------------------------------------------------
@@ -228,12 +228,16 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T> x,
                            graph::shared_leaf<T> y,
                            graph::shared_leaf<T> z) final {
-            auto zero = graph::constant_node<T>::zero();
+            auto zero = graph::zero<T> ();
             return graph::vector(zero, zero, zero);
         }
     };
 
-///  Convenience type alias for unique equilibria.
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a no magnetic field equilibrium.
+///
+///  @returns A constructed no magnetic field equilibrium.
+//------------------------------------------------------------------------------
     template<typename T>
     std::unique_ptr<equilibrium<T>> make_no_magnetic_field() {
         return std::make_unique<no_magnetic_field<T>> ();
@@ -323,13 +327,17 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T> x,
                            graph::shared_leaf<T> y,
                            graph::shared_leaf<T> z) final {
-            auto zero = graph::constant_node<T>::zero();
+            auto zero = graph::zero<T> ();
             return graph::vector(zero, zero,
-                                 graph::constant(static_cast<T> (0.1))*x + graph::constant_node<T>::one());
+                                 graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
     };
 
-///  Convenience type alias for unique equilibria.
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a slab equilibrium.
+///
+///  @returns A constructed slab equilibrium.
+//------------------------------------------------------------------------------
     template<typename T>
     std::unique_ptr<equilibrium<T>> make_slab() {
         return std::make_unique<slab<T>> ();
@@ -363,7 +371,7 @@ namespace equilibrium {
                                                            graph::shared_leaf<T> y,
                                                            graph::shared_leaf<T> z) final {
             return graph::constant(static_cast<T> (1.0E19)) *
-                   (graph::constant(static_cast<T> (0.1))*x + graph::constant_node<T>::one());
+                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
 
 //------------------------------------------------------------------------------
@@ -377,7 +385,7 @@ namespace equilibrium {
                                                       graph::shared_leaf<T> y,
                                                       graph::shared_leaf<T> z) final {
             return graph::constant(static_cast<T> (1.0E19)) *
-                   (graph::constant(static_cast<T> (0.1))*x + graph::constant_node<T>::one());
+                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
 
 //------------------------------------------------------------------------------
@@ -421,12 +429,16 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T> x,
                            graph::shared_leaf<T> y,
                            graph::shared_leaf<T> z) final {
-            auto zero = graph::constant_node<T>::zero();
-            return graph::vector(zero, zero, graph::constant_node<T>::one());
+            auto zero = graph::zero<T> ();
+            return graph::vector(zero, zero, graph::one<T> ());
         }
     };
 
-///  Convenience type alias for unique equilibria.
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a slab density equilibrium.
+///
+///  @returns A constructed slab density equilibrium.
+//------------------------------------------------------------------------------
     template<typename T>
     std::unique_ptr<equilibrium<T>> make_slab_density() {
         return std::make_unique<slab_density<T>> ();
@@ -516,13 +528,16 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T> x,
                            graph::shared_leaf<T> y,
                            graph::shared_leaf<T> z) final {
-            auto zero = graph::constant_node<T>::zero();
-            return graph::vector(graph::constant_node<T>::one(),
-                                 zero, zero);
+            auto zero = graph::zero<T> ();
+            return graph::vector(graph::one<T> (), zero, zero);
         }
     };
 
-///  Convenience type alias for unique equilibria.
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a guassian density equilibrium.
+///
+///  @returns A constructed guassian density equilibrium.
+//------------------------------------------------------------------------------
     template<typename T>
     std::unique_ptr<equilibrium<T>> make_guassian_density() {
         return std::make_unique<guassian_density<T>> ();

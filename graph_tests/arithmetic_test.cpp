@@ -19,7 +19,7 @@
 template<typename T> void test_add() {
 //  Three constant nodes should reduce to a single constant node with added
 //  operands.
-    auto one = graph::constant_node<T>::one();
+    auto one = graph::one<T> ();
     auto three = one + one + one;
 #ifdef USE_REDUCE
     assert(graph::constant_cast(three).get() && "Expected a constant type.");
@@ -35,7 +35,7 @@ template<typename T> void test_add() {
            "Expected three for result");
 
 //  Any zero nodes should reduce to the other operand.
-    auto zero = graph::constant_node<T>::zero();
+    auto zero = graph::zero<T> ();
     auto one_plus_zero = one + zero;
 #ifdef USE_REDUCE
     assert(one_plus_zero.get() == one.get() &&
@@ -185,8 +185,8 @@ template<typename T> void test_add() {
 #endif
 
 //  Test is_match
-    auto match = graph::constant_node<T>::one()*var_a
-               + graph::constant_node<T>::one()*var_a;
+    auto match = graph::one<T> ()*var_a
+               + graph::one<T> ()*var_a;
 #ifdef USE_REDUCE
     assert(graph::multiply_cast(match).get() && "Expected multiply node.");
 #else
@@ -277,8 +277,8 @@ template<typename T> void test_add() {
 #endif
     
 //  Test is_match
-    auto match1 = graph::constant_node<T>::one() + variable;
-    auto match2 = graph::constant_node<T>::one() + variable;
+    auto match1 = graph::one<T> () + variable;
+    auto match2 = graph::one<T> () + variable;
     assert(match1->is_match(match2) && "Expected match");
 }
 
@@ -288,7 +288,7 @@ template<typename T> void test_add() {
 template<typename T> void test_subtract() {
 //  Three constant nodes should reduce to a single constant node with added
 //  operands.
-    auto one = graph::constant_node<T>::one();
+    auto one = graph::one<T> ();
     auto zero = one - one;
 #ifdef USE_REDUCE
     auto zero_cast = graph::constant_cast(zero);
@@ -450,8 +450,8 @@ template<typename T> void test_subtract() {
 #endif
 
 //  Test is_match
-    auto match = graph::constant_node<T>::one()*var_a
-               - graph::constant_node<T>::one()*var_a;
+    auto match = graph::one<T> ()*var_a
+               - graph::one<T> ()*var_a;
 #ifdef USE_REDUCE
     auto match_cast = graph::constant_cast(match);
     assert(match_cast.get() && "Expected a constant type.");
@@ -544,7 +544,7 @@ template<typename T> void test_subtract() {
 template<typename T> void test_multiply() {
 //  Three constant nodes should reduce to a single constant node with multiplied
 //  operands.
-    auto one = graph::constant_node<T>::one();
+    auto one = graph::one<T> ();
     auto one_cubed = one*one*one;
 #ifdef USE_REDUCE
     assert(one_cubed.get() == one.get() && "Expected to reduce back to one");
@@ -555,7 +555,7 @@ template<typename T> void test_multiply() {
            "Expected one.");
 
 //  Any zero nodes should reduce zero.
-    auto zero = graph::constant_node<T>::zero();
+    auto zero = graph::zero<T> ();
 #ifdef USE_REDUCE
     assert((zero*one).get() == zero.get() && "Expected to reduce back to zero");
     assert((one*zero).get() == zero.get() && "Expected to reduce back to zero");
@@ -1091,7 +1091,7 @@ template<typename T> void test_multiply() {
 //------------------------------------------------------------------------------
 template<typename T> void test_divide() {
 // Check for potential divide by zero.
-    auto zero = graph::constant_node<T>::zero();
+    auto zero = graph::zero<T> ();
 #ifdef USE_REDUCE
     assert((zero/zero).get() == zero.get() && "Expected to recover zero.");
 #endif
@@ -1099,7 +1099,7 @@ template<typename T> void test_divide() {
            "Expected to recover zero.");
 
 // A zero in the numerator should result in zero.
-    auto one = graph::constant_node<T>::one();
+    auto one = graph::one<T> ();
 #ifdef USE_REDUCE
     assert((zero/one).get() == zero.get() && "Expected to recover zero.");
 #else
@@ -1313,8 +1313,8 @@ template<typename T> void test_divide() {
            "Expected 2/3^2 for result.");
 
 //  Test is_match
-    auto match = (graph::constant_node<T>::one() + variable)
-               / (graph::constant_node<T>::one() + variable);
+    auto match = (graph::one<T> () + variable)
+               / (graph::one<T> () + variable);
 #ifdef USE_REDUCE
     auto match_cast = graph::constant_cast(match);
     assert(match_cast->is(1) &&
@@ -1586,9 +1586,9 @@ template<typename T> void test_divide() {
 //------------------------------------------------------------------------------
 template<typename T> void test_fma() {
 //  Three constant nodes should reduce to a single constant node with a*b + c.
-    auto zero = graph::constant_node<T>::zero();
-    auto one = graph::constant_node<T>::one();
-    auto two = graph::constant_node<T>::two();
+    auto zero = graph::zero<T> ();
+    auto one = graph::one<T> ();
+    auto two = graph::two<T> ();
 
     auto zero_times_one_plus_two = graph::fma(zero, one, two);
 #ifdef USE_REDUCE
@@ -1844,7 +1844,7 @@ template<typename T> void test_fma() {
 //------------------------------------------------------------------------------
 template<typename T> void test_variable_like() {
     auto a = graph::variable<T> (1, "");
-    auto c = graph::constant_node<T>::one();
+    auto c = graph::one<T> ();
     
     assert(graph::is_variable_like(a) && "Expected a to be variable like.");
     assert(graph::is_variable_like(graph::sqrt(a)) &&

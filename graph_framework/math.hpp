@@ -110,10 +110,10 @@ namespace graph {
         virtual shared_leaf<typename N::base>
         df(shared_leaf<typename N::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename N::base>::one();
+                return one<typename N::base> ();
             } else {
                 return this->arg->df(x) /
-                       (constant_node<typename N::base>::two()*this->shared_from_this());
+                       (two<typename N::base> ()*this->shared_from_this());
             }
         }
 
@@ -251,7 +251,7 @@ namespace graph {
         virtual shared_leaf<typename N::base>
         df(shared_leaf<typename N::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename N::base>::one();
+                return one<typename N::base> ();
             }
 
             return this->shared_from_this()*this->arg->df(x);
@@ -515,7 +515,7 @@ namespace graph {
 
             if (rc.get()) {
                 if (rc->is(0)) {
-                    return constant_node<typename LN::base>::one();
+                    return one<typename LN::base> ();
                 } else if (rc->is(1)) {
                     return this->left;
                 } else if (rc->is(0.5)) {
@@ -568,8 +568,8 @@ namespace graph {
 //  Reduce sqrt(a)^b
             auto lsq = sqrt_cast(this->left);
             if (lsq.get()) {
-                auto two = constant_node<typename LN::base>::two();
-                return pow(lsq->get_arg(), this->right/two);
+                return pow(lsq->get_arg(),
+                           this->right/two<typename LN::base> ());
             }
 #endif
             return this->shared_from_this();
@@ -585,8 +585,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base>
         df(shared_leaf<typename LN::base> x) final {
-            auto one = constant_node<typename LN::base>::one();
-            return pow(this->left, this->right - one) *
+            return pow(this->left, this->right - one<typename LN::base> ()) *
                    (this->right*this->left->df(x) +
                     this->left*log(this->left)*this->right->df(x));
         }

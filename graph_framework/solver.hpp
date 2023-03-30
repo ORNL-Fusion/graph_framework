@@ -436,7 +436,7 @@ namespace solver {
             this->y2  = graph::cache(dt_const*D2.get_dydt());
             this->z2  = graph::cache(dt_const*D2.get_dzdt());
 
-            auto two = graph::constant_node<typename DISPERSION_FUNCTION::base>::two();
+            auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
 
             this->kx_next = this->kx + (this->kx1 + this->kx2)/two;
             this->ky_next = this->ky + (this->ky1 + this->ky2)/two;
@@ -565,7 +565,7 @@ namespace solver {
             this->y1  = graph::cache(dt_const*this->D.get_dydt());
             this->z1  = graph::cache(dt_const*this->D.get_dzdt());
 
-            auto two = graph::constant_node<typename DISPERSION_FUNCTION::base>::two();
+            auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
 
             this->t_sub = graph::cache(this->t + dt_const/two);
 
@@ -791,7 +791,7 @@ namespace solver {
 
             this->residule_pred = D2.get_d()*D2.get_d();
 
-            auto two = graph::constant_node<typename DISPERSION_FUNCTION::base>::two();
+            auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
 
             this->kx_next = graph::cache(kx + (this->dkxdt + dt_const*D2.get_dkxdt())/two);
             this->ky_next = graph::cache(ky + (this->dkydt + dt_const*D2.get_dkydt())/two);
@@ -914,7 +914,7 @@ namespace solver {
 
 //  Test if the function is separatable.
 #ifdef USE_REDUCE
-            auto zero = graph::constant_node<typename DISPERSION_FUNCTION::base>::zero();
+            auto zero = graph::zero<typename DISPERSION_FUNCTION::base> ();
             
             assert(zero->is_match(this->D.get_dkxdt()->df(kx)) &&
                    zero->is_match(this->D.get_dkxdt()->df(ky)) &&
@@ -959,7 +959,7 @@ namespace solver {
 #endif
 
             auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
-            auto two = graph::constant_node<typename DISPERSION_FUNCTION::base>::two();
+            auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
 
             this->t_next = graph::cache(this->t + dt_const);
 

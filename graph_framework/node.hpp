@@ -311,11 +311,6 @@ namespace graph {
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() final {
-#ifdef USE_REDUCE
-            if (data.size() > 1 && data.is_same()) {
-                return std::make_shared<constant_node<T>> (data.at(0));
-            }
-#endif
             return this->shared_from_this();
         }
 
@@ -326,7 +321,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) final {
-            return zero();
+            return std::make_shared<constant_node<T>> (static_cast<T> (0.0));
         }
 
 //------------------------------------------------------------------------------
@@ -389,43 +384,6 @@ namespace graph {
         virtual void to_latex() const final {
             std::cout << data.at(0);
         }
-
-//  Define some common constants.
-//------------------------------------------------------------------------------
-///  @brief Create a zero constant.
-///
-///  @returns A zero constant.
-//------------------------------------------------------------------------------
-        static shared_leaf<T> zero() {
-            return std::make_shared<constant_node<T>> (static_cast<T> (0.0));
-        }
-        
-//------------------------------------------------------------------------------
-///  @brief Create a one constant.
-///
-///  @returns A one constant.
-//------------------------------------------------------------------------------
-        static shared_leaf<T> one() {
-            return std::make_shared<constant_node<T>> (static_cast<T> (1.0));
-        }
-        
-//------------------------------------------------------------------------------
-///  @brief Create a negative one constant.
-///
-///  @returns A negative one constant.
-//------------------------------------------------------------------------------
-        static shared_leaf<T> none() {
-            return std::make_shared<constant_node<T>> (static_cast<T> (-1.0));
-        }
-        
-//------------------------------------------------------------------------------
-///  @brief Create a two constant.
-///
-///  @returns A two constant.
-//------------------------------------------------------------------------------
-        static shared_leaf<T> two() {
-            return std::make_shared<constant_node<T>> (static_cast<T> (2.0));
-        }
     };
 
 //------------------------------------------------------------------------------
@@ -448,6 +406,47 @@ namespace graph {
     template<typename T>
     shared_leaf<T> constant(const backend::cpu<T> &d) {
         return (std::make_shared<constant_node<T>> (d))->reduce();
+    }
+
+//  Define some common constants.
+//------------------------------------------------------------------------------
+///  @brief Create a zero constant.
+///
+///  @returns A zero constant.
+//------------------------------------------------------------------------------
+    template<typename T>
+    shared_leaf<T> zero() {
+        return constant(static_cast<T> (0.0));
+    }
+        
+//------------------------------------------------------------------------------
+///  @brief Create a one constant.
+///
+///  @returns A one constant.
+//------------------------------------------------------------------------------
+    template<typename T>
+    shared_leaf<T> one() {
+        return constant(static_cast<T> (1.0));
+    }
+        
+//------------------------------------------------------------------------------
+///  @brief Create a negative one constant.
+///
+///  @returns A negative one constant.
+//------------------------------------------------------------------------------
+    template<typename T>
+    shared_leaf<T> none() {
+        return constant(static_cast<T> (-1.0));
+    }
+        
+//------------------------------------------------------------------------------
+///  @brief Create a two constant.
+///
+///  @returns A two constant.
+//------------------------------------------------------------------------------
+    template<typename T>
+    shared_leaf<T> two() {
+        return constant(static_cast<T> (2.0));
     }
 
 ///  Convenience type alias for shared constant nodes.
@@ -765,7 +764,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) final {
             if (this->is_match(x)) {
-                return graph::constant_node<T>::one();
+                return one<T> ();
             } else {
                 return this->arg->df(x)->reduce();
             }

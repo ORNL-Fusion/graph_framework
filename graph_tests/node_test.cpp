@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 template<typename T>
 void test_constant() {
-    auto zero = graph::constant_node<T>::zero();
+    auto zero = graph::zero<T> ();
     auto zero_cast = graph::constant_cast(zero);
     assert(zero_cast.get() && "Expected a constant type.");
     assert(graph::variable_cast(zero).get() == nullptr &&
@@ -36,7 +36,7 @@ void test_constant() {
     zero->set(static_cast<T> (1.0));
     assert(zero_cast->is(0.0) && "Constant value expeced zero.");
 
-    auto one = graph::constant_node<T>::one();
+    auto one = graph::one<T> ();
     auto one_cast = graph::constant_cast(one);
     assert(one_cast.get() && "Expected a constant type.");
     assert(one_cast->is(1.0) && "Constant value expeced zero.");

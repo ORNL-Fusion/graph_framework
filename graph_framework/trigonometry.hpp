@@ -68,7 +68,7 @@ namespace graph {
         virtual shared_leaf<typename N::base>
         df(shared_leaf<typename N::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename N::base>::one();
+                return one<typename N::base> ();
             } else {
                 return cos(this->arg)*this->arg->df(x);
             }
@@ -206,7 +206,7 @@ namespace graph {
         virtual shared_leaf<typename N::base>
         df(shared_leaf<typename N::base> x) final {
             if (this->is_match(x)) {
-                return constant_node<typename N::base>::one();
+                return one<typename N::base> ();
             } else {
                 return constant_node<typename N::base>::none()*sin(this->arg)*this->arg->df(x);
             }
