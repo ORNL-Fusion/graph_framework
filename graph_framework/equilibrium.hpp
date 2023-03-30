@@ -26,7 +26,6 @@ namespace equilibrium {
         const std::vector<T> ion_masses;
 ///  Ion charge for each species.
         const std::vector<uint8_t> ion_charges;
-///
 
     public:
 //------------------------------------------------------------------------------
