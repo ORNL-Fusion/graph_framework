@@ -64,11 +64,11 @@ namespace gpu {
 ///  @param[in] add_reduction Optional argument to generate the reduction
 ///                           kernel.
 //------------------------------------------------------------------------------
-        template<class BACKEND>
+        template<typename T>
         void create_pipeline(const std::string kernel_source,
                              const std::string kernel_name,
-                             graph::input_nodes<BACKEND> inputs,
-                             graph::output_nodes<BACKEND> outputs,
+                             graph::input_nodes<T> inputs,
+                             graph::output_nodes<T> outputs,
                              const size_t num_rays,
                              const bool add_reduction=false) {
             NSError *error;
@@ -97,15 +97,15 @@ namespace gpu {
                 NSLog(@"%@", error);
             }
 
-            const size_t buffer_element_size = sizeof(typename BACKEND::base);
-            for (graph::shared_variable<BACKEND> &input : inputs) {
-                BACKEND buffer = input->evaluate();
+            const size_t buffer_element_size = sizeof(T);
+            for (graph::shared_variable<T> &input : inputs) {
+                backend::cpu<T> buffer = input->evaluate();
                 buffers.push_back([device newBufferWithBytes:buffer.data()
                                                       length:buffer.size()*buffer_element_size
                                                      options:MTLResourceStorageModeManaged]);
             }
-            for (graph::shared_leaf<BACKEND> &output : outputs) {
-                BACKEND buffer = output->evaluate();
+            for (graph::shared_leaf<T> &output : outputs) {
+                backend::cpu<T> buffer = output->evaluate();
                 buffers.push_back([device newBufferWithBytes:&buffer[0]
                                                       length:buffer.size()*buffer_element_size
                                                      options:MTLResourceStorageModeManaged]);
@@ -125,7 +125,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a max compute pipeline.
 //------------------------------------------------------------------------------
-        template<class BACKEND>
+        template<typename T>
         void create_max_pipeline() {
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
@@ -141,7 +141,7 @@ namespace gpu {
                 NSLog(@"%@", error);
             }
 
-            result = [device newBufferWithLength:sizeof(typename BACKEND::base)
+            result = [device newBufferWithLength:sizeof(T)
                                          options:MTLResourceStorageModeManaged];
         }
 
@@ -181,8 +181,8 @@ namespace gpu {
 ///
 ///  @returns The maximum value from the input buffer.
 //------------------------------------------------------------------------------
-        template<class BACKEND>
-        typename BACKEND::base max_reduction() {
+        template<typename T>
+        T max_reduction() {
             run();
             command_buffer = [queue commandBuffer];
 
@@ -202,7 +202,7 @@ namespace gpu {
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
 
-            return static_cast<typename BACKEND::base *> ([result contents])[0];
+            return static_cast<T *> ([result contents])[0];
         }
 
 //------------------------------------------------------------------------------
@@ -225,11 +225,11 @@ namespace gpu {
 ///
 ///  @param[in] index Particle index to print.
 //------------------------------------------------------------------------------
-        template<class BACKEND>
+        template<typename T>
         void print_results(const size_t index) {
             wait();
             for (id<MTLBuffer> buffer : buffers) {
-                const typename BACKEND::base *contents = static_cast<typename BACKEND::base *> ([buffer contents]);
+                const T *contents = static_cast<T *> ([buffer contents]);
                 std::cout << contents[index] << " ";
             }
             std::cout << std::endl;
@@ -241,9 +241,9 @@ namespace gpu {
 ///  @param[in]     source_index Index of the GPU buffer.
 ///  @param[in,out] destination  Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        template<typename BASE>
+        template<typename T>
         void copy_buffer(const size_t source_index,
-                         BASE *destination) {
+                         T *destination) {
             command_buffer = [queue commandBuffer];
             id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
             [blit synchronizeResource:buffers[source_index]];

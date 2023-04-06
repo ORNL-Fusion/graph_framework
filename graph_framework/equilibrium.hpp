@@ -19,11 +19,11 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a generic equilibrium.
 //------------------------------------------------------------------------------
-    template<typename BACKEND>
+    template<typename T>
     class equilibrium {
     protected:
 ///  Ion masses for each species.
-        const std::vector<typename BACKEND::base> ion_masses;
+        const std::vector<T> ion_masses;
 ///  Ion charge for each species.
         const std::vector<uint8_t> ion_charges;
 
@@ -34,7 +34,7 @@ namespace equilibrium {
 ///  @param[in] masses  Vector of ion masses.
 ///  @param[in] charges Vector of ion charges.
 //------------------------------------------------------------------------------
-        equilibrium(const std::vector<typename BACKEND::base> &masses,
+        equilibrium(const std::vector<T> &masses,
                     const std::vector<uint8_t> &charges) :
         ion_masses(masses), ion_charges(charges) {
             assert(ion_masses.size() == ion_charges.size() &&
@@ -61,7 +61,7 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The mass for the ion at the index.
 //------------------------------------------------------------------------------
-        typename BACKEND::base get_ion_mass(const size_t index) const {
+        T get_ion_mass(const size_t index) const {
             return ion_masses.at(index);
         }
 
@@ -83,9 +83,9 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_density(graph::shared_leaf<BACKEND> x,
-                                                                 graph::shared_leaf<BACKEND> y,
-                                                                 graph::shared_leaf<BACKEND> z) = 0;
+        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
+                                                           graph::shared_leaf<T> y,
+                                                           graph::shared_leaf<T> z) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
@@ -93,10 +93,10 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_density(const size_t index,
-                                                            graph::shared_leaf<BACKEND> x,
-                                                            graph::shared_leaf<BACKEND> y,
-                                                            graph::shared_leaf<BACKEND> z) = 0;
+        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
+                                                      graph::shared_leaf<T> x,
+                                                      graph::shared_leaf<T> y,
+                                                      graph::shared_leaf<T> z) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
@@ -106,9 +106,9 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_temperature(graph::shared_leaf<BACKEND> x,
-                                                                     graph::shared_leaf<BACKEND> y,
-                                                                     graph::shared_leaf<BACKEND> z) = 0;
+        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
+                                                               graph::shared_leaf<T> y,
+                                                               graph::shared_leaf<T> z) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
@@ -116,10 +116,10 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_temperature(const size_t index,
-                                                                graph::shared_leaf<BACKEND> x,
-                                                                graph::shared_leaf<BACKEND> y,
-                                                                graph::shared_leaf<BACKEND> z) = 0;
+        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
+                                                          graph::shared_leaf<T> x,
+                                                          graph::shared_leaf<T> y,
+                                                          graph::shared_leaf<T> z) = 0;
         
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
@@ -129,17 +129,17 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>>
-        get_magnetic_field(graph::shared_leaf<BACKEND> x,
-                           graph::shared_leaf<BACKEND> y,
-                           graph::shared_leaf<BACKEND> z) = 0;
+        virtual graph::shared_vector<graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>>
+        get_magnetic_field(graph::shared_leaf<T> x,
+                           graph::shared_leaf<T> y,
+                           graph::shared_leaf<T> z) = 0;
     };
 
 ///  Convenience type alias for unique equilibria.
-    template<typename BACKEND>
-    using unique_equilibrium = std::unique_ptr<equilibrium<BACKEND>>;
+    template<typename T>
+    using unique_equilibrium = std::unique_ptr<equilibrium<T>>;
 
 //******************************************************************************
 //  No Magnetic equilibrium.
@@ -147,15 +147,15 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Uniform density with varying magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename BACKEND>
-    class no_magnetic_field : public equilibrium<BACKEND> {
+    template<typename T>
+    class no_magnetic_field : public equilibrium<T> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a linear density with no magnetic field.
 //------------------------------------------------------------------------------
         no_magnetic_field() :
-        equilibrium<BACKEND> ({3.34449469E-27},
-                              {1}) {}
+        equilibrium<T> ({3.34449469E-27},
+                        {1}) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -165,11 +165,11 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_density(graph::shared_leaf<BACKEND> x,
-                                                                 graph::shared_leaf<BACKEND> y,
-                                                                 graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0E19) *
-                   (graph::constant<BACKEND> (0.1)*x + graph::constant<BACKEND> (1.0));
+        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
+                                                           graph::shared_leaf<T> y,
+                                                           graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1.0E19)) *
+                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
 
 //------------------------------------------------------------------------------
@@ -178,12 +178,12 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_density(const size_t index,
-                                                            graph::shared_leaf<BACKEND> x,
-                                                            graph::shared_leaf<BACKEND> y,
-                                                            graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0E19) *
-                   (graph::constant<BACKEND> (0.1)*x + graph::constant<BACKEND> (1.0));
+        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
+                                                      graph::shared_leaf<T> x,
+                                                      graph::shared_leaf<T> y,
+                                                      graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1.0E19)) *
+                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
 
 //------------------------------------------------------------------------------
@@ -194,10 +194,10 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_temperature(graph::shared_leaf<BACKEND> x,
-                                                                     graph::shared_leaf<BACKEND> y,
-                                                                     graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1000.0);
+        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
+                                                               graph::shared_leaf<T> y,
+                                                               graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -206,11 +206,11 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_temperature(const size_t index,
-                                                                graph::shared_leaf<BACKEND> x,
-                                                                graph::shared_leaf<BACKEND> y,
-                                                                graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1000.0);
+        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
+                                                          graph::shared_leaf<T> x,
+                                                          graph::shared_leaf<T> y,
+                                                          graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -221,21 +221,25 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>>
-        get_magnetic_field(graph::shared_leaf<BACKEND> x,
-                           graph::shared_leaf<BACKEND> y,
-                           graph::shared_leaf<BACKEND> z) final {
-            auto zero = graph::constant<BACKEND> (0.0);
+        virtual graph::shared_vector<graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>>
+        get_magnetic_field(graph::shared_leaf<T> x,
+                           graph::shared_leaf<T> y,
+                           graph::shared_leaf<T> z) final {
+            auto zero = graph::zero<T> ();
             return graph::vector(zero, zero, zero);
         }
     };
 
-///  Convenience type alias for unique equilibria.
-    template<typename BACKEND>
-    std::unique_ptr<equilibrium<BACKEND>> make_no_magnetic_field() {
-        return std::make_unique<no_magnetic_field<BACKEND>> ();
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a no magnetic field equilibrium.
+///
+///  @returns A constructed no magnetic field equilibrium.
+//------------------------------------------------------------------------------
+    template<typename T>
+    std::unique_ptr<equilibrium<T>> make_no_magnetic_field() {
+        return std::make_unique<no_magnetic_field<T>> ();
     }
 
 //******************************************************************************
@@ -244,15 +248,15 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Uniform density with varying magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename BACKEND>
-    class slab : public equilibrium<BACKEND> {
+    template<typename T>
+    class slab : public equilibrium<T> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a guassian density with uniform magnetic field.
 //------------------------------------------------------------------------------
         slab() :
-        equilibrium<BACKEND> ({3.34449469E-27},
-                              {1}) {}
+        equilibrium<T> ({3.34449469E-27},
+                        {1}) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -262,10 +266,10 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_density(graph::shared_leaf<BACKEND> x,
-                                                                 graph::shared_leaf<BACKEND> y,
-                                                                 graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0E19);
+        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
+                                                           graph::shared_leaf<T> y,
+                                                           graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1.0E19));
         }
 
 //------------------------------------------------------------------------------
@@ -274,11 +278,11 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_density(const size_t index,
-                                                            graph::shared_leaf<BACKEND> x,
-                                                            graph::shared_leaf<BACKEND> y,
-                                                            graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0E19);
+        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
+                                                      graph::shared_leaf<T> x,
+                                                      graph::shared_leaf<T> y,
+                                                      graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1.0E19));
         }
 
 //------------------------------------------------------------------------------
@@ -289,10 +293,10 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_temperature(graph::shared_leaf<BACKEND> x,
-                                                                     graph::shared_leaf<BACKEND> y,
-                                                                     graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1000.0);
+        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
+                                                               graph::shared_leaf<T> y,
+                                                               graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -301,11 +305,11 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_temperature(const size_t index,
-                                                                graph::shared_leaf<BACKEND> x,
-                                                                graph::shared_leaf<BACKEND> y,
-                                                                graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1000.0);
+        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
+                                                          graph::shared_leaf<T> x,
+                                                          graph::shared_leaf<T> y,
+                                                          graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -316,22 +320,26 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>>
-        get_magnetic_field(graph::shared_leaf<BACKEND> x,
-                           graph::shared_leaf<BACKEND> y,
-                           graph::shared_leaf<BACKEND> z) final {
-            auto zero = graph::constant<BACKEND> (0.0);
+        virtual graph::shared_vector<graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>>
+        get_magnetic_field(graph::shared_leaf<T> x,
+                           graph::shared_leaf<T> y,
+                           graph::shared_leaf<T> z) final {
+            auto zero = graph::zero<T> ();
             return graph::vector(zero, zero,
-                                 graph::constant<BACKEND> (0.1)*x + graph::constant<BACKEND> (1.0));
+                                 graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
     };
 
-///  Convenience type alias for unique equilibria.
-    template<typename BACKEND>
-    std::unique_ptr<equilibrium<BACKEND>> make_slab() {
-        return std::make_unique<slab<BACKEND>> ();
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a slab equilibrium.
+///
+///  @returns A constructed slab equilibrium.
+//------------------------------------------------------------------------------
+    template<typename T>
+    std::unique_ptr<equilibrium<T>> make_slab() {
+        return std::make_unique<slab<T>> ();
     }
 
 //******************************************************************************
@@ -340,15 +348,15 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Vary density with uniform magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename BACKEND>
-    class slab_density : public equilibrium<BACKEND> {
+    template<typename T>
+    class slab_density : public equilibrium<T> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a guassian density with uniform magnetic field.
 //------------------------------------------------------------------------------
         slab_density() :
-        equilibrium<BACKEND> ({3.34449469E-27},
-                              {1}) {}
+        equilibrium<T> ({3.34449469E-27},
+                        {1}) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -358,11 +366,11 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_density(graph::shared_leaf<BACKEND> x,
-                                                                 graph::shared_leaf<BACKEND> y,
-                                                                 graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0E19) *
-                   (graph::constant<BACKEND> (0.1)*x + graph::constant<BACKEND> (1.0));
+        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
+                                                           graph::shared_leaf<T> y,
+                                                           graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1.0E19)) *
+                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
 
 //------------------------------------------------------------------------------
@@ -371,12 +379,12 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_density(const size_t index,
-                                                            graph::shared_leaf<BACKEND> x,
-                                                            graph::shared_leaf<BACKEND> y,
-                                                            graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0E19) *
-                   (graph::constant<BACKEND> (0.1)*x + graph::constant<BACKEND> (1.0));
+        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
+                                                      graph::shared_leaf<T> x,
+                                                      graph::shared_leaf<T> y,
+                                                      graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1.0E19)) *
+                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
         }
 
 //------------------------------------------------------------------------------
@@ -387,10 +395,10 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_temperature(graph::shared_leaf<BACKEND> x,
-                                                                     graph::shared_leaf<BACKEND> y,
-                                                                     graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1000.0);
+        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
+                                                               graph::shared_leaf<T> y,
+                                                               graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -399,11 +407,11 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_temperature(const size_t index,
-                                                                graph::shared_leaf<BACKEND> x,
-                                                                graph::shared_leaf<BACKEND> y,
-                                                                graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1000.0);
+        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
+                                                          graph::shared_leaf<T> x,
+                                                          graph::shared_leaf<T> y,
+                                                          graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1000.0));
         }
         
 //------------------------------------------------------------------------------
@@ -414,22 +422,25 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>>
-        get_magnetic_field(graph::shared_leaf<BACKEND> x,
-                           graph::shared_leaf<BACKEND> y,
-                           graph::shared_leaf<BACKEND> z) final {
-            auto zero = graph::constant<BACKEND> (0.0);
-            auto one = graph::constant<BACKEND> (1.0);
-            return graph::vector(zero, zero, one);
+        virtual graph::shared_vector<graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>>
+        get_magnetic_field(graph::shared_leaf<T> x,
+                           graph::shared_leaf<T> y,
+                           graph::shared_leaf<T> z) final {
+            auto zero = graph::zero<T> ();
+            return graph::vector(zero, zero, graph::one<T> ());
         }
     };
 
-///  Convenience type alias for unique equilibria.
-    template<typename BACKEND>
-    std::unique_ptr<equilibrium<BACKEND>> make_slab_density() {
-        return std::make_unique<slab_density<BACKEND>> ();
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a slab density equilibrium.
+///
+///  @returns A constructed slab density equilibrium.
+//------------------------------------------------------------------------------
+    template<typename T>
+    std::unique_ptr<equilibrium<T>> make_slab_density() {
+        return std::make_unique<slab_density<T>> ();
     }
 
 //******************************************************************************
@@ -438,15 +449,15 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Guassian density with uniform magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename BACKEND>
-    class guassian_density : public equilibrium<BACKEND> {
+    template<typename T>
+    class guassian_density : public equilibrium<T> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a guassian density with uniform magnetic field.
 //------------------------------------------------------------------------------
         guassian_density() :
-        equilibrium<BACKEND> ({3.34449469E-27},
-                              {1}) {}
+        equilibrium<T> ({3.34449469E-27},
+                        {1}) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -456,10 +467,10 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_density(graph::shared_leaf<BACKEND> x,
-                                                                 graph::shared_leaf<BACKEND> y,
-                                                                 graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0E19)*graph::exp((x*x + y*y)/graph::constant<BACKEND> (-0.2));
+        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
+                                                           graph::shared_leaf<T> y,
+                                                           graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1.0E19))*graph::exp((x*x + y*y)/graph::constant(static_cast<T> (-0.2)));
         }
 
 //------------------------------------------------------------------------------
@@ -468,11 +479,11 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_density(const size_t index,
-                                                            graph::shared_leaf<BACKEND> x,
-                                                            graph::shared_leaf<BACKEND> y,
-                                                            graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1.0E19)*graph::exp((x*x + y*y)/graph::constant<BACKEND> (-0.2));
+        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
+                                                      graph::shared_leaf<T> x,
+                                                      graph::shared_leaf<T> y,
+                                                      graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1.0E19))*graph::exp((x*x + y*y)/graph::constant(static_cast<T> (-0.2)));
         }
 
 //------------------------------------------------------------------------------
@@ -483,10 +494,10 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_electron_temperature(graph::shared_leaf<BACKEND> x,
-                                                                     graph::shared_leaf<BACKEND> y,
-                                                                     graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1000.0);
+        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
+                                                               graph::shared_leaf<T> y,
+                                                               graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -495,11 +506,11 @@ namespace equilibrium {
 ///  @param[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<BACKEND> get_ion_temperature(const size_t index,
-                                                                graph::shared_leaf<BACKEND> x,
-                                                                graph::shared_leaf<BACKEND> y,
-                                                                graph::shared_leaf<BACKEND> z) final {
-            return graph::constant<BACKEND> (1000.0);
+        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
+                                                          graph::shared_leaf<T> x,
+                                                          graph::shared_leaf<T> y,
+                                                          graph::shared_leaf<T> z) final {
+            return graph::constant(static_cast<T> (1000.0));
         }
         
 //------------------------------------------------------------------------------
@@ -510,22 +521,25 @@ namespace equilibrium {
 ///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>,
-                                     graph::shared_leaf<BACKEND>>
-        get_magnetic_field(graph::shared_leaf<BACKEND> x,
-                           graph::shared_leaf<BACKEND> y,
-                           graph::shared_leaf<BACKEND> z) final {
-            auto zero = graph::constant<BACKEND> (0.0);
-            return graph::vector(graph::constant<BACKEND> (1.0),
-                                 zero, zero);
+        virtual graph::shared_vector<graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>,
+                                     graph::shared_leaf<T>>
+        get_magnetic_field(graph::shared_leaf<T> x,
+                           graph::shared_leaf<T> y,
+                           graph::shared_leaf<T> z) final {
+            auto zero = graph::zero<T> ();
+            return graph::vector(graph::one<T> (), zero, zero);
         }
     };
 
-///  Convenience type alias for unique equilibria.
-    template<typename BACKEND>
-    std::unique_ptr<equilibrium<BACKEND>> make_guassian_density() {
-        return std::make_unique<guassian_density<BACKEND>> ();
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a guassian density equilibrium.
+///
+///  @returns A constructed guassian density equilibrium.
+//------------------------------------------------------------------------------
+    template<typename T>
+    std::unique_ptr<equilibrium<T>> make_guassian_density() {
+        return std::make_unique<guassian_density<T>> ();
     }
 }
 

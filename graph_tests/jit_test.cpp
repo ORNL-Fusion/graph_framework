@@ -24,9 +24,9 @@
 ///  @param[in] test      Test value.
 ///  @param[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
-template<typename BASE> void check(const BASE test,
-                                   const BASE tolarance) {
-    if constexpr (jit::is_complex<BASE> ()) {
+template<typename T> void check(const T test,
+                                   const T tolarance) {
+    if constexpr (jit::is_complex<T> ()) {
         assert(std::real(test) <= std::real(tolarance) &&
                "Real GPU and CPU values differ.");
         assert(std::imag(test) <= std::imag(tolarance) &&
@@ -45,269 +45,269 @@ template<typename BASE> void check(const BASE test,
 ///  @param[in] expected  Expected result.
 ///  @param[in] tolarance Check tolarances.
 //------------------------------------------------------------------------------
-template<typename BASE> void compile(graph::input_nodes<backend::cpu<BASE>> inputs,
-                                     graph::output_nodes<backend::cpu<BASE>> outputs,
-                                     graph::map_nodes<backend::cpu<BASE>> setters,
-                                     const BASE expected,
-                                     const BASE tolarance) {
-    jit::kernel<backend::cpu<BASE>> source("test_kernel", inputs, outputs, setters);
+template<typename T> void compile(graph::input_nodes<backend::cpu<T>> inputs,
+                                  graph::output_nodes<backend::cpu<T>> outputs,
+                                  graph::map_nodes<backend::cpu<T>> setters,
+                                  const T expected,
+                                  const T tolarance) {
+    jit::kernel<backend::cpu<T>> source("test_kernel", inputs, outputs, setters);
 
     source.compile("test_kernel", inputs, outputs, 1);
     source.run();
 
-    BASE result;
+    T result;
     source.copy_buffer(inputs.size(), &result);
 
-    const BASE diff = std::abs(result - expected);
+    const T diff = std::abs(result - expected);
     check(diff, tolarance);
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests to test simple math operations are the same.
 //------------------------------------------------------------------------------
-template<typename BASE> void run_math_tests() {
-    auto v1 = graph::variable<backend::cpu<BASE>> (1, "v1");
-    auto v2 = graph::variable<backend::cpu<BASE>> (1, "v2");
-    auto v3 = graph::variable<backend::cpu<BASE>> (1, "v3");
+template<typename T> void run_math_tests() {
+    auto v1 = graph::variable<backend::cpu<T>> (1, "v1");
+    auto v2 = graph::variable<backend::cpu<T>> (1, "v2");
+    auto v3 = graph::variable<backend::cpu<T>> (1, "v3");
 
-    v1->set(static_cast<BASE> (2.0));
-    v2->set(static_cast<BASE> (3.0));
-    v3->set(static_cast<BASE> (4.0));
+    v1->set(static_cast<T> (2.0));
+    v2->set(static_cast<T> (3.0));
+    v3->set(static_cast<T> (4.0));
 
     auto add_node = v1 + v2;
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {add_node}, {},
-                   add_node->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {add_node}, {},
+                add_node->evaluate().at(0), 0.0);
 
     auto add_node_dfdv1 = add_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {add_node_dfdv1}, {},
-                   add_node_dfdv1->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {add_node_dfdv1}, {},
+                add_node_dfdv1->evaluate().at(0), 0.0);
 
     auto add_node_dfdv2 = add_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {add_node_dfdv2}, {},
-                   add_node_dfdv2->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {add_node_dfdv2}, {},
+                add_node_dfdv2->evaluate().at(0), 0.0);
 
     auto add_node_dfdv3 = add_node->df(v3);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {add_node_dfdv3}, {},
-                   add_node_dfdv3->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {add_node_dfdv3}, {},
+                add_node_dfdv3->evaluate().at(0), 0.0);
 
     auto subtract_node = v1 - v2;
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {subtract_node}, {},
-                   subtract_node->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {subtract_node}, {},
+                subtract_node->evaluate().at(0), 0.0);
 
     auto subtract_node_dfdv1 = subtract_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {subtract_node_dfdv1}, {},
-                   subtract_node_dfdv1->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {subtract_node_dfdv1}, {},
+                subtract_node_dfdv1->evaluate().at(0), 0.0);
 
     auto subtract_node_dfdv2 = subtract_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {subtract_node_dfdv2}, {},
-                   subtract_node_dfdv2->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {subtract_node_dfdv2}, {},
+                subtract_node_dfdv2->evaluate().at(0), 0.0);
 
     auto subtract_node_dfdv3 = subtract_node->df(v3);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {subtract_node_dfdv3}, {},
-                   subtract_node_dfdv3->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {subtract_node_dfdv3}, {},
+                subtract_node_dfdv3->evaluate().at(0), 0.0);
 
     auto multiply_node = v1*v2;
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {multiply_node}, {},
-                   multiply_node->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {multiply_node}, {},
+                multiply_node->evaluate().at(0), 0.0);
 
     auto multiply_node_dfdv1 = multiply_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {multiply_node_dfdv1}, {},
-                   multiply_node_dfdv1->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {multiply_node_dfdv1}, {},
+                multiply_node_dfdv1->evaluate().at(0), 0.0);
 
     auto multiply_node_dfdv2 = multiply_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {multiply_node_dfdv2}, {},
-                   multiply_node_dfdv2->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {multiply_node_dfdv2}, {},
+                multiply_node_dfdv2->evaluate().at(0), 0.0);
 
     auto multiply_node_dfdv3 = multiply_node->df(v3);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {multiply_node_dfdv3}, {},
-                   multiply_node_dfdv3->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {multiply_node_dfdv3}, {},
+                multiply_node_dfdv3->evaluate().at(0), 0.0);
 
     auto divide_node = v1/v2;
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {divide_node}, {},
-                   divide_node->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {divide_node}, {},
+                divide_node->evaluate().at(0), 0.0);
 
     auto divide_node_dfdv1 = divide_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {divide_node_dfdv1}, {},
-                   divide_node_dfdv1->evaluate().at(0),
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {divide_node_dfdv1}, {},
+                divide_node_dfdv1->evaluate().at(0),
 #ifdef USE_CUDA
-                   2.8E-17);
+                2.8E-17);
 #else
-                   0.0);
+                0.0);
 #endif
     auto divide_node_dfdv2 = divide_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {divide_node_dfdv2}, {},
-                   divide_node_dfdv2->evaluate().at(0),
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {divide_node_dfdv2}, {},
+                divide_node_dfdv2->evaluate().at(0),
 #ifdef USE_CUDA
-                   2.8E-17);
+                2.8E-17);
 #else
-                   0.0);
+                0.0);
 #endif
 
     auto divide_node_dfdv3 = divide_node->df(v3);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {divide_node_dfdv3}, {},
-                   divide_node_dfdv3->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {divide_node_dfdv3}, {},
+                divide_node_dfdv3->evaluate().at(0), 0.0);
 
     auto fma_node = graph::fma(v1, v2, v3);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2),
-                    graph::variable_cast(v3)},
-                   {fma_node}, {},
-                   fma_node->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2),
+                 graph::variable_cast(v3)},
+                {fma_node}, {},
+                fma_node->evaluate().at(0), 0.0);
 
     auto fma_node_dfdv1 = fma_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {fma_node_dfdv1}, {},
-                   fma_node_dfdv1->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {fma_node_dfdv1}, {},
+                fma_node_dfdv1->evaluate().at(0), 0.0);
 
     auto fma_node_dfdv2 = fma_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2),
-                    graph::variable_cast(v3)},
-                   {fma_node_dfdv2}, {},
-                   fma_node_dfdv2->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2),
+                 graph::variable_cast(v3)},
+                {fma_node_dfdv2}, {},
+                fma_node_dfdv2->evaluate().at(0), 0.0);
 
     auto fma_node_dfdv3 = fma_node->df(v3);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2),
-                    graph::variable_cast(v3)},
-                   {fma_node_dfdv2}, {},
-                   fma_node_dfdv2->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2),
+                 graph::variable_cast(v3)},
+                {fma_node_dfdv2}, {},
+                fma_node_dfdv2->evaluate().at(0), 0.0);
 
-    auto fma_node_dfdv4 = fma_node->df(graph::variable<backend::cpu<BASE>> (1, ""));
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2),
-                    graph::variable_cast(v3)},
-                   {fma_node_dfdv4}, {},
-                   fma_node_dfdv4->evaluate().at(0), 0.0);
+    auto fma_node_dfdv4 = fma_node->df(graph::variable<backend::cpu<T>> (1, ""));
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2),
+                 graph::variable_cast(v3)},
+                {fma_node_dfdv4}, {},
+                fma_node_dfdv4->evaluate().at(0), 0.0);
 
     auto sqrt_node = graph::sqrt(v2);
-    compile<BASE> ({graph::variable_cast(v2)},
-                   {sqrt_node}, {},
-                   sqrt_node->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v2)},
+                {sqrt_node}, {},
+                sqrt_node->evaluate().at(0), 0.0);
 
     auto sqrt_node_dfdv1 = sqrt_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v2)},
-                   {sqrt_node_dfdv1}, {},
-                   sqrt_node_dfdv1->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v2)},
+                {sqrt_node_dfdv1}, {},
+                sqrt_node_dfdv1->evaluate().at(0), 0.0);
 
     auto sqrt_node_dfdv2 = sqrt_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v2)},
-                   {sqrt_node_dfdv2}, {},
-                   sqrt_node_dfdv2->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v2)},
+                {sqrt_node_dfdv2}, {},
+                sqrt_node_dfdv2->evaluate().at(0), 0.0);
 
     auto log_node = graph::log(v1);
-    compile<BASE> ({graph::variable_cast(v1)},
-                   {log_node}, {},
-                   log_node->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1)},
+                {log_node}, {},
+                log_node->evaluate().at(0), 0.0);
 
     auto log_node_dfdv1 = log_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v1)},
-                   {log_node_dfdv1}, {},
-                   log_node_dfdv1->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1)},
+                {log_node_dfdv1}, {},
+                log_node_dfdv1->evaluate().at(0), 0.0);
 
     auto log_node_dfdv2 = log_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v1)},
-                   {log_node_dfdv2}, {},
-                   log_node_dfdv2->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1)},
+                {log_node_dfdv2}, {},
+                log_node_dfdv2->evaluate().at(0), 0.0);
 
     auto exp_node = graph::exp(v2);
-    compile<BASE> ({graph::variable_cast(v2)},
-                   {exp_node}, {},
-                   exp_node->evaluate().at(0), 2.0E-6);
+    compile<T> ({graph::variable_cast(v2)},
+                {exp_node}, {},
+                exp_node->evaluate().at(0), 2.0E-6);
 
     auto exp_node_dfdv1 = exp_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v2)},
-                   {exp_node_dfdv1}, {},
-                   exp_node_dfdv1->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v2)},
+                {exp_node_dfdv1}, {},
+                exp_node_dfdv1->evaluate().at(0), 0.0);
 
     auto exp_node_dfdv2 = exp_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v2)},
-                   {exp_node_dfdv2}, {},
-                   exp_node_dfdv2->evaluate().at(0), 2.0E-6);
+    compile<T> ({graph::variable_cast(v2)},
+                {exp_node_dfdv2}, {},
+                exp_node_dfdv2->evaluate().at(0), 2.0E-6);
 
     auto pow_node = graph::pow(v1, v2);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {pow_node}, {},
-                   pow_node->evaluate().at(0),
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {pow_node}, {},
+                pow_node->evaluate().at(0),
 #ifdef USE_CUDA
-                   1.8E-15);
+                1.8E-15);
 #else
-                   0.0);
+                0.0);
 #endif
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {pow_node}, {},
-                   2.0*2.0*2.0,
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {pow_node}, {},
+                2.0*2.0*2.0,
 #ifdef USE_CUDA
-                   1.8E-15);
+                1.8E-15);
 #else
-                   0.0);
+                0.0);
 #endif
 
     auto pow_node_dfdv1 = pow_node->df(v1);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {pow_node_dfdv1}, {},
-                   pow_node_dfdv1->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {pow_node_dfdv1}, {},
+                pow_node_dfdv1->evaluate().at(0), 0.0);
 
     auto pow_node_dfdv2 = pow_node->df(v2);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {pow_node_dfdv2}, {},
-                   pow_node_dfdv2->evaluate().at(0),
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {pow_node_dfdv2}, {},
+                pow_node_dfdv2->evaluate().at(0),
 #ifdef USE_CUDA
-                   8.9E-16);
+                8.9E-16);
 #else
-                   0.0);
+                0.0);
 #endif
 
     auto pow_node_dfdv3 = pow_node->df(v3);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v2)},
-                   {pow_node_dfdv3}, {},
-                   pow_node_dfdv3->evaluate().at(0), 0.0);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v2)},
+                {pow_node_dfdv3}, {},
+                pow_node_dfdv3->evaluate().at(0), 0.0);
 
-    auto v4 = graph::variable<backend::cpu<BASE>> (1, "v4");
-    v4->set(static_cast<BASE> (0.57245));
+    auto v4 = graph::variable<backend::cpu<T>> (1, "v4");
+    v4->set(static_cast<T> (0.57245));
     auto pow_non_int = graph::pow(v4, v1);
-    compile<BASE> ({graph::variable_cast(v1),
-                    graph::variable_cast(v4)},
-                   {pow_non_int}, {},
-                   pow_non_int->evaluate().at(0), 3.0E-8);
+    compile<T> ({graph::variable_cast(v1),
+                 graph::variable_cast(v4)},
+                {pow_non_int}, {},
+                pow_non_int->evaluate().at(0), 3.0E-8);
 }
 
 //------------------------------------------------------------------------------
@@ -317,7 +317,7 @@ template<typename BASE> void run_math_tests() {
 //------------------------------------------------------------------------------
 template<class DISPERSION_FUNCTION>
 void run_dispersion_test(equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::backend> &eq,
-                         const typename DISPERSION_FUNCTION::backend::base tolarance) {
+                         const typename DISPERSION_FUNCTION::backend::T tolarance) {
 
     auto w = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "w");
     auto x = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "x");
@@ -328,19 +328,19 @@ void run_dispersion_test(equilibrium::unique_equilibrium<typename DISPERSION_FUN
     auto kz = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "kz");
     auto t = graph::variable<typename DISPERSION_FUNCTION::backend> (1, "t");
 
-    w->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
-    x->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
-    y->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
-    z->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
-    kx->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
-    ky->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
-    kz->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
-    t->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
+    w->set(static_cast<typename DISPERSION_FUNCTION::T> (1.0));
+    x->set(static_cast<typename DISPERSION_FUNCTION::T> (1.0));
+    y->set(static_cast<typename DISPERSION_FUNCTION::T> (1.0));
+    z->set(static_cast<typename DISPERSION_FUNCTION::T> (1.0));
+    kx->set(static_cast<typename DISPERSION_FUNCTION::T> (1.0));
+    ky->set(static_cast<typename DISPERSION_FUNCTION::T> (1.0));
+    kz->set(static_cast<typename DISPERSION_FUNCTION::T> (1.0));
+    t->set(static_cast<typename DISPERSION_FUNCTION::T> (1.0));
 
     dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx, ky, kz, x, y, z, t, eq);
     auto residule = D.get_d();
 
-    compile<typename DISPERSION_FUNCTION::backend::base> ({graph::variable_cast(w),
+    compile<typename DISPERSION_FUNCTION::backend::T> ({graph::variable_cast(w),
                                                            graph::variable_cast(x),
                                                            graph::variable_cast(y),
                                                            graph::variable_cast(z),
@@ -356,23 +356,23 @@ void run_dispersion_test(equilibrium::unique_equilibrium<typename DISPERSION_FUN
 //------------------------------------------------------------------------------
 ///  @brief Run dispersion tests.
 //------------------------------------------------------------------------------
-template<class BASE>
+template<class T>
 void run_dispersion_tests() {
-    auto no_mag_eq = equilibrium::make_no_magnetic_field<backend::cpu<BASE>> ();
+    auto no_mag_eq = equilibrium::make_no_magnetic_field<backend::cpu<T>> ();
 
-    run_dispersion_test<dispersion::bohm_gross<backend::cpu<BASE>>> (no_mag_eq, 0.0);
+    run_dispersion_test<dispersion::bohm_gross<backend::cpu<T>>> (no_mag_eq, 0.0);
 
-    auto slab_eq = equilibrium::make_no_magnetic_field<backend::cpu<BASE>> ();
+    auto slab_eq = equilibrium::make_no_magnetic_field<backend::cpu<T>> ();
 
-    run_dispersion_test<dispersion::simple<backend::cpu<BASE>>> (slab_eq, 0.0);
-    run_dispersion_test<dispersion::ordinary_wave<backend::cpu<BASE>>> (slab_eq, 0.0);
-    run_dispersion_test<dispersion::extra_ordinary_wave<backend::cpu<BASE>>> (slab_eq,
+    run_dispersion_test<dispersion::simple<backend::cpu<T>>> (slab_eq, 0.0);
+    run_dispersion_test<dispersion::ordinary_wave<backend::cpu<T>>> (slab_eq, 0.0);
+    run_dispersion_test<dispersion::extra_ordinary_wave<backend::cpu<T>>> (slab_eq,
 #ifdef USE_CUDA
                                                                               0.032);
 #else
                                                                               0.0);
 #endif
-    run_dispersion_test<dispersion::cold_plasma<backend::cpu<BASE>>> (slab_eq,
+    run_dispersion_test<dispersion::cold_plasma<backend::cpu<T>>> (slab_eq,
 #ifdef USE_CUDA
                                                                       1.4E10);
 #else
@@ -383,10 +383,10 @@ void run_dispersion_tests() {
 //------------------------------------------------------------------------------
 ///  @brief Run tests.
 //------------------------------------------------------------------------------
-template<typename BASE> void run_tests() {
-    if constexpr (jit::can_jit<backend::cpu<BASE>> ()) {
-        run_math_tests<BASE> ();
-        run_dispersion_tests<BASE> ();
+template<typename T> void run_tests() {
+    if constexpr (jit::can_jit<backend::cpu<T>> ()) {
+        run_math_tests<T> ();
+        run_dispersion_tests<T> ();
     }
 }
 

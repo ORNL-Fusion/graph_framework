@@ -15,16 +15,16 @@
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
-template<typename BACKEND> void run_tests() {
-    auto one = graph::constant<BACKEND> (1.0);
-    auto zero = graph::constant<BACKEND> (0.0);
+template<typename T> void run_tests() {
+    auto one = graph::one<T> ();
+    auto zero = graph::zero<T> ();
 
 //  test a zero vector length.
     auto v0 = graph::vector(zero, zero, zero);
 #ifdef USE_REDUCE
     assert(zero.get() == v0->length().get() && "Expected zero.");
 #endif
-    assert(v0->length()->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(v0->length()->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
 
     auto v1 = graph::vector(one, zero, zero);
@@ -32,13 +32,13 @@ template<typename BACKEND> void run_tests() {
 #ifdef USE_REDUCE
     assert(one.get() == length.get() && "Expected one.");
 #endif
-    assert(length->evaluate()[0] == backend::base_cast<BACKEND> (1.0) &&
+    assert(length->evaluate()[0] == static_cast<T> (1.0) &&
            "Expected one.");
     auto dot = v1->dot(v1);
 #ifdef USE_REDUCE
     assert(dot.get() == one.get() && "Expected one.");
 #endif
-    assert(dot->evaluate()[0] == backend::base_cast<BACKEND> (1.0) &&
+    assert(dot->evaluate()[0] == static_cast<T> (1.0) &&
            "Expected one.");
     auto cross = v1->cross(v1);
 #ifdef USE_REDUCE
@@ -46,11 +46,11 @@ template<typename BACKEND> void run_tests() {
     assert(cross->get_y().get() == zero.get() && "Expected zero.");
     assert(cross->get_z().get() == zero.get() && "Expected zero.");
 #endif
-    assert(cross->get_x()->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(cross->get_x()->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
-    assert(cross->get_y()->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(cross->get_y()->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
-    assert(cross->get_z()->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(cross->get_z()->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
     auto unit = v1->unit();
 #ifdef USE_REDUCE
@@ -58,11 +58,11 @@ template<typename BACKEND> void run_tests() {
     assert(unit->get_y().get() == zero.get() && "Expected zero.");
     assert(unit->get_z().get() == zero.get() && "Expected zero.");
 #endif
-    assert(unit->get_x()->evaluate()[0] == backend::base_cast<BACKEND> (1.0) &&
+    assert(unit->get_x()->evaluate()[0] == static_cast<T> (1.0) &&
            "Expected zero.");
-    assert(unit->get_y()->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(unit->get_y()->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
-    assert(unit->get_z()->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(unit->get_z()->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
 
     auto v2 = graph::vector(zero, one, zero);
@@ -70,7 +70,7 @@ template<typename BACKEND> void run_tests() {
 #ifdef USE_REDUCE
     assert(dot.get() == zero.get() && "Expected zero.");
 #endif
-    assert(dot->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(dot->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
     cross = v1->cross(v2);
 #ifdef USE_REDUCE
@@ -78,11 +78,11 @@ template<typename BACKEND> void run_tests() {
     assert(cross->get_y().get() == zero.get() && "Expected zero.");
     assert(cross->get_z().get() == one.get() && "Expected one.");
 #endif
-    assert(cross->get_x()->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(cross->get_x()->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
-    assert(cross->get_y()->evaluate()[0] == backend::base_cast<BACKEND> (0.0) &&
+    assert(cross->get_y()->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected zero.");
-    assert(cross->get_z()->evaluate()[0] == backend::base_cast<BACKEND> (1.0) &&
+    assert(cross->get_z()->evaluate()[0] == static_cast<T> (1.0) &&
            "Expected one.");
 }
 
@@ -93,8 +93,8 @@ template<typename BACKEND> void run_tests() {
 ///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
-    run_tests<backend::cpu<float>> ();
-    run_tests<backend::cpu<double>> ();
-    run_tests<backend::cpu<std::complex<float>>> ();
-    run_tests<backend::cpu<std::complex<double>>> ();
+    run_tests<float> ();
+    run_tests<double> ();
+    run_tests<std::complex<float>> ();
+    run_tests<std::complex<double>> ();
 }

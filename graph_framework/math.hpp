@@ -19,7 +19,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
     template<typename N>
-    class sqrt_node : public straight_node<typename N::backend> {
+    class sqrt_node : public straight_node<typename N::base> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a sqrt node.
@@ -27,7 +27,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         sqrt_node(std::shared_ptr<N> x) :
-        straight_node<typename N::backend> (x->reduce()) {}
+        straight_node<typename N::base> (x->reduce()) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sqrt.
@@ -36,8 +36,8 @@ namespace graph {
 ///
 ///  @returns The value of sqrt(x).
 //------------------------------------------------------------------------------
-        virtual typename N::backend evaluate() final {
-            typename N::backend result = this->arg->evaluate();
+        virtual backend::cpu<typename N::base> evaluate() final {
+            backend::cpu<typename N::base> result = this->arg->evaluate();
             result.sqrt();
             return result;
         }
@@ -47,7 +47,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> reduce() final {
+        virtual shared_leaf<typename N::base> reduce() final {
 #ifdef USE_REDUCE
             auto ac = constant_cast(this->arg);
             if (ac.get()) {
@@ -67,7 +67,7 @@ namespace graph {
 
                 return pow(ap->get_left(),
                            ap->get_right() +
-                           constant<typename N::backend> (0.5));
+                           constant(static_cast<typename N::base> (0.5)));
             }
 
 //  Handle casses like sqrt(c*x) where c is constant or cases like
@@ -107,13 +107,13 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend>
-        df(shared_leaf<typename N::backend> x) final {
+        virtual shared_leaf<typename N::base>
+        df(shared_leaf<typename N::base> x) final {
             if (this->is_match(x)) {
-                return constant<typename N::backend> (1);
+                return one<typename N::base> ();
             } else {
                 return this->arg->df(x) /
-                       (constant<typename N::backend> (2)*this->shared_from_this());
+                       (two<typename N::base> ()*this->shared_from_this());
             }
         }
 
@@ -123,14 +123,14 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
-                                                         jit::register_map<N> &registers) final {
+        virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
+                                                      jit::register_map<N> &registers) final {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+                shared_leaf<typename N::base> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename N::backend> (stream);
+                jit::add_type<typename N::base> (stream);
                 stream << " " << registers[this] << " = sqrt("
                        << registers[a.get()] << ");"
                        << std::endl;
@@ -145,7 +145,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename N::backend> x) final {
+        virtual bool is_match(shared_leaf<typename N::base> x) final {
             if (this == x.get()) {
                 return true;
             }
@@ -175,7 +175,7 @@ namespace graph {
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
     template<typename N>
-    shared_leaf<typename N::backend> sqrt(std::shared_ptr<N> x) {
+    shared_leaf<typename N::base> sqrt(std::shared_ptr<N> x) {
         return (std::make_shared<sqrt_node<N>> (x))->reduce();
     }
 
@@ -203,7 +203,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
     template<typename N>
-    class exp_node : public straight_node<typename N::backend> {
+    class exp_node : public straight_node<typename N::base> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a exp node.
@@ -211,7 +211,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         exp_node(std::shared_ptr<N> x) :
-        straight_node<typename N::backend> (x->reduce()) {}
+        straight_node<typename N::base> (x->reduce()) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of exp.
@@ -220,8 +220,8 @@ namespace graph {
 ///
 ///  @returns The value of exp(x).
 //------------------------------------------------------------------------------
-        virtual typename N::backend evaluate() final {
-            typename N::backend result = this->arg->evaluate();
+        virtual backend::cpu<typename N::base> evaluate() final {
+            backend::cpu<typename N::base> result = this->arg->evaluate();
             result.exp();
             return result;
         }
@@ -231,7 +231,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> reduce() final {
+        virtual shared_leaf<typename N::base> reduce() final {
 #ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
@@ -248,10 +248,10 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend>
-        df(shared_leaf<typename N::backend> x) final {
+        virtual shared_leaf<typename N::base>
+        df(shared_leaf<typename N::base> x) final {
             if (this->is_match(x)) {
-                return constant<typename N::backend> (1);
+                return one<typename N::base> ();
             }
 
             return this->shared_from_this()*this->arg->df(x);
@@ -263,14 +263,14 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
-                                                         jit::register_map<N> &registers) final {
+        virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
+                                                      jit::register_map<N> &registers) final {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+                shared_leaf<typename N::base> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename N::backend> (stream);
+                jit::add_type<typename N::base> (stream);
                 stream << " " << registers[this] << " = exp("
                        << registers[a.get()] << ");"
                        << std::endl;
@@ -285,7 +285,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename N::backend> x) final {
+        virtual bool is_match(shared_leaf<typename N::base> x) final {
             if (this == x.get()) {
                 return true;
             }
@@ -315,7 +315,7 @@ namespace graph {
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
     template<typename N>
-    shared_leaf<typename N::backend> exp(std::shared_ptr<N> x) {
+    shared_leaf<typename N::base> exp(std::shared_ptr<N> x) {
         return (std::make_shared<exp_node<N>> (x))->reduce();
     }
 
@@ -343,7 +343,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
     template<typename N>
-    class log_node : public straight_node<typename N::backend> {
+    class log_node : public straight_node<typename N::base> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a log node.
@@ -351,7 +351,7 @@ namespace graph {
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         log_node(std::shared_ptr<N> x) :
-        straight_node<typename N::backend> (x->reduce()) {}
+        straight_node<typename N::base> (x->reduce()) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of log.
@@ -360,8 +360,8 @@ namespace graph {
 ///
 ///  @returns The value of log(x).
 //------------------------------------------------------------------------------
-        virtual typename N::backend evaluate() final {
-            typename N::backend result = this->arg->evaluate();
+        virtual backend::cpu<typename N::base> evaluate() final {
+            backend::cpu<typename N::base> result = this->arg->evaluate();
             result.log();
             return result;
         }
@@ -371,7 +371,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from log.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> reduce() final {
+        virtual shared_leaf<typename N::base> reduce() final {
 #ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
@@ -388,8 +388,8 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend>
-        df(shared_leaf<typename N::backend> x) final {
+        virtual shared_leaf<typename N::base>
+        df(shared_leaf<typename N::base> x) final {
             return this->arg->df(x)/this->arg;
         }
 
@@ -399,14 +399,14 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::backend> compile(std::stringstream &stream,
-                                                         jit::register_map<N> &registers) final {
+        virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
+                                                      jit::register_map<N> &registers) final {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename N::backend> a = this->arg->compile(stream, registers);
+                shared_leaf<typename N::base> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename N::backend> (stream);
+                jit::add_type<typename N::base> (stream);
                 stream << " " << registers[this] << " = log("
                        << registers[a.get()] << ");"
                        << std::endl;
@@ -421,7 +421,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename N::backend> x) final {
+        virtual bool is_match(shared_leaf<typename N::base> x) final {
             if (this == x.get()) {
                 return true;
             }
@@ -451,7 +451,7 @@ namespace graph {
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
     template<typename N>
-    shared_leaf<typename N::backend> log(std::shared_ptr<N> x) {
+    shared_leaf<typename N::base> log(std::shared_ptr<N> x) {
         return (std::make_shared<log_node<N>> (x))->reduce();
     }
 
@@ -479,7 +479,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    class pow_node : public branch_node<typename LN::backend> {
+    class pow_node : public branch_node<typename LN::base> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct an power node.
@@ -489,7 +489,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         pow_node(std::shared_ptr<LN> l,
                  std::shared_ptr<RN> r) :
-        branch_node<typename LN::backend> (l, r) {}
+        branch_node<typename LN::base> (l, r) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of addition.
@@ -498,9 +498,9 @@ namespace graph {
 ///
 ///  @returns The value of l^r.
 //------------------------------------------------------------------------------
-        virtual typename LN::backend evaluate() final {
-            typename LN::backend l_result = this->left->evaluate();
-            typename RN::backend r_result = this->right->evaluate();
+        virtual backend::cpu<typename LN::base> evaluate() final {
+            backend::cpu<typename LN::base> l_result = this->left->evaluate();
+            backend::cpu<typename RN::base> r_result = this->right->evaluate();
             return pow(l_result, r_result);
         }
 
@@ -509,13 +509,13 @@ namespace graph {
 ///
 ///  @returns A reduced power node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename LN::backend> reduce() final {
+        virtual shared_leaf<typename LN::base> reduce() final {
 #ifdef USE_REDUCE
             auto rc = constant_cast(this->right);
 
             if (rc.get()) {
                 if (rc->is(0)) {
-                    return constant<typename LN::backend> (1.0);
+                    return one<typename LN::base> ();
                 } else if (rc->is(1)) {
                     return this->left;
                 } else if (rc->is(0.5)) {
@@ -568,8 +568,8 @@ namespace graph {
 //  Reduce sqrt(a)^b
             auto lsq = sqrt_cast(this->left);
             if (lsq.get()) {
-                auto two = constant<typename LN::backend> (2.0);
-                return pow(lsq->get_arg(), this->right/two);
+                return pow(lsq->get_arg(),
+                           this->right/two<typename LN::base> ());
             }
 #endif
             return this->shared_from_this();
@@ -583,10 +583,9 @@ namespace graph {
 ///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename LN::backend>
-        df(shared_leaf<typename LN::backend> x) final {
-            auto one = constant<typename LN::backend> (1.0);
-            return pow(this->left, this->right - one) *
+        virtual shared_leaf<typename LN::base>
+        df(shared_leaf<typename LN::base> x) final {
+            return pow(this->left, this->right - one<typename LN::base> ()) *
                    (this->right*this->left->df(x) +
                     this->left*log(this->left)*this->right->df(x));
         }
@@ -597,15 +596,15 @@ namespace graph {
 ///  @param[in] stream    String buffer stream.
 ///  @param[in] registers List of defined registers.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename LN::backend> compile(std::stringstream &stream,
-                                                          jit::register_map<LN> &registers) final {
+        virtual shared_leaf<typename LN::base> compile(std::stringstream &stream,
+                                                       jit::register_map<LN> &registers) final {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename LN::backend> l = this->left->compile(stream, registers);
-                shared_leaf<typename RN::backend> r = this->right->compile(stream, registers);
+                shared_leaf<typename LN::base> l = this->left->compile(stream, registers);
+                shared_leaf<typename RN::base> r = this->right->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename LN::backend> (stream);
+                jit::add_type<typename LN::base> (stream);
                 stream << " " << registers[this] << " = pow("
                        << registers[l.get()] << ", "
                        << registers[r.get()] << ");"
@@ -621,7 +620,7 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename LN::backend> x) final {
+        virtual bool is_match(shared_leaf<typename LN::base> x) final {
             if (this == x.get()) {
                 return true;
             }
@@ -662,8 +661,8 @@ namespace graph {
 ///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
-    shared_leaf<typename LN::backend> pow(std::shared_ptr<LN> l,
-                                          std::shared_ptr<RN> r) {
+    shared_leaf<typename LN::base> pow(std::shared_ptr<LN> l,
+                                       std::shared_ptr<RN> r) {
         return std::make_shared<pow_node<LN, RN>> (l, r)->reduce();
     }
 
