@@ -418,7 +418,7 @@ namespace graph {
     shared_leaf<T> zero() {
         return constant(static_cast<T> (0.0));
     }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Create a one constant.
 ///
@@ -428,7 +428,7 @@ namespace graph {
     shared_leaf<T> one() {
         return constant(static_cast<T> (1.0));
     }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Create a negative one constant.
 ///
@@ -438,7 +438,7 @@ namespace graph {
     shared_leaf<T> none() {
         return constant(static_cast<T> (-1.0));
     }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Create a two constant.
 ///
