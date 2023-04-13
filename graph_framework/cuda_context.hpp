@@ -179,8 +179,9 @@ namespace gpu {
             check_error(cuDeviceGetName(device_name, 100, device), "cuDeviceGetName");
             std::cout << "  Device name              : " << device_name << std::endl;
 
+            const std::string temp = arch.str();
             std::array<const char *, 3> options({
-                arch.str().c_str(),
+                temp.c_str(),
                 "--std=c++17",
                 "--include-path=" CUDA_INCLUDE
             });
@@ -195,6 +196,7 @@ namespace gpu {
                                   "nvrtcGetProgramLog");
                 std::cout << log << std::endl;
                 free(log);
+                std::cout << kernel_source << std::endl;
             }
 
             const char *mangled_kernel_name;
@@ -321,7 +323,6 @@ namespace gpu {
 ///
 ///  @params[in] index Number of times to record.
 //------------------------------------------------------------------------------
-        template<typename T>
         void print_results(const size_t index) {
             wait();
             for (CUdeviceptr &buffer : buffers) {
@@ -336,7 +337,6 @@ namespace gpu {
 ///  @params[in]     source_index Index of the GPU buffer.
 ///  @params[in,out] destination  Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        template<typename T>
         void copy_buffer(const size_t source_index,
                          T *destination) {
 	    size_t size;
@@ -382,7 +382,7 @@ namespace gpu {
                 jit::add_type<T> (source_buffer);
                 source_buffer << " *" << jit::to_string('v', inputs[i].get());
             }
-                    
+
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
                 source_buffer << "," << std::endl;
                 source_buffer << "    ";
@@ -390,11 +390,11 @@ namespace gpu {
                 source_buffer << " *" << jit::to_string('o', outputs[i].get());
             }
             source_buffer << ") {" << std::endl;
-            
-            source_buffer << "    const index = blockIdx.x*blockDim.x + threadIdx.x;"
+
+            source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
                           << std::endl;
             source_buffer << "    if (index < " << size << ") {" << std::endl;
-                    
+
             for (auto &input : inputs) {
                 registers[input.get()] = jit::to_string('r', input.get());
                 source_buffer << "        const ";
@@ -430,7 +430,7 @@ namespace gpu {
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;
             }
-            
+
             source_buffer << "    }" << std::endl << "}" << std::endl;
         }
 
@@ -454,25 +454,22 @@ namespace gpu {
             source_buffer << "    const unsigned int j = threadIdx.x/32;" << std::endl;
             source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
             source_buffer << "    if (i < " << size << ") {" << std::endl;
-            source_buffer << "        "
-            jit::add_type<T> (source_buffer);
-            source_buffer << " sub_max = input[i];" << std::endl;
+            source_buffer << "        " << jit::type_to_string<T> () << " sub_max = ";
+            if constexpr (jit::is_complex<T> ()) {
+                source_buffer << "abs(input[i]);" << std::endl;
+            } else {
+                source_buffer << "input[i];" << std::endl;
+            }
             source_buffer << "        for (size_t index = i + 1024; index < " << size <<"; index += 1024) {" << std::endl;
             if constexpr (jit::is_complex<T> ()) {
-                source_buffer << "            sub_max = max(abs(sub_max), abs(input[index]));" << std::endl;
+                source_buffer << "            sub_max = max(sub_max, abs(input[index]));" << std::endl;
             } else {
                 source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
             }
             source_buffer << "        }" << std::endl;
-            source_buffer << "        __shared__ ";
-            jit::add_type<T> (source_buffer);
-            source_buffer << " thread_max[32];" << std::endl;
+            source_buffer << "        __shared__ " << jit::type_to_string<T> () << " thread_max[32];" << std::endl;
             source_buffer << "        for (int index = 16; index > 0; index /= 2) {" << std::endl;
-            if constexpr (jit::is_complex<T> ()) {
-                source_buffer << "            sub_max = max(abs(sub_max), abs(__shfl_down_sync(__activemask(), sub_max, index)));" << std::endl;
-            } else {
-                source_buffer << "            sub_max = max(sub_max, __shfl_down_sync(__activemask(), sub_max, index));" << std::endl;
-            }
+            source_buffer << "            sub_max = max(sub_max, __shfl_down_sync(__activemask(), sub_max, index));" << std::endl;
             source_buffer << "        }" << std::endl;
             source_buffer << "        thread_max[j] = sub_max;" << std::endl;
             source_buffer << "        __syncthreads();" << std::endl;
