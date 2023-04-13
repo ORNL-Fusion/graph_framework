@@ -25,7 +25,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a sine_node node.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         sine_node(std::shared_ptr<N> x) :
         straight_node<typename N::base> (x) {}
@@ -37,8 +37,8 @@ namespace graph {
 ///
 ///  @returns The value of sin(x).
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename N::base> evaluate() final {
-            backend::cpu<typename N::base> result = this->arg->evaluate();
+        virtual backend::buffer<typename N::base> evaluate() final {
+            backend::buffer<typename N::base> result = this->arg->evaluate();
             result.sin();
             return this->save_cache(result);
         }
@@ -62,7 +62,7 @@ namespace graph {
 ///
 ///  d sin(a)/dx = cos(a)*da/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base>
@@ -77,8 +77,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
                                                       jit::register_map<N> &registers) final {
@@ -99,7 +99,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename N::base> x) final {
@@ -128,7 +128,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define sine convience function.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 ///  @returns A reduced sin node.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -143,7 +143,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a sine node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -163,7 +163,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a cosine_node node.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         cosine_node(std::shared_ptr<N> x) :
         straight_node<typename N::base> (x) {}
@@ -175,8 +175,8 @@ namespace graph {
 ///
 ///  @returns The value of cos(x).
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename N::base> evaluate() final {
-            backend::cpu<typename N::base> result = this->arg->evaluate();
+        virtual backend::buffer<typename N::base> evaluate() final {
+            backend::buffer<typename N::base> result = this->arg->evaluate();
             result.cos();
             return this->save_cache(result);
         }
@@ -200,7 +200,7 @@ namespace graph {
 ///
 ///  d sin(a)/dx = cos(a)*da/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base>
@@ -215,8 +215,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
                                                       jit::register_map<N> &registers) final {
@@ -237,7 +237,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename N::base> x) final {
@@ -266,7 +266,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define cosine convience function.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 ///  @returns A reduced cos node.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -282,7 +282,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a cosine node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -298,7 +298,7 @@ namespace graph {
 ///
 ///  tan(x) = sin(x)/cos(x)
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 ///  @returns A reduced tan node.
 //------------------------------------------------------------------------------
     template<typename N>

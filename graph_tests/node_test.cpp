@@ -10,7 +10,7 @@
 
 #include <cassert>
 
-#include "../graph_framework/cpu_backend.hpp"
+#include "../graph_framework/backend.hpp"
 #include "../graph_framework/node.hpp"
 
 //------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ void test_constant() {
            "Expected a constant type.");
     assert(zero_cast->is(0) && "Constant value expeced zero.");
     assert(!zero_cast->is(1) && "Constant value not expeced one.");
-    const backend::cpu<T> zero_result = zero->evaluate();
+    const backend::buffer<T> zero_result = zero->evaluate();
     assert(zero_result.size() == 1 && "Expected single value.");
     assert(zero_result.at(0) == static_cast<T> (0.0) &&
            "Constant value evalute expeced zero.");
@@ -40,7 +40,7 @@ void test_constant() {
     auto one_cast = graph::constant_cast(one);
     assert(one_cast.get() && "Expected a constant type.");
     assert(one_cast->is(1.0) && "Constant value expeced zero.");
-    const backend::cpu<T> one_result = one->evaluate();
+    const backend::buffer<T> one_result = one->evaluate();
     assert(one_result.size() == 1 && "Expected single value.");
     assert(one_result.at(0) == static_cast<T> (1.0) &&
            "Constant value evalute expeced one.");
@@ -67,18 +67,18 @@ void test_variable() {
     assert(graph::variable_cast(zero).get() && "Expected a variable type.");
     assert(graph::constant_cast(zero).get() == nullptr &&
            "Expected a variable type.");
-    const backend::cpu<T> zero_result = zero->evaluate();
+    const backend::buffer<T> zero_result = zero->evaluate();
     assert(zero_result.size() == 1 && "Expected single value.");
     assert(zero_result.at(0) == static_cast<T> (0.0) &&
            "Variable value evalute expeced zero.");
     zero->set(static_cast<T> (1.0));
-    const backend::cpu<T> zero_result2 = zero->evaluate();
+    const backend::buffer<T> zero_result2 = zero->evaluate();
     assert(zero_result2.size() == 1 && "Expected single value.");
     assert(zero_result2.at(0) == static_cast<T> (1.0) &&
            "Variable value evalute expeced zero.");
     auto dzero = zero->df(zero);
     assert(graph::constant_cast(dzero).get() && "Expected a constant type.");
-    const backend::cpu<T> dzero_result = dzero->evaluate();
+    const backend::buffer<T> dzero_result = dzero->evaluate();
     assert(dzero_result.size() == 1 && "Expected single value.");
     assert(dzero_result.at(0) == static_cast<T> (1.0) &&
            "Constant value evalute expeced one.");
@@ -87,20 +87,20 @@ void test_variable() {
     auto dzerodone = zero->df(ones);
     assert(graph::constant_cast(dzerodone).get() &&
            "Expected a constant type.");
-    const backend::cpu<T> dzerodone_result = dzerodone->evaluate();
+    const backend::buffer<T> dzerodone_result = dzerodone->evaluate();
     assert(dzerodone_result.size() == 1 && "Expected single value.");
     assert(dzerodone_result.at(0) == static_cast<T> (0.0) &&
            "Constant value evalute expeced zero.");
 
     auto one_two = graph::variable<T> (std::vector<T> ({1.0, 2.0}), "");
-    const backend::cpu<T> one_two_result = one_two->evaluate();
+    const backend::buffer<T> one_two_result = one_two->evaluate();
     assert(one_two_result.size() == 2 && "Expected two elements in constant");
     assert(one_two_result.at(0) == static_cast<T> (1.0) &&
            "Expected one for first elememt");
     assert(one_two_result.at(1) == static_cast<T> (2.0) &&
            "Expected two for second elememt");
     one_two->set(std::vector<T> ({3.0, 4.0}));
-    const backend::cpu<T> one_two_result2 = one_two->evaluate();
+    const backend::buffer<T> one_two_result2 = one_two->evaluate();
     assert(one_two_result2.size() == 2 && "Expected two elements in constant");
     assert(one_two_result2.at(0) == static_cast<T> (3.0) &&
            "Expected three for first elememt");
@@ -188,8 +188,8 @@ template<typename T> void run_tests() {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     run_tests<float> ();

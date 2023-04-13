@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file cuda_context.hpp
-///  @brief Base nodes of graph computation framework.
+///  @brief Cuda context for metal based gpus.
 ///
 ///  Defines context for cuda gpu.
 //------------------------------------------------------------------------------
@@ -23,6 +23,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
 //------------------------------------------------------------------------------
+    template<typename T>
     class cuda_context {
     private:
 ///  The cuda device.
@@ -54,7 +55,7 @@ namespace gpu {
 
 //------------------------------------------------------------------------------
 ///  @brief  Check results of realtime compile.
-///  @param[in] name   Name of the operation.
+///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
         void check_nvrtc_error(nvrtcResult result,
                                const std::string &name) {
@@ -68,8 +69,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief  Check results of cuda functions.
 ///
-///  @param[in] result Result code of the operation.
-///  @param[in] name   Name of the operation.
+///  @params[in] result Result code of the operation.
+///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
         void check_error(CUresult result,
                          const std::string &name) {
@@ -85,8 +86,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief  Check results of async cuda functions.
 ///
-///  @param[in] result Result code of the operation.
-///  @param[in] name   Name of the operation.
+///  @params[in] result Result code of the operation.
+///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
         void check_error_async(CUresult result,
                                const std::string &name) {
@@ -129,15 +130,14 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a compute pipeline.
 ///
-///  @param[in] kernel_source Source code buffer for the kernel.
-///  @param[in] kernel_name   Name of the kernel for later reference.
-///  @param[in] inputs        Input nodes of the kernel.
-///  @param[in] outputs       Output nodes of the kernel.
-///  @param[in] num_rays      Number of rays to trace.
-///  @param[in] add_reduction Optional argument to generate the reduction
+///  @params[in] kernel_source Source code buffer for the kernel.
+///  @params[in] kernel_name   Name of the kernel for later reference.
+///  @params[in] inputs        Input nodes of the kernel.
+///  @params[in] outputs       Output nodes of the kernel.
+///  @params[in] num_rays      Number of rays to trace.
+///  @params[in] add_reduction Optional argument to generate the reduction
 ///                           kernel.
 //------------------------------------------------------------------------------
-        template<typename T>
         void create_pipeline(const std::string kernel_source,
                              const std::string kernel_name,
                              graph::input_nodes<T> inputs,
@@ -226,7 +226,7 @@ namespace gpu {
 
             const size_t buffer_element_size = sizeof(T);
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                const backend::cpu<T> backend = inputs[i]->evaluate();
+                const backend::buffer<T> backend = inputs[i]->evaluate();
 
                 check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size,
                                               CU_MEM_ATTACH_GLOBAL),
@@ -236,7 +236,7 @@ namespace gpu {
                 kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
             }
             for (size_t i = inputs.size(), ie = buffers.size(), j = 0; i < ie; i++, j++) {
-                const backend::cpu<T> backend = outputs[j]->evaluate();
+                const backend::buffer<T> backend = outputs[j]->evaluate();
 
                 check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size,
                                               CU_MEM_ATTACH_GLOBAL), 
@@ -259,7 +259,6 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a max compute pipeline.
 //------------------------------------------------------------------------------
-        template<typename T>
         void create_max_pipeline() {
             const char *mangled_kernel_name;
             check_nvrtc_error(nvrtcGetLoweredName(kernel_program,
@@ -298,7 +297,6 @@ namespace gpu {
 ///
 ///  @returns The maximum value from the input buffer.
 //------------------------------------------------------------------------------
-        template<typename T>
         T max_reduction() {
             run();
             check_error_async(cuLaunchKernel(max_function, 1, 1, 1,
@@ -321,7 +319,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @param[in] index Number of times to record.
+///  @params[in] index Number of times to record.
 //------------------------------------------------------------------------------
         template<typename T>
         void print_results(const size_t index) {
@@ -335,8 +333,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents.
 ///
-///  @param[in]     source_index Index of the GPU buffer.
-///  @param[in,out] destination  Host side buffer to copy to.
+///  @params[in]     source_index Index of the GPU buffer.
+///  @params[in,out] destination  Host side buffer to copy to.
 //------------------------------------------------------------------------------
         template<typename T>
         void copy_buffer(const size_t source_index,
@@ -344,6 +342,189 @@ namespace gpu {
 	    size_t size;
 	    check_error(cuMemGetAddressRange(NULL, &size, buffers[source_index]), "cuMemGetAddressRange");
             check_error_async(cuMemcpyDtoHAsync(destination, buffers[source_index], size, stream), "cuMemcpyDtoHAsync");
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create the source header.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_header(std::stringstream &source_buffer) {
+            source_buffer << "#include <cuda/std/complex>" << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel prefix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     name          Name to call the kernel.
+///  @params[in]     inputs        Input variables of the kernel.
+///  @params[in]     outputs       Output nodes of the graph to compute.
+///  @params[in]     size          Size of the input buffer.
+///  @params[in,out] registers     Map of used registers.
+//------------------------------------------------------------------------------
+        void create_kernel_prefix(std::stringstream &source_buffer,
+                                  const std::string name,
+                                  graph::input_nodes<T> &inputs,
+                                  graph::output_nodes<T> &outputs,
+                                  const size_t size,
+                                  jit::register_map<graph::leaf_node<T>> &registers) {
+            source_buffer << std::endl;
+            source_buffer << "extern \"C\" __global__ void " << name << "("
+                          << std::endl;
+
+            source_buffer << "    ";
+            jit::add_type<T> (source_buffer);
+            source_buffer << " *" << jit::to_string('v', inputs[0].get());
+            for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
+                source_buffer << "," << std::endl;
+                source_buffer << "    ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " *" << jit::to_string('v', inputs[i].get());
+            }
+                    
+            for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
+                source_buffer << "," << std::endl;
+                source_buffer << "    ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " *" << jit::to_string('o', outputs[i].get());
+            }
+            source_buffer << ") {" << std::endl;
+            
+            source_buffer << "    const index = blockIdx.x*blockDim.x + threadIdx.x;"
+                          << std::endl;
+            source_buffer << "    if (index < " << size << ") {" << std::endl;
+                    
+            for (auto &input : inputs) {
+                registers[input.get()] = jit::to_string('r', input.get());
+                source_buffer << "        const ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " " << registers[input.get()] << " = "
+                              << jit::to_string('v', input.get()) << "[index];"
+                              << std::endl;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel postfix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     outputs       Output nodes of the graph to compute.
+///  @params[in]     setters       Map outputs back to input values.
+///  @params[in,out] registers     Map of used registers.
+//------------------------------------------------------------------------------
+        void create_kernel_postfix(std::stringstream &source_buffer,
+                                   graph::output_nodes<T> &outputs,
+                                   graph::map_nodes<T> &setters,
+                                   jit::register_map<graph::leaf_node<T>> &registers) {
+            for (auto &[out, in] : setters) {
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                source_buffer << "        " << jit::to_string('v',  in.get())
+                              << "[index] = " << registers[a.get()] << ";"
+                              << std::endl;
+            }
+
+            for (auto &out : outputs) {
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                source_buffer << "        " << jit::to_string('o',  out.get())
+                              << "[index] = " << registers[a.get()] << ";"
+                              << std::endl;
+            }
+            
+            source_buffer << "    }" << std::endl << "}" << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create reduction.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     size          Size of the input buffer.
+//------------------------------------------------------------------------------
+        void create_reduction(std::stringstream &source_buffer,
+                              const size_t size) {
+            source_buffer << std::endl;
+            source_buffer << "extern \"C\" __global__ void max_reduction(" << std::endl;
+            source_buffer << "    ";
+            jit::add_type<T> (source_buffer);
+            source_buffer << " *input," << std::endl;
+            source_buffer << "    ";
+            jit::add_type<T> (source_buffer);
+            source_buffer << " *result) {" << std::endl;
+            source_buffer << "    const unsigned int i = threadIdx.x;" << std::endl;
+            source_buffer << "    const unsigned int j = threadIdx.x/32;" << std::endl;
+            source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
+            source_buffer << "    if (i < " << size << ") {" << std::endl;
+            source_buffer << "        "
+            jit::add_type<T> (source_buffer);
+            source_buffer << " sub_max = input[i];" << std::endl;
+            source_buffer << "        for (size_t index = i + 1024; index < " << size <<"; index += 1024) {" << std::endl;
+            if constexpr (jit::is_complex<T> ()) {
+                source_buffer << "            sub_max = max(abs(sub_max), abs(input[index]));" << std::endl;
+            } else {
+                source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
+            }
+            source_buffer << "        }" << std::endl;
+            source_buffer << "        __shared__ ";
+            jit::add_type<T> (source_buffer);
+            source_buffer << " thread_max[32];" << std::endl;
+            source_buffer << "        for (int index = 16; index > 0; index /= 2) {" << std::endl;
+            if constexpr (jit::is_complex<T> ()) {
+                source_buffer << "            sub_max = max(abs(sub_max), abs(__shfl_down_sync(__activemask(), sub_max, index)));" << std::endl;
+            } else {
+                source_buffer << "            sub_max = max(sub_max, __shfl_down_sync(__activemask(), sub_max, index));" << std::endl;
+            }
+            source_buffer << "        }" << std::endl;
+            source_buffer << "        thread_max[j] = sub_max;" << std::endl;
+            source_buffer << "        __syncthreads();" << std::endl;
+            source_buffer << "        if (j == 0) {"  << std::endl;
+            source_buffer << "            for (int index = 16; index > 0; index /= 2) {" << std::endl;
+            source_buffer << "                thread_max[k] = max(thread_max[k], __shfl_down_sync(__activemask(), thread_max[k], index));" << std::endl;
+            source_buffer << "            }" << std::endl;
+            source_buffer << "            *result = thread_max[0];" << std::endl;
+            source_buffer << "        }"  << std::endl;
+            source_buffer << "    }"  << std::endl;
+            source_buffer << "}" << std::endl << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create a preamble.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_preamble(std::stringstream &source_buffer) {
+            source_buffer << "extern \"C\" __global__ ";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create arg prefix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_argument_prefix(std::stringstream &source_buffer) {}
+
+//------------------------------------------------------------------------------
+///  @brief Create arg postfix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     index         Argument index.
+//------------------------------------------------------------------------------
+        void create_argument_postfix(std::stringstream &source_buffer,
+                                     const size_t index) {}
+
+//------------------------------------------------------------------------------
+///  @brief Create index argument.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_index_argument(std::stringstream &source_buffer) {}
+
+//------------------------------------------------------------------------------
+///  @brief Create index.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_index(std::stringstream &source_buffer) {
+            source_buffer << "blockIdx.x*blockDim.x + threadIdx.x;";
         }
     };
 }

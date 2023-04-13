@@ -8,7 +8,7 @@
 #include <thread>
 #include <random>
 
-#include "../graph_framework/cpu_backend.hpp"
+#include "../graph_framework/backend.hpp"
 #include "../graph_framework/solver.hpp"
 #include "../graph_framework/timing.hpp"
 
@@ -17,7 +17,7 @@ void write_time(const std::string &name, const std::chrono::nanoseconds time);
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
 ///
-///  @param[in] t Current Time.
+///  @params[in] t Current Time.
 //------------------------------------------------------------------------------
 template<typename base>
 static base solution(const base t) {
@@ -27,8 +27,8 @@ static base solution(const base t) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
 ///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
@@ -45,17 +45,13 @@ int main(int argc, const char * argv[]) {
     const size_t num_rays = 1000000;
 
     std::vector<std::thread> threads(0);
-#if USE_GPU
-    if constexpr (jit::can_jit<base> ()) {
+    if constexpr (jit::use_gpu<base> ()) {
         threads.resize(1);
     } else {
-#endif
         threads.resize(std::max(std::min(std::thread::hardware_concurrency(),
                                          static_cast<unsigned int> (num_rays)),
                                 static_cast<unsigned int> (1)));
-#if USE_GPU
     }
-#endif
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         threads[i] = std::thread([num_times, num_rays] (const size_t thread_number,

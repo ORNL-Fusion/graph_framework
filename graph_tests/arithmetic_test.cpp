@@ -10,7 +10,7 @@
 
 #include <cassert>
 
-#include "../graph_framework/cpu_backend.hpp"
+#include "../graph_framework/backend.hpp"
 #include "../graph_framework/math.hpp"
 
 //------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ template<typename T> void test_add() {
     assert(three->evaluate()[0] == static_cast<T> (3.0) &&
            "Expected the evaluation of one.");
 
-    const backend::cpu<T> result_three = three->evaluate();
+    const backend::buffer<T> result_three = three->evaluate();
     assert(result_three.size() == 1 && "Expected single value.");
     assert(result_three.at(0) == static_cast<T> (3.0) &&
            "Expected three for result");
@@ -82,7 +82,7 @@ template<typename T> void test_add() {
            "Expected an add node.");
 #endif
     variable->set(static_cast<T> (10.0));
-    const backend::cpu<T> var_plus_var_result = var_plus_var->evaluate();
+    const backend::buffer<T> var_plus_var_result = var_plus_var->evaluate();
     assert(var_plus_var_result.size() == 1 && "Expected single value.");
     assert(var_plus_var_result.at(0) == static_cast<T> (20.0) &&
            "Expected 10 + 10 for result");
@@ -92,7 +92,7 @@ template<typename T> void test_add() {
     auto var_plus_varb = variable + variable_b;
     assert(graph::add_cast(var_plus_varb).get() && "Expected an add node.");
     variable_b->set(static_cast<T> (5.0));
-    const backend::cpu<T> var_plus_varb_result = var_plus_varb->evaluate();
+    const backend::buffer<T> var_plus_varb_result = var_plus_varb->evaluate();
     assert(var_plus_varb_result.size() == 1 && "Expected single value.");
     assert(var_plus_varb_result.at(0) == static_cast<T> (15.0) &&
            "Expected 10 + 5 for result");
@@ -100,7 +100,7 @@ template<typename T> void test_add() {
 //  Test variable vectors.
     auto varvec = graph::variable<T> (std::vector<T> ({10.0, 20.0}), "");
     auto varvec_plus_varvec = varvec + varvec;
-    const backend::cpu<T> varvec_plus_varvec_result =
+    const backend::buffer<T> varvec_plus_varvec_result =
         varvec_plus_varvec->evaluate();
     assert(varvec_plus_varvec_result.size() == 2 &&
            "Size mismatch in result.");
@@ -357,7 +357,7 @@ template<typename T> void test_subtract() {
            "Expected an subtract node.");
 #endif
     variable->set(static_cast<T> (3.0));
-    const backend::cpu<T> zero_minus_var_result = zero_minus_var->evaluate();
+    const backend::buffer<T> zero_minus_var_result = zero_minus_var->evaluate();
     assert(zero_minus_var_result.size() == 1 && "Expected single value.");
     assert(zero_minus_var_result.at(0) == static_cast<T> (-3.0) &&
            "Expected 0 - 3 for result.");
@@ -368,7 +368,7 @@ template<typename T> void test_subtract() {
     assert(graph::subtract_cast(var_minus_var).get() &&
            "Expected a subtraction node.");
     variable_b->set(static_cast<T> (10.0));
-    const backend::cpu<T> var_minus_var_result = var_minus_var->evaluate();
+    const backend::buffer<T> var_minus_var_result = var_minus_var->evaluate();
     assert(var_minus_var_result.size() == 1 && "Expected single value.");
     assert(var_minus_var_result.at(0) == static_cast<T> (-7) &&
            "Expected 3 - 10 for result");
@@ -377,7 +377,7 @@ template<typename T> void test_subtract() {
     auto varvec_a = graph::variable<T> (std::vector<T> ({10.0, 20.0}), "");
     auto varvec_b = graph::variable<T> (std::vector<T> ({-3.0, 5.0}), "");
     auto varvec_minus_varvec = varvec_a - varvec_b;
-    const backend::cpu<T> varvec_minus_varvec_result =
+    const backend::buffer<T> varvec_minus_varvec_result =
         varvec_minus_varvec->evaluate();
     assert(varvec_minus_varvec_result.size() == 2 &&
            "Size mismatch in result.");
@@ -587,9 +587,9 @@ template<typename T> void test_multiply() {
     assert(graph::multiply_cast(three_times_two).get() &&
            "Expected a multiply node.");
 #endif
-    const backend::cpu<T> two_times_three_result =
+    const backend::buffer<T> two_times_three_result =
         two_times_three->evaluate();
-    const backend::cpu<T> three_times_two_result =
+    const backend::buffer<T> three_times_two_result =
         three_times_two->evaluate();
     assert(two_times_three_result.size() == 1 && "Expected single value.");
     assert(three_times_two_result.size() == 1 && "Expected single value.");
@@ -634,7 +634,7 @@ template<typename T> void test_multiply() {
     assert(graph::multiply_cast(two_times_var).get() &&
            "Expected multiply node.");
     variable->set(static_cast<T> (6.0));
-    const backend::cpu<T> two_times_var_result = two_times_var->evaluate();
+    const backend::buffer<T> two_times_var_result = two_times_var->evaluate();
     assert(two_times_var_result.size() == 1 && "Expected single value.");
     assert(two_times_var_result.at(0) == static_cast<T> (12.0) &&
            "Expected 2*6 for result.");
@@ -643,7 +643,7 @@ template<typename T> void test_multiply() {
     auto varvec_a = graph::variable<T> (std::vector<T> ({4.0, -2.0}), "a");
     auto varvec_b = graph::variable<T> (std::vector<T> ({-4.0, -2.0}), "b");
     auto varvec_times_varvec = varvec_a*varvec_b;
-    const backend::cpu<T> varvec_times_varvec_result =
+    const backend::buffer<T> varvec_times_varvec_result =
         varvec_times_varvec->evaluate();
     assert(varvec_times_varvec_result.size() == 2 &&
            "Size mismatch in result.");
@@ -658,7 +658,7 @@ template<typename T> void test_multiply() {
 //  are zero.
     auto var_sum_prod = graph::variable<T> (std::vector<T> ({-2.0, 2.0, 0.0}), "");
     auto var_sum_prod_multiply_two = var_sum_prod*two;
-    const backend::cpu<T> var_sum_prod_multiply_two_result =
+    const backend::buffer<T> var_sum_prod_multiply_two_result =
         var_sum_prod_multiply_two->evaluate();
     assert(var_sum_prod_multiply_two_result.at(0) == static_cast<T> (-2.0) *
                                                      static_cast<T> (2.0) &&
@@ -688,7 +688,7 @@ template<typename T> void test_multiply() {
     assert(graph::add_cast(dvarvec_sqrd) &&
            "Expected an add node.");
 #endif
-    const backend::cpu<T> dvarvec_sqrd_result = dvarvec_sqrd->evaluate();
+    const backend::buffer<T> dvarvec_sqrd_result = dvarvec_sqrd->evaluate();
     assert(dvarvec_sqrd_result.size() == 2 && "Size mismatch in result.");
     assert(dvarvec_sqrd_result.at(0) == static_cast<T> (8.0) &&
            "Expected 2*4 for result.");
@@ -836,7 +836,7 @@ template<typename T> void test_multiply() {
     assert(graph::multiply_cast(var_times_var).get() &&
            "Expected a multiply node.");
 #endif
-    const backend::cpu<T> var_times_var_result = var_times_var->evaluate();
+    const backend::buffer<T> var_times_var_result = var_times_var->evaluate();
     assert(var_times_var_result.size() == 1 && "Expected single value.");
     assert(var_times_var_result.at(0) == static_cast<T> (36) &&
            "Expected 6*6 for result.");
@@ -1171,7 +1171,7 @@ template<typename T> void test_divide() {
     assert(graph::divide_cast(two_divided_var).get() &&
            "Expected divide node.");
     variable->set(static_cast<T> (3.0));
-    const backend::cpu<T> two_divided_var_result = two_divided_var->evaluate();
+    const backend::buffer<T> two_divided_var_result = two_divided_var->evaluate();
     assert(two_divided_var_result.size() == 1 && "Expected single value.");
     assert(two_divided_var_result.at(0) == static_cast<T> (2.0) /
                                            static_cast<T> (3.0) &&
@@ -1186,7 +1186,7 @@ template<typename T> void test_divide() {
     assert(graph::divide_cast(var_divided_two).get() &&
            "Expected a divide node.");
 #endif
-    const backend::cpu<T> var_divided_two_result = var_divided_two->evaluate();
+    const backend::buffer<T> var_divided_two_result = var_divided_two->evaluate();
     assert(var_divided_two_result.size() == 1 && "Expected single value.");
     assert(var_divided_two_result.at(0) == static_cast<T> (3.0) /
                                            static_cast<T> (2.0) &&
@@ -1203,7 +1203,7 @@ template<typename T> void test_divide() {
     auto var_divided_varb = variable/variable_b;
     assert(graph::divide_cast(var_divided_varb).get() &&
            "Expected divide node.");
-    const backend::cpu<T> var_divided_varb_result = var_divided_varb->evaluate();
+    const backend::buffer<T> var_divided_varb_result = var_divided_varb->evaluate();
     assert(var_divided_varb_result.size() == 1 && "Expected single value.");
     assert(var_divided_varb_result.at(0) == static_cast<T> (3.0) /
                                             static_cast<T> (4.0) &&
@@ -1234,7 +1234,7 @@ template<typename T> void test_divide() {
     assert(graph::divide_cast(varvec_divided_two).get() &&
            "Expect a divide node.");
 #endif
-    const backend::cpu<T> varvec_divided_two_result = varvec_divided_two->evaluate();
+    const backend::buffer<T> varvec_divided_two_result = varvec_divided_two->evaluate();
     assert(varvec_divided_two_result.size() == 2 && "Size mismatch in result.");
     assert(varvec_divided_two_result.at(0) == static_cast<T> (1.0) &&
            "Expected 2/2 for result.");
@@ -1244,7 +1244,7 @@ template<typename T> void test_divide() {
     auto two_divided_varvec = two/varvec;
     assert(graph::divide_cast(two_divided_varvec).get() &&
            "Expect divide node.");
-    const backend::cpu<T> two_divided_varvec_result = two_divided_varvec->evaluate();
+    const backend::buffer<T> two_divided_varvec_result = two_divided_varvec->evaluate();
     assert(two_divided_varvec_result.size() == 2 && "Size mismatch in result.");
     assert(two_divided_varvec_result.at(0) == static_cast<T> (1.0) &&
            "Expected 2/2 for result.");
@@ -1256,7 +1256,7 @@ template<typename T> void test_divide() {
     auto varvec_divided_varvecb = varvec/varvec_b;
     assert(graph::divide_cast(varvec_divided_varvecb).get() &&
            "Expect divide node.");
-    const backend::cpu<T> varvec_divided_varvecb_result =
+    const backend::buffer<T> varvec_divided_varvecb_result =
         varvec_divided_varvecb->evaluate();
     assert(varvec_divided_varvecb_result.size() == 2 &&
            "Size mismatch in result.");
@@ -1269,7 +1269,7 @@ template<typename T> void test_divide() {
     auto varvecb_divided_varvec = varvec_b/varvec;
     assert(graph::divide_cast(varvecb_divided_varvec).get() &&
            "Expect divide node.");
-    const backend::cpu<T> varvecb_divided_varvec_result =
+    const backend::buffer<T> varvecb_divided_varvec_result =
         varvecb_divided_varvec->evaluate();
     assert(varvecb_divided_varvec_result.size() == 2 &&
            "Size mismatch in result.");
@@ -1285,7 +1285,7 @@ template<typename T> void test_divide() {
 //  are zero.
     auto var_sum_prod = graph::variable<T> (std::vector<T> ({-2.0, 2.0, 0.0}), "");
     auto var_sum_prod_divided_two = var_sum_prod/two;
-    const backend::cpu<T> var_sum_prod_divided_two_result =
+    const backend::buffer<T> var_sum_prod_divided_two_result =
         var_sum_prod_divided_two->evaluate();
     assert(var_sum_prod_divided_two_result.at(0) == static_cast<T> (-2.0) /
                                                     static_cast<T> (2.0) &&
@@ -1299,14 +1299,14 @@ template<typename T> void test_divide() {
 //  Test derivatives.
 //  d (x/c) / dx = dxdx/c + x d 1/c /dx = 1/c
     auto dvar_divided_two = var_divided_two->df(variable);
-    const backend::cpu<T> dvar_divided_two_result = dvar_divided_two->evaluate();
+    const backend::buffer<T> dvar_divided_two_result = dvar_divided_two->evaluate();
     assert(dvar_divided_two_result.at(0) == static_cast<T> (1.0) /
                                             static_cast<T> (2.0) &&
            "Expected 1/2 for result.");
 
 //  d (c/x) / dx = dc/dx x - c/x^2 dx/dx = -c/x^2
     auto dtwo_divided_var = two_divided_var->df(variable);
-    const backend::cpu<T> dtwo_divided_var_result = dtwo_divided_var->evaluate();
+    const backend::buffer<T> dtwo_divided_var_result = dtwo_divided_var->evaluate();
     assert(dtwo_divided_var_result.at(0) == static_cast<T> (-2.0) /
                                             (static_cast<T> (3.0) *
                                              static_cast<T> (3.0)) &&
@@ -1634,13 +1634,13 @@ template<typename T> void test_fma() {
 
     auto three = graph::constant(static_cast<T> (3.0));
     auto one_two_three = graph::fma(one, two, three);
-    const backend::cpu<T> one_two_three_result = one_two_three->evaluate();
+    const backend::buffer<T> one_two_three_result = one_two_three->evaluate();
     assert(one_two_three_result.size() == 1 && "Expected single value.");
     assert(one_two_three_result.at(0) == static_cast<T> (5.0) &&
            "Expected five for result");
 
     auto two_three_one = graph::fma(two, three, one);
-    const backend::cpu<T> two_three_one_result = two_three_one->evaluate();
+    const backend::buffer<T> two_three_one_result = two_three_one->evaluate();
     assert(two_three_one_result.size() == 1 && "Expected single value.");
     assert(two_three_one_result.at(0) == static_cast<T> (7) &&
            "Expected seven for result");
@@ -1916,8 +1916,8 @@ template<typename T> void run_tests() {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     run_tests<float> ();

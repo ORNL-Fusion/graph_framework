@@ -32,9 +32,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new vector_quantity.
 ///
-///  @param[in] x X vector component.
-///  @param[in] y Y vector component.
-///  @param[in] z Z Vector component.
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
 //------------------------------------------------------------------------------
         vector_quantity(VX x, VY y, VZ z) :
         x(x), y(y), z(z) {}
@@ -70,7 +70,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Vector dot product.
 ///
-///  @param[in] v2 Second vector.
+///  @params[in] v2 Second vector.
 ///  @returns v1.v2
 //------------------------------------------------------------------------------
         VX dot(std::shared_ptr<vector_quantity<VX, VY, VZ>> v2) {
@@ -82,7 +82,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Vector cross product.
 ///
-///  @param[in] v2 Second vector.
+///  @params[in] v2 Second vector.
 ///  @returns v1 X v2
 //------------------------------------------------------------------------------
         std::shared_ptr<vector_quantity<VX, VY, VZ>>

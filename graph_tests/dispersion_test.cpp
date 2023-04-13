@@ -10,15 +10,15 @@
 
 #include <cassert>
 
-#include "../graph_framework/cpu_backend.hpp"
+#include "../graph_framework/backend.hpp"
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief The newton solve for dispersion relation.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
-///  @param[in] omega   Ray frequency.
-///  @param[in] k_guess Inital guess for the wave number.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] omega   Ray frequency.
+///  @params[in] k_guess Inital guess for the wave number.
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,
@@ -91,7 +91,7 @@ void test_solve(const typename DISPERSION::base tolarance,
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename T>
 void run_tests(const T tolarance) {
@@ -107,8 +107,8 @@ void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU

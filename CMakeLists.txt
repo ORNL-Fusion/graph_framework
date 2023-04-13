@@ -66,11 +66,6 @@ target_link_libraries (gpu_lib
                        $<$<BOOL:${USE_METAL}>:metal_lib>
                        $<$<BOOL:${USE_CUDA}>:cuda_lib>
 )
-target_compile_definitions (gpu_lib
-                            INTERFACE
-                            $<$<BOOL:${USE_METAL}>:USE_GPU>
-                            $<$<BOOL:${USE_CUDA}>:USE_GPU>
-)
 
 #-------------------------------------------------------------------------------
 #  Sanitizer options

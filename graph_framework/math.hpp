@@ -24,7 +24,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a sqrt node.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         sqrt_node(std::shared_ptr<N> x) :
         straight_node<typename N::base> (x->reduce()) {}
@@ -36,8 +36,8 @@ namespace graph {
 ///
 ///  @returns The value of sqrt(x).
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename N::base> evaluate() final {
-            backend::cpu<typename N::base> result = this->arg->evaluate();
+        virtual backend::buffer<typename N::base> evaluate() final {
+            backend::buffer<typename N::base> result = this->arg->evaluate();
             result.sqrt();
             return result;
         }
@@ -104,7 +104,7 @@ namespace graph {
 ///
 ///  d sqrt(a)/dx = 1/(2*sqrt(a))da/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base>
@@ -120,8 +120,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
                                                       jit::register_map<N> &registers) final {
@@ -142,7 +142,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename N::base> x) final {
@@ -171,7 +171,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define sqrt convience function.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -186,7 +186,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a sqrt node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -208,7 +208,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a exp node.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         exp_node(std::shared_ptr<N> x) :
         straight_node<typename N::base> (x->reduce()) {}
@@ -220,8 +220,8 @@ namespace graph {
 ///
 ///  @returns The value of exp(x).
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename N::base> evaluate() final {
-            backend::cpu<typename N::base> result = this->arg->evaluate();
+        virtual backend::buffer<typename N::base> evaluate() final {
+            backend::buffer<typename N::base> result = this->arg->evaluate();
             result.exp();
             return result;
         }
@@ -245,7 +245,7 @@ namespace graph {
 ///
 ///  d exp(a)/dx = exp(a)*da/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base>
@@ -260,8 +260,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
                                                       jit::register_map<N> &registers) final {
@@ -282,7 +282,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename N::base> x) final {
@@ -311,7 +311,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define exp convience function.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -326,7 +326,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a exp node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -348,7 +348,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a log node.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         log_node(std::shared_ptr<N> x) :
         straight_node<typename N::base> (x->reduce()) {}
@@ -360,8 +360,8 @@ namespace graph {
 ///
 ///  @returns The value of log(x).
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename N::base> evaluate() final {
-            backend::cpu<typename N::base> result = this->arg->evaluate();
+        virtual backend::buffer<typename N::base> evaluate() final {
+            backend::buffer<typename N::base> result = this->arg->evaluate();
             result.log();
             return result;
         }
@@ -385,7 +385,7 @@ namespace graph {
 ///
 ///  d log(a)/dx = (da/dx)/a
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base>
@@ -396,8 +396,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
                                                       jit::register_map<N> &registers) final {
@@ -418,7 +418,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename N::base> x) final {
@@ -447,7 +447,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define log convience function.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -462,7 +462,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a exp node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -484,8 +484,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct an power node.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
         pow_node(std::shared_ptr<LN> l,
                  std::shared_ptr<RN> r) :
@@ -498,9 +498,9 @@ namespace graph {
 ///
 ///  @returns The value of l^r.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename LN::base> evaluate() final {
-            backend::cpu<typename LN::base> l_result = this->left->evaluate();
-            backend::cpu<typename RN::base> r_result = this->right->evaluate();
+        virtual backend::buffer<typename LN::base> evaluate() final {
+            backend::buffer<typename LN::base> l_result = this->left->evaluate();
+            backend::buffer<typename RN::base> r_result = this->right->evaluate();
             return pow(l_result, r_result);
         }
 
@@ -580,7 +580,7 @@ namespace graph {
 ///
 ///  d a^b dx = b*a^(b-1)*da/dx + ln(a)a^b*db/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base>
@@ -593,8 +593,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base> compile(std::stringstream &stream,
                                                        jit::register_map<LN> &registers) final {
@@ -617,7 +617,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename LN::base> x) final {
@@ -657,8 +657,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build power node.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> pow(std::shared_ptr<LN> l,
@@ -673,7 +673,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a power node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>

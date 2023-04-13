@@ -23,7 +23,7 @@ namespace timeing {
 //------------------------------------------------------------------------------
 ///  @brief Construct a time diagnostic object.
 ///
-///  @param[in] message Discription of what is being timed.
+///  @params[in] message Discription of what is being timed.
 //------------------------------------------------------------------------------
         measure_diagnostic(const std::string message) :
         label(message), start(std::chrono::high_resolution_clock::now()) {}

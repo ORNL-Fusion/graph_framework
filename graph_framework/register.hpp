@@ -74,8 +74,8 @@ namespace jit {
 ///  -# v Variable
 ///  -# r Register
 ///
-///  @param[in] prefix  Type prefix for the name.
-///  @param[in] pointer Address of the @ref{leaf_node}.
+///  @params[in] prefix  Type prefix for the name.
+///  @params[in] pointer Address of the @ref{leaf_node}.
 ///  @returns The pointer value as a string.
 //------------------------------------------------------------------------------
     template<class NODE>
@@ -106,16 +106,47 @@ namespace jit {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Test to use Cuda
+//------------------------------------------------------------------------------
+    constexpr bool use_cuda() {
+#ifdef USE_CUDA
+        return true;
+#else
+        return false;
+#endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Test to use metal.
+//------------------------------------------------------------------------------
+    template<typename T>
+    constexpr bool use_metal() {
+#if USE_METAL
+        return is_float<T>() && !is_complex<T> ();
+#else
+        return false;
+#endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief  Test to use the GPU.
+//------------------------------------------------------------------------------
+    template<typename T>
+    constexpr bool use_gpu() {
+        return use_cuda() || use_metal<T> ();
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Write out the node base type to a general stream.
 ///
-///  @param[in, out] stream Generic stream.
+///  @params[in, out] stream Generic stream.
 //------------------------------------------------------------------------------
     template<typename T>
     void add_type(std::basic_ostream<char> &stream) {
         if constexpr (is_complex<T> ()) {
-#ifdef USE_CUDA
-            stream << "cuda::";
-#endif
+            if constexpr (use_cuda()) {
+                stream << "cuda::";
+            }
             stream << "std::complex<";
         }
         stream << type_to_string<T> ();

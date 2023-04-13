@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file metal_context.hpp
-///  @brief Base nodes of graph computation framework.
+///  @brief Metal context for metal based gpus.
 ///
 ///  Defines context for metal gpu.
 //------------------------------------------------------------------------------
@@ -18,6 +18,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a metal gpu context.
 //------------------------------------------------------------------------------
+    template<typename T>
     class metal_context {
     private:
 ///  The metal device.
@@ -56,15 +57,14 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a compute pipeline.
 ///
-///  @param[in] kernel_source Source code buffer for the kernel.
-///  @param[in] kernel_name   Name of the kernel for later reference.
-///  @param[in] inputs        Input nodes of the kernel.
-///  @param[in] outputs       Output nodes of the kernel.
-///  @param[in] num_rays      Number of rays to trace.
-///  @param[in] add_reduction Optional argument to generate the reduction
+///  @params[in] kernel_source Source code buffer for the kernel.
+///  @params[in] kernel_name   Name of the kernel for later reference.
+///  @params[in] inputs        Input nodes of the kernel.
+///  @params[in] outputs       Output nodes of the kernel.
+///  @params[in] num_rays      Number of rays to trace.
+///  @params[in] add_reduction Optional argument to generate the reduction
 ///                           kernel.
 //------------------------------------------------------------------------------
-        template<typename T>
         void create_pipeline(const std::string kernel_source,
                              const std::string kernel_name,
                              graph::input_nodes<T> inputs,
@@ -82,7 +82,7 @@ namespace gpu {
             }
 
             id<MTLFunction> function = [library newFunctionWithName:[NSString stringWithCString:kernel_name.c_str()
-                                                                                        encoding:NSUTF8StringEncoding]];
+                                                                                       encoding:NSUTF8StringEncoding]];
 
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
@@ -99,13 +99,13 @@ namespace gpu {
 
             const size_t buffer_element_size = sizeof(T);
             for (graph::shared_variable<T> &input : inputs) {
-                backend::cpu<T> buffer = input->evaluate();
+                backend::buffer<T> buffer = input->evaluate();
                 buffers.push_back([device newBufferWithBytes:buffer.data()
                                                       length:buffer.size()*buffer_element_size
                                                      options:MTLResourceStorageModeManaged]);
             }
             for (graph::shared_leaf<T> &output : outputs) {
-                backend::cpu<T> buffer = output->evaluate();
+                backend::buffer<T> buffer = output->evaluate();
                 buffers.push_back([device newBufferWithBytes:&buffer[0]
                                                       length:buffer.size()*buffer_element_size
                                                      options:MTLResourceStorageModeManaged]);
@@ -125,7 +125,6 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a max compute pipeline.
 //------------------------------------------------------------------------------
-        template<typename T>
         void create_max_pipeline() {
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
@@ -181,7 +180,6 @@ namespace gpu {
 ///
 ///  @returns The maximum value from the input buffer.
 //------------------------------------------------------------------------------
-        template<typename T>
         T max_reduction() {
             run();
             command_buffer = [queue commandBuffer];
@@ -223,9 +221,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @param[in] index Particle index to print.
+///  @params[in] index Particle index to print.
 //------------------------------------------------------------------------------
-        template<typename T>
         void print_results(const size_t index) {
             wait();
             for (id<MTLBuffer> buffer : buffers) {
@@ -238,10 +235,9 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents.
 ///
-///  @param[in]     source_index Index of the GPU buffer.
-///  @param[in,out] destination  Host side buffer to copy to.
+///  @params[in]     source_index Index of the GPU buffer.
+///  @params[in,out] destination  Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        template<typename T>
         void copy_buffer(const size_t source_index,
                          T *destination) {
             command_buffer = [queue commandBuffer];
@@ -255,6 +251,121 @@ namespace gpu {
             memcpy(destination,
                    [buffers[source_index] contents],
                    [buffers[source_index] length]);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create the source header.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_header(std::stringstream &source_buffer) {
+            source_buffer << "#include <metal_stdlib>" << std::endl;
+            source_buffer << "#include <metal_simdgroup>" << std::endl;
+            source_buffer << "using namespace metal;" << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel prefix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     name          Name to call the kernel.
+///  @params[in]     inputs        Input variables of the kernel.
+///  @params[in]     outputs       Output nodes of the graph to compute.
+///  @params[in]     size          Size of the input buffer.
+///  @params[in,out] registers     Map of used registers.
+//------------------------------------------------------------------------------
+        void create_kernel_prefix(std::stringstream &source_buffer,
+                                  const std::string name,
+                                  graph::input_nodes<T> &inputs,
+                                  graph::output_nodes<T> &outputs,
+                                  const size_t size,
+                                  jit::register_map<graph::leaf_node<T>> &registers) {
+            source_buffer << std::endl;
+            source_buffer << "kernel void " << name << "(" << std::endl;
+            
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                source_buffer << "    device float *"
+                              << jit::to_string('v', inputs[i].get())
+                              << " [[buffer(" << i << ")]]," << std::endl;
+            }
+            
+            for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
+                source_buffer << "    device float *"
+                              << jit::to_string('o', outputs[i].get())
+                              << " [[buffer(" << i + inputs.size() << ")]],"
+                              << std::endl;
+            }
+            
+            source_buffer << "    uint index [[thread_position_in_grid]]) {" << std::endl;
+            source_buffer << "    if (index < " << size << ") {" << std::endl;
+            
+            for (auto &input : inputs) {
+                registers[input.get()] = jit::to_string('r', input.get());
+                source_buffer << "        const ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " " << registers[input.get()] << " = "
+                              << jit::to_string('v', input.get()) << "[index];"
+                              << std::endl;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel postfix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     outputs       Output nodes of the graph to compute.
+///  @params[in]     setters       Map outputs back to input values.
+///  @params[in,out] registers     Map of used registers.
+//------------------------------------------------------------------------------
+        void create_kernel_postfix(std::stringstream &source_buffer,
+                                   graph::output_nodes<T> &outputs,
+                                   graph::map_nodes<T> &setters,
+                                   jit::register_map<graph::leaf_node<T>> &registers) {
+            for (auto &[out, in] : setters) {
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                source_buffer << "        " << jit::to_string('v',  in.get())
+                              << "[index] = " << registers[a.get()] << ";"
+                              << std::endl;
+            }
+            
+            for (auto &out : outputs) {
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                source_buffer << "        " << jit::to_string('o',  out.get())
+                              << "[index] = " << registers[a.get()] << ";"
+                              << std::endl;
+            }
+    
+            source_buffer << "    }" << std::endl << "}" << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create reduction.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     size          Size of the input buffer.
+//------------------------------------------------------------------------------
+        void create_reduction(std::stringstream &source_buffer,
+                              const size_t size) {
+            source_buffer << std::endl;
+            source_buffer << "kernel void max_reduction(" << std::endl;
+            source_buffer << "    device float *input [[buffer(0)]]," << std::endl;
+            source_buffer << "    device float *result [[buffer(1)]]," << std::endl;
+            source_buffer << "    uint i [[thread_position_in_grid]]," << std::endl;
+            source_buffer << "    uint j [[simdgroup_index_in_threadgroup]]," << std::endl;
+            source_buffer << "    uint k [[thread_index_in_simdgroup]]) {" << std::endl;
+            source_buffer << "    if (i < " << size << ") {" << std::endl;
+            source_buffer << "        float sub_max = input[i];" << std::endl;
+            source_buffer << "        for (size_t index = i + 1024; index < " << size <<"; index += 1024) {" << std::endl;
+            source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
+            source_buffer << "        }" << std::endl;
+            source_buffer << "        threadgroup float thread_max[32];" << std::endl;
+            source_buffer << "        thread_max[j] = simd_max(sub_max);" << std::endl;
+            source_buffer << "        threadgroup_barrier(mem_flags::mem_threadgroup);" << std::endl;
+            source_buffer << "        if (j == 0) {"  << std::endl;
+            source_buffer << "            *result = simd_max(thread_max[k]);"  << std::endl;
+            source_buffer << "        }"  << std::endl;
+            source_buffer << "    }"  << std::endl;
+            source_buffer << "}" << std::endl << std::endl;
         }
     };
 }

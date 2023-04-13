@@ -73,15 +73,15 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new dispersion_interface.
 ///
-///  @param[in] w  Wave frequency.
-///  @param[in] kx Wave number in x.
-///  @param[in] ky Wave number in y.
-///  @param[in] kz Wave number in z.
-///  @param[in] x  Position in x.
-///  @param[in] y  Position in y.
-///  @param[in] z  Position in z.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Wave frequency.
+///  @params[in] kx Wave number in x.
+///  @params[in] ky Wave number in y.
+///  @params[in] kz Wave number in z.
+///  @params[in] x  Position in x.
+///  @params[in] y  Position in y.
+///  @params[in] z  Position in z.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         dispersion_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
                              graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -117,10 +117,10 @@ namespace dispersion {
 ///
 ///  This uses newtons methods to solver for D(x) = 0.
 ///
-///  @param[in,out] x              The unknown to solver for.
-///  @param[in]     inputs         Inputs for jit compile.
-///  @param[in]     tolarance      Tolarance to solve the dispersion function to.
-///  @param[in]     max_iterations Maximum number of iterations before giving up.
+///  @params[in,out] x              The unknown to solver for.
+///  @params[in]     inputs         Inputs for jit compile.
+///  @params[in]     tolarance      Tolarance to solve the dispersion function to.
+///  @params[in]     max_iterations Maximum number of iterations before giving up.
 ///  @returns The residule graph.
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
@@ -135,47 +135,38 @@ namespace dispersion {
 
             typename DISPERSION_FUNCTION::base max_residule;
             size_t iterations = 0;
-            std::unique_ptr<jit::kernel<typename DISPERSION_FUNCTION::base>> source;
-            if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::base> ()) {
-                auto x_var = graph::variable_cast(x);
-                inputs.push_back(x_var);
+            std::unique_ptr<jit::context<typename DISPERSION_FUNCTION::base>> source;
+            
+            auto x_var = graph::variable_cast(x);
+            inputs.push_back(x_var);
 
-                graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
-                    loss
-                };
+            graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
+                loss
+            };
 
-                graph::map_nodes<typename DISPERSION_FUNCTION::base> setters = {
-                    {x_next, x_var}
-                };
+            graph::map_nodes<typename DISPERSION_FUNCTION::base> setters = {
+                {x_next, x_var}
+            };
 
-                source = std::make_unique<jit::kernel<typename DISPERSION_FUNCTION::base>> ("loss_kernel",
-                                                                                            inputs,
-                                                                                            outputs,
-                                                                                            setters);
-                source->add_max_reduction(x_var);
+            source = std::make_unique<jit::context<typename DISPERSION_FUNCTION::base>> ();
+            source->add_kernel("loss_kernel",
+                               inputs,
+                               outputs,
+                               setters);
+            source->add_max_reduction("max_reduction", x_var);
 
-                source->compile("loss_kernel", inputs, outputs, x_var->size(), true);
-                source->compile_max();
+            source->compile("loss_kernel", inputs, outputs, x_var->size(), true);
+            source->compile_max();
 
-                max_residule = source->max_reduction();
-            } else {
-                max_residule = loss->evaluate().max();
-            }
+            max_residule = source->max_reduction();
 
             while (std::abs(max_residule) > std::abs(tolarance) &&
                    iterations++ < max_iterations) {
-                if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::base> ()) {
-                    max_residule = source->max_reduction();
-               } else {
-                    x->set(x_next->evaluate());
-                    max_residule = loss->evaluate().max();
-                }
+                   max_residule = source->max_reduction();
             }
 
-            if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::base> ()) {
-                source->copy_buffer(inputs.size() - 1,
-                                    inputs.back()->data());
-            }
+            source->copy_buffer(inputs.size() - 1,
+                                inputs.back()->data());
 
 //  In release mode asserts are diaables so write error to standard err. Need to
 //  flip the comparison operator because we want to assert to trip if false.
@@ -340,15 +331,15 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Interface for a dispersion function.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -391,15 +382,15 @@ namespace dispersion {
 ///
 ///  This satisfies equations 1.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -427,15 +418,15 @@ namespace dispersion {
 ///
 ///  D = npar^2 + nperp^2 - 1
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -486,15 +477,15 @@ namespace dispersion {
 ///
 ///  vth = Sqrt(2*ne*te/me)                                                    (2)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -552,15 +543,15 @@ namespace dispersion {
 ///
 ///  B = 0.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -608,15 +599,15 @@ namespace dispersion {
 ///
 ///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                            (2)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -669,15 +660,15 @@ namespace dispersion {
 ///
 ///  D = npar^2 + nperp^2 - (1 - 0.5*Exp(-x^2/0.1)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -711,15 +702,15 @@ namespace dispersion {
 ///
 ///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                            (2)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -772,15 +763,15 @@ namespace dispersion {
 ///
 ///  ⍵pe is the plasma frequency.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -816,7 +807,7 @@ namespace dispersion {
 ///  @brief Extra ordinary wave dispersion function.
 //------------------------------------------------------------------------------
     template<typename T>
-    class extra_ordinary_wave final : public dispersion_function<T> {
+    class extra_ordinary_wave final : public physics<T> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Disperison relation for the X-Mode.
@@ -830,15 +821,15 @@ namespace dispersion {
 ///
 ///  ⍵pe is the plasma frequency while ⍵ce is the cyclotron frequency.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,
@@ -911,15 +902,15 @@ namespace dispersion {
 ///  ⍵_p^2 = n*q^2/ϵ0m                                                       (7)
 ///  Ω_c = qB/m                                                              (8)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
                                         graph::shared_leaf<T> kx,

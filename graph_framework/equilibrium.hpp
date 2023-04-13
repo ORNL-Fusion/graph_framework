@@ -31,8 +31,8 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Construct an equilibrum.
 ///
-///  @param[in] masses  Vector of ion masses.
-///  @param[in] charges Vector of ion charges.
+///  @params[in] masses  Vector of ion masses.
+///  @params[in] charges Vector of ion charges.
 //------------------------------------------------------------------------------
         equilibrium(const std::vector<T> &masses,
                     const std::vector<uint8_t> &charges) :
@@ -58,7 +58,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the mass for an ion species.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The mass for the ion at the index.
 //------------------------------------------------------------------------------
         T get_ion_mass(const size_t index) const {
@@ -68,7 +68,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the charge for an ion species.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The number of ion species.
 //------------------------------------------------------------------------------
         uint8_t get_ion_charge(const size_t index) const {
@@ -78,9 +78,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
@@ -90,7 +90,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_density(const size_t index,
@@ -101,9 +101,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
@@ -113,7 +113,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
@@ -124,9 +124,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<graph::shared_leaf<T>,
@@ -160,9 +160,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
@@ -175,7 +175,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_density(const size_t index,
@@ -189,9 +189,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
@@ -203,7 +203,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
@@ -216,9 +216,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<graph::shared_leaf<T>,
@@ -261,9 +261,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
@@ -275,7 +275,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_density(const size_t index,
@@ -288,9 +288,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
@@ -302,7 +302,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
@@ -315,9 +315,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<graph::shared_leaf<T>,
@@ -361,9 +361,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
@@ -376,7 +376,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_density(const size_t index,
@@ -390,9 +390,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
@@ -404,7 +404,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
@@ -417,9 +417,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<graph::shared_leaf<T>,
@@ -462,9 +462,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
@@ -476,7 +476,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_density(const size_t index,
@@ -489,9 +489,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
@@ -503,7 +503,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @param[in] index The species index.
+///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
@@ -516,9 +516,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @param[in] x X position.
-///  @param[in] y Y position.
-///  @param[in] z Z position.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<graph::shared_leaf<T>,

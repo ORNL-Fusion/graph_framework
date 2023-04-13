@@ -3,10 +3,13 @@ target_compile_features (rays
                          INTERFACE
                          cxx_std_17
 )
+
 target_compile_definitions (rays
                             INTERFACE
                             $<$<CONFIG:Release>:NDEBUG>
                             $<$<BOOL:${USE_REDUCE}>:USE_REDUCE>
+                            $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT}">
+                            $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER}">
 )
 target_include_directories (rays
                             INTERFACE
@@ -20,8 +23,7 @@ target_link_libraries (rays
 target_precompile_headers (rays
                            INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/arithmetic.hpp>
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/backend_protocall.hpp>
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpu_backend.hpp>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/backend.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dispersion.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/math.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/node.hpp>
@@ -30,8 +32,10 @@ target_precompile_headers (rays
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vector.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/equilibrium.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jit.hpp>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/workflow.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/register.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/timing.hpp>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpu_context.hpp>
                            $<$<BOOL:${USE_METAL}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/metal_context.hpp>>
                            $<$<BOOL:${USE_CUDA}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cuda_context.hpp>>
 )
