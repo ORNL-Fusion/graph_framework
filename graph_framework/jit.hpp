@@ -96,11 +96,9 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Add max reduction kernel.
 ///
-///  @params[in] name  Name to call the kernel.
 ///  @params[in] input Graph node to reduce.
 //------------------------------------------------------------------------------
-        void add_max_reduction(const std::string name,
-                               graph::shared_variable<T> input) {
+        void add_max_reduction(graph::shared_variable<T> input) {
             gpu_context.create_reduction(source_buffer, input->size());
         }
 

@@ -153,7 +153,7 @@ namespace dispersion {
                                inputs,
                                outputs,
                                setters);
-            source->add_max_reduction("max_reduction", x_var);
+            source->add_max_reduction(x_var);
 
             source->compile("loss_kernel", inputs, outputs, x_var->size(), true);
             source->compile_max();

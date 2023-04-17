@@ -113,20 +113,20 @@ void run_tests(const T tolarance) {
 int main(int argc, const char * argv[]) {
     START_GPU
 #ifdef USE_REDUCE
-#ifdef USE_CUDA
-    run_tests<float> (3.2E-14);
-#else
-    run_tests<float> (2.0E-14);
-#endif
+    if constexpr (jit::use_cuda()) {
+        run_tests<float> (3.2E-14);
+    } else {
+        run_tests<float> (2.0E-14);
+    }
 #else
     run_tests<float> (1.5E-14);
 #endif
     run_tests<double> (1.0E-30);
-#ifdef USE_CUDA
-    run_tests<std::complex<float>> (5.7E-14);
-#else
-    run_tests<std::complex<float>> (2.0E-14);
-#endif
+    if constexpr (jit::use_cuda()) {
+        run_tests<std::complex<float>> (5.7E-14);
+    } else {
+        run_tests<std::complex<float>> (2.0E-14);
+    }
     run_tests<std::complex<double>> (1.0E-30);
     END_GPU
 }

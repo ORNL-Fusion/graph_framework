@@ -98,7 +98,7 @@ namespace gpu {
 #endif
             temp_stream << filename << " -o " << library_name;
 
-            std::cout << "Metal GPU info." << std::endl;
+            std::cout << "CPU info." << std::endl;
             std::cout << "  Command Line    : " << temp_stream.str() << std::endl;
             int error = system(temp_stream.str().c_str());
             if (error) {
