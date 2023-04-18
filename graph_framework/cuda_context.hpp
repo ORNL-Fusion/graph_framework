@@ -191,11 +191,11 @@ namespace gpu {
             check_nvrtc_error(nvrtcGetPTXSize(kernel_program, &ptx_size),
                               "nvrtcGetPTXSize");
 
-            check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
-                              "nvrtcDestroyProgram");
-
             char *ptx = static_cast<char *> (malloc(ptx_size));
             check_nvrtc_error(nvrtcGetPTX(kernel_program, ptx), "nvrtcGetPTX");
+
+            check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
+                              "nvrtcDestroyProgram");
 
             check_error(cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL), "cuModuleLoadDataEx");
 
