@@ -124,13 +124,13 @@ namespace gpu {
             if (add_reduction) {
                 names.push_back("max_reduction");
             }
-            
+
             nvrtcProgram kernel_program;
             check_nvrtc_error(nvrtcCreateProgram(&kernel_program,
                                                  kernel_source.c_str(),
                                                  NULL, 0, NULL, NULL),
                               "nvrtcCreateProgram");
-            
+
             for (std::string &name : names) {
                 check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
                                                          name.c_str()),
@@ -198,7 +198,7 @@ namespace gpu {
             check_nvrtc_error(nvrtcGetPTX(kernel_program, ptx), "nvrtcGetPTX");
 
             check_error(cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL), "cuModuleLoadDataEx");
-            
+
             free(ptx);
         }
 
@@ -218,7 +218,7 @@ namespace gpu {
             CUfunction function;
             check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
 
-            std::vector<CUdeviceptr> buffers;
+            std::vector<void *> buffers;
 
             const size_t buffer_element_size = sizeof(T);
             for (auto &input : inputs) {
@@ -234,17 +234,17 @@ namespace gpu {
                                              backend.size()*sizeof(T)),
                                 "cuMemcpyHtoD");
                 }
-                buffers.push_back(kernel_arguments[input.get()]);
+                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
             }
             for (auto &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
                     kernel_arguments.try_emplace(output.get());
-                    check_error(cuMemAllocManaged(&kernel_arguments[input.get()],
+                    check_error(cuMemAllocManaged(&kernel_arguments[output.get()],
                                                   num_rays*sizeof(T),
                                                   CU_MEM_ATTACH_GLOBAL),
                                 "cuMemAllocManaged");
                 }
-                buffers.push_back(kernel_arguments[output.get()]);
+                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
             }
 
             int value;
@@ -256,8 +256,8 @@ namespace gpu {
             std::cout << "    Threads per group  : " << threads_per_group << std::endl;
             std::cout << "    Number of groups   : " << thread_groups << std::endl;
             std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
-            
-            return [this, function, thread_groups, threads_per_group, buffers] {
+
+            return [this, function, thread_groups, threads_per_group, buffers] mutable {
                 check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
                                                  threads_per_group, 1, 1, 0, stream,
                                                  buffers.data(), NULL),
@@ -278,18 +278,18 @@ namespace gpu {
                                           CU_MEM_ATTACH_GLOBAL),
                         "cuMemAllocManaged");
 
-            std::vector<CUdeviceptr> buffers;
-            
+            std::vector<void *> buffers;
+
             buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[argument.get()]));
             buffers.push_back(reinterpret_cast<void *> (&result_buffer));
 
             CUfunction function;
             check_error(cuModuleGetFunction(&function, module, "max_reduction"),
                         "cuModuleGetFunction");
-            
+
             std::cout << "  Kernel name              : max_reduction" << std::endl;
-            
-            return [this, run, buffers] {
+
+            return [this, function, run, buffers] mutable {
                 run();
                 check_error_async(cuLaunchKernel(function, 1, 1, 1,
                                                  1024, 1, 1, 0, stream,
@@ -298,7 +298,7 @@ namespace gpu {
                 wait();
 
                 return reinterpret_cast<T *> (result_buffer)[0];
-            }
+            };
         }
 
 //------------------------------------------------------------------------------
@@ -316,8 +316,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void print_results(const size_t index) {
             wait();
-            for (CUdeviceptr &buffer : buffers) {
-                std::cout << reinterpret_cast<T *> (buffer)[index] << " ";
+            for (auto &[key, value] : kernel_arguments) {
+                std::cout << reinterpret_cast<T *> (value)[index] << " ";
             }
             std::cout << std::endl;
         }
@@ -325,14 +325,14 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents.
 ///
-///  @params[in]     source_index Index of the GPU buffer.
-///  @params[in,out] destination  Host side buffer to copy to.
+///  @params[in]     node        Node to copy buffer from.
+///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_buffer(const size_t source_index,
+        void copy_buffer(graph::shared_leaf<T> node,
                          T *destination) {
             size_t size;
-            check_error(cuMemGetAddressRange(NULL, &size, buffers[source_index]), "cuMemGetAddressRange");
-            check_error_async(cuMemcpyDtoHAsync(destination, buffers[source_index], size, stream), "cuMemcpyDtoHAsync");
+            check_error(cuMemGetAddressRange(NULL, &size, kernel_arguments[node.get()]), "cuMemGetAddressRange");
+            check_error_async(cuMemcpyDtoHAsync(destination, kernel_arguments[node.get()], size, stream), "cuMemcpyDtoHAsync");
         }
 
 //------------------------------------------------------------------------------
