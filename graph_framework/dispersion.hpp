@@ -155,18 +155,19 @@ namespace dispersion {
                                setters);
             source->add_max_reduction(x_var);
 
-            source->compile("loss_kernel", inputs, outputs, x_var->size(), true);
-            source->compile_max();
+            source->compile(true);
 
-            max_residule = source->max_reduction();
+            auto run = source->create_kernel_call("loss_kernel", inputs,
+                                                  outputs, x_var->size());
 
+            auto max = source->create_max_call(loss, run);
+            max_residule = max();
             while (std::abs(max_residule) > std::abs(tolarance) &&
                    iterations++ < max_iterations) {
-                   max_residule = source->max_reduction();
+                   max_residule = max();
             }
 
-            source->copy_buffer(inputs.size() - 1,
-                                inputs.back()->data());
+            source->copy_buffer(x, x_var->data());
 
 //  In release mode asserts are diaables so write error to standard err. Need to
 //  flip the comparison operator because we want to assert to trip if false.

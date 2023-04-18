@@ -27,10 +27,8 @@ namespace gpu {
         std::string library_name;
 ///  Handle for the dynamic library.
         void *lib_handle;
-///  Dynamic header
-        void *kernel;
-///  Kernel arguments.
-        std::vector<std::vector<T>> kernel_args;
+///  Argument map.
+        std::map<graph::leaf_node<T> *, std::vector<T>> kernel_arguments;
 ///  Argument index map.
         std::map<graph::leaf_node<T> *, size_t> arg_index;
 
@@ -52,22 +50,15 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create a compute pipeline.
+///  @brief Compile the kernels.
 ///
 ///  @params[in] kernel_source Source code buffer for the kernel.
-///  @params[in] kernel_name   Name of the kernel for later reference.
-///  @params[in] inputs        Input nodes of the kernel.
-///  @params[in] outputs       Output nodes of the kernel.
-///  @params[in] num_rays      Number of rays to trace.
-///  @params[in] add_reduction Optional argument to generate the reduction
-///                           kernel.
+///  @params[in] names         Names of the kernel functions.
+///  @params[in] add_reduction Include the reduction kernel.
 //------------------------------------------------------------------------------
-        void create_pipeline(const std::string kernel_source,
-                             const std::string kernel_name,
-                             graph::input_nodes<T> inputs,
-                             graph::output_nodes<T> outputs,
-                             const size_t num_rays,
-                             const bool add_reduction=false) {
+        void compile(const std::string kernel_source,
+                     std::vector<std::string> names,
+                     const bool add_reduction=false) {
             std::stringstream temp_stream;
             temp_stream << reinterpret_cast<size_t> (this);
             const std::string thread_id = temp_stream.str();
@@ -92,9 +83,14 @@ namespace gpu {
             temp_stream.str(std::string());
             temp_stream.clear();
 #ifdef __APPLE__
-            temp_stream << CXX << " -O3 -dynamiclib -flat_namespace ";
+            temp_stream << CXX << " -dynamiclib -flat_namespace ";
 #else
-            temp_stream << CXX << " -O3 -fPIC -shared ";
+            temp_stream << CXX << " -fPIC -shared ";
+#endif
+#ifndef NDEBUG
+            temp_stream << "-g ";
+#else
+            temp_stream << "-O3 ";
 #endif
             temp_stream << filename << " -o " << library_name;
 
@@ -107,10 +103,12 @@ namespace gpu {
                 exit(error);
             }
             
+#ifdef NDEBUG
             temp_stream.str(std::string());
             temp_stream.clear();
             temp_stream << "rm " << filename;
             system(temp_stream.str().c_str());
+#endif
 
             lib_handle = dlopen(library_name.c_str(), RTLD_LAZY);
             if (!lib_handle) {
@@ -118,43 +116,79 @@ namespace gpu {
                           << std::endl;
                 exit(1);
             }
-            kernel = dlsym(lib_handle, kernel_name.c_str());
+
+            std::cout << "  Library name    : " << library_name << std::endl;
+            std::cout << "  Library handle  : " << reinterpret_cast<size_t> (lib_handle) << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create a kernel calling function.
+///
+///  @params[in] kernel_name   Name of the kernel for later reference.
+///  @params[in] inputs        Input nodes of the kernel.
+///  @params[in] outputs       Output nodes of the kernel.
+///  @params[in] num_rays      Number of rays to trace.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)>  create_kernel_call(const std::string kernel_name,
+                                                      graph::input_nodes<T> inputs,
+                                                      graph::output_nodes<T> outputs,
+                                                      const size_t num_rays) {
+            void *kernel = dlsym(lib_handle, kernel_name.c_str());
             if (!kernel) {
                 std::cout << "Failed to load function. " << kernel_name
                           << std::endl;
                 exit(1);
             }
 
+            std::vector<T *> buffers;
+
             for (auto &input : inputs) {
-                backend::buffer<T> buffer = input->evaluate();
-                std::vector<T> arg(buffer.size());
-                memcpy(arg.data(), buffer.data(), buffer.size()*sizeof(T));
-                kernel_args.push_back(arg);
+                if (!kernel_arguments.contains(input.get())) {
+                    backend::buffer<T> buffer = input->evaluate();
+                    std::vector<T> arg(buffer.size());
+                    memcpy(arg.data(), buffer.data(), buffer.size()*sizeof(T));
+                    kernel_arguments[input.get()] = arg;
+                }
+                buffers.push_back(kernel_arguments[input.get()].data());
             }
             for (auto &output : outputs) {
-                backend::buffer<T> buffer = output->evaluate();
-                std::vector<T> arg(buffer.size());
-                kernel_args.push_back(arg);
+                if (!kernel_arguments.contains(output.get())) {
+                    std::vector<T> arg(num_rays);
+                    kernel_arguments[output.get()] = arg;
+                }
+                buffers.push_back(kernel_arguments[output.get()].data());
             }
-            
-            std::cout << "  Library name    : " << library_name << std::endl;
-            std::cout << "  Library handle  : " << reinterpret_cast<size_t> (lib_handle) << std::endl;
+
             std::cout << "  Function pointer: " << reinterpret_cast<size_t> (kernel) << std::endl;
+
+            return [kernel, buffers] {
+                ((void (*)(const std::vector<T *> &))kernel)(buffers);
+            };
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Create a max compute pipeline.
-//------------------------------------------------------------------------------
-        void create_max_pipeline() {}
-
-//------------------------------------------------------------------------------
-///  @brief Perform a time step.
 ///
-///  This calls dispatches a kernel instance to the command buffer and the commits
-///  the job. This method is asyncronus.
+///  @params[in] argument Node to reduce.
+///  @params[in] run      Function to run before reduction.
 //------------------------------------------------------------------------------
-        void run() {
-            ((void (*)(std::vector<std::vector<T>> &))kernel)(kernel_args);
+        std::function<T(void)> create_max_call(graph::shared_leaf<T> &argument,
+                                               std::function<void(void)> run) {
+            auto begin = kernel_arguments[argument.get()].cbegin();
+            auto end = kernel_arguments[argument.get()].cend();
+            
+            return [run, begin, end] {
+                run();
+                if constexpr (jit::is_complex<T> ()) {
+                    return *std::max_element(begin, end,
+                                             [] (const T a, const T b) {
+                        return std::abs(a) < std::abs(b);
+                    });
+                } else {
+                    return *std::max_element(begin, end);
+                }
+            };
         }
 
 //------------------------------------------------------------------------------
@@ -168,8 +202,8 @@ namespace gpu {
 ///  @params[in] index Particle index to print.
 //------------------------------------------------------------------------------
         void print_results(const size_t index) {
-            for (auto &buffer : kernel_args) {
-                std::cout << buffer[index] << " ";
+            for (const auto &[key, value] : kernel_arguments) {
+                std::cout << value[index] << " ";
             }
             std::cout << std::endl;
         }
@@ -177,33 +211,14 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents.
 ///
-///  @params[in]     source_index Index of the GPU buffer.
-///  @params[in,out] destination  Host side buffer to copy to.
+///  @params[in]     node        Node to copy buffer from.
+///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_buffer(const size_t source_index,
+        void copy_buffer(const graph::shared_leaf<T> node,
                          T *destination) {
             memcpy(destination,
-                   kernel_args[source_index].data(),
-                   sizeof(T)*kernel_args[source_index].size());
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Compute the max reduction.
-///
-///  @returns The maximum value from the input buffer.
-//------------------------------------------------------------------------------
-        T max_reduction() {
-            run();
-            if constexpr (jit::is_complex<T> ()) {
-                return *std::max_element(kernel_args.back().cbegin(),
-                                         kernel_args.back().cend(),
-                                         [] (const T a, const T b) {
-                    return std::abs(a) < std::abs(b);
-                });
-            } else {
-                return *std::max_element(kernel_args.back().cbegin(),
-                                         kernel_args.back().cend());
-            }
+                   kernel_arguments[node.get()].data(),
+                   sizeof(T)*kernel_arguments[node.get()].size());
         }
 
 //------------------------------------------------------------------------------
@@ -240,9 +255,9 @@ namespace gpu {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
             
-            source_buffer << "    vector<vector<";
+            source_buffer << "    const vector<";
             jit::add_type<T> (source_buffer);
-            source_buffer << " > > &args) {" << std::endl;
+            source_buffer << " *> &args) {" << std::endl;
             
             source_buffer << "    for (size_t i = 0; i < " << size << "; i++) {" << std::endl;
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {

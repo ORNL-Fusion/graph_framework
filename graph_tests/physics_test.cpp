@@ -308,8 +308,6 @@ void test_acoustic_wave(const T tolarance) {
 
     const T vs = std::sqrt((q*te+gamma*q*ti)/mi)/c;
 
-    const T k0 = omega0/vs;
-
 //  Omega must be greater than plasma frequency for the wave to propagate.
     omega->set(static_cast<T> (omega0));
     kx->set(static_cast<T> (600.0));

@@ -32,26 +32,12 @@ namespace gpu {
         CUcontext context;
 ///  The cuda code library.
         CUmodule module;
-///  The cuda kernel.
-        CUfunction function;
-///  The cuda max reduction kernel.
-        CUfunction max_function;
-///  The cuda library.
-        nvrtcProgram kernel_program;
-///  Buffer objects.
-        std::vector<CUdeviceptr> buffers;
+///  Argument map.
+        std::map<graph::leaf_node<T> *, CUdeviceptr> kernel_arguments;
 ///  Result buffer.
         CUdeviceptr result_buffer;
 ///  Cuda stream.
         CUstream stream;
-///  Number of thread groups.
-        unsigned int thread_groups;
-///  Number of threads in a group.
-        unsigned int threads_per_group;
-///  Kernel arguments.
-        std::vector<void *> kernel_arguments;
-///  Max kernel arguments.
-        std::vector<void *> max_kernel_arguments;
 
 //------------------------------------------------------------------------------
 ///  @brief  Check results of realtime compile.
@@ -115,12 +101,10 @@ namespace gpu {
         ~cuda_context() {
             check_error(cuModuleUnload(module), "cuModuleUnload");
 
-            for (CUdeviceptr &ptr : buffers) {
-                check_error(cuMemFree(ptr), "cuMemFree");
+            for (auto &[key, value] : kernel_arguments) {
+                check_error(cuMemFree(value), "cuMemFree");
             }
 
-            check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
-                              "nvrtcDestroyProgram");
             check_error(cuMemFree(result_buffer), "cuMemFree");
 
             check_error(cuStreamDestroy(stream), "cuStreamDestroy");
@@ -128,31 +112,30 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create a compute pipeline.
+///  @brief Compile the kernels.
 ///
 ///  @params[in] kernel_source Source code buffer for the kernel.
-///  @params[in] kernel_name   Name of the kernel for later reference.
-///  @params[in] inputs        Input nodes of the kernel.
-///  @params[in] outputs       Output nodes of the kernel.
-///  @params[in] num_rays      Number of rays to trace.
-///  @params[in] add_reduction Optional argument to generate the reduction
-///                           kernel.
+///  @params[in] names         Names of the kernel functions.
+///  @params[in] add_reduction Include the reduction kernel.
 //------------------------------------------------------------------------------
-        void create_pipeline(const std::string kernel_source,
-                             const std::string kernel_name,
-                             graph::input_nodes<T> inputs,
-                             graph::output_nodes<T> outputs,
-                             const size_t num_rays,
-                             const bool add_reduction=false) {
+        void compile(const std::string kernel_source,
+                     std::vector<std::string> names,
+                     const bool add_reduction=false) {
+            if (add_reduction) {
+                names.push_back("max_reduction");
+            }
+            
+            nvrtcProgram kernel_program;
             check_nvrtc_error(nvrtcCreateProgram(&kernel_program,
                                                  kernel_source.c_str(),
                                                  NULL, 0, NULL, NULL),
                               "nvrtcCreateProgram");
-
-            check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
-                                                     kernel_name.c_str()),
-                              "nvrtcAddNameExpression");
-
+            
+            for (std::string &name : names) {
+                check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
+                                                         name.c_str()),
+                                  "nvrtcAddNameExpression");
+            }
             if (add_reduction) {
                 check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
                                                          "max_reduction"),
@@ -199,14 +182,6 @@ namespace gpu {
                 std::cout << kernel_source << std::endl;
             }
 
-            const char *mangled_kernel_name;
-            check_nvrtc_error(nvrtcGetLoweredName(kernel_program,
-                                                  kernel_name.c_str(),
-                                                  &mangled_kernel_name),
-                              "nvrtcGetLoweredName");
-
-            std::cout << "  Mangled Kernel Name      : " << mangled_kernel_name << std::endl;
-
             check_error(cuDeviceGetAttribute(&compute_version,
                                              CU_DEVICE_ATTRIBUTE_MANAGED_MEMORY,
                                              device), "cuDeviceGetAttribute");
@@ -216,98 +191,114 @@ namespace gpu {
             check_nvrtc_error(nvrtcGetPTXSize(kernel_program, &ptx_size),
                               "nvrtcGetPTXSize");
 
+            check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
+                              "nvrtcDestroyProgram");
+
             char *ptx = static_cast<char *> (malloc(ptx_size));
             check_nvrtc_error(nvrtcGetPTX(kernel_program, ptx), "nvrtcGetPTX");
 
             check_error(cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL), "cuModuleLoadDataEx");
-            check_error(cuModuleGetFunction(&function, module, mangled_kernel_name), "cuModuleGetFunction");
-
+            
             free(ptx);
+        }
 
-            buffers.resize(inputs.size() + outputs.size());
+//------------------------------------------------------------------------------
+///  @brief Create a kernel calling function.
+///
+///  @params[in] kernel_name   Name of the kernel for later reference.
+///  @params[in] inputs        Input nodes of the kernel.
+///  @params[in] outputs       Output nodes of the kernel.
+///  @params[in] num_rays      Number of rays to trace.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_kernel_call(const std::string kernel_name,
+                                                     graph::input_nodes<T> inputs,
+                                                     graph::output_nodes<T> outputs,
+                                                     const size_t num_rays) {
+            CUfunction function;
+            check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
+
+            std::vector<CUdeviceptr> buffers;
 
             const size_t buffer_element_size = sizeof(T);
-            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                const backend::buffer<T> backend = inputs[i]->evaluate();
-
-                check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size,
-                                              CU_MEM_ATTACH_GLOBAL),
-                            "cuMemAllocManaged");
-                check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), 
-                            "cuMemcpyHtoD");
-                kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
+            for (auto &input : inputs) {
+                if (!kernel_arguments.contains(input.get())) {
+                    kernel_arguments.try_emplace(input.get());
+                    const backend::buffer<T> backend = input->evaluate();
+                    check_error(cuMemAllocManaged(&kernel_arguments[input.get()],
+                                                  backend.size()*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(kernel_arguments[input.get()],
+                                             &backend[0],
+                                             backend.size()*sizeof(T)),
+                                "cuMemcpyHtoD");
+                }
+                buffers.push_back(kernel_arguments[input.get()]);
             }
-            for (size_t i = inputs.size(), ie = buffers.size(), j = 0; i < ie; i++, j++) {
-                const backend::buffer<T> backend = outputs[j]->evaluate();
-
-                check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size,
-                                              CU_MEM_ATTACH_GLOBAL), 
-                            "cuMemAllocManaged");
-                check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), 
-                                         "cuMemcpyHtoD");
-                kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
+            for (auto &output : outputs) {
+                if (!kernel_arguments.contains(output.get())) {
+                    kernel_arguments.try_emplace(output.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[input.get()],
+                                                  num_rays*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                }
+                buffers.push_back(kernel_arguments[output.get()]);
             }
 
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
-            threads_per_group = value;
-            thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
-            std::cout << "  Threads per group        : " << threads_per_group << std::endl;
-            std::cout << "  Number of groups         : " << thread_groups << std::endl;
-            std::cout << "  Total problem size       : " << threads_per_group*thread_groups << std::endl;
+            unsigned int threads_per_group = value;
+            unsigned int thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+            std::cout << "  Kernel name              : " << kernel_name << std::endl;
+            std::cout << "    Threads per group  : " << threads_per_group << std::endl;
+            std::cout << "    Number of groups   : " << thread_groups << std::endl;
+            std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+            
+            return [this, function, thread_groups, threads_per_group, buffers] {
+                check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
+                                                 threads_per_group, 1, 1, 0, stream,
+                                                 buffers.data(), NULL),
+                                  "cuLaunchKernel");
+            };
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create a max compute pipeline.
+///  @brief Create a max compute kernel calling function.
+///
+///  @params[in] argument Node to reduce.
+///  @params[in] run      Function to run before reduction.
+///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        void create_max_pipeline() {
-            const char *mangled_kernel_name;
-            check_nvrtc_error(nvrtcGetLoweredName(kernel_program,
-                                                  "max_reduction",
-                                                  &mangled_kernel_name),
-                              "nvrtcGetLoweredName");
-
-            std::cout << "  Mangled Kernel Name      : " << mangled_kernel_name << std::endl;
-
+        std::function<T(void)> create_max_call(graph::shared_leaf<T> &argument,
+                                               std::function<void(void)> run) {
             check_error(cuMemAllocManaged(&result_buffer, sizeof(T),
                                           CU_MEM_ATTACH_GLOBAL),
                         "cuMemAllocManaged");
 
-            max_kernel_arguments.push_back(reinterpret_cast<void *> (&buffers.back()));
-            max_kernel_arguments.push_back(reinterpret_cast<void *> (&result_buffer));
+            std::vector<CUdeviceptr> buffers;
+            
+            buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[argument.get()]));
+            buffers.push_back(reinterpret_cast<void *> (&result_buffer));
 
-            check_error(cuModuleGetFunction(&max_function, module, mangled_kernel_name),
+            CUfunction function;
+            check_error(cuModuleGetFunction(&function, module, "max_reduction"),
                         "cuModuleGetFunction");
-        }
+            
+            std::cout << "  Kernel name              : max_reduction" << std::endl;
+            
+            return [this, run, buffers] {
+                run();
+                check_error_async(cuLaunchKernel(function, 1, 1, 1,
+                                                 1024, 1, 1, 0, stream,
+                                                 buffers.data(), NULL),
+                                  "cuLaunchKernel");
+                wait();
 
-//------------------------------------------------------------------------------
-///  @brief Perform a time step.
-///
-///  This calls dispatches a kernel instance to the command buffer and the
-///  commits the job. This method is asynchronous.
-//------------------------------------------------------------------------------
-        void run() {
-            check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
-                                             threads_per_group, 1, 1, 0, stream,
-                                             kernel_arguments.data(), NULL),
-                              "cuLaunchKernel");
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Compute the max reduction.
-///
-///  @returns The maximum value from the input buffer.
-//------------------------------------------------------------------------------
-        T max_reduction() {
-            run();
-            check_error_async(cuLaunchKernel(max_function, 1, 1, 1,
-                                             threads_per_group, 1, 1, 0, stream,
-                                             max_kernel_arguments.data(), NULL),
-                              "cuLaunchKernel");
-            wait();
-
-            return reinterpret_cast<T *> (result_buffer)[0];
+                return reinterpret_cast<T *> (result_buffer)[0];
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -339,8 +330,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void copy_buffer(const size_t source_index,
                          T *destination) {
-	    size_t size;
-	    check_error(cuMemGetAddressRange(NULL, &size, buffers[source_index]), "cuMemGetAddressRange");
+            size_t size;
+            check_error(cuMemGetAddressRange(NULL, &size, buffers[source_index]), "cuMemGetAddressRange");
             check_error_async(cuMemcpyDtoHAsync(destination, buffers[source_index], size, stream), "cuMemcpyDtoHAsync");
         }
 

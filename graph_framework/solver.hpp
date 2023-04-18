@@ -63,7 +63,10 @@ namespace solver {
 ///  Residule.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base> residule;
 
+///  Jit context for the kernels.
         std::unique_ptr<jit::context<typename DISPERSION_FUNCTION::base>> source;
+///  Kernel function call.
+        std::function<void(void)> run;
 
     public:
 //------------------------------------------------------------------------------
@@ -211,31 +214,31 @@ namespace solver {
             this->source = std::make_unique<jit::context<typename DISPERSION_FUNCTION::base>> ();
             this->source->add_kernel("solver_kernel",
                                      inputs, outputs, setters);
-            this->source->compile("solver_kernel",
-                                  inputs, outputs, num_rays);
-
-            //this->source->print_source();
+            
+            this->source->compile();
+            this->run = source->create_kernel_call("solver_kernel",
+                                                   inputs, outputs, num_rays);
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Syncronize results between host and gpu.
 //------------------------------------------------------------------------------
         void sync() {
-            this->source->copy_buffer(0, graph::variable_cast(this->t)->data());
-            this->source->copy_buffer(1, graph::variable_cast(this->w)->data());
-            this->source->copy_buffer(2, graph::variable_cast(this->x)->data());
-            this->source->copy_buffer(3, graph::variable_cast(this->y)->data());
-            this->source->copy_buffer(4, graph::variable_cast(this->z)->data());
-            this->source->copy_buffer(5, graph::variable_cast(this->kx)->data());
-            this->source->copy_buffer(6, graph::variable_cast(this->ky)->data());
-            this->source->copy_buffer(7, graph::variable_cast(this->kz)->data());
+            this->source->copy_buffer(this->t, graph::variable_cast(this->t)->data());
+            this->source->copy_buffer(this->w, graph::variable_cast(this->w)->data());
+            this->source->copy_buffer(this->x, graph::variable_cast(this->x)->data());
+            this->source->copy_buffer(this->y, graph::variable_cast(this->y)->data());
+            this->source->copy_buffer(this->z, graph::variable_cast(this->z)->data());
+            this->source->copy_buffer(this->kx, graph::variable_cast(this->kx)->data());
+            this->source->copy_buffer(this->ky, graph::variable_cast(this->ky)->data());
+            this->source->copy_buffer(this->kz, graph::variable_cast(this->kz)->data());
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Method to step the rays.
 //------------------------------------------------------------------------------
         void step() {
-            this->source->run();
+            this->run();
         }
 
 //------------------------------------------------------------------------------

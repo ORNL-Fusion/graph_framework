@@ -53,11 +53,13 @@ template<typename T> void compile(graph::input_nodes<T> inputs,
     jit::context<T> source;
     source.add_kernel("test_kernel", inputs, outputs, setters);
 
-    source.compile("test_kernel", inputs, outputs, 1);
-    source.run();
+    source.compile();
+    
+    auto run = source.create_kernel_call("test_kernel", inputs, outputs, 1);
+    run();
 
     T result;
-    source.copy_buffer(inputs.size(), &result);
+    source.copy_buffer(outputs.back(), &result);
 
     const T diff = std::abs(result - expected);
     check(diff, tolarance);

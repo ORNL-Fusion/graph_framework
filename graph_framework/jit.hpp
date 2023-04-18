@@ -38,7 +38,10 @@ namespace jit {
         std::stringstream source_buffer;
 ///  Nodes that have been jitted.
         register_map<graph::leaf_node<T>> registers;
+///  Kernel names.
+        std::vector<std::string> kernel_names;
 
+///  Type for the GPU context.
         using gpu_context_type = typename std::conditional<use_gpu<T> (),
 #ifdef USE_CUDA
                                                            gpu::cuda_context<T>,
@@ -76,6 +79,8 @@ namespace jit {
                         graph::input_nodes<T> inputs,
                         graph::output_nodes<T> outputs,
                         graph::map_nodes<T> setters) {
+            kernel_names.push_back(name);
+            
             const size_t size = inputs[0]->size();
 
             gpu_context.create_kernel_prefix(source_buffer,
@@ -112,44 +117,42 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Compile the kernel.
 ///
-///  @params[in] name          Name of the kernel for reference.
-///  @params[in] inputs        Input variables of the kernel.
-///  @params[in] outputs       Output nodes to calculate results of.
-///  @params[in] num_rays      Number of rays.
 ///  @params[in] add_reduction Optional argument to generate the reduction
-///                           kernel.
+///                            kernel.
 //------------------------------------------------------------------------------
-        void compile(const std::string name,
-                     graph::input_nodes<T> inputs,
-                     graph::output_nodes<T> outputs,
-                     const size_t num_rays,
-                     const bool add_reduction=false) {
-            gpu_context.create_pipeline(source_buffer.str(), name,
-                                        inputs, outputs, num_rays,
-                                        add_reduction);
+        void compile(const bool add_reduction=false) {
+            gpu_context.compile(source_buffer.str(),
+                                kernel_names,
+                                add_reduction);
         }
 
 //------------------------------------------------------------------------------
-///  @brief Compile the max kernel.
-//------------------------------------------------------------------------------
-        void compile_max() {
-            gpu_context.create_max_pipeline();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Run the kernel.
-//------------------------------------------------------------------------------
-        void run() {
-            gpu_context.run();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Max reduction.
+///  @brief Create a kernel calling function.
 ///
-///  @returns The maximum value from the input buffer.
+///  @params[in] kernel_name   Name of the kernel for later reference.
+///  @params[in] inputs        Input nodes of the kernel.
+///  @params[in] outputs       Output nodes of the kernel.
+///  @params[in] num_rays      Number of rays to trace.
+///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        T max_reduction() {
-            return gpu_context.max_reduction();
+        std::function<void(void)> create_kernel_call(const std::string kernel_name,
+                                                     graph::input_nodes<T> inputs,
+                                                     graph::output_nodes<T> outputs,
+                                                     const size_t num_rays) {
+            return gpu_context.create_kernel_call(kernel_name, inputs, outputs,
+                                                  num_rays);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create a max compute kernel calling function.
+///
+///  @params[in] argument Node to reduce.
+///  @params[in] run      Function to run before reduction.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<T(void)> create_max_call(graph::shared_leaf<T> &argument,
+                                               std::function<void(void)> run) {
+            return gpu_context.create_max_call(argument, run);
         }
 
 //------------------------------------------------------------------------------
@@ -171,12 +174,12 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Copy contexts of buffer.
 ///
-///  @params[in]     source_index Index of the GPU buffer.
-///  @params[in,out] destination  Host side buffer to copy to.
+///  @params[in]     node        Node to copy buffer from.
+///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_buffer(const size_t source_index,
+        void copy_buffer(graph::shared_leaf<T> &node,
                          T *destination) {
-            gpu_context.copy_buffer(source_index, destination);
+            gpu_context.copy_buffer(node, destination);
         }
     };
 }

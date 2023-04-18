@@ -25,26 +25,14 @@ namespace gpu {
         id<MTLDevice> device;
 ///  The metal command queue.
         id<MTLCommandQueue> queue;
-///  Buffer objects.
-        std::vector<id<MTLBuffer>> buffers;
-///  Buffer offsets.
-        std::vector<NSUInteger> offsets;
-///  Range
-        NSRange range;
+///  Argument map.
+        std::map<graph::leaf_node<T> *, id<MTLBuffer>> kernel_arguments;
 ///  Max Buffer.
         id<MTLBuffer> result;
-///  Compute pipeline discriptor.
-        id<MTLComputePipelineState> state;
-///  Compute pipeline discriptor.
-        id<MTLComputePipelineState> max_state;
 ///  Metal command buffer.
         id<MTLCommandBuffer> command_buffer;
 ///  Metal library.
         id<MTLLibrary> library;
-///  Number of thread groups.
-        NSUInteger thread_groups;
-///  Number of threads in a group.
-        NSUInteger threads_per_group;
 
     public:
 //------------------------------------------------------------------------------
@@ -55,31 +43,42 @@ namespace gpu {
         queue([device newCommandQueue]) {}
 
 //------------------------------------------------------------------------------
-///  @brief Create a compute pipeline.
+///  @brief Compile the kernels.
 ///
 ///  @params[in] kernel_source Source code buffer for the kernel.
-///  @params[in] kernel_name   Name of the kernel for later reference.
-///  @params[in] inputs        Input nodes of the kernel.
-///  @params[in] outputs       Output nodes of the kernel.
-///  @params[in] num_rays      Number of rays to trace.
-///  @params[in] add_reduction Optional argument to generate the reduction
-///                           kernel.
+///  @params[in] names         Names of the kernel functions.
+///  @params[in] add_reduction Include the reduction kernel.
 //------------------------------------------------------------------------------
-        void create_pipeline(const std::string kernel_source,
-                             const std::string kernel_name,
-                             graph::input_nodes<T> inputs,
-                             graph::output_nodes<T> outputs,
-                             const size_t num_rays,
-                             const bool add_reduction=false) {
+        void compile(const std::string kernel_source,
+                     std::vector<std::string> names,
+                     const bool add_reduction=false) {
             NSError *error;
             library = [device newLibraryWithSource:[NSString stringWithCString:kernel_source.c_str()
                                                                       encoding:NSUTF8StringEncoding]
                                            options:compile_options()
                                              error:&error];
-
+            
             if (error) {
                 NSLog(@"%@", error);
             }
+            
+            std::cout << "Metal GPU info." << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create a kernel calling function.
+///
+///  @params[in] kernel_name   Name of the kernel for later reference.
+///  @params[in] inputs        Input nodes of the kernel.
+///  @params[in] outputs       Output nodes of the kernel.
+///  @params[in] num_rays      Number of rays to trace.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_kernel_call(const std::string kernel_name,
+                                                     graph::input_nodes<T> inputs,
+                                                     graph::output_nodes<T> outputs,
+                                                     const size_t num_rays) {
+            NSError *error;
 
             id<MTLFunction> function = [library newFunctionWithName:[NSString stringWithCString:kernel_name.c_str()
                                                                                        encoding:NSUTF8StringEncoding]];
@@ -88,60 +87,113 @@ namespace gpu {
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
             compute.computeFunction = function;
 
-            state = [device newComputePipelineStateWithDescriptor:compute
-                                                          options:MTLPipelineOptionNone
-                                                       reflection:NULL
-                                                            error:&error];
+            id<MTLComputePipelineState> state = [device newComputePipelineStateWithDescriptor:compute
+                                                                                      options:MTLPipelineOptionNone
+                                                                                   reflection:NULL
+                                                                                        error:&error];
 
             if (error) {
                 NSLog(@"%@", error);
             }
 
+            std::vector<id<MTLBuffer>> buffers;
+
             const size_t buffer_element_size = sizeof(T);
             for (graph::shared_variable<T> &input : inputs) {
-                backend::buffer<T> buffer = input->evaluate();
-                buffers.push_back([device newBufferWithBytes:buffer.data()
-                                                      length:buffer.size()*buffer_element_size
-                                                     options:MTLResourceStorageModeManaged]);
+                if (!kernel_arguments.contains(input.get())) {
+                    backend::buffer<T> buffer = input->evaluate();
+                    kernel_arguments[input.get()] = [device newBufferWithBytes:buffer.data()
+                                                                        length:buffer.size()*buffer_element_size
+                                                                       options:MTLResourceStorageModeManaged];
+                }
+                buffers.push_back(kernel_arguments[input.get()]);
             }
             for (graph::shared_leaf<T> &output : outputs) {
-                backend::buffer<T> buffer = output->evaluate();
-                buffers.push_back([device newBufferWithBytes:&buffer[0]
-                                                      length:buffer.size()*buffer_element_size
-                                                     options:MTLResourceStorageModeManaged]);
+                if (!kernel_arguments.contains(output.get())) {
+                    kernel_arguments[output.get()] = [device newBufferWithLength:[buffers.back() length]
+                                                                         options:MTLResourceStorageModeManaged];
+                }
+                buffers.push_back(kernel_arguments[output.get()]);
             }
 
-            offsets.assign(buffers.size(), 0);
-            range = NSMakeRange(0, buffers.size());
+            std::vector<NSUInteger> offsets(buffers.size(), 0);
+            NSRange range = NSMakeRange(0, buffers.size());
 
-            threads_per_group = state.maxTotalThreadsPerThreadgroup;
-            thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
-            std::cout << "Metal GPU info." << std::endl;
-            std::cout << "  Threads per group  : " << threads_per_group << std::endl;
-            std::cout << "  Number of groups   : " << thread_groups << std::endl;
-            std::cout << "  Total problem size : " << threads_per_group*thread_groups << std::endl;
+            NSUInteger threads_per_group = state.maxTotalThreadsPerThreadgroup;
+            NSUInteger thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+
+            std::cout << "  Kernel name : " << kernel_name << std::endl;
+            std::cout << "    Threads per group  : " << threads_per_group << std::endl;
+            std::cout << "    Number of groups   : " << thread_groups << std::endl;
+            std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+            
+            return [this, state, buffers, offsets, range, thread_groups, threads_per_group] {
+                command_buffer = [queue commandBuffer];
+                id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
+
+                [encoder setComputePipelineState:state];
+                [encoder setBuffers:buffers.data()
+                            offsets:offsets.data()
+                          withRange:range];
+
+                [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
+                        threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
+                [encoder endEncoding];
+
+                [command_buffer commit];
+            };
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create a max compute pipeline.
+///  @brief Create a max compute kernel calling function.
+///
+///  @params[in] argument Node to reduce.
+///  @params[in] run      Function to run before reduction.
+///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        void create_max_pipeline() {
+        std::function<T(void)> create_max_call(graph::shared_leaf<T> &argument,
+                                               std::function<void(void)> run) {
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
             compute.computeFunction = [library newFunctionWithName:@"max_reduction"];
 
             NSError *error;
-            max_state = [device newComputePipelineStateWithDescriptor:compute
-                                                              options:MTLPipelineOptionNone
-                                                           reflection:NULL
-                                                                error:&error];
+            id<MTLComputePipelineState> max_state = [device newComputePipelineStateWithDescriptor:compute
+                                                                                          options:MTLPipelineOptionNone
+                                                                                       reflection:NULL
+                                                                                            error:&error];
 
             if (error) {
                 NSLog(@"%@", error);
             }
 
-            result = [device newBufferWithLength:sizeof(T)
-                                         options:MTLResourceStorageModeManaged];
+            id<MTLBuffer> result = [device newBufferWithLength:sizeof(T)
+                                                       options:MTLResourceStorageModeManaged];
+            
+            id<MTLBuffer> buffer = kernel_arguments[argument.get()];
+            
+            return [this, run, buffer, result, max_state] {
+                run();
+                command_buffer = [queue commandBuffer];
+
+                id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
+
+                [encoder setComputePipelineState:max_state];
+                [encoder setBuffer:buffer offset:0 atIndex:0];
+                [encoder setBuffer:result offset:0 atIndex:1];
+                [encoder dispatchThreadgroups:MTLSizeMake(1, 1, 1)
+                        threadsPerThreadgroup:MTLSizeMake(1024, 1, 1)];
+                [encoder endEncoding];
+
+                id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
+                [blit synchronizeResource:result];
+                [blit endEncoding];
+
+                [command_buffer commit];
+                [command_buffer waitUntilCompleted];
+
+                return static_cast<T *> ([result contents])[0];
+            };
         }
 
 //------------------------------------------------------------------------------
@@ -154,63 +206,13 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Perform a time step.
-///
-///  This calls dispatches a kernel instance to the command buffer and the commits
-///  the job. This method is asyncronus.
-//------------------------------------------------------------------------------
-        void run() {
-            command_buffer = [queue commandBuffer];
-            id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
-
-            [encoder setComputePipelineState:state];
-            [encoder setBuffers:buffers.data()
-                        offsets:offsets.data()
-                      withRange:range];
-
-            [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
-                    threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
-            [encoder endEncoding];
-
-            [command_buffer commit];
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Compute the max reduction.
-///
-///  @returns The maximum value from the input buffer.
-//------------------------------------------------------------------------------
-        T max_reduction() {
-            run();
-            command_buffer = [queue commandBuffer];
-
-            id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
-
-            [encoder setComputePipelineState:max_state];
-            [encoder setBuffer:buffers.back() offset:0 atIndex:0];
-            [encoder setBuffer:result offset:0 atIndex:1];
-            [encoder dispatchThreadgroups:MTLSizeMake(1, 1, 1)
-                    threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
-            [encoder endEncoding];
-
-            id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
-            [blit synchronizeResource:result];
-            [blit endEncoding];
-
-            [command_buffer commit];
-            [command_buffer waitUntilCompleted];
-
-            return static_cast<T *> ([result contents])[0];
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Hold the current thread until the current command buffer has complete.
 //------------------------------------------------------------------------------
         void wait() {
             command_buffer = [queue commandBuffer];
             id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
-            for (id<MTLBuffer> buffer : buffers) {
-                [blit synchronizeResource:buffer];
+            for (const auto &[key, value] : kernel_arguments) {
+                [blit synchronizeResource:value];
             }
             [blit endEncoding];
 
@@ -225,8 +227,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void print_results(const size_t index) {
             wait();
-            for (id<MTLBuffer> buffer : buffers) {
-                const T *contents = static_cast<T *> ([buffer contents]);
+            for (const auto &[key, value] : kernel_arguments) {
+                const T *contents = static_cast<T *> ([value contents]);
                 std::cout << contents[index] << " ";
             }
             std::cout << std::endl;
@@ -235,22 +237,22 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents.
 ///
-///  @params[in]     source_index Index of the GPU buffer.
-///  @params[in,out] destination  Host side buffer to copy to.
+///  @params[in]     node        Node to copy buffer from.
+///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_buffer(const size_t source_index,
+        void copy_buffer(graph::shared_leaf<T> node,
                          T *destination) {
             command_buffer = [queue commandBuffer];
             id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
-            [blit synchronizeResource:buffers[source_index]];
+            [blit synchronizeResource:kernel_arguments[node.get()]];
             [blit endEncoding];
 
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
 
             memcpy(destination,
-                   [buffers[source_index] contents],
-                   [buffers[source_index] length]);
+                   [kernel_arguments[node.get()] contents],
+                   [kernel_arguments[node.get()] length]);
         }
 
 //------------------------------------------------------------------------------

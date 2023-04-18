@@ -1,7 +1,7 @@
 add_library (rays INTERFACE)
 target_compile_features (rays
                          INTERFACE
-                         cxx_std_17
+                         cxx_std_20
 )
 
 target_compile_definitions (rays
