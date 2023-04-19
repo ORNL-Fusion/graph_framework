@@ -127,7 +127,7 @@ namespace gpu {
             std::cout << "    Number of groups   : " << thread_groups << std::endl;
             std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
             
-            return [this, state, buffers, offsets, range, thread_groups, threads_per_group] {
+            return [this, state, buffers, offsets, range, thread_groups, threads_per_group] () mutable {
                 command_buffer = [queue commandBuffer];
                 id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
@@ -172,7 +172,7 @@ namespace gpu {
             
             id<MTLBuffer> buffer = kernel_arguments[argument.get()];
             
-            return [this, run, buffer, result, max_state] {
+            return [this, run, buffer, result, max_state] () mutable {
                 run();
                 command_buffer = [queue commandBuffer];
 
@@ -235,13 +235,27 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Copy buffer contents.
+///  @brief Copy buffer contents to the device.
+///
+///  @params[in] node   Not to copy buffer to.
+///  @params[in] source Host side buffer to copy from.
+//------------------------------------------------------------------------------
+        void copy_to_device(graph::shared_leaf<T> node,
+                            T *source) {
+            const size_t size = [kernel_arguments[node.get()] length];
+            memcpy([kernel_arguments[node.get()] contents],
+                   source, size);
+            [kernel_arguments[node.get()] didModifyRange:NSMakeRange(0, size)];
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Copy buffer contents to host.
 ///
 ///  @params[in]     node        Node to copy buffer from.
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_buffer(graph::shared_leaf<T> node,
-                         T *destination) {
+        void copy_to_host(graph::shared_leaf<T> node,
+                          T *destination) {
             command_buffer = [queue commandBuffer];
             id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
             [blit synchronizeResource:kernel_arguments[node.get()]];

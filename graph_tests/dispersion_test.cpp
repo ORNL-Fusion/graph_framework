@@ -42,6 +42,7 @@ void test_solve(const typename DISPERSION::base tolarance,
         graph::variable_cast(x),
         graph::variable_cast(y),
         graph::variable_cast(z),
+        graph::variable_cast(kx),
         graph::variable_cast(ky),
         graph::variable_cast(kz),
         graph::variable_cast(t),
@@ -49,42 +50,14 @@ void test_solve(const typename DISPERSION::base tolarance,
     D.solve(kx, inputs, tolarance);
 
     kx->set(static_cast<typename DISPERSION::base> (0.2));
-    ky->set(k_guess);
-    inputs = {
-        graph::variable_cast(w),
-        graph::variable_cast(x),
-        graph::variable_cast(y),
-        graph::variable_cast(z),
-        graph::variable_cast(kx),
-        graph::variable_cast(kz),
-        graph::variable_cast(t),
-    };
     D.solve(ky, inputs, tolarance);
 
     ky->set(static_cast<typename DISPERSION::base> (0.25));
     kz->set(k_guess);
-    inputs = {
-        graph::variable_cast(w),
-        graph::variable_cast(x),
-        graph::variable_cast(y),
-        graph::variable_cast(z),
-        graph::variable_cast(kx),
-        graph::variable_cast(ky),
-        graph::variable_cast(t),
-    };
     D.solve(kz, inputs, tolarance);
 
     kz->set(static_cast<typename DISPERSION::base> (0.15));
     kx->set(k_guess);
-    inputs = {
-        graph::variable_cast(x),
-        graph::variable_cast(y),
-        graph::variable_cast(z),
-        graph::variable_cast(kx),
-        graph::variable_cast(ky),
-        graph::variable_cast(kz),
-        graph::variable_cast(t),
-    };
     D.solve(w, inputs, tolarance);
 }
 

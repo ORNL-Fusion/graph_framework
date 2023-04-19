@@ -12,8 +12,6 @@
 #include <array>
 
 #include "dispersion.hpp"
-#include "equilibrium.hpp"
-#include "jit.hpp"
 
 namespace solver {
 //******************************************************************************
@@ -63,10 +61,8 @@ namespace solver {
 ///  Residule.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base> residule;
 
-///  Jit context for the kernels.
-        std::unique_ptr<jit::context<typename DISPERSION_FUNCTION::base>> source;
-///  Kernel function call.
-        std::function<void(void)> run;
+///  Workflow manager.
+        workflow::manager<typename DISPERSION_FUNCTION::base> work;
 
     public:
 //------------------------------------------------------------------------------
@@ -107,72 +103,17 @@ namespace solver {
         init(graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
              const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
              const size_t max_iterations = 1000) final {
-            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs;
-            if (x->is_match(this->w)) {
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->x)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->y)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->z)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->kx)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->ky)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->kz)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->t)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-            }
+            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs {
+                graph::variable_cast(this->t),
+                graph::variable_cast(this->w),
+                graph::variable_cast(this->x),
+                graph::variable_cast(this->y),
+                graph::variable_cast(this->z),
+                graph::variable_cast(this->kx),
+                graph::variable_cast(this->ky),
+                graph::variable_cast(this->kz)
+            };
+
             residule = this->D.solve(x, inputs, tolarance, max_iterations);
 
             return residule;
@@ -180,12 +121,8 @@ namespace solver {
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the solver function.
-///
-///  FIXME: For now this compiles and run the kernel for all time steps.
-///
-///  @params[in] num_rays  Number of rays in the solution.
 //------------------------------------------------------------------------------
-        void compile(const size_t num_rays) {
+        void compile() {
             graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs = {
                 graph::variable_cast(this->t),
                 graph::variable_cast(this->w),
@@ -211,34 +148,43 @@ namespace solver {
                 {this->t_next, graph::variable_cast(this->t)}
             };
 
-            this->source = std::make_unique<jit::context<typename DISPERSION_FUNCTION::base>> ();
-            this->source->add_kernel("solver_kernel",
-                                     inputs, outputs, setters);
-            
-            this->source->compile();
-            this->run = source->create_kernel_call("solver_kernel",
-                                                   inputs, outputs, num_rays);
+            work.add_item(inputs, outputs, setters, "solver_kernel");
+            work.compile();
         }
 
 //------------------------------------------------------------------------------
-///  @brief Syncronize results between host and gpu.
+///  @brief Syncronize results from host to gpu.
 //------------------------------------------------------------------------------
-        void sync() {
-            this->source->copy_buffer(this->t, graph::variable_cast(this->t)->data());
-            this->source->copy_buffer(this->w, graph::variable_cast(this->w)->data());
-            this->source->copy_buffer(this->x, graph::variable_cast(this->x)->data());
-            this->source->copy_buffer(this->y, graph::variable_cast(this->y)->data());
-            this->source->copy_buffer(this->z, graph::variable_cast(this->z)->data());
-            this->source->copy_buffer(this->kx, graph::variable_cast(this->kx)->data());
-            this->source->copy_buffer(this->ky, graph::variable_cast(this->ky)->data());
-            this->source->copy_buffer(this->kz, graph::variable_cast(this->kz)->data());
+        void sync_device() {
+            work.copy_to_device(this->t, graph::variable_cast(this->t)->data());
+            work.copy_to_device(this->w, graph::variable_cast(this->w)->data());
+            work.copy_to_device(this->x, graph::variable_cast(this->x)->data());
+            work.copy_to_device(this->y, graph::variable_cast(this->y)->data());
+            work.copy_to_device(this->z, graph::variable_cast(this->z)->data());
+            work.copy_to_device(this->kx, graph::variable_cast(this->kx)->data());
+            work.copy_to_device(this->ky, graph::variable_cast(this->ky)->data());
+            work.copy_to_device(this->kz, graph::variable_cast(this->kz)->data());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Syncronize results from gpu to host.
+//------------------------------------------------------------------------------
+        void sync_host() {
+            work.copy_to_host(this->t, graph::variable_cast(this->t)->data());
+            work.copy_to_host(this->w, graph::variable_cast(this->w)->data());
+            work.copy_to_host(this->x, graph::variable_cast(this->x)->data());
+            work.copy_to_host(this->y, graph::variable_cast(this->y)->data());
+            work.copy_to_host(this->z, graph::variable_cast(this->z)->data());
+            work.copy_to_host(this->kx, graph::variable_cast(this->kx)->data());
+            work.copy_to_host(this->ky, graph::variable_cast(this->ky)->data());
+            work.copy_to_host(this->kz, graph::variable_cast(this->kz)->data());
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Method to step the rays.
 //------------------------------------------------------------------------------
         void step() {
-            this->run();
+            work.run();
         }
 
 //------------------------------------------------------------------------------
@@ -247,7 +193,7 @@ namespace solver {
 ///  @params[in] index Ray index to print results of.
 //------------------------------------------------------------------------------
         void print(const size_t index) {
-            this->source->print(index);
+            work.print(index);
         }
 
 //------------------------------------------------------------------------------

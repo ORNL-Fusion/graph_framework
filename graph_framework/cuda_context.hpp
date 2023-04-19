@@ -323,13 +323,26 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Copy buffer contents.
+///  @brief Copy buffer contents to the device.
+///
+///  @params[in] node   Not to copy buffer to.
+///  @params[in] source Host side buffer to copy from.
+//------------------------------------------------------------------------------
+        void copy_to_device(graph::shared_leaf<T> node,
+                            T *source) {
+            size_t size;
+            check_error(cuMemGetAddressRange(NULL, &size, kernel_arguments[node.get()]), "cuMemGetAddressRange");
+            check_error_async(cuMemcpyHtoDAsync(source, kernel_arguments[node.get()], size, stream), "cuMemcpyHtoDAsync");
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Copy buffer contents to host.
 ///
 ///  @params[in]     node        Node to copy buffer from.
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_buffer(graph::shared_leaf<T> node,
-                         T *destination) {
+        void copy_to_host(graph::shared_leaf<T> node,
+                          T *destination) {
             size_t size;
             check_error(cuMemGetAddressRange(NULL, &size, kernel_arguments[node.get()]), "cuMemGetAddressRange");
             check_error_async(cuMemcpyDtoHAsync(destination, kernel_arguments[node.get()], size, stream), "cuMemcpyDtoHAsync");

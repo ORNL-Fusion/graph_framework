@@ -98,7 +98,7 @@ int main(int argc, const char * argv[]) {
             solver::rk4<dispersion::cold_plasma<base>>
                 solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
             solve.init(kx);
-            solve.compile(num_rays);
+            solve.compile();
             if (thread_number == 0) {
                 solve.print_dispersion();
                 std::cout << std::endl;
@@ -131,7 +131,7 @@ int main(int argc, const char * argv[]) {
             if (thread_number == 0) {
                 solve.print(sample);
             } else {
-                solve.sync();
+                solve.sync_host();
             }
 
         }, i, threads.size());

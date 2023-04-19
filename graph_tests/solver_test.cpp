@@ -44,7 +44,7 @@ void test_solver(const typename SOLVER::base tolarance,
     solver.stop();
 
     timeing::measure_diagnostic compile("compile");
-    solve.compile(1);
+    solve.compile();
     compile.stop();
 
     timeing::measure_diagnostic step("step");

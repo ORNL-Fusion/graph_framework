@@ -61,7 +61,6 @@ namespace jit {
 //------------------------------------------------------------------------------
         context() {
             source_buffer << std::setprecision(jit::max_digits10<T> ());
-
             gpu_context.create_header(source_buffer);
         }
         
@@ -101,10 +100,10 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Add max reduction kernel.
 ///
-///  @params[in] input Graph node to reduce.
+///  @params[in] size Size of the input buffer.
 //------------------------------------------------------------------------------
-        void add_max_reduction(graph::shared_variable<T> input) {
-            gpu_context.create_reduction(source_buffer, input->size());
+        void add_max_reduction(const size_t size) {
+            gpu_context.create_reduction(source_buffer, size);
         }
 
 //------------------------------------------------------------------------------
@@ -172,14 +171,25 @@ namespace jit {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Copy contexts of buffer.
+///  @brief Copy contexts of buffer to device.
+///
+///  @params[in] node   Not to copy buffer to.
+///  @params[in] source Host side buffer to copy from.
+//------------------------------------------------------------------------------
+        void copy_to_device(graph::shared_leaf<T> &node,
+                            T *source) {
+            gpu_context.copy_to_device(node, source);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Copy contexts of buffer to host.
 ///
 ///  @params[in]     node        Node to copy buffer from.
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_buffer(graph::shared_leaf<T> &node,
-                         T *destination) {
-            gpu_context.copy_buffer(node, destination);
+        void copy_to_host(graph::shared_leaf<T> &node,
+                          T *destination) {
+            gpu_context.copy_to_host(node, destination);
         }
     };
 }

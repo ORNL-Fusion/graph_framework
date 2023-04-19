@@ -13,7 +13,7 @@
 
 #include "vector.hpp"
 #include "equilibrium.hpp"
-#include "jit.hpp"
+#include "workflow.hpp"
 
 namespace dispersion {
 //******************************************************************************
@@ -132,13 +132,8 @@ namespace dispersion {
             auto x_next = x
                         - loss/(loss->df(x) +
                                 graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (tolarance)));
-
-            typename DISPERSION_FUNCTION::base max_residule;
-            size_t iterations = 0;
-            std::unique_ptr<jit::context<typename DISPERSION_FUNCTION::base>> source;
             
             auto x_var = graph::variable_cast(x);
-            inputs.push_back(x_var);
 
             graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
                 loss
@@ -148,37 +143,13 @@ namespace dispersion {
                 {x_next, x_var}
             };
 
-            source = std::make_unique<jit::context<typename DISPERSION_FUNCTION::base>> ();
-            source->add_kernel("loss_kernel",
-                               inputs,
-                               outputs,
-                               setters);
-            source->add_max_reduction(x_var);
+            workflow::manager<typename DISPERSION_FUNCTION::base> work;
+            work.add_converge_item(inputs, outputs, setters, "loss_kernel",
+                                   tolarance, max_iterations);
+            work.compile();
+            work.run();
 
-            source->compile(true);
-
-            auto run = source->create_kernel_call("loss_kernel", inputs,
-                                                  outputs, x_var->size());
-
-            auto max = source->create_max_call(loss, run);
-            max_residule = max();
-            while (std::abs(max_residule) > std::abs(tolarance) &&
-                   iterations++ < max_iterations) {
-                   max_residule = max();
-            }
-
-            source->copy_buffer(x, x_var->data());
-
-//  In release mode asserts are diaables so write error to standard err. Need to
-//  flip the comparison operator because we want to assert to trip if false.
-            assert(iterations < max_iterations &&
-                   "Newton solve failed to converge with in given iterations.");
-            if (iterations > max_iterations) {
-                std::cerr << "Newton solve failed to converge with in given iterations."
-                          << std::endl;
-                std::cerr << "Minimum residule reached: " << max_residule
-                          << std::endl;
-            }
+            work.copy_to_host(x, x_var->data());
 
             return loss;
         }

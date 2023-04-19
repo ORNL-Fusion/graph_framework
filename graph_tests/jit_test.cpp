@@ -59,7 +59,7 @@ template<typename T> void compile(graph::input_nodes<T> inputs,
     run();
 
     T result;
-    source.copy_buffer(outputs.back(), &result);
+    source.copy_to_host(outputs.back(), &result);
 
     const T diff = std::abs(result - expected);
     check(diff, tolarance);

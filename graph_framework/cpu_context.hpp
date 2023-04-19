@@ -98,11 +98,11 @@ namespace gpu {
             std::cout << "  Command Line    : " << temp_stream.str() << std::endl;
             int error = system(temp_stream.str().c_str());
             if (error) {
-                std::cout << "Failed to compile cpu kernel. Check source code in "
+                std::cerr << "Failed to compile cpu kernel. Check source code in "
                           << filename << std::endl;
                 exit(error);
             }
-            
+
 #ifdef NDEBUG
             temp_stream.str(std::string());
             temp_stream.clear();
@@ -136,7 +136,7 @@ namespace gpu {
                                                       const size_t num_rays) {
             void *kernel = dlsym(lib_handle, kernel_name.c_str());
             if (!kernel) {
-                std::cout << "Failed to load function. " << kernel_name
+                std::cerr << "Failed to load function. " << kernel_name
                           << std::endl;
                 exit(1);
             }
@@ -162,8 +162,8 @@ namespace gpu {
 
             std::cout << "  Function pointer: " << reinterpret_cast<size_t> (kernel) << std::endl;
 
-            return [kernel, buffers] {
-                ((void (*)(const std::vector<T *> &))kernel)(buffers);
+            return [kernel, buffers] () mutable {
+                ((void (*)(std::vector<T *> &))kernel)(buffers);
             };
         }
 
@@ -178,7 +178,7 @@ namespace gpu {
             auto begin = kernel_arguments[argument.get()].cbegin();
             auto end = kernel_arguments[argument.get()].cend();
             
-            return [run, begin, end] {
+            return [run, begin, end] () mutable {
                 run();
                 if constexpr (jit::is_complex<T> ()) {
                     return *std::max_element(begin, end,
@@ -209,13 +209,26 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Copy buffer contents.
+///  @brief Copy buffer contents to the device.
+///
+///  @params[in] node   Not to copy buffer to.
+///  @params[in] source Host side buffer to copy from.
+//------------------------------------------------------------------------------
+        void copy_to_device(graph::shared_leaf<T> node,
+                            T *source) {
+            memcpy(kernel_arguments[node.get()].data(),
+                   source,
+                   sizeof(T)*kernel_arguments[node.get()].size());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Copy buffer contents to host.
 ///
 ///  @params[in]     node        Node to copy buffer from.
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_buffer(const graph::shared_leaf<T> node,
-                         T *destination) {
+        void copy_to_host(const graph::shared_leaf<T> node,
+                          T *destination) {
             memcpy(destination,
                    kernel_arguments[node.get()].data(),
                    sizeof(T)*kernel_arguments[node.get()].size());
@@ -255,7 +268,7 @@ namespace gpu {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
             
-            source_buffer << "    const vector<";
+            source_buffer << "    vector<";
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args) {" << std::endl;
             

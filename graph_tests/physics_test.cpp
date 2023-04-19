@@ -51,13 +51,13 @@ void test_constant() {
     auto eq = equilibrium::make_slab<T> ();
     solver::rk2<dispersion::simple<T>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx);
-    solve.compile(1);
+    solve.compile();
 
     auto constant = kx*x + ky*y + kz*z - omega*t;
     const auto c0 = constant->evaluate().at(0);
     for (size_t i = 0; i < 10; i++) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
 
     assert(std::abs(c0 - constant->evaluate().at(0)) < 5.0E-15 &&
@@ -152,11 +152,11 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
     } else {
         solve.init(kx);
     }
-    solve.compile(1);
+    solve.compile();
 
     for (size_t i = 0; i < 20; i++) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
     const typename SOLVER::base time = t->evaluate().at(0);
     const typename SOLVER::base expected_x = -3.0/8.0*vth2*omega2p/(omega0*omega0)*time*time
@@ -245,11 +245,11 @@ void test_light_wave(const typename SOLVER::base tolarance) {
     auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::base> ();
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx, tolarance);
-    solve.compile(1);
+    solve.compile();
 
     for (size_t i = 0; i < 20; i++) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
     const typename SOLVER::base time = t->evaluate().at(0);
     const typename SOLVER::base expected_x = -omega2p/(4.0*omega0*omega0)*time*time
@@ -321,11 +321,11 @@ void test_acoustic_wave(const T tolarance) {
     auto eq = equilibrium::make_no_magnetic_field<T> ();
     solver::rk4<dispersion::acoustic_wave<T>> solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
     solve.init(kx, tolarance);
-    solve.compile(1);
+    solve.compile();
 
     for (size_t i = 0; i < 20; i++) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
 
     const auto diff_x = x->evaluate().at(0)/t->evaluate().at(0) - vs;
@@ -430,7 +430,6 @@ void test_cold_plasma_cutoffs(const T tolarance) {
     x->set(0, static_cast<T> (25.0));
     x->set(1, static_cast<T> (5.0));
     solve.init(x);
-    solve.compile(1);
 
     T wpecut_pos = x->evaluate().at(0);
     const T wrcut_pos = x->evaluate().at(1);
@@ -443,10 +442,11 @@ void test_cold_plasma_cutoffs(const T tolarance) {
     kx->set(0, static_cast<T> (1000.0)); // O-Mode
     kx->set(1, static_cast<T> (500.0));  // X-Mode
     solve.init(kx);
+    solve.compile();
 
     while (std::abs(t->evaluate().at(0)) < 30.0) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
 
     backend::buffer<T> result = x->evaluate();
@@ -472,6 +472,7 @@ void test_cold_plasma_cutoffs(const T tolarance) {
     } else {
         solve.init(x, 5.0E-30);
     }
+    solve.sync_device();
 
     wpecut_pos = x->evaluate().at(1);
 
@@ -487,11 +488,11 @@ void test_cold_plasma_cutoffs(const T tolarance) {
     } else {
         solve.init(kx);
     }
-    solve.compile(2);
+    solve.sync_device();
 
     while (std::abs(t->evaluate().at(0)) < 60.0) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
 
     result = x->evaluate();
@@ -547,14 +548,14 @@ void test_reflection(const T tolarance,
 //  location.
     kx->set(kx0);
     solve.init(kx, tolarance);
-    solve.compile(1);
-    solve.sync();
+    solve.compile();
+    solve.sync_host();
 
     auto max_x = std::real(x->evaluate().at(0));
     auto new_x = max_x;
     do {
         solve.step();
-        solve.sync();
+        solve.sync_host();
         new_x = std::real(x->evaluate().at(0));
         max_x = std::max(new_x, max_x);
         if constexpr (jit::use_cuda() || !jit::use_gpu<T> ()) {
