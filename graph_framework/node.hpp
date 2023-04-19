@@ -17,7 +17,7 @@
 #include <iomanip>
 
 #include "register.hpp"
-#include "cpu_backend.hpp"
+#include "backend.hpp"
 
 namespace graph {
 //******************************************************************************
@@ -39,7 +39,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<T> evaluate() = 0;
+        virtual backend::buffer<T> evaluate() = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Reduction method.
@@ -53,7 +53,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T>> df(std::shared_ptr<leaf_node<T>> x) = 0;
@@ -61,8 +61,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T>> compile(std::stringstream &stream,
                                                       jit::register_map<leaf_node<T>> &registers) = 0;
@@ -77,7 +77,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(std::shared_ptr<leaf_node<T>> x) = 0;
@@ -85,15 +85,15 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @param[in] d Scalar data to set.
+///  @params[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const T d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @param[in] index Buffer index to set value.
-///  @param[in] d     Scalar data to set.
+///  @params[in] index Buffer index to set value.
+///  @params[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const size_t index,
                          const T d) {}
@@ -101,16 +101,16 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @param[in] d Vector data to set.
+///  @params[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<T> &d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @param[in] d Backend buffer data to set.
+///  @params[in] d Backend buffer data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const backend::cpu<T> &d) {}
+        virtual void set(const backend::buffer<T> &d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
@@ -147,7 +147,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a straight node.
 ///
-///  @param[in] a Argument.
+///  @params[in] a Argument.
 //------------------------------------------------------------------------------
         straight_node(shared_leaf<T> a) :
         arg(a->reduce()) {}
@@ -157,15 +157,15 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<T> evaluate() {
+        virtual backend::buffer<T> evaluate() {
             return this->arg->evaluate();
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
                                        jit::register_map<leaf_node<T>> &registers) {
@@ -202,8 +202,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Reduces and assigns the left and right branches.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
         branch_node(shared_leaf<T> l,
                     shared_leaf<T> r) :
@@ -245,9 +245,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Reduces and assigns the left and right branches.
 ///
-///  @param[in] l Left branch.
-///  @param[in] m Middle branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
         triple_node(shared_leaf<T> l,
                     shared_leaf<T> m,
@@ -273,13 +273,13 @@ namespace graph {
     class constant_node final : public leaf_node<T> {
     private:
 ///  Storage buffer for the data.
-        const backend::cpu<T> data;
+        const backend::buffer<T> data;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a scalar.
 ///
-///  @param[in] d Scalar data to initalize.
+///  @params[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
         constant_node(const T d) :
         data(1, d) {}
@@ -287,9 +287,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
 ///
-///  @param[in] d Array buffer.
+///  @params[in] d Array buffer.
 //------------------------------------------------------------------------------
-        constant_node(const backend::cpu<T> &d) :
+        constant_node(const backend::buffer<T> &d) :
         data(d) {
             assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
@@ -299,7 +299,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<T> evaluate() final {
+        virtual backend::buffer<T> evaluate() final {
             return data;
         }
 
@@ -317,7 +317,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) final {
@@ -327,8 +327,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
                                        jit::register_map<leaf_node<T>> &registers) final {
@@ -355,7 +355,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) final {
@@ -389,7 +389,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant.
 ///
-///  @param[in] d Scalar data to initalize.
+///  @params[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     template<typename T>
@@ -400,11 +400,11 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant.
 ///
-///  @param[in] d Array buffer.
+///  @params[in] d Array buffer.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_leaf<T> constant(const backend::cpu<T> &d) {
+    shared_leaf<T> constant(const backend::buffer<T> &d) {
         return (std::make_shared<constant_node<T>> (d))->reduce();
     }
 
@@ -456,7 +456,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a constant node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -474,7 +474,7 @@ namespace graph {
     class variable_node final : public leaf_node<T> {
     private:
 ///  Storage buffer for the data.
-        backend::cpu<T> buffer;
+        backend::buffer<T> buffer;
 ///  Latex Symbol for the variable when pretty printing.
         const std::string symbol;
 
@@ -482,8 +482,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node with a size.
 ///
-///  @param[in] s      Size of the data buffer.
-///  @param[in] symbol Symbol of the variable used in equations.
+///  @params[in] s      Size of the data buffer.
+///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
         variable_node(const size_t s,
                       const std::string &symbol) :
@@ -492,9 +492,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a scalar.
 ///
-///  @param[in] s      Size of he data buffer.
-///  @param[in] d      Scalar data to initalize.
-///  @param[in] symbol Symbol of the variable used in equations.
+///  @params[in] s      Size of he data buffer.
+///  @params[in] d      Scalar data to initalize.
+///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
         variable_node(const size_t s, const T d,
                       const std::string &symbol) :
@@ -503,7 +503,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
 ///
-///  @param[in] d Array buffer.
+///  @params[in] d Array buffer.
 //------------------------------------------------------------------------------
         variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
@@ -512,9 +512,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from backend buffer.
 ///
-///  @param[in] d Backend buffer.
+///  @params[in] d Backend buffer.
 //------------------------------------------------------------------------------
-        variable_node(const backend::cpu<T> &d,
+        variable_node(const backend::buffer<T> &d,
                       const std::string &symbol) :
         buffer(d), symbol(symbol) {}
 
@@ -523,7 +523,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<T> evaluate() final {
+        virtual backend::buffer<T> evaluate() final {
             return buffer;
         }
 
@@ -541,7 +541,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) final {
@@ -551,8 +551,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
                                        jit::register_map<leaf_node<T>> &registers) final {
@@ -562,7 +562,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) final {
@@ -572,7 +572,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @param[in] d Scalar data to set.
+///  @params[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const T d) final {
             buffer.set(d);
@@ -581,8 +581,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @param[in] index Index to place the value at.
-///  @param[in] d     Scalar data to set.
+///  @params[in] index Index to place the value at.
+///  @params[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const size_t index, const T d) final {
             buffer[index] = d;
@@ -591,7 +591,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @param[in] d Vector data to set.
+///  @params[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<T> &d) final {
             buffer.set(d);
@@ -600,9 +600,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @param[in] d Vector data to set.
+///  @params[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const backend::cpu<T> &d) final {
+        virtual void set(const backend::buffer<T> &d) final {
             buffer = d;
         }
 
@@ -633,8 +633,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
-///  @param[in] s      Size of the data buffer.
-///  @param[in] symbol Symbol of the variable used in equations.
+///  @params[in] s      Size of the data buffer.
+///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> variable(const size_t s,
@@ -645,9 +645,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
-///  @param[in] s      Size of he data buffer.
-///  @param[in] d      Scalar data to initalize.
-///  @param[in] symbol Symbol of the variable used in equations.
+///  @params[in] s      Size of he data buffer.
+///  @params[in] d      Scalar data to initalize.
+///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> variable(const size_t s, const T d,
@@ -658,8 +658,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
-///  @param[in] d      Array buffer.
-///  @param[in] symbol Symbol of the variable used in equations.
+///  @params[in] d      Array buffer.
+///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> variable(const std::vector<T> &d,
@@ -670,11 +670,11 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
-///  @param[in] d      Array buffer.
-///  @param[in] symbol Symbol of the variable used in equations.
+///  @params[in] d      Array buffer.
+///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_leaf<T> variable(const backend::cpu<T> &d,
+    shared_leaf<T> variable(const backend::buffer<T> &d,
                             const std::string &symbol) {
         return (std::make_shared<variable_node<T>> (d, symbol))->reduce();
     }
@@ -693,7 +693,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename T>
@@ -714,13 +714,13 @@ namespace graph {
     class cache_node final : public straight_node<T> {
     private:
 ///  Storage buffer for the data.
-        backend::cpu<T> data;
+        backend::buffer<T> data;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a cache node.
 ///
-///  @param[in] a Argument.
+///  @params[in] a Argument.
 //------------------------------------------------------------------------------
         cache_node(shared_leaf<T> a) :
         straight_node<T> (a),
@@ -733,7 +733,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<T> evaluate() final {
+        virtual backend::buffer<T> evaluate() final {
             return data;
         }
 
@@ -759,7 +759,7 @@ namespace graph {
 ///
 ///  This has the consequence of removing the cache node.
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) final {
@@ -773,7 +773,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) final {
@@ -807,7 +807,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define cache convience function.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 ///  @returns A reduced cache node.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -822,7 +822,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a cache node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -846,7 +846,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a cache node.
 ///
-///  @param[in] a Argument.
+///  @params[in] a Argument.
 //------------------------------------------------------------------------------
         pseudo_variable_node(shared_leaf<T> a) :
         straight_node<T> (a) {}
@@ -865,7 +865,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) final {
@@ -875,7 +875,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) final {
@@ -893,7 +893,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define pseudo variable convience function.
 ///
-///  @param[in] x Argument.
+///  @params[in] x Argument.
 ///  @returns A reduced cache node.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -908,7 +908,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a pseudo variable node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>

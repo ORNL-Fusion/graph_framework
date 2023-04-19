@@ -10,7 +10,7 @@
 
 #include <cassert>
 
-#include "../graph_framework/cpu_backend.hpp"
+#include "../graph_framework/backend.hpp"
 #include "../graph_framework/math.hpp"
 
 //------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ void test_sqrt() {
     auto var_vec = graph::variable<T> (std::vector<T> ({4.0, 7.0}), "");
     auto sqrt_var_vec = graph::sqrt(var_vec);
     assert(graph::sqrt_cast(sqrt_var_vec).get() && "Expected a variable type.");
-    const backend::cpu<T> sqrt_var_vec_result = sqrt_var_vec->evaluate();
+    const backend::buffer<T> sqrt_var_vec_result = sqrt_var_vec->evaluate();
     assert(sqrt_var_vec_result.size() == 2);
     assert(sqrt_var_vec_result.at(0) == std::sqrt(static_cast<T> (4.0)));
     assert(sqrt_var_vec_result.at(1) == std::sqrt(static_cast<T> (7.0)));
@@ -143,7 +143,7 @@ void test_exp() {
     auto var_vec = graph::variable<T> (std::vector<T> ({4.0, 7.0}), "");
     auto exp_var_vec = graph::exp(var_vec);
     assert(graph::exp_cast(exp_var_vec).get() && "Expected a variable type.");
-    const backend::cpu<T> exp_var_vec_result = exp_var_vec->evaluate();
+    const backend::buffer<T> exp_var_vec_result = exp_var_vec->evaluate();
     assert(exp_var_vec_result.size() == 2);
     assert(exp_var_vec_result.at(0) == std::exp(static_cast<T> (4.0)));
     assert(exp_var_vec_result.at(1) == std::exp(static_cast<T> (7.0)));
@@ -364,8 +364,8 @@ template<typename T> void run_tests() {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     run_tests<float> ();

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file cuda_context.hpp
-///  @brief Base nodes of graph computation framework.
+///  @brief Cuda context for metal based gpus.
 ///
 ///  Defines context for cuda gpu.
 //------------------------------------------------------------------------------
@@ -23,6 +23,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
 //------------------------------------------------------------------------------
+    template<typename T>
     class cuda_context {
     private:
 ///  The cuda device.
@@ -31,30 +32,16 @@ namespace gpu {
         CUcontext context;
 ///  The cuda code library.
         CUmodule module;
-///  The cuda kernel.
-        CUfunction function;
-///  The cuda max reduction kernel.
-        CUfunction max_function;
-///  The cuda library.
-        nvrtcProgram kernel_program;
-///  Buffer objects.
-        std::vector<CUdeviceptr> buffers;
+///  Argument map.
+        std::map<graph::leaf_node<T> *, CUdeviceptr> kernel_arguments;
 ///  Result buffer.
         CUdeviceptr result_buffer;
 ///  Cuda stream.
         CUstream stream;
-///  Number of thread groups.
-        unsigned int thread_groups;
-///  Number of threads in a group.
-        unsigned int threads_per_group;
-///  Kernel arguments.
-        std::vector<void *> kernel_arguments;
-///  Max kernel arguments.
-        std::vector<void *> max_kernel_arguments;
 
 //------------------------------------------------------------------------------
 ///  @brief  Check results of realtime compile.
-///  @param[in] name   Name of the operation.
+///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
         void check_nvrtc_error(nvrtcResult result,
                                const std::string &name) {
@@ -68,8 +55,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief  Check results of cuda functions.
 ///
-///  @param[in] result Result code of the operation.
-///  @param[in] name   Name of the operation.
+///  @params[in] result Result code of the operation.
+///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
         void check_error(CUresult result,
                          const std::string &name) {
@@ -85,8 +72,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief  Check results of async cuda functions.
 ///
-///  @param[in] result Result code of the operation.
-///  @param[in] name   Name of the operation.
+///  @params[in] result Result code of the operation.
+///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
         void check_error_async(CUresult result,
                                const std::string &name) {
@@ -101,7 +88,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Cuda context constructor.
 //------------------------------------------------------------------------------
-        cuda_context() : result_buffer(0) {
+        cuda_context() : result_buffer(0), module(0) {
             check_error(cuDeviceGet(&device, 0), "cuDeviceGet");
             check_error(cuDevicePrimaryCtxRetain(&context, device), "cuDevicePrimaryCtxRetain");
             check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
@@ -112,47 +99,49 @@ namespace gpu {
 ///  @brief Cuda context destructor.
 //------------------------------------------------------------------------------
         ~cuda_context() {
-            check_error(cuModuleUnload(module), "cuModuleUnload");
-
-            for (CUdeviceptr &ptr : buffers) {
-                check_error(cuMemFree(ptr), "cuMemFree");
+            if (module) {
+                 check_error(cuModuleUnload(module), "cuModuleUnload");
+                 module = 0;
             }
 
-            check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
-                              "nvrtcDestroyProgram");
-            check_error(cuMemFree(result_buffer), "cuMemFree");
+            for (auto &[key, value] : kernel_arguments) {
+                check_error(cuMemFree(value), "cuMemFree");
+            }
+
+            if (result_buffer) {
+                check_error(cuMemFree(result_buffer), "cuMemFree");
+                result_buffer = 0;
+            }
 
             check_error(cuStreamDestroy(stream), "cuStreamDestroy");
             check_error(cuDevicePrimaryCtxRelease(device), "cuDevicePrimaryCtxRelease");
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create a compute pipeline.
+///  @brief Compile the kernels.
 ///
-///  @param[in] kernel_source Source code buffer for the kernel.
-///  @param[in] kernel_name   Name of the kernel for later reference.
-///  @param[in] inputs        Input nodes of the kernel.
-///  @param[in] outputs       Output nodes of the kernel.
-///  @param[in] num_rays      Number of rays to trace.
-///  @param[in] add_reduction Optional argument to generate the reduction
-///                           kernel.
+///  @params[in] kernel_source Source code buffer for the kernel.
+///  @params[in] names         Names of the kernel functions.
+///  @params[in] add_reduction Include the reduction kernel.
 //------------------------------------------------------------------------------
-        template<typename T>
-        void create_pipeline(const std::string kernel_source,
-                             const std::string kernel_name,
-                             graph::input_nodes<T> inputs,
-                             graph::output_nodes<T> outputs,
-                             const size_t num_rays,
-                             const bool add_reduction=false) {
+        void compile(const std::string kernel_source,
+                     std::vector<std::string> names,
+                     const bool add_reduction=false) {
+            if (add_reduction) {
+                names.push_back("max_reduction");
+            }
+
+            nvrtcProgram kernel_program;
             check_nvrtc_error(nvrtcCreateProgram(&kernel_program,
                                                  kernel_source.c_str(),
                                                  NULL, 0, NULL, NULL),
                               "nvrtcCreateProgram");
 
-            check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
-                                                     kernel_name.c_str()),
-                              "nvrtcAddNameExpression");
-
+            for (std::string &name : names) {
+                check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
+                                                         name.c_str()),
+                                  "nvrtcAddNameExpression");
+            }
             if (add_reduction) {
                 check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
                                                          "max_reduction"),
@@ -179,8 +168,9 @@ namespace gpu {
             check_error(cuDeviceGetName(device_name, 100, device), "cuDeviceGetName");
             std::cout << "  Device name              : " << device_name << std::endl;
 
+            const std::string temp = arch.str();
             std::array<const char *, 3> options({
-                arch.str().c_str(),
+                temp.c_str(),
                 "--std=c++17",
                 "--include-path=" CUDA_INCLUDE
             });
@@ -195,15 +185,8 @@ namespace gpu {
                                   "nvrtcGetProgramLog");
                 std::cout << log << std::endl;
                 free(log);
+                std::cout << kernel_source << std::endl;
             }
-
-            const char *mangled_kernel_name;
-            check_nvrtc_error(nvrtcGetLoweredName(kernel_program,
-                                                  kernel_name.c_str(),
-                                                  &mangled_kernel_name),
-                              "nvrtcGetLoweredName");
-
-            std::cout << "  Mangled Kernel Name      : " << mangled_kernel_name << std::endl;
 
             check_error(cuDeviceGetAttribute(&compute_version,
                                              CU_DEVICE_ATTRIBUTE_MANAGED_MEMORY,
@@ -217,97 +200,111 @@ namespace gpu {
             char *ptx = static_cast<char *> (malloc(ptx_size));
             check_nvrtc_error(nvrtcGetPTX(kernel_program, ptx), "nvrtcGetPTX");
 
+            check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
+                              "nvrtcDestroyProgram");
+
             check_error(cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL), "cuModuleLoadDataEx");
-            check_error(cuModuleGetFunction(&function, module, mangled_kernel_name), "cuModuleGetFunction");
 
             free(ptx);
+        }
 
-            buffers.resize(inputs.size() + outputs.size());
+//------------------------------------------------------------------------------
+///  @brief Create a kernel calling function.
+///
+///  @params[in] kernel_name   Name of the kernel for later reference.
+///  @params[in] inputs        Input nodes of the kernel.
+///  @params[in] outputs       Output nodes of the kernel.
+///  @params[in] num_rays      Number of rays to trace.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_kernel_call(const std::string kernel_name,
+                                                     graph::input_nodes<T> inputs,
+                                                     graph::output_nodes<T> outputs,
+                                                     const size_t num_rays) {
+            CUfunction function;
+            check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
+
+            std::vector<void *> buffers;
 
             const size_t buffer_element_size = sizeof(T);
-            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                const backend::cpu<T> backend = inputs[i]->evaluate();
-
-                check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size,
-                                              CU_MEM_ATTACH_GLOBAL),
-                            "cuMemAllocManaged");
-                check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), 
-                            "cuMemcpyHtoD");
-                kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
+            for (auto &input : inputs) {
+                if (!kernel_arguments.contains(input.get())) {
+                    kernel_arguments.try_emplace(input.get());
+                    const backend::buffer<T> backend = input->evaluate();
+                    check_error(cuMemAllocManaged(&kernel_arguments[input.get()],
+                                                  backend.size()*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(kernel_arguments[input.get()],
+                                             &backend[0],
+                                             backend.size()*sizeof(T)),
+                                "cuMemcpyHtoD");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
             }
-            for (size_t i = inputs.size(), ie = buffers.size(), j = 0; i < ie; i++, j++) {
-                const backend::cpu<T> backend = outputs[j]->evaluate();
-
-                check_error(cuMemAllocManaged(&buffers[i], backend.size()*buffer_element_size,
-                                              CU_MEM_ATTACH_GLOBAL), 
-                            "cuMemAllocManaged");
-                check_error(cuMemcpyHtoD(buffers[i], &backend[0], backend.size()*buffer_element_size), 
-                                         "cuMemcpyHtoD");
-                kernel_arguments.push_back(reinterpret_cast<void *> (&buffers[i]));
+            for (auto &output : outputs) {
+                if (!kernel_arguments.contains(output.get())) {
+                    kernel_arguments.try_emplace(output.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[output.get()],
+                                                  num_rays*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
             }
 
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
-            threads_per_group = value;
-            thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
-            std::cout << "  Threads per group        : " << threads_per_group << std::endl;
-            std::cout << "  Number of groups         : " << thread_groups << std::endl;
-            std::cout << "  Total problem size       : " << threads_per_group*thread_groups << std::endl;
+            unsigned int threads_per_group = value;
+            unsigned int thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+            std::cout << "  Kernel name              : " << kernel_name << std::endl;
+            std::cout << "    Threads per group  : " << threads_per_group << std::endl;
+            std::cout << "    Number of groups   : " << thread_groups << std::endl;
+            std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+
+            return [this, function, thread_groups, threads_per_group, buffers] mutable {
+                check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
+                                                 threads_per_group, 1, 1, 0, stream,
+                                                 buffers.data(), NULL),
+                                  "cuLaunchKernel");
+            };
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create a max compute pipeline.
+///  @brief Create a max compute kernel calling function.
+///
+///  @params[in] argument Node to reduce.
+///  @params[in] run      Function to run before reduction.
+///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        template<typename T>
-        void create_max_pipeline() {
-            const char *mangled_kernel_name;
-            check_nvrtc_error(nvrtcGetLoweredName(kernel_program,
-                                                  "max_reduction",
-                                                  &mangled_kernel_name),
-                              "nvrtcGetLoweredName");
-
-            std::cout << "  Mangled Kernel Name      : " << mangled_kernel_name << std::endl;
-
+        std::function<T(void)> create_max_call(graph::shared_leaf<T> &argument,
+                                               std::function<void(void)> run) {
             check_error(cuMemAllocManaged(&result_buffer, sizeof(T),
                                           CU_MEM_ATTACH_GLOBAL),
                         "cuMemAllocManaged");
 
-            max_kernel_arguments.push_back(reinterpret_cast<void *> (&buffers.back()));
-            max_kernel_arguments.push_back(reinterpret_cast<void *> (&result_buffer));
+            std::vector<void *> buffers;
 
-            check_error(cuModuleGetFunction(&max_function, module, mangled_kernel_name),
+            buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[argument.get()]));
+            buffers.push_back(reinterpret_cast<void *> (&result_buffer));
+
+            CUfunction function;
+            check_error(cuModuleGetFunction(&function, module, "max_reduction"),
                         "cuModuleGetFunction");
-        }
 
-//------------------------------------------------------------------------------
-///  @brief Perform a time step.
-///
-///  This calls dispatches a kernel instance to the command buffer and the
-///  commits the job. This method is asynchronous.
-//------------------------------------------------------------------------------
-        void run() {
-            check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
-                                             threads_per_group, 1, 1, 0, stream,
-                                             kernel_arguments.data(), NULL),
-                              "cuLaunchKernel");
-        }
+            std::cout << "  Kernel name              : max_reduction" << std::endl;
 
-//------------------------------------------------------------------------------
-///  @brief Compute the max reduction.
-///
-///  @returns The maximum value from the input buffer.
-//------------------------------------------------------------------------------
-        template<typename T>
-        T max_reduction() {
-            run();
-            check_error_async(cuLaunchKernel(max_function, 1, 1, 1,
-                                             threads_per_group, 1, 1, 0, stream,
-                                             max_kernel_arguments.data(), NULL),
-                              "cuLaunchKernel");
-            wait();
+            return [this, function, run, buffers] mutable {
+                run();
+                check_error_async(cuLaunchKernel(function, 1, 1, 1,
+                                                 1024, 1, 1, 0, stream,
+                                                 buffers.data(), NULL),
+                                  "cuLaunchKernel");
+                wait();
 
-            return reinterpret_cast<T *> (result_buffer)[0];
+                return reinterpret_cast<T *> (result_buffer)[0];
+            };
         }
 
 //------------------------------------------------------------------------------
@@ -321,29 +318,220 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @param[in] index Number of times to record.
+///  @params[in] index Number of times to record.
 //------------------------------------------------------------------------------
-        template<typename T>
         void print_results(const size_t index) {
             wait();
-            for (CUdeviceptr &buffer : buffers) {
-                std::cout << reinterpret_cast<T *> (buffer)[index] << " ";
+            for (auto &[key, value] : kernel_arguments) {
+                std::cout << reinterpret_cast<T *> (value)[index] << " ";
             }
             std::cout << std::endl;
         }
 
 //------------------------------------------------------------------------------
-///  @brief Copy buffer contents.
+///  @brief Copy buffer contents to the device.
 ///
-///  @param[in]     source_index Index of the GPU buffer.
-///  @param[in,out] destination  Host side buffer to copy to.
+///  @params[in] node   Not to copy buffer to.
+///  @params[in] source Host side buffer to copy from.
 //------------------------------------------------------------------------------
-        template<typename T>
-        void copy_buffer(const size_t source_index,
-                         T *destination) {
-	    size_t size;
-	    check_error(cuMemGetAddressRange(NULL, &size, buffers[source_index]), "cuMemGetAddressRange");
-            check_error_async(cuMemcpyDtoHAsync(destination, buffers[source_index], size, stream), "cuMemcpyDtoHAsync");
+        void copy_to_device(graph::shared_leaf<T> node,
+                            T *source) {
+            size_t size;
+            check_error(cuMemGetAddressRange(NULL, &size, kernel_arguments[node.get()]), "cuMemGetAddressRange");
+            check_error_async(cuMemcpyHtoDAsync(kernel_arguments[node.get()], source, size, stream), "cuMemcpyHtoDAsync");
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Copy buffer contents to host.
+///
+///  @params[in]     node        Node to copy buffer from.
+///  @params[in,out] destination Host side buffer to copy to.
+//------------------------------------------------------------------------------
+        void copy_to_host(graph::shared_leaf<T> node,
+                          T *destination) {
+            size_t size;
+            check_error(cuMemGetAddressRange(NULL, &size, kernel_arguments[node.get()]), "cuMemGetAddressRange");
+            check_error_async(cuMemcpyDtoHAsync(destination, kernel_arguments[node.get()], size, stream), "cuMemcpyDtoHAsync");
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create the source header.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_header(std::stringstream &source_buffer) {
+            source_buffer << "#include <cuda/std/complex>" << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel prefix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     name          Name to call the kernel.
+///  @params[in]     inputs        Input variables of the kernel.
+///  @params[in]     outputs       Output nodes of the graph to compute.
+///  @params[in]     size          Size of the input buffer.
+///  @params[in,out] registers     Map of used registers.
+//------------------------------------------------------------------------------
+        void create_kernel_prefix(std::stringstream &source_buffer,
+                                  const std::string name,
+                                  graph::input_nodes<T> &inputs,
+                                  graph::output_nodes<T> &outputs,
+                                  const size_t size,
+                                  jit::register_map<graph::leaf_node<T>> &registers) {
+            source_buffer << std::endl;
+            source_buffer << "extern \"C\" __global__ void " << name << "("
+                          << std::endl;
+
+            source_buffer << "    ";
+            jit::add_type<T> (source_buffer);
+            source_buffer << " *" << jit::to_string('v', inputs[0].get());
+            for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
+                source_buffer << "," << std::endl;
+                source_buffer << "    ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " *" << jit::to_string('v', inputs[i].get());
+            }
+
+            for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
+                source_buffer << "," << std::endl;
+                source_buffer << "    ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " *" << jit::to_string('o', outputs[i].get());
+            }
+            source_buffer << ") {" << std::endl;
+
+            source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
+                          << std::endl;
+            source_buffer << "    if (index < " << size << ") {" << std::endl;
+
+            for (auto &input : inputs) {
+                registers[input.get()] = jit::to_string('r', input.get());
+                source_buffer << "        const ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " " << registers[input.get()] << " = "
+                              << jit::to_string('v', input.get()) << "[index];"
+                              << std::endl;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel postfix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     outputs       Output nodes of the graph to compute.
+///  @params[in]     setters       Map outputs back to input values.
+///  @params[in,out] registers     Map of used registers.
+//------------------------------------------------------------------------------
+        void create_kernel_postfix(std::stringstream &source_buffer,
+                                   graph::output_nodes<T> &outputs,
+                                   graph::map_nodes<T> &setters,
+                                   jit::register_map<graph::leaf_node<T>> &registers) {
+            for (auto &[out, in] : setters) {
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                source_buffer << "        " << jit::to_string('v',  in.get())
+                              << "[index] = " << registers[a.get()] << ";"
+                              << std::endl;
+            }
+
+            for (auto &out : outputs) {
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                source_buffer << "        " << jit::to_string('o',  out.get())
+                              << "[index] = " << registers[a.get()] << ";"
+                              << std::endl;
+            }
+
+            source_buffer << "    }" << std::endl << "}" << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create reduction.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     size          Size of the input buffer.
+//------------------------------------------------------------------------------
+        void create_reduction(std::stringstream &source_buffer,
+                              const size_t size) {
+            source_buffer << std::endl;
+            source_buffer << "extern \"C\" __global__ void max_reduction(" << std::endl;
+            source_buffer << "    ";
+            jit::add_type<T> (source_buffer);
+            source_buffer << " *input," << std::endl;
+            source_buffer << "    ";
+            jit::add_type<T> (source_buffer);
+            source_buffer << " *result) {" << std::endl;
+            source_buffer << "    const unsigned int i = threadIdx.x;" << std::endl;
+            source_buffer << "    const unsigned int j = threadIdx.x/32;" << std::endl;
+            source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
+            source_buffer << "    if (i < " << size << ") {" << std::endl;
+            source_buffer << "        " << jit::type_to_string<T> () << " sub_max = ";
+            if constexpr (jit::is_complex<T> ()) {
+                source_buffer << "abs(input[i]);" << std::endl;
+            } else {
+                source_buffer << "input[i];" << std::endl;
+            }
+            source_buffer << "        for (size_t index = i + 1024; index < " << size <<"; index += 1024) {" << std::endl;
+            if constexpr (jit::is_complex<T> ()) {
+                source_buffer << "            sub_max = max(sub_max, abs(input[index]));" << std::endl;
+            } else {
+                source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
+            }
+            source_buffer << "        }" << std::endl;
+            source_buffer << "        __shared__ " << jit::type_to_string<T> () << " thread_max[32];" << std::endl;
+            source_buffer << "        for (int index = 16; index > 0; index /= 2) {" << std::endl;
+            source_buffer << "            sub_max = max(sub_max, __shfl_down_sync(__activemask(), sub_max, index));" << std::endl;
+            source_buffer << "        }" << std::endl;
+            source_buffer << "        thread_max[j] = sub_max;" << std::endl;
+            source_buffer << "        __syncthreads();" << std::endl;
+            source_buffer << "        if (j == 0) {"  << std::endl;
+            source_buffer << "            for (int index = 16; index > 0; index /= 2) {" << std::endl;
+            source_buffer << "                thread_max[k] = max(thread_max[k], __shfl_down_sync(__activemask(), thread_max[k], index));" << std::endl;
+            source_buffer << "            }" << std::endl;
+            source_buffer << "            *result = thread_max[0];" << std::endl;
+            source_buffer << "        }"  << std::endl;
+            source_buffer << "    }"  << std::endl;
+            source_buffer << "}" << std::endl << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create a preamble.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_preamble(std::stringstream &source_buffer) {
+            source_buffer << "extern \"C\" __global__ ";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create arg prefix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_argument_prefix(std::stringstream &source_buffer) {}
+
+//------------------------------------------------------------------------------
+///  @brief Create arg postfix.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+///  @params[in]     index         Argument index.
+//------------------------------------------------------------------------------
+        void create_argument_postfix(std::stringstream &source_buffer,
+                                     const size_t index) {}
+
+//------------------------------------------------------------------------------
+///  @brief Create index argument.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_index_argument(std::stringstream &source_buffer) {}
+
+//------------------------------------------------------------------------------
+///  @brief Create index.
+///
+///  @params[in,out] source_buffer Source buffer stream.
+//------------------------------------------------------------------------------
+        void create_index(std::stringstream &source_buffer) {
+            source_buffer << "blockIdx.x*blockDim.x + threadIdx.x;";
         }
     };
 }

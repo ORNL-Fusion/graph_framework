@@ -10,15 +10,15 @@
 
 #include <cassert>
 
-#include "../graph_framework/cpu_backend.hpp"
+#include "../graph_framework/backend.hpp"
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief The newton solve for dispersion relation.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
-///  @param[in] omega   Ray frequency.
-///  @param[in] k_guess Inital guess for the wave number.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] omega   Ray frequency.
+///  @params[in] k_guess Inital guess for the wave number.
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,
@@ -42,6 +42,7 @@ void test_solve(const typename DISPERSION::base tolarance,
         graph::variable_cast(x),
         graph::variable_cast(y),
         graph::variable_cast(z),
+        graph::variable_cast(kx),
         graph::variable_cast(ky),
         graph::variable_cast(kz),
         graph::variable_cast(t),
@@ -49,49 +50,21 @@ void test_solve(const typename DISPERSION::base tolarance,
     D.solve(kx, inputs, tolarance);
 
     kx->set(static_cast<typename DISPERSION::base> (0.2));
-    ky->set(k_guess);
-    inputs = {
-        graph::variable_cast(w),
-        graph::variable_cast(x),
-        graph::variable_cast(y),
-        graph::variable_cast(z),
-        graph::variable_cast(kx),
-        graph::variable_cast(kz),
-        graph::variable_cast(t),
-    };
     D.solve(ky, inputs, tolarance);
 
     ky->set(static_cast<typename DISPERSION::base> (0.25));
     kz->set(k_guess);
-    inputs = {
-        graph::variable_cast(w),
-        graph::variable_cast(x),
-        graph::variable_cast(y),
-        graph::variable_cast(z),
-        graph::variable_cast(kx),
-        graph::variable_cast(ky),
-        graph::variable_cast(t),
-    };
     D.solve(kz, inputs, tolarance);
 
     kz->set(static_cast<typename DISPERSION::base> (0.15));
     kx->set(k_guess);
-    inputs = {
-        graph::variable_cast(x),
-        graph::variable_cast(y),
-        graph::variable_cast(z),
-        graph::variable_cast(kx),
-        graph::variable_cast(ky),
-        graph::variable_cast(kz),
-        graph::variable_cast(t),
-    };
     D.solve(w, inputs, tolarance);
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename T>
 void run_tests(const T tolarance) {
@@ -107,26 +80,26 @@ void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
 #ifdef USE_REDUCE
-#ifdef USE_CUDA
-    run_tests<float> (3.2E-14);
-#else
-    run_tests<float> (2.0E-14);
-#endif
+    if constexpr (jit::use_cuda()) {
+        run_tests<float> (3.2E-14);
+    } else {
+        run_tests<float> (2.0E-14);
+    }
 #else
     run_tests<float> (1.5E-14);
 #endif
     run_tests<double> (1.0E-30);
-#ifdef USE_CUDA
-    run_tests<std::complex<float>> (5.7E-14);
-#else
-    run_tests<std::complex<float>> (2.0E-14);
-#endif
+    if constexpr (jit::use_cuda()) {
+        run_tests<std::complex<float>> (5.7E-14);
+    } else {
+        run_tests<std::complex<float>> (2.0E-14);
+    }
     run_tests<std::complex<double>> (1.0E-30);
     END_GPU
 }

@@ -12,7 +12,7 @@
 #include <random>
 #include <cassert>
 
-#include "../graph_framework/cpu_backend.hpp"
+#include "../graph_framework/backend.hpp"
 #include "../graph_framework/solver.hpp"
 
 //------------------------------------------------------------------------------
@@ -51,13 +51,13 @@ void test_constant() {
     auto eq = equilibrium::make_slab<T> ();
     solver::rk2<dispersion::simple<T>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx);
-    solve.compile(1);
+    solve.compile();
 
     auto constant = kx*x + ky*y + kz*z - omega*t;
     const auto c0 = constant->evaluate().at(0);
     for (size_t i = 0; i < 10; i++) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
 
     assert(std::abs(c0 - constant->evaluate().at(0)) < 5.0E-15 &&
@@ -101,7 +101,7 @@ void test_constant() {
 ///
 ///  B = 0 or k || B
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename SOLVER>
 void test_bohm_gross(const typename SOLVER::base tolarance) {
@@ -147,16 +147,16 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 
     auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::base> ();
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
-#if USE_CUDA
-    solve.init(kx, tolarance);
-#else
-    solve.init(kx);
-#endif
-    solve.compile(1);
+    if constexpr (jit::use_cuda()) {
+        solve.init(kx, tolarance);
+    } else {
+        solve.init(kx);
+    }
+    solve.compile();
 
     for (size_t i = 0; i < 20; i++) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
     const typename SOLVER::base time = t->evaluate().at(0);
     const typename SOLVER::base expected_x = -3.0/8.0*vth2*omega2p/(omega0*omega0)*time*time
@@ -200,7 +200,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 ///
 ///  B = 0
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename SOLVER>
 void test_light_wave(const typename SOLVER::base tolarance) {
@@ -245,11 +245,11 @@ void test_light_wave(const typename SOLVER::base tolarance) {
     auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::base> ();
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
     solve.init(kx, tolarance);
-    solve.compile(1);
+    solve.compile();
 
     for (size_t i = 0; i < 20; i++) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
     const typename SOLVER::base time = t->evaluate().at(0);
     const typename SOLVER::base expected_x = -omega2p/(4.0*omega0*omega0)*time*time
@@ -279,7 +279,7 @@ void test_light_wave(const typename SOLVER::base tolarance) {
 ///
 ///  dx/dt = vs^2                                                              (4)
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_acoustic_wave(const T tolarance) {
@@ -308,8 +308,6 @@ void test_acoustic_wave(const T tolarance) {
 
     const T vs = std::sqrt((q*te+gamma*q*ti)/mi)/c;
 
-    const T k0 = omega0/vs;
-
 //  Omega must be greater than plasma frequency for the wave to propagate.
     omega->set(static_cast<T> (omega0));
     kx->set(static_cast<T> (600.0));
@@ -323,11 +321,11 @@ void test_acoustic_wave(const T tolarance) {
     auto eq = equilibrium::make_no_magnetic_field<T> ();
     solver::rk4<dispersion::acoustic_wave<T>> solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
     solve.init(kx, tolarance);
-    solve.compile(1);
+    solve.compile();
 
     for (size_t i = 0; i < 20; i++) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
 
     const auto diff_x = x->evaluate().at(0)/t->evaluate().at(0) - vs;
@@ -408,7 +406,7 @@ void test_o_mode_wave() {
 ///  frequencies above and trapped between the left and cutoff and the upper
 ///  hybird resonance.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_cold_plasma_cutoffs(const T tolarance) {
@@ -432,7 +430,6 @@ void test_cold_plasma_cutoffs(const T tolarance) {
     x->set(0, static_cast<T> (25.0));
     x->set(1, static_cast<T> (5.0));
     solve.init(x);
-    solve.compile(1);
 
     T wpecut_pos = x->evaluate().at(0);
     const T wrcut_pos = x->evaluate().at(1);
@@ -445,13 +442,14 @@ void test_cold_plasma_cutoffs(const T tolarance) {
     kx->set(0, static_cast<T> (1000.0)); // O-Mode
     kx->set(1, static_cast<T> (500.0));  // X-Mode
     solve.init(kx);
+    solve.compile();
 
     while (std::abs(t->evaluate().at(0)) < 30.0) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
 
-    backend::cpu<T> result = x->evaluate();
+    backend::buffer<T> result = x->evaluate();
     assert(std::real(result.at(0)) > std::real(wrcut_pos) &&
            std::real(result.at(0)) < std::real(wpecut_pos) &&
            "Expected O-Mode to cross right cuttoff but not plasma cutoff.");
@@ -469,15 +467,12 @@ void test_cold_plasma_cutoffs(const T tolarance) {
     kx->set(1, static_cast<T> (0.0));
     t->set(0, static_cast<T> (0.0));
     t->set(1, static_cast<T> (0.0));
-#ifdef USE_CUDA
     if constexpr (jit::is_complex<T> ()) {
         solve.init(x, 1.6E-29);
     } else {
         solve.init(x, 5.0E-30);
     }
-#else
-    solve.init(x, 5.0E-30);
-#endif
+    solve.sync_device();
 
     wpecut_pos = x->evaluate().at(1);
 
@@ -488,18 +483,16 @@ void test_cold_plasma_cutoffs(const T tolarance) {
 //  Solve for X-Mode and O-Mode wave numbers.
     kx->set(0, static_cast<T> (500.0));  // O-Mode
     kx->set(1, static_cast<T> (1500.0)); // X-Mode
-#ifdef USE_CUDA
     if constexpr (jit::is_complex<T> ()) {
         solve.init(kx, 2.2E-30);
     } else {
         solve.init(kx);
     }
-#endif
-    solve.compile(2);
+    solve.sync_device();
 
     while (std::abs(t->evaluate().at(0)) < 60.0) {
         solve.step();
-        solve.sync();
+        solve.sync_host();
     }
 
     result = x->evaluate();
@@ -514,10 +507,10 @@ void test_cold_plasma_cutoffs(const T tolarance) {
 ///
 ///  Given a wave frequency, a wave with zero k will not propagate.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
-///  @param[in] n0        Starting nz value.
-///  @param[in] x0        Starting x guess.
-///  @param[in] kx0       Starting kx guess.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] n0        Starting nz value.
+///  @params[in] x0        Starting x guess.
+///  @params[in] kx0       Starting kx guess.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_reflection(const T tolarance,
@@ -555,28 +548,30 @@ void test_reflection(const T tolarance,
 //  location.
     kx->set(kx0);
     solve.init(kx, tolarance);
-    solve.compile(1);
-    solve.sync();
+    solve.compile();
+    solve.sync_host();
 
     auto max_x = std::real(x->evaluate().at(0));
     auto new_x = max_x;
     do {
         solve.step();
-        solve.sync();
+        solve.sync_host();
         new_x = std::real(x->evaluate().at(0));
         max_x = std::max(new_x, max_x);
-#ifdef USE_CUDA
-        assert(std::abs(max_x - cuttoff_location) < 1.9E-6 && "Ray exceeded cutoff.");
-#else
-        assert(max_x < std::abs(cuttoff_location) && "Ray exceeded cutoff.");
-#endif
+        if constexpr (jit::use_cuda() || !jit::use_gpu<T> ()) {
+            assert(std::abs(max_x - cuttoff_location) < 1.9E-6 &&
+                   "Ray exceeded cutoff.");
+        } else {
+            assert(max_x < std::abs(cuttoff_location) &&
+                   "Ray exceeded cutoff.");
+        }
     } while (max_x == new_x);
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests(const T tolarance) {
     test_constant<T> ();
@@ -593,17 +588,17 @@ template<typename T> void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
 //  There is not enough precision in float to pass the test.
-#ifdef USE_CUDA
-    run_tests<double> (1.6E-21);
-#else
-    run_tests<double> (2.0E-29);
-#endif
+    if constexpr (jit::use_cuda()) {
+        run_tests<double> (1.6E-21);
+    } else {
+        run_tests<double> (2.0E-29);
+    }
     run_tests<std::complex<double>> (2.0E-29);
     END_GPU
 }

@@ -17,7 +17,7 @@ namespace graph {
 ///
 ///  Variable like quantities can be a variable or sqrt and power of one.
 ///
-///  @param[in] a Expression to check.
+///  @params[in] a Expression to check.
 ///  @returns True if a is variable like.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -30,7 +30,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Get the argument of a variable like object.
 ///
-///  @param[in] a Expression to check.
+///  @params[in] a Expression to check.
 ///  @returns The agument of a.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -51,8 +51,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Check variable like objects are the same.
 ///
-///  @param[in] a Expression to check.
-///  @param[in] b Expression to check.
+///  @params[in] a Expression to check.
+///  @params[in] b Expression to check.
 ///  @returns True if a is variable like.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -77,8 +77,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct an addition node.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
         add_node(std::shared_ptr<LN> l,
                  std::shared_ptr<RN> r) :
@@ -91,9 +91,9 @@ namespace graph {
 ///
 ///  @returns The value of l + r.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename LN::base> evaluate() final {
-            backend::cpu<typename LN::base> l_result = this->left->evaluate();
-            backend::cpu<typename RN::base> r_result = this->right->evaluate();
+        virtual backend::buffer<typename LN::base> evaluate() final {
+            backend::buffer<typename LN::base> l_result = this->left->evaluate();
+            backend::buffer<typename RN::base> r_result = this->right->evaluate();
             return l_result + r_result;
         }
 
@@ -263,7 +263,7 @@ namespace graph {
 ///
 ///  d add(a,b)/dx = da/dx + db/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base>
@@ -278,8 +278,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base> compile(std::stringstream &stream,
                                                        jit::register_map<LN> &registers) final {
@@ -302,7 +302,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename LN::base> x) final {
@@ -351,8 +351,8 @@ namespace graph {
 ///  Note use templates here to defer this so it can be used in the above
 ///  classes.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> add(std::shared_ptr<LN> l,
@@ -366,8 +366,8 @@ namespace graph {
 ///  Note use templates here to defer this so it can be used in the above
 ///  classes.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> operator+(std::shared_ptr<LN> l,
@@ -382,7 +382,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a add node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -404,8 +404,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Consruct a subtraction node.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
         subtract_node(std::shared_ptr<LN> l,
                       std::shared_ptr<RN> r) :
@@ -418,9 +418,9 @@ namespace graph {
 ///
 ///  @returns The value of l - r.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename LN::base> evaluate() final {
-            backend::cpu<typename LN::base> l_result = this->left->evaluate();
-            backend::cpu<typename RN::base> r_result = this->right->evaluate();
+        virtual backend::buffer<typename LN::base> evaluate() final {
+            backend::buffer<typename LN::base> l_result = this->left->evaluate();
+            backend::buffer<typename RN::base> r_result = this->right->evaluate();
             return l_result - r_result;
         }
 
@@ -574,7 +574,7 @@ namespace graph {
 ///
 ///  d sub(a,b)/dx = da/dx - db/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base>
@@ -589,8 +589,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base> compile(std::stringstream &stream,
                                                        jit::register_map<LN> &registers) final {
@@ -613,7 +613,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename LN::base> x) final {
@@ -659,8 +659,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build subtract node from two leaves.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> subtract(std::shared_ptr<LN> l,
@@ -671,8 +671,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build subtract operator from two leaves.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> operator-(std::shared_ptr<LN> l,
@@ -687,7 +687,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a subtract node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -707,8 +707,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Consruct a multiplcation node.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
         multiply_node(std::shared_ptr<LN> l,
                       std::shared_ptr<RN> r) :
@@ -721,8 +721,8 @@ namespace graph {
 ///
 ///  @returns The value of l*r.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename LN::base> evaluate() final {
-            backend::cpu<typename LN::base> l_result = this->left->evaluate();
+        virtual backend::buffer<typename LN::base> evaluate() final {
+            backend::buffer<typename LN::base> l_result = this->left->evaluate();
 
 //  If the left are right are same don't evaluate the right.
 //  NOTE: Do not use is_match here. Remove once power is implimented.
@@ -737,7 +737,7 @@ namespace graph {
                 return l_result;
             }
 
-            backend::cpu<typename LN::base> r_result = this->right->evaluate();
+            backend::buffer<typename LN::base> r_result = this->right->evaluate();
             return l_result*r_result;
         }
 
@@ -949,7 +949,7 @@ namespace graph {
 ///
 ///  d mul(a,b)/dx = da/dx*b + a*db/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base>
@@ -965,8 +965,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base> compile(std::stringstream &stream,
                                                        jit::register_map<LN> &registers) final {
@@ -989,7 +989,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename LN::base> x) final {
@@ -1035,8 +1035,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build multiply node from two leaves.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> multiply(std::shared_ptr<LN> l,
@@ -1047,8 +1047,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build multiply operator from two leaves.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> operator*(std::shared_ptr<LN> l,
@@ -1063,7 +1063,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a multiply node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -1091,8 +1091,8 @@ namespace graph {
 ///
 ///  @returns The value of n/d.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename LN::base> evaluate() final {
-            backend::cpu<typename LN::base> l_result = this->left->evaluate();
+        virtual backend::buffer<typename LN::base> evaluate() final {
+            backend::buffer<typename LN::base> l_result = this->left->evaluate();
 
 //  If all the elements on the left are zero, return the leftside without
 //  revaluating the rightside. Stop this loop early once the first non zero
@@ -1101,7 +1101,7 @@ namespace graph {
                 return l_result;
             }
 
-            backend::cpu<typename RN::base> r_result = this->right->evaluate();
+            backend::buffer<typename RN::base> r_result = this->right->evaluate();
             return l_result/r_result;
         }
 
@@ -1266,7 +1266,7 @@ namespace graph {
 ///
 ///  d div(n,d)/dx = dn/dx*1/d - n*/(d*d)*db/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base>
@@ -1282,8 +1282,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base> compile(std::stringstream &stream,
                                                        jit::register_map<LN> &registers) final {
@@ -1308,7 +1308,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename LN::base> x) final {
@@ -1340,8 +1340,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build divide node from two leaves.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> divide(std::shared_ptr<LN> l,
@@ -1352,8 +1352,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build divide operator from two leaves.
 ///
-///  @param[in] l Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename RN>
     shared_leaf<typename LN::base> operator/(std::shared_ptr<LN> l,
@@ -1368,7 +1368,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a divide node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>
@@ -1390,9 +1390,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a fused multiply add node.
 ///
-///  @param[in] l Left branch.
-///  @param[in] m Left branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] m Left branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
         fma_node(std::shared_ptr<LN> l,
                  std::shared_ptr<MN> m,
@@ -1406,9 +1406,9 @@ namespace graph {
 ///
 ///  @returns The value of l*m + r.
 //------------------------------------------------------------------------------
-        virtual backend::cpu<typename LN::base> evaluate() final {
-            backend::cpu<typename LN::base> l_result = this->left->evaluate();
-            backend::cpu<typename RN::base> r_result = this->right->evaluate();
+        virtual backend::buffer<typename LN::base> evaluate() final {
+            backend::buffer<typename LN::base> l_result = this->left->evaluate();
+            backend::buffer<typename RN::base> r_result = this->right->evaluate();
 
 //  If all the elements on the left are zero, return the leftside without
 //  revaluating the rightside.
@@ -1416,7 +1416,7 @@ namespace graph {
                 return r_result;
             }
 
-            backend::cpu<typename MN::base> m_result = this->middle->evaluate();
+            backend::buffer<typename MN::base> m_result = this->middle->evaluate();
             return fma(l_result, m_result, r_result);
         }
 
@@ -1439,8 +1439,8 @@ namespace graph {
             } else if (l.get() && m.get() && r.get()) {
                 return constant(this->evaluate());
             } else if (l.get() && m.get()) {
-                backend::cpu<typename LN::base> l_result = this->left->evaluate();
-                backend::cpu<typename MN::base> m_result = this->middle->evaluate();
+                backend::buffer<typename LN::base> l_result = this->left->evaluate();
+                backend::buffer<typename MN::base> m_result = this->middle->evaluate();
                 return constant(l_result*m_result) + this->right;
             }
 
@@ -1511,7 +1511,7 @@ namespace graph {
 ///
 ///  d fma(a,b,c)/dx = da*b/dx + dc/dx = da/dx*b + a*db/dx + dc/dx
 ///
-///  @param[in] x The variable to take the derivative to.
+///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base>
@@ -1532,8 +1532,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in] stream    String buffer stream.
-///  @param[in] registers List of defined registers.
+///  @params[in] stream    String buffer stream.
+///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<typename LN::base> compile(std::stringstream &stream,
                                                        jit::register_map<LN> &registers) final {
@@ -1566,7 +1566,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @param[in] x Other graph to check if it is a match.
+///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<typename LN::base> x) final {
@@ -1615,9 +1615,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build fused multiply add node.
 ///
-///  @param[in] l Left branch.
-///  @param[in] m Middle branch.
-///  @param[in] r Right branch.
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
     template<typename LN, typename MN, typename RN>
     shared_leaf<typename LN::base> fma(std::shared_ptr<LN> l,
@@ -1633,7 +1633,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a fma node.
 ///
-///  @param[in] x Leaf node to attempt cast.
+///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename N>

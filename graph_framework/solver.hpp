@@ -12,8 +12,6 @@
 #include <array>
 
 #include "dispersion.hpp"
-#include "equilibrium.hpp"
-#include "jit.hpp"
 
 namespace solver {
 //******************************************************************************
@@ -63,22 +61,22 @@ namespace solver {
 ///  Residule.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base> residule;
 
-#ifdef USE_GPU
-        std::unique_ptr<jit::kernel<typename DISPERSION_FUNCTION::base>> source;
-#endif
+///  Workflow manager.
+        workflow::manager<typename DISPERSION_FUNCTION::base> work;
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a new solver_interface with inital conditions.
 ///
-///  @param[in] w  Inital w.
-///  @param[in] kx Inital kx.
-///  @param[in] ky Inital ky.
-///  @param[in] kz Inital kz.
-///  @param[in] x  Inital x.
-///  @param[in] y  Inital y.
-///  @param[in] z  Inital z.
-///  @param[in] t  Inital t.
-///  @param[in] eq The plasma equilibrium.
+///  @params[in] w  Inital w.
+///  @params[in] kx Inital kx.
+///  @params[in] ky Inital ky.
+///  @params[in] kz Inital kz.
+///  @params[in] x  Inital x.
+///  @params[in] y  Inital y.
+///  @params[in] z  Inital z.
+///  @params[in] t  Inital t.
+///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         solver_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -96,81 +94,26 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Method to initalize the rays.
 ///
-///  @param[in,out] x              Variable reference to update.
-///  @param[in]     tolarance      Tolarance to solve to dispersion function to.
-///  @param[in]     max_iterations Maximum number of iterations to run.
+///  @params[in,out] x              Variable reference to update.
+///  @params[in]     tolarance      Tolarance to solve to dispersion function to.
+///  @params[in]     max_iterations Maximum number of iterations to run.
 ///  @returns The residule graph.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         init(graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
              const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
              const size_t max_iterations = 1000) final {
-            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs;
-            if (x->is_match(this->w)) {
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->x)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->y)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->z)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->kx)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->ky)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->kz));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->kz)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->t));
-            } else if (x->is_match(this->t)) {
-                inputs.push_back(graph::variable_cast(this->w));
-                inputs.push_back(graph::variable_cast(this->x));
-                inputs.push_back(graph::variable_cast(this->y));
-                inputs.push_back(graph::variable_cast(this->z));
-                inputs.push_back(graph::variable_cast(this->kx));
-                inputs.push_back(graph::variable_cast(this->ky));
-                inputs.push_back(graph::variable_cast(this->kz));
-            }
+            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs {
+                graph::variable_cast(this->t),
+                graph::variable_cast(this->w),
+                graph::variable_cast(this->x),
+                graph::variable_cast(this->y),
+                graph::variable_cast(this->z),
+                graph::variable_cast(this->kx),
+                graph::variable_cast(this->ky),
+                graph::variable_cast(this->kz)
+            };
+
             residule = this->D.solve(x, inputs, tolarance, max_iterations);
 
             return residule;
@@ -178,112 +121,79 @@ namespace solver {
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the solver function.
-///
-///  FIXME: For now this compiles and run the kernel for all time steps.
-///
-///  @param[in] num_rays  Number of rays in the solution.
 //------------------------------------------------------------------------------
-        void compile(const size_t num_rays) {
-            if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::base> ()) {
-                graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs = {
-                    graph::variable_cast(this->t),
-                    graph::variable_cast(this->w),
-                    graph::variable_cast(this->x),
-                    graph::variable_cast(this->y),
-                    graph::variable_cast(this->z),
-                    graph::variable_cast(this->kx),
-                    graph::variable_cast(this->ky),
-                    graph::variable_cast(this->kz)
-                };
+        void compile() {
+            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs = {
+                graph::variable_cast(this->t),
+                graph::variable_cast(this->w),
+                graph::variable_cast(this->x),
+                graph::variable_cast(this->y),
+                graph::variable_cast(this->z),
+                graph::variable_cast(this->kx),
+                graph::variable_cast(this->ky),
+                graph::variable_cast(this->kz)
+            };
 
-                graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
-                    this->residule
-                };
+            graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
+                this->residule
+            };
 
-                graph::map_nodes<typename DISPERSION_FUNCTION::base> setters = {
-                    {this->kx_next, graph::variable_cast(this->kx)},
-                    {this->ky_next, graph::variable_cast(this->ky)},
-                    {this->kz_next, graph::variable_cast(this->kz)},
-                    {this->x_next, graph::variable_cast(this->x)},
-                    {this->y_next, graph::variable_cast(this->y)},
-                    {this->z_next, graph::variable_cast(this->z)},
-                    {this->t_next, graph::variable_cast(this->t)}
-                };
+            graph::map_nodes<typename DISPERSION_FUNCTION::base> setters = {
+                {this->kx_next, graph::variable_cast(this->kx)},
+                {this->ky_next, graph::variable_cast(this->ky)},
+                {this->kz_next, graph::variable_cast(this->kz)},
+                {this->x_next, graph::variable_cast(this->x)},
+                {this->y_next, graph::variable_cast(this->y)},
+                {this->z_next, graph::variable_cast(this->z)},
+                {this->t_next, graph::variable_cast(this->t)}
+            };
 
-                this->source = std::make_unique<jit::kernel<typename DISPERSION_FUNCTION::base>> ("solver_kernel",
-                                                                                                  inputs, outputs, setters);
-
-                this->source->compile("solver_kernel",
-                                      inputs, outputs, num_rays);
-
-                //this->source->print_source();
-            }
+            work.add_item(inputs, outputs, setters, "solver_kernel");
+            work.compile();
         }
 
 //------------------------------------------------------------------------------
-///  @brief Syncronize results between host and gpu.
+///  @brief Syncronize results from host to gpu.
 //------------------------------------------------------------------------------
-        void sync() {
-            if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::base> ()) {
-                this->source->copy_buffer(0, graph::variable_cast(this->t)->data());
-                this->source->copy_buffer(1, graph::variable_cast(this->w)->data());
-                this->source->copy_buffer(2, graph::variable_cast(this->x)->data());
-                this->source->copy_buffer(3, graph::variable_cast(this->y)->data());
-                this->source->copy_buffer(4, graph::variable_cast(this->z)->data());
-                this->source->copy_buffer(5, graph::variable_cast(this->kx)->data());
-                this->source->copy_buffer(6, graph::variable_cast(this->ky)->data());
-                this->source->copy_buffer(7, graph::variable_cast(this->kz)->data());
-            }
+        void sync_device() {
+            work.copy_to_device(this->t, graph::variable_cast(this->t)->data());
+            work.copy_to_device(this->w, graph::variable_cast(this->w)->data());
+            work.copy_to_device(this->x, graph::variable_cast(this->x)->data());
+            work.copy_to_device(this->y, graph::variable_cast(this->y)->data());
+            work.copy_to_device(this->z, graph::variable_cast(this->z)->data());
+            work.copy_to_device(this->kx, graph::variable_cast(this->kx)->data());
+            work.copy_to_device(this->ky, graph::variable_cast(this->ky)->data());
+            work.copy_to_device(this->kz, graph::variable_cast(this->kz)->data());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Syncronize results from gpu to host.
+//------------------------------------------------------------------------------
+        void sync_host() {
+            work.copy_to_host(this->t, graph::variable_cast(this->t)->data());
+            work.copy_to_host(this->w, graph::variable_cast(this->w)->data());
+            work.copy_to_host(this->x, graph::variable_cast(this->x)->data());
+            work.copy_to_host(this->y, graph::variable_cast(this->y)->data());
+            work.copy_to_host(this->z, graph::variable_cast(this->z)->data());
+            work.copy_to_host(this->kx, graph::variable_cast(this->kx)->data());
+            work.copy_to_host(this->ky, graph::variable_cast(this->ky)->data());
+            work.copy_to_host(this->kz, graph::variable_cast(this->kz)->data());
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Method to step the rays.
 //------------------------------------------------------------------------------
         void step() {
-            if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::base> ()) {
-                this->source->run();
-            } else {
-                this->reset_cache();
-
-                //  Need to evaluate all the steps before setting them otherwise later values
-                //  will have the wrong conditions for when earlier values are set.
-                const backend::cpu<typename DISPERSION_FUNCTION::base> kx_result = this->kx_next->evaluate();
-                const backend::cpu<typename DISPERSION_FUNCTION::base> ky_result = this->ky_next->evaluate();
-                const backend::cpu<typename DISPERSION_FUNCTION::base> kz_result = this->kz_next->evaluate();
-                const backend::cpu<typename DISPERSION_FUNCTION::base> x_result  = this->x_next->evaluate();
-                const backend::cpu<typename DISPERSION_FUNCTION::base> y_result  = this->y_next->evaluate();
-                const backend::cpu<typename DISPERSION_FUNCTION::base> z_result  = this->z_next->evaluate();
-                const backend::cpu<typename DISPERSION_FUNCTION::base> t_result  = this->t_next->evaluate();
-
-                this->kx->set(kx_result);
-                this->ky->set(ky_result);
-                this->kz->set(kz_result);
-                this->x->set(x_result);
-                this->y->set(y_result);
-                this->z->set(z_result);
-                this->t->set(t_result);
-            }
+            work.run();
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @param[in] index Ray index to print results of.
+///  @params[in] index Ray index to print results of.
 //------------------------------------------------------------------------------
         void print(const size_t index) {
-            if constexpr (jit::can_jit<typename DISPERSION_FUNCTION::base> ()) {
-                this->source->print(index);
-            } else {
-                std::cout << this->t->evaluate().at(index) << " "
-                          << this->x->evaluate().at(index) << " "
-                          << this->y->evaluate().at(index) << " "
-                          << this->z->evaluate().at(index) << " "
-                          << this->kx->evaluate().at(index) << " "
-                          << this->ky->evaluate().at(index) << " "
-                          << this->kz->evaluate().at(index) << " "
-                          << this->residule->evaluate().at(index)
-                          << std::endl;
-            }
+            work.print(index);
         }
 
 //------------------------------------------------------------------------------
@@ -389,15 +299,15 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @param[in] w  Inital omega.
-///  @param[in] kx Inital kx.
-///  @param[in] ky Inital ky.
-///  @param[in] kz Inital kz.
-///  @param[in] x  Inital x.
-///  @param[in] y  Inital y.
-///  @param[in] z  Inital z.
-///  @param[in] t  Inital t.
-///  @param[in] dt Inital dt.
+///  @params[in] w  Inital omega.
+///  @params[in] kx Inital kx.
+///  @params[in] ky Inital ky.
+///  @params[in] kz Inital kz.
+///  @params[in] x  Inital x.
+///  @params[in] y  Inital y.
+///  @params[in] z  Inital z.
+///  @params[in] t  Inital t.
+///  @params[in] dt Inital dt.
 //------------------------------------------------------------------------------
         rk2(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -535,15 +445,15 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @param[in] w  Inital omega.
-///  @param[in] kx Inital kx.
-///  @param[in] ky Inital ky.
-///  @param[in] kz Inital kz.
-///  @param[in] x  Inital x.
-///  @param[in] y  Inital y.
-///  @param[in] z  Inital z.
-///  @param[in] t  Inital t.
-///  @param[in] dt Inital dt.
+///  @params[in] w  Inital omega.
+///  @params[in] kx Inital kx.
+///  @params[in] ky Inital ky.
+///  @params[in] kz Inital kz.
+///  @params[in] x  Inital x.
+///  @params[in] y  Inital y.
+///  @params[in] z  Inital z.
+///  @params[in] t  Inital t.
+///  @params[in] dt Inital dt.
 //------------------------------------------------------------------------------
         rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -728,16 +638,16 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a predictor corrector solver.
 ///
-///  @param[in] w         Inital omega.
-///  @param[in] kx        Inital kx.
-///  @param[in] ky        Inital ky.
-///  @param[in] kz        Inital kz.
-///  @param[in] x         Inital x.
-///  @param[in] y         Inital y.
-///  @param[in] z         Inital z.
-///  @param[in] t         Inital t.
-///  @param[in] dt        Inital dt.
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @params[in] w         Inital omega.
+///  @params[in] kx        Inital kx.
+///  @params[in] ky        Inital ky.
+///  @params[in] kz        Inital kz.
+///  @params[in] x         Inital x.
+///  @params[in] y         Inital y.
+///  @params[in] z         Inital z.
+///  @params[in] t         Inital t.
+///  @params[in] dt        Inital dt.
+///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
         predictor_corrector(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
                             graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -890,15 +800,15 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a split simplextic integrator.
 ///
-///  @param[in] w         Inital omega.
-///  @param[in] kx        Inital kx.
-///  @param[in] ky        Inital ky.
-///  @param[in] kz        Inital kz.
-///  @param[in] x         Inital x.
-///  @param[in] y         Inital y.
-///  @param[in] z         Inital z.
-///  @param[in] t         Inital t.
-///  @param[in] dt        Inital dt.
+///  @params[in] w         Inital omega.
+///  @params[in] kx        Inital kx.
+///  @params[in] ky        Inital ky.
+///  @params[in] kz        Inital kz.
+///  @params[in] x         Inital x.
+///  @params[in] y         Inital y.
+///  @params[in] z         Inital z.
+///  @params[in] t         Inital t.
+///  @params[in] dt        Inital dt.
 //------------------------------------------------------------------------------
         split_simplextic(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
