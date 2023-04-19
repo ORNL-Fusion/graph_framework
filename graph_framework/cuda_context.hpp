@@ -88,7 +88,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Cuda context constructor.
 //------------------------------------------------------------------------------
-        cuda_context() : result_buffer(0) {
+        cuda_context() : result_buffer(0), module(0) {
             check_error(cuDeviceGet(&device, 0), "cuDeviceGet");
             check_error(cuDevicePrimaryCtxRetain(&context, device), "cuDevicePrimaryCtxRetain");
             check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
@@ -99,13 +99,19 @@ namespace gpu {
 ///  @brief Cuda context destructor.
 //------------------------------------------------------------------------------
         ~cuda_context() {
-            check_error(cuModuleUnload(module), "cuModuleUnload");
+            if (module) {
+                 check_error(cuModuleUnload(module), "cuModuleUnload");
+                 module = 0;
+            }
 
             for (auto &[key, value] : kernel_arguments) {
                 check_error(cuMemFree(value), "cuMemFree");
             }
 
-            check_error(cuMemFree(result_buffer), "cuMemFree");
+            if (result_buffer) {
+                check_error(cuMemFree(result_buffer), "cuMemFree");
+                result_buffer = 0;
+            }
 
             check_error(cuStreamDestroy(stream), "cuStreamDestroy");
             check_error(cuDevicePrimaryCtxRelease(device), "cuDevicePrimaryCtxRelease");
@@ -332,7 +338,7 @@ namespace gpu {
                             T *source) {
             size_t size;
             check_error(cuMemGetAddressRange(NULL, &size, kernel_arguments[node.get()]), "cuMemGetAddressRange");
-            check_error_async(cuMemcpyHtoDAsync(source, kernel_arguments[node.get()], size, stream), "cuMemcpyHtoDAsync");
+            check_error_async(cuMemcpyHtoDAsync(kernel_arguments[node.get()], source, size, stream), "cuMemcpyHtoDAsync");
         }
 
 //------------------------------------------------------------------------------
