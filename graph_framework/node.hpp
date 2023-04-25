@@ -65,7 +65,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T>> compile(std::stringstream &stream,
-                                                      jit::register_map<leaf_node<T>> &registers) = 0;
+                                                      jit::register_map &registers) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Reset the cache.
@@ -168,7 +168,7 @@ namespace graph {
 ///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map<leaf_node<T>> &registers) {
+                                       jit::register_map &registers) {
             return this->arg->compile(stream, registers);
         }
 
@@ -331,7 +331,7 @@ namespace graph {
 ///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map<leaf_node<T>> &registers) final {
+                                       jit::register_map &registers) final {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -450,8 +450,8 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared constant nodes.
-    template<typename N>
-    using shared_constant = std::shared_ptr<constant_node<typename N::base>>;
+    template<typename T>
+    using shared_constant = std::shared_ptr<constant_node<T>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a constant node.
@@ -459,9 +459,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_constant<N> constant_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<constant_node<typename N::base>> (x);
+    template<typename T>
+    shared_constant<T> constant_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<constant_node<T>> (x);
     }
 
 //******************************************************************************
@@ -555,7 +555,7 @@ namespace graph {
 ///  @params[in] registers List of defined registers.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map<leaf_node<T>> &registers) final {
+                                       jit::register_map &registers) final {
            return this->shared_from_this();
         }
 
@@ -810,14 +810,14 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced cache node.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_leaf<typename N::base> cache(std::shared_ptr<N> x) {
-        return (std::make_shared<cache_node<typename N::base>> (x))->reduce();
+    template<typename T>
+    shared_leaf<T> cache(shared_leaf<T> x) {
+        return (std::make_shared<cache_node<T>> (x))->reduce();
     }
 
 ///  Convenience type alias for shared cache nodes.
-    template<typename N>
-    using shared_cache = std::shared_ptr<cache_node<typename N::base>>;
+    template<typename T>
+    using shared_cache = std::shared_ptr<cache_node<T>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a cache node.
@@ -825,9 +825,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_cache<N> cache_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<cache_node<typename N::base>> (x);
+    template<typename T>
+    shared_cache<T> cache_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<cache_node<T>> (x);
     }
 
 //******************************************************************************
@@ -896,14 +896,14 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced cache node.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_leaf<typename N::base> pseudo_variable(std::shared_ptr<N> x) {
-        return (std::make_shared<pseudo_variable_node<typename N::base>> (x))->reduce();
+    template<typename T>
+    shared_leaf<T> pseudo_variable(shared_leaf<T> x) {
+        return (std::make_shared<pseudo_variable_node<T>> (x))->reduce();
     }
 
 ///  Convenience type alias for shared pseudo variable nodes.
-    template<typename N>
-    using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<typename N::base>>;
+    template<typename T>
+    using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<T>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a pseudo variable node.
@@ -911,9 +911,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_pseudo_variable<N> pseudo_variable_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<pseudo_variable_node<typename N::base>> (x);
+    template<typename T>
+    shared_pseudo_variable<T> pseudo_variable_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<pseudo_variable_node<T>> (x);
     }
 }
 

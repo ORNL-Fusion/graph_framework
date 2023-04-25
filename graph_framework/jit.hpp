@@ -37,7 +37,7 @@ namespace jit {
 ///  String stream to build the kernel source.
         std::stringstream source_buffer;
 ///  Nodes that have been jitted.
-        register_map<graph::leaf_node<T>> registers;
+        register_map registers;
 ///  Kernel names.
         std::vector<std::string> kernel_names;
 

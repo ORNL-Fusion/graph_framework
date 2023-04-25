@@ -81,8 +81,9 @@ namespace jit {
     template<class NODE>
     std::string to_string(const char prefix,
                           const NODE *pointer) {
-        assert((prefix == 'r' || prefix == 'v' || prefix == 'o' ) &&
-               "Expected a variable (v) or register (r) prefix.");
+        assert((prefix == 'r' || prefix == 'v' ||
+                prefix == 'o' || prefix == 'a') &&
+               "Expected a variable (v), register (r), output (o) or array (a) prefix.");
         std::stringstream stream;
         stream << prefix << "_" << reinterpret_cast<size_t> (pointer);
         return stream.str();
@@ -170,8 +171,7 @@ namespace jit {
     }
 
 ///  Type alias for mapping node pointers to register names.
-    template<class NODE>
-    using register_map = std::map<NODE *, std::string>;
+    using register_map = std::map<void *, std::string>;
 }
 
 #endif /* register_h */

@@ -220,8 +220,8 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
-///  @params[in] node   Not to copy buffer to.
-///  @params[in] source Host side buffer to copy from.
+///  @params[in] node        Not to copy buffer to.
+///  @params[in] destination Device side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_device(graph::shared_leaf<T> &node,
                             T *destination) {

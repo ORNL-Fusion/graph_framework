@@ -36,6 +36,7 @@ target_precompile_headers (rays
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/register.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/timing.hpp>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpu_context.hpp>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/piecewise.hpp>
                            $<$<BOOL:${USE_METAL}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/metal_context.hpp>>
                            $<$<BOOL:${USE_CUDA}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cuda_context.hpp>>
 )

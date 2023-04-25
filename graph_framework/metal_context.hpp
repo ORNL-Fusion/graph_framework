@@ -295,7 +295,7 @@ namespace gpu {
                                   graph::input_nodes<T> &inputs,
                                   graph::output_nodes<T> &outputs,
                                   const size_t size,
-                                  jit::register_map<graph::leaf_node<T>> &registers) {
+                                  jit::register_map &registers) {
             source_buffer << std::endl;
             source_buffer << "kernel void " << name << "(" << std::endl;
             
@@ -336,7 +336,7 @@ namespace gpu {
         void create_kernel_postfix(std::stringstream &source_buffer,
                                    graph::output_nodes<T> &outputs,
                                    graph::map_nodes<T> &setters,
-                                   jit::register_map<graph::leaf_node<T>> &registers) {
+                                   jit::register_map &registers) {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('v',  in.get())
