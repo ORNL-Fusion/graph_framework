@@ -26,7 +26,7 @@ template<typename T> void test_sin() {
            "Expected division node");
 #endif
 
-    auto y = graph::variable<T> (1, "y");
+    auto y = graph::variable<T> (1, "");
     auto siny = graph::sin(y);
     assert(graph::sin_cast(siny) && "Expected a sine node");
 
@@ -47,7 +47,7 @@ template<typename T> void test_cos() {
            "Expected division node");
 #endif
 
-    auto y = graph::variable<T> (1, "y");
+    auto y = graph::variable<T> (1, "");
     auto cosy = graph::cos(y);
     assert(graph::cos_cast(cosy).get() && "Expected a cosine node");
 
@@ -64,11 +64,11 @@ template<typename T> void test_tan() {
     assert(graph::constant_cast(graph::tan(graph::constant(static_cast<T> (10.0)))).get() &&
            "Expected constant");
 #else
-    assert(graph::divide_cast(graph::log(graph::constant(static_cast<T> (10.0)))).get() &&
+    assert(graph::divide_cast(graph::tan(graph::constant(static_cast<T> (10.0)))).get() &&
            "Expected division node");
 #endif
 
-    auto y = graph::variable<T> (1, "y");
+    auto y = graph::variable<T> (1, "");
     auto tany = graph::tan(y);
     assert(graph::divide_cast(tany).get() && "Expected divide node");
 
@@ -78,12 +78,49 @@ template<typename T> void test_tan() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests for tan nodes.
+//------------------------------------------------------------------------------
+template<typename T> void test_atan() {
+#ifdef USE_REDUCE
+    assert(graph::constant_cast(graph::atan(graph::constant(static_cast<T> (10.0)),
+                                            graph::constant(static_cast<T> (11.0)))).get() &&
+           "Expected constant");
+#else
+    assert(graph::atan_cast(graph::atan(graph::constant(static_cast<T> (10.0)),
+                                        graph::constant(static_cast<T> (11.0)))).get() &&
+           "Expected atan node");
+#endif
+
+#ifdef USE_REDUCE
+    assert(graph::constant_cast(graph::atan(graph::constant(static_cast<T> (0.0)),
+                                            graph::constant(static_cast<T> (11.0)))).get() &&
+           "Expected constant");
+#else
+    assert(graph::atan_cast(graph::atan(graph::constant(static_cast<T> (0.0)),
+                                        graph::constant(static_cast<T> (11.0)))).get() &&
+           "Expected atan node");
+#endif
+
+    auto x = graph::variable<T> (1, "");
+    auto y = graph::variable<T> (1, "");
+    auto atanxy = graph::atan(x, y);
+    assert(graph::atan_cast(atanxy).get() && "Expected an atan node");
+
+//  Test derivatives.
+    assert(graph::multiply_cast(atanxy->df(x)).get() &&
+           "Expected multiply node.");
+    assert(graph::divide_cast(atanxy->df(y)).get() &&
+           "Expected divide node.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
     test_sin<T> ();
     test_cos<T> ();
     test_tan<T> ();
+    test_atan<T> ();
 }
 
 //------------------------------------------------------------------------------

@@ -13,7 +13,7 @@
 
 #include "vector.hpp"
 #include "equilibrium.hpp"
-#include "workflow.hpp"
+#include "newton.hpp"
 
 namespace dispersion {
 //******************************************************************************
@@ -126,26 +126,15 @@ namespace dispersion {
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         solve(graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
               graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs,
-              const typename DISPERSION_FUNCTION::base tolarance=1.0E-30,
+              const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
               const size_t max_iterations = 1000) {
             auto loss = D*D;
-            auto x_next = x
-                        - loss/(loss->df(x) +
-                                graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (tolarance)));
-            
             auto x_var = graph::variable_cast(x);
 
-            graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
-                loss
-            };
-
-            graph::map_nodes<typename DISPERSION_FUNCTION::base> setters = {
-                {x_next, x_var}
-            };
-
             workflow::manager<typename DISPERSION_FUNCTION::base> work;
-            work.add_converge_item(inputs, outputs, setters, "loss_kernel",
-                                   tolarance, max_iterations);
+
+            solver::newton(work, {x}, inputs, loss, tolarance, max_iterations);
+
             work.compile();
             work.run();
 
@@ -372,7 +361,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
             auto none = graph::none<T> ();
             auto c = graph::constant(static_cast<T> (1.0E3));
             return (c*(x - graph::exp(none*t)) - graph::exp(none*t))*kx + w;
@@ -408,7 +397,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
             auto c = graph::one<T> ();
 
             auto npar2 = kz*kz*c*c/(w*w);
@@ -467,7 +456,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
 
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
@@ -533,7 +522,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
 
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
@@ -589,7 +578,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
 
 //  Equilibrium quantities.
             auto mi = graph::constant(eq->get_ion_mass(0));
@@ -650,7 +639,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
             auto c = graph::one<T> ();
             auto well = c - graph::constant(static_cast<T> (0.5))*exp(graph::constant(static_cast<T> (-1.0))*(x*x + y*y)/graph::constant(static_cast<T> (0.1)));
             auto npar2 = kz*kz*c*c/(w*w);
@@ -692,7 +681,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
 //  Constants
             auto none = graph::constant(static_cast<T> (-1.0));
                         
@@ -753,7 +742,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
 //  Constants
             auto one = graph::one<T> ();
 
@@ -811,7 +800,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
 //  Constants
             auto one = graph::one<T> ();
             auto none = graph::constant(static_cast<T> (-1.0));
@@ -892,7 +881,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> y,
                                         graph::shared_leaf<T> z,
                                         graph::shared_leaf<T> t,
-                                        equilibrium::unique_equilibrium<T> &eq) final {
+                                        equilibrium::unique_equilibrium<T> &eq) {
 //  Constants
             auto one = graph::one<T> ();
             auto none = graph::constant(static_cast<T> (-1.0));

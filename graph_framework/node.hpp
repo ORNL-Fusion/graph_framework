@@ -59,20 +59,28 @@ namespace graph {
         virtual std::shared_ptr<leaf_node<T>> df(std::shared_ptr<leaf_node<T>> x) = 0;
 
 //------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  Some nodes require additions to the preamble however most don't so define a
+///  generic method that does nothing.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @params[in,out] visited   List of visited nodes.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::stringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited) {}
+
+//------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T>> compile(std::stringstream &stream,
                                                       jit::register_map &registers) = 0;
-
-//------------------------------------------------------------------------------
-///  @brief Reset the cache.
-///
-///  For any nodes that are not a cache node this is a no operation.
-//------------------------------------------------------------------------------
-        virtual void reset_cache() {}
 
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
@@ -127,6 +135,9 @@ namespace graph {
 ///  Convenience type alias for a vector of output nodes.
     template<typename T>
     using output_nodes = std::vector<shared_leaf<T>>;
+///  Convenience type alias for node caches.
+    template<typename T>
+    using node_cache = std::vector<shared_leaf<T>>;
 
 //******************************************************************************
 //  Base straight node.
@@ -162,10 +173,26 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+//------------------------------------------------------------------------------
+    virtual void compile_preamble(std::stringstream &stream,
+                                  jit::register_map &registers,
+                                  jit::visiter_map &visited) {
+        if (visited.find(this) == visited.end()) {
+            this->arg->compile_preamble(stream, registers, visited);
+            visited[this] = 0;
+        }
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in] stream    String buffer stream.
-///  @params[in] registers List of defined registers.
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
                                        jit::register_map &registers) {
@@ -209,6 +236,22 @@ namespace graph {
                     shared_leaf<T> r) :
         left(l->reduce()),
         right(r->reduce()) {}
+
+//------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.///  @params[in,out] visited   List of visited nodes.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::stringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited) {
+            if (visited.find(this) == visited.end()) {
+                this->left->compile_preamble(stream, registers, visited);
+                this->right->compile_preamble(stream, registers, visited);
+                visited[this] = 0;
+            }
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the left branch.
@@ -256,6 +299,23 @@ namespace graph {
         middle(m->reduce()) {}
 
 //------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.///  @params[in,out] visited   List of visited nodes.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::stringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited) {
+            if (visited.find(this) == visited.end()) {
+                this->left->compile_preamble(stream, registers, visited);
+                this->middle->compile_preamble(stream, registers, visited);
+                this->right->compile_preamble(stream, registers, visited);
+                visited[this] = 0;
+            }
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Get the right branch.
 //------------------------------------------------------------------------------
         shared_leaf<T> get_middle() {
@@ -299,7 +359,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual backend::buffer<T> evaluate() final {
+        virtual backend::buffer<T> evaluate() {
             return data;
         }
 
@@ -310,7 +370,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() final {
+        virtual shared_leaf<T> reduce() {
             return this->shared_from_this();
         }
 
@@ -320,18 +380,25 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) final {
-            return std::make_shared<constant_node<T>> (static_cast<T> (0.0));
+        virtual shared_leaf<T> df(shared_leaf<T> x) {
+            auto zero = std::make_shared<constant_node<T>> (static_cast<T> (0.0));
+            for (auto &c : constant_node<T>::cache) {
+                if (zero->is_match(c)) {
+                    return c;
+                }
+            }
+            constant_node<T>::cache.push_back(zero);
+            return zero;
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in] stream    String buffer stream.
-///  @params[in] registers List of defined registers.
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map &registers) final {
+                                       jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -342,7 +409,7 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     jit::add_type<T> (stream);
                     stream << " (" << std::real(temp) << ","
-                                   << std::imag(temp) << ")";
+                    << std::imag(temp) << ")";
                 } else {
                     stream << temp;
                 }
@@ -358,7 +425,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) final {
+        virtual bool is_match(shared_leaf<T> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -381,9 +448,12 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const final {
+        virtual void to_latex() const {
             std::cout << data.at(0);
         }
+
+///  Cache for constructed nodes.
+        inline static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -394,7 +464,14 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> constant(const T d) {
-        return (std::make_shared<constant_node<T>> (d))->reduce();
+        auto temp = std::make_shared<constant_node<T>> (d)->reduce();
+        for (auto &c : constant_node<T>::cache) {
+            if (temp->is_match(c)) {
+                return c;
+            }
+        }
+        constant_node<T>::cache.push_back(temp);
+        return temp;
     }
 
 //------------------------------------------------------------------------------
@@ -405,7 +482,14 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> constant(const backend::buffer<T> &d) {
-        return (std::make_shared<constant_node<T>> (d))->reduce();
+        auto temp = std::make_shared<constant_node<T>> (d)->reduce();
+        for (auto &c : constant_node<T>::cache) {
+            if (temp->is_match(c)) {
+                return c;
+            }
+        }
+        constant_node<T>::cache.push_back(temp);
+        return temp;
     }
 
 //  Define some common constants.
@@ -523,7 +607,7 @@ namespace graph {
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
-        virtual backend::buffer<T> evaluate() final {
+        virtual backend::buffer<T> evaluate() {
             return buffer;
         }
 
@@ -534,7 +618,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() final {
+        virtual shared_leaf<T> reduce() {
             return this->shared_from_this();
         }
 
@@ -544,18 +628,18 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) final {
+        virtual shared_leaf<T> df(shared_leaf<T> x) {
             return constant(static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in] stream    String buffer stream.
-///  @params[in] registers List of defined registers.
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map &registers) final {
+                                       jit::register_map &registers) {
            return this->shared_from_this();
         }
 
@@ -565,7 +649,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) final {
+        virtual bool is_match(shared_leaf<T> x) {
             return this == x.get();
         }
 
@@ -574,7 +658,7 @@ namespace graph {
 ///
 ///  @params[in] d Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const T d) final {
+        virtual void set(const T d) {
             buffer.set(d);
         }
 
@@ -584,7 +668,7 @@ namespace graph {
 ///  @params[in] index Index to place the value at.
 ///  @params[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const size_t index, const T d) final {
+        virtual void set(const size_t index, const T d) {
             buffer[index] = d;
         }
 
@@ -593,7 +677,7 @@ namespace graph {
 ///
 ///  @params[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const std::vector<T> &d) final {
+        virtual void set(const std::vector<T> &d) {
             buffer.set(d);
         }
 
@@ -602,15 +686,22 @@ namespace graph {
 ///
 ///  @params[in] d Vector data to set.
 //------------------------------------------------------------------------------
-        virtual void set(const backend::buffer<T> &d) final {
+        virtual void set(const backend::buffer<T> &d) {
             buffer = d;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get Symbol.
+//------------------------------------------------------------------------------
+        std::string get_symbol() const {
+            return symbol;
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const final {
-            std::cout << symbol;
+        virtual void to_latex() const {
+            std::cout << get_symbol();
         }
 
 //------------------------------------------------------------------------------
@@ -702,135 +793,6 @@ namespace graph {
     }
 
 //******************************************************************************
-//  Cache node.
-//******************************************************************************
-//------------------------------------------------------------------------------
-///  @brief Class representing data that can be cached.
-///
-///  Cache nodes save the results of evaluate so the subtree does not need to be
-///  revaluated.
-//------------------------------------------------------------------------------
-    template<typename T>
-    class cache_node final : public straight_node<T> {
-    private:
-///  Storage buffer for the data.
-        backend::buffer<T> data;
-
-    public:
-//------------------------------------------------------------------------------
-///  @brief Construct a cache node.
-///
-///  @params[in] a Argument.
-//------------------------------------------------------------------------------
-        cache_node(shared_leaf<T> a) :
-        straight_node<T> (a),
-        data(a->evaluate()) {}
-
-//------------------------------------------------------------------------------
-///  @brief Evaluate method.
-///
-///  Only need to evaluate the sub tree if the cache is not set.
-///
-///  @returns A reduced representation of the node.
-//------------------------------------------------------------------------------
-        virtual backend::buffer<T> evaluate() final {
-            return data;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Reduction method.
-///
-///  When the arg is a constant there's no point to caching anything. Replace
-///  cache node with the constant node. Otherwise do nothing.
-///
-///  @returns A reduced representation of the node.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() final {
-#ifdef USE_REDUCE
-            if (constant_cast(this->arg).get()) {
-                return this->arg;
-            }
-#endif
-            return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Transform node to derivative.
-///
-///  This has the consequence of removing the cache node.
-///
-///  @params[in] x The variable to take the derivative to.
-///  @returns The derivative of the node.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) final {
-            if (this->is_match(x)) {
-                return one<T> ();
-            } else {
-                return this->arg->df(x)->reduce();
-            }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
-///
-///  @params[in] x Other graph to check if it is a match.
-///  @returns True if the nodes are a match.
-//------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) final {
-            if (this == x.get()) {
-                return true;
-            }
-
-            auto x_cast = cache_cast(x);
-            if (x_cast.get()) {
-                return this->arg->is_match(x_cast->get_arg());
-            }
-
-            return false;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Reset the cache.
-//------------------------------------------------------------------------------
-        virtual void reset_cache() final {
-            data = this->arg->evaluate();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Convert the node to latex.
-//------------------------------------------------------------------------------
-        virtual void to_latex() const final {
-            return this->arg->to_latex();
-        }
-    };
-
-//------------------------------------------------------------------------------
-///  @brief Define cache convience function.
-///
-///  @params[in] x Argument.
-///  @returns A reduced cache node.
-//------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> cache(shared_leaf<T> x) {
-        return (std::make_shared<cache_node<T>> (x))->reduce();
-    }
-
-///  Convenience type alias for shared cache nodes.
-    template<typename T>
-    using shared_cache = std::shared_ptr<cache_node<T>>;
-
-//------------------------------------------------------------------------------
-///  @brief Cast to a cache node.
-///
-///  @params[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
-//------------------------------------------------------------------------------
-    template<typename T>
-    shared_cache<T> cache_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<cache_node<T>> (x);
-    }
-
-//******************************************************************************
 //  Pseudo variable node.
 //******************************************************************************
 //------------------------------------------------------------------------------
@@ -844,7 +806,7 @@ namespace graph {
     class pseudo_variable_node final : public straight_node<T> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a cache node.
+///  @brief Construct a pseudo variable node.
 ///
 ///  @params[in] a Argument.
 //------------------------------------------------------------------------------
@@ -858,7 +820,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() final {
+        virtual shared_leaf<T> reduce() {
             return this->shared_from_this();
         }
 
@@ -868,7 +830,7 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) final {
+        virtual shared_leaf<T> df(shared_leaf<T> x) {
             return constant(static_cast<T> (this->is_match(x)));
         }
 
@@ -878,27 +840,37 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) final {
+        virtual bool is_match(shared_leaf<T> x) {
             return this == x.get();
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const final {
+        virtual void to_latex() const {
             this->arg->to_latex();
         }
+
+///  Cache for constructed nodes.
+        inline static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
 ///  @brief Define pseudo variable convience function.
 ///
 ///  @params[in] x Argument.
-///  @returns A reduced cache node.
+///  @returns A reduced pseudo variable node.
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> pseudo_variable(shared_leaf<T> x) {
-        return (std::make_shared<pseudo_variable_node<T>> (x))->reduce();
+        auto temp = std::make_shared<pseudo_variable_node<T>> (x)->reduce();
+        for (auto &c : pseudo_variable_node<T>::cache) {
+            if (temp->is_match(c)) {
+                return c;
+            }
+        }
+        pseudo_variable_node<T>::cache.push_back(temp);
+        return temp;
     }
 
 ///  Convenience type alias for shared pseudo variable nodes.

@@ -3,6 +3,11 @@ cmake_minimum_required (VERSION 3.21)
 project (rays CXX)
 
 #-------------------------------------------------------------------------------
+#  Set the cmake module path.
+#-------------------------------------------------------------------------------
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+#-------------------------------------------------------------------------------
 #  Setup build types
 #-------------------------------------------------------------------------------
 set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS

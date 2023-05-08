@@ -18,15 +18,15 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class to represent vector quantities.
 //------------------------------------------------------------------------------
-    template<typename VX, typename VY, typename VZ>
+    template<typename T>
     class vector_quantity {
     protected:
 ///  X component of the vector.
-        VX x;
+        shared_leaf<T> x;
 ///  Y component of the vector.
-        VY y;
+        shared_leaf<T> y;
 ///  Z component of the vector.
-        VZ z;
+        shared_leaf<T> z;
 
     public:
 //------------------------------------------------------------------------------
@@ -36,7 +36,9 @@ namespace graph {
 ///  @params[in] y Y vector component.
 ///  @params[in] z Z Vector component.
 //------------------------------------------------------------------------------
-        vector_quantity(VX x, VY y, VZ z) :
+        vector_quantity(shared_leaf<T> x,
+                        shared_leaf<T> y,
+                        shared_leaf<T> z) :
         x(x), y(y), z(z) {}
 
 //------------------------------------------------------------------------------
@@ -44,7 +46,7 @@ namespace graph {
 ///
 ///  @return x
 //------------------------------------------------------------------------------
-        VX get_x() const {
+        shared_leaf<T> get_x() const {
             return x;
         }
 
@@ -54,7 +56,7 @@ namespace graph {
 ///
 ///  @return y
 //------------------------------------------------------------------------------
-        VY get_y() const {
+        shared_leaf<T> get_y() const {
             return y;
         }
 
@@ -63,7 +65,7 @@ namespace graph {
 ///
 ///  @return z
 //------------------------------------------------------------------------------
-        VZ get_z() const {
+        shared_leaf<T> get_z() const {
             return z;
         }
 
@@ -73,7 +75,7 @@ namespace graph {
 ///  @params[in] v2 Second vector.
 ///  @returns v1.v2
 //------------------------------------------------------------------------------
-        VX dot(std::shared_ptr<vector_quantity<VX, VY, VZ>> v2) {
+        shared_leaf<T> dot(std::shared_ptr<vector_quantity<T>> v2) {
             return x*v2->get_x() +
                    y*v2->get_y() +
                    z*v2->get_z();
@@ -85,11 +87,11 @@ namespace graph {
 ///  @params[in] v2 Second vector.
 ///  @returns v1 X v2
 //------------------------------------------------------------------------------
-        std::shared_ptr<vector_quantity<VX, VY, VZ>>
-        cross(std::shared_ptr<vector_quantity<VX, VY, VZ>> v2) {
-            return std::make_shared<vector_quantity<VX, VY, VZ>> (y*v2->get_z() - z*v2->get_y(),
-                                                                  z*v2->get_x() - x*v2->get_z(),
-                                                                  x*v2->get_y() - y*v2->get_x());
+        std::shared_ptr<vector_quantity<T>>
+        cross(std::shared_ptr<vector_quantity<T>> v2) {
+            return std::make_shared<vector_quantity<T>> (y*v2->get_z() - z*v2->get_y(),
+                                                         z*v2->get_x() - x*v2->get_z(),
+                                                         x*v2->get_y() - y*v2->get_x());
         }
 
 //------------------------------------------------------------------------------
@@ -97,7 +99,7 @@ namespace graph {
 ///
 ///  @returns |V|
 //------------------------------------------------------------------------------
-        VX length() {
+        shared_leaf<T> length() {
             return sqrt(x*x + y*y + z*z);
         }
 
@@ -106,22 +108,24 @@ namespace graph {
 ///
 ///  @returns v_hat
 //------------------------------------------------------------------------------
-        std::shared_ptr<vector_quantity<VX, VY, VZ>> unit() {
+        std::shared_ptr<vector_quantity<T>> unit() {
             auto l = length();
-            return std::make_shared<vector_quantity<VX, VY, VZ>> (x/l, y/l, z/l);
+            return std::make_shared<vector_quantity<T>> (x/l, y/l, z/l);
         }
     };
 
 ///  Convenience type for shared vector quantities.
-    template<typename VX, typename VY, typename VZ>
-    using shared_vector = std::shared_ptr<vector_quantity<VX, VY, VZ>>;
+    template<typename T>
+    using shared_vector = std::shared_ptr<vector_quantity<T>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Build a shared vector quantity.
 //------------------------------------------------------------------------------
-    template<typename VX, typename VY, typename VZ>
-    shared_vector<VX, VY, VZ> vector(VX x, VY y, VZ z) {
-        return std::make_shared<vector_quantity<VX, VY, VZ>> (x, y, z);
+    template<typename T>
+    shared_vector<T> vector(shared_leaf<T> x,
+                            shared_leaf<T> y,
+                            shared_leaf<T> z) {
+        return std::make_shared<vector_quantity<T>> (x, y, z);
     }
 }
 

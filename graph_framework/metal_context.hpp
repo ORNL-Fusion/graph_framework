@@ -9,6 +9,7 @@
 #define metal_context_h
 
 #import <vector>
+#include <map>
 
 #import <Metal/Metal.h>
 

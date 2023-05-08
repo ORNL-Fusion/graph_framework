@@ -53,7 +53,7 @@ void test_constant() {
 //  Test is_match
     auto c1 = graph::constant(static_cast<T> (5.0));
     auto c2 = graph::constant(static_cast<T> (5.0));
-    assert(c1.get() != c2.get() && "Expected different pointers");
+    assert(c1.get() == c2.get() && "Expected same pointers");
     assert(c1->is_match(c2) && "Expected match.");
 }
 
@@ -115,46 +115,6 @@ void test_variable() {
 }
 
 //------------------------------------------------------------------------------
-///  @brief Tests for cache nodes.
-//------------------------------------------------------------------------------
-template<typename T>
-void test_cache() {
-    auto five = graph::variable<T> (1, "");
-    five->set(static_cast<T> (5.0));
-    auto cache_five = graph::cache(five);
-    cache_five->evaluate();
-    five->set(static_cast<T> (6.0));
-    assert(cache_five->evaluate().at(0) == static_cast<T> (5.0) &&
-           "Expected a value of five.");
-    cache_five->reset_cache();
-    assert(cache_five->evaluate().at(0) == static_cast<T> (6.0) &&
-           "Expected a value of six.");
-    assert(graph::cache_cast(cache_five).get() && "Expected cache node.");
-
-    auto three = graph::constant(static_cast<T> (3.0));
-    auto cache_three = graph::cache(three);
-#ifdef USE_REDUCE
-    assert(graph::constant_cast(cache_three).get() &&
-           "Expected a constant node.");
-#else
-    assert(graph::cache_cast(cache_three).get() && "Expected a constant node.");
-#endif
-
-    assert(graph::constant_cast(cache_five->df(cache_five))->is(1) &&
-           "Expected the constant 1");
-    assert(graph::constant_cast(cache_five->df(five))->is(1) &&
-           "Expected the constant 1");
-    assert(graph::constant_cast(cache_five->df(three))->is(0) &&
-           "Expected the constant 0");
-
-//  Test is_match
-    auto c1 = graph::cache(five);
-    auto c2 = graph::cache(five);
-    assert(c1.get() != c2.get() && "Expected different pointers");
-    assert(c1->is_match(c2) && "Expected match.");
-}
-
-//------------------------------------------------------------------------------
 ///  @brief Tests for pseudo variable nodes.
 //------------------------------------------------------------------------------
 template<typename T>
@@ -181,7 +141,6 @@ void test_pseudo_variable() {
 template<typename T> void run_tests() {
     test_constant<T> ();
     test_variable<T> ();
-    test_cache<T> ();
     test_pseudo_variable<T> ();
 }
 

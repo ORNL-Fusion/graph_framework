@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <map>
 
 #include <dlfcn.h>
 
@@ -73,7 +74,7 @@ namespace gpu {
 
             out << kernel_source;
             out.close();
-            
+
             temp_stream.str(std::string());
             temp_stream.clear();
 
@@ -88,7 +89,7 @@ namespace gpu {
             temp_stream << CXX << " -fPIC -shared ";
 #endif
 #ifndef NDEBUG
-            temp_stream << "-g ";
+            temp_stream << "-g -fsanitize=undefined -fsanitize=float-divide-by-zero ";
 #else
             temp_stream << "-O3 ";
 #endif
@@ -278,7 +279,7 @@ namespace gpu {
                 source_buffer << "        const ";
                 jit::add_type<T> (source_buffer);
                 source_buffer << " " << registers[inputs[i].get()]
-                              << " = args[" << i << "][i];" << std::endl;
+                              << " = args[" << i << "][i]; //" << inputs[i]->get_symbol() << std::endl;
                 arg_index[inputs[i].get()] = i;
             }
         }

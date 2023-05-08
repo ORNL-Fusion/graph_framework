@@ -422,20 +422,22 @@ namespace gpu {
 ///  @params[in]     outputs       Output nodes of the graph to compute.
 ///  @params[in]     setters       Map outputs back to input values.
 ///  @params[in,out] registers     Map of used registers.
+
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::stringstream &source_buffer,
                                    graph::output_nodes<T> &outputs,
                                    graph::map_nodes<T> &setters,
-                                   jit::register_map &registers) {
+                                   jit::register_map &registers,
+                                   jit::constant_map<T, graph::shared_leaf<T>> &constants) {
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers, constants);
                 source_buffer << "        " << jit::to_string('v',  in.get())
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;
             }
 
             for (auto &out : outputs) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers, constants);
                 source_buffer << "        " << jit::to_string('o',  out.get())
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;

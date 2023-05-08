@@ -82,6 +82,14 @@ namespace jit {
             
             const size_t size = inputs[0]->size();
 
+            visiter_map visited;
+            for (auto &[out, in] : setters) {
+                out->compile_preamble(source_buffer, registers, visited);
+            }
+            for (auto &out : outputs) {
+                out->compile_preamble(source_buffer, registers, visited);
+            }
+
             gpu_context.create_kernel_prefix(source_buffer,
                                              name, inputs, outputs, size,
                                              registers);

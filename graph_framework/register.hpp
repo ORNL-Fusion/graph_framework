@@ -171,7 +171,34 @@ namespace jit {
     }
 
 ///  Type alias for mapping node pointers to register names.
-    using register_map = std::map<void *, std::string>;
+    typedef std::map<void *, std::string> register_map;
+///  Type alias for listing visited nodes.
+    typedef std::map<void *, bool> visiter_map;
+
+//------------------------------------------------------------------------------
+///  @brief  Define a custom comparitor class.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class float_compare {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Call operator.
+///
+///  @params[in] left  Left hand side.
+///  @params[in] right Right hand side.
+//------------------------------------------------------------------------------
+        bool operator() (const T &left, const T &right) const {
+            if constexpr (is_complex<T> ()) {
+                return std::abs(left) < std::abs(right);
+            } else {
+                return left < right;
+            }
+        }
+    };
+
+///  Type alias for constant registers.
+    template<typename T, class C>
+    using constant_map = std::map<T, C, float_compare<T>>;
 }
 
 #endif /* register_h */

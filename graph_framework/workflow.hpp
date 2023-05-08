@@ -108,7 +108,7 @@ namespace workflow {
 ///
 ///  @params[in,out] context Jit context.
 //------------------------------------------------------------------------------
-        virtual void create_kernel_call(jit::context<T> &context) final {
+        virtual void create_kernel_call(jit::context<T> &context) {
             work_item<T>::create_kernel_call(context);
             max_kernel = context.create_max_call(this->outputs.back(),
                                                  this->kernel);
