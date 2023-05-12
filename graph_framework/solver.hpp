@@ -562,7 +562,6 @@ namespace solver {
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq) {
 
 //  Test if the function is separatable.
-#ifdef USE_REDUCE
             auto zero = graph::zero<typename DISPERSION_FUNCTION::base> ();
             
             assert(zero->is_match(this->D.get_dkxdt()->df(kx)) &&
@@ -584,28 +583,6 @@ namespace solver {
                    zero->is_match(this->D.get_dzdt()->df(y))   &&
                    zero->is_match(this->D.get_dzdt()->df(z))   &&
                    "Hamiltonian is not separable.");
-#else
-            auto check_zero = static_cast<typename DISPERSION_FUNCTION::base> (0.0);
-            assert(this->D.get_dkxdt()->df(kx)->evaluate()[0] == check_zero &&
-                   this->D.get_dkxdt()->df(ky)->evaluate()[0] == check_zero &&
-                   this->D.get_dkxdt()->df(kz)->evaluate()[0] == check_zero &&
-                   this->D.get_dkydt()->df(kx)->evaluate()[0] == check_zero &&
-                   this->D.get_dkydt()->df(ky)->evaluate()[0] == check_zero &&
-                   this->D.get_dkydt()->df(kz)->evaluate()[0] == check_zero &&
-                   this->D.get_dkzdt()->df(kx)->evaluate()[0] == check_zero &&
-                   this->D.get_dkzdt()->df(ky)->evaluate()[0] == check_zero &&
-                   this->D.get_dkzdt()->df(kz)->evaluate()[0] == check_zero &&
-                   this->D.get_dxdt()->df(x)->evaluate()[0] == check_zero   &&
-                   this->D.get_dxdt()->df(y)->evaluate()[0] == check_zero   &&
-                   this->D.get_dxdt()->df(z)->evaluate()[0] == check_zero   &&
-                   this->D.get_dydt()->df(x)->evaluate()[0] == check_zero   &&
-                   this->D.get_dydt()->df(y)->evaluate()[0] == check_zero   &&
-                   this->D.get_dydt()->df(z)->evaluate()[0] == check_zero   &&
-                   this->D.get_dzdt()->df(x)->evaluate()[0] == check_zero   &&
-                   this->D.get_dzdt()->df(y)->evaluate()[0] == check_zero   &&
-                   this->D.get_dzdt()->df(z)->evaluate()[0] == check_zero   &&
-                   "Hamiltonian is not separable.");
-#endif
 
             auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
             auto two = graph::two<typename DISPERSION_FUNCTION::base> ();

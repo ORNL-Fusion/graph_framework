@@ -36,15 +36,14 @@ int main(int argc, const char * argv[]) {
     std::mutex sync;
 
     //typedef float base;
-    //typedef double base;
+    typedef double base;
     //typedef std::complex<float> base;
-    typedef std::complex<double> base;
+    //typedef std::complex<double> base;
 
     const timeing::measure_diagnostic total("Total Time");
 
     const size_t num_times = 10000;
-    //const size_t num_rays = 1;
-    const size_t num_rays = 1; //000000;
+    const size_t num_rays = 1000000;
 
     std::vector<std::thread> threads(0);
     if constexpr (jit::use_gpu<base> ()) {
@@ -95,10 +94,12 @@ int main(int argc, const char * argv[]) {
                 }
             }
 
-            x->set(static_cast<base> (2.2));
+            x->set(static_cast<base> (2.5));
+            //x->set(static_cast<base> (0.0));
             y->set(static_cast<base> (0.0));
             z->set(static_cast<base> (0.0));
             kx->set(static_cast<base> (-600.0));
+            //kx->set(static_cast<base> (600.0));
             ky->set(static_cast<base> (0.0));
             kz->set(static_cast<base> (0.0));
 
@@ -106,14 +107,18 @@ int main(int argc, const char * argv[]) {
             auto eq = equilibrium::make_efit<base> ("/Users/m4c/efit.nc", x, y, z, sync);
             //auto eq = equilibrium::make_slab_density<base> ();
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
-            
+
+            //const base endtime = static_cast<base> (60.0);
+            const base endtime = static_cast<base> (4.0);
+            const base dt = endtime/static_cast<base> (num_times);
+
             //solver::split_simplextic<dispersion::bohm_gross<base>>
             //solver::rk4<dispersion::bohm_gross<base>>
             //solver::rk4<dispersion::simple<base>>
             //solver::rk4<dispersion::ordinary_wave<base>>
             //solver::rk4<dispersion::extra_ordinary_wave<base>>
             solver::rk4<dispersion::cold_plasma<base>>
-                solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
+                solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
             solve.init(kx);
             solve.compile();
             if (thread_number == 0) {

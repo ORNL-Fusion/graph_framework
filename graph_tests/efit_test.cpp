@@ -111,9 +111,11 @@ template<typename T> void sherwood() {
 ///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    START_GPU
     //test_efit<float> ();
     //test_efit<double> ();
     //test_efit<std::complex<float>> ();
     //test_efit<std::complex<double>> ();
     sherwood<float> ();
+    END_GPU
 }

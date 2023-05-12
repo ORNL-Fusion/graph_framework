@@ -15,9 +15,6 @@ set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
               Release
               Sanitized
 )
-
-option (USE_REDUCE "Enable the graph reduction" ON)
-
 #-------------------------------------------------------------------------------
 #  GPU config
 #-------------------------------------------------------------------------------

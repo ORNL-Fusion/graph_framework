@@ -9,7 +9,6 @@ target_compile_features (rays
 target_compile_definitions (rays
                             INTERFACE
                             $<$<CONFIG:Release>:NDEBUG>
-                            $<$<BOOL:${USE_REDUCE}>:USE_REDUCE>
                             $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT}">
                             $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER}">
 )

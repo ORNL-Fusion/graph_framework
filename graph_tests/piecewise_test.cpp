@@ -76,13 +76,8 @@ template<typename T> void piecewise_1D() {
                                                        static_cast<T> (6.0)}), b);
     auto zero = graph::zero<T> ();
 
-#ifdef USE_REDUCE
     assert(graph::constant_cast(p1*zero).get() &&
            "Expected a constant node.");
-#else
-    assert(graph::multiply_cast(p1*zero).get() &&
-           "Expected a multiply node.");
-#endif
 
     auto two = graph::two<T> ();
 
@@ -91,51 +86,29 @@ template<typename T> void piecewise_1D() {
     assert(graph::multiply_cast(p1*p2).get() &&
            "Expected a multiply node.");
 
-#ifdef USE_REDUCE
     assert(graph::piecewise_1D_cast(p1 + zero).get() &&
            "Expected a piecewise_1D node.");
-#else
-    assert(graph::add_cast(p1 + zero).get() &&
-           "Expected a add node.");
-#endif
     assert(graph::add_cast(p1 + two).get() &&
            "Expected an add node.");
     assert(graph::add_cast(p1 + p2).get() &&
            "Expected an add node.");
 
-#ifdef USE_REDUCE
     assert(graph::piecewise_1D_cast(p1 - zero).get() &&
            "Expected a piecewise_1D node.");
-#else
-    assert(graph::subtract_cast(p1 - zero).get() &&
-           "Expected a subtract node.");
-#endif
     assert(graph::subtract_cast(p1 - two).get() &&
            "Expected a subtract node.");
     assert(graph::subtract_cast(p1 - p2).get() &&
            "Expected a subtract node.");
 
-#ifdef USE_REDUCE
     assert(graph::constant_cast(zero/p1).get() &&
            "Expected a constant node.");
     assert(graph::multiply_cast(p1/two).get() &&
            "Expected a multiply node.");
-#else
-    assert(graph::divide_cast(zero/pi).get() &&
-           "Expected a divide node.");
-    assert(graph::divide_cast(p1/two).get() &&
-           "Expected a divide node.");
-#endif
     assert(graph::divide_cast(p1/p2).get() &&
            "Expected a divide node.");
 
-#ifdef USE_REDUCE
     assert(graph::multiply_cast(graph::fma(p1, two, zero)).get() &&
            "Expected a multiply node.");
-#else
-    assert(graph::fma_cast(graph::fma(p1, two, zero)).get() &&
-           "Expected a fma node.");
-#endif
     assert(graph::fma_cast(graph::fma(p1, two, p2)).get() &&
            "Expected a fma constant.");
     assert(graph::fma_cast(graph::fma(p1, p2, two)).get() &&
@@ -187,13 +160,8 @@ template<typename T> void piecewise_1D() {
     auto pc = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (10.0),
                                                        static_cast<T> (10.0),
                                                        static_cast<T> (10.0)}), a);
-#ifdef USE_REDUCE
     assert(graph::constant_cast(pc).get() &&
            "Expected a constant.");
-#else
-    assert(graph::piecewise_1D_cast(pc).get() &&
-           "Expected a piecewise constant.");
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -217,13 +185,8 @@ template<typename T> void piecewise_2D() {
 
     auto zero = graph::zero<T> ();
 
-#ifdef USE_REDUCE
     assert(graph::constant_cast(p1*zero).get() &&
            "Expected a constant node.");
-#else
-    assert(graph::multiply_cast(p1*zero).get() &&
-           "Expected a multiply node.");
-#endif
 
     auto two = graph::two<T> ();
 
@@ -232,51 +195,29 @@ template<typename T> void piecewise_2D() {
     assert(graph::multiply_cast(p1*p2).get() &&
            "Expected a multiply node.");
 
-#ifdef USE_REDUCE
     assert(graph::piecewise_2D_cast(p1 + zero).get() &&
            "Expected a piecewise_2D node.");
-#else
-    assert(graph::add_cast(p1 + zero).get() &&
-           "Expected a add node.");
-#endif
     assert(graph::add_cast(p1 + two).get() &&
            "Expected an add node.");
     assert(graph::add_cast(p1 + p2).get() &&
            "Expected an add node.");
 
-#ifdef USE_REDUCE
     assert(graph::piecewise_2D_cast(p1 - zero).get() &&
            "Expected a piecewise_2D node.");
-#else
-    assert(graph::subtract_cast(p1 - zero).get() &&
-           "Expected a subtract node.");
-#endif
     assert(graph::subtract_cast(p1 - two).get() &&
            "Expected a subtract node.");
     assert(graph::subtract_cast(p1 - p2).get() &&
            "Expected a subtract node.");
 
-#ifdef USE_REDUCE
     assert(graph::constant_cast(zero/p1).get() &&
            "Expected a constant node.");
     assert(graph::multiply_cast(p1/two).get() &&
            "Expected a multiply node.");
-#else
-    assert(graph::divide_cast(zero/pi).get() &&
-           "Expected a divide node.");
-    assert(graph::divide_cast(p1/two).get() &&
-           "Expected a divide node.");
-#endif
     assert(graph::divide_cast(p1/p2).get() &&
            "Expected a divide node.");
 
-#ifdef USE_REDUCE
     assert(graph::multiply_cast(graph::fma(p1, two, zero)).get() &&
            "Expected a multiply node.");
-#else
-    assert(graph::fma_cast(graph::fma(p1, two, zero)).get() &&
-           "Expected a fma node.");
-#endif
     assert(graph::fma_cast(graph::fma(p1, two, p2)).get() &&
            "Expected a fma constant.");
     assert(graph::fma_cast(graph::fma(p1, p2, two)).get() &&
@@ -343,13 +284,8 @@ template<typename T> void piecewise_2D() {
                                                        static_cast<T> (10.0),
                                                        static_cast<T> (10.0)}),
                                       2, ax, bx);
-#ifdef USE_REDUCE
     assert(graph::constant_cast(pc).get() &&
            "Expected a constant.");
-#else
-    assert(graph::piecewise_1D_cast(pc).get() &&
-           "Expected a piecewise constant.");
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -367,8 +303,10 @@ template<typename T> void run_tests() {
 ///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    START_GPU
     run_tests<float> ();
     run_tests<double> ();
     run_tests<std::complex<float>> ();
     run_tests<std::complex<double>> ();
+    END_GPU
 }

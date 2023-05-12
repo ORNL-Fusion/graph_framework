@@ -49,11 +49,9 @@ namespace graph {
 ///  @returns Reduced graph from sine.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -126,7 +124,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -198,11 +196,9 @@ namespace graph {
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -275,7 +271,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -368,13 +364,11 @@ namespace graph {
 ///  @returns A reduced arctan node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             auto l = constant_cast(this->left);
             auto r = constant_cast(this->right);
             if (l.get() && r.get()) {
                 return constant(this->evaluate());
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -454,7 +448,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------

@@ -588,43 +588,42 @@ namespace equilibrium {
 
 //  Load scalar quantities.
             int varid;
-            double temp_scalar;
             
+            double rmin_value;
             nc_inq_varid(ncid, "rmin", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto rmin = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &rmin_value);
 
+            double dr_value;
             nc_inq_varid(ncid, "dr", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto dr = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &dr_value);
 
+            double zmin_value;
             nc_inq_varid(ncid, "zmin", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto zmin = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &zmin_value);
 
+            double dz_value;
             nc_inq_varid(ncid, "dz", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto dz = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &dz_value);
 
+            double psimin_value;
             nc_inq_varid(ncid, "psimin", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto psimin = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &psimin_value);
 
+            double dpsi_value;
             nc_inq_varid(ncid, "dpsi", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto dpsi = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &dpsi_value);
 
+            double pres_scale_value;
             nc_inq_varid(ncid, "pres_scale", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto pres_scale = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &pres_scale_value);
 
+            double ne_scale_value;
             nc_inq_varid(ncid, "ne_scale", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto ne_scale = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &ne_scale_value);
 
+            double te_scale_value;
             nc_inq_varid(ncid, "te_scale", &varid);
-            nc_get_var(ncid, varid, &temp_scalar);
-            auto te_scale = graph::constant(static_cast<T> (temp_scalar));
+            nc_get_var(ncid, varid, &te_scale_value);
 
 //  Load 1D quantities.
             int dimid;
@@ -637,156 +636,176 @@ namespace equilibrium {
             nc_inq_dimid(ncid, "numpsi", &dimid);
             nc_inq_dimlen(ncid, dimid, &numpsi);
             
-            std::vector<double> temp_c0_buffer(numr);
-            std::vector<double> temp_c1_buffer(numr);
-            std::vector<double> temp_c2_buffer(numr);
-            std::vector<double> temp_c3_buffer(numr);
+            std::vector<double> fpol_c0_buffer(numr);
+            std::vector<double> fpol_c1_buffer(numr);
+            std::vector<double> fpol_c2_buffer(numr);
+            std::vector<double> fpol_c3_buffer(numr);
 
             nc_inq_varid(ncid, "fpol_c0", &varid);
-            nc_get_var(ncid, varid, temp_c0_buffer.data());
+            nc_get_var(ncid, varid, fpol_c0_buffer.data());
             nc_inq_varid(ncid, "fpol_c1", &varid);
-            nc_get_var(ncid, varid, temp_c1_buffer.data());
+            nc_get_var(ncid, varid, fpol_c1_buffer.data());
             nc_inq_varid(ncid, "fpol_c2", &varid);
-            nc_get_var(ncid, varid, temp_c2_buffer.data());
+            nc_get_var(ncid, varid, fpol_c2_buffer.data());
             nc_inq_varid(ncid, "fpol_c3", &varid);
-            nc_get_var(ncid, varid, temp_c3_buffer.data());
-
-            b_phi = spline::make_1D(rmin, dr,
-                                    std::vector<T> (temp_c0_buffer.begin(), temp_c0_buffer.end()),
-                                    std::vector<T> (temp_c1_buffer.begin(), temp_c1_buffer.end()),
-                                    std::vector<T> (temp_c2_buffer.begin(), temp_c2_buffer.end()),
-                                    std::vector<T> (temp_c3_buffer.begin(), temp_c3_buffer.end()),
-                                    r)/r;
+            nc_get_var(ncid, varid, fpol_c3_buffer.data());
         
 //  Load psi grids.
             size_t numz;
             nc_inq_dimid(ncid, "numz", &dimid);
             nc_inq_dimlen(ncid, dimid, &numz);
 
-            std::vector<double> temp_c00_buffer(numz*numr);
-            std::vector<double> temp_c01_buffer(numz*numr);
-            std::vector<double> temp_c02_buffer(numz*numr);
-            std::vector<double> temp_c03_buffer(numz*numr);
-            std::vector<double> temp_c10_buffer(numz*numr);
-            std::vector<double> temp_c11_buffer(numz*numr);
-            std::vector<double> temp_c12_buffer(numz*numr);
-            std::vector<double> temp_c13_buffer(numz*numr);
-            std::vector<double> temp_c20_buffer(numz*numr);
-            std::vector<double> temp_c21_buffer(numz*numr);
-            std::vector<double> temp_c22_buffer(numz*numr);
-            std::vector<double> temp_c23_buffer(numz*numr);
-            std::vector<double> temp_c30_buffer(numz*numr);
-            std::vector<double> temp_c31_buffer(numz*numr);
-            std::vector<double> temp_c32_buffer(numz*numr);
-            std::vector<double> temp_c33_buffer(numz*numr);
+            std::vector<double> psi_c00_buffer(numz*numr);
+            std::vector<double> psi_c01_buffer(numz*numr);
+            std::vector<double> psi_c02_buffer(numz*numr);
+            std::vector<double> psi_c03_buffer(numz*numr);
+            std::vector<double> psi_c10_buffer(numz*numr);
+            std::vector<double> psi_c11_buffer(numz*numr);
+            std::vector<double> psi_c12_buffer(numz*numr);
+            std::vector<double> psi_c13_buffer(numz*numr);
+            std::vector<double> psi_c20_buffer(numz*numr);
+            std::vector<double> psi_c21_buffer(numz*numr);
+            std::vector<double> psi_c22_buffer(numz*numr);
+            std::vector<double> psi_c23_buffer(numz*numr);
+            std::vector<double> psi_c30_buffer(numz*numr);
+            std::vector<double> psi_c31_buffer(numz*numr);
+            std::vector<double> psi_c32_buffer(numz*numr);
+            std::vector<double> psi_c33_buffer(numz*numr);
 
             nc_inq_varid(ncid, "psi_c00", &varid);
-            nc_get_var(ncid, varid, temp_c00_buffer.data());
+            nc_get_var(ncid, varid, psi_c00_buffer.data());
             nc_inq_varid(ncid, "psi_c01", &varid);
-            nc_get_var(ncid, varid, temp_c01_buffer.data());
+            nc_get_var(ncid, varid, psi_c01_buffer.data());
             nc_inq_varid(ncid, "psi_c02", &varid);
-            nc_get_var(ncid, varid, temp_c02_buffer.data());
+            nc_get_var(ncid, varid, psi_c02_buffer.data());
             nc_inq_varid(ncid, "psi_c03", &varid);
-            nc_get_var(ncid, varid, temp_c03_buffer.data());
+            nc_get_var(ncid, varid, psi_c03_buffer.data());
             nc_inq_varid(ncid, "psi_c10", &varid);
-            nc_get_var(ncid, varid, temp_c10_buffer.data());
+            nc_get_var(ncid, varid, psi_c10_buffer.data());
             nc_inq_varid(ncid, "psi_c11", &varid);
-            nc_get_var(ncid, varid, temp_c11_buffer.data());
+            nc_get_var(ncid, varid, psi_c11_buffer.data());
             nc_inq_varid(ncid, "psi_c12", &varid);
-            nc_get_var(ncid, varid, temp_c12_buffer.data());
+            nc_get_var(ncid, varid, psi_c12_buffer.data());
             nc_inq_varid(ncid, "psi_c13", &varid);
-            nc_get_var(ncid, varid, temp_c13_buffer.data());
+            nc_get_var(ncid, varid, psi_c13_buffer.data());
             nc_inq_varid(ncid, "psi_c20", &varid);
-            nc_get_var(ncid, varid, temp_c20_buffer.data());
+            nc_get_var(ncid, varid, psi_c20_buffer.data());
             nc_inq_varid(ncid, "psi_c21", &varid);
-            nc_get_var(ncid, varid, temp_c21_buffer.data());
+            nc_get_var(ncid, varid, psi_c21_buffer.data());
             nc_inq_varid(ncid, "psi_c22", &varid);
-            nc_get_var(ncid, varid, temp_c22_buffer.data());
+            nc_get_var(ncid, varid, psi_c22_buffer.data());
             nc_inq_varid(ncid, "psi_c23", &varid);
-            nc_get_var(ncid, varid, temp_c23_buffer.data());
+            nc_get_var(ncid, varid, psi_c23_buffer.data());
             nc_inq_varid(ncid, "psi_c30", &varid);
-            nc_get_var(ncid, varid, temp_c30_buffer.data());
+            nc_get_var(ncid, varid, psi_c30_buffer.data());
             nc_inq_varid(ncid, "psi_c31", &varid);
-            nc_get_var(ncid, varid, temp_c31_buffer.data());
+            nc_get_var(ncid, varid, psi_c31_buffer.data());
             nc_inq_varid(ncid, "psi_c32", &varid);
-            nc_get_var(ncid, varid, temp_c32_buffer.data());
+            nc_get_var(ncid, varid, psi_c32_buffer.data());
             nc_inq_varid(ncid, "psi_c33", &varid);
-            nc_get_var(ncid, varid, temp_c33_buffer.data());
+            nc_get_var(ncid, varid, psi_c33_buffer.data());
 
-            psi = spline::make_2D(rmin, dr, zmin, dz,
-                                  std::vector<T> (temp_c00_buffer.begin(), temp_c00_buffer.end()),
-                                  std::vector<T> (temp_c01_buffer.begin(), temp_c01_buffer.end()),
-                                  std::vector<T> (temp_c02_buffer.begin(), temp_c02_buffer.end()),
-                                  std::vector<T> (temp_c03_buffer.begin(), temp_c03_buffer.end()),
-                                  std::vector<T> (temp_c10_buffer.begin(), temp_c10_buffer.end()),
-                                  std::vector<T> (temp_c11_buffer.begin(), temp_c11_buffer.end()),
-                                  std::vector<T> (temp_c12_buffer.begin(), temp_c12_buffer.end()),
-                                  std::vector<T> (temp_c13_buffer.begin(), temp_c13_buffer.end()),
-                                  std::vector<T> (temp_c20_buffer.begin(), temp_c20_buffer.end()),
-                                  std::vector<T> (temp_c21_buffer.begin(), temp_c21_buffer.end()),
-                                  std::vector<T> (temp_c22_buffer.begin(), temp_c22_buffer.end()),
-                                  std::vector<T> (temp_c23_buffer.begin(), temp_c23_buffer.end()),
-                                  std::vector<T> (temp_c30_buffer.begin(), temp_c30_buffer.end()),
-                                  std::vector<T> (temp_c31_buffer.begin(), temp_c31_buffer.end()),
-                                  std::vector<T> (temp_c32_buffer.begin(), temp_c32_buffer.end()),
-                                  std::vector<T> (temp_c33_buffer.begin(), temp_c33_buffer.end()),
-                                  r, z, numz);
-
-            temp_c0_buffer.resize(numpsi);
-            temp_c1_buffer.resize(numpsi);
-            temp_c2_buffer.resize(numpsi);
-            temp_c3_buffer.resize(numpsi);
+            std::vector<double> pressure_c0_buffer(numpsi);
+            std::vector<double> pressure_c1_buffer(numpsi);
+            std::vector<double> pressure_c2_buffer(numpsi);
+            std::vector<double> pressure_c3_buffer(numpsi);
 
             nc_inq_varid(ncid, "pressure_c0", &varid);
-            nc_get_var(ncid, varid, temp_c0_buffer.data());
+            nc_get_var(ncid, varid, pressure_c0_buffer.data());
             nc_inq_varid(ncid, "pressure_c1", &varid);
-            nc_get_var(ncid, varid, temp_c1_buffer.data());
+            nc_get_var(ncid, varid, pressure_c1_buffer.data());
             nc_inq_varid(ncid, "pressure_c2", &varid);
-            nc_get_var(ncid, varid, temp_c2_buffer.data());
+            nc_get_var(ncid, varid, pressure_c2_buffer.data());
             nc_inq_varid(ncid, "pressure_c3", &varid);
-            nc_get_var(ncid, varid, temp_c3_buffer.data());
+            nc_get_var(ncid, varid, pressure_c3_buffer.data());
 
-            pressure = pres_scale*spline::make_1D(psimin, dpsi,
-                                                  std::vector<T> (temp_c0_buffer.begin(), temp_c0_buffer.end()),
-                                                  std::vector<T> (temp_c1_buffer.begin(), temp_c1_buffer.end()),
-                                                  std::vector<T> (temp_c2_buffer.begin(), temp_c2_buffer.end()),
-                                                  std::vector<T> (temp_c3_buffer.begin(), temp_c3_buffer.end()),
-                                                  psi);
+            std::vector<double> te_c0_buffer(numpsi);
+            std::vector<double> te_c1_buffer(numpsi);
+            std::vector<double> te_c2_buffer(numpsi);
+            std::vector<double> te_c3_buffer(numpsi);
 
             nc_inq_varid(ncid, "te_c0", &varid);
-            nc_get_var(ncid, varid, temp_c0_buffer.data());
+            nc_get_var(ncid, varid, te_c0_buffer.data());
             nc_inq_varid(ncid, "te_c1", &varid);
-            nc_get_var(ncid, varid, temp_c1_buffer.data());
+            nc_get_var(ncid, varid, te_c1_buffer.data());
             nc_inq_varid(ncid, "te_c2", &varid);
-            nc_get_var(ncid, varid, temp_c2_buffer.data());
+            nc_get_var(ncid, varid, te_c2_buffer.data());
             nc_inq_varid(ncid, "te_c3", &varid);
-            nc_get_var(ncid, varid, temp_c3_buffer.data());
-            
-            te = te_scale*spline::make_1D(psimin, dpsi,
-                                          std::vector<T> (temp_c0_buffer.begin(), temp_c0_buffer.end()),
-                                          std::vector<T> (temp_c1_buffer.begin(), temp_c1_buffer.end()),
-                                          std::vector<T> (temp_c2_buffer.begin(), temp_c2_buffer.end()),
-                                          std::vector<T> (temp_c3_buffer.begin(), temp_c3_buffer.end()),
-                                          psi);
+            nc_get_var(ncid, varid, te_c3_buffer.data());
+
+            std::vector<double> ne_c0_buffer(numpsi);
+            std::vector<double> ne_c1_buffer(numpsi);
+            std::vector<double> ne_c2_buffer(numpsi);
+            std::vector<double> ne_c3_buffer(numpsi);
 
             nc_inq_varid(ncid, "ne_c0", &varid);
-            nc_get_var(ncid, varid, temp_c0_buffer.data());
+            nc_get_var(ncid, varid, ne_c0_buffer.data());
             nc_inq_varid(ncid, "ne_c1", &varid);
-            nc_get_var(ncid, varid, temp_c1_buffer.data());
+            nc_get_var(ncid, varid, ne_c1_buffer.data());
             nc_inq_varid(ncid, "ne_c2", &varid);
-            nc_get_var(ncid, varid, temp_c2_buffer.data());
+            nc_get_var(ncid, varid, ne_c2_buffer.data());
             nc_inq_varid(ncid, "ne_c3", &varid);
-            nc_get_var(ncid, varid, temp_c3_buffer.data());
-
-            ne = ne_scale*spline::make_1D(psimin, dpsi,
-                                          std::vector<T> (temp_c0_buffer.begin(), temp_c0_buffer.end()),
-                                          std::vector<T> (temp_c1_buffer.begin(), temp_c1_buffer.end()),
-                                          std::vector<T> (temp_c2_buffer.begin(), temp_c2_buffer.end()),
-                                          std::vector<T> (temp_c3_buffer.begin(), temp_c3_buffer.end()),
-                                          psi);
+            nc_get_var(ncid, varid, ne_c3_buffer.data());
             
             nc_close(ncid);
             sync.unlock();
+
+            auto rmin = graph::constant(static_cast<T> (rmin_value));
+            auto dr = graph::constant(static_cast<T> (dr_value));
+            auto zmin = graph::constant(static_cast<T> (zmin_value));
+            auto dz = graph::constant(static_cast<T> (dz_value));
+            auto psimin = graph::constant(static_cast<T> (psimin_value));
+            auto dpsi = graph::constant(static_cast<T> (dpsi_value));
+            auto pres_scale = graph::constant(static_cast<T> (pres_scale_value));
+            auto ne_scale = graph::constant(static_cast<T> (ne_scale_value));
+            auto te_scale = graph::constant(static_cast<T> (te_scale_value));
+
+            b_phi = spline::make_1D(rmin, dr,
+                                    std::vector<T> (fpol_c0_buffer.begin(), fpol_c0_buffer.end()),
+                                    std::vector<T> (fpol_c1_buffer.begin(), fpol_c1_buffer.end()),
+                                    std::vector<T> (fpol_c2_buffer.begin(), fpol_c2_buffer.end()),
+                                    std::vector<T> (fpol_c3_buffer.begin(), fpol_c3_buffer.end()),
+                                    r)/r;
+
+            psi = spline::make_2D(rmin, dr, zmin, dz,
+                                  std::vector<T> (psi_c00_buffer.begin(), psi_c00_buffer.end()),
+                                  std::vector<T> (psi_c01_buffer.begin(), psi_c01_buffer.end()),
+                                  std::vector<T> (psi_c02_buffer.begin(), psi_c02_buffer.end()),
+                                  std::vector<T> (psi_c03_buffer.begin(), psi_c03_buffer.end()),
+                                  std::vector<T> (psi_c10_buffer.begin(), psi_c10_buffer.end()),
+                                  std::vector<T> (psi_c11_buffer.begin(), psi_c11_buffer.end()),
+                                  std::vector<T> (psi_c12_buffer.begin(), psi_c12_buffer.end()),
+                                  std::vector<T> (psi_c13_buffer.begin(), psi_c13_buffer.end()),
+                                  std::vector<T> (psi_c20_buffer.begin(), psi_c20_buffer.end()),
+                                  std::vector<T> (psi_c21_buffer.begin(), psi_c21_buffer.end()),
+                                  std::vector<T> (psi_c22_buffer.begin(), psi_c22_buffer.end()),
+                                  std::vector<T> (psi_c23_buffer.begin(), psi_c23_buffer.end()),
+                                  std::vector<T> (psi_c30_buffer.begin(), psi_c30_buffer.end()),
+                                  std::vector<T> (psi_c31_buffer.begin(), psi_c31_buffer.end()),
+                                  std::vector<T> (psi_c32_buffer.begin(), psi_c32_buffer.end()),
+                                  std::vector<T> (psi_c33_buffer.begin(), psi_c33_buffer.end()),
+                                  r, z, numz);
+
+            pressure = pres_scale*spline::make_1D(psimin, dpsi,
+                                                  std::vector<T> (pressure_c0_buffer.begin(), pressure_c0_buffer.end()),
+                                                  std::vector<T> (pressure_c1_buffer.begin(), pressure_c1_buffer.end()),
+                                                  std::vector<T> (pressure_c2_buffer.begin(), pressure_c2_buffer.end()),
+                                                  std::vector<T> (pressure_c3_buffer.begin(), pressure_c3_buffer.end()),
+                                                  psi);
+            
+            te = te_scale*spline::make_1D(psimin, dpsi,
+                                          std::vector<T> (te_c0_buffer.begin(), te_c0_buffer.end()),
+                                          std::vector<T> (te_c1_buffer.begin(), te_c1_buffer.end()),
+                                          std::vector<T> (te_c2_buffer.begin(), te_c2_buffer.end()),
+                                          std::vector<T> (te_c3_buffer.begin(), te_c3_buffer.end()),
+                                          psi);
+
+            ne = ne_scale*spline::make_1D(psimin, dpsi,
+                                          std::vector<T> (ne_c0_buffer.begin(), ne_c0_buffer.end()),
+                                          std::vector<T> (ne_c1_buffer.begin(), ne_c1_buffer.end()),
+                                          std::vector<T> (ne_c2_buffer.begin(), ne_c2_buffer.end()),
+                                          std::vector<T> (ne_c3_buffer.begin(), ne_c3_buffer.end()),
+                                          psi);
         }
 
 //------------------------------------------------------------------------------
@@ -878,8 +897,6 @@ namespace equilibrium {
             
             auto br = graph::none<T> ()*aphi->df(z);
             auto bz = (r*aphi)->df(r)/r;
-            
-            auto zero = graph::zero<T> ();
             
             auto cos = graph::cos(phi);
             auto sin = graph::sin(phi);

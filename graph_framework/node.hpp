@@ -453,7 +453,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -852,7 +852,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------

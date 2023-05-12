@@ -473,11 +473,7 @@ namespace dispersion {
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto k = graph::vector(kx, ky, kz);
             graph::shared_leaf<T> kpara2;
-#ifdef USE_REDUCE
             if (b_vec->length()->is_match(graph::zero<T> ())) {
-#else
-            if (b_vec->length()->evaluate()[0] == static_cast<T> (0.0)) {
-#endif
                 kpara2 = k->dot(k);
             } else {
                 auto b_hat = b_vec->unit();
@@ -531,14 +527,8 @@ namespace dispersion {
 
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
-#ifdef USE_REDUCE
             assert(eq->get_magnetic_field(x, y, z)->length()->is_match(graph::zero<T> ()) &&
                    "Expected equilibrium with no magnetic field.");
-#else
-            assert(eq->get_magnetic_field(x, y, z)->length()->evaluate()[0] ==
-                   static_cast<T> (0.0) &&
-                   "Expected equilibrium with no magnetic field.");
-#endif
 
             auto k = graph::vector(kx, ky, kz);
             auto k2 = k->dot(k);
@@ -593,12 +583,7 @@ namespace dispersion {
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto k = graph::vector(kx, ky, kz);
             graph::shared_leaf<T> kpara2;
-#ifdef USE_REDUCE
             if (b_vec->length()->is_match(graph::zero<T> ())) {
-#else
-            if (b_vec->length()->evaluate()[0] ==
-                static_cast<T> (0.0)) {
-#endif
                 kpara2 = k->dot(k);
             } else {
                 auto b_hat = b_vec->unit();
@@ -884,7 +869,7 @@ namespace dispersion {
                                         equilibrium::unique_equilibrium<T> &eq) {
 //  Constants
             auto one = graph::one<T> ();
-            auto none = graph::constant(static_cast<T> (-1.0));
+            auto none = graph::none<T> ();
 
 //  Dielectric terms.
 //  Frequencies

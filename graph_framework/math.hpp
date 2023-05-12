@@ -48,7 +48,6 @@ namespace graph {
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             auto ac = constant_cast(this->arg);
             if (ac.get()) {
                 if (ac->is(0) || ac->is(1)) {
@@ -95,7 +94,6 @@ namespace graph {
                            sqrt(ad->get_right());
                 }
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -167,7 +165,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -240,7 +238,6 @@ namespace graph {
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
             }
@@ -250,7 +247,6 @@ namespace graph {
             if (a.get()) {
                 return a->get_arg();
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -321,7 +317,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -395,7 +391,6 @@ namespace graph {
 ///  @returns Reduced graph from log.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
             }
@@ -405,7 +400,6 @@ namespace graph {
             if (a.get()) {
                 return a->get_arg();
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -473,7 +467,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -549,7 +543,6 @@ namespace graph {
 ///  @returns A reduced power node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             auto rc = constant_cast(this->right);
 
             if (rc.get()) {
@@ -610,7 +603,6 @@ namespace graph {
                 return pow(lsq->get_arg(),
                            this->right/two<T> ());
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -694,7 +686,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------

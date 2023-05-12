@@ -94,11 +94,9 @@ namespace graph {
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             if (data.is_same()) {
                 return constant(data.at(0));
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -215,7 +213,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -386,11 +384,9 @@ namespace graph {
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-#ifdef USE_REDUCE
             if (data.is_same()) {
                 return constant(data.at(0));
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -529,7 +525,7 @@ namespace graph {
         }
 
 ///  Cache for constructed nodes.
-        inline static node_cache<T> cache;
+        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
