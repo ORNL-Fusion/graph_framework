@@ -21,6 +21,20 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class sine_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "sin(" << reinterpret_cast<size_t> (a) << ")";
+                            
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a sine\_node node.
@@ -28,7 +42,7 @@ namespace graph {
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         sine_node(shared_leaf<T> x) :
-        straight_node<T> (x) {}
+        straight_node<T> (x, sine_node<T>::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sine.
@@ -136,13 +150,14 @@ namespace graph {
     template<typename T>
     shared_leaf<T> sin(shared_leaf<T> x) {
         auto temp = std::make_shared<sine_node<T>> (x)->reduce();
-        for (auto &c : sine_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (sine_node<T>::cache.find(h) ==
+            sine_node<T>::cache.end()) {
+            sine_node<T>::cache[h] = temp;
+            return temp;
         }
-        sine_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return sine_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared sine nodes.
@@ -168,6 +183,20 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class cosine_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "cos(" << reinterpret_cast<size_t> (a) << ")";
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a cosine_node node.
@@ -175,7 +204,7 @@ namespace graph {
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         cosine_node(shared_leaf<T> x) :
-        straight_node<T> (x) {}
+        straight_node<T> (x, cosine_node<T>::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of cosine.
@@ -283,13 +312,14 @@ namespace graph {
     template<typename T>
     shared_leaf<T> cos(shared_leaf<T> x) {
         auto temp = std::make_shared<cosine_node<T>> (x)->reduce();
-        for (auto &c : cosine_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (cosine_node<T>::cache.find(h) ==
+            cosine_node<T>::cache.end()) {
+            cosine_node<T>::cache[h] = temp;
+            return temp;
         }
-        cosine_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return cosine_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared cosine nodes.
@@ -334,6 +364,23 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class arctan_node final : public branch_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] l Left pointer.
+///  @params[in] r Left pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+    static std::string to_string(leaf_node<T> *l,
+                                 leaf_node<T> *r) {
+        std::stringstream stream;
+        stream << "atan(" << reinterpret_cast<size_t> (l) << ","
+                          << reinterpret_cast<size_t> (r) << ")";
+                
+        return stream.str();
+    }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a arctan\_node node.
@@ -343,7 +390,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         arctan_node(shared_leaf<T> x,
                     shared_leaf<T> y) :
-        branch_node<T> (x, y) {}
+        branch_node<T> (x, y, arctan_node<T>::to_string(x.get(), y.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of arctan.
@@ -461,13 +508,14 @@ namespace graph {
     shared_leaf<T> atan(shared_leaf<T> l,
                         shared_leaf<T> r) {
         auto temp = std::make_shared<arctan_node<T>> (l, r)->reduce();
-        for (auto &c : arctan_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (arctan_node<T>::cache.find(h) ==
+            arctan_node<T>::cache.end()) {
+            arctan_node<T>::cache[h] = temp;
+            return temp;
         }
-        arctan_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return arctan_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared add nodes.

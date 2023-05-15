@@ -22,12 +22,16 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     bool is_variable_like(shared_leaf<T> a) {
-        return variable_cast(a).get()                                                        ||
-               pseudo_variable_cast(a).get()                                                 ||
-               (sqrt_cast(a).get() && (variable_cast(sqrt_cast(a)->get_arg()).get() ||
-                                       pseudo_variable_cast(sqrt_cast(a)->get_arg()).get())) ||
-               (pow_cast(a).get()  && (variable_cast(pow_cast(a)->get_left()).get() ||
-                                       pseudo_variable_cast(pow_cast(a)->get_left()).get()));
+        auto sq_cast = sqrt_cast(a);
+        auto p_cast = pow_cast(a);
+        return variable_cast(a).get()                                              ||
+               pseudo_variable_cast(a).get()                                       ||
+               (sq_cast.get() && (variable_cast(sq_cast->get_arg()).get() ||
+                                  pseudo_variable_cast(sq_cast->get_arg()).get())) ||
+               (p_cast.get()                                     &&
+                (variable_cast(p_cast->get_left()).get() ||
+                 pseudo_variable_cast(p_cast->get_left()).get()) &&
+                constant_cast(p_cast->get_right()).get());
     }
 
 //------------------------------------------------------------------------------
@@ -80,6 +84,23 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class add_node final : public branch_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] l Left node pointer.
+///  @params[in] r Right node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *l,
+                                     leaf_node<T> *r) {
+            std::stringstream stream;
+            stream << reinterpret_cast<size_t> (l) << "+"
+                   << reinterpret_cast<size_t> (r);
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct an addition node.
@@ -89,7 +110,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         add_node(shared_leaf<T> l,
                  shared_leaf<T> r) :
-        branch_node<T> (l, r) {}
+        branch_node<T> (l, r, add_node<T>::to_string(l.get(), r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of addition.
@@ -367,13 +388,14 @@ namespace graph {
     shared_leaf<T> add(shared_leaf<T> l,
                        shared_leaf<T> r) {
         auto temp = std::make_shared<add_node<T>> (l, r)->reduce();
-        for (auto &c : add_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (add_node<T>::cache.find(h) ==
+            add_node<T>::cache.end()) {
+            add_node<T>::cache[h] = temp;
+            return temp;
         }
-        add_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return add_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -416,6 +438,23 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class subtract_node final : public branch_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] l Left node pointer.
+///  @params[in] r Right node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *l,
+                                     leaf_node<T> *r) {
+            std::stringstream stream;
+            stream << reinterpret_cast<size_t> (l) << "-"
+                   << reinterpret_cast<size_t> (r);
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Consruct a subtraction node.
@@ -425,7 +464,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         subtract_node(shared_leaf<T> l,
                       shared_leaf<T> r) :
-        branch_node<T> (l, r) {}
+        branch_node<T> (l, r, subtract_node<T>::to_string(l.get(), r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of subtraction.
@@ -684,13 +723,14 @@ namespace graph {
     shared_leaf<T> subtract(shared_leaf<T> l,
                             shared_leaf<T> r) {
         auto temp = std::make_shared<subtract_node<T>> (l, r)->reduce();
-        for (auto &c : subtract_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (subtract_node<T>::cache.find(h) ==
+            subtract_node<T>::cache.end()) {
+            subtract_node<T>::cache[h] = temp;
+            return temp;
         }
-        subtract_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return subtract_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -728,6 +768,23 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class multiply_node final : public branch_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] l Left node pointer.
+///  @params[in] r Right node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *l,
+                                     leaf_node<T> *r) {
+            std::stringstream stream;
+            stream << reinterpret_cast<size_t> (l) << "*"
+                   << reinterpret_cast<size_t> (r);
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Consruct a multiplcation node.
@@ -737,7 +794,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         multiply_node(shared_leaf<T> l,
                       shared_leaf<T> r) :
-        branch_node<T> (l, r) {}
+        branch_node<T> (l, r, multiply_node<T>::to_string(l.get(), r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of multiplcation.
@@ -803,9 +860,20 @@ namespace graph {
                 return this->right*this->left;
             }
 
+//  Move constant like to the left.
+            if (this->right->is_constant_like() &&
+                !this->left->is_constant_like()) {
+                return this->right*this->left;
+            }
+
 //  Move variables, sqrt of variables, and powers of variables to the right.
             if (is_variable_like(this->left) &&
                 !is_variable_like(this->right)) {
+                return this->right*this->left;
+            }
+
+            if (this->left->is_variable_like() &&
+                !this->right->is_variable_like()) {
                 return this->right*this->left;
             }
 
@@ -840,6 +908,11 @@ namespace graph {
 //  (a*v)*b -> a*(v*b)
                 if (is_variable_like(lm->get_right()) &&
                     !is_variable_like(lm->get_left())) {
+                    return lm->get_left()*(lm->get_right()*this->right);
+                }
+
+                if (lm->get_right()->is_variable_like() &&
+                    !lm->get_left()->is_variable_like()) {
                     return lm->get_left()*(lm->get_right()*this->right);
                 }
             }
@@ -1081,13 +1154,14 @@ namespace graph {
     shared_leaf<T> multiply(shared_leaf<T> l,
                             shared_leaf<T> r) {
         auto temp = std::make_shared<multiply_node<T>> (l, r)->reduce();
-        for (auto &c : multiply_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (multiply_node<T>::cache.find(h) ==
+            multiply_node<T>::cache.end()) {
+            multiply_node<T>::cache[h] = temp;
+            return temp;
         }
-        multiply_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return multiply_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -1125,10 +1199,33 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class divide_node final : public branch_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] l Left node pointer.
+///  @params[in] r Right node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *l,
+                                     leaf_node<T> *r) {
+            std::stringstream stream;
+            stream << reinterpret_cast<size_t> (l) << "/"
+                   << reinterpret_cast<size_t> (r);
+                    
+            return stream.str();
+        }
+
     public:
+//------------------------------------------------------------------------------
+///  @brief Construct an addition node.
+///
+///  @params[in] n Numerator branch.
+///  @params[in] d Denominator branch.
+//------------------------------------------------------------------------------
         divide_node(shared_leaf<T> n,
                     shared_leaf<T> d) :
-        branch_node<T> (n, d) {}
+        branch_node<T> (n, d, divide_node<T>::to_string(n.get(), d.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of division.
@@ -1248,8 +1345,17 @@ namespace graph {
                 return lm->get_left()*(lm->get_right()/this->right);
             }
 
+            if (lm.get() && lm->get_right()->is_variable_like() &&
+                !lm->get_left()->is_variable_like()) {
+                return lm->get_left()*(lm->get_right()/this->right);
+            }
+
 //  (c*v1)/v2 -> c*(v1/v2)
             if (lm.get() && constant_cast(lm->get_left()).get()) {
+                return lm->get_left()*(lm->get_right()/this->right);
+            }
+
+            if (lm.get() && lm->get_left()->is_constant_like()) {
                 return lm->get_left()*(lm->get_right()/this->right);
             }
 
@@ -1392,13 +1498,14 @@ namespace graph {
     shared_leaf<T> divide(shared_leaf<T> l,
                           shared_leaf<T> r) {
         auto temp = std::make_shared<divide_node<T>> (l, r)->reduce();
-        for (auto &c : divide_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (divide_node<T>::cache.find(h) ==
+            divide_node<T>::cache.end()) {
+            divide_node<T>::cache[h] = temp;
+            return temp;
         }
-        divide_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return divide_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -1438,18 +1545,41 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class fma_node final : public triple_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] l Left node pointer.
+///  @params[in] m Middle node pointer.
+///  @params[in] r Right node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *l,
+                                     leaf_node<T> *m,
+                                     leaf_node<T> *r) {
+            std::stringstream stream;
+            stream << "fma("
+                   << reinterpret_cast<size_t> (l) << ","
+                   << reinterpret_cast<size_t> (m) << ","
+                   << reinterpret_cast<size_t> (r) << ")";
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a fused multiply add node.
 ///
 ///  @params[in] l Left branch.
-///  @params[in] m Left branch.
+///  @params[in] m Middle branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
         fma_node(shared_leaf<T> l,
                  shared_leaf<T> m,
                  shared_leaf<T> r) :
-        triple_node<T> (l, m, r) {}
+        triple_node<T> (l, m, r, fma_node<T>::to_string(l.get(),
+                                                        m.get(),
+                                                        r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of fused multiply add.
@@ -1676,13 +1806,14 @@ namespace graph {
                        shared_leaf<T> m,
                        shared_leaf<T> r) {
         auto temp = std::make_shared<fma_node<T>> (l, m, r)->reduce();
-        for (auto &c : fma_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (fma_node<T>::cache.find(h) ==
+            fma_node<T>::cache.end()) {
+            fma_node<T>::cache[h] = temp;
+            return temp;
         }
-        fma_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return fma_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared add nodes.

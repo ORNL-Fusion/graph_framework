@@ -48,6 +48,25 @@ namespace graph {
     template<typename T>
     class piecewise_1D_node final : public straight_node<T> {
     private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] d Backend buffer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(const std::vector<T> &d) {
+            std::stringstream stream;
+            stream << std::setprecision(jit::max_digits10<T> ());
+
+            stream << "{" << d[0];
+            for (size_t i = 1, ie = d.size(); i < ie; i++) {
+                stream << "," << d[i];
+            }
+            stream << "}";
+                    
+            return stream.str();
+        }
+
 ///  Storage buffers for the data.
         backend::buffer<T> data;
 
@@ -60,17 +79,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         piecewise_1D_node(const std::vector<T> d,
                           shared_leaf<T> x) :
-        straight_node<T> (x->reduce()), data(d) {}
-
-//------------------------------------------------------------------------------
-///  @brief Construct 1D a piece wise constant.
-///
-///  @params[in] d Back end buffer to initalize with.
-///  @params[in] x Argument.
-//------------------------------------------------------------------------------
-        piecewise_1D_node(const backend::buffer<T> d,
-                          shared_leaf<T> x) :
-        straight_node<T> (x->reduce()), data(d) {}
+        straight_node<T> (x, piecewise_1D_node<T>::to_string(d)), data(d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of the piecewise constant.
@@ -212,6 +221,24 @@ namespace graph {
             std::cout << jit::to_string('r', this) << "_{i}";
         }
 
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return false;
+        }
+
 ///  Cache for constructed nodes.
         inline thread_local static node_cache<T> cache;
     };
@@ -226,32 +253,14 @@ namespace graph {
     template<typename T> shared_leaf<T> piecewise_1D(const std::vector<T> d,
                                                      shared_leaf<T> x) {
         auto temp = std::make_shared<piecewise_1D_node<T>> (d, x)->reduce();
-        for (auto &c : piecewise_1D_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (piecewise_1D_node<T>::cache.find(h) ==
+            piecewise_1D_node<T>::cache.end()) {
+            piecewise_1D_node<T>::cache[h] = temp;
+            return temp;
         }
-        piecewise_1D_node<T>::cache.push_back(temp);
-        return temp;
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Define piecewise\_1D convience function.
-///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] x Argument.
-///  @returns A reduced sqrt node.
-//------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_1D(const backend::buffer<T> d,
-                                                     shared_leaf<T> x) {
-        auto temp = std::make_shared<piecewise_1D_node<T>> (d, x)->reduce();
-        for (auto &c : piecewise_1D_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
-        }
-        piecewise_1D_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return piecewise_1D_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared piecewise 1D nodes.
@@ -313,6 +322,25 @@ namespace graph {
     template<typename T>
     class piecewise_2D_node final : public branch_node<T> {
     private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] d Backend buffer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(const std::vector<T> &d) {
+            std::stringstream stream;
+            stream << std::setprecision(jit::max_digits10<T> ());
+
+            stream << "{" << d[0];
+            for (size_t i = 1, ie = d.size(); i < ie; i++) {
+                stream << "," << d[i];
+            }
+            stream << "}";
+
+            return stream.str();
+        }
+
 ///  Storage buffers for the data.
         backend::buffer<T> data;
 ///  Number of columns.
@@ -331,24 +359,8 @@ namespace graph {
                           const size_t n,
                           shared_leaf<T> x,
                           shared_leaf<T> y) :
-        branch_node<T> (x->reduce(), y->reduce()), data(d), num_columns(n) {
-            assert(data.size()/n &&
-                   "Expected the data buffer to be a multiple of the number of columns.");
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Construct 2D a piece wise constant.
-///
-///  @params[in] d Back end buffer to initalize with.
-///  @params[in] n Number of columns.
-///  @params[in] x X Argument.
-///  @params[in] y Y Argument.
-//------------------------------------------------------------------------------
-        piecewise_2D_node(const backend::buffer<T> d,
-                          const size_t n,
-                          shared_leaf<T> x,
-                          shared_leaf<T> y) :
-        branch_node<T> (x->reduce(), y->reduce()), data(d), num_columns(n) {
+        branch_node<T> (x, y, piecewise_2D_node<T>::to_string(d)),
+        data(d), num_columns(n) {
             assert(data.size()/n &&
                    "Expected the data buffer to be a multiple of the number of columns.");
         }
@@ -524,6 +536,24 @@ namespace graph {
             std::cout << jit::to_string('r', this) << "_{ij}";
         }
 
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return false;
+        }
+
 ///  Cache for constructed nodes.
         inline thread_local static node_cache<T> cache;
     };
@@ -542,34 +572,14 @@ namespace graph {
                                                      shared_leaf<T> x,
                                                      shared_leaf<T> y) {
         auto temp = std::make_shared<piecewise_2D_node<T>> (d, n, x, y)->reduce();
-        for (auto &c : piecewise_2D_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (piecewise_2D_node<T>::cache.find(h) ==
+            piecewise_2D_node<T>::cache.end()) {
+            piecewise_2D_node<T>::cache[h] = temp;
+            return temp;
         }
-        piecewise_2D_node<T>::cache.push_back(temp);
-        return temp;
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Define piecewise\_2D convience function.
-///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] x Argument.
-///  @returns A reduced sqrt node.
-//------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_2D(const backend::buffer<T> d,
-                                                     const size_t n,
-                                                     shared_leaf<T> x,
-                                                     shared_leaf<T> y) {
-        auto temp = std::make_shared<piecewise_2D_node<T>> (d, n, x, y)->reduce();
-        for (auto &c : piecewise_2D_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
-        }
-        piecewise_2D_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return piecewise_2D_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared piecewise 2D nodes.

@@ -20,6 +20,20 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class sqrt_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "sqrt(" << reinterpret_cast<size_t> (a) << ")";
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a sqrt node.
@@ -27,7 +41,7 @@ namespace graph {
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         sqrt_node(shared_leaf<T> x) :
-        straight_node<T> (x->reduce()) {}
+        straight_node<T> (x, sqrt_node<T>::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sqrt.
@@ -176,13 +190,14 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T> shared_leaf<T> sqrt(shared_leaf<T> x) {
         auto temp = std::make_shared<sqrt_node<T>> (x)->reduce();
-        for (auto &c : sqrt_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (sqrt_node<T>::cache.find(h) ==
+            sqrt_node<T>::cache.end()) {
+            sqrt_node<T>::cache[h] = temp;
+            return temp;
         }
-        sqrt_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return sqrt_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared sqrt nodes.
@@ -210,6 +225,20 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class exp_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "exp(" << reinterpret_cast<size_t> (a) << ")";
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a exp node.
@@ -217,7 +246,7 @@ namespace graph {
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         exp_node(shared_leaf<T> x) :
-        straight_node<T> (x->reduce()) {}
+        straight_node<T> (x, exp_node<T>::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of exp.
@@ -326,16 +355,16 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> exp(shared_leaf<T> x) {
+    template<typename T> shared_leaf<T> exp(shared_leaf<T> x) {
         auto temp = std::make_shared<exp_node<T>> (x)->reduce();
-        for (auto &c : exp_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (exp_node<T>::cache.find(h) ==
+            exp_node<T>::cache.end()) {
+            exp_node<T>::cache[h] = temp;
+            return temp;
         }
-        exp_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return exp_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared exp nodes.
@@ -363,6 +392,20 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class log_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "log(" << reinterpret_cast<size_t> (a) << ")";
+                            
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a log node.
@@ -370,7 +413,7 @@ namespace graph {
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         log_node(shared_leaf<T> x) :
-        straight_node<T> (x->reduce()) {}
+        straight_node<T> (x, log_node<T>::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of log.
@@ -476,16 +519,16 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced log node.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> log(shared_leaf<T> x) {
+    template<typename T> shared_leaf<T> log(shared_leaf<T> x) {
         auto temp = std::make_shared<log_node<T>> (x)->reduce();
-        for (auto &c : log_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (log_node<T>::cache.find(h) ==
+            log_node<T>::cache.end()) {
+            log_node<T>::cache[h] = temp;
+            return temp;
         }
-        log_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return log_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared log nodes.
@@ -513,6 +556,23 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class pow_node final : public branch_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] l Argument node pointer.
+///  @params[in] r Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *l,
+                                     leaf_node<T> *r) {
+            std::stringstream stream;
+            stream << "pow(" << reinterpret_cast<size_t> (l) << ","
+                             << reinterpret_cast<size_t> (r) << ")";
+                            
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct an power node.
@@ -522,7 +582,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         pow_node(shared_leaf<T> l,
                  shared_leaf<T> r) :
-        branch_node<T> (l, r) {}
+        branch_node<T> (l, r, pow_node<T>::to_string(l.get(), r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of addition.
@@ -685,6 +745,17 @@ namespace graph {
             std::cout << "}";
         }
 
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return this->left->is_variable_like() &&
+                   (this->right->is_variable_like() ||
+                    constant_cast(this->right).get());
+        }
+
 ///  Cache for constructed nodes.
         inline thread_local static node_cache<T> cache;
     };
@@ -699,13 +770,14 @@ namespace graph {
     shared_leaf<T> pow(shared_leaf<T> l,
                        shared_leaf<T> r) {
         auto temp = std::make_shared<pow_node<T>> (l, r)->reduce();
-        for (auto &c : pow_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (pow_node<T>::cache.find(h) ==
+            pow_node<T>::cache.end()) {
+            pow_node<T>::cache[h] = temp;
+            return temp;
         }
-        pow_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return pow_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared add nodes.

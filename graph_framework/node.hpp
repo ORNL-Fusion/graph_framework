@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 #include <iomanip>
+#include <functional>
 
 #include "register.hpp"
 #include "backend.hpp"
@@ -28,7 +29,18 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class leaf_node : public std::enable_shared_from_this<leaf_node<T>> {
+    protected:
+///  Hash for node.
+        const size_t hash;
+
     public:
+//------------------------------------------------------------------------------
+///  @brief Construct a basic node.
+///
+///  @params[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        leaf_node(const std::string s) : hash(std::hash<std::string>{} (s)) {}
+
 //------------------------------------------------------------------------------
 ///  @brief Destructor
 //------------------------------------------------------------------------------
@@ -125,6 +137,29 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const = 0;
 
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Get the hash for the node.
+///
+///  @returns The hash for the current node.
+//------------------------------------------------------------------------------
+        size_t get_hash() {
+            return hash;
+        }
+
 ///  Type def to retrieve the backend type.
         typedef T base;
     };
@@ -137,7 +172,7 @@ namespace graph {
     using output_nodes = std::vector<shared_leaf<T>>;
 ///  Convenience type alias for node caches.
     template<typename T>
-    using node_cache = std::vector<shared_leaf<T>>;
+    using node_cache = std::map<size_t, shared_leaf<T>>;
 
 //******************************************************************************
 //  Base straight node.
@@ -159,9 +194,11 @@ namespace graph {
 ///  @brief Construct a straight node.
 ///
 ///  @params[in] a Argument.
+///  @params[in] s Node string to hash.
 //------------------------------------------------------------------------------
-        straight_node(shared_leaf<T> a) :
-        arg(a->reduce()) {}
+        straight_node(shared_leaf<T> a,
+                      const std::string s) :
+        leaf_node<T> (s), arg(a->reduce()) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -205,6 +242,24 @@ namespace graph {
         shared_leaf<T> get_arg() {
             return this->arg;
         }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return this->arg->is_constant_like();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return this->arg->is_variable_like();
+        }
     };
 
 //******************************************************************************
@@ -231,9 +286,12 @@ namespace graph {
 ///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
+///  @params[in] s Node string to hash.
 //------------------------------------------------------------------------------
         branch_node(shared_leaf<T> l,
-                    shared_leaf<T> r) :
+                    shared_leaf<T> r,
+                    const std::string s) :
+        leaf_node<T> (s),
         left(l->reduce()),
         right(r->reduce()) {}
 
@@ -241,7 +299,8 @@ namespace graph {
 ///  @brief Compile preamble.
 ///
 ///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] registers List of defined registers.
+///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::stringstream &stream,
                                       jit::register_map &registers,
@@ -265,6 +324,26 @@ namespace graph {
 //------------------------------------------------------------------------------
         shared_leaf<T> get_right() {
             return this->right;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return this->left->is_constant_like() &&
+                   this->right->is_constant_like();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return this->left->is_variable_like() &&
+                   this->right->is_variable_like();
         }
     };
 
@@ -291,11 +370,13 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] m Middle branch.
 ///  @params[in] r Right branch.
+///  @params[in] s Node string to hash.
 //------------------------------------------------------------------------------
         triple_node(shared_leaf<T> l,
                     shared_leaf<T> m,
-                    shared_leaf<T> r) :
-        branch_node<T> (l, r),
+                    shared_leaf<T> r,
+                    const std::string s) :
+        branch_node<T> (l, r, s),
         middle(m->reduce()) {}
 
 //------------------------------------------------------------------------------
@@ -321,6 +402,28 @@ namespace graph {
         shared_leaf<T> get_middle() {
             return this->middle;
         }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return this->left->is_constant_like()   &&
+                   this->middle->is_constant_like() &&
+                   this->right->is_constant_like();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return this->left->is_variable_like()   &&
+                   this->middle->is_variable_like() &&
+                   this->right->is_variable_like();
+        }
     };
 
 //******************************************************************************
@@ -331,6 +434,27 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class constant_node final : public leaf_node<T> {
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] d Scalar data to initalize.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(const T d) {
+            std::stringstream stream;
+            stream << std::setprecision(jit::max_digits10<T> ());
+
+            if constexpr (jit::is_complex<T> ()) {
+                jit::add_type<T> (stream);
+                stream << " (" << std::real(d) << ","
+                << std::imag(d) << ")";
+            } else {
+                stream << d;
+            }
+            
+            return stream.str();
+        }
+        
     private:
 ///  Storage buffer for the data.
         const backend::buffer<T> data;
@@ -342,7 +466,7 @@ namespace graph {
 ///  @params[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
         constant_node(const T d) :
-        data(1, d) {}
+        leaf_node<T> (constant_node<T>::to_string(d)), data(1, d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
@@ -350,7 +474,7 @@ namespace graph {
 ///  @params[in] d Array buffer.
 //------------------------------------------------------------------------------
         constant_node(const backend::buffer<T> &d) :
-        data(d) {
+        leaf_node<T> (constant_node::to_string(d.at(0))), data(d) {
             assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
 
@@ -382,13 +506,14 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) {
             auto zero = std::make_shared<constant_node<T>> (static_cast<T> (0.0));
-            for (auto &c : constant_node<T>::cache) {
-                if (zero->is_match(c)) {
-                    return c;
-                }
+            const size_t h = zero->get_hash();
+            if (constant_node<T>::cache.find(h) ==
+                constant_node<T>::cache.end()) {
+                constant_node<T>::cache[h] = zero;
+                return zero;
             }
-            constant_node<T>::cache.push_back(zero);
-            return zero;
+            
+            return constant_node<T>::cache[h];
         }
 
 //------------------------------------------------------------------------------
@@ -403,7 +528,7 @@ namespace graph {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                const T temp = this->evaluate()[0];
+                const T temp = this->evaluate().at(0);
 
                 stream << " " << registers[this] << " = ";
                 if constexpr (jit::is_complex<T> ()) {
@@ -452,6 +577,24 @@ namespace graph {
             std::cout << data.at(0);
         }
 
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return false;
+        }
+
 ///  Cache for constructed nodes.
         inline thread_local static node_cache<T> cache;
     };
@@ -465,13 +608,14 @@ namespace graph {
     template<typename T>
     shared_leaf<T> constant(const T d) {
         auto temp = std::make_shared<constant_node<T>> (d)->reduce();
-        for (auto &c : constant_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (constant_node<T>::cache.find(h) ==
+            constant_node<T>::cache.end()) {
+            constant_node<T>::cache[h] = temp;
+            return temp;
         }
-        constant_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return constant_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -483,13 +627,14 @@ namespace graph {
     template<typename T>
     shared_leaf<T> constant(const backend::buffer<T> &d) {
         auto temp = std::make_shared<constant_node<T>> (d)->reduce();
-        for (auto &c : constant_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
+        const size_t h = temp->get_hash();
+        if (constant_node<T>::cache.find(h) ==
+            constant_node<T>::cache.end()) {
+            constant_node<T>::cache[h] = temp;
+            return temp;
         }
-        constant_node<T>::cache.push_back(temp);
-        return temp;
+        
+        return constant_node<T>::cache[h];
     }
 
 //  Define some common constants.
@@ -562,6 +707,19 @@ namespace graph {
 ///  Latex Symbol for the variable when pretty printing.
         const std::string symbol;
 
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] p Pointer to the node.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(variable_node<T> *p) {
+            std::stringstream stream;
+            stream << reinterpret_cast<size_t> (p);
+
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node with a size.
@@ -571,6 +729,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s,
                       const std::string &symbol) :
+        leaf_node<T> (variable_node<T>::to_string(this)),
         buffer(s), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -582,24 +741,29 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s, const T d,
                       const std::string &symbol) :
+        leaf_node<T> (variable_node<T>::to_string(this)),
         buffer(s, d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
 ///
-///  @params[in] d Array buffer.
+///  @params[in] d      Array buffer.
+///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
         variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
+        leaf_node<T> (variable_node<T>::to_string(this)),
         buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from backend buffer.
 ///
-///  @params[in] d Backend buffer.
+///  @params[in] d      Backend buffer.
+///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
         variable_node(const backend::buffer<T> &d,
                       const std::string &symbol) :
+        leaf_node<T> (variable_node<T>::to_string(this)),
         buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -719,6 +883,24 @@ namespace graph {
         T *data() {
             return buffer.data();
         }
+    
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return true;
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -767,7 +949,7 @@ namespace graph {
     template<typename T>
     shared_leaf<T> variable(const backend::buffer<T> &d,
                             const std::string &symbol) {
-        return (std::make_shared<variable_node<T>> (d, symbol))->reduce();
+        return std::make_shared<variable_node<T>> (d, symbol)->reduce();
     }
 
 ///  Convenience type alias for shared variable nodes.
@@ -804,6 +986,20 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     class pseudo_variable_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] p Pointer to the node argument.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *p) {
+            std::stringstream stream;
+            stream << reinterpret_cast<size_t> (p);
+            
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a pseudo variable node.
@@ -811,7 +1007,7 @@ namespace graph {
 ///  @params[in] a Argument.
 //------------------------------------------------------------------------------
         pseudo_variable_node(shared_leaf<T> a) :
-        straight_node<T> (a) {}
+        straight_node<T> (a, pseudo_variable_node<T>::to_string(a.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Reduction method.
@@ -851,8 +1047,23 @@ namespace graph {
             this->arg->to_latex();
         }
 
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return true;
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -863,14 +1074,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> pseudo_variable(shared_leaf<T> x) {
-        auto temp = std::make_shared<pseudo_variable_node<T>> (x)->reduce();
-        for (auto &c : pseudo_variable_node<T>::cache) {
-            if (temp->is_match(c)) {
-                return c;
-            }
-        }
-        pseudo_variable_node<T>::cache.push_back(temp);
-        return temp;
+        return std::make_shared<pseudo_variable_node<T>> (x)->reduce();
     }
 
 ///  Convenience type alias for shared pseudo variable nodes.
