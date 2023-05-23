@@ -487,7 +487,7 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
-            std::cout << "\\atan\\left(";
+            std::cout << "atan\\left(";
             this->left->to_latex();
             std::cout << ",";
             this->right->to_latex();

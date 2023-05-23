@@ -11,6 +11,7 @@ target_compile_definitions (rays
                             $<$<CONFIG:Release>:NDEBUG>
                             $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT}">
                             $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER}">
+                            NC_FILE="/Users/m4c/Projects/graph_framework/graph_tests/efit.nc"
 )
 target_include_directories (rays
                             INTERFACE

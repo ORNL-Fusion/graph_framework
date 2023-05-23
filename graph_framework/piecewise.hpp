@@ -123,7 +123,8 @@ namespace graph {
 ///  @brief Compile preamble.
 ///
 ///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] registers List of defined registers.
+///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::stringstream &stream,
                                       jit::register_map &registers,
@@ -170,7 +171,8 @@ namespace graph {
 ///    d'_i = d_i                                                              (5)
 ///
 ///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.///  @returns The current node.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
                                        jit::register_map &registers) {
@@ -218,7 +220,7 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
-            std::cout << jit::to_string('r', this) << "_{i}";
+            std::cout << "r\\_" << reinterpret_cast<size_t> (this) << "_{i}";
         }
 
 //------------------------------------------------------------------------------
@@ -416,7 +418,8 @@ namespace graph {
 ///  @brief Compile preamble.
 ///
 ///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] registers List of defined registers.
+///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::stringstream &stream,
                                       jit::register_map &registers,
@@ -475,7 +478,8 @@ namespace graph {
 ///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)       (18)
 ///
 ///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.///  @returns The current node.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
                                        jit::register_map &registers) {
@@ -533,7 +537,7 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
-            std::cout << jit::to_string('r', this) << "_{ij}";
+            std::cout  << "r\\_" << reinterpret_cast<size_t> (this) << "_{ij}";
         }
 
 //------------------------------------------------------------------------------

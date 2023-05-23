@@ -42,7 +42,7 @@ int main(int argc, const char * argv[]) {
 
     const timeing::measure_diagnostic total("Total Time");
 
-    const size_t num_times = 10000;
+    const size_t num_times = 50000;
     const size_t num_rays = 1000000;
 
     std::vector<std::thread> threads(0);
@@ -77,18 +77,18 @@ int main(int argc, const char * argv[]) {
 //  Inital conditions.
             if constexpr (jit::is_complex<base> ()) {
                 if constexpr (jit::is_float<base> ()) {
-                    std::normal_distribution<float> norm_dist(static_cast<float> (600.0), static_cast<float> (10.0));
+                    std::normal_distribution<float> norm_dist(static_cast<float> (590.0), static_cast<float> (10.0));
                     for (size_t j = 0; j < local_num_rays; j++) {
                         omega->set(j, static_cast<base> (norm_dist(engine)));
                     }
                 } else {
-                    std::normal_distribution<double> norm_dist(static_cast<double> (600.0), static_cast<double> (10.0));
+                    std::normal_distribution<double> norm_dist(static_cast<double> (590.0), static_cast<double> (10.0));
                     for (size_t j = 0; j < local_num_rays; j++) {
                         omega->set(j, static_cast<base> (norm_dist(engine)));
                     }
                 }
             } else {
-                std::normal_distribution<base> norm_dist(static_cast<base> (600.0), static_cast<base> (10.0));
+                std::normal_distribution<base> norm_dist(static_cast<base> (590.0), static_cast<base> (10.0));
                 for (size_t j = 0; j < local_num_rays; j++) {
                     omega->set(j, static_cast<base> (norm_dist(engine)));
                 }
@@ -104,12 +104,12 @@ int main(int argc, const char * argv[]) {
             kz->set(static_cast<base> (0.0));
 
             
-            auto eq = equilibrium::make_efit<base> ("/Users/m4c/efit.nc", x, y, z, sync);
+            auto eq = equilibrium::make_efit<base> (NC_FILE, x, y, z, sync);
             //auto eq = equilibrium::make_slab_density<base> ();
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
             //const base endtime = static_cast<base> (60.0);
-            const base endtime = static_cast<base> (4.0);
+            const base endtime = static_cast<base> (3.0);
             const base dt = endtime/static_cast<base> (num_times);
 
             //solver::split_simplextic<dispersion::bohm_gross<base>>
@@ -121,7 +121,7 @@ int main(int argc, const char * argv[]) {
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
             solve.init(kx);
             solve.compile();
-            if (thread_number == 0) {
+            if (thread_number == 0 && false) {
                 solve.print_dispersion();
                 std::cout << std::endl;
                 solve.print_dkxdt();

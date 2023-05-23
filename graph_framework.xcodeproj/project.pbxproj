@@ -1105,7 +1105,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
-				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				OTHER_CPLUSPLUSFLAGS = "-fsanitize=float-divide-by-zero";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1120,7 +1123,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
-				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = "-lnetcdf";
@@ -1135,6 +1141,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -1149,6 +1156,12 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					USE_METAL,
+					"CXX=\\\"c++\\\"",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

@@ -892,11 +892,10 @@ namespace equilibrium {
                            graph::shared_leaf<T> z) {
             auto r = graph::sqrt(x*x + y*y);
             auto phi = graph::atan(x, y);
-            auto twopi = graph::constant(static_cast<T> (2*M_PI));
-            auto aphi = psi/twopi;
+            auto none = graph::none<T> ();
             
-            auto br = graph::none<T> ()*aphi->df(z);
-            auto bz = (r*aphi)->df(r)/r;
+            auto br = psi->df(z)/r;
+            auto bz = none*psi->df(r)/r;
             
             auto cos = graph::cos(phi);
             auto sin = graph::sin(phi);

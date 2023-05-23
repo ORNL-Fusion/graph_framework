@@ -383,7 +383,8 @@ namespace graph {
 ///  @brief Compile preamble.
 ///
 ///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] registers List of defined registers.
+///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::stringstream &stream,
                                       jit::register_map &registers,
@@ -520,7 +521,8 @@ namespace graph {
 ///  @brief Compile the node.
 ///
 ///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.///  @returns The current node.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
                                        jit::register_map &registers) {
@@ -800,7 +802,8 @@ namespace graph {
 ///  @brief Compile the node.
 ///
 ///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.///  @returns The current node.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::stringstream &stream,
                                        jit::register_map &registers) {

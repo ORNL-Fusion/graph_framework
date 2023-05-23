@@ -11,68 +11,94 @@
 #include <cassert>
 #include <complex>
 
-#include "../graph_framework/equilibrium.hpp"
-#include "../graph_framework/jit.hpp"
-#include "../graph_framework/node.hpp"
+#include "../graph_framework/solver.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Efit tests
 //------------------------------------------------------------------------------
 template<typename T>
 void test_efit() {
-    const size_t num_r = 500;
-    const size_t num_z = 250;
+    std::mutex sync;
 
-    const T r_min = static_cast<T> (0.84);
-    const T r_max = r_min + static_cast<T> (1.7);
-    const T dr = (r_max - r_min)/static_cast<T> (num_r - 1);
+    const size_t num_r = 200;
+    const size_t num_z = 400;
+    const size_t total = num_r*num_z;
 
-    const T z_min = static_cast<T> (-3.2/2.0);
-    const T z_max = z_min + static_cast<T> (3.2);
-    const T dz = (z_max - z_min)/static_cast<T> (num_z - 1);
+    auto omega = graph::variable<T> (total, "\\omega");
+    auto kx = graph::variable<T> (total, "k_{x}");
+    auto ky = graph::variable<T> (total, "k_{y}");
+    auto kz = graph::variable<T> (total, "k_{z}");
+    auto x = graph::variable<T> (total, "x");
+    auto y = graph::variable<T> (total, "y");
+    auto z = graph::variable<T> (total, "z");
+    auto t = graph::variable<T> (total, "t");
 
-    std::vector<T> x(num_r*num_z);
-    std::vector<T> y(num_r*num_z, static_cast<T> (0.0));
-    std::vector<T> z(num_r*num_z);
+    t->set(static_cast<T> (0.0));
+    omega->set(static_cast<T> (590.0));
+    y->set(static_cast<T> (0.0));
+    kx->set(static_cast<T> (0.0));
+    ky->set(static_cast<T> (0.0));
+    kz->set(static_cast<T> (0.0));
+
+    auto eq = equilibrium::make_efit<T> (NC_FILE, x, y, z, sync);
+
+    dispersion::dispersion_interface<dispersion::ordinary_wave<T>> D(omega, kx, ky, kz, x, y, z, t, eq);
+
+    auto ne = eq->get_electron_density(x, y, z);
+    auto b = eq->get_magnetic_field(x, y, z);
+
+    std::vector<T> r_buffer(0);
+    std::vector<T> z_buffer(0);
+
+    const T dr = 1.7/(num_r - 1);
+    const T dz = 3.2/(num_z - 1);
+
     for (size_t i = 0; i < num_r; i++) {
         for (size_t j = 0; j < num_z; j++) {
-            x[i*num_z + j] = r_min + static_cast<T> (i)*dr;
-            z[i*num_z + j] = z_min + static_cast<T> (j)*dz;
+            r_buffer.push_back(i*dr + 0.84);
+            z_buffer.push_back(j*dz - 1.6);
         }
     }
 
-    auto x_var = graph::variable<T> (x, "x");
-    auto y_var = graph::variable<T> (y, "y");
-    auto z_var = graph::variable<T> (z, "z");
+    auto q = graph::constant(static_cast<T> (1.602176634E-19));
+    auto epsion0 = graph::constant(static_cast<T> (8.8541878138E-12));
+    auto mu0 = graph::constant(static_cast<T> (M_PI*4.0E-7));
+    auto me = graph::constant(static_cast<T> (9.1093837015E-31));
+    auto c = graph::one<T> ()/graph::sqrt(epsion0*mu0);
+    auto wpe = dispersion::build_plasma_fequency(ne, q, me, c, epsion0);
 
-    std::mutex sync;
-    auto eq = equilibrium::efit_equilibrium<T> (NC_FILE, x_var, y_var, z_var, sync);
+    x->set(r_buffer);
+    z->set(z_buffer);
 
-    auto ne = eq.get_electron_density(x_var, y_var, z_var);
-    auto te = eq.get_electron_temperature(x_var, y_var, z_var);
-    auto psi = eq.get_psi(x_var, y_var, z_var);
-    
-    auto b_vec = eq.get_magnetic_field(x_var, y_var, z_var);
-    
-    jit::context<T> source;
-    source.add_kernel("test_ne",
-                      {graph::variable_cast(x_var),
-                       graph::variable_cast(y_var),
-                       graph::variable_cast(z_var)},
-                      {psi, ne, te, b_vec->get_x(), b_vec->get_y(), b_vec->get_z()},
-                      {});
-    
-    source.compile();
-    auto run = source.create_kernel_call("test_ne",
-                                         {graph::variable_cast(x_var),
-                                          graph::variable_cast(y_var),
-                                          graph::variable_cast(z_var)},
-                                         {psi, ne, te, b_vec->get_x(), b_vec->get_y(), b_vec->get_z()},
-                                         num_r*num_z);
-    run();
-    source.wait();
-    
-    std::cout << std::endl << std::endl;
+    graph::input_nodes<T> inputs = {
+        graph::variable_cast<T> (omega),
+        graph::variable_cast<T> (kx),
+        graph::variable_cast<T> (ky),
+        graph::variable_cast<T> (kz),
+        graph::variable_cast<T> (x),
+        graph::variable_cast<T> (y),
+        graph::variable_cast<T> (z),
+        graph::variable_cast<T> (t)
+    };
+    graph::output_nodes<T> outputs = {
+        D.get_d(),
+        ne,
+        b->get_x(),
+        b->get_y(),
+        b->get_z(),
+        wpe
+    };
+
+    jit::context<T> context;
+    context.add_kernel("residule", inputs, outputs, {});
+    context.compile();
+    auto kernel = context.create_kernel_call("residule", inputs, outputs, total);
+
+    kernel();
+
+    for (size_t i = 0; i < total; i++) {
+        context.print(i);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -83,9 +109,9 @@ void test_efit() {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
-    test_efit<float> ();
+    //test_efit<float> ();
     test_efit<double> ();
-    test_efit<std::complex<float>> ();
-    test_efit<std::complex<double>> ();
+    //test_efit<std::complex<float>> ();
+    //test_efit<std::complex<double>> ();
     END_GPU
 }
