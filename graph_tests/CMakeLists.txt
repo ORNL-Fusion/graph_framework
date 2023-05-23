@@ -10,7 +10,3 @@ add_test_target (jit_test)
 add_test_target (trigonometry_test)
 add_test_target (piecewise_test)
 add_test_target (efit_test)
-
-target_compile_definitions (efit_test
-                            PUBLIC
-                            NC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/efit.nc")
