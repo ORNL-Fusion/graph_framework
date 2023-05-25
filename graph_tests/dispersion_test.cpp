@@ -24,7 +24,7 @@ template<typename DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,
                 const typename DISPERSION::base omega,
                 const typename DISPERSION::base k_guess,
-                equilibrium::unique_equilibrium<typename DISPERSION::base> &eq) {
+                equilibrium::shared<typename DISPERSION::base> &eq) {
     auto w = graph::variable<typename DISPERSION::base> (1, omega, "\\omega");
     auto kx = graph::variable<typename DISPERSION::base> (1, 0.25, "k_{x}");
     auto ky = graph::variable<typename DISPERSION::base> (1, 0.25, "k_{y}");

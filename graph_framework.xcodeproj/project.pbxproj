@@ -14,8 +14,6 @@
 		C73BBE8229F820810027BB7F /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C79141B622DAAD0C00E0BA0D /* xrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C79141B522DAAD0C00E0BA0D /* xrays.cpp */; };
 		C7D371132A0595A40074676E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
-		C7D371202A05B74E0074676E /* efit_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7D3711F2A05B74E0074676E /* efit_test.cpp */; };
-		C7D371212A05D8450074676E /* efit_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7D3711F2A05B74E0074676E /* efit_test.cpp */; };
 		C7D371222A05D84F0074676E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C7E5644528A2A1AA000F31A2 /* backend_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E7328074F540033B488 /* backend_test.cpp */; };
 		C7E5645128A2A1DD000F31A2 /* dispersion_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E6B28073BCA0033B488 /* dispersion_test.cpp */; };
@@ -156,7 +154,6 @@
 		C71342652947D57900672AD4 /* metal_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = metal_context.hpp; sourceTree = "<group>"; };
 		C71342682947F36100672AD4 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		C717CB8D2A02E361008FBDD8 /* FindNetCDF.cmake */ = {isa = PBXFileReference; lastKnownFileType = text; path = FindNetCDF.cmake; sourceTree = "<group>"; };
-		C717CB8E2A02EB5C008FBDD8 /* cublic_splines.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cublic_splines.hpp; sourceTree = "<group>"; };
 		C71C1FF527F5379D006997C2 /* dispersion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dispersion.hpp; sourceTree = "<group>"; };
 		C71C1FF627F5F5A8006997C2 /* solver.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = solver.hpp; sourceTree = "<group>"; };
 		C71C1FF727F61DFA006997C2 /* math.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = math.hpp; sourceTree = "<group>"; };
@@ -190,7 +187,6 @@
 		C7CEA0042948D02A00F61D09 /* timing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = timing.hpp; sourceTree = "<group>"; };
 		C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cuda_context.hpp; sourceTree = "<group>"; };
 		C7D371182A05B7230074676E /* efit_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = efit_test; sourceTree = BUILT_PRODUCTS_DIR; };
-		C7D3711F2A05B74E0074676E /* efit_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = efit_test.cpp; sourceTree = "<group>"; };
 		C7E5643E28A2A16F000F31A2 /* backend_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = backend_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E5644A28A2A1C5000F31A2 /* dispersion_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dispersion_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E5645628A2A204000F31A2 /* solver_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = solver_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -200,7 +196,6 @@
 		C7E5648628A2A324000F31A2 /* vector_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = vector_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E5649228A2A34A000F31A2 /* physics_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = physics_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E7D02F283565A200E09896 /* vector_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = vector_test.cpp; sourceTree = "<group>"; };
-		C7E8AA0829FDF5CC00302595 /* coordinates.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = coordinates.hpp; sourceTree = "<group>"; };
 		C7FA0DFD29590B7400A31E4D /* jit_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = jit_test.cpp; sourceTree = "<group>"; };
 		C7FA0E0329590EF300A31E4D /* jit_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = jit_test; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -384,8 +379,6 @@
 				C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */,
 				C7CEA0042948D02A00F61D09 /* timing.hpp */,
 				C73BBE9629F8669F0027BB7F /* newton.hpp */,
-				C7E8AA0829FDF5CC00302595 /* coordinates.hpp */,
-				C717CB8E2A02EB5C008FBDD8 /* cublic_splines.hpp */,
 			);
 			path = graph_framework;
 			sourceTree = "<group>";
@@ -414,7 +407,6 @@
 				C7FA0DFD29590B7400A31E4D /* jit_test.cpp */,
 				C73BBE6929F7117E0027BB7F /* trigonometry_test.cpp */,
 				C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */,
-				C7D3711F2A05B74E0074676E /* efit_test.cpp */,
 			);
 			path = graph_tests;
 			sourceTree = SOURCE_ROOT;
@@ -777,7 +769,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				C73BBE6A29F7117E0027BB7F /* trigonometry_test.cpp in Sources */,
-				C7D371202A05B74E0074676E /* efit_test.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -793,7 +784,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C7D371212A05D8450074676E /* efit_test.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1342,6 +1332,13 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					USE_METAL,
+					"CXX=\\\"c++\\\"",
+					"DEBUG=1",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1354,6 +1351,12 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					USE_METAL,
+					"CXX=\\\"c++\\\"",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

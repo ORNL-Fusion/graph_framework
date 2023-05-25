@@ -569,6 +569,56 @@ void test_reflection(const T tolarance,
 }
 
 //------------------------------------------------------------------------------
+///  @brief Efit equilibrium test.
+//------------------------------------------------------------------------------
+template<typename T> void test_efit() {
+    auto omega = graph::variable<T> (1, "\\omega");
+    auto kx = graph::variable<T> (1, "k_{x}");
+    auto ky = graph::variable<T> (1, "k_{y}");
+    auto kz = graph::variable<T> (1, "k_{z}");
+    auto x = graph::variable<T> (1, "x");
+    auto y = graph::variable<T> (1, "y");
+    auto z = graph::variable<T> (1, "z");
+    auto t = graph::variable<T> (1, "t");
+
+    const T q = 1.602176634E-19;
+    const T me = 9.1093837015E-31;
+    const T mu0 = M_PI*4.0E-7;
+    const T epsilon0 = 8.8541878138E-12;
+    const T c = 1.0/sqrt(mu0*epsilon0);
+    const T ne0 = 1.0E19;
+    const T omega2 = (ne0*q*q)/(epsilon0*me*c*c);
+    const T omega0 = 590.0;
+
+    const T x_cut = (omega0*omega0 - 1.0 - omega2)/(omega2*0.1);
+
+//  Omega must be greater than plasma frequency for the wave to propagate.
+    omega->set(static_cast<T> (omega0));
+    kx->set(static_cast<T> (-600.0));
+    ky->set(static_cast<T> (0.0));
+    kz->set(static_cast<T> (0.0));
+    x->set(static_cast<T> (2.5));
+    y->set(static_cast<T> (0.0));
+    z->set(static_cast<T> (0.0));
+    t->set(static_cast<T> (0.0));
+
+    std::mutex sync;
+    
+    auto eq = equilibrium::make_efit<T> (NC_FILE, sync);
+    solver::rk4<dispersion::ordinary_wave<T>>
+        solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
+    solve.init(kx);
+    solve.compile();
+
+    for (size_t i = 0; i < 10000; i++) {
+        solve.step();
+    }
+
+    solve.sync_host();
+    assert(std::abs(kx->evaluate().at(0)) > 0 && "Expected wave to reflect.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
@@ -583,6 +633,7 @@ template<typename T> void run_tests(const T tolarance) {
     test_o_mode_wave<T> ();
     test_reflection<T> (tolarance, 0.7, 0.1, 22.0);
     test_cold_plasma_cutoffs<T> (tolarance);
+    test_efit<T> ();
 }
 
 //------------------------------------------------------------------------------

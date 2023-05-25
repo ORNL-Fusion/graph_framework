@@ -35,14 +35,16 @@ int main(int argc, const char * argv[]) {
 
     std::mutex sync;
 
-    //typedef float base;
-    typedef double base;
+    typedef float base;
+    //typedef double base;
     //typedef std::complex<float> base;
     //typedef std::complex<double> base;
 
     const timeing::measure_diagnostic total("Total Time");
 
-    const size_t num_times = 50000;
+    const size_t num_times = 10000;
+    const size_t sub_steps = 1;
+    const size_t num_steps = num_times/sub_steps;
     const size_t num_rays = 1000000;
 
     std::vector<std::thread> threads(0);
@@ -103,22 +105,25 @@ int main(int argc, const char * argv[]) {
             ky->set(static_cast<base> (0.0));
             kz->set(static_cast<base> (0.0));
 
-            
-            auto eq = equilibrium::make_efit<base> (NC_FILE, x, y, z, sync);
+
+            auto eq = equilibrium::make_efit<base> (NC_FILE, sync);
             //auto eq = equilibrium::make_slab_density<base> ();
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
-            //const base endtime = static_cast<base> (60.0);
-            const base endtime = static_cast<base> (3.0);
+            //const base endtime = static_cast<base> (4.0);
+            const base endtime = static_cast<base> (1.0);
             const base dt = endtime/static_cast<base> (num_times);
 
+            //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");
+
             //solver::split_simplextic<dispersion::bohm_gross<base>>
-            //solver::rk4<dispersion::bohm_gross<base>>
+            //solver::adaptive_rk4<dispersion::bohm_gross<base>>
             //solver::rk4<dispersion::simple<base>>
-            //solver::rk4<dispersion::ordinary_wave<base>>
+            solver::rk4<dispersion::ordinary_wave<base>>
             //solver::rk4<dispersion::extra_ordinary_wave<base>>
-            solver::rk4<dispersion::cold_plasma<base>>
+            //solver::adaptive_rk4<dispersion::ordinary_wave<base>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
+                //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq);
             solve.init(kx);
             solve.compile();
             if (thread_number == 0 && false) {
@@ -143,11 +148,13 @@ int main(int argc, const char * argv[]) {
                 std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
             }
 
-            for (size_t j = 0; j < num_times; j++) {
+            for (size_t j = 0; j < num_steps; j++) {
                 if (thread_number == 0) {
                     solve.print(sample);
                 }
-                solve.step();
+                for(size_t k = 0; k < sub_steps; k++) {
+                    solve.step();
+                }
             }
 
             if (thread_number == 0) {
