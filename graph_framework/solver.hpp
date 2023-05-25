@@ -86,7 +86,7 @@ namespace solver {
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
-                         equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::base> &eq) :
+                         equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
         D(w, kx, ky, kz, x, y, z, t, eq), w(w),
         kx(kx), ky(ky), kz(kz),
         x(x), y(y), z(z), t(t) {}
@@ -122,7 +122,7 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Compile the solver function.
 //------------------------------------------------------------------------------
-        void compile() {
+        virtual void compile() {
             graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs = {
                 graph::variable_cast(this->t),
                 graph::variable_cast(this->w),
@@ -313,7 +313,7 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
             const typename DISPERSION_FUNCTION::base dt,
-            equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::base> &eq) :
+            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq) {
             auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
 
@@ -440,20 +440,44 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
             const typename DISPERSION_FUNCTION::base dt,
-            equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::base> &eq) :
+            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
+        rk4(w, kx, ky, kz, x, y, z, t,
+            graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt)), eq) {}
+        
+//------------------------------------------------------------------------------
+///  @brief Construct a new second order runge kutta solver.
+///
+///  @params[in] w  Inital omega.
+///  @params[in] kx Inital kx.
+///  @params[in] ky Inital ky.
+///  @params[in] kz Inital kz.
+///  @params[in] x  Inital x.
+///  @params[in] y  Inital y.
+///  @params[in] z  Inital z.
+///  @params[in] t  Inital t.
+///  @params[in] dt Inital dt.
+//------------------------------------------------------------------------------
+        rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base> dt,
+            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq) {
-            auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
-
-            this->kx1 = dt_const*this->D.get_dkxdt();
-            this->ky1 = dt_const*this->D.get_dkydt();
-            this->kz1 = dt_const*this->D.get_dkzdt();
-            this->x1  = dt_const*this->D.get_dxdt();
-            this->y1  = dt_const*this->D.get_dydt();
-            this->z1  = dt_const*this->D.get_dzdt();
+            this->kx1 = dt*this->D.get_dkxdt();
+            this->ky1 = dt*this->D.get_dkydt();
+            this->kz1 = dt*this->D.get_dkzdt();
+            this->x1  = dt*this->D.get_dxdt();
+            this->y1  = dt*this->D.get_dydt();
+            this->z1  = dt*this->D.get_dzdt();
 
             auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
 
-            this->t_sub = this->t + dt_const/two;
+            this->t_sub = this->t + dt/two;
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
                                                                      graph::pseudo_variable(this->kx + kx1/two),
@@ -465,12 +489,12 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t_sub),
                                                                      eq);
 
-            this->kx2 = dt_const*D2.get_dkxdt();
-            this->ky2 = dt_const*D2.get_dkydt();
-            this->kz2 = dt_const*D2.get_dkzdt();
-            this->x2  = dt_const*D2.get_dxdt();
-            this->y2  = dt_const*D2.get_dydt();
-            this->z2  = dt_const*D2.get_dzdt();
+            this->kx2 = dt*D2.get_dkxdt();
+            this->ky2 = dt*D2.get_dkydt();
+            this->kz2 = dt*D2.get_dkzdt();
+            this->x2  = dt*D2.get_dxdt();
+            this->y2  = dt*D2.get_dydt();
+            this->z2  = dt*D2.get_dzdt();
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D3(this->w,
                                                                      graph::pseudo_variable(this->kx + kx2/two),
@@ -482,14 +506,14 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t_sub),
                                                                      eq);
 
-            this->kx3 = dt_const*D3.get_dkxdt();
-            this->ky3 = dt_const*D3.get_dkydt();
-            this->kz3 = dt_const*D3.get_dkzdt();
-            this->x3  = dt_const*D3.get_dxdt();
-            this->y3  = dt_const*D3.get_dydt();
-            this->z3  = dt_const*D3.get_dzdt();
+            this->kx3 = dt*D3.get_dkxdt();
+            this->ky3 = dt*D3.get_dkydt();
+            this->kz3 = dt*D3.get_dkzdt();
+            this->x3  = dt*D3.get_dxdt();
+            this->y3  = dt*D3.get_dydt();
+            this->z3  = dt*D3.get_dzdt();
 
-            this->t_next = this->t + dt_const;
+            this->t_next = this->t + dt;
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D4(this->w,
                                                                      graph::pseudo_variable(this->kx + kx3),
@@ -501,12 +525,12 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t_next),
                                                                      eq);
 
-            this->kx4 = dt_const*D4.get_dkxdt();
-            this->ky4 = dt_const*D4.get_dkydt();
-            this->kz4 = dt_const*D4.get_dkzdt();
-            this->x4  = dt_const*D4.get_dxdt();
-            this->y4  = dt_const*D4.get_dydt();
-            this->z4  = dt_const*D4.get_dzdt();
+            this->kx4 = dt*D4.get_dkxdt();
+            this->ky4 = dt*D4.get_dkydt();
+            this->kz4 = dt*D4.get_dkzdt();
+            this->x4  = dt*D4.get_dxdt();
+            this->y4  = dt*D4.get_dydt();
+            this->z4  = dt*D4.get_dzdt();
 
             auto six = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (6.0));
 
@@ -516,6 +540,111 @@ namespace solver {
             this->x_next  = this->x  + (this->x1  + two*(this->x2  + this->x3 ) + this->x4 )/six;
             this->y_next  = this->y  + (this->y1  + two*(this->y2  + this->y3 ) + this->y4 )/six;
             this->z_next  = this->z  + (this->z1  + two*(this->z2  + this->z3 ) + this->z4 )/six;
+        }
+    };
+
+//******************************************************************************
+//  Adaptive timestep Fourth Order Runge Kutta.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Adaptive Fourth Order Runge Kutta class.
+//------------------------------------------------------------------------------
+    template<class DISPERSION_FUNCTION>
+    class adaptive_rk4 : public rk4<DISPERSION_FUNCTION> {
+    protected:
+///  Dispersion residule.
+        dispersion::dispersion_interface<DISPERSION_FUNCTION> D;
+///  Time step variable.
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dt_var;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a new second order runge kutta solver.
+///
+///  @params[in] w  Inital omega.
+///  @params[in] kx Inital kx.
+///  @params[in] ky Inital ky.
+///  @params[in] kz Inital kz.
+///  @params[in] x  Inital x.
+///  @params[in] y  Inital y.
+///  @params[in] z  Inital z.
+///  @params[in] t  Inital t.
+///  @params[in] dt Inital dt.
+//------------------------------------------------------------------------------
+        adaptive_rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> dt,
+                     equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
+        rk4<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, dt, eq),
+        D(w,
+          graph::pseudo_variable(this->kx_next),
+          graph::pseudo_variable(this->ky_next),
+          graph::pseudo_variable(this->kz_next),
+          graph::pseudo_variable(this->x_next),
+          graph::pseudo_variable(this->y_next),
+          graph::pseudo_variable(this->z_next),
+          graph::pseudo_variable(this->t_next),
+          eq),
+        dt_var(dt) {}
+
+//------------------------------------------------------------------------------
+///  @brief Compile the solver function.
+//------------------------------------------------------------------------------
+        virtual void compile() final {
+            auto var = graph::variable_cast(dt_var);
+            auto lambda = graph::variable(var->size(), static_cast<typename DISPERSION_FUNCTION::base> (1.0), "\\lambda");
+            auto loss = graph::one<typename DISPERSION_FUNCTION::base> ()/dt_var + lambda*D.get_d()*D.get_d();
+
+            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs = {
+                graph::variable_cast(this->t),
+                graph::variable_cast(this->w),
+                graph::variable_cast(this->x),
+                graph::variable_cast(this->y),
+                graph::variable_cast(this->z),
+                graph::variable_cast(this->kx),
+                graph::variable_cast(this->ky),
+                graph::variable_cast(this->kz),
+                var,
+                graph::variable_cast(lambda)
+            };
+
+            solver::newton(this->work, {var, graph::variable_cast(lambda)},
+                           inputs, loss);
+
+            inputs = {
+                graph::variable_cast(this->t),
+                graph::variable_cast(this->w),
+                graph::variable_cast(this->x),
+                graph::variable_cast(this->y),
+                graph::variable_cast(this->z),
+                graph::variable_cast(this->kx),
+                graph::variable_cast(this->ky),
+                graph::variable_cast(this->kz),
+                var
+            };
+
+            graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
+                this->residule
+            };
+
+            graph::map_nodes<typename DISPERSION_FUNCTION::base> setters = {
+                {this->kx_next, graph::variable_cast(this->kx)},
+                {this->ky_next, graph::variable_cast(this->ky)},
+                {this->kz_next, graph::variable_cast(this->kz)},
+                {this->x_next, graph::variable_cast(this->x)},
+                {this->y_next, graph::variable_cast(this->y)},
+                {this->z_next, graph::variable_cast(this->z)},
+                {this->t_next, graph::variable_cast(this->t)}
+            };
+
+            this->work.add_item(inputs, outputs, setters, "solver_kernel");
+            this->work.compile();
         }
     };
 
@@ -558,7 +687,7 @@ namespace solver {
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
                          const typename DISPERSION_FUNCTION::base dt,
-                         equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::base> &eq) :
+                         equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq) {
 
 //  Test if the function is separatable.

@@ -28,6 +28,12 @@ namespace backend {
 
     public:
 //------------------------------------------------------------------------------
+///  @brief Construct an empty buffer backend.
+//------------------------------------------------------------------------------
+        buffer() :
+        memory() {}
+
+//------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend with a size.
 ///
 ///  @params[in] s Size of he data buffer.

@@ -103,6 +103,18 @@ namespace jit {
 
             gpu_context.create_kernel_postfix(source_buffer, outputs,
                                               setters, registers);
+
+//  Delete the registers so that can be used again in other kernels.
+            std::vector<void *> removed_elements;
+            for (auto &[key, value] : registers) {
+                if (value[0] == 'r') {
+                    removed_elements.push_back(key);
+                }
+            }
+            
+            for (auto &key : removed_elements) {
+                registers.erase(key);
+            }
         }
 
 //------------------------------------------------------------------------------

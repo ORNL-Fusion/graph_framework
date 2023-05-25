@@ -198,7 +198,15 @@ namespace graph {
 //------------------------------------------------------------------------------
         straight_node(shared_leaf<T> a,
                       const std::string s) :
-        leaf_node<T> (s), arg(a->reduce()) {}
+        leaf_node<T> (s), arg(a) {}
+
+//------------------------------------------------------------------------------
+///  @brief Construct a straight node with defered argument.
+///
+///  @params[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        straight_node(const std::string s) :
+        leaf_node<T> (s) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -282,7 +290,7 @@ namespace graph {
     public:
 
 //------------------------------------------------------------------------------
-///  @brief Reduces and assigns the left and right branches.
+///  @brief Assigns the left and right branches.
 ///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
@@ -291,9 +299,15 @@ namespace graph {
         branch_node(shared_leaf<T> l,
                     shared_leaf<T> r,
                     const std::string s) :
-        leaf_node<T> (s),
-        left(l->reduce()),
-        right(r->reduce()) {}
+        leaf_node<T> (s), left(l), right(r) {}
+
+//------------------------------------------------------------------------------
+///  @brief Defers the asigment of branches.
+///
+///  @params[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        branch_node(const std::string s) :
+        leaf_node<T> (s) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.

@@ -142,7 +142,7 @@ namespace gpu {
                 exit(1);
             }
 
-            std::vector<T *> buffers;
+            std::map<std::string, T *> buffers;
 
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
@@ -151,20 +151,20 @@ namespace gpu {
                     memcpy(arg.data(), buffer.data(), buffer.size()*sizeof(T));
                     kernel_arguments[input.get()] = arg;
                 }
-                buffers.push_back(kernel_arguments[input.get()].data());
+                buffers[jit::to_string('v', input.get())] = kernel_arguments[input.get()].data();
             }
             for (auto &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
                     std::vector<T> arg(num_rays);
                     kernel_arguments[output.get()] = arg;
                 }
-                buffers.push_back(kernel_arguments[output.get()].data());
+                buffers[jit::to_string('o', output.get())] = kernel_arguments[output.get()].data();
             }
 
             std::cout << "  Function pointer: " << reinterpret_cast<size_t> (kernel) << std::endl;
 
             return [kernel, buffers] () mutable {
-                ((void (*)(std::vector<T *> &))kernel)(buffers);
+                ((void (*)(std::map<std::string, T *> &))kernel)(buffers);
             };
         }
 
@@ -241,7 +241,8 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::stringstream &source_buffer) {
-            source_buffer << "#include <vector>" << std::endl;
+            source_buffer << "#include <map>" << std::endl;
+            source_buffer << "#include <string>" << std::endl;
             if (jit::is_complex<T> ()) {
                 source_buffer << "#include <complex>" << std::endl;
             } else {
@@ -269,18 +270,19 @@ namespace gpu {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
             
-            source_buffer << "    vector<";
+            source_buffer << "    std::map<std::string, ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args) {" << std::endl;
             
             source_buffer << "    for (size_t i = 0; i < " << size << "; i++) {" << std::endl;
-            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+
+            for (auto &input : inputs) {
+                registers[input.get()] = jit::to_string('r', input.get());
                 source_buffer << "        const ";
                 jit::add_type<T> (source_buffer);
-                source_buffer << " " << registers[inputs[i].get()]
-                              << " = args[" << i << "][i]; //" << inputs[i]->get_symbol() << std::endl;
-                arg_index[inputs[i].get()] = i;
+                source_buffer << " " << registers[input.get()]
+                              << " = args[std::string(\"" << jit::to_string('v', input.get())
+                              << "\")][i]; //" << input->get_symbol() << std::endl;
             }
         }
 
@@ -298,15 +300,13 @@ namespace gpu {
                                    jit::register_map &registers) {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T> a = out->compile(source_buffer, registers);
-                source_buffer << "        args[" << arg_index[in.get()];
-                source_buffer << "][i] = " << registers[a.get()] << ";" << std::endl;
+                source_buffer << "        args[std::string(\"" << jit::to_string('v', in.get());
+                source_buffer << "\")][i] = " << registers[a.get()] << ";" << std::endl;
             }
-
-            for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                graph::shared_leaf<T> a = outputs[i]->compile(source_buffer, registers);
-                source_buffer << "        args[" << arg_index.size() + i
-                              << "][i] = " << registers[a.get()] << ";"
-                              << std::endl;
+            for (auto &out : outputs) {
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                source_buffer << "        args[std::string(\"" << jit::to_string('o', out.get());
+                source_buffer << "\")][i] = " << registers[a.get()] << ";" << std::endl;
             }
                     
             source_buffer << "    }" << std::endl;
