@@ -8,7 +8,6 @@
 #ifndef equilibrium_h
 #define equilibrium_h
 
-#include <vector>
 #include <mutex>
 
 #include <netcdf.h>

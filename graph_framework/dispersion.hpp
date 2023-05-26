@@ -8,9 +8,6 @@
 #ifndef dispersion_h
 #define dispersion_h
 
-#include <iostream>
-#include <cassert>
-
 #include "equilibrium.hpp"
 #include "newton.hpp"
 

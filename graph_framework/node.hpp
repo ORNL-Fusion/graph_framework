@@ -10,14 +10,10 @@
 
 #include <iostream>
 #include <string>
-#include <type_traits>
-#include <cassert>
 #include <memory>
-#include <vector>
 #include <iomanip>
 #include <functional>
 
-#include "register.hpp"
 #include "backend.hpp"
 
 namespace graph {

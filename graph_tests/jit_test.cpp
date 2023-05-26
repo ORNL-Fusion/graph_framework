@@ -8,12 +8,6 @@
 #undef NDEBUG
 #endif
 
-#include <cassert>
-
-#include <iomanip>
-
-#include "../graph_framework/jit.hpp"
-#include "../graph_framework/math.hpp"
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------

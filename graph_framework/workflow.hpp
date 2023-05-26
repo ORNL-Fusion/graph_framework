@@ -8,9 +8,6 @@
 #ifndef workflow_h
 #define workflow_h
 
-#include <forward_list>
-
-#include "node.hpp"
 #include "jit.hpp"
 
 namespace workflow {

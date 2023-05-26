@@ -8,11 +8,8 @@
 #undef NDEBUG
 #endif
 
-#include <cassert>
-
 #include "../graph_framework/backend.hpp"
 #include "../graph_framework/solver.hpp"
-#include "../graph_framework/timing.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Test the solver.

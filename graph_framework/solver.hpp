@@ -8,9 +8,6 @@
 #ifndef solver_h
 #define solver_h
 
-#include <list>
-#include <array>
-
 #include "dispersion.hpp"
 
 namespace solver {

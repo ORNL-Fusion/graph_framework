@@ -8,7 +8,6 @@
 #ifndef cuda_context_h
 #define cuda_context_h
 
-#include <vector>
 #include <array>
 
 #include <cuda.h>

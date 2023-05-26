@@ -8,16 +8,12 @@
 #ifndef jit_h
 #define jit_h
 
-#include <chrono>
-
 #ifdef USE_METAL
 #include "metal_context.hpp"
 #elif defined(USE_CUDA)
 #include "cuda_context.hpp"
 #endif
 #include "cpu_context.hpp"
-
-#include "timing.hpp"
 
 #ifdef USE_METAL
 #define START_GPU @autoreleasepool {

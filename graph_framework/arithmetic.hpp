@@ -9,7 +9,6 @@
 #define arithmetic_h
 
 #include "piecewise.hpp"
-#include "register.hpp"
 
 namespace graph {
 //------------------------------------------------------------------------------

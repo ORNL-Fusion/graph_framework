@@ -8,9 +8,6 @@
 #ifndef metal_context_h
 #define metal_context_h
 
-#include <vector>
-#include <map>
-
 #import <Metal/Metal.h>
 
 #include "node.hpp"

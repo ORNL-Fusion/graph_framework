@@ -8,10 +8,8 @@
 #ifndef cpu_context_h
 #define cpu_context_h
 
-#include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include <map>
 
 #include <dlfcn.h>
 

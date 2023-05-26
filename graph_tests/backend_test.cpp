@@ -8,8 +8,6 @@
 #undef NDEBUG
 #endif
 
-#include <cassert>
-
 #include "../graph_framework/backend.hpp"
 
 //------------------------------------------------------------------------------
