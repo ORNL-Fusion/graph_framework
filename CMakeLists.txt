@@ -3,6 +3,11 @@ cmake_minimum_required (VERSION 3.21)
 project (rays CXX)
 
 #-------------------------------------------------------------------------------
+#  Build Options
+#-------------------------------------------------------------------------------
+option (USE_PCH "Enable the use of precompiled headers" ON)
+    
+#-------------------------------------------------------------------------------
 #  Set the cmake module path.
 #-------------------------------------------------------------------------------
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -15,6 +20,7 @@ set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
               Release
               Sanitized
 )
+
 #-------------------------------------------------------------------------------
 #  GPU config
 #-------------------------------------------------------------------------------
@@ -146,7 +152,9 @@ macro (add_test_target target)
               COMMAND ${target}
     )
 
-    target_precompile_headers (${target} REUSE_FROM xrays)
+    if (${USE_PCH})
+        target_precompile_headers (${target} REUSE_FROM xrays)
+    endif ()
 endmacro ()
 
 add_subdirectory (graph_tests)
