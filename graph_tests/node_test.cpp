@@ -8,7 +8,9 @@
 #undef NDEBUG
 #endif
 
-#include "../graph_framework/node.hpp"
+#include "../graph_framework/piecewise.hpp"
+#include "../graph_framework/math.hpp"
+#include "../graph_framework/arithmetic.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for constant nodes.

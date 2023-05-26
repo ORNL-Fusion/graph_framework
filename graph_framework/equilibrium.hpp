@@ -16,6 +16,7 @@
 #include "trigonometry.hpp"
 #include "piecewise.hpp"
 #include "math.hpp"
+#include "arithmetic.hpp"
 
 namespace equilibrium {
 //******************************************************************************

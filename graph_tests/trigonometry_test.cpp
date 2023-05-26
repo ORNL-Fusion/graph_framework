@@ -10,6 +10,8 @@
 
 #include "../graph_framework/math.hpp"
 #include "../graph_framework/trigonometry.hpp"
+#include "../graph_framework/arithmetic.hpp"
+#include "../graph_framework/piecewise.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for cosine nodes.
