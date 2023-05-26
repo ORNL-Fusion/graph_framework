@@ -9,7 +9,7 @@
 #ifndef vector_h
 #define vector_h
 
-#include "math.hpp"
+#include "node.hpp"
 
 namespace graph {
 //******************************************************************************

@@ -14,6 +14,8 @@
 
 #include "vector.hpp"
 #include "trigonometry.hpp"
+#include "piecewise.hpp"
+#include "math.hpp"
 
 namespace equilibrium {
 //******************************************************************************

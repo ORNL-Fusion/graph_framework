@@ -8,7 +8,7 @@
 #ifndef arithmetic_h
 #define arithmetic_h
 
-#include "piecewise.hpp"
+#include "node.hpp"
 
 namespace graph {
 //------------------------------------------------------------------------------

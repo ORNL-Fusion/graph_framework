@@ -7,7 +7,7 @@
 #ifndef math_h
 #define math_h
 
-#include "arithmetic.hpp"
+#include "node.hpp"
 
 namespace graph {
 //******************************************************************************
