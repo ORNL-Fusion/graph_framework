@@ -8,11 +8,11 @@
 #ifndef cuda_context_h
 #define cuda_context_h
 
-#import <vector>
-#import <array>
+#include <vector>
+#include <array>
 
-#import <cuda.h>
-#import <nvrtc.h>
+#include <cuda.h>
+#include <nvrtc.h>
 
 #include "node.hpp"
 
@@ -263,7 +263,7 @@ namespace gpu {
             std::cout << "    Number of groups   : " << thread_groups << std::endl;
             std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
 
-            return [this, function, thread_groups, threads_per_group, buffers] mutable {
+            return [this, function, thread_groups, threads_per_group, buffers] () mutable {
                 check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
                                                  threads_per_group, 1, 1, 0, stream,
                                                  buffers.data(), NULL),
@@ -295,7 +295,7 @@ namespace gpu {
 
             std::cout << "  Kernel name              : max_reduction" << std::endl;
 
-            return [this, function, run, buffers] mutable {
+            return [this, function, run, buffers] () mutable {
                 run();
                 check_error_async(cuLaunchKernel(function, 1, 1, 1,
                                                  1024, 1, 1, 0, stream,
@@ -427,17 +427,16 @@ namespace gpu {
         void create_kernel_postfix(std::stringstream &source_buffer,
                                    graph::output_nodes<T> &outputs,
                                    graph::map_nodes<T> &setters,
-                                   jit::register_map &registers,
-                                   jit::constant_map<T, graph::shared_leaf<T>> &constants) {
+                                   jit::register_map &registers) {
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers, constants);
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('v',  in.get())
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;
             }
 
             for (auto &out : outputs) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers, constants);
+                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('o',  out.get())
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;

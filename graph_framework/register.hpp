@@ -9,6 +9,7 @@
 #ifndef register_h
 #define register_h
 
+#include <cassert>
 #include <map>
 #include <sstream>
 #include <complex>

@@ -13,7 +13,6 @@
 
 #include <netcdf.h>
 
-#include "math.hpp"
 #include "trigonometry.hpp"
 #include "vector.hpp"
 

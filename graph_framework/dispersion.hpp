@@ -11,7 +11,6 @@
 #include <iostream>
 #include <cassert>
 
-#include "vector.hpp"
 #include "equilibrium.hpp"
 #include "newton.hpp"
 
