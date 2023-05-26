@@ -8,7 +8,6 @@
 #ifndef newton_h
 #define newton_h
 
-#include "arithmetic.hpp"
 #include "workflow.hpp"
 
 namespace solver {

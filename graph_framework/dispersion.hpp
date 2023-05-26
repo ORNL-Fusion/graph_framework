@@ -8,8 +8,8 @@
 #ifndef dispersion_h
 #define dispersion_h
 
-#include "equilibrium.hpp"
 #include "newton.hpp"
+#include "equilibrium.hpp"
 
 namespace dispersion {
 //******************************************************************************

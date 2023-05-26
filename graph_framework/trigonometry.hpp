@@ -9,7 +9,7 @@
 #ifndef trigonometry_h
 #define trigonometry_h
 
-#include "arithmetic.hpp"
+#include "node.hpp"
 
 namespace graph {
 

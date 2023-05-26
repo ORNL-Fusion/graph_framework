@@ -12,8 +12,8 @@
 
 #include <netcdf.h>
 
-#include "trigonometry.hpp"
 #include "vector.hpp"
+#include "trigonometry.hpp"
 
 namespace equilibrium {
 //******************************************************************************
