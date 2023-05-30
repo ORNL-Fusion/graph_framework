@@ -287,8 +287,6 @@ namespace graph {
             return false;
         }
 
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
 ///  Cache for the backend buffers.
         inline thread_local static std::map<size_t, backend::buffer<T>> backend_cache;
     };
@@ -302,13 +300,13 @@ namespace graph {
     template<typename T> shared_leaf<T> piecewise_1D(const std::vector<T> &d) {
         auto temp = std::make_shared<piecewise_1D_node<T>> (d)->reduce();
         const size_t h = temp->get_hash();
-        if (piecewise_1D_node<T>::cache.find(h) ==
-            piecewise_1D_node<T>::cache.end()) {
-            piecewise_1D_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return piecewise_1D_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -322,13 +320,13 @@ namespace graph {
                                                      shared_leaf<T> x) {
         auto temp = std::make_shared<piecewise_1D_node<T>> (d, x)->reduce();
         const size_t h = temp->get_hash();
-        if (piecewise_1D_node<T>::cache.find(h) ==
-            piecewise_1D_node<T>::cache.end()) {
-            piecewise_1D_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return piecewise_1D_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared piecewise 1D nodes.
@@ -702,8 +700,6 @@ namespace graph {
             return false;
         }
 
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
 ///  Cache for the backend buffers.
         inline thread_local static std::map<size_t, backend::buffer<T>> backend_cache;
     };
@@ -719,13 +715,13 @@ namespace graph {
                                                      const size_t n) {
         auto temp = std::make_shared<piecewise_2D_node<T>> (d, n)->reduce();
         const size_t h = temp->get_hash();
-        if (piecewise_2D_node<T>::cache.find(h) ==
-            piecewise_2D_node<T>::cache.end()) {
-            piecewise_2D_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return piecewise_2D_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------

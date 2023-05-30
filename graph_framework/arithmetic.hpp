@@ -369,9 +369,6 @@ namespace graph {
                 std::cout << "\\right)";
             }
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -388,13 +385,13 @@ namespace graph {
                        shared_leaf<T> r) {
         auto temp = std::make_shared<add_node<T>> (l, r)->reduce();
         const size_t h = temp->get_hash();
-        if (add_node<T>::cache.find(h) ==
-            add_node<T>::cache.end()) {
-            add_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return add_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -707,9 +704,6 @@ namespace graph {
                 std::cout << "\\right)";
             }
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -723,13 +717,13 @@ namespace graph {
                             shared_leaf<T> r) {
         auto temp = std::make_shared<subtract_node<T>> (l, r)->reduce();
         const size_t h = temp->get_hash();
-        if (subtract_node<T>::cache.find(h) ==
-            subtract_node<T>::cache.end()) {
-            subtract_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return subtract_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -1138,9 +1132,6 @@ namespace graph {
                 this->right->to_latex();
             }
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -1154,13 +1145,13 @@ namespace graph {
                             shared_leaf<T> r) {
         auto temp = std::make_shared<multiply_node<T>> (l, r)->reduce();
         const size_t h = temp->get_hash();
-        if (multiply_node<T>::cache.find(h) ==
-            multiply_node<T>::cache.end()) {
-            multiply_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return multiply_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -1482,9 +1473,6 @@ namespace graph {
             this->right->to_latex();
             std::cout << "}";
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -1498,13 +1486,13 @@ namespace graph {
                           shared_leaf<T> r) {
         auto temp = std::make_shared<divide_node<T>> (l, r)->reduce();
         const size_t h = temp->get_hash();
-        if (divide_node<T>::cache.find(h) ==
-            divide_node<T>::cache.end()) {
-            divide_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return divide_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -1788,9 +1776,6 @@ namespace graph {
             this->right->to_latex();
             std::cout << "\\right)";
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -1806,13 +1791,13 @@ namespace graph {
                        shared_leaf<T> r) {
         auto temp = std::make_shared<fma_node<T>> (l, m, r)->reduce();
         const size_t h = temp->get_hash();
-        if (fma_node<T>::cache.find(h) ==
-            fma_node<T>::cache.end()) {
-            fma_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return fma_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared add nodes.

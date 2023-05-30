@@ -178,9 +178,6 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "}";
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -192,13 +189,13 @@ namespace graph {
     template<typename T> shared_leaf<T> sqrt(shared_leaf<T> x) {
         auto temp = std::make_shared<sqrt_node<T>> (x)->reduce();
         const size_t h = temp->get_hash();
-        if (sqrt_node<T>::cache.find(h) ==
-            sqrt_node<T>::cache.end()) {
-            sqrt_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return sqrt_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared sqrt nodes.
@@ -346,9 +343,6 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "\\right)}";
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -360,13 +354,13 @@ namespace graph {
     template<typename T> shared_leaf<T> exp(shared_leaf<T> x) {
         auto temp = std::make_shared<exp_node<T>> (x)->reduce();
         const size_t h = temp->get_hash();
-        if (exp_node<T>::cache.find(h) ==
-            exp_node<T>::cache.end()) {
-            exp_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return exp_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared exp nodes.
@@ -510,9 +504,6 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "\\right)}";
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -524,13 +515,13 @@ namespace graph {
     template<typename T> shared_leaf<T> log(shared_leaf<T> x) {
         auto temp = std::make_shared<log_node<T>> (x)->reduce();
         const size_t h = temp->get_hash();
-        if (log_node<T>::cache.find(h) ==
-            log_node<T>::cache.end()) {
-            log_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return log_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared log nodes.
@@ -757,9 +748,6 @@ namespace graph {
                    (this->right->is_variable_like() ||
                     constant_cast(this->right).get());
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -773,13 +761,13 @@ namespace graph {
                        shared_leaf<T> r) {
         auto temp = std::make_shared<pow_node<T>> (l, r)->reduce();
         const size_t h = temp->get_hash();
-        if (pow_node<T>::cache.find(h) ==
-            pow_node<T>::cache.end()) {
-            pow_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return pow_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared add nodes.

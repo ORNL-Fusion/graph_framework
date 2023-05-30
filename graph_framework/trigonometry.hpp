@@ -136,9 +136,6 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "\\right)";
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -151,9 +148,9 @@ namespace graph {
     shared_leaf<T> sin(shared_leaf<T> x) {
         auto temp = std::make_shared<sine_node<T>> (x)->reduce();
         const size_t h = temp->get_hash();
-        if (sine_node<T>::cache.find(h) ==
-            sine_node<T>::cache.end()) {
-            sine_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
@@ -298,9 +295,6 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "\\right)";
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -313,13 +307,13 @@ namespace graph {
     shared_leaf<T> cos(shared_leaf<T> x) {
         auto temp = std::make_shared<cosine_node<T>> (x)->reduce();
         const size_t h = temp->get_hash();
-        if (cosine_node<T>::cache.find(h) ==
-            cosine_node<T>::cache.end()) {
-            cosine_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return cosine_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared cosine nodes.
@@ -493,9 +487,6 @@ namespace graph {
             this->right->to_latex();
             std::cout << "\\right)";
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -509,13 +500,13 @@ namespace graph {
                         shared_leaf<T> r) {
         auto temp = std::make_shared<arctan_node<T>> (l, r)->reduce();
         const size_t h = temp->get_hash();
-        if (arctan_node<T>::cache.find(h) ==
-            arctan_node<T>::cache.end()) {
-            arctan_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return arctan_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared add nodes.

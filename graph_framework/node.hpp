@@ -156,6 +156,10 @@ namespace graph {
             return hash;
         }
 
+///  Cache for constructed nodes.
+        inline thread_local static std::map<size_t,
+                                            std::shared_ptr<leaf_node<T>>> cache;
+
 ///  Type def to retrieve the backend type.
         typedef T base;
     };
@@ -166,9 +170,6 @@ namespace graph {
 ///  Convenience type alias for a vector of output nodes.
     template<typename T>
     using output_nodes = std::vector<shared_leaf<T>>;
-///  Convenience type alias for node caches.
-    template<typename T>
-    using node_cache = std::map<size_t, shared_leaf<T>>;
 
 //******************************************************************************
 //  Base straight node.
@@ -518,13 +519,11 @@ namespace graph {
         virtual shared_leaf<T> df(shared_leaf<T> x) {
             auto zero = std::make_shared<constant_node<T>> (static_cast<T> (0.0));
             const size_t h = zero->get_hash();
-            if (constant_node<T>::cache.find(h) ==
-                constant_node<T>::cache.end()) {
-                constant_node<T>::cache[h] = zero;
+            if (leaf_node<T>::cache.find(h) ==
+                leaf_node<T>::cache.end()) {
+                leaf_node<T>::cache[h] = zero;
                 return zero;
             }
-            
-            return constant_node<T>::cache[h];
         }
 
 //------------------------------------------------------------------------------
@@ -606,9 +605,6 @@ namespace graph {
         virtual bool is_variable_like() const {
             return false;
         }
-
-///  Cache for constructed nodes.
-        inline thread_local static node_cache<T> cache;
     };
 
 //------------------------------------------------------------------------------
@@ -621,13 +617,13 @@ namespace graph {
     shared_leaf<T> constant(const T d) {
         auto temp = std::make_shared<constant_node<T>> (d)->reduce();
         const size_t h = temp->get_hash();
-        if (constant_node<T>::cache.find(h) ==
-            constant_node<T>::cache.end()) {
-            constant_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return constant_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 //------------------------------------------------------------------------------
@@ -640,13 +636,13 @@ namespace graph {
     shared_leaf<T> constant(const backend::buffer<T> &d) {
         auto temp = std::make_shared<constant_node<T>> (d)->reduce();
         const size_t h = temp->get_hash();
-        if (constant_node<T>::cache.find(h) ==
-            constant_node<T>::cache.end()) {
-            constant_node<T>::cache[h] = temp;
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
             return temp;
         }
         
-        return constant_node<T>::cache[h];
+        return leaf_node<T>::cache[h];
     }
 
 //  Define some common constants.

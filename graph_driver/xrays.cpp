@@ -78,28 +78,28 @@ int main(int argc, const char * argv[]) {
 //  Inital conditions.
             if constexpr (jit::is_complex<base> ()) {
                 if constexpr (jit::is_float<base> ()) {
-                    std::normal_distribution<float> norm_dist(static_cast<float> (590.0), static_cast<float> (10.0));
+                    std::normal_distribution<float> norm_dist(static_cast<float> (1000.0), static_cast<float> (10.0));
                     for (size_t j = 0; j < local_num_rays; j++) {
                         omega->set(j, static_cast<base> (norm_dist(engine)));
                     }
                 } else {
-                    std::normal_distribution<double> norm_dist(static_cast<double> (590.0), static_cast<double> (10.0));
+                    std::normal_distribution<double> norm_dist(static_cast<double> (1000.0), static_cast<double> (10.0));
                     for (size_t j = 0; j < local_num_rays; j++) {
                         omega->set(j, static_cast<base> (norm_dist(engine)));
                     }
                 }
             } else {
-                std::normal_distribution<base> norm_dist(static_cast<base> (590.0), static_cast<base> (10.0));
+                std::normal_distribution<base> norm_dist(static_cast<base> (1000.0), static_cast<base> (10.0));
                 for (size_t j = 0; j < local_num_rays; j++) {
                     omega->set(j, static_cast<base> (norm_dist(engine)));
                 }
             }
 
-            x->set(static_cast<base> (2.5));
+            x->set(static_cast<base> (1.5));
             //x->set(static_cast<base> (0.0));
             y->set(static_cast<base> (0.0));
             z->set(static_cast<base> (0.0));
-            kx->set(static_cast<base> (-600.0));
+            kx->set(static_cast<base> (2000.0));
             //kx->set(static_cast<base> (600.0));
             ky->set(static_cast<base> (0.0));
             kz->set(static_cast<base> (0.0));
@@ -110,7 +110,7 @@ int main(int argc, const char * argv[]) {
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
             //const base endtime = static_cast<base> (4.0);
-            const base endtime = static_cast<base> (1.0);
+            const base endtime = static_cast<base> (100.0);
             const base dt = endtime/static_cast<base> (num_times);
 
             //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");
@@ -118,12 +118,13 @@ int main(int argc, const char * argv[]) {
             //solver::split_simplextic<dispersion::bohm_gross<base>>
             //solver::adaptive_rk4<dispersion::bohm_gross<base>>
             //solver::rk4<dispersion::simple<base>>
-            solver::rk4<dispersion::ordinary_wave<base>>
-            //solver::rk4<dispersion::extra_ordinary_wave<base>>
+            //solver::rk4<dispersion::ordinary_wave<base>>
+            solver::rk4<dispersion::extra_ordinary_wave<base>>
+            //solver::rk4<dispersion::cold_plasma<base>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<base>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
                 //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq);
-            solve.init(kx);
+            solve.init(omega);
             solve.compile();
             if (thread_number == 0 && false) {
                 solve.print_dispersion();
