@@ -524,6 +524,8 @@ namespace graph {
                 leaf_node<T>::cache[h] = zero;
                 return zero;
             }
+            
+            return leaf_node<T>::cache[h];
         }
 
 //------------------------------------------------------------------------------
