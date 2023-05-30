@@ -16,7 +16,8 @@
 //------------------------------------------------------------------------------
 ///  @brief Constant Test
 ///
-///  A wave in no medium with a constant phase velocity should propagate such that
+///  A wave in no medium with a constant phase velocity should propagate such
+///  that
 ///
 ///  k.x - wt = Constant
 //------------------------------------------------------------------------------
@@ -67,35 +68,35 @@ void test_constant() {
 ///
 ///  In the bohm-gross dispersion relation, the group velocity should be.
 ///
-///  vg = 3/2*vth^2*k/⍵                                                        (1)
+///  vg = 3/2*vth^2*k/⍵                                                      (1)
 ///
 ///  Where vth is the thermal velocity.
 ///
-///  vth = sqrt(2*kb*T/m)                                                      (2)
+///  vth = sqrt(2*kb*T/m)                                                    (2)
 ///
 ///  The wave number varies with time.
 ///
-///  k(t) = -⍵pe'(x)/(2⍵)*t + k0                                               (3)
+///  k(t) = -⍵pe'(x)/(2⍵)*t + k0                                             (3)
 ///
 ///  Where ⍵pe is the plasma frequency.
 ///
-///  ⍵pe2 = q^2*n(x))/(ϵ0*m)                                                   (4)
+///  ⍵pe2 = q^2*n(x))/(ϵ0*m)                                                 (4)
 ///
 ///  For a linear gradient in the density ⍵pe2'(x) is a constant.
 ///
-///  ⍵pe2' = ne0*q^2*0.1/(ϵ0*m)                                                (5)
+///  ⍵pe2' = ne0*q^2*0.1/(ϵ0*m)                                              (5)
 ///
 ///  k0 must be a solution of the dispersion relation.
 ///
-///  k0 = sqrt(3/2(⍵^2 - ⍵pe^2)/vth^2)                                         (6)
+///  k0 = sqrt(3/2(⍵^2 - ⍵pe^2)/vth^2)                                       (6)
 ///
 ///  Putting equation 3 into 1 yields the group velocity as a function of time.
 ///
-///  vg(t) = -3/2*vth^2/⍵*⍵pe'(x)/(2⍵)*t + 3/2*vth^2/⍵*k0                      (7)
+///  vg(t) = -3/2*vth^2/⍵*⍵pe'(x)/(2⍵)*t + 3/2*vth^2/⍵*k0                    (7)
 ///
 ///  This expression can be integrated to find a parabolic ray trajectory.
 ///
-///  x(t) = -3/8*vth^2/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth^2/⍵*k0*t + x0                 (8)
+///  x(t) = -3/8*vth^2/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth^2/⍵*k0*t + x0               (8)
 ///
 ///  B = 0 or k || B
 ///
@@ -103,9 +104,6 @@ void test_constant() {
 //------------------------------------------------------------------------------
 template<typename SOLVER>
 void test_bohm_gross(const typename SOLVER::base tolarance) {
-    std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-    std::uniform_real_distribution<double> real_dist(0.1, 1.0);
-
     auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
     auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
     auto ky = graph::variable<typename SOLVER::base> (1, "k_{y}");
@@ -170,31 +168,31 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 ///
 ///  In the bohm-gross dispersion relation, the group velocity should be.
 ///
-///  vg = c^2*k/⍵                                                              (1)
+///  vg = c^2*k/⍵                                                            (1)
 ///
 ///  Where c is the speed of light. The wave number varies with time.
 ///
-///  k(t) = -⍵pe'(x)/(2⍵)*t + k0                                               (3)
+///  k(t) = -⍵pe'(x)/(2⍵)*t + k0                                             (3)
 ///
 ///  Where ⍵pe is the plasma frequency.
 ///
-///  ⍵pe2 = q^2*n(x))/(ϵ0*m)                                                   (4)
+///  ⍵pe2 = q^2*n(x))/(ϵ0*m)                                                 (4)
 ///
 ///  For a linear gradient in the density ⍵pe2'(x) is a constant.
 ///
-///  ⍵pe2' = ne0*q^2*0.1/(ϵ0*m)                                                (5)
+///  ⍵pe2' = ne0*q^2*0.1/(ϵ0*m)                                              (5)
 ///
 ///  k0 must be a solution of the dispersion relation.
 ///
-///  k0 = sqrt((⍵^2 - ⍵pe^2)/c^2)                                              (6)
+///  k0 = sqrt((⍵^2 - ⍵pe^2)/c^2)                                            (6)
 ///
 ///  Putting equation 3 into 1 yields the group velocity as a function of time.
 ///
-///  vg(t) = -c^2/⍵*⍵pe'(x)/(2⍵)*t + c^2/⍵*k0                                  (7)
+///  vg(t) = -c^2/⍵*⍵pe'(x)/(2⍵)*t + c^2/⍵*k0                                (7)
 ///
 ///  This expression can be integrated to find a parabolic ray trajectory.
 ///
-///  x(t) = -1/4*c^2/⍵*⍵pe'(x)/⍵*t^2 + c^2/⍵*k0*t + x0                         (8)
+///  x(t) = -1/4*c^2/⍵*⍵pe'(x)/⍵*t^2 + c^2/⍵*k0*t + x0                       (8)
 ///
 ///  B = 0
 ///
@@ -202,9 +200,6 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 //------------------------------------------------------------------------------
 template<typename SOLVER>
 void test_light_wave(const typename SOLVER::base tolarance) {
-    std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-    std::uniform_real_distribution<double> real_dist(0.1, 1.0);
-
     auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
     auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
     auto ky = graph::variable<typename SOLVER::base> (1, "k_{y}");
@@ -263,27 +258,24 @@ void test_light_wave(const typename SOLVER::base tolarance) {
 ///
 ///  In the ion-wave dispersion relation, the group velocity should be.
 ///
-///  vg = vs^2*k/⍵                                                             (1)
+///  vg = vs^2*k/⍵                                                           (1)
 ///
 ///  Where vs is the sound speed.
 ///
-///  vs = sqrt((kb*Te - ɣ*kb*ti)/mi)                                           (2)
+///  vs = sqrt((kb*Te - ɣ*kb*ti)/mi)                                         (2)
 ///
 ///  The wave number is constant in time.
 ///
-///  k(t) = 0                                                                  (3)
+///  k(t) = 0                                                                (3)
 ///
 ///  The slope of the wave trajectory is vs
 ///
-///  dx/dt = vs^2                                                              (4)
+///  dx/dt = vs^2                                                            (4)
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_acoustic_wave(const T tolarance) {
-    std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-    std::uniform_real_distribution<double> real_dist(0.1, 1.0);
-
     auto omega = graph::variable<T> (1, "\\omega");
     auto kx = graph::variable<T> (1, "k_{x}");
     auto ky = graph::variable<T> (1, "k_{y}");
@@ -336,21 +328,21 @@ void test_acoustic_wave(const T tolarance) {
 ///
 ///  For a linear density gradient, the O-Mode cut off should be located at
 ///
-///  1 - ⍵pe^2(x)/⍵^2 = 0                                                      (1)
+///  1 - ⍵pe^2(x)/⍵^2 = 0                                                    (1)
 ///
-///  ⍵^2 - 1 = ⍵pe^2                                                           (2)
+///  ⍵^2 - 1 = ⍵pe^2                                                         (2)
 ///
 ///  The plasma frequency is defined as
 ///
-///  ⍵pe^2 = ne0*q^2/(ϵ0*m)*(0.1*x + 1)                                        (3)
+///  ⍵pe^2 = ne0*q^2/(ϵ0*m)*(0.1*x + 1)                                      (3)
 ///
 ///  Putting equation 3 into 2 yields
 ///
-///  ⍵^2 - 1 = ne0*q^2/(ϵ0*m)*(0.1*x + 1)                                      (4)
+///  ⍵^2 - 1 = ne0*q^2/(ϵ0*m)*(0.1*x + 1)                                    (4)
 ///
 ///  Solving for x
 ///
-///  (⍵^2 - 1 - ne0*q^2/(ϵ0*m))/(ne0*q^2/(ϵ0*m)*0.1) = x                       (5)
+///  (⍵^2 - 1 - ne0*q^2/(ϵ0*m))/(ne0*q^2/(ϵ0*m)*0.1) = x                     (5)
 //------------------------------------------------------------------------------
 template<typename T>
 void test_o_mode_wave() {
@@ -579,16 +571,7 @@ template<typename T> void test_efit() {
     auto z = graph::variable<T> (1, "z");
     auto t = graph::variable<T> (1, "t");
 
-    const T q = 1.602176634E-19;
-    const T me = 9.1093837015E-31;
-    const T mu0 = M_PI*4.0E-7;
-    const T epsilon0 = 8.8541878138E-12;
-    const T c = 1.0/sqrt(mu0*epsilon0);
-    const T ne0 = 1.0E19;
-    const T omega2 = (ne0*q*q)/(epsilon0*me*c*c);
     const T omega0 = 590.0;
-
-    const T x_cut = (omega0*omega0 - 1.0 - omega2)/(omega2*0.1);
 
 //  Omega must be greater than plasma frequency for the wave to propagate.
     omega->set(static_cast<T> (omega0));

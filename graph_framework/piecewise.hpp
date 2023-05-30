@@ -20,30 +20,30 @@ namespace graph {
 ///  This class is used to impliment the coefficent terms of cubic spline
 ///  interpolation. An function is interpolated using
 ///
-///    y(x) = a_i + b_i*x +c_i*x^2 + d_i*x^3                                   (1)
+///    y(x) = a_i + b_i*x +c_i*x^2 + d_i*x^3                                 (1)
 ///
 ///  The coeffients are defined as
 ///
-///    a_i = y_i                                                               (2)
-///    b_i = D_i                                                               (3)
-///    c_i = 3*(y_i+1 - y_i) - 2*D_i - D_i+1                                   (4)
-///    d_i = 2*(y_i - y_i+1) + D_i + D_i+1                                     (5)
+///    a_i = y_i                                                             (2)
+///    b_i = D_i                                                             (3)
+///    c_i = 3*(y_i+1 - y_i) - 2*D_i - D_i+1                                 (4)
+///    d_i = 2*(y_i - y_i+1) + D_i + D_i+1                                   (5)
 ///
 ///  The agument x is assumed to be the normalized argument
 ///
-///    x_norm = (x - xmin)/dx - i                                              (6)
+///    x_norm = (x - xmin)/dx - i                                            (6)
 ///
-///  To avoid tracking the index i which normaizes x to a zero to one interval the
-///  coefficients should be normalized to
+///  To avoid tracking the index i which normaizes x to a zero to one interval
+///  the coefficients should be normalized to
 ///
-///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                  (7)
-///    b'_i = b_i - 2*c_i*i+3*d_i*i^2                                          (8)
-///    c'_i = c_i - 3*d_i*i                                                    (9)
-///    d'_i = d_i                                                             (10)
+///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                (7)
+///    b'_i = b_i - 2*c_i*i+3*d_i*i^2                                        (8)
+///    c'_i = c_i - 3*d_i*i                                                  (9)
+///    d'_i = d_i                                                           (10)
 ///
 ///  This makes the normalized argument (6) become
 ///
-///    x_norm' = (x - xmin)/dx                                                (11)
+///    x_norm' = (x - xmin)/dx                                              (11)
 //------------------------------------------------------------------------------
     template<typename T>
     class piecewise_1D_node final : public straight_node<T> {
@@ -198,14 +198,14 @@ namespace graph {
 ///  This node first evaluates the value of the argument then chooses the correct
 ///  piecewise index. This assumes that the argument is
 ///
-///    x' = (x - xmin)/dx                                                      (1)
+///    x' = (x - xmin)/dx                                                    (1)
 ///
 ///  and the spline coefficients are of the form.
 ///
-///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                  (2)
-///    b'_i = b_i - 2*c_i*i+3*d_i*i^2                                          (3)
-///    c'_i = c_i - 3*d_i*i                                                    (4)
-///    d'_i = d_i                                                              (5)
+///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                (2)
+///    b'_i = b_i - 2*c_i*i+3*d_i*i^2                                        (3)
+///    c'_i = c_i - 3*d_i*i                                                  (4)
+///    d'_i = d_i                                                            (5)
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
@@ -236,8 +236,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  The argument of this node can be defered so we need to check if the arguments
-///  are null.
+///  The argument of this node can be defered so we need to check if the
+///  arguments are null.
 ///
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -347,8 +347,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the argument of a piecewise\_1D node.
 ///
-///  Piecewise functions could be reduced to a single constant so we need to check
-///  if it can be cast.
+///  Piecewise functions could be reduced to a single constant so we need to
+///  check if it can be cast.
 ///
 ///  @params[in] p Existing piecewise constant.
 ///  @params[in] x Argument.
@@ -371,37 +371,37 @@ namespace graph {
 ///  This class is used to impliment the coefficent terms of bicubic spline
 ///  interpolation. An function is interpolated using
 ///
-///    z(x,y) = Σ_i,3Σ_j,3 c_ij*x^i*y^j                                        (1)
+///    z(x,y) = Σ_i,3Σ_j,3 c_ij*x^i*y^j                                      (1)
 ///
 ///  The aguments x and y are assumed to be the normalized arguments
 ///
-///    x_norm = (x - xmin)/dx - i                                              (2)
-///    y_norm = (y - ymin)/dy - j                                              (3)
+///    x_norm = (x - xmin)/dx - i                                            (2)
+///    y_norm = (y - ymin)/dy - j                                            (3)
 ///
 ///  To avoid tracking the indices i and j which normaizes x and y to a zero to
 ///  one interval the coefficients should be normalized to
 ///
-///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                               (4)
-///    c10'_ij = Σ_k,3Σ_l,3 k*(-i)^(k-1)*(-j)^l*ckl_ij                         (5)
-///    c01'_ij = Σ_k,3Σ_l,3 l*(-i)^k*(-j)^(l-1)*ckl_ij                         (6)
-///    c20'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*(-i)^(k-2)*(-j)^l*ckl_ij              (7)
-///    c02'_ij = Σ_k,3Σ_l,3 Max(2*l-3,0)*(-i)^k*(-j)^(l-2)*ckl_ij              (8)
-///    c30'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*(-i)^(k-3)*(-j)^l*ckl_ij                (9)
-///    c03'_ij = Σ_k,3Σ_l,3 Max(l-2,0)*(-i)^k*(-j)^(l-3)*ckl_ij               (10)
-///    c11'_ij = Σ_k,3Σ_l,3 k*l*(-i)^(k-1)*(-j)^(j-1)                         (11)
-///    c21'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*l*(-i)^(k-2)*(-j)^(j-1)              (12)
-///    c12'_ij = Σ_k,3Σ_l,3 k*Max(2*l-3,0)*(-i)^(k-1)*(-j)^(j-2)              (13)
-///    c31'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*l*(-i)^(k-3)*(-j)^(j-1)                (14)
-///    c13'_ij = Σ_k,3Σ_l,3 k*Max(l-2,0)*(-i)^(k-1)*(-j)^(j-3)                (15)
-///    c22'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(2*l-3,0)*(-i)^(k-2)*(-j)^(j-2)   (16)
-///    c32'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(2*l-3,0)*(-i)^(k-3)*(-j)^(j-2)     (17)
-///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)     (18)
-///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)       (19)
+///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                             (4)
+///    c10'_ij = Σ_k,3Σ_l,3 k*(-i)^(k-1)*(-j)^l*ckl_ij                       (5)
+///    c01'_ij = Σ_k,3Σ_l,3 l*(-i)^k*(-j)^(l-1)*ckl_ij                       (6)
+///    c20'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*(-i)^(k-2)*(-j)^l*ckl_ij            (7)
+///    c02'_ij = Σ_k,3Σ_l,3 Max(2*l-3,0)*(-i)^k*(-j)^(l-2)*ckl_ij            (8)
+///    c30'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*(-i)^(k-3)*(-j)^l*ckl_ij              (9)
+///    c03'_ij = Σ_k,3Σ_l,3 Max(l-2,0)*(-i)^k*(-j)^(l-3)*ckl_ij             (10)
+///    c11'_ij = Σ_k,3Σ_l,3 k*l*(-i)^(k-1)*(-j)^(j-1)                       (11)
+///    c21'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*l*(-i)^(k-2)*(-j)^(j-1)            (12)
+///    c12'_ij = Σ_k,3Σ_l,3 k*Max(2*l-3,0)*(-i)^(k-1)*(-j)^(j-2)            (13)
+///    c31'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*l*(-i)^(k-3)*(-j)^(j-1)              (14)
+///    c13'_ij = Σ_k,3Σ_l,3 k*Max(l-2,0)*(-i)^(k-1)*(-j)^(j-3)              (15)
+///    c22'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(2*l-3,0)*(-i)^(k-2)*(-j)^(j-2) (16)
+///    c32'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(2*l-3,0)*(-i)^(k-3)*(-j)^(j-2)   (17)
+///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)   (18)
+///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)     (19)
 ///
 ///  This makes the normalized arguments (6,7) become
 ///
-///    x_norm' = (x - xmin)/dx                                                (20)
-///    y_norm' = (y - ymin)/dy                                                (21)
+///    x_norm' = (x - xmin)/dx                                              (20)
+///    y_norm' = (y - ymin)/dy                                              (21)
 //------------------------------------------------------------------------------
     template<typename T>
     class piecewise_2D_node final : public branch_node<T> {
@@ -583,27 +583,27 @@ namespace graph {
 ///  This node first evaluates the value of the argument then chooses the correct
 ///  piecewise index. This assumes that the argument is
 ///
-///    x' = (x - xmin)/dx                                                      (1)
-///    y' = (y - ymin)/dy                                                      (2)
+///    x' = (x - xmin)/dx                                                    (1)
+///    y' = (y - ymin)/dy                                                    (2)
 ///
 ///  and the spline coefficients are of the form.
 ///
-///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                               (3)
-///    c10'_ij = Σ_k,3Σ_l,3 k*(-i)^(k-1)*(-j)^l*ckl_ij                         (4)
-///    c01'_ij = Σ_k,3Σ_l,3 l*(-i)^k*(-j)^(l-1)*ckl_ij                         (5)
-///    c20'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*(-i)^(k-2)*(-j)^l*ckl_ij              (6)
-///    c02'_ij = Σ_k,3Σ_l,3 Max(2*l-3,0)*(-i)^k*(-j)^(l-2)*ckl_ij              (7)
-///    c30'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*(-i)^(k-3)*(-j)^l*ckl_ij                (8)
-///    c03'_ij = Σ_k,3Σ_l,3 Max(l-2,0)*(-i)^k*(-j)^(l-3)*ckl_ij                (9)
-///    c11'_ij = Σ_k,3Σ_l,3 k*l*(-i)^(k-1)*(-j)^(j-1)                         (10)
-///    c21'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*l*(-i)^(k-2)*(-j)^(j-1)              (11)
-///    c12'_ij = Σ_k,3Σ_l,3 k*Max(2*l-3,0)*(-i)^(k-1)*(-j)^(j-2)              (12)
-///    c31'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*l*(-i)^(k-3)*(-j)^(j-1)                (13)
-///    c13'_ij = Σ_k,3Σ_l,3 k*Max(l-2,0)*(-i)^(k-1)*(-j)^(j-3)                (14)
-///    c22'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(2*l-3,0)*(-i)^(k-2)*(-j)^(j-2)   (15)
-///    c32'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(2*l-3,0)*(-i)^(k-3)*(-j)^(j-2)     (16)
-///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)     (17)
-///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)       (18)
+///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                             (3)
+///    c10'_ij = Σ_k,3Σ_l,3 k*(-i)^(k-1)*(-j)^l*ckl_ij                       (4)
+///    c01'_ij = Σ_k,3Σ_l,3 l*(-i)^k*(-j)^(l-1)*ckl_ij                       (5)
+///    c20'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*(-i)^(k-2)*(-j)^l*ckl_ij            (6)
+///    c02'_ij = Σ_k,3Σ_l,3 Max(2*l-3,0)*(-i)^k*(-j)^(l-2)*ckl_ij            (7)
+///    c30'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*(-i)^(k-3)*(-j)^l*ckl_ij              (8)
+///    c03'_ij = Σ_k,3Σ_l,3 Max(l-2,0)*(-i)^k*(-j)^(l-3)*ckl_ij              (9)
+///    c11'_ij = Σ_k,3Σ_l,3 k*l*(-i)^(k-1)*(-j)^(j-1)                       (10)
+///    c21'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*l*(-i)^(k-2)*(-j)^(j-1)            (11)
+///    c12'_ij = Σ_k,3Σ_l,3 k*Max(2*l-3,0)*(-i)^(k-1)*(-j)^(j-2)            (12)
+///    c31'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*l*(-i)^(k-3)*(-j)^(j-1)              (13)
+///    c13'_ij = Σ_k,3Σ_l,3 k*Max(l-2,0)*(-i)^(k-1)*(-j)^(j-3)              (14)
+///    c22'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(2*l-3,0)*(-i)^(k-2)*(-j)^(j-2) (15)
+///    c32'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(2*l-3,0)*(-i)^(k-3)*(-j)^(j-2)   (16)
+///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)   (17)
+///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)     (18)
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
@@ -617,7 +617,8 @@ namespace graph {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = " << registers[piecewise_2D_node<T>::backend_cache[data_hash].data()];
+                stream << " " << registers[this] << " = "
+                       << registers[piecewise_2D_node<T>::backend_cache[data_hash].data()];
                 stream << "[max(min((int)";
                 if constexpr (jit::is_complex<T> ()) {
                     stream << "real(";
@@ -634,7 +635,9 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     stream << ")";
                 }
-                stream <<", " << piecewise_2D_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];" << std::endl;
+                stream << ", "
+                       << piecewise_2D_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];"
+                       << std::endl;
             }
             
             return this->shared_from_this();
@@ -766,8 +769,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the argument of a piecewise\_1D node.
 ///
-///  Piecewise functions could be reduced to a single constant so we need to check
-///  if it can be cast.
+///  Piecewise functions could be reduced to a single constant so we need to
+///  check if it can be cast.
 ///
 ///  @params[in] p Existing piecewise constant.
 ///  @params[in] x X Argument.

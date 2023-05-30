@@ -688,6 +688,16 @@ namespace graph {
         return constant(static_cast<T> (2.0));
     }
 
+//------------------------------------------------------------------------------
+///  @brief Create a two constant.
+///
+///  @returns A two constant.
+//------------------------------------------------------------------------------
+    template<typename T>
+    shared_leaf<T> pi() {
+        return constant(static_cast<T> (M_PI));
+    }
+
 ///  Convenience type alias for shared constant nodes.
     template<typename T>
     using shared_constant = std::shared_ptr<constant_node<T>>;

@@ -2,8 +2,7 @@
 ///  @file trigonometry.hpp
 ///  @brief Trigonometry functions.
 ///
-///  Created by Cianciosa, Mark R. on 7/15/19.
-///  Copyright © 2019 Cianciosa, Mark R. All rights reserved.
+///  Defines trigonometry operations.
 //------------------------------------------------------------------------------
 
 #ifndef trigonometry_h

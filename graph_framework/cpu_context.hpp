@@ -191,7 +191,7 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Hold the current thread until the current command buffer has complete.
+///  @brief Hold the current thread until the command buffer has completed.
 //------------------------------------------------------------------------------
         void wait() {}
 

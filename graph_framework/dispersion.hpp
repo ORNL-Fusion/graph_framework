@@ -115,8 +115,10 @@ namespace dispersion {
 ///
 ///  @params[in,out] x              The unknown to solver for.
 ///  @params[in]     inputs         Inputs for jit compile.
-///  @params[in]     tolarance      Tolarance to solve the dispersion function to.
-///  @params[in]     max_iterations Maximum number of iterations before giving up.
+///  @params[in]     tolarance      Tolarance to solve the dispersion function
+///                                 to.
+///  @params[in]     max_iterations Maximum number of iterations before giving
+///                                 up.
 ///  @returns The residule graph.
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
@@ -321,21 +323,22 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Stiff function.
 ///
-///  This is not really a dispersion function but is an example of a stiff system.
+///  This is not really a dispersion function but is an example of a stiff
+///  system.
 ///
-///  dx/dt = -1.0E3*(x - Exp(-t)) - Exp(-t)                                    (1)
+///  dx/dt = -1.0E3*(x - Exp(-t)) - Exp(-t)                                  (1)
 ///
 ///  We need to figure out a disperison function D(w,k,x) such that
 ///
-///  dx/dt = -(dD/dk)/(dD/dw) = -1.0E3*(x - Exp(-t)) - Exp(-t).                (2)
+///  dx/dt = -(dD/dk)/(dD/dw) = -1.0E3*(x - Exp(-t)) - Exp(-t).              (2)
 ///
 ///  If we assume,
 ///
-///  D = (1.0E3*(x - Exp(-t)) - Exp(-t))*kx + w                                (3)
+///  D = (1.0E3*(x - Exp(-t)) - Exp(-t))*kx + w                              (3)
 ///
-///  dD/dw = 1                                                                 (4)
+///  dD/dw = 1                                                               (4)
 ///
-///  dD/dkx = (1.0E3*(x - Exp(-t)) - Exp(-t))                                  (5)
+///  dD/dkx = (1.0E3*(x - Exp(-t)) - Exp(-t))                                (5)
 ///
 ///  This satisfies equations 1.
 ///
@@ -430,9 +433,9 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Bohm-Gross function.
 ///
-///  D = ⍵_p^2 + 3/2(kx^2 + ky^2 + kz^2)vth^2 - ⍵^2                            (1)
+///  D = ⍵_p^2 + 3/2(kx^2 + ky^2 + kz^2)vth^2 - ⍵^2                          (1)
 ///
-///  vth = Sqrt(2*ne*te/me)                                                    (2)
+///  vth = Sqrt(2*ne*te/me)                                                  (2)
 ///
 ///  @params[in] w  Omega variable.
 ///  @params[in] kx Kx variable.
@@ -492,7 +495,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Light-wave function.
 ///
-///  D = ⍵_p^2 + 3/2(kx^2 + ky^2 + kz^2)c^2 - ⍵^2                              (1)
+///  D = ⍵_p^2 + 3/2(kx^2 + ky^2 + kz^2)c^2 - ⍵^2                            (1)
 ///
 ///  B = 0.
 ///
@@ -542,9 +545,9 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Ion acoustic wave function.
 ///
-///  D = (kx^2 + ky^2 + kz^2)vs^2 - ⍵^2                                        (1)
+///  D = (kx^2 + ky^2 + kz^2)vs^2 - ⍵^2                                      (1)
 ///
-///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                            (2)
+///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                          (2)
 ///
 ///  @params[in] w  Omega variable.
 ///  @params[in] kx Kx variable.
@@ -638,11 +641,11 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Disperison relation for the O mode.
 ///
-///  D = ⍵ce^2 + k^2*vs^2 - ⍵^2                                                (1)
+///  D = ⍵ce^2 + k^2*vs^2 - ⍵^2                                              (1)
 ///
 ///  ⍵ce is the electron cyclotron frequency and vs
 ///
-///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                            (2)
+///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                          (2)
 ///
 ///  @params[in] w  Omega variable.
 ///  @params[in] kx Kx variable.
@@ -701,7 +704,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Disperison relation for the O mode.
 ///
-///  D = 1 - ⍵pe^2/⍵^2 - c^2/⍵^2*(kx^2 + ky^2 + kz^2)                          (1)
+///  D = 1 - ⍵pe^2/⍵^2 - c^2/⍵^2*(kx^2 + ky^2 + kz^2)                        (1)
 ///
 ///  ⍵pe is the plasma frequency.
 ///
@@ -755,7 +758,7 @@ namespace dispersion {
 ///  @brief Disperison relation for the X-Mode.
 ///
 ///  D = 1 - ⍵pe^2/⍵^2(⍵^2 - ⍵pe^2)/(⍵^2 - ⍵h^2)
-///    - c^2/⍵^2*(kx^2 + ky^2 + kz^2)                                          (1)
+///    - c^2/⍵^2*(kx^2 + ky^2 + kz^2)                                        (1)
 ///
 ///  Where ⍵h is the upper hybrid frequency and defined by
 ///
@@ -921,6 +924,176 @@ namespace dispersion {
             auto m33 = e33 - nperp2;
 
             return (m11*m22 - m12*m12)*m33 - m22*(m13*m13);
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Hot Plasma Disperison function.
+//------------------------------------------------------------------------------
+    template<typename T, class Z>
+    class hot_plasma final : public physics<T> {
+    private:
+///  Z function.
+        Z z;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Cold Plasma Disperison function.
+///
+///  D = iσΓ0 + Γ1 + Γ2(1 + ζZ(ζ)) + Γ3ζZ(ζ)(1 + ζZ(ζ)) + Γ4iσF + Γ5F        (1)
+///
+///  Γ0 = n^2n⟂^2 - (1 - P)(n^2 + n||^2) - 2(1 - 2q)n⟂^2 + 2(1 - P)(1 - 2q)  (2)
+///
+///  Γ1 = (1 - q)n^2n⟂^2 + (1 - P)n^2n||^2 - (1 - q)(1 - P)(n^2 + n||^2)
+///     - (1 - 2q)n⟂^2 + (1 - 2q)(1 - P)                                     (3)
+///
+///  Γ2 = P⍵/Ωe(n^2n⟂^2 - (1 - 2q)n⟂^2)
+///     + P^2⍵^2/(4Ωe^2)(n⟂^2/n||^2(n^2 + n||^2) - 2(1 - 2q)n⟂^2/n||^2)      (4)
+///
+///  Γ3 = P⍵^2/(4Ωe^2)n⟂^2/n||^2((n^2 + n||^2) - 2(1 - 2q))                  (5)
+///
+///  Γ4 = P(-(n^2 + n||^2) + 2(1 - 2q))                                      (6)
+///
+///  Γ5 = P(n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q))                      (7)
+///
+///  iσ = ⍵pe^2/(2⍵)1/(k||ve)Z(ζ)                                            (8)
+///
+///  ζ = (⍵ - Ωe)/(k||ve)                                                    (9)
+///
+///  F = n⟂^2/(2n||^2)⍵^2/Ωe^2ve/cζ(1 + ζZ(ζ))                              (10)
+///
+///  P = ⍵pe^2/⍵^2                                                          (11)
+///
+///  q = ⍵pe^2/(2⍵(⍵ + Ωe))                                                 (12)
+///
+///  ve = Sqrt(2*ne*te/me)                                                  (13)
+///
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
+                                        graph::shared_leaf<T> kx,
+                                        graph::shared_leaf<T> ky,
+                                        graph::shared_leaf<T> kz,
+                                        graph::shared_leaf<T> x,
+                                        graph::shared_leaf<T> y,
+                                        graph::shared_leaf<T> z,
+                                        graph::shared_leaf<T> t,
+                                        equilibrium::shared<T> &eq) {
+//  Constants
+            auto one = graph::one<T> ();
+            auto none = graph::none<T> ();
+            auto two = graph::two<T> ();
+            auto four = two*two;
+
+//  Setup plasma parameters.
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto b_hat = b_vec->unit();
+            auto b_len = b_vec->length();
+            auto ne = eq->get_electron_density(x, y, z);
+            auto te = eq->get_electron_temperature(x, y, z);
+            
+            auto ve = graph::sqrt(two*ne*te/physics<T>::me);
+
+//  Setup characteristic frequencies.
+            auto ec = build_cyclotron_fequency(none*physics<T>::q, b_len,
+                                               physics<T>::me, physics<T>::c);
+            auto wpe2 = build_plasma_fequency(ne, physics<T>::q, physics<T>::me,
+                                              physics<T>::c,
+                                              physics<T>::epsion0);
+
+//  Disperison quantities.
+            auto q = wpe2/(two*w*(w + ec));
+            auto P = wpe2/(w*w);
+
+            auto kvec = graph::vector(kx, ky, kz);
+            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto n2 = n->dot(n);
+            auto kpara = b_hat->dot(kvec);
+            auto npara = b_hat->dot(n);
+            auto npara2 = npara*npara;
+            auto nperp = b_hat->cross(n)->length();
+            auto nperp2 = nperp*nperp;
+            
+            auto zeta = (w - ec)/(kpara*ve);
+            auto Z_func = this->z.Z(zeta);
+            auto F = nperp2/(two*npara)*w*w/(ec*ec)*ve/physics<T>::c*zeta*(one + zeta*Z_func);
+            auto isigma = wpe2/(two*w)*Z_func/(kpara*ve);
+
+            auto q_func = one - two*q;
+            auto n_func = n2 + npara2;
+            auto n2nperp2 = n2*nperp2;
+            auto p_func = one - P;
+
+            auto gamma5 = P*(n2*npara2 - (one - q)*n_func + q_func);
+            auto gamma4 = P*(two*q_func - n_func);
+            auto gamma3 = P*w*w/(four*ec*ec)*nperp2/npara2*(n_func - two*q_func);
+            auto gamma2 = P*w/ec*(n2nperp2 - q_func*nperp2)
+                        + P*P*w*w/(four*ec*ec)*(n_func - two*q_func)*nperp2/npara2;
+            auto gamma1 = (one - q)*n2nperp2 + p_func*n2*npara2
+                        - (one - q)*p_func*n_func - q_func*nperp2 + q_func*p_func;
+            auto gamma0 = n2nperp2 - p_func*n_func - two*q_func*nperp2 + two*p_func*q_func;
+
+            auto zeta_func = one + zeta*Z_func;
+
+            return isigma*gamma0 + gamma1 + gamma2*zeta_func +
+                   gamma2*zeta*Z_func*zeta_func + gamma4*isigma*F + gamma5*F;
+        }
+    };
+
+//******************************************************************************
+//  Z Function interface.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class interface to build dispersion relation functions.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class z_function {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Method to build the Z function.
+///
+///  @params[in] zeta The zeta argument.
+///  @returns The constructed Z function.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T> Z(graph::shared_leaf<T> zeta) = 0;
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Class interface to build dispersion relation functions.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class z_power_series final : public z_function<T> {
+
+    static_assert(jit::is_complex<T> (), "Only supported for complex base types.");
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Method to build the Z function.
+///
+///  @params[in] zeta The zeta argument.
+///  @returns The constructed Z function.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T> Z(graph::shared_leaf<T> zeta) {
+            auto one = graph::one<T> ();
+            auto two = graph::two<T> ();
+            auto four = two*two;
+            auto eight = four*two;
+            auto zeta2 = zeta*zeta;
+            auto zeta4 = zeta2*zeta2;
+            auto zeta6 = zeta4*zeta2;
+            T i(0.0, 1.0);
+            return graph::constant(i)*graph::sqrt(graph::pi<T> ())/graph::exp(zeta2) -
+                   two*(one - two/graph::constant(static_cast<T> (3.0))*zeta2
+                            + four/graph::constant(static_cast<T> (15.0))*zeta4
+                            - eight/graph::constant(static_cast<T> (105.0))*zeta6)*zeta;
         }
     };
 }

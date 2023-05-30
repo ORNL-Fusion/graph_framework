@@ -92,7 +92,8 @@ namespace solver {
 ///  @brief Method to initalize the rays.
 ///
 ///  @params[in,out] x              Variable reference to update.
-///  @params[in]     tolarance      Tolarance to solve to dispersion function to.
+///  @params[in]     tolarance      Tolarance to solve to dispersion function
+///                                 to.
 ///  @params[in]     max_iterations Maximum number of iterations to run.
 ///  @returns The residule graph.
 //------------------------------------------------------------------------------

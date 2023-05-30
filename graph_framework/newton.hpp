@@ -20,8 +20,10 @@ namespace solver {
 ///  @params[in]     vars           The unknowns to solver for.
 ///  @params[in]     inputs         Inputs for jit compile.
 ///  @params[in]     loss           Loss function.
-///  @params[in]     tolarance      Tolarance to solve the dispersion function to.
-///  @params[in]     max_iterations Maximum number of iterations before giving up.
+///  @params[in]     tolarance      Tolarance to solve the dispersion function
+///                                 to.
+///  @params[in]     max_iterations Maximum number of iterations before giving
+///                                 up.
 //------------------------------------------------------------------------------
     template<typename T>
     void newton(workflow::manager<T> &work,
