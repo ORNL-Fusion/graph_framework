@@ -9,6 +9,7 @@
 #ifndef register_h
 #define register_h
 
+#include <cassert>
 #include <map>
 #include <sstream>
 #include <complex>
@@ -81,8 +82,9 @@ namespace jit {
     template<class NODE>
     std::string to_string(const char prefix,
                           const NODE *pointer) {
-        assert((prefix == 'r' || prefix == 'v' || prefix == 'o' ) &&
-               "Expected a variable (v) or register (r) prefix.");
+        assert((prefix == 'r' || prefix == 'v' ||
+                prefix == 'o' || prefix == 'a') &&
+               "Expected a variable (v), register (r), output (o) or array (a) prefix.");
         std::stringstream stream;
         stream << prefix << "_" << reinterpret_cast<size_t> (pointer);
         return stream.str();
@@ -170,8 +172,34 @@ namespace jit {
     }
 
 ///  Type alias for mapping node pointers to register names.
-    template<class NODE>
-    using register_map = std::map<NODE *, std::string>;
+    typedef std::map<void *, std::string> register_map;
+///  Type alias for listing visited nodes.
+    typedef std::map<void *, bool> visiter_map;
+
+//------------------------------------------------------------------------------
+///  @brief  Define a custom comparitor class.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class float_compare {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Call operator.
+///
+///  @params[in] left  Left hand side.
+///  @params[in] right Right hand side.
+//------------------------------------------------------------------------------
+        bool operator() (const T &left, const T &right) const {
+            if constexpr (is_complex<T> ()) {
+                return std::abs(left) < std::abs(right);
+            } else {
+                return left < right;
+            }
+        }
+    };
+
+///  Type alias for constant registers.
+    template<typename T, class C>
+    using constant_map = std::map<T, C, float_compare<T>>;
 }
 
 #endif /* register_h */

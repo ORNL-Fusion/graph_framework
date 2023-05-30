@@ -8,9 +8,6 @@
 #ifndef workflow_h
 #define workflow_h
 
-#include <forward_list>
-
-#include "node.hpp"
 #include "jit.hpp"
 
 namespace workflow {
@@ -108,7 +105,7 @@ namespace workflow {
 ///
 ///  @params[in,out] context Jit context.
 //------------------------------------------------------------------------------
-        virtual void create_kernel_call(jit::context<T> &context) final {
+        virtual void create_kernel_call(jit::context<T> &context) {
             work_item<T>::create_kernel_call(context);
             max_kernel = context.create_max_call(this->outputs.back(),
                                                  this->kernel);
@@ -220,8 +217,8 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
-///  @params[in] node   Not to copy buffer to.
-///  @params[in] source Host side buffer to copy from.
+///  @params[in] node        Not to copy buffer to.
+///  @params[in] destination Device side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_device(graph::shared_leaf<T> &node,
                             T *destination) {

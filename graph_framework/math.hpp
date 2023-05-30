@@ -7,7 +7,7 @@
 #ifndef math_h
 #define math_h
 
-#include "arithmetic.hpp"
+#include "node.hpp"
 
 namespace graph {
 //******************************************************************************
@@ -18,16 +18,30 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename N>
-    class sqrt_node : public straight_node<typename N::base> {
+    template<typename T>
+    class sqrt_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "sqrt(" << reinterpret_cast<size_t> (a) << ")";
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a sqrt node.
 ///
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
-        sqrt_node(std::shared_ptr<N> x) :
-        straight_node<typename N::base> (x->reduce()) {}
+        sqrt_node(shared_leaf<T> x) :
+        straight_node<T> (x, sqrt_node<T>::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sqrt.
@@ -36,8 +50,8 @@ namespace graph {
 ///
 ///  @returns The value of sqrt(x).
 //------------------------------------------------------------------------------
-        virtual backend::buffer<typename N::base> evaluate() final {
-            backend::buffer<typename N::base> result = this->arg->evaluate();
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> result = this->arg->evaluate();
             result.sqrt();
             return result;
         }
@@ -47,8 +61,7 @@ namespace graph {
 ///
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base> reduce() final {
-#ifdef USE_REDUCE
+        virtual shared_leaf<T> reduce() {
             auto ac = constant_cast(this->arg);
             if (ac.get()) {
                 if (ac->is(0) || ac->is(1)) {
@@ -67,7 +80,7 @@ namespace graph {
 
                 return pow(ap->get_left(),
                            ap->get_right() +
-                           constant(static_cast<typename N::base> (0.5)));
+                           constant(static_cast<T> (0.5)));
             }
 
 //  Handle casses like sqrt(c*x) where c is constant or cases like
@@ -95,7 +108,6 @@ namespace graph {
                            sqrt(ad->get_right());
                 }
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -107,30 +119,30 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base>
-        df(shared_leaf<typename N::base> x) final {
+        virtual shared_leaf<T> df(shared_leaf<T> x) {
             if (this->is_match(x)) {
-                return one<typename N::base> ();
+                return one<T> ();
             } else {
                 return this->arg->df(x) /
-                       (two<typename N::base> ()*this->shared_from_this());
+                       (two<T> ()*this->shared_from_this());
             }
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in] stream    String buffer stream.
-///  @params[in] registers List of defined registers.
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
-                                                      jit::register_map<N> &registers) final {
+        virtual shared_leaf<T> compile(std::stringstream &stream,
+                                       jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename N::base> a = this->arg->compile(stream, registers);
+                shared_leaf<T> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename N::base> (stream);
+                jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = sqrt("
                        << registers[a.get()] << ");"
                        << std::endl;
@@ -145,7 +157,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename N::base> x) final {
+        virtual bool is_match(shared_leaf<T> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -161,7 +173,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const final {
+        virtual void to_latex() const {
             std::cout << "\\sqrt{";
             this->arg->to_latex();
             std::cout << "}";
@@ -174,14 +186,21 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_leaf<typename N::base> sqrt(std::shared_ptr<N> x) {
-        return (std::make_shared<sqrt_node<N>> (x))->reduce();
+    template<typename T> shared_leaf<T> sqrt(shared_leaf<T> x) {
+        auto temp = std::make_shared<sqrt_node<T>> (x)->reduce();
+        const size_t h = temp->get_hash();
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
+            return temp;
+        }
+        
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared sqrt nodes.
-    template<typename N>
-    using shared_sqrt = std::shared_ptr<sqrt_node<N>>;
+    template<typename T>
+    using shared_sqrt = std::shared_ptr<sqrt_node<T>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a sqrt node.
@@ -189,9 +208,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_sqrt<N> sqrt_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<sqrt_node<N>> (x);
+    template<typename T>
+    shared_sqrt<T> sqrt_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<sqrt_node<T>> (x);
     }
 
 //******************************************************************************
@@ -202,16 +221,30 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename N>
-    class exp_node : public straight_node<typename N::base> {
+    template<typename T>
+    class exp_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "exp(" << reinterpret_cast<size_t> (a) << ")";
+                    
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a exp node.
 ///
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
-        exp_node(std::shared_ptr<N> x) :
-        straight_node<typename N::base> (x->reduce()) {}
+        exp_node(shared_leaf<T> x) :
+        straight_node<T> (x, exp_node<T>::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of exp.
@@ -220,8 +253,8 @@ namespace graph {
 ///
 ///  @returns The value of exp(x).
 //------------------------------------------------------------------------------
-        virtual backend::buffer<typename N::base> evaluate() final {
-            backend::buffer<typename N::base> result = this->arg->evaluate();
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> result = this->arg->evaluate();
             result.exp();
             return result;
         }
@@ -231,12 +264,16 @@ namespace graph {
 ///
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base> reduce() final {
-#ifdef USE_REDUCE
+        virtual shared_leaf<T> reduce() {
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
             }
-#endif
+
+//  Reduce exp(log(x)) -> x
+            auto a = log_cast(this->arg);
+            if (a.get()) {
+                return a->get_arg();
+            }
             return this->shared_from_this();
         }
 
@@ -248,10 +285,9 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base>
-        df(shared_leaf<typename N::base> x) final {
+        virtual shared_leaf<T> df(shared_leaf<T> x) {
             if (this->is_match(x)) {
-                return one<typename N::base> ();
+                return one<T> ();
             }
 
             return this->shared_from_this()*this->arg->df(x);
@@ -260,17 +296,18 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in] stream    String buffer stream.
-///  @params[in] registers List of defined registers.
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
-                                                      jit::register_map<N> &registers) final {
+        virtual shared_leaf<T> compile(std::stringstream &stream,
+                                       jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename N::base> a = this->arg->compile(stream, registers);
+                shared_leaf<T> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename N::base> (stream);
+                jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = exp("
                        << registers[a.get()] << ");"
                        << std::endl;
@@ -285,7 +322,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename N::base> x) final {
+        virtual bool is_match(shared_leaf<T> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -301,10 +338,10 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const final {
-            std::cout << "e^{";
+        virtual void to_latex() const {
+            std::cout << "e^{\\left(";
             this->arg->to_latex();
-            std::cout << "}";
+            std::cout << "\\right)}";
         }
     };
 
@@ -314,14 +351,21 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_leaf<typename N::base> exp(std::shared_ptr<N> x) {
-        return (std::make_shared<exp_node<N>> (x))->reduce();
+    template<typename T> shared_leaf<T> exp(shared_leaf<T> x) {
+        auto temp = std::make_shared<exp_node<T>> (x)->reduce();
+        const size_t h = temp->get_hash();
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
+            return temp;
+        }
+        
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared exp nodes.
-    template<typename N>
-    using shared_exp = std::shared_ptr<exp_node<N>>;
+    template<typename T>
+    using shared_exp = std::shared_ptr<exp_node<T>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a exp node.
@@ -329,9 +373,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_exp<N> exp_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<exp_node<N>> (x);
+    template<typename T>
+    shared_exp<T> exp_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<exp_node<T>> (x);
     }
 
 //******************************************************************************
@@ -342,16 +386,30 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename N>
-    class log_node : public straight_node<typename N::base> {
+    template<typename T>
+    class log_node final : public straight_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "log(" << reinterpret_cast<size_t> (a) << ")";
+                            
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a log node.
 ///
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
-        log_node(std::shared_ptr<N> x) :
-        straight_node<typename N::base> (x->reduce()) {}
+        log_node(shared_leaf<T> x) :
+        straight_node<T> (x, log_node<T>::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of log.
@@ -360,8 +418,8 @@ namespace graph {
 ///
 ///  @returns The value of log(x).
 //------------------------------------------------------------------------------
-        virtual backend::buffer<typename N::base> evaluate() final {
-            backend::buffer<typename N::base> result = this->arg->evaluate();
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> result = this->arg->evaluate();
             result.log();
             return result;
         }
@@ -371,12 +429,16 @@ namespace graph {
 ///
 ///  @returns Reduced graph from log.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base> reduce() final {
-#ifdef USE_REDUCE
+        virtual shared_leaf<T> reduce() {
             if (constant_cast(this->arg).get()) {
                 return constant(this->evaluate());
             }
-#endif
+
+//  Reduce log(exp(x)) -> x
+            auto a = exp_cast(this->arg);
+            if (a.get()) {
+                return a->get_arg();
+            }
             return this->shared_from_this();
         }
 
@@ -388,25 +450,25 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base>
-        df(shared_leaf<typename N::base> x) final {
+        virtual shared_leaf<T> df(shared_leaf<T> x) {
             return this->arg->df(x)/this->arg;
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in] stream    String buffer stream.
-///  @params[in] registers List of defined registers.
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename N::base> compile(std::stringstream &stream,
-                                                      jit::register_map<N> &registers) final {
+        virtual shared_leaf<T> compile(std::stringstream &stream,
+                                       jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename N::base> a = this->arg->compile(stream, registers);
+                shared_leaf<T> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename N::base> (stream);
+                jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = log("
                        << registers[a.get()] << ");"
                        << std::endl;
@@ -421,7 +483,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename N::base> x) final {
+        virtual bool is_match(shared_leaf<T> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -437,7 +499,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const final {
+        virtual void to_latex() const {
             std::cout << "\\ln{\\left(";
             this->arg->to_latex();
             std::cout << "\\right)}";
@@ -448,16 +510,23 @@ namespace graph {
 ///  @brief Define log convience function.
 ///
 ///  @params[in] x Argument.
-///  @returns A reduced exp node.
+///  @returns A reduced log node.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_leaf<typename N::base> log(std::shared_ptr<N> x) {
-        return (std::make_shared<log_node<N>> (x))->reduce();
+    template<typename T> shared_leaf<T> log(shared_leaf<T> x) {
+        auto temp = std::make_shared<log_node<T>> (x)->reduce();
+        const size_t h = temp->get_hash();
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
+            return temp;
+        }
+        
+        return leaf_node<T>::cache[h];
     }
 
-///  Convenience type alias for shared exp nodes.
-    template<typename N>
-    using shared_log = std::shared_ptr<log_node<N>>;
+///  Convenience type alias for shared log nodes.
+    template<typename T>
+    using shared_log = std::shared_ptr<log_node<T>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a exp node.
@@ -465,9 +534,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_log<N> log_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<log_node<N>> (x);
+    template<typename T>
+    shared_log<T> log_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<log_node<T>> (x);
     }
 
 //******************************************************************************
@@ -478,8 +547,25 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename LN, typename RN>
-    class pow_node : public branch_node<typename LN::base> {
+    template<typename T>
+    class pow_node final : public branch_node<T> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] l Argument node pointer.
+///  @params[in] r Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *l,
+                                     leaf_node<T> *r) {
+            std::stringstream stream;
+            stream << "pow(" << reinterpret_cast<size_t> (l) << ","
+                             << reinterpret_cast<size_t> (r) << ")";
+                            
+            return stream.str();
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct an power node.
@@ -487,9 +573,9 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-        pow_node(std::shared_ptr<LN> l,
-                 std::shared_ptr<RN> r) :
-        branch_node<typename LN::base> (l, r) {}
+        pow_node(shared_leaf<T> l,
+                 shared_leaf<T> r) :
+        branch_node<T> (l, r, pow_node<T>::to_string(l.get(), r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of addition.
@@ -498,10 +584,10 @@ namespace graph {
 ///
 ///  @returns The value of l^r.
 //------------------------------------------------------------------------------
-        virtual backend::buffer<typename LN::base> evaluate() final {
-            backend::buffer<typename LN::base> l_result = this->left->evaluate();
-            backend::buffer<typename RN::base> r_result = this->right->evaluate();
-            return pow(l_result, r_result);
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> l_result = this->left->evaluate();
+            backend::buffer<T> r_result = this->right->evaluate();
+            return backend::pow(l_result, r_result);
         }
 
 //------------------------------------------------------------------------------
@@ -509,13 +595,12 @@ namespace graph {
 ///
 ///  @returns A reduced power node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename LN::base> reduce() final {
-#ifdef USE_REDUCE
+        virtual shared_leaf<T> reduce() {
             auto rc = constant_cast(this->right);
 
             if (rc.get()) {
                 if (rc->is(0)) {
-                    return one<typename LN::base> ();
+                    return one<T> ();
                 } else if (rc->is(1)) {
                     return this->left;
                 } else if (rc->is(0.5)) {
@@ -569,9 +654,8 @@ namespace graph {
             auto lsq = sqrt_cast(this->left);
             if (lsq.get()) {
                 return pow(lsq->get_arg(),
-                           this->right/two<typename LN::base> ());
+                           this->right/two<T> ());
             }
-#endif
             return this->shared_from_this();
         }
 
@@ -583,9 +667,9 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename LN::base>
-        df(shared_leaf<typename LN::base> x) final {
-            return pow(this->left, this->right - one<typename LN::base> ()) *
+        virtual shared_leaf<T>
+        df(shared_leaf<T> x) {
+            return pow(this->left, this->right - one<T> ()) *
                    (this->right*this->left->df(x) +
                     this->left*log(this->left)*this->right->df(x));
         }
@@ -593,18 +677,19 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in] stream    String buffer stream.
-///  @params[in] registers List of defined registers.
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<typename LN::base> compile(std::stringstream &stream,
-                                                       jit::register_map<LN> &registers) final {
+        virtual shared_leaf<T> compile(std::stringstream &stream,
+                                       jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<typename LN::base> l = this->left->compile(stream, registers);
-                shared_leaf<typename RN::base> r = this->right->compile(stream, registers);
+                shared_leaf<T> l = this->left->compile(stream, registers);
+                shared_leaf<T> r = this->right->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
-                jit::add_type<typename LN::base> (stream);
+                jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = pow("
                        << registers[l.get()] << ", "
                        << registers[r.get()] << ");"
@@ -620,7 +705,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<typename LN::base> x) final {
+        virtual bool is_match(shared_leaf<T> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -637,7 +722,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const final {
+        virtual void to_latex() const {
             auto use_brackets = !constant_cast(this->left).get() &&
                                 !variable_cast(this->left).get();
 
@@ -652,6 +737,17 @@ namespace graph {
             this->right->to_latex();
             std::cout << "}";
         }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_variable_like() const {
+            return this->left->is_variable_like() &&
+                   (this->right->is_variable_like() ||
+                    constant_cast(this->right).get());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -660,15 +756,23 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename LN, typename RN>
-    shared_leaf<typename LN::base> pow(std::shared_ptr<LN> l,
-                                       std::shared_ptr<RN> r) {
-        return std::make_shared<pow_node<LN, RN>> (l, r)->reduce();
+    template<typename T>
+    shared_leaf<T> pow(shared_leaf<T> l,
+                       shared_leaf<T> r) {
+        auto temp = std::make_shared<pow_node<T>> (l, r)->reduce();
+        const size_t h = temp->get_hash();
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
+            return temp;
+        }
+        
+        return leaf_node<T>::cache[h];
     }
 
 ///  Convenience type alias for shared add nodes.
-    template<typename LN, typename RN>
-    using shared_pow = std::shared_ptr<pow_node<LN, RN>>;
+    template<typename T>
+    using shared_pow = std::shared_ptr<pow_node<T>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a power node.
@@ -676,9 +780,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename N>
-    shared_pow<N, N> pow_cast(std::shared_ptr<N> x) {
-        return std::dynamic_pointer_cast<pow_node<N, N>> (x);
+    template<typename T>
+    shared_pow<T> pow_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<pow_node<T>> (x);
     }
 }
 

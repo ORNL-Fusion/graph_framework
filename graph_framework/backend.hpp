@@ -8,8 +8,8 @@
 #ifndef backend_h
 #define backend_h
 
-#include <complex>
 #include <algorithm>
+#include <vector>
 
 #include "register.hpp"
 
@@ -27,6 +27,12 @@ namespace backend {
         std::vector<T> memory;
 
     public:
+//------------------------------------------------------------------------------
+///  @brief Construct an empty buffer backend.
+//------------------------------------------------------------------------------
+        buffer() :
+        memory() {}
+
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend with a size.
 ///
@@ -552,6 +558,38 @@ namespace backend {
             base[i] = std::pow(base.at(i), exponent.at(i));
         }
         return base;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Take the inverse tangent.
+///
+///  @params[in] x X argument.
+///  @params[in] y Y argument.
+///  @returns atan2(y, x)
+//------------------------------------------------------------------------------
+    template<typename T>
+    inline buffer<T> atan(buffer<T> &x,
+                          buffer<T> &y) {
+        if (y.size() == 1) {
+            const T right = y.at(0);
+            for (size_t i = 0, ie = x.size(); i < ie; i++) {
+                x[i] = std::atan(right/x[i]);
+            }
+            return x;
+        } else if (x.size() == 1) {
+            const T left = x.at(0);
+            for (size_t i = 0, ie = y.size(); i < ie; i++) {
+                y[i] = std::atan(y[i]/left);
+            }
+            return y;
+        }
+
+        assert(x.size() == y.size() &&
+               "Left and right sizes are incompatable.");
+        for (size_t i = 0, ie = x.size(); i < ie; i++) {
+            x[i] = std::atan(y[i]/x[i]);
+        }
+        return x;
     }
 }
 

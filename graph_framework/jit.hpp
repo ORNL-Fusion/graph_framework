@@ -8,16 +8,12 @@
 #ifndef jit_h
 #define jit_h
 
-#include <chrono>
-
 #ifdef USE_METAL
 #include "metal_context.hpp"
 #elif defined(USE_CUDA)
 #include "cuda_context.hpp"
 #endif
 #include "cpu_context.hpp"
-
-#include "timing.hpp"
 
 #ifdef USE_METAL
 #define START_GPU @autoreleasepool {
@@ -37,7 +33,7 @@ namespace jit {
 ///  String stream to build the kernel source.
         std::stringstream source_buffer;
 ///  Nodes that have been jitted.
-        register_map<graph::leaf_node<T>> registers;
+        register_map registers;
 ///  Kernel names.
         std::vector<std::string> kernel_names;
 
@@ -82,6 +78,14 @@ namespace jit {
             
             const size_t size = inputs[0]->size();
 
+            visiter_map visited;
+            for (auto &[out, in] : setters) {
+                out->compile_preamble(source_buffer, registers, visited);
+            }
+            for (auto &out : outputs) {
+                out->compile_preamble(source_buffer, registers, visited);
+            }
+
             gpu_context.create_kernel_prefix(source_buffer,
                                              name, inputs, outputs, size,
                                              registers);
@@ -95,6 +99,18 @@ namespace jit {
 
             gpu_context.create_kernel_postfix(source_buffer, outputs,
                                               setters, registers);
+
+//  Delete the registers so that can be used again in other kernels.
+            std::vector<void *> removed_elements;
+            for (auto &[key, value] : registers) {
+                if (value[0] == 'r') {
+                    removed_elements.push_back(key);
+                }
+            }
+            
+            for (auto &key : removed_elements) {
+                registers.erase(key);
+            }
         }
 
 //------------------------------------------------------------------------------

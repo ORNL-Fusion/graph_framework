@@ -8,12 +8,6 @@
 #undef NDEBUG
 #endif
 
-#include <cassert>
-
-#include <iomanip>
-
-#include "../graph_framework/jit.hpp"
-#include "../graph_framework/math.hpp"
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
@@ -324,7 +318,7 @@ template<typename T> void run_math_tests() {
 ///  @params[in] eq Equilibrium for the dispersion function.
 //------------------------------------------------------------------------------
 template<class DISPERSION_FUNCTION>
-void run_dispersion_test(equilibrium::unique_equilibrium<typename DISPERSION_FUNCTION::base> &eq,
+void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
                          const typename DISPERSION_FUNCTION::base tolarance) {
 
     auto w = graph::variable<typename DISPERSION_FUNCTION::base> (1, "w");

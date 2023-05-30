@@ -8,7 +8,6 @@
 #include <thread>
 #include <random>
 
-#include "../graph_framework/backend.hpp"
 #include "../graph_framework/solver.hpp"
 #include "../graph_framework/timing.hpp"
 
@@ -33,15 +32,18 @@ static base solution(const base t) {
 int main(int argc, const char * argv[]) {
     START_GPU
 
-    //typedef std::complex<double> base;
-    //typedef double base;
+    std::mutex sync;
+
     typedef float base;
+    //typedef double base;
     //typedef std::complex<float> base;
-    
+    //typedef std::complex<double> base;
+
     const timeing::measure_diagnostic total("Total Time");
 
     const size_t num_times = 10000;
-    //const size_t num_rays = 1;
+    const size_t sub_steps = 1;
+    const size_t num_steps = num_times/sub_steps;
     const size_t num_rays = 1000000;
 
     std::vector<std::thread> threads(0);
@@ -54,14 +56,12 @@ int main(int argc, const char * argv[]) {
     }
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, num_rays] (const size_t thread_number,
-                                                        const size_t num_threads) -> void {
+        threads[i] = std::thread([num_times, num_rays, &sync] (const size_t thread_number,
+                                                               const size_t num_threads) -> void {
             const size_t local_num_rays = num_rays/num_threads
                                         + std::min(thread_number, num_rays%num_threads);
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-            std::uniform_real_distribution<base> real_dist(0.6, 1.0);
-            std::normal_distribution<base> norm_dist(600.0, 10.0);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
             
             auto omega = graph::variable<base> (local_num_rays, "\\omega");
@@ -76,30 +76,57 @@ int main(int argc, const char * argv[]) {
             t->set(static_cast<base> (0.0));
 
 //  Inital conditions.
-            for (size_t j = 0; j < local_num_rays; j++) {
-                omega->set(j, norm_dist(engine));
+            if constexpr (jit::is_complex<base> ()) {
+                if constexpr (jit::is_float<base> ()) {
+                    std::normal_distribution<float> norm_dist(static_cast<float> (1000.0), static_cast<float> (10.0));
+                    for (size_t j = 0; j < local_num_rays; j++) {
+                        omega->set(j, static_cast<base> (norm_dist(engine)));
+                    }
+                } else {
+                    std::normal_distribution<double> norm_dist(static_cast<double> (1000.0), static_cast<double> (10.0));
+                    for (size_t j = 0; j < local_num_rays; j++) {
+                        omega->set(j, static_cast<base> (norm_dist(engine)));
+                    }
+                }
+            } else {
+                std::normal_distribution<base> norm_dist(static_cast<base> (1000.0), static_cast<base> (10.0));
+                for (size_t j = 0; j < local_num_rays; j++) {
+                    omega->set(j, static_cast<base> (norm_dist(engine)));
+                }
             }
 
-            x->set(static_cast<base> (0.0));
+            x->set(static_cast<base> (1.5));
+            //x->set(static_cast<base> (0.0));
             y->set(static_cast<base> (0.0));
             z->set(static_cast<base> (0.0));
-            kx->set(static_cast<base> (600.0));
+            kx->set(static_cast<base> (2000.0));
+            //kx->set(static_cast<base> (600.0));
             ky->set(static_cast<base> (0.0));
             kz->set(static_cast<base> (0.0));
 
-            auto eq = equilibrium::make_slab_density<base> ();
+
+            auto eq = equilibrium::make_efit<base> (NC_FILE, sync);
+            //auto eq = equilibrium::make_slab_density<base> ();
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
+            //const base endtime = static_cast<base> (4.0);
+            const base endtime = static_cast<base> (100.0);
+            const base dt = endtime/static_cast<base> (num_times);
+
+            //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");
+
             //solver::split_simplextic<dispersion::bohm_gross<base>>
-            //solver::rk4<dispersion::bohm_gross<base>>
+            //solver::adaptive_rk4<dispersion::bohm_gross<base>>
             //solver::rk4<dispersion::simple<base>>
             //solver::rk4<dispersion::ordinary_wave<base>>
-            //solver::rk4<dispersion::extra_ordinary_wave<base>>
-            solver::rk4<dispersion::cold_plasma<base>>
-                solve(omega, kx, ky, kz, x, y, z, t, 60.0/num_times, eq);
-            solve.init(kx);
+            solver::rk4<dispersion::extra_ordinary_wave<base>>
+            //solver::rk4<dispersion::cold_plasma<base>>
+            //solver::adaptive_rk4<dispersion::ordinary_wave<base>>
+                solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
+                //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq);
+            solve.init(omega);
             solve.compile();
-            if (thread_number == 0) {
+            if (thread_number == 0 && false) {
                 solve.print_dispersion();
                 std::cout << std::endl;
                 solve.print_dkxdt();
@@ -121,11 +148,13 @@ int main(int argc, const char * argv[]) {
                 std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
             }
 
-            for (size_t j = 0; j < num_times; j++) {
+            for (size_t j = 0; j < num_steps; j++) {
                 if (thread_number == 0) {
                     solve.print(sample);
                 }
-                solve.step();
+                for(size_t k = 0; k < sub_steps; k++) {
+                    solve.step();
+                }
             }
 
             if (thread_number == 0) {

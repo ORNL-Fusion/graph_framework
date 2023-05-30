@@ -8,9 +8,6 @@
 #undef NDEBUG
 #endif
 
-#include <cassert>
-
-#include "../graph_framework/backend.hpp"
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
@@ -24,7 +21,7 @@ template<typename DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,
                 const typename DISPERSION::base omega,
                 const typename DISPERSION::base k_guess,
-                equilibrium::unique_equilibrium<typename DISPERSION::base> &eq) {
+                equilibrium::shared<typename DISPERSION::base> &eq) {
     auto w = graph::variable<typename DISPERSION::base> (1, omega, "\\omega");
     auto kx = graph::variable<typename DISPERSION::base> (1, 0.25, "k_{x}");
     auto ky = graph::variable<typename DISPERSION::base> (1, 0.25, "k_{y}");
@@ -85,15 +82,12 @@ void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
-#ifdef USE_REDUCE
     if constexpr (jit::use_cuda()) {
         run_tests<float> (3.2E-14);
     } else {
         run_tests<float> (2.0E-14);
     }
-#else
-    run_tests<float> (1.5E-14);
-#endif
+
     run_tests<double> (1.0E-30);
     if constexpr (jit::use_cuda()) {
         run_tests<std::complex<float>> (5.7E-14);
