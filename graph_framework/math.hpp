@@ -239,6 +239,28 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return sqrt(this->arg->remove_pseudo());
         }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
+                                           jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"sqrt\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto a = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -440,6 +462,28 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return exp(this->arg->remove_pseudo());
         }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
+                                           jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"exp\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto a = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -636,6 +680,28 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return log(this->arg->remove_pseudo());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
+                                           jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"log\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto a = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
         }
     };
 
@@ -918,6 +984,30 @@ namespace graph {
             std::cout << "^{";
             this->right->to_latex();
             std::cout << "}";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
+                                           jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"pow\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto l = this->left->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[l.get()] << ";" << std::endl;
+                auto r = this->right->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[r.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------

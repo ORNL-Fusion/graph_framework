@@ -256,10 +256,6 @@ namespace jit {
             }
         }
     };
-
-///  Type alias for constant registers.
-    template<typename T, class C>
-    using constant_map = std::map<T, C, float_compare<T>>;
 }
 
 #endif /* register_h */

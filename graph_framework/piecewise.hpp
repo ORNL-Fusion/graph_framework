@@ -263,6 +263,29 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
+                                           jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"r_" << reinterpret_cast<size_t> (this)
+                       << "_{i}\", shape = hexagon, style = filled, fillcolor = black, fontcolor = white];" << std::endl;
+
+                auto a = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Test if node acts like a constant.
 ///
 ///  @returns True if the node acts like a constant.
@@ -665,6 +688,31 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
             std::cout  << "r\\_" << reinterpret_cast<size_t> (this) << "_{ij}";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
+                                           jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"r_" << reinterpret_cast<size_t> (this)
+                       << "_{ij}\", shape = hexagon, style = filled, fillcolor = black, fontcolor = white];" << std::endl;
+
+                auto l = this->left->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[l.get()] << ";" << std::endl;
+                auto r = this->right->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[r.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
