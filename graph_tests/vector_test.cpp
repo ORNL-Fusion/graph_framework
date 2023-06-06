@@ -8,6 +8,8 @@
 #undef NDEBUG
 #endif
 
+#include <cassert>
+
 #include "../graph_framework/vector.hpp"
 #include "../graph_framework/math.hpp"
 #include "../graph_framework/arithmetic.hpp"

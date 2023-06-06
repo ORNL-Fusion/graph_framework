@@ -8,7 +8,6 @@ target_compile_features (rays
 
 target_compile_definitions (rays
                             INTERFACE
-                            $<$<CONFIG:Release>:NDEBUG>
                             $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT}">
                             $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER}">
                             NC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"

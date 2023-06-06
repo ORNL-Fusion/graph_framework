@@ -8,6 +8,7 @@
 #undef NDEBUG
 #endif
 
+#include <cassert>
 #include <chrono>
 #include <random>
 

@@ -8,6 +8,8 @@
 #undef NDEBUG
 #endif
 
+#include <cassert>
+
 #include "../graph_framework/math.hpp"
 #include "../graph_framework/arithmetic.hpp"
 #include "../graph_framework/piecewise.hpp"
@@ -140,7 +142,11 @@ template<typename T> void test_add() {
 
 //  v1 + -c*v2 -> v1 - c*v2
     auto negate = var_a + graph::constant(static_cast<T> (-2.0))*var_b;
-    assert(graph::subtract_cast(negate).get() && "Expected subtract node.");
+    assert(graph::add_cast(negate).get() && "Expected add node.");
+
+//  v1 + -1*v2 -> v1 - v2
+    auto add_neg = var_a + graph::none<T> ()*var_b;
+    assert(graph::subtract_cast(add_neg).get() && "Expected subtract node.");
 
 //  -c1*v1 + v2 -> v2 - c*v1
     auto negate2 = graph::constant(static_cast<T> (-2.0))*var_a + var_b;
@@ -313,7 +319,11 @@ template<typename T> void test_subtract() {
 
 //  v1 - -c*v2 -> v1 + c*v2
     auto negate = var_a - graph::constant(static_cast<T> (-2.0))*var_b;
-    assert(graph::add_cast(negate).get() && "Expected addition node.");
+    assert(graph::subtract_cast(negate).get() && "Expected subtraction node.");
+
+//  v1 - -1*v2 -> v1 + v2
+    neg_one = var_a - graph::none<T> ()*var_b;
+    assert(graph::add_cast(neg_one).get() && "Expected addition node.");
 
 //  (c1*v1 + c2) - (c3*v1 + c4) -> c5*(v1 - c6)
     auto two = graph::constant(static_cast<T> (2.0));

@@ -110,7 +110,7 @@ int main(int argc, const char * argv[]) {
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
             //const base endtime = static_cast<base> (4.0);
-            const base endtime = static_cast<base> (100.0);
+            const base endtime = static_cast<base> (1.0);
             const base dt = endtime/static_cast<base> (num_times);
 
             //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");
@@ -125,7 +125,7 @@ int main(int argc, const char * argv[]) {
             solver::rk4<dispersion::hot_plasma<base, dispersion::z_power_series<base>>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
                 //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq);
-            solve.init(omega);
+            solve.init(kx);
             solve.compile();
             if (thread_number == 0 && false) {
                 solve.print_dispersion();
