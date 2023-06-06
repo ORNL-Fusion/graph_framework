@@ -110,7 +110,7 @@ namespace workflow {
             max_kernel = context.create_max_call(this->outputs.back(),
                                                  this->kernel);
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Run the workitem.
 //------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ namespace workflow {
                    iterations++ < max_iterations) {
                 max_residule = max_kernel();
             }
-            
+
 //  In release mode asserts are diaables so write error to standard err. Need to
 //  flip the comparison operator because we want to assert to trip if false.
             assert(iterations < max_iterations &&
@@ -199,7 +199,7 @@ namespace workflow {
 //------------------------------------------------------------------------------
         void compile() {
             context.compile(add_reduction);
-            
+
             for (auto &item : items) {
                 item->create_kernel_call(context);
             }

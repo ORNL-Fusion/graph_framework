@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <cstdlib>
+#include <cstring>
 
 #include <dlfcn.h>
 

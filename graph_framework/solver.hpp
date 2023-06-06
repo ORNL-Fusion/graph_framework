@@ -441,7 +441,7 @@ namespace solver {
             equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
         rk4(w, kx, ky, kz, x, y, z, t,
             graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt)), eq) {}
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
@@ -690,7 +690,7 @@ namespace solver {
 
 //  Test if the function is separatable.
             auto zero = graph::zero<typename DISPERSION_FUNCTION::base> ();
-            
+
             assert(zero->is_match(this->D.get_dkxdt()->df(kx)) &&
                    zero->is_match(this->D.get_dkxdt()->df(ky)) &&
                    zero->is_match(this->D.get_dkxdt()->df(kz)) &&

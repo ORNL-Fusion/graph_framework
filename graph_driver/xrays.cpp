@@ -63,7 +63,7 @@ int main(int argc, const char * argv[]) {
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
-            
+
             auto omega = graph::variable<base> (local_num_rays, "\\omega");
             auto kx = graph::variable<base> (local_num_rays, "k_{x}");
             auto ky = graph::variable<base> (local_num_rays, "k_{y}");
@@ -149,16 +149,18 @@ int main(int argc, const char * argv[]) {
                 std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
             }
 
+            const timeing::measure_diagnostic steps("Step Time");
             for (size_t j = 0; j < num_steps; j++) {
-                if (thread_number == 0) {
+                if (thread_number == 0 && false) {
                     solve.print(sample);
                 }
                 for(size_t k = 0; k < sub_steps; k++) {
                     solve.step();
                 }
             }
+            steps.stop();
 
-            if (thread_number == 0) {
+            if (thread_number == 0 && false) {
                 solve.print(sample);
             } else {
                 solve.sync_host();

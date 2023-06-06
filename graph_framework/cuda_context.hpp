@@ -185,6 +185,7 @@ namespace gpu {
                 std::cout << log << std::endl;
                 free(log);
                 std::cout << kernel_source << std::endl;
+                exit(1);
             }
 
             check_error(cuDeviceGetAttribute(&compute_version,
@@ -202,7 +203,18 @@ namespace gpu {
             check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
                               "nvrtcDestroyProgram");
 
-            check_error(cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL), "cuModuleLoadDataEx");
+            std::array<CUjit_option, 1> jit_options({
+                CU_JIT_MAX_REGISTERS
+            });
+            unsigned int max_registers = MAX_REG;
+            std::array<void *, 1> jit_values({
+                reinterpret_cast<void *> (max_registers)
+            });
+
+            check_error(cuModuleLoadDataEx(&module, ptx,
+                                           jit_options.size(),
+                                           jit_options.data(),
+                                           jit_values.data()), "cuModuleLoadDataEx");
 
             free(ptx);
         }

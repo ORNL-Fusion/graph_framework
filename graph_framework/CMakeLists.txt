@@ -6,11 +6,13 @@ target_compile_features (rays
                          cxx_std_20
 )
 
+set(MAX_REGISTERS 60 CACHE STRING "Maximum Number of Registers to use")
 target_compile_definitions (rays
                             INTERFACE
                             $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT}">
                             $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER}">
                             NC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"
+                            MAX_REG=${MAX_REGISTERS}
 )
 target_include_directories (rays
                             INTERFACE
@@ -21,6 +23,7 @@ target_link_libraries (rays
                        sanitizer
                        gpu_lib
                        NetCDF::NetCDF
+                       ${CMAKE_DL_LIBS}
 )
 target_precompile_headers (rays
                            INTERFACE
