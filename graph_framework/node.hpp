@@ -454,15 +454,13 @@ namespace graph {
 //------------------------------------------------------------------------------
         static std::string to_string(const T d) {
             std::stringstream stream;
+            stream << d;
             stream << std::setprecision(jit::max_digits10<T> ());
 
             if constexpr (jit::is_complex<T> ()) {
                 jit::add_type<T> (stream);
-                stream << " (" << std::real(d) << ","
-                << std::imag(d) << ")";
-            } else {
-                stream << d;
             }
+            stream << d;
             
             return stream.str();
         }
@@ -546,12 +544,8 @@ namespace graph {
                 stream << " " << registers[this] << " = ";
                 if constexpr (jit::is_complex<T> ()) {
                     jit::add_type<T> (stream);
-                    stream << " (" << std::real(temp) << ","
-                    << std::imag(temp) << ")";
-                } else {
-                    stream << temp;
                 }
-                stream << ";" << std::endl;
+                stream << temp << ";" << std::endl;
             }
 
             return this->shared_from_this();

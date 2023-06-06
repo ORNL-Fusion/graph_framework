@@ -56,7 +56,7 @@ namespace jit {
 ///  @brief Construct a jit context object.
 //------------------------------------------------------------------------------
         context() {
-            source_buffer << std::setprecision(jit::max_digits10<T> ());
+            source_buffer << std::setprecision(max_digits10<T> ());
             gpu_context.create_header(source_buffer);
         }
         

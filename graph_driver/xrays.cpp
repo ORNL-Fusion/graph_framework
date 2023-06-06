@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
     const size_t num_times = 10000;
     const size_t sub_steps = 1;
     const size_t num_steps = num_times/sub_steps;
-    const size_t num_rays = 1000000;
+    const size_t num_rays = 1;//000000;
 
     std::vector<std::thread> threads(0);
     if constexpr (jit::use_gpu<base> ()) {

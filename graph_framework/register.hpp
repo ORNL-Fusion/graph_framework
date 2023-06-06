@@ -14,6 +14,7 @@
 #include <sstream>
 #include <complex>
 #include <type_traits>
+#include <limits>
 
 namespace jit {
 //------------------------------------------------------------------------------
@@ -167,7 +168,7 @@ namespace jit {
         if constexpr (is_float<T> ()) {
             return std::numeric_limits<float>::max_digits10;
         } else {
-            return std::numeric_limits<double>::max_digits10;;
+            return std::numeric_limits<double>::max_digits10;
         }
     }
 
