@@ -175,6 +175,21 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Is every element negative one.
+///
+///  @returns Returns true if every element is negative one.
+//------------------------------------------------------------------------------
+        bool is_none() const {
+            for (T d : memory) {
+                if (d != static_cast<T> (-1.0)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Take sqrt.
 //------------------------------------------------------------------------------
         void sqrt() {
