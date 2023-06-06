@@ -158,13 +158,13 @@ int main(int argc, const char * argv[]) {
                     solve.step();
                 }
             }
-            steps.stop();
 
             if (thread_number == 0 && false) {
                 solve.print(sample);
             } else {
                 solve.sync_host();
             }
+            steps.stop();
 
         }, i, threads.size());
     }
