@@ -240,9 +240,11 @@ namespace workflow {
 ///  @brief Print results.
 ///
 ///  @params[in] index Particle index to print.
+///  @params[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
-        void print(const size_t index) {
-            context.print(index);
+        void print(const size_t index,
+                   const graph::output_nodes<T> &nodes) {
+            context.print(index, nodes);
         }
     };
 }

@@ -784,6 +784,170 @@ namespace graph {
     shared_pow<T> pow_cast(shared_leaf<T> x) {
         return std::dynamic_pointer_cast<pow_node<T>> (x);
     }
+
+//******************************************************************************
+//  Erfi node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief An imaginary error function node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class erfi_node final : public straight_node<T> {
+    private:
+//  Limit node to complex base types.
+        static_assert(jit::is_complex<T> (),
+                      "erfi only valid for complex base types.");
+
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T> *a) {
+            std::stringstream stream;
+            stream << "erfi(" << reinterpret_cast<size_t> (a) << ")";
+                            
+            return stream.str();
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a exp node.
+///
+///  @params[in] x Argument.
+//------------------------------------------------------------------------------
+        erfi_node(shared_leaf<T> x) :
+        straight_node<T> (x, erfi_node<T>::to_string(x.get())) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of erfi.
+///
+///  result = erfi(x)
+///
+///  @returns The value of erfi(x).
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> result = this->arg->evaluate();
+            result.erfi();
+            return result;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce the erfi(x).
+///
+///  @returns Reduced graph from exp.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> reduce() {
+            if (constant_cast(this->arg).get()) {
+                return constant(this->evaluate());
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  d erfi(z)/dx = 2/sqrt(pi)Exp(z^2)*dz/dx
+///
+///  @params[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> df(shared_leaf<T> x) {
+            if (this->is_match(x)) {
+                return one<T> ();
+            }
+
+            return two<T> ()/sqrt(pi<T> ())*exp(this->arg*this->arg)*this->arg->df(x);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> compile(std::stringstream &stream,
+                                       jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<T> a = this->arg->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                stream << " " << registers[this] << " = special::erfi("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @params[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T> x) {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = erfi_cast(x);
+            if (x_cast.get()) {
+                return this->arg->is_match(x_cast->get_arg());
+            }
+
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "erfi\\left(";
+            this->arg->to_latex();
+            std::cout << "\\right)}";
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define erfi convience function.
+///
+///  @params[in] x Argument.
+///  @returns A reduced exp node.
+//------------------------------------------------------------------------------
+    template<typename T> shared_leaf<T> erfi(shared_leaf<T> x) {
+        auto temp = std::make_shared<erfi_node<T>> (x)->reduce();
+        const size_t h = temp->get_hash();
+        if (leaf_node<T>::cache.find(h) ==
+            leaf_node<T>::cache.end()) {
+            leaf_node<T>::cache[h] = temp;
+            return temp;
+        }
+        
+        return leaf_node<T>::cache[h];
+    }
+
+///  Convenience type alias for shared exp nodes.
+    template<typename T>
+    using shared_erfi = std::shared_ptr<erfi_node<T>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a exp node.
+///
+///  @params[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
+//------------------------------------------------------------------------------
+    template<typename T>
+    shared_erfi<T> erfi_cast(shared_leaf<T> x) {
+        return std::dynamic_pointer_cast<erfi_node<T>> (x);
+    }
 }
 
 #endif /* math_h */

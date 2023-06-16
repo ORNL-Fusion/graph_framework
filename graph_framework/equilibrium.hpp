@@ -606,7 +606,7 @@ namespace equilibrium {
 ///  Fpol c3.
         graph::shared_leaf<T> fpol_c3;
 
-//  Pressure spline coefficients.
+//  Psi spline coefficients.
 ///  Psi c00.
         graph::shared_leaf<T> c00;
 ///  Psi c01.
@@ -644,7 +644,47 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Construct a EFIT equilibrium.
 ///
-///  @params[in] psimin Minimum psi value.
+///  @params[in] psimin     Minimum psi value.
+///  @params[in] dpsi       Change in psi value.
+///  @params[in] te_c0      Te c0 spline coefficient.
+///  @params[in] te_c1      Te c1 spline coefficient.
+///  @params[in] te_c2      Te c2 spline coefficient.
+///  @params[in] te_c3      Te c3 spline coefficient.
+///  @params[in] te_scale   Temperatire scale.
+///  @params[in] ne_c0      Ne c0 spline coefficient.
+///  @params[in] ne_c1      Ne c1 spline coefficient.
+///  @params[in] ne_c2      Ne c2 spline coefficient.
+///  @params[in] ne_c3      Ne c3 spline coefficient.
+///  @params[in] ne_scale   Denisty scale.
+///  @params[in] pres_c0    Pressure c0 spline coefficient.
+///  @params[in] pres_c1    Pressure c1 spline coefficient.
+///  @params[in] pres_c2    Pressure c2 spline coefficient.
+///  @params[in] pres_c3    Pressure c3 spline coefficient.
+///  @params[in] pres_scale Pressure scale.
+///  @params[in] rmin       Radial gird minimum.
+///  @params[in] dr         Radial grid spacing.
+///  @params[in] zmin       Vertical grid minimum.
+///  @params[in] dz         Vertical grid spacing.
+///  @params[in] fpol_c0    Flux function c0 spline coefficient.
+///  @params[in] fpol_c1    Flux function c1 spline coefficient.
+///  @params[in] fpol_c2    Flux function c2 spline coefficient.
+///  @params[in] fpol_c3    Flux function c3 spline coefficient.
+///  @params[in] c00        Psi c00 spline coefficient.
+///  @params[in] c01        Psi c01 spline coefficient.
+///  @params[in] c02        Psi c02 spline coefficient.
+///  @params[in] c03        Psi c03 spline coefficient.
+///  @params[in] c10        Psi c10 spline coefficient.
+///  @params[in] c11        Psi c11 spline coefficient.
+///  @params[in] c12        Psi c12 spline coefficient.
+///  @params[in] c13        Psi c13 spline coefficient.
+///  @params[in] c20        Psi c20 spline coefficient.
+///  @params[in] c21        Psi c21 spline coefficient.
+///  @params[in] c22        Psi c22 spline coefficient.
+///  @params[in] c23        Psi c23 spline coefficient.
+///  @params[in] c30        Psi c30 spline coefficient.
+///  @params[in] c31        Psi c31 spline coefficient.
+///  @params[in] c32        Psi c32 spline coefficient.
+///  @params[in] c33        Psi c33 spline coefficient.
 //------------------------------------------------------------------------------
         efit(graph::shared_leaf<T> psimin,
              graph::shared_leaf<T> dpsi,
@@ -1108,6 +1148,7 @@ namespace equilibrium {
         auto zmin = graph::constant(static_cast<T> (zmin_value));
         auto dz = graph::constant(static_cast<T> (dz_value));
         auto psimin = graph::constant(static_cast<T> (psimin_value));
+        auto psibry = graph::constant(static_cast<T> (psibry_value));
         auto dpsi = graph::constant(static_cast<T> (dpsi_value));
         auto pres_scale = graph::constant(static_cast<T> (pres_scale_value));
         auto ne_scale = graph::constant(static_cast<T> (ne_scale_value));

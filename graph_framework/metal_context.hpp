@@ -222,12 +222,18 @@ namespace gpu {
 ///  @brief Print out the results.
 ///
 ///  @params[in] index Particle index to print.
+///  @params[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
-        void print_results(const size_t index) {
+        void print_results(const size_t index,
+                           const graph::output_nodes<T> &nodes) {
             wait();
-            for (const auto &[key, value] : kernel_arguments) {
-                const T *contents = static_cast<T *> ([value contents]);
-                std::cout << contents[index] << " ";
+            for (auto &out : nodes) {
+                const T temp = static_cast<T *> ([kernel_arguments[out.get()] contents])[index];
+                if constexpr (jit::is_complex<T> ()) {
+                    std::cout << std::real(temp) << " " << std::imag(temp) << " ";
+                } else {
+                    std::cout << temp << " ";
+                }
             }
             std::cout << std::endl;
         }

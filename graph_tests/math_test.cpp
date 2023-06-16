@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file math_test.cpp
+///  @file math\_test.cpp
 ///  @brief Tests for math nodes.
 //------------------------------------------------------------------------------
 
@@ -242,6 +242,26 @@ void test_log() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests for log nodes.
+//------------------------------------------------------------------------------
+template<typename T>
+void test_erfi() {
+    auto a = graph::variable<T> (1, "");
+    auto erfi = graph::erfi(a);
+    
+    assert(graph::erfi_cast(erfi) &&
+           "Expected an erfi node.");
+
+    auto derfida = erfi->df(a);
+    assert(graph::multiply_cast(derfida) &&
+           "Expected a multiply node.");
+    
+    auto erfic = graph::erfi(graph::one<T> ());
+    assert(graph::constant_cast(erfic) &&
+           "Expected a constant node.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
@@ -249,6 +269,9 @@ template<typename T> void run_tests() {
     test_exp<T> ();
     test_pow<T> ();
     test_log<T> ();
+    if constexpr (jit::is_complex<T> ()) {
+        test_erfi<T> ();
+    }
 }
 
 //------------------------------------------------------------------------------

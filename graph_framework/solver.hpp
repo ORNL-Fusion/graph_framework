@@ -191,7 +191,17 @@ namespace solver {
 ///  @params[in] index Ray index to print results of.
 //------------------------------------------------------------------------------
         void print(const size_t index) {
-            work.print(index);
+            work.print(index, {
+                this->t,
+                this->residule,
+                this->w,
+                this->x,
+                this->y,
+                this->z,
+                this->kx,
+                this->ky,
+                this->kz
+            });
         }
 
 //------------------------------------------------------------------------------

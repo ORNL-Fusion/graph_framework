@@ -199,10 +199,17 @@ namespace gpu {
 ///  @brief Print out the results.
 ///
 ///  @params[in] index Particle index to print.
+///  @params[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
-        void print_results(const size_t index) {
-            for (const auto &[key, value] : kernel_arguments) {
-                std::cout << value[index] << " ";
+        void print_results(const size_t index,
+                           const graph::output_nodes<T> &nodes) {
+            for (auto &out : nodes) {
+                const T temp = kernel_arguments[out.get()][index];
+                if constexpr (jit::is_complex<T> ()) {
+                    std::cout << std::real(temp) << " " << std::imag(temp) << " ";
+                } else {
+                    std::cout << temp << " ";
+                }
             }
             std::cout << std::endl;
         }
@@ -243,6 +250,7 @@ namespace gpu {
             source_buffer << "#include <string>" << std::endl;
             if (jit::is_complex<T> ()) {
                 source_buffer << "#include <complex>" << std::endl;
+                source_buffer << "#include <special_functions.hpp>" << std::endl;
             } else {
                 source_buffer << "#include <cmath>" << std::endl;
             }

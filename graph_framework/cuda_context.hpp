@@ -318,11 +318,18 @@ namespace gpu {
 ///  @brief Print out the results.
 ///
 ///  @params[in] index Number of times to record.
+///  @params[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
-        void print_results(const size_t index) {
+        void print_results(const size_t index,
+                           const graph::output_nodes<T> &nodes) {
             wait();
-            for (auto &[key, value] : kernel_arguments) {
-                std::cout << reinterpret_cast<T *> (value)[index] << " ";
+            for (auto &out : nodes) {
+                const T temp = reinterpret_cast<T *> (kernel_arguments[out.get()])[index];
+                if constexpr (jit::is_complex<T> ()) {
+                    std::cout << std::real(temp) << " " << std::imag(temp) << " ";
+                } else {
+                    std::cout << temp << " ";
+                }
             }
             std::cout << std::endl;
         }

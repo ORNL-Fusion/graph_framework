@@ -1089,11 +1089,33 @@ namespace dispersion {
             auto zeta2 = zeta*zeta;
             auto zeta4 = zeta2*zeta2;
             auto zeta6 = zeta4*zeta2;
-            T i(0.0, 1.0);
-            return graph::constant(i)*graph::sqrt(graph::pi<T> ())/graph::exp(zeta2) -
+            return graph::i<T> ()*graph::sqrt(graph::pi<T> ())/graph::exp(zeta2) -
                    two*(one - two/graph::constant(static_cast<T> (3.0))*zeta2
                             + four/graph::constant(static_cast<T> (15.0))*zeta4
                             - eight/graph::constant(static_cast<T> (105.0))*zeta6)*zeta;
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Class interface to build dispersion relation functions.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class z_erfi final : public z_function<T> {
+
+    static_assert(jit::is_complex<T> (), "Only supported for complex base types.");
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Method to build the Z function.
+///
+///  @params[in] zeta The zeta argument.
+///  @returns The constructed Z function.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T> Z(graph::shared_leaf<T> zeta) {
+            auto i = graph::i<T> ();
+            return i*graph::exp(graph::none<T> ()*zeta*zeta) *
+                   graph::sqrt(graph::pi<T> ())*(graph::one<T> () +
+                                                 i*graph::erfi(zeta));
         }
     };
 }

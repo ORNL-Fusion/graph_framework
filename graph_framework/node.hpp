@@ -692,6 +692,16 @@ namespace graph {
         return constant(static_cast<T> (M_PI));
     }
 
+//------------------------------------------------------------------------------
+/// @brief Create an imaginary constant.
+//------------------------------------------------------------------------------
+    template<typename T>
+    shared_leaf<T> i() {
+        static_assert(jit::is_complex<T> (),
+                      "Imaginary only valid for complex base types.");
+        return constant(T(0.0, 1.0));
+    }
+
 ///  Convenience type alias for shared constant nodes.
     template<typename T>
     using shared_constant = std::shared_ptr<constant_node<T>>;

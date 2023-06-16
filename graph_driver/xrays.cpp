@@ -41,8 +41,8 @@ int main(int argc, const char * argv[]) {
 
     const timeing::measure_diagnostic total("Total Time");
 
-    const size_t num_times = 10000;
-    const size_t sub_steps = 1;
+    const size_t num_times = 100000;
+    const size_t sub_steps = 10;
     const size_t num_steps = num_times/sub_steps;
     const size_t num_rays = 1;//000000;
 
@@ -110,7 +110,7 @@ int main(int argc, const char * argv[]) {
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
             //const base endtime = static_cast<base> (4.0);
-            const base endtime = static_cast<base> (1.0);
+            const base endtime = static_cast<base> (10.0);
             const base dt = endtime/static_cast<base> (num_times);
 
             //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");
@@ -122,7 +122,7 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::extra_ordinary_wave<base>>
             //solver::rk4<dispersion::cold_plasma<base>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<base>>
-            solver::rk4<dispersion::hot_plasma<base, dispersion::z_power_series<base>>>
+            solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base>>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
                 //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq);
             solve.init(kx);

@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "special_functions.hpp"
 #include "register.hpp"
 
 namespace backend {
@@ -228,9 +229,19 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Take cos.
 //------------------------------------------------------------------------------
-        virtual void cos() {
+        void cos() {
             for (T &d : memory) {
                 d = std::cos(d);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Take cos.
+//------------------------------------------------------------------------------
+        template<typename D=T>
+        typename std::enable_if<jit::is_complex<D> (), void>::type erfi() {
+            for (D &d : memory) {
+                d = special::erfi(d);
             }
         }
 
@@ -239,7 +250,7 @@ namespace backend {
 ///
 ///  @returns The pointer to the buffer memory.
 //------------------------------------------------------------------------------
-        virtual T *data() {
+        T *data() {
             return memory.data();
         }
 
