@@ -1148,7 +1148,6 @@ namespace equilibrium {
         auto zmin = graph::constant(static_cast<T> (zmin_value));
         auto dz = graph::constant(static_cast<T> (dz_value));
         auto psimin = graph::constant(static_cast<T> (psimin_value));
-        auto psibry = graph::constant(static_cast<T> (psibry_value));
         auto dpsi = graph::constant(static_cast<T> (dpsi_value));
         auto pres_scale = graph::constant(static_cast<T> (pres_scale_value));
         auto ne_scale = graph::constant(static_cast<T> (ne_scale_value));

@@ -19,6 +19,9 @@ namespace gpu {
     template<typename T>
     class metal_context {
     private:
+        static_assert(std::is_same<T, float>::value,
+                      "Metal is single precision real only.");
+        
 ///  The metal device.
         id<MTLDevice> device;
 ///  The metal command queue.
