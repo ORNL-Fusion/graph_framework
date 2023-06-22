@@ -9,6 +9,7 @@
 #define solver_h
 
 #include "dispersion.hpp"
+#include "output.hpp"
 
 namespace solver {
 //******************************************************************************
@@ -61,19 +62,24 @@ namespace solver {
 ///  Workflow manager.
         workflow::manager<typename DISPERSION_FUNCTION::base> work;
 
+///  Output file.
+        output::result_file<typename DISPERSION_FUNCTION::base> file;
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a new solver_interface with inital conditions.
 ///
-///  @params[in] w  Inital w.
-///  @params[in] kx Inital kx.
-///  @params[in] ky Inital ky.
-///  @params[in] kz Inital kz.
-///  @params[in] x  Inital x.
-///  @params[in] y  Inital y.
-///  @params[in] z  Inital z.
-///  @params[in] t  Inital t.
-///  @params[in] eq The plasma equilibrium.
+///  @params[in] w        Inital w.
+///  @params[in] kx       Inital kx.
+///  @params[in] ky       Inital ky.
+///  @params[in] kz       Inital kz.
+///  @params[in] x        Inital x.
+///  @params[in] y        Inital y.
+///  @params[in] z        Inital z.
+///  @params[in] t        Inital t.
+///  @params[in] eq       The plasma equilibrium.
+///  @params[in] filename Result filename, empty names will be blank.
+///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
         solver_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -83,10 +89,12 @@ namespace solver {
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
-                         equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
+                         equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+                         const std::string &filename="",
+                         const size_t num_rays=0) :
         D(w, kx, ky, kz, x, y, z, t, eq), w(w),
         kx(kx), ky(ky), kz(kz),
-        x(x), y(y), z(z), t(t) {}
+        x(x), y(y), z(z), t(t), file(filename, num_rays) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Method to initalize the rays.
@@ -148,6 +156,18 @@ namespace solver {
 
             work.add_item(inputs, outputs, setters, "solver_kernel");
             work.compile();
+
+            file.create_variable("time", this->t, work.get_context());
+            file.create_variable("residule", residule, work.get_context());
+            file.create_variable("w", this->w, work.get_context());
+            file.create_variable("x", this->x, work.get_context());
+            file.create_variable("y", this->y, work.get_context());
+            file.create_variable("z", this->z, work.get_context());
+            file.create_variable("kx", this->kx, work.get_context());
+            file.create_variable("ky", this->ky, work.get_context());
+            file.create_variable("kz", this->kz, work.get_context());
+
+            file.end_define_mode();
         }
 
 //------------------------------------------------------------------------------
@@ -202,6 +222,14 @@ namespace solver {
                 this->ky,
                 this->kz
             });
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Write result step.
+//------------------------------------------------------------------------------
+        void write_step() {
+            work.wait();
+            file.write();
         }
 
 //------------------------------------------------------------------------------
@@ -302,15 +330,17 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @params[in] w  Inital omega.
-///  @params[in] kx Inital kx.
-///  @params[in] ky Inital ky.
-///  @params[in] kz Inital kz.
-///  @params[in] x  Inital x.
-///  @params[in] y  Inital y.
-///  @params[in] z  Inital z.
-///  @params[in] t  Inital t.
-///  @params[in] dt Inital dt.
+///  @params[in] w        Inital omega.
+///  @params[in] kx       Inital kx.
+///  @params[in] ky       Inital ky.
+///  @params[in] kz       Inital kz.
+///  @params[in] x        Inital x.
+///  @params[in] y        Inital y.
+///  @params[in] z        Inital z.
+///  @params[in] t        Inital t.
+///  @params[in] dt       Inital dt.
+///  @params[in] filename Result filename, empty names will be blank.
+///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
         rk2(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -321,8 +351,11 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
             const typename DISPERSION_FUNCTION::base dt,
-            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
-        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq) {
+            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+            const std::string &filename="",
+            const size_t num_rays=0) :
+        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq,
+                                               filename, num_rays) {
             auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
 
             this->kx1 = dt_const*this->D.get_dkxdt();
@@ -429,15 +462,17 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @params[in] w  Inital omega.
-///  @params[in] kx Inital kx.
-///  @params[in] ky Inital ky.
-///  @params[in] kz Inital kz.
-///  @params[in] x  Inital x.
-///  @params[in] y  Inital y.
-///  @params[in] z  Inital z.
-///  @params[in] t  Inital t.
-///  @params[in] dt Inital dt.
+///  @params[in] w        Inital omega.
+///  @params[in] kx       Inital kx.
+///  @params[in] ky       Inital ky.
+///  @params[in] kz       Inital kz.
+///  @params[in] x        Inital x.
+///  @params[in] y        Inital y.
+///  @params[in] z        Inital z.
+///  @params[in] t        Inital t.
+///  @params[in] dt       Inital dt.
+///  @params[in] filename Result filename, empty names will be blank.
+///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
         rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -448,9 +483,12 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
             const typename DISPERSION_FUNCTION::base dt,
-            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
+            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+            const std::string &filename="",
+            const size_t num_rays=0) :
         rk4(w, kx, ky, kz, x, y, z, t,
-            graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt)), eq) {}
+            graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt)), eq,
+            filename, num_rays) {}
         
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
@@ -464,6 +502,8 @@ namespace solver {
 ///  @params[in] z  Inital z.
 ///  @params[in] t  Inital t.
 ///  @params[in] dt Inital dt.
+///  @params[in] filename Result filename, empty names will be blank.
+///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
         rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -474,8 +514,11 @@ namespace solver {
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base> dt,
-            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
-        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq) {
+            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+            const std::string &filename="",
+            const size_t num_rays=0) :
+        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq,
+                                               filename, num_rays) {
             this->kx1 = dt*this->D.get_dkxdt();
             this->ky1 = dt*this->D.get_dkydt();
             this->kz1 = dt*this->D.get_dkzdt();
@@ -569,15 +612,17 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @params[in] w  Inital omega.
-///  @params[in] kx Inital kx.
-///  @params[in] ky Inital ky.
-///  @params[in] kz Inital kz.
-///  @params[in] x  Inital x.
-///  @params[in] y  Inital y.
-///  @params[in] z  Inital z.
-///  @params[in] t  Inital t.
-///  @params[in] dt Inital dt.
+///  @params[in] w        Inital omega.
+///  @params[in] kx       Inital kx.
+///  @params[in] ky       Inital ky.
+///  @params[in] kz       Inital kz.
+///  @params[in] x        Inital x.
+///  @params[in] y        Inital y.
+///  @params[in] z        Inital z.
+///  @params[in] t        Inital t.
+///  @params[in] dt       Inital dt.
+///  @params[in] filename Result filename, empty names will be blank.
+///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
         adaptive_rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
                      graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -588,7 +633,9 @@ namespace solver {
                      graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
                      graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
                      graph::shared_leaf<typename DISPERSION_FUNCTION::base> dt,
-                     equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
+                     equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+                     const std::string &filename="",
+                     const size_t num_rays=0) :
         rk4<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, dt, eq),
         D(w,
           graph::pseudo_variable(this->kx_next),
@@ -676,15 +723,17 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a split simplextic integrator.
 ///
-///  @params[in] w         Inital omega.
-///  @params[in] kx        Inital kx.
-///  @params[in] ky        Inital ky.
-///  @params[in] kz        Inital kz.
-///  @params[in] x         Inital x.
-///  @params[in] y         Inital y.
-///  @params[in] z         Inital z.
-///  @params[in] t         Inital t.
-///  @params[in] dt        Inital dt.
+///  @params[in] w        Inital omega.
+///  @params[in] kx       Inital kx.
+///  @params[in] ky       Inital ky.
+///  @params[in] kz       Inital kz.
+///  @params[in] x        Inital x.
+///  @params[in] y        Inital y.
+///  @params[in] z        Inital z.
+///  @params[in] t        Inital t.
+///  @params[in] dt       Inital dt.
+///  @params[in] filename Result filename, empty names will be blank.
+///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
         split_simplextic(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
@@ -695,8 +744,11 @@ namespace solver {
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
                          const typename DISPERSION_FUNCTION::base dt,
-                         equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
-        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq) {
+                         equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+                         const std::string &filename="",
+                         const size_t num_rays=0) :
+        solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq,
+                                               filename, num_rays) {
 
 //  Test if the function is separatable.
             auto zero = graph::zero<typename DISPERSION_FUNCTION::base> ();

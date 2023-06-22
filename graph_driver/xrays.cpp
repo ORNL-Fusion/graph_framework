@@ -11,6 +11,9 @@
 #include "../graph_framework/solver.hpp"
 #include "../graph_framework/timing.hpp"
 
+const bool print = false;
+const bool write_step = true;
+
 void write_time(const std::string &name, const std::chrono::nanoseconds time);
 
 //------------------------------------------------------------------------------
@@ -44,7 +47,7 @@ int main(int argc, const char * argv[]) {
     const size_t num_times = 100000;
     const size_t sub_steps = 10;
     const size_t num_steps = num_times/sub_steps;
-    const size_t num_rays = 1;//000000;
+    const size_t num_rays = 10000;//00;
 
     std::vector<std::thread> threads(0);
     if constexpr (jit::use_gpu<base> ()) {
@@ -115,6 +118,9 @@ int main(int argc, const char * argv[]) {
 
             //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");
 
+            std::ostringstream stream;
+            stream << "result" << thread_number << ".nc";
+
             //solver::split_simplextic<dispersion::bohm_gross<base>>
             //solver::adaptive_rk4<dispersion::bohm_gross<base>>
             //solver::rk4<dispersion::simple<base>>
@@ -123,9 +129,11 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::cold_plasma<base>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<base>>
             solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base>>>
-                solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
-                //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq);
-            solve.init(kx);
+                solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
+                      stream.str(), local_num_rays);
+                //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq,
+                //      stream.str(), num_rays);
+            solve.init(ky);
             solve.compile();
             if (thread_number == 0 && false) {
                 solve.print_dispersion();
@@ -150,16 +158,21 @@ int main(int argc, const char * argv[]) {
             }
 
             for (size_t j = 0; j < num_steps; j++) {
-                if (thread_number == 0) {
+                if (thread_number == 0 && print) {
                     solve.print(sample);
+                }
+                if (write_step) {
+                    solve.write_step();
                 }
                 for(size_t k = 0; k < sub_steps; k++) {
                     solve.step();
                 }
             }
 
-            if (thread_number == 0) {
+            if (thread_number == 0 && print) {
                 solve.print(sample);
+            } else if (write_step) {
+                solve.write_step();
             } else {
                 solve.sync_host();
             }

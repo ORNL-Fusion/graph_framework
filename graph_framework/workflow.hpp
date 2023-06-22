@@ -215,6 +215,13 @@ namespace workflow {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Wait for GPU queue to finish.
+//------------------------------------------------------------------------------
+        void wait() {
+            context.wait();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
 ///  @params[in] node        Not to copy buffer to.
@@ -245,6 +252,15 @@ namespace workflow {
         void print(const size_t index,
                    const graph::output_nodes<T> &nodes) {
             context.print(index, nodes);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the jit context.
+///
+///  @returns The jit context.
+//------------------------------------------------------------------------------
+        jit::context<T> &get_context() {
+            return context;
         }
     };
 }

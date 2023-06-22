@@ -28,10 +28,7 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T> *a) {
-            std::stringstream stream;
-            stream << "sqrt(" << reinterpret_cast<size_t> (a) << ")";
-                    
-            return stream.str();
+            return "sqrt" + jit::format_to_string(reinterpret_cast<size_t> (a));
         }
 
     public:
@@ -135,7 +132,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T> a = this->arg->compile(stream, registers);
@@ -231,10 +228,7 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T> *a) {
-            std::stringstream stream;
-            stream << "exp(" << reinterpret_cast<size_t> (a) << ")";
-                    
-            return stream.str();
+            return "exp" + jit::format_to_string(reinterpret_cast<size_t> (a));
         }
 
     public:
@@ -300,7 +294,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T> a = this->arg->compile(stream, registers);
@@ -396,10 +390,7 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T> *a) {
-            std::stringstream stream;
-            stream << "log(" << reinterpret_cast<size_t> (a) << ")";
-                            
-            return stream.str();
+            return "log" + jit::format_to_string(reinterpret_cast<size_t> (a));
         }
 
     public:
@@ -461,7 +452,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T> a = this->arg->compile(stream, registers);
@@ -559,11 +550,8 @@ namespace graph {
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T> *l,
                                      leaf_node<T> *r) {
-            std::stringstream stream;
-            stream << "pow(" << reinterpret_cast<size_t> (l) << ","
-                             << reinterpret_cast<size_t> (r) << ")";
-                            
-            return stream.str();
+            return "pow" + jit::format_to_string(reinterpret_cast<size_t> (l))
+                         + jit::format_to_string(reinterpret_cast<size_t> (r));
         }
 
     public:
@@ -681,7 +669,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T> l = this->left->compile(stream, registers);
@@ -807,10 +795,7 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T> *a) {
-            std::stringstream stream;
-            stream << "erfi(" << reinterpret_cast<size_t> (a) << ")";
-                            
-            return stream.str();
+            return "erfi" + jit::format_to_string(reinterpret_cast<size_t> (a));
         }
 
     public:
@@ -871,7 +856,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T> a = this->arg->compile(stream, registers);

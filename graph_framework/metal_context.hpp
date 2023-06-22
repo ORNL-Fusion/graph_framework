@@ -281,7 +281,7 @@ namespace gpu {
 ///
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
-        void create_header(std::stringstream &source_buffer) {
+        void create_header(std::ostringstream &source_buffer) {
             source_buffer << "#include <metal_stdlib>" << std::endl;
             source_buffer << "#include <metal_simdgroup>" << std::endl;
             source_buffer << "using namespace metal;" << std::endl;
@@ -297,7 +297,7 @@ namespace gpu {
 ///  @params[in]     size          Size of the input buffer.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
-        void create_kernel_prefix(std::stringstream &source_buffer,
+        void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<T> &inputs,
                                   graph::output_nodes<T> &outputs,
@@ -340,7 +340,7 @@ namespace gpu {
 ///  @params[in]     setters       Map outputs back to input values.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
-        void create_kernel_postfix(std::stringstream &source_buffer,
+        void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T> &outputs,
                                    graph::map_nodes<T> &setters,
                                    jit::register_map &registers) {
@@ -367,7 +367,7 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 ///  @params[in]     size          Size of the input buffer.
 //------------------------------------------------------------------------------
-        void create_reduction(std::stringstream &source_buffer,
+        void create_reduction(std::ostringstream &source_buffer,
                               const size_t size) {
             source_buffer << std::endl;
             source_buffer << "kernel void max_reduction(" << std::endl;
@@ -389,6 +389,15 @@ namespace gpu {
             source_buffer << "        }"  << std::endl;
             source_buffer << "    }"  << std::endl;
             source_buffer << "}" << std::endl << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the buffer for a node.
+///
+///  @params[in] node Node to get the buffer for.
+//------------------------------------------------------------------------------
+        T *get_buffer(graph::shared_leaf<T> &node) {
+            return static_cast<T *> ([kernel_arguments[node.get()] contents]);
         }
     };
 }

@@ -147,7 +147,7 @@ namespace gpu {
                                   "nvrtcAddNameExpression");
             }
 
-            std::stringstream arch;
+            std::ostringstream arch;
             int compute_version;
             check_error(cuDeviceGetAttribute(&compute_version,
                                              CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR,
@@ -365,7 +365,7 @@ namespace gpu {
 ///
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
-        void create_header(std::stringstream &source_buffer) {
+        void create_header(std::ostringstream &source_buffer) {
             source_buffer << "#include <cuda/std/complex>" << std::endl;
         }
 
@@ -379,7 +379,7 @@ namespace gpu {
 ///  @params[in]     size          Size of the input buffer.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
-        void create_kernel_prefix(std::stringstream &source_buffer,
+        void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<T> &inputs,
                                   graph::output_nodes<T> &outputs,
@@ -430,7 +430,7 @@ namespace gpu {
 ///  @params[in,out] registers     Map of used registers.
 
 //------------------------------------------------------------------------------
-        void create_kernel_postfix(std::stringstream &source_buffer,
+        void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T> &outputs,
                                    graph::map_nodes<T> &setters,
                                    jit::register_map &registers) {
@@ -457,7 +457,7 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 ///  @params[in]     size          Size of the input buffer.
 //------------------------------------------------------------------------------
-        void create_reduction(std::stringstream &source_buffer,
+        void create_reduction(std::ostringstream &source_buffer,
                               const size_t size) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" __global__ void max_reduction(" << std::endl;
@@ -505,7 +505,7 @@ namespace gpu {
 ///
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
-        void create_preamble(std::stringstream &source_buffer) {
+        void create_preamble(std::ostringstream &source_buffer) {
             source_buffer << "extern \"C\" __global__ ";
         }
 
@@ -514,7 +514,7 @@ namespace gpu {
 ///
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
-        void create_argument_prefix(std::stringstream &source_buffer) {}
+        void create_argument_prefix(std::ostringstream &source_buffer) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Create arg postfix.
@@ -522,7 +522,7 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 ///  @params[in]     index         Argument index.
 //------------------------------------------------------------------------------
-        void create_argument_postfix(std::stringstream &source_buffer,
+        void create_argument_postfix(std::ostringstream &source_buffer,
                                      const size_t index) {}
 
 //------------------------------------------------------------------------------
@@ -530,15 +530,24 @@ namespace gpu {
 ///
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
-        void create_index_argument(std::stringstream &source_buffer) {}
+        void create_index_argument(std::ostringstream &source_buffer) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Create index.
 ///
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
-        void create_index(std::stringstream &source_buffer) {
+        void create_index(std::ostringstream &source_buffer) {
             source_buffer << "blockIdx.x*blockDim.x + threadIdx.x;";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the buffer for a node.
+///
+///  @params[in] node Node to get the buffer for.
+//------------------------------------------------------------------------------
+        T *get_buffer(graph::shared_leaf<T> &node) {
+            return reinterpret_cast<T *> (kernel_arguments[node.get()]);
         }
     };
 }

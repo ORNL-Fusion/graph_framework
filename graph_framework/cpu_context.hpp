@@ -43,7 +43,7 @@ namespace gpu {
         ~cpu_context() {
             dlclose(lib_handle);
             
-            std::stringstream temp_stream;
+            std::ostringstream temp_stream;
             temp_stream << "rm " << library_name;
             system(temp_stream.str().c_str());
         }
@@ -58,7 +58,7 @@ namespace gpu {
         void compile(const std::string kernel_source,
                      std::vector<std::string> names,
                      const bool add_reduction=false) {
-            std::stringstream temp_stream;
+            std::ostringstream temp_stream;
             temp_stream << reinterpret_cast<size_t> (this);
             const std::string thread_id = temp_stream.str();
 
@@ -245,7 +245,7 @@ namespace gpu {
 ///
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
-        void create_header(std::stringstream &source_buffer) {
+        void create_header(std::ostringstream &source_buffer) {
             source_buffer << "#include <map>" << std::endl;
             source_buffer << "#include <string>" << std::endl;
             if (jit::is_complex<T> ()) {
@@ -267,7 +267,7 @@ namespace gpu {
 ///  @params[in]     size          Size of the input buffer.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
-        void create_kernel_prefix(std::stringstream &source_buffer,
+        void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<T> &inputs,
                                   graph::output_nodes<T> &outputs,
@@ -300,7 +300,7 @@ namespace gpu {
 ///  @params[in]     setters       Map outputs back to input values.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
-        void create_kernel_postfix(std::stringstream &source_buffer,
+        void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T> &outputs,
                                    graph::map_nodes<T> &setters,
                                    jit::register_map &registers) {
@@ -325,8 +325,17 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 ///  @params[in]     size          Size of the input buffer.
 //------------------------------------------------------------------------------
-        void create_reduction(std::stringstream &source_buffer,
+        void create_reduction(std::ostringstream &source_buffer,
                               const size_t size) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the buffer for a node.
+///
+///  @params[in] node Node to get the buffer for.
+//------------------------------------------------------------------------------
+        T *get_buffer(graph::shared_leaf<T> &node) {
+            return kernel_arguments[node.get()].data();
+        }
     };
 }
 

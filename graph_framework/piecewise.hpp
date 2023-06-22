@@ -55,16 +55,12 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d) {
-            std::stringstream stream;
-            stream << std::setprecision(jit::max_digits10<T> ());
-
-            stream << "{" << d[0];
-            for (size_t i = 1, ie = d.size(); i < ie; i++) {
-                stream << "," << d[i];
+            std::string temp;
+            for (size_t i = 0, ie = d.size(); i < ie; i++) {
+                temp += jit::format_to_string(d[i]);
             }
-            stream << "}";
-                    
-            return stream.str();
+
+            return temp;
         }
 
 //------------------------------------------------------------------------------
@@ -76,11 +72,8 @@ namespace graph {
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
                                      shared_leaf<T> x) {
-            std::stringstream stream;
-            stream << piecewise_1D_node<T>::to_string(d);
-            stream << x->get_hash();
-
-            return stream.str();
+            return piecewise_1D_node<T>::to_string(d) +
+                   jit::format_to_string(x->get_hash());
         }
 
 ///  Data buffer hash.
@@ -162,7 +155,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
-        virtual void compile_preamble(std::stringstream &stream,
+        virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {
             if (visited.find(this) == visited.end()) {
@@ -179,7 +172,7 @@ namespace graph {
                         jit::add_type<T> (stream);
                     }
                     stream << piecewise_1D_node<T>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = piecewise_1D_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
+                    for (size_t i = 0, ie = piecewise_1D_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
                         stream << ", ";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
@@ -211,7 +204,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T> a = this->arg->compile(stream, registers);
@@ -413,16 +406,12 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d) {
-            std::stringstream stream;
-            stream << std::setprecision(jit::max_digits10<T> ());
-
-            stream << "{" << d[0];
-            for (size_t i = 1, ie = d.size(); i < ie; i++) {
-                stream << "," << d[i];
+            std::string temp;
+            for (size_t i = 0, ie = d.size(); i < ie; i++) {
+                temp += jit::format_to_string(d[i]);
             }
-            stream << "}";
-                    
-            return stream.str();
+
+            return temp;
         }
 
 //------------------------------------------------------------------------------
@@ -436,12 +425,9 @@ namespace graph {
         static std::string to_string(const backend::buffer<T> &d,
                                      shared_leaf<T> x,
                                      shared_leaf<T> y) {
-            std::stringstream stream;
-            stream << piecewise_2D_node<T>::to_string(d);
-            stream << x->get_hash();
-            stream << y->get_hash();
-
-            return stream.str();
+            return piecewise_2D_node<T>::to_string(d) +
+                   jit::format_to_string(x->get_hash()) +
+                   jit::format_to_string(y->get_hash());
         }
 
 ///  Data buffer hash.
@@ -548,7 +534,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
-        virtual void compile_preamble(std::stringstream &stream,
+        virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {
             if (visited.find(this) == visited.end()) {
@@ -609,7 +595,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {                
                 shared_leaf<T> x = this->left->compile(stream, registers);

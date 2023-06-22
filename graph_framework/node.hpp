@@ -76,7 +76,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
-        virtual void compile_preamble(std::stringstream &stream,
+        virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {}
 
@@ -87,7 +87,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<T>> compile(std::stringstream &stream,
+        virtual std::shared_ptr<leaf_node<T>> compile(std::ostringstream &stream,
                                                       jit::register_map &registers) = 0;
 
 //------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ namespace graph {
 ///
 ///  @returns The hash for the current node.
 //------------------------------------------------------------------------------
-        size_t get_hash() {
+        size_t get_hash() const {
             return hash;
         }
 
@@ -220,7 +220,7 @@ namespace graph {
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
 //------------------------------------------------------------------------------
-    virtual void compile_preamble(std::stringstream &stream,
+    virtual void compile_preamble(std::ostringstream &stream,
                                   jit::register_map &registers,
                                   jit::visiter_map &visited) {
         if (visited.find(this) == visited.end()) {
@@ -236,7 +236,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             return this->arg->compile(stream, registers);
         }
@@ -313,7 +313,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
-        virtual void compile_preamble(std::stringstream &stream,
+        virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {
             if (visited.find(this) == visited.end()) {
@@ -397,7 +397,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
-        virtual void compile_preamble(std::stringstream &stream,
+        virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {
             if (visited.find(this) == visited.end()) {
@@ -453,16 +453,7 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const T d) {
-            std::stringstream stream;
-            stream << d;
-            stream << std::setprecision(jit::max_digits10<T> ());
-
-            if constexpr (jit::is_complex<T> ()) {
-                jit::add_type<T> (stream);
-            }
-            stream << d;
-            
-            return stream.str();
+            return jit::format_to_string<T> (d);
         }
         
     private:
@@ -533,7 +524,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
@@ -648,7 +639,7 @@ namespace graph {
 ///  @returns A zero constant.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_leaf<T> zero() {
+    constexpr shared_leaf<T> zero() {
         return constant(static_cast<T> (0.0));
     }
 
@@ -658,7 +649,7 @@ namespace graph {
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_leaf<T> one() {
+    constexpr shared_leaf<T> one() {
         return constant(static_cast<T> (1.0));
     }
 
@@ -668,7 +659,7 @@ namespace graph {
 ///  @returns A negative one constant.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_leaf<T> none() {
+     constexpr shared_leaf<T> none() {
         return constant(static_cast<T> (-1.0));
     }
 
@@ -678,7 +669,7 @@ namespace graph {
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_leaf<T> two() {
+    constexpr shared_leaf<T> two() {
         return constant(static_cast<T> (2.0));
     }
 
@@ -688,7 +679,7 @@ namespace graph {
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_leaf<T> pi() {
+    constexpr shared_leaf<T> pi() {
         return constant(static_cast<T> (M_PI));
     }
 
@@ -696,7 +687,7 @@ namespace graph {
 /// @brief Create an imaginary constant.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_leaf<T> i() {
+    constexpr shared_leaf<T> i() {
         static_assert(jit::is_complex<T> (),
                       "Imaginary only valid for complex base types.");
         return constant(T(0.0, 1.0));
@@ -738,10 +729,7 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(variable_node<T> *p) {
-            std::stringstream stream;
-            stream << reinterpret_cast<size_t> (p);
-
-            return stream.str();
+            return jit::format_to_string(reinterpret_cast<size_t> (p));
         }
 
     public:
@@ -827,7 +815,7 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
            return this->shared_from_this();
         }
@@ -1019,10 +1007,7 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T> *p) {
-            std::stringstream stream;
-            stream << reinterpret_cast<size_t> (p);
-            
-            return stream.str();
+            return jit::format_to_string(reinterpret_cast<size_t> (p));
         }
 
     public:

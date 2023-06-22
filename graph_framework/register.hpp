@@ -15,6 +15,7 @@
 #include <complex>
 #include <type_traits>
 #include <limits>
+#include <charconv>
 
 namespace jit {
 //------------------------------------------------------------------------------
@@ -66,29 +67,6 @@ namespace jit {
     constexpr bool is_complex() {
         return is_complex<T, float> () ||
                is_complex<T, double> ();
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Convert a leaf\_node pointer to a string.
-///
-///  This converts the point value into a string of format t\_######. Where t is
-///  of type
-///  -# v Variable
-///  -# r Register
-///
-///  @params[in] prefix  Type prefix for the name.
-///  @params[in] pointer Address of the @ref{leaf_node}.
-///  @returns The pointer value as a string.
-//------------------------------------------------------------------------------
-    template<class NODE>
-    std::string to_string(const char prefix,
-                          const NODE *pointer) {
-        assert((prefix == 'r' || prefix == 'v' ||
-                prefix == 'o' || prefix == 'a') &&
-               "Expected a variable (v), register (r), output (o) or array (a) prefix.");
-        std::stringstream stream;
-        stream << prefix << "_" << reinterpret_cast<size_t> (pointer);
-        return stream.str();
     }
 
 //------------------------------------------------------------------------------
@@ -170,6 +148,55 @@ namespace jit {
         } else {
             return std::numeric_limits<double>::max_digits10;
         }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Convert a value to a string while avoiding locale.
+///
+///  The standard streams use localizarion that interfers with multiple threads.
+///
+///  @params[in] value Value to convert.
+///  @returns String with the value.
+//------------------------------------------------------------------------------
+    template<typename T>
+    std::string format_to_string(const T value) {
+        std::array<char, 36> buffer;
+        char *end;
+        if constexpr (std::is_same<T, size_t>::value) {
+            end = std::to_chars(buffer.begin(),
+                                buffer.end(),
+                                value, 16).ptr;
+        } else if constexpr (is_complex<T> ()) {
+            return format_to_string(std::real(value)) + " " +
+                   format_to_string(std::imag(value));
+        } else {
+            end = std::to_chars(buffer.begin(), buffer.end(),
+                                value, std::chars_format::general,
+                                max_digits10<T> ()).ptr;
+        }
+        return std::string(buffer.data(), end);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Convert a leaf\_node pointer to a string.
+///
+///  This converts the point value into a string of format t\_######. Where t is
+///  of type
+///  -# v Variable
+///  -# r Register
+///
+///  @params[in] prefix  Type prefix for the name.
+///  @params[in] pointer Address of the @ref{leaf_node}.
+///  @returns The pointer value as a string.
+//------------------------------------------------------------------------------
+    template<class NODE>
+    std::string to_string(const char prefix,
+                          const NODE *pointer) {
+        assert((prefix == 'r' || prefix == 'v' ||
+                prefix == 'o' || prefix == 'a') &&
+               "Expected a variable (v), register (r), output (o) or array (a) prefix.");
+        return std::string(1, prefix) + "_" +
+               format_to_string(reinterpret_cast<size_t> (pointer));
     }
 
 ///  Type alias for mapping node pointers to register names.

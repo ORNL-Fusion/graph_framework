@@ -31,7 +31,7 @@ namespace jit {
     class context {
     private:
 ///  String stream to build the kernel source.
-        std::stringstream source_buffer;
+        std::ostringstream source_buffer;
 ///  Nodes that have been jitted.
         register_map registers;
 ///  Kernel names.
@@ -208,6 +208,15 @@ namespace jit {
         void copy_to_host(graph::shared_leaf<T> &node,
                           T *destination) {
             gpu_context.copy_to_host(node, destination);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get buffer frim the gpu\_context.
+///
+///  @params[in] node Node to get the gpu buffer for.
+//------------------------------------------------------------------------------
+        T *get_buffer(graph::shared_leaf<T> &node) {
+            return gpu_context.get_buffer(node);
         }
     };
 }

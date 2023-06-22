@@ -207,6 +207,7 @@
 		C7B677DA29E464AE00D3ADC6 /* cpu_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cpu_context.hpp; sourceTree = "<group>"; };
 		C7CEA0042948D02A00F61D09 /* timing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = timing.hpp; sourceTree = "<group>"; };
 		C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cuda_context.hpp; sourceTree = "<group>"; };
+		C7E134492A3CB3EC0083F6A7 /* output.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = output.hpp; sourceTree = "<group>"; };
 		C7E5643E28A2A16F000F31A2 /* backend_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = backend_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E5644A28A2A1C5000F31A2 /* dispersion_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dispersion_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E5645628A2A204000F31A2 /* solver_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = solver_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -399,6 +400,7 @@
 				C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */,
 				C7CEA0042948D02A00F61D09 /* timing.hpp */,
 				C73BBE9629F8669F0027BB7F /* newton.hpp */,
+				C7E134492A3CB3EC0083F6A7 /* output.hpp */,
 			);
 			path = graph_framework;
 			sourceTree = "<group>";
@@ -1152,6 +1154,7 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1167,6 +1170,7 @@
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -1183,9 +1187,10 @@
 					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				OTHER_CPLUSPLUSFLAGS = "-fsanitize=float-divide-by-zero";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 			};
 			name = Debug;
 		};
@@ -1201,10 +1206,11 @@
 					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = "-lnetcdf";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 			};
 			name = Release;
 		};
