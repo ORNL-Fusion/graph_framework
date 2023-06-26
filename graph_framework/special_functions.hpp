@@ -487,13 +487,13 @@ constexpr std::complex<T> i(static_cast<T> (0),
             if (std::abs(x) > static_cast<T> (5e7)) {
                 return isqpi<T>/x;
             }
-            
+
 //  5-term expansion (rely on compiler for CSE), simplified from:
 //  ispi / (x-0.5/(x-1/(x-1.5/(x-2/x))))
             return isqpi<T>*(sq(x)*(sq(x) - static_cast<T> (4.5)) + static_cast<T> (2)) /
                    (x*(sq(x)*(sq(x) - static_cast<T> (5)) + static_cast<T> (3.75)));
         }
-        
+
         const T prefix = x >= 0 ? static_cast<T> (1) :
                                   static_cast<T> (-1);
         return prefix*w_im_y100(prefix*x);
@@ -966,7 +966,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
 //  1-term expansion, important to avoid overflow
                     return isqpi<T>/x;
                 }
-                
+
 //  5-term expansion (rely on compiler for CSE), simplified from:
 //     ispi / (x+0.5/(x+1/(x+1.5/(x+2/x))))
                 return isqpi<T>*(sq(x)*(sq(x) + static_cast<T> (4.5)) + static_cast<T> (2))/(x*(sq(x) * (sq(x) + static_cast<T> (5)) + static_cast<T> (3.75)));
@@ -974,8 +974,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
             return erfcx_y100(static_cast<T> (400)/(static_cast<T> (4) + x));
         } else {
             return x < static_cast<T> (-26.7) ? std::numeric_limits<T>::max() :
-                                                (x < static_cast<T> (-6.1) ? static_cast<T> (2)*exp(sq(x)) :
-                                                                             static_cast<T> (2)*exp(sq(x)) - erfcx_y100(static_cast<T> (400)/(static_cast<T> (4) - x)));
+                                                (x < static_cast<T> (-6.1) ? static_cast<T> (2)*std::exp(sq(x)) :
+                                                                             static_cast<T> (2)*std::exp(sq(x)) - erfcx_y100(static_cast<T> (400)/(static_cast<T> (4) - x)));
         }
     }
 
@@ -1080,27 +1080,27 @@ constexpr std::complex<T> i(static_cast<T> (0),
 //  Give correct sign of 0 in cimag(w)
             return std::complex<T> (erfcx(std::imag(z)), std::real(z));
         } else if (std::imag(z) == static_cast<T> (0)) {
-            return std::complex<T> (std::abs(std::real(z)) > static_cast<T> (27) ? static_cast<T> (0) : exp(-sq<T> (std::real(z))),
+            return std::complex<T> (std::abs(std::real(z)) > static_cast<T> (27) ? static_cast<T> (0) : std::exp(-sq<T> (std::real(z))),
                                     w_im(std::real(z)));
         }
-        
+
         const T a = static_cast<T> (M_PI)/std::sqrt(-std::log(std::numeric_limits<T>::epsilon()*static_cast<T> (0.5))); // pi / sqrt(-log(eps*0.5))
         const T c = static_cast<T> (2)/static_cast<T> (M_PI)*a; // (2/pi) * a;
         const T a2 = sq(a);
-        
+
         const T x = std::abs(std::real(z));
         const T y = std::imag(z);
         const T ya = std::abs(y);
-    
+
 //  Return value.
         std::complex<T> ret(0.0, 0.0);
-        
+
         T sum1 = static_cast<T> (0);
         T sum2 = static_cast<T> (0);
         T sum3 = static_cast<T> (0);
         T sum4 = static_cast<T> (0);
         T sum5 = static_cast<T> (0);
-    
+
 //  Continued fraction is faster
 //  As pointed out by M. Zaghloul, the continued fraction seems to give a large
 //  relative error in Re w(z) for |x| ~ 6 and small |y|, so use algorithm 816 in
@@ -1109,7 +1109,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
                                         (ya > static_cast<T> (0.1)                                 ||
                                          (x > static_cast<T> (8) && ya > static_cast<T> (1.0E-10)) ||
                                          x > static_cast<T> (28)))) {
-        
+
 //  Poppe & Wijers suggest using a number of terms
 //
 //  nu = 3 + 1442 / (26*rho + 77)
@@ -1173,12 +1173,12 @@ constexpr std::complex<T> i(static_cast<T> (0),
 //  use w(z) = 2.0*exp(-z*z) - w(-z),
 //  but be careful of overflow in exp(-z*z)
 //                                = exp(-(xs*xs-ya*ya) -2*i*xs*ya)
-                return static_cast<T> (2)*exp(std::complex<T> ((ya - xs)*(xs + ya),
-                                                               static_cast<T> (2)*xs*y)) - ret;
+                return static_cast<T> (2)*std::exp(std::complex<T> ((ya - xs)*(xs + ya),
+                                                                    static_cast<T> (2)*xs*y)) - ret;
             } else {
                 return ret;
             }
-        
+
 //  Note: The test that seems to be suggested in the paper is
 //  x < sqrt(-log(DBL_MIN)), about 26.6, since otherwise exp(-x^2) underflows to
 //  zero and sum1,sum2,sum4 are zero. However, long before this occurs, the
@@ -1197,11 +1197,11 @@ constexpr std::complex<T> i(static_cast<T> (0),
             if (std::isnan(y)) {
                 return std::complex<T> (y, y);
             }
-        
+
 //  Somewhat ugly copy-and-paste duplication here, but I see significant
 //  speedups from using the special-case code with the precomputed exponential,
 //  and the x < 5E-4 special case is needed for accuracy.
-        
+
 //  Use precomputed exp(-a2*(n*n)) table
             if (x < static_cast<T> (5.0E-4)) { // compute sum4 and sum5 together as sum5-sum4
                 const T x2 = sq(x);
@@ -1229,8 +1229,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
                 }
             } else {
 // x > 5E-4, compute sum4 and sum5 separately
-                expx2 = exp(-sq(x));
-                const T exp2ax = exp(static_cast<T> (2)*a*x);
+                expx2 = std::exp(-sq(x));
+                const T exp2ax = std::exp(static_cast<T> (2)*a*x);
                 const T expm2ax = static_cast<T> (1)/exp2ax;
                 for (int n = 1; n < 53; ++n) {
                     const T coef = expa2n2<T> [n - 1]*expx2/(a2*static_cast<T> (n*n) + sq(y));
@@ -1248,11 +1248,11 @@ constexpr std::complex<T> i(static_cast<T> (0),
                     }
                 }
             }
-        
+
 // avoid spurious overflow for large negative y
 // for y < -6, erfcx(y) = 2*exp(y*y) to double precision
             const T expx2erfcxy = y > static_cast<T> (-6) ? expx2*erfcx(y) :
-                                                            static_cast<T> (2)*exp(sq(y) - sq(x));
+                                                            static_cast<T> (2)*std::exp(sq(y) - sq(x));
             if (y > static_cast<T> (5)) { // imaginary terms cancel
                 const T sinxy = sin(x*y);
                 ret = (expx2erfcxy - c*y*sum1)*cos(static_cast<T> (2)*x*y)
@@ -1275,23 +1275,23 @@ constexpr std::complex<T> i(static_cast<T> (0),
             if (std::isnan(y)) {
                 return std::complex<T> (y, y);
             }
-            
+
 // |y| < 1E-10, so we only need exp(-x*x) term
-            ret = exp(-sq(x));
-            
+            ret = std::exp(-sq(x));
+
 //  (round instead of ceil as in original paper; note that x/a > 1 here)
             const T n0 = floor(x/a + static_cast<T> (0.5)); // sum in both directions, starting at n0
             const T dx = a*n0 - x;
-            sum3 = exp(-dx*dx) / (a2*(n0*n0) + sq(y));
+            sum3 = std::exp(-dx*dx) / (a2*(n0*n0) + sq(y));
             sum5 = a*n0 * sum3;
-            const T exp1 = exp(static_cast<T> (4)*a*dx);
+            const T exp1 = std::exp(static_cast<T> (4)*a*dx);
             T exp1dn = static_cast<T> (1);
             int dn;
             for (dn = 1; n0 - static_cast<T> (dn) > static_cast<T> (0); ++dn) {
 // loop over n0-dn and n0+dn terms
                 const T np = n0 + static_cast<T> (dn);
                 const T nm = n0 - static_cast<T> (dn);
-                T tp = exp(-sq<T> (a*static_cast<T> (dn) + dx));
+                T tp = std::exp(-sq<T> (a*static_cast<T> (dn) + dx));
                 T tm = tp*(exp1dn *= exp1); // trick to get tm from tp
                 tp /= (a2*np*np + sq(y));
                 tm /= (a2*nm*nm + sq(y));
@@ -1306,7 +1306,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
             while (true) {
 //  Loop over n0+dn terms only (since n0-dn <= 0)
                 const T np = n0 + static_cast<T> (dn++);
-                const T tp = exp(-sq<T> (a*static_cast<T> (dn) + dx))/(a2*(np*np) + sq(y));
+                const T tp = std::exp(-sq<T> (a*static_cast<T> (dn) + dx))/(a2*(np*np) + sq(y));
                 sum3 += tp;
                 sum5 += a*np*tp;
                 if (a*np*tp < std::numeric_limits<T>::epsilon()*sum5) {
@@ -1316,7 +1316,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
                 }
             }
         }
-    
+
         return ret + std::complex<T> (static_cast<T> (0.5)*c*y*(sum2 + sum3),
                                       static_cast<T> (0.5)*c*copysign(sum5 - sum4,
                                                                       std::real(z)));
@@ -1363,7 +1363,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
     std::complex<T> taylor_erfi(const T x, const T y) {
                     const T x2 = sq(x);
                     const T y2 = sq(y);
-                    const T expy2 = exp(y2);
+                    const T expy2 = std::exp(y2);
                     return expy2*std::complex<T> (x*(static_cast<T> (1.1283791670955125739) -
                                                      x2*(static_cast<T> (0.37612638903183752464) +
                                                          static_cast<T> (0.75225277806367504925)*y2) +
@@ -1387,16 +1387,16 @@ constexpr std::complex<T> i(static_cast<T> (0),
     std::complex<T> erf(std::complex<T> z) {
         T x = std::real(z);
         T y = std::imag(z);
-        
+
         if (y == static_cast<T> (0)) {
             return std::complex<T> (std::erf(x), y);
         } else if (x == static_cast<T> (0)) {
             const T y2 = sq(y);
             return std::complex<T> (x, y2 > static_cast<T> (720) ? (y > static_cast<T> (0) ?  std::numeric_limits<T>::infinity() :
                                                                                              -std::numeric_limits<T>::infinity()) :
-                                                                   exp(y2)*w_im(y));
+                                                                   std::exp(y2)*w_im(y));
         }
-        
+
         T mRe_z2 = (y - x)*(x + y);
         T mIm_z2 = -static_cast<T> (2)*x*y;
     
@@ -1421,15 +1421,15 @@ constexpr std::complex<T> i(static_cast<T> (0),
 //  Don't use complex exp function, since that will produce spurious NaN
 //  values when multiplying w in an overflow situation.
             return static_cast<T> (1) -
-                   exp(mRe_z2)*(std::complex<T> (cos(mIm_z2),
-                                                 sin(mIm_z2))*w(std::complex<T> (-y, x)));
+                   std::exp(mRe_z2)*(std::complex<T> (std::cos(mIm_z2),
+                                                      std::sin(mIm_z2))*w(std::complex<T> (-y, x)));
         } else {
 // x < 0
             if (x > static_cast<T> (-8.0E-2)) {
 //  Duplicate from above to avoid std::abs(x) call
                 if (std::abs(y) < static_cast<T> (1.0E-2)) {
                     return taylor(z, mRe_z2, mIm_z2);
-                } else if (fabs(mIm_z2) < 5e-3 && x > -5e-3) {
+                } else if (std::abs(mIm_z2) < 5e-3 && x > -5e-3) {
                     return taylor_erfi(x, y);
                 }
             } else if (std::isnan(x)) {

@@ -513,8 +513,18 @@ namespace graph {
                 leaf_node<T>::cache[h] = zero;
                 return zero;
             }
-            
-            return leaf_node<T>::cache[h];
+
+//  Hash found, test for collisions.
+            for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
+                if (zero->is_match(leaf_node<T>::cache[i])) {
+                    return leaf_node<T>::cache[i];
+                } else if (leaf_node<T>::cache.find(i) ==
+                           leaf_node<T>::cache.end()) {
+                    leaf_node<T>::cache[i] = zero;
+                    break;
+                }
+            }
+            return zero;
         }
 
 //------------------------------------------------------------------------------
@@ -609,8 +619,18 @@ namespace graph {
             leaf_node<T>::cache[h] = temp;
             return temp;
         }
-        
-        return leaf_node<T>::cache[h];
+
+//  Hash found, test for collisions.
+        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
+            if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
+            } else if (leaf_node<T>::cache.find(i) ==
+                       leaf_node<T>::cache.end()) {
+                leaf_node<T>::cache[i] = temp;
+                break;
+            }
+        }
+        return temp;
     }
 
 //------------------------------------------------------------------------------
@@ -628,8 +648,18 @@ namespace graph {
             leaf_node<T>::cache[h] = temp;
             return temp;
         }
-        
-        return leaf_node<T>::cache[h];
+
+//  Hash found, test for collisions.
+        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
+            if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
+            } else if (leaf_node<T>::cache.find(i) ==
+                       leaf_node<T>::cache.end()) {
+                leaf_node<T>::cache[i] = temp;
+                break;
+            }
+        }
+        return temp;
     }
 
 //  Define some common constants.

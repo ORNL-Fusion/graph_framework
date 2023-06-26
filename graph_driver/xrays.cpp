@@ -14,17 +14,7 @@
 const bool print = false;
 const bool write_step = true;
 
-void write_time(const std::string &name, const std::chrono::nanoseconds time);
-
-//------------------------------------------------------------------------------
-///  @brief Main program of the driver.
-///
-///  @params[in] t Current Time.
-//------------------------------------------------------------------------------
-template<typename base>
-static base solution(const base t) {
-    return std::exp(-t) - std::exp(-1000.0*t);
-}
+//void write_time(const std::string &name, const std::chrono::nanoseconds time);
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
@@ -47,7 +37,7 @@ int main(int argc, const char * argv[]) {
     const size_t num_times = 100000;
     const size_t sub_steps = 10;
     const size_t num_steps = num_times/sub_steps;
-    const size_t num_rays = 10000;//00;
+    const size_t num_rays = 10000;//000;
 
     std::vector<std::thread> threads(0);
     if constexpr (jit::use_gpu<base> ()) {
@@ -79,17 +69,15 @@ int main(int argc, const char * argv[]) {
             t->set(static_cast<base> (0.0));
 
 //  Inital conditions.
-            if constexpr (jit::is_complex<base> ()) {
-                if constexpr (jit::is_float<base> ()) {
-                    std::normal_distribution<float> norm_dist(static_cast<float> (600.0), static_cast<float> (10.0));
-                    for (size_t j = 0; j < local_num_rays; j++) {
-                        omega->set(j, static_cast<base> (norm_dist(engine)));
-                    }
-                } else {
-                    std::normal_distribution<double> norm_dist(static_cast<double> (600.0), static_cast<double> (10.0));
-                    for (size_t j = 0; j < local_num_rays; j++) {
-                        omega->set(j, static_cast<base> (norm_dist(engine)));
-                    }
+            if constexpr (jit::is_complex<base, float> ()) {
+                std::normal_distribution<float> norm_dist(static_cast<float> (600.0), static_cast<float> (10.0));
+                for (size_t j = 0; j < local_num_rays; j++) {
+                    omega->set(j, static_cast<base> (norm_dist(engine)));
+                }
+            } else if constexpr (jit::is_complex<base, double> ()) {
+                std::normal_distribution<double> norm_dist(static_cast<double> (600.0), static_cast<double> (10.0));
+                for (size_t j = 0; j < local_num_rays; j++) {
+                    omega->set(j, static_cast<base> (norm_dist(engine)));
                 }
             } else {
                 std::normal_distribution<base> norm_dist(static_cast<base> (600.0), static_cast<base> (10.0));

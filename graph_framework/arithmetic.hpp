@@ -388,7 +388,17 @@ namespace graph {
             return temp;
         }
         
-        return leaf_node<T>::cache[h];
+//  Hash found, test for collisions.
+        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
+            if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
+            } else if (leaf_node<T>::cache.find(i) ==
+                       leaf_node<T>::cache.end()) {
+                leaf_node<T>::cache[i] = temp;
+                break;
+            }
+        }
+        return temp;
     }
 
 //------------------------------------------------------------------------------
@@ -716,7 +726,17 @@ namespace graph {
             return temp;
         }
         
-        return leaf_node<T>::cache[h];
+//  Hash found, test for collisions.
+        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
+            if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
+            } else if (leaf_node<T>::cache.find(i) ==
+                       leaf_node<T>::cache.end()) {
+                leaf_node<T>::cache[i] = temp;
+                break;
+            }
+        }
+        return temp;
     }
 
 //------------------------------------------------------------------------------
@@ -1141,7 +1161,17 @@ namespace graph {
             return temp;
         }
         
-        return leaf_node<T>::cache[h];
+//  Hash found, test for collisions.
+        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
+            if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
+            } else if (leaf_node<T>::cache.find(i) ==
+                       leaf_node<T>::cache.end()) {
+                leaf_node<T>::cache[i] = temp;
+                break;
+            }
+        }
+        return temp;
     }
 
 //------------------------------------------------------------------------------
@@ -1479,7 +1509,17 @@ namespace graph {
             return temp;
         }
         
-        return leaf_node<T>::cache[h];
+//  Hash found, test for collisions.
+        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
+            if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
+            } else if (leaf_node<T>::cache.find(i) ==
+                       leaf_node<T>::cache.end()) {
+                leaf_node<T>::cache[i] = temp;
+                break;
+            }
+        }
+        return temp;
     }
 
 //------------------------------------------------------------------------------
@@ -1780,7 +1820,17 @@ namespace graph {
             return temp;
         }
         
-        return leaf_node<T>::cache[h];
+//  Hash found, test for collisions.
+        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
+            if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
+            } else if (leaf_node<T>::cache.find(i) ==
+                       leaf_node<T>::cache.end()) {
+                leaf_node<T>::cache[i] = temp;
+                break;
+            }
+        }
+        return temp;
     }
 
 ///  Convenience type alias for shared add nodes.
