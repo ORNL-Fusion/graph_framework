@@ -14,7 +14,27 @@
 const bool print = false;
 const bool write_step = true;
 
-//void write_time(const std::string &name, const std::chrono::nanoseconds time);
+//------------------------------------------------------------------------------
+///  @brief Set random values.
+///
+///  if constexpr does not work like a #ifdef statement. When not used in
+///  templates, both branches must be valid C++. This template ensures that
+///  special cases for complex types are respected.
+///
+///  @params[in]     mean   Mean value for the normal distibution.
+///  @params[in]     sigma  Sigma value for the normal distibution.
+///  @params[in]     size   Size of the node.
+///  @params[in,out] engine Ransom engine.
+///  @params[in,out] node   Node to set values of.
+//------------------------------------------------------------------------------
+template<typename base, typename T>
+void set_normal(const T mean, const T sigma, const size_t size,
+                std::mt19937_64 &engine, graph::shared_leaf<base> &node) {
+    std::normal_distribution<T> norm_dist(static_cast<T> (mean), static_cast<T> (sigma));
+    for (size_t j = 0; j < size; j++) {
+        node->set(j, static_cast<base> (norm_dist(engine)));
+    }
+}
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
@@ -56,7 +76,7 @@ int main(int argc, const char * argv[]) {
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
-            
+
             auto omega = graph::variable<base> (local_num_rays, "\\omega");
             auto kx = graph::variable<base> (local_num_rays, "k_{x}");
             auto ky = graph::variable<base> (local_num_rays, "k_{y}");
@@ -69,21 +89,14 @@ int main(int argc, const char * argv[]) {
             t->set(static_cast<base> (0.0));
 
 //  Inital conditions.
-            if constexpr (jit::is_complex<base, float> ()) {
-                std::normal_distribution<float> norm_dist(static_cast<float> (600.0), static_cast<float> (10.0));
-                for (size_t j = 0; j < local_num_rays; j++) {
-                    omega->set(j, static_cast<base> (norm_dist(engine)));
-                }
-            } else if constexpr (jit::is_complex<base, double> ()) {
-                std::normal_distribution<double> norm_dist(static_cast<double> (600.0), static_cast<double> (10.0));
-                for (size_t j = 0; j < local_num_rays; j++) {
-                    omega->set(j, static_cast<base> (norm_dist(engine)));
-                }
+            if constexpr (jit::is_float<base> ()) {
+                set_normal(static_cast<float> (600.0),
+                           static_cast<float> (10.0),
+                           local_num_rays, engine, omega);
             } else {
-                std::normal_distribution<base> norm_dist(static_cast<base> (600.0), static_cast<base> (10.0));
-                for (size_t j = 0; j < local_num_rays; j++) {
-                    omega->set(j, static_cast<base> (norm_dist(engine)));
-                }
+                set_normal(static_cast<double> (600.0),
+                           static_cast<double> (10.0),
+                           local_num_rays, engine, omega);
             }
 
             x->set(static_cast<base> (2.5));
