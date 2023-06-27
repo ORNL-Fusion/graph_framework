@@ -553,37 +553,37 @@ namespace equilibrium {
 
 //  Temperature spline coefficients.
 ///  Temperature c0.
-        graph::shared_leaf<T> te_c0;
+        const backend::buffer<T> te_c0;
 ///  Temperature c1.
-        graph::shared_leaf<T> te_c1;
+        const backend::buffer<T> te_c1;
 ///  Temperature c2.
-        graph::shared_leaf<T> te_c2;
+        const backend::buffer<T> te_c2;
 ///  Temperature c3.
-        graph::shared_leaf<T> te_c3;
+        const backend::buffer<T> te_c3;
 ///  Temperature scale factor.
         graph::shared_leaf<T> te_scale;
 
 //  Density spline coefficients.
 ///  Density c0.
-        graph::shared_leaf<T> ne_c0;
+        const backend::buffer<T> ne_c0;
 ///  Density c1.
-        graph::shared_leaf<T> ne_c1;
+        const backend::buffer<T> ne_c1;
 ///  Density c2.
-        graph::shared_leaf<T> ne_c2;
+        const backend::buffer<T> ne_c2;
 ///  Density c3.
-        graph::shared_leaf<T> ne_c3;
+        const backend::buffer<T> ne_c3;
 ///  Density scale factor.
         graph::shared_leaf<T> ne_scale;
 
 //  Pressure spline coefficients.
 ///  Pressure c0.
-        graph::shared_leaf<T> pres_c0;
+        const backend::buffer<T> pres_c0;
 ///  Pressure c1.
-        graph::shared_leaf<T> pres_c1;
+        const backend::buffer<T> pres_c1;
 ///  Pressure c2.
-        graph::shared_leaf<T> pres_c2;
+        const backend::buffer<T> pres_c2;
 ///  Pressure c3.
-        graph::shared_leaf<T> pres_c3;
+        const backend::buffer<T> pres_c3;
 ///  Pressure scale factor.
         graph::shared_leaf<T> pres_scale;
 
@@ -598,47 +598,49 @@ namespace equilibrium {
 
 //  Fpol spline coefficients.
 ///  Fpol c0.
-        graph::shared_leaf<T> fpol_c0;
+        const backend::buffer<T> fpol_c0;
 ///  Fpol c1.
-        graph::shared_leaf<T> fpol_c1;
+        const backend::buffer<T> fpol_c1;
 ///  Fpol c2.
-        graph::shared_leaf<T> fpol_c2;
+        const backend::buffer<T> fpol_c2;
 ///  Fpol c3.
-        graph::shared_leaf<T> fpol_c3;
+        const backend::buffer<T> fpol_c3;
 
 //  Psi spline coefficients.
+///  Number of columns.
+        const size_t num_cols;
 ///  Psi c00.
-        graph::shared_leaf<T> c00;
+        const backend::buffer<T> c00;
 ///  Psi c01.
-        graph::shared_leaf<T> c01;
+        const backend::buffer<T> c01;
 ///  Psi c02.
-        graph::shared_leaf<T> c02;
+        const backend::buffer<T> c02;
 ///  Psi c03.
-        graph::shared_leaf<T> c03;
+        const backend::buffer<T> c03;
 ///  Psi c10.
-        graph::shared_leaf<T> c10;
+        const backend::buffer<T> c10;
 ///  Psi c11.
-        graph::shared_leaf<T> c11;
+        const backend::buffer<T> c11;
 ///  Psi c12.
-        graph::shared_leaf<T> c12;
+        const backend::buffer<T> c12;
 ///  Psi c13.
-        graph::shared_leaf<T> c13;
+        const backend::buffer<T> c13;
 ///  Psi c20.
-        graph::shared_leaf<T> c20;
+        const backend::buffer<T> c20;
 ///  Psi c21.
-        graph::shared_leaf<T> c21;
+        const backend::buffer<T> c21;
 ///  Psi c22.
-        graph::shared_leaf<T> c22;
+        const backend::buffer<T> c22;
 ///  Psi c23.
-        graph::shared_leaf<T> c23;
+        const backend::buffer<T> c23;
 ///  Psi c30.
-        graph::shared_leaf<T> c30;
+        const backend::buffer<T> c30;
 ///  Psi c31.
-        graph::shared_leaf<T> c31;
+        const backend::buffer<T> c31;
 ///  Psi c32.
-        graph::shared_leaf<T> c32;
+        const backend::buffer<T> c32;
 ///  Psi c33.
-        graph::shared_leaf<T> c33;
+        const backend::buffer<T> c33;
 
     public:
 //------------------------------------------------------------------------------
@@ -669,6 +671,7 @@ namespace equilibrium {
 ///  @params[in] fpol_c1    Flux function c1 spline coefficient.
 ///  @params[in] fpol_c2    Flux function c2 spline coefficient.
 ///  @params[in] fpol_c3    Flux function c3 spline coefficient.
+///  @params[in] num_cols   Number of columns for the 2D splines.
 ///  @params[in] c00        Psi c00 spline coefficient.
 ///  @params[in] c01        Psi c01 spline coefficient.
 ///  @params[in] c02        Psi c02 spline coefficient.
@@ -688,51 +691,52 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
         efit(graph::shared_leaf<T> psimin,
              graph::shared_leaf<T> dpsi,
-             graph::shared_leaf<T> te_c0,
-             graph::shared_leaf<T> te_c1,
-             graph::shared_leaf<T> te_c2,
-             graph::shared_leaf<T> te_c3,
+             const backend::buffer<T> te_c0,
+             const backend::buffer<T> te_c1,
+             const backend::buffer<T> te_c2,
+             const backend::buffer<T> te_c3,
              graph::shared_leaf<T> te_scale,
-             graph::shared_leaf<T> ne_c0,
-             graph::shared_leaf<T> ne_c1,
-             graph::shared_leaf<T> ne_c2,
-             graph::shared_leaf<T> ne_c3,
+             const backend::buffer<T> ne_c0,
+             const backend::buffer<T> ne_c1,
+             const backend::buffer<T> ne_c2,
+             const backend::buffer<T> ne_c3,
              graph::shared_leaf<T> ne_scale,
-             graph::shared_leaf<T> pres_c0,
-             graph::shared_leaf<T> pres_c1,
-             graph::shared_leaf<T> pres_c2,
-             graph::shared_leaf<T> pres_c3,
+             const backend::buffer<T> pres_c0,
+             const backend::buffer<T> pres_c1,
+             const backend::buffer<T> pres_c2,
+             const backend::buffer<T> pres_c3,
              graph::shared_leaf<T> pres_scale,
              graph::shared_leaf<T> rmin,
              graph::shared_leaf<T> dr,
              graph::shared_leaf<T> zmin,
              graph::shared_leaf<T> dz,
-             graph::shared_leaf<T> fpol_c0,
-             graph::shared_leaf<T> fpol_c1,
-             graph::shared_leaf<T> fpol_c2,
-             graph::shared_leaf<T> fpol_c3,
-             graph::shared_leaf<T> c00,
-             graph::shared_leaf<T> c01,
-             graph::shared_leaf<T> c02,
-             graph::shared_leaf<T> c03,
-             graph::shared_leaf<T> c10,
-             graph::shared_leaf<T> c11,
-             graph::shared_leaf<T> c12,
-             graph::shared_leaf<T> c13,
-             graph::shared_leaf<T> c20,
-             graph::shared_leaf<T> c21,
-             graph::shared_leaf<T> c22,
-             graph::shared_leaf<T> c23,
-             graph::shared_leaf<T> c30,
-             graph::shared_leaf<T> c31,
-             graph::shared_leaf<T> c32,
-             graph::shared_leaf<T> c33) :
+             const backend::buffer<T> fpol_c0,
+             const backend::buffer<T> fpol_c1,
+             const backend::buffer<T> fpol_c2,
+             const backend::buffer<T> fpol_c3,
+             const size_t num_cols,
+             const backend::buffer<T> c00,
+             const backend::buffer<T> c01,
+             const backend::buffer<T> c02,
+             const backend::buffer<T> c03,
+             const backend::buffer<T> c10,
+             const backend::buffer<T> c11,
+             const backend::buffer<T> c12,
+             const backend::buffer<T> c13,
+             const backend::buffer<T> c20,
+             const backend::buffer<T> c21,
+             const backend::buffer<T> c22,
+             const backend::buffer<T> c23,
+             const backend::buffer<T> c30,
+             const backend::buffer<T> c31,
+             const backend::buffer<T> c32,
+             const backend::buffer<T> c33) :
         generic<T> ({3.34449469E-27} ,{1}),
-        psimin(psimin), dpsi(dpsi),
+        psimin(psimin), dpsi(dpsi), num_cols(num_cols),
         te_c0(te_c0), te_c1(te_c1), te_c2(te_c2), te_c3(te_c3), te_scale(te_scale),
         ne_c0(te_c0), ne_c1(te_c1), ne_c2(ne_c2), ne_c3(ne_c3), ne_scale(ne_scale),
-        pres_c0(pres_c0), pres_c1(pres_c1), pres_c2(pres_c2), pres_c3(pres_c3), pres_scale(pres_scale),
-        rmin(rmin), dr(dr), zmin(zmin), dz(dz),
+        pres_c0(pres_c0), pres_c1(pres_c1), pres_c2(pres_c2), pres_c3(pres_c3),
+        pres_scale(pres_scale), rmin(rmin), dr(dr), zmin(zmin), dz(dz),
         fpol_c0(fpol_c0), fpol_c1(fpol_c1), fpol_c2(fpol_c2), fpol_c3(fpol_c3),
         c00(c00), c01(c01), c02(c02), c03(c03),
         c10(c10), c11(c11), c12(c12), c13(c13),
@@ -766,25 +770,25 @@ namespace equilibrium {
             auto r_norm = (r - rmin)/dr;
             auto z_norm = (z - zmin)/dz;
 
-            auto c00_temp = graph::piecewise_2D(c00, r_norm, z_norm);
-            auto c01_temp = graph::piecewise_2D(c01, r_norm, z_norm);
-            auto c02_temp = graph::piecewise_2D(c02, r_norm, z_norm);
-            auto c03_temp = graph::piecewise_2D(c03, r_norm, z_norm);
+            auto c00_temp = graph::piecewise_2D(c00, num_cols, r_norm, z_norm);
+            auto c01_temp = graph::piecewise_2D(c01, num_cols, r_norm, z_norm);
+            auto c02_temp = graph::piecewise_2D(c02, num_cols, r_norm, z_norm);
+            auto c03_temp = graph::piecewise_2D(c03, num_cols, r_norm, z_norm);
 
-            auto c10_temp = graph::piecewise_2D(c10, r_norm, z_norm);
-            auto c11_temp = graph::piecewise_2D(c11, r_norm, z_norm);
-            auto c12_temp = graph::piecewise_2D(c12, r_norm, z_norm);
-            auto c13_temp = graph::piecewise_2D(c13, r_norm, z_norm);
+            auto c10_temp = graph::piecewise_2D(c10, num_cols, r_norm, z_norm);
+            auto c11_temp = graph::piecewise_2D(c11, num_cols, r_norm, z_norm);
+            auto c12_temp = graph::piecewise_2D(c12, num_cols, r_norm, z_norm);
+            auto c13_temp = graph::piecewise_2D(c13, num_cols, r_norm, z_norm);
 
-            auto c20_temp = graph::piecewise_2D(c20, r_norm, z_norm);
-            auto c21_temp = graph::piecewise_2D(c21, r_norm, z_norm);
-            auto c22_temp = graph::piecewise_2D(c22, r_norm, z_norm);
-            auto c23_temp = graph::piecewise_2D(c23, r_norm, z_norm);
+            auto c20_temp = graph::piecewise_2D(c20, num_cols, r_norm, z_norm);
+            auto c21_temp = graph::piecewise_2D(c21, num_cols, r_norm, z_norm);
+            auto c22_temp = graph::piecewise_2D(c22, num_cols, r_norm, z_norm);
+            auto c23_temp = graph::piecewise_2D(c23, num_cols, r_norm, z_norm);
 
-            auto c30_temp = graph::piecewise_2D(c30, r_norm, z_norm);
-            auto c31_temp = graph::piecewise_2D(c31, r_norm, z_norm);
-            auto c32_temp = graph::piecewise_2D(c32, r_norm, z_norm);
-            auto c33_temp = graph::piecewise_2D(c33, r_norm, z_norm);
+            auto c30_temp = graph::piecewise_2D(c30, num_cols, r_norm, z_norm);
+            auto c31_temp = graph::piecewise_2D(c31, num_cols, r_norm, z_norm);
+            auto c32_temp = graph::piecewise_2D(c32, num_cols, r_norm, z_norm);
+            auto c33_temp = graph::piecewise_2D(c33, num_cols, r_norm, z_norm);
 
             return c00_temp +
                    c01_temp*z_norm +
@@ -1153,42 +1157,42 @@ namespace equilibrium {
         auto ne_scale = graph::constant(static_cast<T> (ne_scale_value));
         auto te_scale = graph::constant(static_cast<T> (te_scale_value));
 
-        auto fpol_c0 = graph::piecewise_1D(std::vector<T> (fpol_c0_buffer.begin(), fpol_c0_buffer.end()));
-        auto fpol_c1 = graph::piecewise_1D(std::vector<T> (fpol_c1_buffer.begin(), fpol_c1_buffer.end()));
-        auto fpol_c2 = graph::piecewise_1D(std::vector<T> (fpol_c2_buffer.begin(), fpol_c2_buffer.end()));
-        auto fpol_c3 = graph::piecewise_1D(std::vector<T> (fpol_c3_buffer.begin(), fpol_c3_buffer.end()));
+        const auto fpol_c0 = backend::buffer(std::vector<T> (fpol_c0_buffer.begin(), fpol_c0_buffer.end()));
+        const auto fpol_c1 = backend::buffer(std::vector<T> (fpol_c1_buffer.begin(), fpol_c1_buffer.end()));
+        const auto fpol_c2 = backend::buffer(std::vector<T> (fpol_c2_buffer.begin(), fpol_c2_buffer.end()));
+        const auto fpol_c3 = backend::buffer(std::vector<T> (fpol_c3_buffer.begin(), fpol_c3_buffer.end()));
 
-        auto c00 = graph::piecewise_2D(std::vector<T> (psi_c00_buffer.begin(), psi_c00_buffer.end()), numz);
-        auto c01 = graph::piecewise_2D(std::vector<T> (psi_c01_buffer.begin(), psi_c01_buffer.end()), numz);
-        auto c02 = graph::piecewise_2D(std::vector<T> (psi_c02_buffer.begin(), psi_c02_buffer.end()), numz);
-        auto c03 = graph::piecewise_2D(std::vector<T> (psi_c03_buffer.begin(), psi_c03_buffer.end()), numz);
-        auto c10 = graph::piecewise_2D(std::vector<T> (psi_c10_buffer.begin(), psi_c10_buffer.end()), numz);
-        auto c11 = graph::piecewise_2D(std::vector<T> (psi_c11_buffer.begin(), psi_c11_buffer.end()), numz);
-        auto c12 = graph::piecewise_2D(std::vector<T> (psi_c12_buffer.begin(), psi_c12_buffer.end()), numz);
-        auto c13 = graph::piecewise_2D(std::vector<T> (psi_c13_buffer.begin(), psi_c13_buffer.end()), numz);
-        auto c20 = graph::piecewise_2D(std::vector<T> (psi_c20_buffer.begin(), psi_c20_buffer.end()), numz);
-        auto c21 = graph::piecewise_2D(std::vector<T> (psi_c21_buffer.begin(), psi_c21_buffer.end()), numz);
-        auto c22 = graph::piecewise_2D(std::vector<T> (psi_c22_buffer.begin(), psi_c22_buffer.end()), numz);
-        auto c23 = graph::piecewise_2D(std::vector<T> (psi_c23_buffer.begin(), psi_c23_buffer.end()), numz);
-        auto c30 = graph::piecewise_2D(std::vector<T> (psi_c30_buffer.begin(), psi_c30_buffer.end()), numz);
-        auto c31 = graph::piecewise_2D(std::vector<T> (psi_c31_buffer.begin(), psi_c31_buffer.end()), numz);
-        auto c32 = graph::piecewise_2D(std::vector<T> (psi_c32_buffer.begin(), psi_c32_buffer.end()), numz);
-        auto c33 = graph::piecewise_2D(std::vector<T> (psi_c33_buffer.begin(), psi_c33_buffer.end()), numz);
+        const auto c00 = backend::buffer(std::vector<T> (psi_c00_buffer.begin(), psi_c00_buffer.end()));
+        const auto c01 = backend::buffer(std::vector<T> (psi_c01_buffer.begin(), psi_c01_buffer.end()));
+        auto c02 = backend::buffer(std::vector<T> (psi_c02_buffer.begin(), psi_c02_buffer.end()));
+        auto c03 = backend::buffer(std::vector<T> (psi_c03_buffer.begin(), psi_c03_buffer.end()));
+        auto c10 = backend::buffer(std::vector<T> (psi_c10_buffer.begin(), psi_c10_buffer.end()));
+        auto c11 = backend::buffer(std::vector<T> (psi_c11_buffer.begin(), psi_c11_buffer.end()));
+        auto c12 = backend::buffer(std::vector<T> (psi_c12_buffer.begin(), psi_c12_buffer.end()));
+        auto c13 = backend::buffer(std::vector<T> (psi_c13_buffer.begin(), psi_c13_buffer.end()));
+        auto c20 = backend::buffer(std::vector<T> (psi_c20_buffer.begin(), psi_c20_buffer.end()));
+        auto c21 = backend::buffer(std::vector<T> (psi_c21_buffer.begin(), psi_c21_buffer.end()));
+        auto c22 = backend::buffer(std::vector<T> (psi_c22_buffer.begin(), psi_c22_buffer.end()));
+        auto c23 = backend::buffer(std::vector<T> (psi_c23_buffer.begin(), psi_c23_buffer.end()));
+        auto c30 = backend::buffer(std::vector<T> (psi_c30_buffer.begin(), psi_c30_buffer.end()));
+        auto c31 = backend::buffer(std::vector<T> (psi_c31_buffer.begin(), psi_c31_buffer.end()));
+        auto c32 = backend::buffer(std::vector<T> (psi_c32_buffer.begin(), psi_c32_buffer.end()));
+        auto c33 = backend::buffer(std::vector<T> (psi_c33_buffer.begin(), psi_c33_buffer.end()));
 
-        auto pres_c0 = graph::piecewise_1D(std::vector<T> (pressure_c0_buffer.begin(), pressure_c0_buffer.end()));
-        auto pres_c1 = graph::piecewise_1D(std::vector<T> (pressure_c1_buffer.begin(), pressure_c1_buffer.end()));
-        auto pres_c2 = graph::piecewise_1D(std::vector<T> (pressure_c2_buffer.begin(), pressure_c2_buffer.end()));
-        auto pres_c3 = graph::piecewise_1D(std::vector<T> (pressure_c3_buffer.begin(), pressure_c3_buffer.end()));
+        auto pres_c0 = backend::buffer(std::vector<T> (pressure_c0_buffer.begin(), pressure_c0_buffer.end()));
+        auto pres_c1 = backend::buffer(std::vector<T> (pressure_c1_buffer.begin(), pressure_c1_buffer.end()));
+        auto pres_c2 = backend::buffer(std::vector<T> (pressure_c2_buffer.begin(), pressure_c2_buffer.end()));
+        auto pres_c3 = backend::buffer(std::vector<T> (pressure_c3_buffer.begin(), pressure_c3_buffer.end()));
 
-        auto te_c0 = graph::piecewise_1D(std::vector<T> (te_c0_buffer.begin(), te_c0_buffer.end()));
-        auto te_c1 = graph::piecewise_1D(std::vector<T> (te_c1_buffer.begin(), te_c1_buffer.end()));
-        auto te_c2 = graph::piecewise_1D(std::vector<T> (te_c2_buffer.begin(), te_c2_buffer.end()));
-        auto te_c3 = graph::piecewise_1D(std::vector<T> (te_c3_buffer.begin(), te_c3_buffer.end()));
+        auto te_c0 = backend::buffer(std::vector<T> (te_c0_buffer.begin(), te_c0_buffer.end()));
+        auto te_c1 = backend::buffer(std::vector<T> (te_c1_buffer.begin(), te_c1_buffer.end()));
+        auto te_c2 = backend::buffer(std::vector<T> (te_c2_buffer.begin(), te_c2_buffer.end()));
+        auto te_c3 = backend::buffer(std::vector<T> (te_c3_buffer.begin(), te_c3_buffer.end()));
 
-        auto ne_c0 = graph::piecewise_1D(std::vector<T> (ne_c0_buffer.begin(), ne_c0_buffer.end()));
-        auto ne_c1 = graph::piecewise_1D(std::vector<T> (ne_c1_buffer.begin(), ne_c1_buffer.end()));
-        auto ne_c2 = graph::piecewise_1D(std::vector<T> (ne_c2_buffer.begin(), ne_c2_buffer.end()));
-        auto ne_c3 = graph::piecewise_1D(std::vector<T> (ne_c3_buffer.begin(), ne_c3_buffer.end()));
+        auto ne_c0 = backend::buffer(std::vector<T> (ne_c0_buffer.begin(), ne_c0_buffer.end()));
+        auto ne_c1 = backend::buffer(std::vector<T> (ne_c1_buffer.begin(), ne_c1_buffer.end()));
+        auto ne_c2 = backend::buffer(std::vector<T> (ne_c2_buffer.begin(), ne_c2_buffer.end()));
+        auto ne_c3 = backend::buffer(std::vector<T> (ne_c3_buffer.begin(), ne_c3_buffer.end()));
 
         return std::make_shared<efit<T>> (psimin, dpsi,
                                           te_c0, te_c1, te_c2, te_c3, te_scale,
@@ -1196,6 +1200,7 @@ namespace equilibrium {
                                           pres_c0, pres_c1, pres_c2, pres_c3, pres_scale,
                                           rmin, dr, zmin, dz,
                                           fpol_c0, fpol_c1, fpol_c2, fpol_c3,
+                                          numz,
                                           c00, c01, c02, c03,
                                           c10, c11, c12, c13,
                                           c20, c21, c22, c23,

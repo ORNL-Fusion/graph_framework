@@ -76,6 +76,26 @@ namespace graph {
                    jit::format_to_string(x->get_hash());
         }
 
+//------------------------------------------------------------------------------
+///  @brief Stores the data in a hash.
+///
+///  @params[in] d Backend buffer.
+///  @returns The hash the node is stored in.
+//------------------------------------------------------------------------------
+        static size_t hash_data(const backend::buffer<T> &d) {
+            const size_t h = std::hash<std::string>{} (piecewise_1D_node<T>::to_string(d));
+            for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
+                if (piecewise_1D_node<T>::backend_cache.find(i) ==
+                    piecewise_1D_node<T>::backend_cache.end()) {
+                    piecewise_1D_node<T>::backend_cache[i] = d;
+                    return i;
+                } else if (d == piecewise_1D_node<T>::backend_cache[i]) {
+                    return i;
+                }
+            }
+            assert(false && "Should never reach.");
+        }
+
 ///  Data buffer hash.
         const size_t data_hash;
 
@@ -89,26 +109,7 @@ namespace graph {
         piecewise_1D_node(const backend::buffer<T> &d,
                           shared_leaf<T> x) :
         straight_node<T> (x, piecewise_1D_node<T>::to_string(d, x)),
-        data_hash(std::hash<std::string>{} (piecewise_1D_node<T>::to_string(d))) {
-            if (piecewise_1D_node<T>::backend_cache.find(data_hash) ==
-                piecewise_1D_node<T>::backend_cache.end()) {
-                piecewise_1D_node<T>::backend_cache[data_hash] = d;
-            }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Construct 1D a piecewise constant node with defered argument.
-///
-///  @params[in] d Data to initalize the piecewise constant.
-//------------------------------------------------------------------------------
-        piecewise_1D_node(const backend::buffer<T> &d) :
-        straight_node<T> (piecewise_1D_node<T>::to_string(d)),
-        data_hash(std::hash<std::string>{} (piecewise_1D_node<T>::to_string(d))) {
-            if (piecewise_1D_node<T>::backend_cache.find(data_hash) ==
-                piecewise_1D_node<T>::backend_cache.end()) {
-                piecewise_1D_node<T>::backend_cache[data_hash] = d;
-            }
-        }
+        data_hash(piecewise_1D_node<T>::hash_data(d)) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of the piecewise constant.
@@ -172,7 +173,7 @@ namespace graph {
                         jit::add_type<T> (stream);
                     }
                     stream << piecewise_1D_node<T>::backend_cache[data_hash][0];
-                    for (size_t i = 0, ie = piecewise_1D_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
+                    for (size_t i = 1, ie = piecewise_1D_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
                         stream << ", ";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
@@ -220,7 +221,7 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     stream << ")";
                 }
-                stream <<", " << piecewise_1D_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];" << std::endl;
+                stream << ", " << piecewise_1D_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];" << std::endl;
             }
             
             return this->shared_from_this();
@@ -285,34 +286,6 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise\_1D convience function with defered argument.
-///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @returns A reduced piecewise\_1D node.
-//------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_1D(const std::vector<T> &d) {
-        auto temp = std::make_shared<piecewise_1D_node<T>> (d)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
-        }
-        
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
-                break;
-            }
-        }
-        return temp;
-    }
-
-//------------------------------------------------------------------------------
 ///  @brief Define piecewise\_1D convience function.
 ///
 ///  @params[in] d Data to initalize the piecewise constant.
@@ -322,24 +295,17 @@ namespace graph {
     template<typename T> shared_leaf<T> piecewise_1D(const backend::buffer<T> &d,
                                                      shared_leaf<T> x) {
         auto temp = std::make_shared<piecewise_1D_node<T>> (d, x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
-        }
-
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T>::cache.find(i) ==
+                leaf_node<T>::cache.end()) {
                 leaf_node<T>::cache[i] = temp;
-                break;
+                return temp;
+            } else if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
             }
         }
-        return temp;
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared piecewise 1D nodes.
@@ -450,6 +416,26 @@ namespace graph {
                    jit::format_to_string(y->get_hash());
         }
 
+//------------------------------------------------------------------------------
+///  @brief Stores the data in a hash.
+///
+///  @params[in] d Backend buffer.
+///  @returns The hash the node is stored in.
+//------------------------------------------------------------------------------
+        static size_t hash_data(const backend::buffer<T> &d) {
+            const size_t h = std::hash<std::string>{} (piecewise_2D_node<T>::to_string(d));
+            for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
+                if (piecewise_2D_node<T>::backend_cache.find(i) ==
+                    piecewise_2D_node<T>::backend_cache.end()) {
+                    piecewise_2D_node<T>::backend_cache[i] = d;
+                    return i;
+                } else if (d == piecewise_2D_node<T>::backend_cache[i]) {
+                    return i;
+                }
+            }
+            assert(false && "Should never reach.");
+        }
+
 ///  Data buffer hash.
         const size_t data_hash;
 ///  Number of columns.
@@ -469,35 +455,10 @@ namespace graph {
                           shared_leaf<T> x,
                           shared_leaf<T> y) :
         branch_node<T> (x, y, piecewise_2D_node<T>::to_string(d, x, y)),
-        data_hash(std::hash<std::string>{} (piecewise_2D_node<T>::to_string(d))),
+        data_hash(piecewise_2D_node<T>::hash_data(d)),
         num_columns(n) {
             assert(d.size()/n &&
                    "Expected the data buffer to be a multiple of the number of columns.");
-
-            if (piecewise_2D_node<T>::backend_cache.find(data_hash) ==
-                piecewise_2D_node<T>::backend_cache.end()) {
-                piecewise_2D_node<T>::backend_cache[data_hash] = d;
-            }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Construct 2D a piecewise constant node with defered arguments.
-///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] n Number of columns.
-//------------------------------------------------------------------------------
-        piecewise_2D_node(const backend::buffer<T> &d,
-                          const size_t n) :
-        branch_node<T> (piecewise_2D_node<T>::to_string(d)),
-        data_hash(std::hash<std::string>{} (piecewise_2D_node<T>::to_string(d))),
-        num_columns(n) {
-            assert(d.size()/n &&
-                   "Expected the data buffer to be a multiple of the number of columns.");
-
-            if (piecewise_2D_node<T>::backend_cache.find(data_hash) ==
-                piecewise_2D_node<T>::backend_cache.end()) {
-                piecewise_2D_node<T>::backend_cache[data_hash] = d;
-            }
         }
 
 //------------------------------------------------------------------------------
@@ -714,36 +675,6 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise\_2D convience function with defered arguments.
-///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] n Number of columns.
-///  @returns A reduced sqrt node.
-//------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_2D(const std::vector<T> &d,
-                                                     const size_t n) {
-        auto temp = std::make_shared<piecewise_2D_node<T>> (d, n)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
-        }
-        
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
-                break;
-            }
-        }
-        return temp;
-    }
-
-//------------------------------------------------------------------------------
 ///  @brief Define piecewise\_2D convience function.
 ///
 ///  @params[in] d Data to initalize the piecewise constant.
@@ -757,24 +688,17 @@ namespace graph {
                                                      shared_leaf<T> x,
                                                      shared_leaf<T> y) {
         auto temp = std::make_shared<piecewise_2D_node<T>> (d, n, x, y)->reduce();
-        const size_t h = temp->get_hash();
-        if (piecewise_2D_node<T>::cache.find(h) ==
-            piecewise_2D_node<T>::cache.end()) {
-            piecewise_2D_node<T>::cache[h] = temp;
-            return temp;
-        }
-        
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T>::cache.find(i) ==
+                leaf_node<T>::cache.end()) {
                 leaf_node<T>::cache[i] = temp;
-                break;
+                return temp;
+            } else if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
             }
         }
-        return temp;
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared piecewise 2D nodes.

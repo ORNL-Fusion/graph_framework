@@ -507,24 +507,17 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) {
             auto zero = std::make_shared<constant_node<T>> (static_cast<T> (0.0));
-            const size_t h = zero->get_hash();
-            if (leaf_node<T>::cache.find(h) ==
-                leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[h] = zero;
-                return zero;
-            }
-
-//  Hash found, test for collisions.
-            for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-                if (zero->is_match(leaf_node<T>::cache[i])) {
-                    return leaf_node<T>::cache[i];
-                } else if (leaf_node<T>::cache.find(i) ==
-                           leaf_node<T>::cache.end()) {
+//  Test for hash collisions.
+            for (size_t i = zero->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+                if (leaf_node<T>::cache.find(i) ==
+                    leaf_node<T>::cache.end()) {
                     leaf_node<T>::cache[i] = zero;
-                    break;
+                    return zero;
+                } else if (zero->is_match(leaf_node<T>::cache[i])) {
+                    return leaf_node<T>::cache[i];
                 }
             }
-            return zero;
+            assert(false && "Should never reach.");
         }
 
 //------------------------------------------------------------------------------
@@ -613,24 +606,17 @@ namespace graph {
     template<typename T>
     shared_leaf<T> constant(const T d) {
         auto temp = std::make_shared<constant_node<T>> (d)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
-        }
-
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T>::cache.find(i) ==
+                leaf_node<T>::cache.end()) {
                 leaf_node<T>::cache[i] = temp;
-                break;
+                return temp;
+            } else if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
             }
         }
-        return temp;
+        assert(false && "Should never reach.");
     }
 
 //------------------------------------------------------------------------------
@@ -642,24 +628,17 @@ namespace graph {
     template<typename T>
     shared_leaf<T> constant(const backend::buffer<T> &d) {
         auto temp = std::make_shared<constant_node<T>> (d)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
-        }
-
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T>::cache.find(i) ==
+                leaf_node<T>::cache.end()) {
                 leaf_node<T>::cache[i] = temp;
-                break;
+                return temp;
+            } else if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
             }
         }
-        return temp;
+        assert(false && "Should never reach.");
     }
 
 //  Define some common constants.

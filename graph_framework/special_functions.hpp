@@ -1156,7 +1156,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
                 const T c2 = static_cast<T> (0.08254);
                 const T c3 = static_cast<T> (0.1421);
                 const T c4 = static_cast<T> (0.2023);
-                T nu = floor(c0 + c1/(c2*x + c3*ya + c4));
+                T nu = std::floor(c0 + c1/(c2*x + c3*ya + c4));
                 T wr = xs;
                 T wi = ya;
                 for (nu = static_cast<T> (0.5)*(nu - static_cast<T> (1)); nu > static_cast<T> (0.4); nu -= static_cast<T> (0.5)) {
@@ -1280,7 +1280,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
             ret = std::exp(-sq(x));
 
 //  (round instead of ceil as in original paper; note that x/a > 1 here)
-            const T n0 = floor(x/a + static_cast<T> (0.5)); // sum in both directions, starting at n0
+            const T n0 = std::floor(x/a + static_cast<T> (0.5)); // sum in both directions, starting at n0
             const T dx = a*n0 - x;
             sum3 = std::exp(-dx*dx) / (a2*(n0*n0) + sq(y));
             sum5 = a*n0 * sum3;

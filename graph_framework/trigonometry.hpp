@@ -143,24 +143,17 @@ namespace graph {
     template<typename T>
     shared_leaf<T> sin(shared_leaf<T> x) {
         auto temp = std::make_shared<sine_node<T>> (x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
-        }
-        
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T>::cache.find(i) ==
+                leaf_node<T>::cache.end()) {
                 leaf_node<T>::cache[i] = temp;
-                break;
+                return temp;
+            } else if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
             }
         }
-        return temp;
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared sine nodes.
@@ -309,24 +302,17 @@ namespace graph {
     template<typename T>
     shared_leaf<T> cos(shared_leaf<T> x) {
         auto temp = std::make_shared<cosine_node<T>> (x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
-        }
-        
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T>::cache.find(i) ==
+                leaf_node<T>::cache.end()) {
                 leaf_node<T>::cache[i] = temp;
-                break;
+                return temp;
+            } else if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
             }
         }
-        return temp;
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared cosine nodes.
@@ -509,24 +495,17 @@ namespace graph {
     shared_leaf<T> atan(shared_leaf<T> l,
                         shared_leaf<T> r) {
         auto temp = std::make_shared<arctan_node<T>> (l, r)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
-        }
-        
-//  Hash found, test for collisions.
-        for (size_t i = h; i <= std::numeric_limits<size_t>::max(); i++) {
-            if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            } else if (leaf_node<T>::cache.find(i) ==
-                       leaf_node<T>::cache.end()) {
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T>::cache.find(i) ==
+                leaf_node<T>::cache.end()) {
                 leaf_node<T>::cache[i] = temp;
-                break;
+                return temp;
+            } else if (temp->is_match(leaf_node<T>::cache[i])) {
+                return leaf_node<T>::cache[i];
             }
         }
-        return temp;
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared add nodes.

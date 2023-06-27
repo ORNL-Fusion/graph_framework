@@ -15,28 +15,6 @@ const bool print = false;
 const bool write_step = true;
 
 //------------------------------------------------------------------------------
-///  @brief Set random values.
-///
-///  if constexpr does not work like a #ifdef statement. When not used in
-///  templates, both branches must be valid C++. This template ensures that
-///  special cases for complex types are respected.
-///
-///  @params[in]     mean   Mean value for the normal distibution.
-///  @params[in]     sigma  Sigma value for the normal distibution.
-///  @params[in]     size   Size of the node.
-///  @params[in,out] engine Ransom engine.
-///  @params[in,out] node   Node to set values of.
-//------------------------------------------------------------------------------
-template<typename base, typename T>
-void set_normal(const T mean, const T sigma, const size_t size,
-                std::mt19937_64 &engine, graph::shared_leaf<base> &node) {
-    std::normal_distribution<T> norm_dist(static_cast<T> (mean), static_cast<T> (sigma));
-    for (size_t j = 0; j < size; j++) {
-        node->set(j, static_cast<base> (norm_dist(engine)));
-    }
-}
-
-//------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
 ///
 ///  @params[in] argc Number of commandline arguments.
@@ -54,10 +32,10 @@ int main(int argc, const char * argv[]) {
 
     const timeing::measure_diagnostic total("Total Time");
 
-    const size_t num_times = 100000;
+    const size_t num_times = 10000;
     const size_t sub_steps = 10;
     const size_t num_steps = num_times/sub_steps;
-    const size_t num_rays = 10000;//000;
+    const size_t num_rays = 1;//0000;//000;
 
     std::vector<std::thread> threads(0);
     if constexpr (jit::use_gpu<base> ()) {
@@ -90,13 +68,15 @@ int main(int argc, const char * argv[]) {
 
 //  Inital conditions.
             if constexpr (jit::is_float<base> ()) {
-                set_normal(static_cast<float> (600.0),
-                           static_cast<float> (10.0),
-                           local_num_rays, engine, omega);
+                std::normal_distribution<float> norm_dist(static_cast<float> (600.0), static_cast<float> (10.0));
+                for (size_t j = 0; j < local_num_rays; j++) {
+                    omega->set(j, static_cast<base> (norm_dist(engine)));
+                }
             } else {
-                set_normal(static_cast<double> (600.0),
-                           static_cast<double> (10.0),
-                           local_num_rays, engine, omega);
+                std::normal_distribution<float> norm_dist(static_cast<double> (600.0), static_cast<double> (10.0));
+                for (size_t j = 0; j < local_num_rays; j++) {
+                    omega->set(j, static_cast<base> (norm_dist(engine)));
+                }
             }
 
             x->set(static_cast<base> (2.5));
