@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <cstdlib>
+#include <cstring>
 
 #include <dlfcn.h>
 
@@ -42,7 +43,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         ~cpu_context() {
             dlclose(lib_handle);
-            
+
             std::ostringstream temp_stream;
             temp_stream << "rm " << library_name;
             system(temp_stream.str().c_str());
