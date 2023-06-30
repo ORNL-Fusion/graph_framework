@@ -5,8 +5,8 @@
 ///  Special functions are adapted from http://ab-initio.mit.edu/Faddeeva
 //------------------------------------------------------------------------------
 
-#ifndef special_functions_hpp
-#define special_functions_hpp
+#ifndef special_functions_h
+#define special_functions_h
 
 #include <complex>
 #include <cfloat>
@@ -1459,4 +1459,4 @@ constexpr std::complex<T> i(static_cast<T> (0),
     }
 }
 
-#endif /* special_functions_hpp */
+#endif /* special_functions_h */

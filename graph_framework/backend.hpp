@@ -420,8 +420,7 @@ namespace backend {
     inline buffer<T> fma(buffer<T> &a,
                          buffer<T> &b,
                          buffer<T> &c) {
-        constexpr bool use_fma = !std::is_same<T, std::complex<float>>::value  &&
-                                 !std::is_same<T, std::complex<double>>::value &&
+        constexpr bool use_fma = !jit::is_complex<T> () &&
 #ifdef FP_FAST_FMA
                                  true;
 #else

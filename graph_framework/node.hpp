@@ -159,7 +159,10 @@ namespace graph {
 ///  Cache for constructed nodes.
         inline thread_local static std::map<size_t,
                                             std::shared_ptr<leaf_node<T>>> cache;
-
+///  Cache for the backend buffers.
+        inline thread_local static std::map<size_t,
+                                            backend::buffer<T>> backend_cache;
+        
 ///  Type def to retrieve the backend type.
         typedef T base;
     };
