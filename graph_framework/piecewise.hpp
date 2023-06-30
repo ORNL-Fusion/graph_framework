@@ -85,11 +85,11 @@ namespace graph {
         static size_t hash_data(const backend::buffer<T> &d) {
             const size_t h = std::hash<std::string>{} (piecewise_1D_node<T>::to_string(d));
             for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
-                if (leaf_node<T>::backend_cache.find(i) ==
-                    leaf_node<T>::backend_cache.end()) {
-                    leaf_node<T>::backend_cache[i] = d;
+                if (piecewise_1D_node<T>::backend_cache.find(i) ==
+                    piecewise_1D_node<T>::backend_cache.end()) {
+                    piecewise_1D_node<T>::backend_cache[i] = d;
                     return i;
-                } else if (d == leaf_node<T>::backend_cache[i]) {
+                } else if (d == piecewise_1D_node<T>::backend_cache[i]) {
                     return i;
                 }
             }
@@ -121,7 +121,7 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return leaf_node<T>::backend_cache[data_hash];
+            return piecewise_1D_node<T>::backend_cache[data_hash];
         }
 
 //------------------------------------------------------------------------------
@@ -160,25 +160,25 @@ namespace graph {
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {
             if (visited.find(this) == visited.end()) {
-                if (registers.find(leaf_node<T>::backend_cache[data_hash].data()) == registers.end()) {
-                    registers[leaf_node<T>::backend_cache[data_hash].data()] =
-                        jit::to_string('a', leaf_node<T>::backend_cache[data_hash].data());
+                if (registers.find(piecewise_1D_node<T>::backend_cache[data_hash].data()) == registers.end()) {
+                    registers[piecewise_1D_node<T>::backend_cache[data_hash].data()] =
+                        jit::to_string('a', piecewise_1D_node<T>::backend_cache[data_hash].data());
                     if constexpr (jit::use_metal<T> ()) {
                         stream << "constant ";
                     }
                     stream << "const ";
                     jit::add_type<T> (stream);
-                    stream << " " << registers[leaf_node<T>::backend_cache[data_hash].data()] << "[] = {";
+                    stream << " " << registers[piecewise_1D_node<T>::backend_cache[data_hash].data()] << "[] = {";
                     if constexpr (jit::is_complex<T> ()) {
                         jit::add_type<T> (stream);
                     }
-                    stream << leaf_node<T>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = leaf_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
+                    stream << piecewise_1D_node<T>::backend_cache[data_hash][0];
+                    for (size_t i = 1, ie = piecewise_1D_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
                         stream << ", ";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << leaf_node<T>::backend_cache[data_hash][i];
+                        stream << piecewise_1D_node<T>::backend_cache[data_hash][i];
                     }
                     stream << "};" << std::endl;
                     visited[this] = 0;
@@ -212,7 +212,7 @@ namespace graph {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = " << registers[leaf_node<T>::backend_cache[data_hash].data()];
+                stream << " " << registers[this] << " = " << registers[piecewise_1D_node<T>::backend_cache[data_hash].data()];
                 stream << "[max(min((int)";
                 if constexpr (jit::is_complex<T> ()) {
                     stream << "real(";
@@ -221,9 +221,9 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     stream << ")";
                 }
-                stream << ", " << leaf_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];" << std::endl;
+                stream << ", " << piecewise_1D_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];" << std::endl;
             }
-
+            
             return this->shared_from_this();
         }
 
@@ -280,6 +280,9 @@ namespace graph {
         virtual bool is_variable_like() const {
             return false;
         }
+
+///  Cache for the backend buffers.
+        inline thread_local static std::map<size_t, backend::buffer<T>> backend_cache;
     };
 
 //------------------------------------------------------------------------------
@@ -422,11 +425,11 @@ namespace graph {
         static size_t hash_data(const backend::buffer<T> &d) {
             const size_t h = std::hash<std::string>{} (piecewise_2D_node<T>::to_string(d));
             for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
-                if (leaf_node<T>::backend_cache.find(i) ==
-                    leaf_node<T>::backend_cache.end()) {
-                    leaf_node<T>::backend_cache[i] = d;
+                if (piecewise_2D_node<T>::backend_cache.find(i) ==
+                    piecewise_2D_node<T>::backend_cache.end()) {
+                    piecewise_2D_node<T>::backend_cache[i] = d;
                     return i;
-                } else if (d == leaf_node<T>::backend_cache[i]) {
+                } else if (d == piecewise_2D_node<T>::backend_cache[i]) {
                     return i;
                 }
             }
@@ -477,7 +480,7 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return leaf_node<T>::backend_cache[data_hash];
+            return piecewise_2D_node<T>::backend_cache[data_hash];
         }
 
 //------------------------------------------------------------------------------
@@ -516,25 +519,25 @@ namespace graph {
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {
             if (visited.find(this) == visited.end()) {
-                if (registers.find(leaf_node<T>::backend_cache[data_hash].data()) == registers.end()) {
-                    registers[leaf_node<T>::backend_cache[data_hash].data()] =
-                        jit::to_string('a', leaf_node<T>::backend_cache[data_hash].data());
+                if (registers.find(piecewise_2D_node<T>::backend_cache[data_hash].data()) == registers.end()) {
+                    registers[piecewise_2D_node<T>::backend_cache[data_hash].data()] =
+                        jit::to_string('a', piecewise_2D_node<T>::backend_cache[data_hash].data());
                     if constexpr (jit::use_metal<T> ()) {
                         stream << "constant ";
                     }
                     stream << "const ";
                     jit::add_type<T> (stream);
-                    stream << " " << registers[leaf_node<T>::backend_cache[data_hash].data()] << "[] = {";
+                    stream << " " << registers[piecewise_2D_node<T>::backend_cache[data_hash].data()] << "[] = {";
                     if constexpr (jit::is_complex<T> ()) {
                         jit::add_type<T> (stream);
                     }
-                    stream << leaf_node<T>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = leaf_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
+                    stream << piecewise_2D_node<T>::backend_cache[data_hash][0];
+                    for (size_t i = 1, ie = piecewise_2D_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
                         stream << ", ";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << leaf_node<T>::backend_cache[data_hash][i];
+                        stream << piecewise_2D_node<T>::backend_cache[data_hash][i];
                     }
                     stream << "};" << std::endl;
                 }
@@ -575,14 +578,14 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> compile(std::ostringstream &stream,
                                        jit::register_map &registers) {
-            if (registers.find(this) == registers.end()) {
+            if (registers.find(this) == registers.end()) {                
                 shared_leaf<T> x = this->left->compile(stream, registers);
                 shared_leaf<T> y = this->right->compile(stream, registers);
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = "
-                       << registers[leaf_node<T>::backend_cache[data_hash].data()];
+                       << registers[piecewise_2D_node<T>::backend_cache[data_hash].data()];
                 stream << "[max(min((int)";
                 if constexpr (jit::is_complex<T> ()) {
                     stream << "real(";
@@ -600,10 +603,10 @@ namespace graph {
                     stream << ")";
                 }
                 stream << ", "
-                       << leaf_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];"
+                       << piecewise_2D_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];"
                        << std::endl;
             }
-
+            
             return this->shared_from_this();
         }
 
@@ -666,6 +669,9 @@ namespace graph {
         virtual bool is_variable_like() const {
             return false;
         }
+
+///  Cache for the backend buffers.
+        inline thread_local static std::map<size_t, backend::buffer<T>> backend_cache;
     };
 
 //------------------------------------------------------------------------------
