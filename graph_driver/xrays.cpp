@@ -26,16 +26,16 @@ int main(int argc, const char * argv[]) {
     std::mutex sync;
 
     //typedef float base;
-    //typedef double base;
+    typedef double base;
     //typedef std::complex<float> base;
-    typedef std::complex<double> base;
+    //typedef std::complex<double> base;
 
     const timeing::measure_diagnostic total("Total Time");
 
     const size_t num_times = 100000;
     const size_t sub_steps = 100;
     const size_t num_steps = num_times/sub_steps;
-    const size_t num_rays = 1000;//0000;
+    const size_t num_rays = 1;//000;//0000;
 
     std::vector<std::thread> threads(0);
     if constexpr (jit::use_gpu<base> ()) {
@@ -103,18 +103,19 @@ int main(int argc, const char * argv[]) {
             stream << "result" << thread_number << ".nc";
 
             //solver::split_simplextic<dispersion::bohm_gross<base>>
+            //solver::rk4<dispersion::bohm_gross<base>>
             //solver::adaptive_rk4<dispersion::bohm_gross<base>>
             //solver::rk4<dispersion::simple<base>>
-            //solver::rk4<dispersion::ordinary_wave<base>>
+            solver::rk4<dispersion::ordinary_wave<base>>
             //solver::rk4<dispersion::extra_ordinary_wave<base>>
             //solver::rk4<dispersion::cold_plasma<base>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<base>>
-            solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base>>>
+            //solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base>>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
                       stream.str(), local_num_rays);
                 //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq,
-                //      stream.str(), num_rays);
-            solve.init(ky);
+                //      stream.str(), local_num_rays);
+            solve.init(kx);
             solve.compile();
             if (thread_number == 0 && false) {
                 solve.print_dispersion();

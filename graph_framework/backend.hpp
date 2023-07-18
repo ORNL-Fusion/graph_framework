@@ -598,13 +598,21 @@ namespace backend {
         if (y.size() == 1) {
             const T right = y.at(0);
             for (size_t i = 0, ie = x.size(); i < ie; i++) {
-                x[i] = std::atan(right/x[i]);
+                if constexpr (jit::is_complex<T> ()) {
+                    x[i] = std::atan(right/x[i]);
+                } else {
+                    x[i] = std::atan2(right, x[i]);
+                }
             }
             return x;
         } else if (x.size() == 1) {
             const T left = x.at(0);
             for (size_t i = 0, ie = y.size(); i < ie; i++) {
-                y[i] = std::atan(y[i]/left);
+                if constexpr (jit::is_complex<T> ()) {
+                    y[i] = std::atan(y[i]/left);
+                } else {
+                    y[i] = std::atan2(y[i], left);
+                }
             }
             return y;
         }
@@ -612,7 +620,11 @@ namespace backend {
         assert(x.size() == y.size() &&
                "Left and right sizes are incompatable.");
         for (size_t i = 0, ie = x.size(); i < ie; i++) {
-            x[i] = std::atan(y[i]/x[i]);
+            if constexpr (jit::is_complex<T> ()) {
+                x[i] = std::atan(y[i]/x[i]);
+            } else {
+                x[i] = std::atan2(y[i], x[i]);
+            }
         }
         return x;
     }

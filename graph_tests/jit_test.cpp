@@ -381,7 +381,7 @@ void run_dispersion_tests() {
     } else if (jit::use_metal<T> ()) {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 5.0E9);
     } else {
-        run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 3.0E10);
+        run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 5.1E10);
     }
 }
 

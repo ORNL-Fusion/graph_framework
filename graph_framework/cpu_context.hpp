@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <cstdlib>
+#include <cstring>
 
 #include <dlfcn.h>
 
@@ -87,7 +88,7 @@ namespace gpu {
             temp_stream << CXX << " -fPIC -shared ";
 #endif
 #ifndef NDEBUG
-            temp_stream << "-g -fsanitize=undefined -fsanitize=float-divide-by-zero ";
+            temp_stream << "-g -fsanitize=undefined -fsanitize=float-divide-by-zero -fsanitize-trap=all ";
 #else
             temp_stream << "-O3 ";
 #endif

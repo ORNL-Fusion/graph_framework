@@ -256,11 +256,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
             std::cout << "r\\_" << reinterpret_cast<size_t> (this) << "_{i}";
-            if (this->arg.get()) {
-                std::cout << "\\left(";
-                this->arg->to_latex();
-                std::cout << "\\right)";
-            }
         }
 
 //------------------------------------------------------------------------------
@@ -277,8 +272,35 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
+        virtual bool is_all_variables() const {
             return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_base() {
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_exponent() const {
+            return one<T> ();
         }
     };
 
@@ -640,13 +662,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
             std::cout  << "r\\_" << reinterpret_cast<size_t> (this) << "_{ij}";
-            if (this->left.get()) {
-                std::cout << "\\left(";
-                this->left->to_latex();
-                std::cout << ",";
-                this->right->to_latex();
-                std::cout << "\\right)";
-            }
         }
 
 //------------------------------------------------------------------------------
@@ -663,8 +678,35 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
+        virtual bool is_all_variables() const {
             return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_base() {
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_exponent() const {
+            return one<T> ();
         }
     };
 

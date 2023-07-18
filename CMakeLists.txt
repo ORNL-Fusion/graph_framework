@@ -106,6 +106,15 @@ register_sanitizer_option (thread OFF)
 register_sanitizer_option (undefined ON)
 register_sanitizer_option (float-divide-by-zero ON)
 
+target_compile_options (sanitizer
+                        INTERFACE
+                        $<$<CONFIG:Sanitized>:-fsanitize-trap=all>
+)
+target_link_options (sanitizer
+                     INTERFACE
+                     $<$<CONFIG:Sanitized>:-fsanitize-trap=all>
+)
+
 #-------------------------------------------------------------------------------
 #  Setup targets
 #-------------------------------------------------------------------------------

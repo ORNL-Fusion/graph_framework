@@ -440,14 +440,20 @@ namespace graph {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T> l = this->left->compile(stream, registers);
                 shared_leaf<T> r = this->right->compile(stream, registers);
-
+                
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = atan("
-                       << registers[r.get()] << "/"
-                       << registers[l.get()] << ");"
-                       << std::endl;
+                if constexpr (jit::is_complex<T> ()) {
+                    stream << " " << registers[this] << " = atan("
+                           << registers[r.get()] << "/"
+                           << registers[l.get()];
+                } else {
+                    stream << " " << registers[this] << " = atan2("
+                           << registers[r.get()] << ","
+                           << registers[l.get()];
+                }
+                stream << ");" << std::endl;
             }
 
             return this->shared_from_this();

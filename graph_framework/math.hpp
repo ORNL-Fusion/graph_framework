@@ -77,7 +77,7 @@ namespace graph {
 
                 return pow(ap->get_left(),
                            ap->get_right() +
-                           constant(static_cast<T> (0.5)));
+                           half<T> ());
             }
 
 //  Handle casses like sqrt(c*x) where c is constant or cases like
@@ -174,6 +174,33 @@ namespace graph {
             std::cout << "\\sqrt{";
             this->arg->to_latex();
             std::cout << "}";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_base() {
+            return this->arg;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_exponent() const {
+            return half<T> ();
         }
     };
 
@@ -740,10 +767,37 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
-            return this->left->is_variable_like() &&
-                   (this->right->is_variable_like() ||
+        virtual bool is_all_variables() const {
+            return this->left->is_all_variables() &&
+                   (this->right->is_all_variables() ||
                     constant_cast(this->right).get());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_base() {
+            return this->left;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_exponent() const {
+            return this->right;
         }
     };
 

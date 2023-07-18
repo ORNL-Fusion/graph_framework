@@ -625,7 +625,7 @@ namespace dispersion {
                                         graph::shared_leaf<T> t,
                                         equilibrium::shared<T> &eq) {
             auto c = graph::one<T> ();
-            auto well = c - graph::constant(static_cast<T> (0.5))*exp(graph::constant(static_cast<T> (-1.0))*(x*x + y*y)/graph::constant(static_cast<T> (0.1)));
+            auto well = c - graph::half<T> ()*exp(graph::constant(static_cast<T> (-1.0))*(x*x + y*y)/graph::constant(static_cast<T> (0.1)));
             auto npar2 = kz*kz*c*c/(w*w);
             auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
             return npar2 + nperp2 - well;
@@ -1000,7 +1000,7 @@ namespace dispersion {
             auto ne = eq->get_electron_density(x, y, z);
             auto te = eq->get_electron_temperature(x, y, z);
             
-            auto ve = graph::sqrt(two*ne*te/physics<T>::me);
+            auto ve = graph::sqrt(two*physics<T>::q*te/physics<T>::me);
 
 //  Setup characteristic frequencies.
             auto ec = build_cyclotron_fequency(none*physics<T>::q, b_len,
@@ -1013,19 +1013,17 @@ namespace dispersion {
             auto q = wpe2/(two*w*(w + ec));
             auto P = wpe2/(w*w);
 
-            auto kvec = graph::vector(kx, ky, kz);
             auto n = graph::vector(kx/w, ky/w, kz/w);
             auto n2 = n->dot(n);
-            auto kpara = b_hat->dot(kvec);
             auto npara = b_hat->dot(n);
             auto npara2 = npara*npara;
             auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
             
-            auto zeta = (w - ec)/(kpara*ve);
+            auto zeta = physics<T>::c/(npara*ve)*(one - ec/w);
             auto Z_func = this->z.Z(zeta);
             auto F = nperp2/(two*npara)*w*w/(ec*ec)*ve/physics<T>::c*zeta*(one + zeta*Z_func);
-            auto isigma = wpe2/(two*w)*Z_func/(kpara*ve);
+            auto isigma = wpe2/(two*w*w)*Z_func*physics<T>::c/(npara*ve);
 
             auto q_func = one - two*q;
             auto n_func = n2 + npara2;
@@ -1033,8 +1031,8 @@ namespace dispersion {
             auto p_func = one - P;
 
             auto gamma5 = P*(n2*npara2 - (one - q)*n_func + q_func);
-            auto gamma4 = P*(two*q_func - n_func);
-            auto gamma3 = P*w*w/(four*ec*ec)*nperp2/npara2*(n_func - two*q_func);
+            //auto gamma4 = P*(two*q_func - n_func);
+            //auto gamma3 = P*w*w/(four*ec*ec)*nperp2/npara2*(n_func - two*q_func);
             auto gamma2 = P*w/ec*(n2nperp2 - q_func*nperp2)
                         + P*P*w*w/(four*ec*ec)*(n_func - two*q_func)*nperp2/npara2;
             auto gamma1 = (one - q)*n2nperp2 + p_func*n2*npara2
@@ -1044,7 +1042,8 @@ namespace dispersion {
             auto zeta_func = one + zeta*Z_func;
 
             return isigma*gamma0 + gamma1 + gamma2*zeta_func +
-                   gamma2*zeta*Z_func*zeta_func + gamma4*isigma*F + gamma5*F;
+//                   gamma3*zeta*Z_func*zeta_func + gamma4*isigma*F +
+                   gamma5*F;
         }
     };
 

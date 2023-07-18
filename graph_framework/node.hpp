@@ -28,14 +28,20 @@ namespace graph {
     protected:
 ///  Hash for node.
         const size_t hash;
+///  Graph complexity.
+        const size_t complexity;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a basic node.
 ///
-///  @params[in] s Node string to hash.
+///  @params[in] s     Node string to hash.
+///  @params[in] count Number of nodes in the subgraph.
 //------------------------------------------------------------------------------
-        leaf_node(const std::string s) : hash(std::hash<std::string>{} (s)) {}
+        leaf_node(const std::string s,
+                  const size_t count) :
+        hash(std::hash<std::string>{} (s)),
+        complexity(count) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Destructor
@@ -99,6 +105,16 @@ namespace graph {
         virtual bool is_match(std::shared_ptr<leaf_node<T>> x) = 0;
 
 //------------------------------------------------------------------------------
+///  @brief Check if the base of the powers match.
+///
+///  @params[in] x Other graph to check if the bases match.
+///  @returns True if the powers of the nodes match.
+//------------------------------------------------------------------------------
+        bool is_power_base_match(std::shared_ptr<leaf_node<T>> x) {
+            return this->get_power_base()->is_match(x->get_power_base());
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
 ///  @params[in] d Scalar data to set.
@@ -141,11 +157,43 @@ namespace graph {
         virtual bool is_constant_like() const = 0;
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
+///  @brief Test if all the subnodes terminate in variables.
 ///
-///  @returns True if the node acts like a variable.
+///  @returns True if all the subnodes terminate in variables.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const = 0;
+        virtual bool is_all_variables() const = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  Most notes are not so default to false.
+///
+///  @returns True the node is power like and false otherwise.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  Most node can be treated as x^1 so just return this node.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T>> get_power_base() {
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  Most node can be treated as x^1 so just return one for those nodes but we
+///  need todo that manually in the derived classes.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T>> get_power_exponent() const = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the hash for the node.
@@ -154,6 +202,15 @@ namespace graph {
 //------------------------------------------------------------------------------
         size_t get_hash() const {
             return hash;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of nodes in the subgraph.
+///
+///  @returns The complexity count.
+//------------------------------------------------------------------------------
+        size_t get_complexity() const {
+            return complexity;
         }
 
 ///  Cache for constructed nodes.
@@ -173,273 +230,6 @@ namespace graph {
 ///  Convenience type alias for a vector of output nodes.
     template<typename T>
     using output_nodes = std::vector<shared_leaf<T>>;
-
-//******************************************************************************
-//  Base straight node.
-//******************************************************************************
-//------------------------------------------------------------------------------
-///  @brief Class representing a straight node.
-///
-///  This ensures that the base leaf type has the common type between the two
-///  template arguments.
-//------------------------------------------------------------------------------
-    template<typename T>
-    class straight_node : public leaf_node<T> {
-    protected:
-///  Argument
-        shared_leaf<T> arg;
-
-    public:
-//------------------------------------------------------------------------------
-///  @brief Construct a straight node.
-///
-///  @params[in] a Argument.
-///  @params[in] s Node string to hash.
-//------------------------------------------------------------------------------
-        straight_node(shared_leaf<T> a,
-                      const std::string s) :
-        leaf_node<T> (s), arg(a) {}
-
-//------------------------------------------------------------------------------
-///  @brief Construct a straight node with defered argument.
-///
-///  @params[in] s Node string to hash.
-//------------------------------------------------------------------------------
-        straight_node(const std::string s) :
-        leaf_node<T> (s) {}
-
-//------------------------------------------------------------------------------
-///  @brief Evaluate method.
-///
-///  @returns The evaluated value of the node.
-//------------------------------------------------------------------------------
-        virtual backend::buffer<T> evaluate() {
-            return this->arg->evaluate();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Compile preamble.
-///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-//------------------------------------------------------------------------------
-    virtual void compile_preamble(std::ostringstream &stream,
-                                  jit::register_map &registers,
-                                  jit::visiter_map &visited) {
-        if (visited.find(this) == visited.end()) {
-            this->arg->compile_preamble(stream, registers, visited);
-            visited[this] = 0;
-        }
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Compile the node.
-///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @returns The current node.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
-            return this->arg->compile(stream, registers);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the argument.
-//------------------------------------------------------------------------------
-        shared_leaf<T> get_arg() {
-            return this->arg;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->arg->is_constant_like();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
-            return this->arg->is_variable_like();
-        }
-    };
-
-//******************************************************************************
-//  Base branch node.
-//******************************************************************************
-//------------------------------------------------------------------------------
-///  @brief Class representing a branch node.
-///
-///  This ensures that the base leaf type has the common type between the two
-///  template arguments.
-//------------------------------------------------------------------------------
-    template<typename T>
-    class branch_node : public leaf_node<T> {
-    protected:
-//  Left branch of the tree.
-        shared_leaf<T> left;
-//  Right branch of the tree.
-        shared_leaf<T> right;
-
-    public:
-
-//------------------------------------------------------------------------------
-///  @brief Assigns the left and right branches.
-///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
-///  @params[in] s Node string to hash.
-//------------------------------------------------------------------------------
-        branch_node(shared_leaf<T> l,
-                    shared_leaf<T> r,
-                    const std::string s) :
-        leaf_node<T> (s), left(l), right(r) {}
-
-//------------------------------------------------------------------------------
-///  @brief Defers the asigment of branches.
-///
-///  @params[in] s Node string to hash.
-//------------------------------------------------------------------------------
-        branch_node(const std::string s) :
-        leaf_node<T> (s) {}
-
-//------------------------------------------------------------------------------
-///  @brief Compile preamble.
-///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
-//------------------------------------------------------------------------------
-        virtual void compile_preamble(std::ostringstream &stream,
-                                      jit::register_map &registers,
-                                      jit::visiter_map &visited) {
-            if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, visited);
-                this->right->compile_preamble(stream, registers, visited);
-                visited[this] = 0;
-            }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the left branch.
-//------------------------------------------------------------------------------
-        shared_leaf<T> get_left() {
-            return this->left;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the right branch.
-//------------------------------------------------------------------------------
-        shared_leaf<T> get_right() {
-            return this->right;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->left->is_constant_like() &&
-                   this->right->is_constant_like();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
-            return this->left->is_variable_like() &&
-                   this->right->is_variable_like();
-        }
-    };
-
-//******************************************************************************
-//  Base triple node.
-//******************************************************************************
-//------------------------------------------------------------------------------
-///  @brief Class representing a triple branch node.
-///
-///  This ensures that the base leaf type has the common type between the two
-///  template arguments.
-//------------------------------------------------------------------------------
-    template<typename T>
-    class triple_node : public branch_node<T> {
-    protected:
-//  Middle branch of the tree.
-        shared_leaf<T> middle;
-
-    public:
-
-//------------------------------------------------------------------------------
-///  @brief Reduces and assigns the left and right branches.
-///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
-///  @params[in] s Node string to hash.
-//------------------------------------------------------------------------------
-        triple_node(shared_leaf<T> l,
-                    shared_leaf<T> m,
-                    shared_leaf<T> r,
-                    const std::string s) :
-        branch_node<T> (l, r, s),
-        middle(m->reduce()) {}
-
-//------------------------------------------------------------------------------
-///  @brief Compile preamble.
-///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
-//------------------------------------------------------------------------------
-        virtual void compile_preamble(std::ostringstream &stream,
-                                      jit::register_map &registers,
-                                      jit::visiter_map &visited) {
-            if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, visited);
-                this->middle->compile_preamble(stream, registers, visited);
-                this->right->compile_preamble(stream, registers, visited);
-                visited[this] = 0;
-            }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the right branch.
-//------------------------------------------------------------------------------
-        shared_leaf<T> get_middle() {
-            return this->middle;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->left->is_constant_like()   &&
-                   this->middle->is_constant_like() &&
-                   this->right->is_constant_like();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
-            return this->left->is_variable_like()   &&
-                   this->middle->is_variable_like() &&
-                   this->right->is_variable_like();
-        }
-    };
 
 //******************************************************************************
 //  Constant node.
@@ -470,7 +260,7 @@ namespace graph {
 ///  @params[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
         constant_node(const T d) :
-        leaf_node<T> (constant_node<T>::to_string(d)), data(1, d) {}
+        leaf_node<T> (constant_node<T>::to_string(d), 1), data(1, d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
@@ -478,7 +268,7 @@ namespace graph {
 ///  @params[in] d Array buffer.
 //------------------------------------------------------------------------------
         constant_node(const backend::buffer<T> &d) :
-        leaf_node<T> (constant_node::to_string(d.at(0))), data(d) {
+        leaf_node<T> (constant_node::to_string(d.at(0)), 1), data(d) {
             assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
 
@@ -595,8 +385,35 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
+        virtual bool is_all_variables() const {
             return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_base() {
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_exponent() const {
+            return std::make_shared<constant_node<T>> (static_cast<T> (1.0));
         }
     };
 
@@ -696,6 +513,16 @@ namespace graph {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Create a two constant.
+///
+///  @returns A two constant.
+//------------------------------------------------------------------------------
+    template<typename T>
+    constexpr shared_leaf<T> half() {
+        return constant(static_cast<T> (0.5));
+    }
+
+//------------------------------------------------------------------------------
 /// @brief Create an imaginary constant.
 //------------------------------------------------------------------------------
     template<typename T>
@@ -719,6 +546,302 @@ namespace graph {
     shared_constant<T> constant_cast(shared_leaf<T> x) {
         return std::dynamic_pointer_cast<constant_node<T>> (x);
     }
+
+//******************************************************************************
+//  Base straight node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a straight node.
+///
+///  This ensures that the base leaf type has the common type between the two
+///  template arguments.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class straight_node : public leaf_node<T> {
+    protected:
+///  Argument
+        shared_leaf<T> arg;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a straight node.
+///
+///  @params[in] a Argument.
+///  @params[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        straight_node(shared_leaf<T> a,
+                      const std::string s) :
+        leaf_node<T> (s, a->get_complexity() + 1), arg(a) {}
+
+//------------------------------------------------------------------------------
+///  @brief Construct a straight node with defered argument.
+///
+///  @params[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        straight_node(const std::string s) :
+        leaf_node<T> (s) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate method.
+///
+///  @returns The evaluated value of the node.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            return this->arg->evaluate();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+//------------------------------------------------------------------------------
+    virtual void compile_preamble(std::ostringstream &stream,
+                                  jit::register_map &registers,
+                                  jit::visiter_map &visited) {
+        if (visited.find(this) == visited.end()) {
+            this->arg->compile_preamble(stream, registers, visited);
+            visited[this] = 0;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> compile(std::ostringstream &stream,
+                                       jit::register_map &registers) {
+            return this->arg->compile(stream, registers);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the argument.
+//------------------------------------------------------------------------------
+        shared_leaf<T> get_arg() {
+            return this->arg;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return this->arg->is_constant_like();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return this->arg->is_all_variables();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns Returns a power of one.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T>> get_power_exponent() const {
+            return one<T> ();
+        }
+    };
+
+//******************************************************************************
+//  Base branch node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a branch node.
+///
+///  This ensures that the base leaf type has the common type between the two
+///  template arguments.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class branch_node : public leaf_node<T> {
+    protected:
+//  Left branch of the tree.
+        shared_leaf<T> left;
+//  Right branch of the tree.
+        shared_leaf<T> right;
+
+    public:
+
+//------------------------------------------------------------------------------
+///  @brief Assigns the left and right branches.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+///  @params[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        branch_node(shared_leaf<T> l,
+                    shared_leaf<T> r,
+                    const std::string s) :
+        leaf_node<T> (s, l->get_complexity() + r->get_complexity() + 1),
+        left(l), right(r) {}
+
+//------------------------------------------------------------------------------
+///  @brief Assigns the left and right branches.
+///
+///  @params[in] l     Left branch.
+///  @params[in] r     Right branch.
+///  @params[in] s     Node string to hash.
+///  @params[in] count Number of nodes in the subgraph.
+//------------------------------------------------------------------------------
+                branch_node(shared_leaf<T> l,
+                            shared_leaf<T> r,
+                            const std::string s,
+                            const size_t count) :
+                leaf_node<T> (s, count),
+                left(l), right(r) {}
+
+//------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @params[in,out] visited   List of visited nodes.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::ostringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited) {
+            if (visited.find(this) == visited.end()) {
+                this->left->compile_preamble(stream, registers, visited);
+                this->right->compile_preamble(stream, registers, visited);
+                visited[this] = 0;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the left branch.
+//------------------------------------------------------------------------------
+        shared_leaf<T> get_left() {
+            return this->left;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the right branch.
+//------------------------------------------------------------------------------
+        shared_leaf<T> get_right() {
+            return this->right;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return this->left->is_constant_like() &&
+                   this->right->is_constant_like();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return this->left->is_all_variables() &&
+                   this->right->is_all_variables();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns Returns a power of one.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T>> get_power_exponent() const {
+            return one<T> ();
+        }
+    };
+
+//******************************************************************************
+//  Base triple node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a triple branch node.
+///
+///  This ensures that the base leaf type has the common type between the two
+///  template arguments.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class triple_node : public branch_node<T> {
+    protected:
+//  Middle branch of the tree.
+        shared_leaf<T> middle;
+
+    public:
+
+//------------------------------------------------------------------------------
+///  @brief Reduces and assigns the left and right branches.
+///
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
+///  @params[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        triple_node(shared_leaf<T> l,
+                    shared_leaf<T> m,
+                    shared_leaf<T> r,
+                    const std::string s) :
+        branch_node<T> (l, r, s,
+                        l->get_complexity() +
+                        m->get_complexity() +
+                        r->get_complexity()),
+        middle(m) {}
+
+//------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @params[in,out] visited   List of visited nodes.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::ostringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited) {
+            if (visited.find(this) == visited.end()) {
+                this->left->compile_preamble(stream, registers, visited);
+                this->middle->compile_preamble(stream, registers, visited);
+                this->right->compile_preamble(stream, registers, visited);
+                visited[this] = 0;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the right branch.
+//------------------------------------------------------------------------------
+        shared_leaf<T> get_middle() {
+            return this->middle;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a constant.
+///
+///  @returns True if the node acts like a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant_like() const {
+            return this->left->is_constant_like()   &&
+                   this->middle->is_constant_like() &&
+                   this->right->is_constant_like();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return this->left->is_all_variables()   &&
+                   this->middle->is_all_variables() &&
+                   this->right->is_all_variables();
+        }
+    };
 
 //******************************************************************************
 //  Variable node.
@@ -753,7 +876,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s,
                       const std::string &symbol) :
-        leaf_node<T> (variable_node<T>::to_string(this)),
+        leaf_node<T> (variable_node<T>::to_string(this), 1),
         buffer(s), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -765,7 +888,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s, const T d,
                       const std::string &symbol) :
-        leaf_node<T> (variable_node<T>::to_string(this)),
+        leaf_node<T> (variable_node<T>::to_string(this), 1),
         buffer(s, d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -776,7 +899,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
-        leaf_node<T> (variable_node<T>::to_string(this)),
+        leaf_node<T> (variable_node<T>::to_string(this), 1),
         buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -787,7 +910,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const backend::buffer<T> &d,
                       const std::string &symbol) :
-        leaf_node<T> (variable_node<T>::to_string(this)),
+        leaf_node<T> (variable_node<T>::to_string(this), 1),
         buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -839,7 +962,12 @@ namespace graph {
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) {
-            return this == x.get();
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto temp = pseudo_variable_cast(x);
+            return temp.get() && this->is_match(temp->get_arg());
         }
 
 //------------------------------------------------------------------------------
@@ -923,8 +1051,35 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
+        virtual bool is_all_variables() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_base() {
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_exponent() const {
+            return one<T> ();
         }
     };
 
@@ -1049,7 +1204,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) {
-            return constant(static_cast<T> (this->is_match(x)));
+            return constant(static_cast<T> (this == x.get()));
         }
 
 //------------------------------------------------------------------------------
@@ -1059,7 +1214,8 @@ namespace graph {
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) {
-            return this == x.get();
+            return this == x.get() ||
+                   this->arg->is_match(x);
         }
 
 //------------------------------------------------------------------------------
@@ -1083,8 +1239,35 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
+        virtual bool is_all_variables() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_base() {
+            return this->arg->get_power_base();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> get_power_exponent() const {
+            return this->arg->get_power_exponent();
         }
     };
 

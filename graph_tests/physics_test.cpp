@@ -591,7 +591,7 @@ template<typename T> void test_efit() {
         solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
     solve.init(kx);
     solve.compile();
-
+    
     for (size_t i = 0; i < 10000; i++) {
         solve.step();
     }
