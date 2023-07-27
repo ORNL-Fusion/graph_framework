@@ -1261,16 +1261,16 @@ template<typename T> void test_divide() {
         
         auto var_move2 = (two/x)/y;
         auto var_move2_cast = graph::divide_cast(var_move2);
-        assert(var_move2_cast.get() && "Expected multiply.");
+        assert(var_move2_cast.get() && "Expected divide.");
         assert(!var_move2_cast->get_left()->is_all_variables() &&
                "Expected Non variable like in the left side.");
         assert(var_move2_cast->get_right()->is_all_variables() &&
                "Expected variable like in the right side.");
     };
 
-    test_var_move(a, pow_sqc);
-    test_var_move(pow_sqc, a);
-    test_var_move(pow_asqa, pow_sqc);
+    test_var_move(a, graph::sqrt(a));
+    test_var_move(graph::pow(a, three), a);
+    test_var_move(graph::pow(a, three), graph::pow(a, two));
 
 //  fma(a,d,c*d)/d -> a + c
     auto fma_divide = graph::fma(graph::variable<T> (1, ""),
@@ -1513,6 +1513,18 @@ template<typename T> void test_fma() {
 //  fma(a/c,b,fma(e/c,f,g)) -> (a*b + e*f)/c + g
     auto chained_fma6 = fma(var_a/var_c, var_b, fma(var_d/var_c, var_e, var));
     assert(add_cast(chained_fma6).get() && "expected add node.");
+
+//  fma(a,b^-c,d/b^c) -> (a + d)/b^c
+    auto none = graph::none<T> ();
+    auto power_factor = graph::fma(var_a, graph::pow(var_b, none*two),
+                                   var_c/graph::pow(var_b, two));
+    auto power_factor_cast = divide_cast(power_factor);
+    assert(power_factor_cast.get() && "Expected a divide node.");
+//  fma(b^-c,a,d/b^c) -> (a + d)/b^c
+    auto power_factor2 = graph::fma(graph::pow(var_b, none*two), var_a,
+                                    var_c/graph::pow(var_b, two));
+    auto power_factor_cast2 = divide_cast(power_factor2);
+    assert(power_factor_cast2.get() && "Expected a divide node.");
 }
 
 //------------------------------------------------------------------------------

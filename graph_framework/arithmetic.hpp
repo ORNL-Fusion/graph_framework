@@ -1027,6 +1027,23 @@ namespace graph {
                                           this->right->get_power_exponent());
             }
 
+//  a*b^-c -> a/b^c
+            auto rp = pow_cast(this->right);
+            if (rp.get()) {
+                auto exponent = constant_cast(rp->get_right());
+                if (exponent.get() && exponent->evaluate().is_negative()) {
+                    return this->left/pow(rp->get_left(), none<T> ()*rp->get_right());
+                }
+            }
+//  b^-c*a -> a/b^c
+            auto lp = pow_cast(this->left);
+            if (lp.get()) {
+                auto exponent = constant_cast(lp->get_right());
+                if (exponent.get() && exponent->evaluate().is_negative()) {
+                    return this->right/pow(lp->get_left(), none<T> ()*lp->get_right());
+                }
+            }
+
             return this->shared_from_this();
         }
 
@@ -1382,6 +1399,15 @@ namespace graph {
                 return pow(this->left->get_power_base(),
                            this->left->get_power_exponent() -
                            this->right->get_power_exponent());
+            }
+
+//  a/b^-c -> a*b^c
+            auto rp = pow_cast(this->right);
+            if (rp.get()) {
+                auto exponent = constant_cast(rp->get_right());
+                if (exponent.get() && exponent->evaluate().is_negative()) {
+                    return this->left*pow(rp->get_left(), none<T> ()*rp->get_right());
+                }
             }
 
             return this->shared_from_this();
@@ -1757,6 +1783,27 @@ namespace graph {
 //  Promote constants out to the left.
             if (l.get() && r.get()) {
                 return this->left*(this->middle + this->right/this->left);
+            }
+
+
+//  Change negative eponents to divide so that can be factored out.
+//  fma(a,b^-c,d) = a/b^c + d
+//  fma(b^-c,a,d) = a/b^c + d
+            auto lp = pow_cast(this->left);
+            if (lp.get()) {
+                auto exponent = constant_cast(lp->get_right());
+                if (exponent.get() && exponent->evaluate().is_negative()) {
+                    return this->middle/pow(lp->get_left(),
+                                            none<T> ()*lp->get_right()) + this->right;
+                }
+            }
+            auto mp = pow_cast(this->middle);
+            if (mp.get()) {
+                auto exponent = constant_cast(mp->get_right());
+                if (exponent.get() && exponent->evaluate().is_negative()) {
+                    return this->left/pow(mp->get_left(),
+                                            none<T> ()*mp->get_right()) + this->right;
+                }
             }
 
             return this->shared_from_this();
