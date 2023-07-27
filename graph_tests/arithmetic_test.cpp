@@ -1525,6 +1525,23 @@ template<typename T> void test_fma() {
                                     var_c/graph::pow(var_b, two));
     auto power_factor_cast2 = divide_cast(power_factor2);
     assert(power_factor_cast2.get() && "Expected a divide node.");
+
+//  fma(a,b/c,b/d) -> b*(a/c + 1/d)
+    auto divide_factor = graph::fma(var_a, var_b/var_c, var_b/var_d);
+    assert(graph::multiply_cast(divide_factor).get() &&
+           "Expetced a multiply node.");
+//  fma(a,c/b,d/b) -> (a*c + d)/b
+    auto divide_factor2 = graph::fma(var_a, var_c/var_b, var_d/var_b);
+    assert(graph::divide_cast(divide_factor2).get() &&
+           "Expetced a divide node.");
+//  fma(b/c,a,b/d) -> b*(a/c + 1/d)
+    auto divide_factor3 = graph::fma(var_b/var_c, var_a, var_b/var_d);
+    assert(graph::multiply_cast(divide_factor3).get() &&
+           "Expetced a multiply node.");
+//  fma(c/b,a,d/b) -> (a*c + d)/b
+    auto divide_factor4 = graph::fma(var_c/var_b, var_a, var_d/var_b);
+    assert(graph::divide_cast(divide_factor4).get() &&
+           "Expetced a divide node.");
 }
 
 //------------------------------------------------------------------------------

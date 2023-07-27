@@ -1806,6 +1806,29 @@ namespace graph {
                 }
             }
 
+//  fma(a,b/c,b/d) -> b*(a/c + 1/d)
+//  fma(a,c/b,d/b) -> (a*c + d)/b
+            if (md.get() && rd.get()) {
+                if (md->get_left()->is_match(rd->get_left())) {
+                    return md->get_left()*(this->left/md->get_right() +
+                                           one<T> ()/rd->get_right());
+                } else if (md->get_right()->is_match(rd->get_right())) {
+                    return (this->left*md->get_left() +
+                            rd->get_left())/md->get_right();
+                }
+            }
+//  fma(b/c,a,b/d) -> b*(a/c + 1/d)
+//  fma(c/b,a,d/b) -> (a*c + d)/b
+            if (ld.get() && rd.get()) {
+                if (ld->get_left()->is_match(rd->get_left())) {
+                    return ld->get_left()*(this->middle/ld->get_right() +
+                                           one<T> ()/rd->get_right());
+                } else if (ld->get_right()->is_match(rd->get_right())) {
+                    return (this->middle*ld->get_left() +
+                            rd->get_left())/ld->get_right();
+                }
+            }
+
             return this->shared_from_this();
         }
 
