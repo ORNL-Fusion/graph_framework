@@ -213,6 +213,15 @@ namespace graph {
             return complexity;
         }
 
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T>> remove_pseudo() {
+            return this->shared_from_this();
+        }
+
 ///  Cache for constructed nodes.
         inline thread_local static std::map<size_t,
                                             std::shared_ptr<leaf_node<T>>> cache;
@@ -425,7 +434,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> constant(const T d) {
-        auto temp = std::make_shared<constant_node<T>> (d)->reduce();
+        auto temp = std::make_shared<constant_node<T>> (d);
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
             if (leaf_node<T>::cache.find(i) ==
@@ -447,7 +456,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> constant(const backend::buffer<T> &d) {
-        auto temp = std::make_shared<constant_node<T>> (d)->reduce();
+        auto temp = std::make_shared<constant_node<T>> (d);
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
             if (leaf_node<T>::cache.find(i) ==
@@ -596,14 +605,14 @@ namespace graph {
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
 //------------------------------------------------------------------------------
-    virtual void compile_preamble(std::ostringstream &stream,
-                                  jit::register_map &registers,
-                                  jit::visiter_map &visited) {
-        if (visited.find(this) == visited.end()) {
-            this->arg->compile_preamble(stream, registers, visited);
-            visited[this] = 0;
+        virtual void compile_preamble(std::ostringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited) {
+            if (visited.find(this) == visited.end()) {
+                this->arg->compile_preamble(stream, registers, visited);
+                visited[this] = 0;
+            }
         }
-    }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
@@ -647,7 +656,7 @@ namespace graph {
 ///
 ///  @returns Returns a power of one.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<T>> get_power_exponent() const {
+        virtual shared_leaf<T> get_power_exponent() const {
             return one<T> ();
         }
     };
@@ -962,12 +971,7 @@ namespace graph {
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) {
-            if (this == x.get()) {
-                return true;
-            }
-
-            auto temp = pseudo_variable_cast(x);
-            return temp.get() && this->is_match(temp->get_arg());
+            return this == x.get();
         }
 
 //------------------------------------------------------------------------------
@@ -1214,15 +1218,16 @@ namespace graph {
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) {
-            return this == x.get() ||
-                   this->arg->is_match(x);
+            return this == x.get();
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
+            std::cout << "(";
             this->arg->to_latex();
+            std::cout << ")";
         }
 
 //------------------------------------------------------------------------------
@@ -1268,6 +1273,15 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> get_power_exponent() const {
             return this->arg->get_power_exponent();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return this->arg;
         }
     };
 

@@ -65,11 +65,6 @@ namespace graph {
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
-//  Idenity reductions.
-            if (this->left->is_match(this->right)) {
-                return two<T> ()*this->left;
-            }
-
 //  Constant reductions.
             auto l = constant_cast(this->left);
             auto r = constant_cast(this->right);
@@ -84,6 +79,11 @@ namespace graph {
                 return this->right + this->left;
             }
 
+//  Idenity reductions.
+            if (this->left->is_match(this->right)) {
+                return two<T> ()*this->left;
+            }
+            
 //  Common factor reduction. If the left and right are both muliply nodes check
 //  for a common factor. So you can change a*b + a*c -> a*(b + c).
             auto lm = multiply_cast(this->left);
@@ -107,12 +107,33 @@ namespace graph {
                 return (ld->get_left() + rd->get_left())/ld->get_right();
             }
 
+//  Chained addition reductions.
+//  a + (a + b) = fma(2,a,b)
+//  a + (b + a) = fma(2,a,b)
+//  (a + b) + a = fma(2,a,b)
+//  (b + a) + a = fma(2,a,b)
+            auto la = add_cast(this->left);
+            if (la.get()) {
+                if (this->right->is_match(la->get_left())) {
+                    return fma(two<T> (), this->right, la->get_right());
+                } else if (this->right->is_match(la->get_right())) {
+                    return fma(two<T> (), this->right, la->get_left());
+                }
+            }
+            auto ra = add_cast(this->right);
+            if (ra.get()) {
+                if (this->left->is_match(ra->get_left())) {
+                    return fma(two<T> (), this->left, ra->get_right());
+                } else if (this->left->is_match(ra->get_right())) {
+                    return fma(two<T> (), this->left, ra->get_left());
+                }
+            }
+
 //  Move cases like
 //  (c1 + c2/x) + c3/y -> c1 + (c2/x + c3/y)
 //  (c1 - c2/x) + c3/y -> c1 + (c3/y - c2/x)
 //  in case of common denominators.
             if (rd.get()) {
-                auto la = add_cast(this->left);
                 if (la.get() && divide_cast(la->get_right()).get()) {
                     return la->get_left() + (la->get_right() + this->right);
                 }
@@ -123,27 +144,18 @@ namespace graph {
                 }
             }
 
-//  Fused multiply add reductions.
-            auto m = multiply_cast(this->left);
-
-            if (m.get()) {
-                return fma(m->get_left(),
-                           m->get_right(),
-                           this->right);
-            }
-
-//  a + fma(c,d,e) -> fma(c,d,a + e)
-//  fma(c,d,e) + a -> fma(c,d,a + e)
             auto lfma = fma_cast(this->left);
             auto rfma = fma_cast(this->right);
             if (lfma.get()) {
+//  fma(c,d,e) + a -> fma(c,d,e + a)
                 return fma(lfma->get_left(), lfma->get_middle(),
                            lfma->get_right() + this->right);
             } else if (rfma.get()) {
-                return fma(rfma->get_right(), rfma->get_middle(),
-                           this->left + rfma->get_left());
+//  a + fma(c,d,e) -> fma(c,d,a + e)
+                return fma(rfma->get_left(), rfma->get_middle(),
+                           this->left + rfma->get_right());
             }
-            
+
 //  Handle cases like:
 //  (a/y)^e + b/y^e -> (a^2 + b)/(y^e)
 //  b/y^e + (a/y)^e -> (b + a^2)/(y^e)
@@ -279,6 +291,16 @@ namespace graph {
                 std::cout << "\\right)";
             }
         }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return this->left->remove_pseudo() +
+                   this->right->remove_pseudo();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -392,6 +414,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> reduce() {
 //  Idenity reductions.
+            auto l = constant_cast(this->left);
             if (this->left->is_match(this->right)) {
                 auto l = constant_cast(this->left);
                 if (l.get() && l->is(0)) {
@@ -402,7 +425,6 @@ namespace graph {
             }
 
 //  Constant reductions.
-            auto l = constant_cast(this->left);
             auto r = constant_cast(this->right);
 
             if (l.get() && l->is(0)) {
@@ -429,12 +451,16 @@ namespace graph {
 
             if (lm.get() && rm.get()) {
                 if (lm->get_left()->is_match(rm->get_left())) {
+//  a*b - a*c -> a*(b - c)
                     return lm->get_left()*(lm->get_right() - rm->get_right());
                 } else if (lm->get_left()->is_match(rm->get_right())) {
+//  a*b - c*a -> a*(b - c)
                     return lm->get_left()*(lm->get_right() - rm->get_left());
                 } else if (lm->get_right()->is_match(rm->get_left())) {
+//  b*a - a*c -> a*(b - c)
                     return lm->get_right()*(lm->get_left() - rm->get_right());
                 } else if (lm->get_right()->is_match(rm->get_right())) {
+//  b*a - c*a -> a*(b - c)
                     return lm->get_right()*(lm->get_left() - rm->get_left());
                 }
 
@@ -445,26 +471,69 @@ namespace graph {
                     return lm->get_left()*(lm->get_right() -
                                            (rm->get_left()/lm->get_left())*rm->get_right());
                 }
+
+//  Handle case
+                auto rmrm = multiply_cast(rm->get_right());
+                if (rmrm.get()) {
+//  a*b - c*(d*b) -> (a - c*d)*b
+                    if (lm->get_right()->is_match(rmrm->get_right())) {
+                        return (lm->get_left() - rm->get_left()*rmrm->get_left())*lm->get_right();
+                    }
+//  a*b - c*(b*d) -> (a - c*d)*b
+                    if (lm->get_right()->is_match(rmrm->get_left())) {
+                        return (lm->get_left() - rm->get_left()*rmrm->get_right())*lm->get_right();
+                    }
+//  b*a - c*(d*b) -> (a - c*d)*b
+                    if (lm->get_left()->is_match(rmrm->get_right())) {
+                        return (lm->get_right() - rm->get_left()*rmrm->get_left())*lm->get_left();
+                    }
+//  b*a - c*(b*d) -> (a - c*d)*b
+                    if (lm->get_left()->is_match(rmrm->get_left())) {
+                        return (lm->get_right() - rm->get_left()*rmrm->get_right())*lm->get_left();
+                    }
+                }
+                auto lmrm = multiply_cast(lm->get_right());
+                if (lmrm.get()) {
+//  c*(d*b) - a*b -> (c*d - a)*b
+                    if (rm->get_right()->is_match(lmrm->get_right())) {
+                        return (lm->get_left()*lmrm->get_left() - lm->get_left())*rm->get_right();
+                    }
+//  c*(b*d) - a*b -> (c*d - a)*b
+                    if (rm->get_right()->is_match(lmrm->get_left())) {
+                        return (lm->get_left()*lmrm->get_right() - lm->get_left())*rm->get_right();
+                    }
+//  c*(d*b) - b*a -> (c*d - a)*b
+                    if (rm->get_left()->is_match(lmrm->get_right())) {
+                        return (lm->get_left()*lmrm->get_left() - lm->get_right())*rm->get_left();
+                    }
+//  c*(b*d) - b*a -> (c*d - a)*b
+                    if (rm->get_left()->is_match(lmrm->get_left())) {
+                        return (lm->get_left()*lmrm->get_right() - lm->get_right())*rm->get_left();
+                    }
+                }
             }
 
 //  Chained subtraction reductions.
-//  (a - b*c) - d*c -> a - (b - d)*c
             auto ls = subtract_cast(this->left);
             if (ls.get()) {
                 auto lrm = multiply_cast(ls->get_right());
                 if (lrm.get() && rm.get()) {
                     if (lrm->get_left()->is_match(rm->get_left())) {
+//  (a - c*b) - c*d -> a - (b + d)*c
                         return ls->get_left() -
-                               (lrm->get_right() - rm->get_right())*rm->get_left();
+                               (lrm->get_right() + rm->get_right())*rm->get_left();
                     } else if (lrm->get_left()->is_match(rm->get_right())) {
+//  (a - c*b) - d*c -> a - (b + d)*c
                         return ls->get_left() -
-                               (lrm->get_right() - rm->get_left())*rm->get_right();
+                               (lrm->get_right() + rm->get_left())*rm->get_right();
                     } else if (lrm->get_right()->is_match(rm->get_left())) {
+//  (a - c*b) - c*d -> a - (b + d)*c
                         return ls->get_left() -
-                               (lrm->get_left() - rm->get_right())*rm->get_left();
+                               (lrm->get_left() + rm->get_right())*rm->get_left();
                     } else if (lrm->get_right()->is_match(rm->get_right())) {
+//  (a - c*b) - d*c -> a - (b + d)*c
                         return ls->get_left() -
-                               (lrm->get_left() - rm->get_left())*rm->get_right();
+                               (lrm->get_left() + rm->get_left())*rm->get_right();
                     }
                 }
             }
@@ -487,8 +556,7 @@ namespace graph {
                 auto la = add_cast(this->left);
                 if (la.get() && divide_cast(la->get_right()).get()) {
                     return la->get_left() + (la->get_right() - this->right);
-                }
-                if (ls.get() && divide_cast(ls->get_right()).get()) {
+                } else if (ls.get() && divide_cast(ls->get_right()).get()) {
                     return ls->get_left() - (this->right + ls->get_right());
                 }
             }
@@ -544,6 +612,7 @@ namespace graph {
                                lfma->get_right() - rfma->get_right());
                 }
             }
+
             return this->shared_from_this();
         }
 
@@ -632,6 +701,16 @@ namespace graph {
             if (r_brackets) {
                 std::cout << "\\right)";
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return this->left->remove_pseudo() -
+                   this->right->remove_pseudo();
         }
     };
 
@@ -828,15 +907,16 @@ namespace graph {
 
 //  Assume variables, sqrt of variables, and powers of variables are on the
 //  right.
-//  (a*v)*b -> a*(v*b)
+//  (a*v)*b -> (a*b)*v
                 if (lm->get_right()->is_power_like() &&
-                    !lm->get_left()->is_power_like()) {
-                    return lm->get_left()*(lm->get_right()*this->right);
+                    !(this->right->is_power_like() ||
+                      this->right->is_all_variables())) {
+                    return (lm->get_left()*this->right)*lm->get_right();
                 }
-
                 if (lm->get_right()->is_all_variables() &&
-                    !lm->get_left()->is_all_variables()) {
-                    return lm->get_left()*(lm->get_right()*this->right);
+                    !(this->right->is_power_like()   ||
+                      this->right->is_all_variables())) {
+                    return (lm->get_left()*this->right)*lm->get_right();
                 }
             }
 
@@ -939,6 +1019,13 @@ namespace graph {
                            this->left->get_power_exponent() +
                            this->right->get_power_exponent());
             }
+//  (a*b^c)*b^d -> a*b^(c + d)
+            if (lm.get() &&
+                lm->get_right()->is_power_base_match(this->right)) {
+                return lm->get_left()*pow(this->right->get_power_base(),
+                                          lm->get_right()->get_power_exponent() +
+                                          this->right->get_power_exponent());
+            }
 
             return this->shared_from_this();
         }
@@ -1033,6 +1120,16 @@ namespace graph {
             } else {
                 this->right->to_latex();
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return this->left->remove_pseudo() *
+                   this->right->remove_pseudo();
         }
     };
 
@@ -1362,6 +1459,16 @@ namespace graph {
             this->right->to_latex();
             std::cout << "}";
         }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return this->left->remove_pseudo() /
+                   this->right->remove_pseudo();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -1588,6 +1695,48 @@ namespace graph {
                 }
             }
 
+//  Chained fma reductions.
+            auto rfma = fma_cast(this->right);
+            if (rfma.get()) {
+//  fma(a,b,fma(a,b,c)) -> fma(2*a,b,c)
+//  fma(a,b,fma(b,a,c)) -> fma(2*a,b,c)
+                if (this->left->is_match(rfma->get_left()) &&
+                    this->middle->is_match(rfma->get_middle())) {
+                    return fma(two<T> ()*this->left, this->middle, rfma->get_right());
+                } else if (this->left->is_match(rfma->get_middle()) &&
+                           this->middle->is_match(rfma->get_left())) {
+                    return fma(two<T> ()*this->left, this->middle, rfma->get_right());
+                }
+
+//  fma(a,b/c,fma(e,f/c,g)) -> (a*b + e*f)/c + g
+//  fma(a,b/c,fma(e/c,f,g)) -> (a*b + e*f)/c + g
+//  fma(a/c,b,fma(e,f/c,g)) -> (a*b + e*f)/c + g
+//  fma(a/c,b,fma(e/c,f,g)) -> (a*b + e*f)/c + g
+                auto fmald = divide_cast(rfma->get_left());
+                auto fmamd = divide_cast(rfma->get_middle());
+                if (ld.get()) {
+                    if (fmald.get() && ld->get_right()->is_match(fmald->get_right())) {
+                        return (ld->get_left()*this->middle +
+                                fmald->get_left()*rfma->get_middle())/ld->get_right() +
+                               rfma->get_right();
+                    } else if (fmamd.get() && ld->get_right()->is_match(fmamd->get_right())) {
+                        return (ld->get_left()*this->middle +
+                                fmamd->get_left()*rfma->get_left())/ld->get_right() +
+                               rfma->get_right();
+                    }
+                } else if (md.get()) {
+                    if (fmald.get() && md->get_right()->is_match(fmald->get_right())) {
+                        return (md->get_left()*this->left +
+                                fmald->get_left()*rfma->get_middle())/md->get_right() +
+                               rfma->get_right();
+                    } else if (fmamd.get() && md->get_right()->is_match(fmamd->get_right())) {
+                        return (md->get_left()*this->left +
+                                fmamd->get_left()*rfma->get_left())/md->get_right() +
+                               rfma->get_right();
+                    }
+                }
+            }
+
 //  Check to see if it is worth moving nodes out of a fma nodes. These should be
 //  restricted to variable like nodes. Only do this reduction is the complexity
 //  reduces.
@@ -1609,6 +1758,7 @@ namespace graph {
             if (l.get() && r.get()) {
                 return this->left*(this->middle + this->right/this->left);
             }
+
             return this->shared_from_this();
         }
 
@@ -1716,6 +1866,17 @@ namespace graph {
             std::cout << "+";
             this->right->to_latex();
             std::cout << "\\right)";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return fma(this->left->remove_pseudo(),
+                       this->middle->remove_pseudo(),
+                       this->right->remove_pseudo());
         }
     };
 

@@ -76,8 +76,7 @@ namespace graph {
                 }
 
                 return pow(ap->get_left(),
-                           ap->get_right() +
-                           half<T> ());
+                           ap->get_right()/two<T> ());
             }
 
 //  Handle casses like sqrt(c*x) where c is constant or cases like
@@ -105,6 +104,7 @@ namespace graph {
                            sqrt(ad->get_right());
                 }
             }
+
             return this->shared_from_this();
         }
 
@@ -202,6 +202,15 @@ namespace graph {
         virtual shared_leaf<T> get_power_exponent() const {
             return half<T> ();
         }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return sqrt(this->arg->remove_pseudo());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -298,6 +307,7 @@ namespace graph {
             if (a.get()) {
                 return a->get_arg();
             }
+
             return this->shared_from_this();
         }
 
@@ -366,6 +376,15 @@ namespace graph {
             std::cout << "e^{\\left(";
             this->arg->to_latex();
             std::cout << "\\right)}";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return exp(this->arg->remove_pseudo());
         }
     };
 
@@ -463,6 +482,7 @@ namespace graph {
             if (a.get()) {
                 return a->get_arg();
             }
+
             return this->shared_from_this();
         }
 
@@ -527,6 +547,15 @@ namespace graph {
             std::cout << "\\ln{\\left(";
             this->arg->to_latex();
             std::cout << "\\right)}";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return log(this->arg->remove_pseudo());
         }
     };
 
@@ -680,6 +709,7 @@ namespace graph {
                 return pow(lsq->get_arg(),
                            this->right/two<T> ());
             }
+
             return this->shared_from_this();
         }
 
@@ -798,6 +828,16 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> get_power_exponent() const {
             return this->right;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return pow(this->left->remove_pseudo(),
+                       this->right->remove_pseudo());
         }
     };
 
@@ -964,6 +1004,15 @@ namespace graph {
             std::cout << "erfi\\left(";
             this->arg->to_latex();
             std::cout << "\\right)}";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return erfi(this->arg->remove_pseudo());
         }
     };
 

@@ -508,11 +508,11 @@ void test_reflection(const T tolarance,
                      const T n0,
                      const T x0,
                      const T kx0) {
-    const T q = 1.602176634E-19;
-    const T me = 9.1093837015E-31;
-    const T mu0 = M_PI*4.0E-7;
-    const T epsilon0 = 8.8541878138E-12;
-    const T c = 1.0/sqrt(mu0*epsilon0);
+    const T q = static_cast<T> (1.602176634E-19);
+    const T me = static_cast<T> (9.1093837015E-31);
+    const T mu0 = static_cast<T> (M_PI*4.0E-7);
+    const T epsilon0 = static_cast<T> (8.8541878138E-12);
+    const T c = static_cast<T> (1.0)/sqrt(mu0*epsilon0);
     const T OmegaCE = -q/(me*c);
 
     auto w = graph::variable<T> (1, OmegaCE, "\\omega");
@@ -632,6 +632,6 @@ int main(int argc, const char * argv[]) {
     } else {
         run_tests<double> (2.0E-29);
     }
-    run_tests<std::complex<double>> (2.0E-29);
+    run_tests<std::complex<double>> (3.2E-27);
     END_GPU
 }

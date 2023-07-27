@@ -93,6 +93,16 @@ void test_sqrt() {
            "Expected a constant coefficent.");
     assert(graph::sqrt_cast(cxby_sqrt_cast->get_right()).get() &&
            "Expected sqrt node.");
+
+//  Reduction Sqrt(x^a) -> x^(a/2)
+    auto sqpow = graph::sqrt(graph::pow(x_var, y_var));
+    auto sqpow_cast = graph::pow_cast(sqpow);
+    assert(sqpow_cast.get() && "Expected pow node.");
+    auto exp_cast = graph::multiply_cast(sqpow_cast->get_right());
+    assert(exp_cast.get() && "Expected a mutliply node.");
+    auto constant_cast = graph::constant_cast(exp_cast->get_left());
+    assert(constant_cast.get() && "Expected constant node on the left.");
+    assert(constant_cast->is(0.5) && "Expected a value of 0.5");
 }
 
 //------------------------------------------------------------------------------
@@ -152,6 +162,16 @@ void test_pow() {
            "Expected ten.");
     assert(graph::pow(graph::sqrt(ten), two)->evaluate().at(0) == static_cast<T> (10.0) &&
            "Expected ten.");
+
+//  (Sqrt(a))^b -> a^(b/2)
+    auto powsq = graph::pow(graph::sqrt(ten), ten);
+    auto powsq_cast = graph::pow_cast(powsq);
+    assert(powsq_cast.get() && "Expected pow node.");
+    auto exp_cast = graph::multiply_cast(powsq_cast->get_right());
+    assert(exp_cast.get() && "Expected a mutliply node.");
+    auto constant_cast = graph::constant_cast(exp_cast->get_left());
+    assert(constant_cast.get() && "Expected constant node on the left.");
+    assert(constant_cast->is(0.5) && "Expected a value of 0.5");
 
 //  (c*Sqrt(b))^a -> c^a*b^a/2
     assert(graph::multiply_cast(graph::pow(two*graph::sqrt(ten), ten)).get() &&

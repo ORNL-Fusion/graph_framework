@@ -134,11 +134,11 @@ void test_pseudo_variable() {
     auto v2 = graph::pseudo_variable(a + b);
     assert(c.get() != v2.get() && "Expected different pointers");
     assert(!c->is_match(v2) && "Expected match.");
-
-    auto pa = graph::pseudo_variable(a);
-    assert(a->is_match(pa) && "Expected to match.");
-    assert(pa->is_match(a) && "Expected to match.");
-    assert(pa->is_match(pa) && "Expected to match.");
+    
+    auto remove = graph::two<T> () + graph::pseudo_variable(graph::one<T> ());
+    assert(add_cast(remove).get() && "Expected add node.");
+    assert(constant_cast(remove->remove_pseudo()).get() &&
+           "Expected constant node.");
 }
 
 //------------------------------------------------------------------------------

@@ -465,7 +465,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
         
 //  Since 0 <= y100 < 101, this is only reached if x is Nan, in which case we
 //  should return NaN.
-        return std::numeric_limits<T>::quiet_NaN();
+        return std::numeric_limits<T>::signaling_NaN();
     }
 
 ///  Define 1.0/sqrt(pi)
@@ -1134,8 +1134,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
                         T denom = isqpi<T> / (xs + yax*ya);
                         ret = std::complex<T> (denom*yax, denom);
                     } else if (std::isinf(ya)) {
-                        return (std::isnan(x) || y < static_cast<T> (0)) ? std::complex<T> (std::numeric_limits<T>::quiet_NaN(),
-                                                                                            std::numeric_limits<T>::quiet_NaN()) :
+                        return (std::isnan(x) || y < static_cast<T> (0)) ? std::complex<T> (std::numeric_limits<T>::signaling_NaN(),
+                                                                                            std::numeric_limits<T>::signaling_NaN()) :
                                                                            std::complex<T> (0.0, 0.0);
                     } else {
                         const T xya = xs/ya;
@@ -1433,9 +1433,9 @@ constexpr std::complex<T> i(static_cast<T> (0),
                     return taylor_erfi(x, y);
                 }
             } else if (std::isnan(x)) {
-                return std::complex<T> (std::numeric_limits<T>::quiet_NaN(),
+                return std::complex<T> (std::numeric_limits<T>::signaling_NaN(),
                                         y == static_cast<T> (0) ? static_cast<T> (0) :
-                                                                  std::numeric_limits<T>::quiet_NaN());
+                                                                  std::numeric_limits<T>::signaling_NaN());
             }
 //  Don't use complex exp function, since that will produce spurious NaN
 //  values when multiplying w in an overflow situation.

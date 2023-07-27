@@ -281,6 +281,62 @@ namespace solver {
             D.print_dzdt();
         }
 
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the residule.
+//------------------------------------------------------------------------------
+        void print_residule() {
+            residule->to_latex();
+            std::cout << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the x\_next.
+//------------------------------------------------------------------------------
+        void print_x_next() {
+            x_next->to_latex();
+            std::cout << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the y\_next.
+//------------------------------------------------------------------------------
+        void print_y_next() {
+            y_next->to_latex();
+            std::cout << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the z\_next.
+//------------------------------------------------------------------------------
+        void print_z_next() {
+            z_next->to_latex();
+            std::cout << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the kx\_next.
+//------------------------------------------------------------------------------
+        void print_kx_next() {
+            kx_next->to_latex();
+            std::cout << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the ky\_next.
+//------------------------------------------------------------------------------
+        void print_ky_next() {
+            ky_next->to_latex();
+            std::cout << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the latex expression for the kz\_next.
+//------------------------------------------------------------------------------
+        void print_kz_next() {
+            kz_next->to_latex();
+            std::cout << std::endl;
+        }
+
 ///  Type def to retrieve the backend base type.
         typedef typename DISPERSION_FUNCTION::base base;
     };
@@ -358,12 +414,12 @@ namespace solver {
                                                filename, num_rays) {
             auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
 
-            this->kx1 = dt_const*this->D.get_dkxdt();
-            this->ky1 = dt_const*this->D.get_dkydt();
-            this->kz1 = dt_const*this->D.get_dkzdt();
-            this->x1  = dt_const*this->D.get_dxdt();
-            this->y1  = dt_const*this->D.get_dydt();
-            this->z1  = dt_const*this->D.get_dzdt();
+            this->kx1 = (dt_const*this->D.get_dkxdt())->remove_pseudo();
+            this->ky1 = (dt_const*this->D.get_dkydt())->remove_pseudo();
+            this->kz1 = (dt_const*this->D.get_dkzdt())->remove_pseudo();
+            this->x1  = (dt_const*this->D.get_dxdt())->remove_pseudo();
+            this->y1  = (dt_const*this->D.get_dydt())->remove_pseudo();
+            this->z1  = (dt_const*this->D.get_dzdt())->remove_pseudo();
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
                                                                      graph::pseudo_variable(this->kx + kx1),
@@ -375,12 +431,12 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t  + dt_const),
                                                                      eq);
 
-            this->kx2 = dt_const*D2.get_dkxdt();
-            this->ky2 = dt_const*D2.get_dkydt();
-            this->kz2 = dt_const*D2.get_dkzdt();
-            this->x2  = dt_const*D2.get_dxdt();
-            this->y2  = dt_const*D2.get_dydt();
-            this->z2  = dt_const*D2.get_dzdt();
+            this->kx2 = (dt_const*D2.get_dkxdt())->remove_pseudo();
+            this->ky2 = (dt_const*D2.get_dkydt())->remove_pseudo();
+            this->kz2 = (dt_const*D2.get_dkzdt())->remove_pseudo();
+            this->x2  = (dt_const*D2.get_dxdt())->remove_pseudo();
+            this->y2  = (dt_const*D2.get_dydt())->remove_pseudo();
+            this->z2  = (dt_const*D2.get_dzdt())->remove_pseudo();
 
             auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
 
@@ -540,12 +596,12 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t_sub),
                                                                      eq);
 
-            this->kx2 = dt*D2.get_dkxdt();
-            this->ky2 = dt*D2.get_dkydt();
-            this->kz2 = dt*D2.get_dkzdt();
-            this->x2  = dt*D2.get_dxdt();
-            this->y2  = dt*D2.get_dydt();
-            this->z2  = dt*D2.get_dzdt();
+            this->kx2 = (dt*D2.get_dkxdt())->remove_pseudo();
+            this->ky2 = (dt*D2.get_dkydt())->remove_pseudo();
+            this->kz2 = (dt*D2.get_dkzdt())->remove_pseudo();
+            this->x2  = (dt*D2.get_dxdt())->remove_pseudo();
+            this->y2  = (dt*D2.get_dydt())->remove_pseudo();
+            this->z2  = (dt*D2.get_dzdt())->remove_pseudo();
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D3(this->w,
                                                                      graph::pseudo_variable(this->kx + kx2/two),
@@ -557,12 +613,12 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t_sub),
                                                                      eq);
 
-            this->kx3 = dt*D3.get_dkxdt();
-            this->ky3 = dt*D3.get_dkydt();
-            this->kz3 = dt*D3.get_dkzdt();
-            this->x3  = dt*D3.get_dxdt();
-            this->y3  = dt*D3.get_dydt();
-            this->z3  = dt*D3.get_dzdt();
+            this->kx3 = (dt*D3.get_dkxdt())->remove_pseudo();
+            this->ky3 = (dt*D3.get_dkydt())->remove_pseudo();
+            this->kz3 = (dt*D3.get_dkzdt())->remove_pseudo();
+            this->x3  = (dt*D3.get_dxdt())->remove_pseudo();
+            this->y3  = (dt*D3.get_dydt())->remove_pseudo();
+            this->z3  = (dt*D3.get_dzdt())->remove_pseudo();
 
             this->t_next = this->t + dt;
 
@@ -576,12 +632,12 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t_next),
                                                                      eq);
 
-            this->kx4 = dt*D4.get_dkxdt();
-            this->ky4 = dt*D4.get_dkydt();
-            this->kz4 = dt*D4.get_dkzdt();
-            this->x4  = dt*D4.get_dxdt();
-            this->y4  = dt*D4.get_dydt();
-            this->z4  = dt*D4.get_dzdt();
+            this->kx4 = (dt*D4.get_dkxdt())->remove_pseudo();
+            this->ky4 = (dt*D4.get_dkydt())->remove_pseudo();
+            this->kz4 = (dt*D4.get_dkzdt())->remove_pseudo();
+            this->x4  = (dt*D4.get_dxdt())->remove_pseudo();
+            this->y4  = (dt*D4.get_dydt())->remove_pseudo();
+            this->z4  = (dt*D4.get_dzdt())->remove_pseudo();
 
             auto six = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (6.0));
 
@@ -792,9 +848,9 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t),
                                                                      eq);
 
-            this->kx_next = this->kx + dt_const*D2.get_dkxdt();
-            this->ky_next = this->ky + dt_const*D2.get_dkydt();
-            this->kz_next = this->kz + dt_const*D2.get_dkzdt();
+            this->kx_next = (this->kx + dt_const*D2.get_dkxdt())->remove_pseudo();
+            this->ky_next = (this->ky + dt_const*D2.get_dkydt())->remove_pseudo();
+            this->kz_next = (this->kz + dt_const*D2.get_dkzdt())->remove_pseudo();
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D3(this->w,
                                                                      graph::pseudo_variable(this->kx_next),
@@ -806,9 +862,9 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t),
                                                                      eq);
 
-            this->x_next  = this->x1 + dt_const*D3.get_dxdt()/two;
-            this->y_next  = this->y1 + dt_const*D3.get_dydt()/two;
-            this->z_next  = this->z1 + dt_const*D3.get_dzdt()/two;
+            this->x_next  = (this->x1 + dt_const*D3.get_dxdt()/two)->remove_pseudo();
+            this->y_next  = (this->y1 + dt_const*D3.get_dydt()/two)->remove_pseudo();
+            this->z_next  = (this->z1 + dt_const*D3.get_dzdt()/two)->remove_pseudo();
         }
     };
 }

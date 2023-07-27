@@ -11,8 +11,9 @@
 #include "../graph_framework/solver.hpp"
 #include "../graph_framework/timing.hpp"
 
-const bool print = false;
-const bool write_step = true;
+const bool print = true;
+const bool write_step = false;
+const bool print_expressions = true;
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
@@ -32,8 +33,8 @@ int main(int argc, const char * argv[]) {
 
     const timeing::measure_diagnostic total("Total Time");
 
-    const size_t num_times = 100000;
-    const size_t sub_steps = 100;
+    const size_t num_times = 10000;
+    const size_t sub_steps = 1;
     const size_t num_steps = num_times/sub_steps;
     const size_t num_rays = 1;//000;//0000;
 
@@ -79,18 +80,18 @@ int main(int argc, const char * argv[]) {
                 }
             }
 
-            x->set(static_cast<base> (2.5));
-            //x->set(static_cast<base> (0.0));
+            //x->set(static_cast<base> (2.5));
+            x->set(static_cast<base> (0.0));
             y->set(static_cast<base> (0.0));
             z->set(static_cast<base> (0.0));
-            kx->set(static_cast<base> (-600.0));
-            //kx->set(static_cast<base> (600.0));
+            //kx->set(static_cast<base> (-600.0));
+            kx->set(static_cast<base> (600.0));
             ky->set(static_cast<base> (0.0));
             kz->set(static_cast<base> (0.0));
 
 
-            auto eq = equilibrium::make_efit<base> (NC_FILE, sync);
-            //auto eq = equilibrium::make_slab_density<base> ();
+            //auto eq = equilibrium::make_efit<base> (NC_FILE, sync);
+            auto eq = equilibrium::make_slab_density<base> ();
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
             //const base endtime = static_cast<base> (4.0);
@@ -106,9 +107,9 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::bohm_gross<base>>
             //solver::adaptive_rk4<dispersion::bohm_gross<base>>
             //solver::rk4<dispersion::simple<base>>
-            solver::rk4<dispersion::ordinary_wave<base>>
+            //solver::rk4<dispersion::ordinary_wave<base>>
             //solver::rk4<dispersion::extra_ordinary_wave<base>>
-            //solver::rk4<dispersion::cold_plasma<base>>
+            solver::rk4<dispersion::cold_plasma<base>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<base>>
             //solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base>>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
@@ -117,20 +118,35 @@ int main(int argc, const char * argv[]) {
                 //      stream.str(), local_num_rays);
             solve.init(kx);
             solve.compile();
-            if (thread_number == 0 && false) {
-                solve.print_dispersion();
-                std::cout << std::endl;
-                solve.print_dkxdt();
-                std::cout << std::endl;
-                solve.print_dkydt();
-                std::cout << std::endl;
-                solve.print_dkzdt();
-                std::cout << std::endl;
-                solve.print_dxdt();
-                std::cout << std::endl;
-                solve.print_dydt();
-                std::cout << std::endl;
-                solve.print_dzdt();
+            if (thread_number == 0 && print_expressions) {
+                //solve.print_dispersion();
+                //std::cout << std::endl;
+                //solve.print_dkxdt();
+                //std::cout << std::endl;
+                //solve.print_dkydt();
+                //std::cout << std::endl;
+                //solve.print_dkzdt();
+                //std::cout << std::endl;
+                //solve.print_dxdt();
+                //std::cout << std::endl;
+                //solve.print_dydt();
+                //std::cout << std::endl;
+                //solve.print_dzdt();
+                //std::cout << std::endl;
+                //solve.print_residule();
+                //std::cout << std::endl;
+                //solve.print_x_next();
+                //std::cout << std::endl;
+                //solve.print_y_next();
+                //std::cout << std::endl;
+                //solve.print_z_next();
+                //std::cout << std::endl;
+                //solve.print_kx_next();
+                //std::cout << std::endl;
+                //solve.print_ky_next();
+                //std::cout << std::endl;
+                //solve.print_kz_next();
+                //std::cout << std::endl;
             }
 
             const size_t sample = int_dist(engine);

@@ -378,8 +378,10 @@ void run_dispersion_tests() {
 
     if constexpr (jit::use_cuda()) {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 1.4E10);
-    } else if (jit::use_metal<T> ()) {
+    } else if constexpr (jit::use_metal<T> ()) {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 5.0E9);
+    } else if constexpr (jit::is_complex<T> ()){
+        run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 1.5E11);
     } else {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 5.1E10);
     }

@@ -89,13 +89,13 @@ namespace dispersion {
                              graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
                              equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
         D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z, t, eq)) {
-            auto dDdw = this->D->df(w)->reduce();
-            auto dDdkx = this->D->df(kx)->reduce();
-            auto dDdky = this->D->df(ky)->reduce();
-            auto dDdkz = this->D->df(kz)->reduce();
-            auto dDdx = this->D->df(x)->reduce();
-            auto dDdy = this->D->df(y)->reduce();
-            auto dDdz = this->D->df(z)->reduce();
+            auto dDdw = this->D->df(w);
+            auto dDdkx = this->D->df(kx);
+            auto dDdky = this->D->df(ky);
+            auto dDdkz = this->D->df(kz);
+            auto dDdx = this->D->df(x);
+            auto dDdy = this->D->df(y);
+            auto dDdz = this->D->df(z);
 
             auto neg_one = graph::none<typename DISPERSION_FUNCTION::base> ();
             dxdt = neg_one*dDdkx/dDdw;
@@ -148,7 +148,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         get_d() {
-            return this->D->reduce();
+            return this->D;
         }
 
 //------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         get_dsdt() {
-            return this->dsdt->reduce();
+            return this->dsdt;
         }
 
 //------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         get_dxdt() {
-            return this->dxdt->reduce();
+            return this->dxdt;
         }
 
 //------------------------------------------------------------------------------
@@ -178,7 +178,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         get_dydt() {
-            return this->dydt->reduce();
+            return this->dydt;
         }
 
 //------------------------------------------------------------------------------
@@ -188,7 +188,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         get_dzdt() {
-            return this->dzdt->reduce();
+            return this->dzdt;
         }
 
 //------------------------------------------------------------------------------
@@ -198,7 +198,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         get_dkxdt() {
-            return this->dkxdt->reduce();
+            return this->dkxdt;
         }
 
 //------------------------------------------------------------------------------
@@ -208,7 +208,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         get_dkydt() {
-            return this->dkydt->reduce();
+            return this->dkydt;
         }
 
 //------------------------------------------------------------------------------
@@ -218,7 +218,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base>
         get_dkzdt() {
-            return this->dkzdt->reduce();
+            return this->dkzdt;
         }
 
 //------------------------------------------------------------------------------

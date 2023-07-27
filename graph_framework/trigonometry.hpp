@@ -132,6 +132,15 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "\\right)";
         }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return sin(this->arg->remove_pseudo());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -291,6 +300,15 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "\\right)";
         }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return cos(this->arg->remove_pseudo());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -343,7 +361,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<typename T>
     shared_leaf<T> tan(shared_leaf<T> x) {
-        return (sin(x)/cos(x))->reduce();
+        return sin(x)/cos(x);
     }
 
 //******************************************************************************
@@ -488,6 +506,16 @@ namespace graph {
             std::cout << ",";
             this->right->to_latex();
             std::cout << "\\right)";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T> remove_pseudo() {
+            return atan(this->left->remove_pseudo(),
+                        this->right->remove_pseudo());
         }
     };
 
