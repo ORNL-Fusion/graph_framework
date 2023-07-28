@@ -238,6 +238,23 @@ template<typename T> void test_add() {
            "Expected var_c in the second slot.");
     assert(graph::add_cast(add_fma_cast->get_right()) &&
            "Expected add_node in the third slot.");
+    
+//  (a/(b*c) + d/(e*c)) -> (a/b + d/e)/c
+    auto muliply_divide_factor = var_a/(var_b*var_c) + var_d/(var_e*var_c);
+    auto muliply_divide_factor_cast = divide_cast(muliply_divide_factor);
+    assert(muliply_divide_factor_cast.get() && "Expected divide node.");
+//  (a/(b*c) + d/(c*e)) -> (a/b + d/e)/c
+    auto muliply_divide_factor2 = var_a/(var_b*var_c) + var_d/(var_c*var_e);
+    auto muliply_divide_factor_cast2 = divide_cast(muliply_divide_factor2);
+    assert(muliply_divide_factor_cast2.get() && "Expected divide node.");
+//  (a/(c*b) + d/(e*c)) -> (a/b + d/e)/c
+    auto muliply_divide_factor3 = var_a/(var_c*var_b) + var_d/(var_e*var_c);
+    auto muliply_divide_factor_cast3 = divide_cast(muliply_divide_factor3);
+    assert(muliply_divide_factor_cast3.get() && "Expected divide node.");
+//  (a/(c*b) + d/(c*e)) -> (a/b + d/e)/c
+    auto muliply_divide_factor4 = var_a/(var_c*var_b) + var_d/(var_c*var_e);
+    auto muliply_divide_factor_cast4 = divide_cast(muliply_divide_factor4);
+    assert(muliply_divide_factor_cast4.get() && "Expected divide node.");
 }
 
 //------------------------------------------------------------------------------
