@@ -1542,6 +1542,19 @@ template<typename T> void test_fma() {
     auto divide_factor4 = graph::fma(var_c/var_b, var_a, var_d/var_b);
     assert(graph::divide_cast(divide_factor4).get() &&
            "Expetced a divide node.");
+
+//  (a - b*c) - d*c -> a - (b + d)*c
+    auto chained_subtract_multiply = (var_a - var_b*var_c) - var_d*var_c;
+    auto chained_subtract_multiply_cast = graph::subtract_cast(chained_subtract_multiply);
+    assert(chained_subtract_multiply_cast.get() && "Expected subtract node.");
+    assert(graph::multiply_cast(chained_subtract_multiply_cast->get_right()).get() &&
+           "Expected a multiply node on the left.");
+//  (a - b/c) - d/c -> a - (b + d)*c
+    auto chained_subtract_divide = (var_a - var_b/var_c) - var_d/var_c;
+    auto chained_subtract_divide_cast = graph::subtract_cast(chained_subtract_divide);
+    assert(chained_subtract_divide_cast.get() && "Expected subtract node.");
+    assert(graph::divide_cast(chained_subtract_divide_cast->get_right()).get() &&
+           "Expected a divide node on the left.");
 }
 
 //------------------------------------------------------------------------------

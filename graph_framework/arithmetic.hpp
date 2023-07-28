@@ -613,6 +613,17 @@ namespace graph {
                 }
             }
 
+//  Reduce cases chained subtract multiply divide.
+            if (ls.get()) {
+//  (a - b*c) - d*e -> a - (b*c + d*e)
+//  (a - b/c) - d/e -> a - (b/c + d/e)
+                auto lsrd = divide_cast(ls->get_right());
+                if ((multiply_cast(ls->get_right()).get() && rm.get()) ||
+                    (divide_cast(ls->get_right()).get() && rd.get())) {
+                    return ls->get_left() - (ls->get_right() + this->right);
+                }
+            }
+
             return this->shared_from_this();
         }
 
