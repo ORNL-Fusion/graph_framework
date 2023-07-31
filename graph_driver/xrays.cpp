@@ -94,7 +94,7 @@ int main(int argc, const char * argv[]) {
             //auto eq = equilibrium::make_slab_density<base> ();
             //auto eq = equilibrium::make_no_magnetic_field<base> ();
 
-            const base endtime = static_cast<base> (.0);
+            const base endtime = static_cast<base> (1.0);
             //const base endtime = static_cast<base> (10.0);
             const base dt = endtime/static_cast<base> (num_times);
 
