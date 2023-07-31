@@ -238,14 +238,10 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) {
             auto x_cast = piecewise_1D_cast(x);
+
             if (x_cast.get()) {
-                if (this->arg.get() && x_cast->get_arg().get()) {
-                    return this->evaluate() == x->evaluate() &&
-                           this->arg->is_match(x_cast->get_arg());
-                } else {
-                    return this->arg.get() == x_cast->get_arg().get() &&
-                           this->evaluate() == x->evaluate();
-                }
+                return this->data_hash == x_cast->data_hash &&
+                       this->arg->is_match(x_cast->get_arg());
             }
 
             return false;
@@ -340,24 +336,6 @@ namespace graph {
     template<typename T>
     shared_piecewise_1D<T> piecewise_1D_cast(shared_leaf<T> x) {
         return std::dynamic_pointer_cast<piecewise_1D_node<T>> (x);
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Set the argument of a piecewise\_1D node.
-///
-///  Piecewise functions could be reduced to a single constant so we need to
-///  check if it can be cast.
-///
-///  @params[in] p Existing piecewise constant.
-///  @params[in] x Argument.
-///  @returns The 1D piecewise constant with the argument set.
-//------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_1D(shared_leaf<T> p,
-                                                     shared_leaf<T> x) {
-        if (piecewise_1D_cast(p).get()) {
-            return piecewise_1D(p->evaluate(), x);
-        }
-        return p;
     }
 
 //******************************************************************************
@@ -639,17 +617,11 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T> x) {
             auto x_cast = piecewise_2D_cast(x);
+
             if (x_cast.get()) {
-                if (this->left.get() &&
-                    x_cast->get_left().get()) {
-                    return this->evaluate() == x->evaluate()        &&
-                           this->left->is_match(x_cast->get_left()) &&
-                           this->right->is_match(x_cast->get_right());
-                } else {
-                    return this->left.get() == x_cast->get_left().get()   &&
-                           this->right.get() == x_cast->get_right().get() &&
-                           this->evaluate() == x->evaluate();
-                }
+                return this->data_hash == x_cast->data_hash     &&
+                       this->left->is_match(x_cast->get_left()) &&
+                       this->right->is_match(x_cast->get_right());
             }
 
             return false;
@@ -750,29 +722,6 @@ namespace graph {
     template<typename T>
     shared_piecewise_2D<T> piecewise_2D_cast(shared_leaf<T> x) {
         return std::dynamic_pointer_cast<piecewise_2D_node<T>> (x);
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Set the argument of a piecewise\_1D node.
-///
-///  Piecewise functions could be reduced to a single constant so we need to
-///  check if it can be cast.
-///
-///  @params[in] p Existing piecewise constant.
-///  @params[in] x X Argument.
-///  @params[in] y Y Argument.
-///  @returns The 1D piecewise constant with the argument set.
-//------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_2D(shared_leaf<T> p,
-                                                     shared_leaf<T> x,
-                                                     shared_leaf<T> y) {
-        auto temp = piecewise_2D_cast(p);
-        if (temp.get()) {
-            return piecewise_2D(temp->evaluate(),
-                                temp->get_num_columns(),
-                                x, y);
-        }
-        return p;
     }
 }
 

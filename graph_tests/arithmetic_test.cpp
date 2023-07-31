@@ -140,19 +140,9 @@ template<typename T> void test_add() {
                          graph::pow(var_d/var_b,var_c);
     assert(graph::divide_cast(common_power3) && "Expected Divide node.");
 
-//  v1 + -c*v2 -> v1 - c*v2
-//    auto negate = var_a + graph::constant(static_cast<T> (-2.0))*var_b;
-//    assert(graph::add_cast(negate).get() && "Expected add node.");
-
 //  v1 + -1*v2 -> v1 - v2
     auto add_neg = var_a + graph::none<T> ()*var_b;
     assert(graph::subtract_cast(add_neg).get() && "Expected subtract node.");
-
-//  -c1*v1 + v2 -> v2 - c*v1
-//    auto negate2 = graph::constant(static_cast<T> (-2.0))*var_a + var_b;
-//    auto negate2_cast = graph::subtract_cast(negate2);
-//    assert(negate2_cast.get() && "Expected subtract node.");
-//    assert(negate2_cast->get_left()->is_match(var_b) && "Expected var_b.");
 
 //  (c1*v1 + c2) + (c3*v1 + c4) -> c5*v1 + c6
     auto var_e = graph::variable<T> (1, "");
@@ -255,6 +245,24 @@ template<typename T> void test_add() {
     auto muliply_divide_factor4 = var_a/(var_c*var_b) + var_d/(var_c*var_e);
     auto muliply_divide_factor_cast4 = divide_cast(muliply_divide_factor4);
     assert(muliply_divide_factor_cast4.get() && "Expected divide node.");
+
+//  Test node properties.
+    assert(three->is_constant_like() && "Expected a constant.");
+    assert(!three->is_all_variables() && "Did not expect a variable.");
+    assert(three->is_power_like() && "Expected a power like.");
+    auto constant_add = three + graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                         static_cast<T> (2.0)}), var_a);
+    assert(constant_add->is_constant_like() && "Expected a constant.");
+    assert(!constant_add->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_add->is_power_like() && "Expected a power like.");
+    auto constant_var_add = three + var_a;
+    assert(!constant_var_add->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_add->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_var_add->is_power_like() && "Did not expect a power like.");
+    auto var_var_add = var_a + variable;
+    assert(!var_var_add->is_constant_like() && "Did not expect a constant.");
+    assert(var_var_add->is_all_variables() && "Expected a variable.");
+    assert(!var_var_add->is_power_like() && "Did not expect a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -457,30 +465,30 @@ template<typename T> void test_subtract() {
     assert(add_cast(multiply_term2->get_left()).get() &&
            "Expected an add node on the right.");
 //  (a - c*b) - d*c -> a - (b + d)*c
-        auto chained_subtract4 = (var_b - var_a*two) - var_c*var_a;
-        auto chained_subtract4_cast = graph::subtract_cast(chained_subtract3);
-        assert(chained_subtract4_cast.get() &&
-               "Expected subtract node.");
-        assert(graph::variable_cast(chained_subtract4_cast->get_left()).get() &&
-               "Expected a constant node on the left.");
-        auto multiply_term3 = graph::multiply_cast(chained_subtract4_cast->get_right());
-        assert(multiply_term.get() &&
-               "Expected a multiply node on the right.");
-        assert(add_cast(multiply_term3->get_left()).get() &&
-               "Expected an add node on the right.");
+    auto chained_subtract4 = (var_b - var_a*two) - var_c*var_a;
+    auto chained_subtract4_cast = graph::subtract_cast(chained_subtract3);
+    assert(chained_subtract4_cast.get() &&
+           "Expected subtract node.");
+    assert(graph::variable_cast(chained_subtract4_cast->get_left()).get() &&
+           "Expected a constant node on the left.");
+    auto multiply_term3 = graph::multiply_cast(chained_subtract4_cast->get_right());
+    assert(multiply_term.get() &&
+           "Expected a multiply node on the right.");
+    assert(add_cast(multiply_term3->get_left()).get() &&
+           "Expected an add node on the right.");
 //  (a - b*c) - c*d -> a - (b + d)*c
-        auto chained_subtract5 = (var_b - var_a*two) - var_a*var_c;
-        auto chained_subtract5_cast = graph::subtract_cast(chained_subtract3);
-        assert(chained_subtract5_cast.get() &&
-               "Expected subtract node.");
-        assert(graph::variable_cast(chained_subtract5_cast->get_left()).get() &&
-               "Expected a constant node on the left.");
-        auto multiply_term4 = graph::multiply_cast(chained_subtract5_cast->get_right());
-        assert(multiply_term4.get() &&
-               "Expected a multiply node on the right.");
-        assert(add_cast(multiply_term4->get_left()).get() &&
-               "Expected an add node on the right.");
-    
+    auto chained_subtract5 = (var_b - var_a*two) - var_a*var_c;
+    auto chained_subtract5_cast = graph::subtract_cast(chained_subtract3);
+    assert(chained_subtract5_cast.get() &&
+           "Expected subtract node.");
+    assert(graph::variable_cast(chained_subtract5_cast->get_left()).get() &&
+           "Expected a constant node on the left.");
+    auto multiply_term4 = graph::multiply_cast(chained_subtract5_cast->get_right());
+    assert(multiply_term4.get() &&
+           "Expected a multiply node on the right.");
+    assert(add_cast(multiply_term4->get_left()).get() &&
+           "Expected an add node on the right.");
+
 //  a*b - c*(d*b) -> (a - c*d)*b
 //  a*b - c*(b*d) -> (a - c*d)*b
 //  b*a - c*(d*b) -> (a - c*d)*b
@@ -538,6 +546,24 @@ template<typename T> void test_subtract() {
     assert(chained_subtract_divide_cast2.get() && "Expected subtract node.");
     assert(graph::fma_cast(chained_subtract_divide_cast2->get_right()).get() &&
            "Expected a fused multiply add node on the left.");
+
+//  Test node properties.
+    assert(zero->is_constant_like() && "Expected a constant.");
+    assert(!zero->is_all_variables() && "Did not expect a variable.");
+    assert(zero->is_power_like() && "Expected a power like.");
+    auto constant_sub = one - graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                       static_cast<T> (2.0)}), var_a);
+    assert(constant_sub->is_constant_like() && "Expected a constant.");
+    assert(!constant_sub->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_sub->is_power_like() && "Expected a power like.");
+    auto constant_var_sub = one - var_a;
+    assert(!constant_var_sub->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_sub->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_var_sub->is_power_like() && "Did not expect a power like.");
+    auto var_var_sub = var_a - var_b;
+    assert(!var_var_sub->is_constant_like() && "Did not expect a constant.");
+    assert(var_var_sub->is_all_variables() && "Expected a variable.");
+    assert(!var_var_sub->is_power_like() && "Did not expect a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -948,6 +974,24 @@ template<typename T> void test_multiply() {
            "Expected add cast on the left.");
     assert(graph::pow_cast(common_base_cast4->get_right()).get() &&
            "Expected power cast on the right.");
+
+//  Test node properties.
+    assert(two_times_three->is_constant_like() && "Expected a constant.");
+    assert(!two_times_three->is_all_variables() && "Did not expect a variable.");
+    assert(two_times_three->is_power_like() && "Expected a power like.");
+    auto constant_mul = three*graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                       static_cast<T> (2.0)}), variable);
+    assert(constant_mul->is_constant_like() && "Expected a constant.");
+    assert(!constant_mul->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_mul->is_power_like() && "Expected a power like.");
+    auto constant_var_mul = three*variable;
+    assert(!constant_var_mul->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_mul->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_var_mul->is_power_like() && "Did not expect a power like.");
+    auto var_var_mul = variable*a;
+    assert(!var_var_mul->is_constant_like() && "Did not expect a constant.");
+    assert(var_var_mul->is_all_variables() && "Expected a variable.");
+    assert(!var_var_mul->is_power_like() && "Did not expect a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -1347,6 +1391,24 @@ template<typename T> void test_divide() {
     auto common_power2 = (graph::pow(a, three)*variable)/graph::pow(a, two);
     assert(graph::multiply_cast(common_power2).get() &&
            "Expected a multiply node.");
+
+//  Test node properties.
+    assert(two_divided_three->is_constant_like() && "Expected a constant.");
+    assert(!two_divided_three->is_all_variables() && "Did not expect a variable.");
+    assert(two_divided_three->is_power_like() && "Expected a power like.");
+    auto constant_div = two_divided_three/graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                                   static_cast<T> (2.0)}), variable);
+    assert(constant_div->is_constant_like() && "Expected a constant.");
+    assert(!constant_div->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_div->is_power_like() && "Expected a power like.");
+    auto constant_var_div = two_divided_three/variable;
+    assert(!constant_var_div->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_div->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_var_div->is_power_like() && "Did not expect a power like.");
+    auto var_var_div = variable/a;
+    assert(!var_var_div->is_constant_like() && "Did not expect a constant.");
+    assert(var_var_div->is_all_variables() && "Expected a variable.");
+    assert(!var_var_div->is_power_like() && "Did not expect a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -1584,34 +1646,29 @@ template<typename T> void test_fma() {
     auto divide_factor4 = graph::fma(var_c/var_b, var_a, var_d/var_b);
     assert(graph::divide_cast(divide_factor4).get() &&
            "Expetced a divide node.");
-}
 
-//------------------------------------------------------------------------------
-///  @brief Tests function for variable like expressions.
-//------------------------------------------------------------------------------
-template<typename T> void test_variable_like() {
-    auto a = graph::variable<T> (1, "");
-    auto c = graph::one<T> ();
-    
-    assert(a->is_all_variables() && "Expected a to be variable like.");
-    assert(graph::sqrt(a)->is_all_variables() &&
-           "Expected sqrt(a) to be variable like.");
-    assert(graph::pow(a, c)->is_all_variables() &&
-           "Expected a^c to be variable like.");
-    
-    assert(!c->is_all_variables() &&
-           "Expected c to not be variable like.");
-    assert(!graph::sqrt(c)->is_all_variables() &&
-           "Expected sqrt(c) to not be variable like.");
-    assert(!graph::pow(c, a)->is_all_variables() &&
-           "Expected c^a to not be variable like.");
+//  Test node properties.
+    assert(one_two_three->is_constant_like() && "Expected a constant.");
+    assert(!one_two_three->is_all_variables() && "Did not expect a variable.");
+    assert(one_two_three->is_power_like() && "Expected a power like.");
+    auto constant_fma = graph::fma(one_two_three, graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                                           static_cast<T> (2.0)}), var_a), one);
+    assert(!constant_fma->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_fma->is_power_like() && "Expected a power like.");
+    auto constant_var_fma = graph::fma(var_a, var_b, one);
+    assert(!constant_var_fma->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_fma->is_all_variables() && "Did not expect a variable.");
+    assert(!constant_var_fma->is_power_like() && "Did not expect a power like.");
+    auto var_var_fma = graph::fma(var_a, var_b, var_c);
+    assert(!var_var_fma->is_constant_like() && "Did not expect a constant.");
+    assert(var_var_fma->is_all_variables() && "Expected a variable.");
+    assert(!var_var_fma->is_power_like() && "Did not expect a power like.");
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
-    test_variable_like<T> ();
     test_add<T> ();
     test_subtract<T> ();
     test_multiply<T> ();

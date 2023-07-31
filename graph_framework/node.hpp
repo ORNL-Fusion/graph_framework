@@ -240,6 +240,13 @@ namespace graph {
     template<typename T>
     using output_nodes = std::vector<shared_leaf<T>>;
 
+///  Forward declare for zero.
+    template<typename T>
+    constexpr shared_leaf<T> zero();
+///  Forward declare for one.
+    template<typename T>
+    constexpr shared_leaf<T> one();
+
 //******************************************************************************
 //  Constant node.
 //******************************************************************************
@@ -263,14 +270,6 @@ namespace graph {
         const backend::buffer<T> data;
 
     public:
-//------------------------------------------------------------------------------
-///  @brief Construct a constant node from a scalar.
-///
-///  @params[in] d Scalar data to initalize.
-//------------------------------------------------------------------------------
-        constant_node(const T d) :
-        leaf_node<T> (constant_node<T>::to_string(d), 1), data(1, d) {}
-
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
 ///
@@ -308,18 +307,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> df(shared_leaf<T> x) {
-            auto zero = std::make_shared<constant_node<T>> (static_cast<T> (0.0));
-//  Test for hash collisions.
-            for (size_t i = zero->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-                if (leaf_node<T>::cache.find(i) ==
-                    leaf_node<T>::cache.end()) {
-                    leaf_node<T>::cache[i] = zero;
-                    return zero;
-                } else if (zero->is_match(leaf_node<T>::cache[i])) {
-                    return leaf_node<T>::cache[i];
-                }
-            }
-            assert(false && "Should never reach.");
+            return zero<T> ();
         }
 
 //------------------------------------------------------------------------------
@@ -422,31 +410,9 @@ namespace graph {
 ///  @returns The exponent of a power like node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T> get_power_exponent() const {
-            return std::make_shared<constant_node<T>> (static_cast<T> (1.0));
+            return one<T> ();
         }
     };
-
-//------------------------------------------------------------------------------
-///  @brief Construct a constant.
-///
-///  @params[in] d Scalar data to initalize.
-///  @returns A reduced constant node.
-//------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> constant(const T d) {
-        auto temp = std::make_shared<constant_node<T>> (d);
-//  Test for hash collisions.
-        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T>::cache.find(i) ==
-                leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
-                return temp;
-            } else if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
-            }
-        }
-        assert(false && "Should never reach.");
-    }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant.
@@ -468,6 +434,17 @@ namespace graph {
             }
         }
         assert(false && "Should never reach.");
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Construct a constant.
+///
+///  @params[in] d Scalar data to initalize.
+///  @returns A reduced constant node.
+//------------------------------------------------------------------------------
+    template<typename T>
+    shared_leaf<T> constant(const T d) {
+        return constant(backend::buffer<T> (1, d));
     }
 
 //  Define some common constants.
