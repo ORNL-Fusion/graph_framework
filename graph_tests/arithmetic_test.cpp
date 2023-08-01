@@ -975,6 +975,21 @@ template<typename T> void test_multiply() {
     assert(graph::pow_cast(common_base_cast4->get_right()).get() &&
            "Expected power cast on the right.");
 
+//  (a/b)^c*b^d -> a^c*b^(c-d)
+    auto divide_pow = graph::pow(v2/v1, two)*graph::pow(v1, two);
+    assert(divide_pow->is_power_base_match(v2) && "Expected the v2 variable.");
+//  (b/a)^c*b^d -> b^(c+d)/a^c
+    auto divide_pow2 = graph::pow(v1/v2, two)*graph::pow(v1, two);
+    assert(graph::divide_cast(divide_pow2).get() &&
+           "Expected a divide node.");
+//  b^d*(a/b)^c -> a^c*b^(c-d)
+    auto divide_pow3 = graph::pow(v1, two)*graph::pow(v2/v1, two);
+    assert(divide_pow3->is_power_base_match(v2) && "Expected the v2 variable.");
+//  b^d*(b/a)^c -> b^(c+d)/a^c
+    auto divide_pow4 = graph::pow(v1, two)*graph::pow(v1/v2, two);
+    assert(graph::divide_cast(divide_pow4).get() &&
+           "Expected a divide node.");
+
 //  Test node properties.
     assert(two_times_three->is_constant_like() && "Expected a constant.");
     assert(!two_times_three->is_all_variables() && "Did not expect a variable.");

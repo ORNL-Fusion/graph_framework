@@ -1078,6 +1078,41 @@ namespace graph {
                 }
             }
 
+            auto lpd = divide_cast(this->left->get_power_base());
+            if (lpd.get()) {
+//  (a/b)^c*b^d -> a^c*b^(c-d)
+                if (lpd->get_right()->is_power_base_match(this->right)) {
+                    return pow(lpd->get_left(), this->left->get_power_exponent()) *
+                           pow(this->right->get_power_base(),
+                               this->right->get_power_exponent() -
+                               this->left->get_power_exponent());
+                }
+//  (b/a)^c*b^d -> b^(c+d)/a^c
+                if (lpd->get_left()->is_power_base_match(this->right)) {
+                    return pow(this->right->get_power_base(),
+                               this->right->get_power_exponent() +
+                               this->left->get_power_exponent()) /
+                           pow(lpd->get_right(), this->left->get_power_exponent());
+                }
+            }
+            auto rpd = divide_cast(this->right->get_power_base());
+            if (rpd.get()) {
+//  b^d*(a/b)^c -> a^c*b^(c-d)
+                if (rpd->get_right()->is_power_base_match(this->left)) {
+                    return pow(rpd->get_left(), this->right->get_power_exponent()) *
+                           pow(this->left->get_power_base(),
+                               this->left->get_power_exponent() -
+                               this->right->get_power_exponent());
+                }
+//  b^d*(b/a)^c -> b^(c+d)/a^c
+                if (rpd->get_left()->is_power_base_match(this->left)) {
+                    return pow(this->right->get_power_base(),
+                               this->right->get_power_exponent() +
+                               this->right->get_power_exponent()) /
+                           pow(rpd->get_right(), this->right->get_power_exponent());
+                }
+            }
+
 //  Exp(a)*Exp(b) -> Exp(a + b)
             auto le = exp_cast(this->left);
             auto re = exp_cast(this->right);
