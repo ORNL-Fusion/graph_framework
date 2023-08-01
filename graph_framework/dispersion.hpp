@@ -1019,7 +1019,7 @@ namespace dispersion {
             auto npara2 = npara*npara;
             auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
-            
+
             auto zeta = physics<T>::c/(npara*ve)*(one - ec/w);
             auto Z_func = this->z.Z(zeta);
             auto F = nperp2/(two*npara)*w*w/(ec*ec)*ve/physics<T>::c*zeta*(one + zeta*Z_func);
@@ -1031,8 +1031,6 @@ namespace dispersion {
             auto p_func = one - P;
 
             auto gamma5 = P*(n2*npara2 - (one - q)*n_func + q_func);
-            //auto gamma4 = P*(two*q_func - n_func);
-            //auto gamma3 = P*w*w/(four*ec*ec)*nperp2/npara2*(n_func - two*q_func);
             auto gamma2 = P*w/ec*(n2nperp2 - q_func*nperp2)
                         + P*P*w*w/(four*ec*ec)*(n_func - two*q_func)*nperp2/npara2;
             auto gamma1 = (one - q)*n2nperp2 + p_func*n2*npara2
@@ -1041,9 +1039,7 @@ namespace dispersion {
 
             auto zeta_func = one + zeta*Z_func;
 
-            return isigma*gamma0 + gamma1 + gamma2*zeta_func +
-//                   gamma3*zeta*Z_func*zeta_func + gamma4*isigma*F +
-                   gamma5*F;
+            return isigma*gamma0 + gamma1 + gamma2*zeta_func + gamma5*F;
         }
     };
 

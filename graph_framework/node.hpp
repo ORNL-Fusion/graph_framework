@@ -1202,9 +1202,9 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
-            std::cout << "(";
+            std::cout << "\\left(";
             this->arg->to_latex();
-            std::cout << ")";
+            std::cout << "\\right)";
         }
 
 //------------------------------------------------------------------------------
@@ -1284,7 +1284,7 @@ namespace graph {
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<typename T>
-    shared_pseudo_variable<T> pseudo_variable_cast(shared_leaf<T> x) {
+    shared_pseudo_variable<T> pseudo_variable_cast(shared_leaf<T> &x) {
         return std::dynamic_pointer_cast<pseudo_variable_node<T>> (x);
     }
 }

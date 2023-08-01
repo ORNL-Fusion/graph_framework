@@ -992,6 +992,82 @@ template<typename T> void test_multiply() {
     assert(!var_var_mul->is_constant_like() && "Did not expect a constant.");
     assert(var_var_mul->is_all_variables() && "Expected a variable.");
     assert(!var_var_mul->is_power_like() && "Did not expect a power like.");
+
+//  Exp(-v)*Exp(v) -> 1
+    auto expnexp = graph::exp(graph::none<T> ()*variable)*graph::exp(variable);
+    auto expnexp_cast = constant_cast(expnexp);
+    assert(expnexp_cast.get() && "Expected a constant.");
+    assert(expnexp_cast->is(1) && "Expected one.");
+//  Exp(v)*Exp(-v) -> 1
+    auto expnexp2 = graph::exp(variable)*graph::exp(graph::none<T> ()*variable);
+    auto expnexp2_cast = constant_cast(expnexp2);
+    assert(expnexp2_cast.get() && "Expected a constant.");
+    assert(expnexp2_cast->is(1) && "Expected one.");
+//  Exp(-cv)*Exp(cv) -> 1
+    auto nthree = graph::none<T> ()*three;
+    auto expnexp3 = graph::exp(nthree*variable)*graph::exp(three*variable);
+    auto expnexp3_cast = constant_cast(expnexp);
+    assert(expnexp3_cast.get() && "Expected a constant.");
+    assert(expnexp3_cast->is(1) && "Expected one.");
+//  Exp(cv)*Exp(-cv) -> 1
+    auto expnexp4 = graph::exp(three*variable)*graph::exp(nthree*variable);
+    auto expnexp4_cast = constant_cast(expnexp2);
+    assert(expnexp4_cast.get() && "Expected a constant.");
+    assert(expnexp4_cast->is(1) && "Expected one.");
+
+//  c*Exp(-v)*Exp(v) -> c
+    auto cexpnexp = (three*graph::exp(graph::none<T> ()*variable))*graph::exp(variable);
+    auto cexpnexp_cast = constant_cast(cexpnexp);
+    assert(cexpnexp_cast.get() && "Expected a constant.");
+    assert(cexpnexp_cast->is(3) && "Expected one.");
+//  Exp(-v)*c*Exp(v) -> c
+    auto cexpnexp2 = graph::exp(graph::none<T> ()*variable)*(three*graph::exp(variable));
+    auto cexpnexp2_cast = constant_cast(cexpnexp2);
+    assert(cexpnexp2_cast.get() && "Expected a constant.");
+    assert(cexpnexp2_cast->is(3) && "Expected one.");
+//  c*Exp(v)*Exp(-v) -> c
+    auto cexpnexp3 = (three*graph::exp(variable))*graph::exp(graph::none<T> ()*variable);
+    auto cexpnexp3_cast = constant_cast(cexpnexp3);
+    assert(cexpnexp3_cast.get() && "Expected a constant.");
+    assert(cexpnexp3_cast->is(3) && "Expected one.");
+//  Exp(v)*c*Exp(-v) -> c
+    auto cexpnexp4 = graph::exp(variable)*(three*graph::exp(graph::none<T> ()*variable));
+    auto cexpnexp4_cast = constant_cast(cexpnexp4);
+    assert(cexpnexp4_cast.get() && "Expected a constant.");
+    assert(cexpnexp4_cast->is(3) && "Expected one.");
+//  c*Exp(-c*v)*Exp(c*v) -> c
+    auto cexpnexp5 = (three*graph::exp(nthree*variable))*graph::exp(three*variable);
+    auto cexpnexp5_cast = constant_cast(cexpnexp5);
+    assert(cexpnexp5_cast.get() && "Expected a constant.");
+    assert(cexpnexp5_cast->is(3) && "Expected one.");
+//  Exp(-v)*c*Exp(v) -> c
+    auto cexpnexp6 = graph::exp(nthree*variable)*(three*graph::exp(three*variable));
+    auto cexpnexp6_cast = constant_cast(cexpnexp6);
+    assert(cexpnexp6_cast.get() && "Expected a constant.");
+    assert(cexpnexp6_cast->is(3) && "Expected one.");
+//  c*Exp(v)*Exp(-v) -> c
+    auto cexpnexp7 = (three*graph::exp(three*variable))*graph::exp(nthree*variable);
+    auto cexpnexp7_cast = constant_cast(cexpnexp7);
+    assert(cexpnexp7_cast.get() && "Expected a constant.");
+    assert(cexpnexp7_cast->is(3) && "Expected one.");
+//  Exp(v)*c*Exp(-v) -> c
+    auto cexpnexp8 = graph::exp(three*variable)*(three*graph::exp(nthree*variable));
+    auto cexpnexp8_cast = constant_cast(cexpnexp8);
+    assert(cexpnexp8_cast.get() && "Expected a constant.");
+    assert(cexpnexp8_cast->is(3) && "Expected one.");
+
+//  Exp(-v)*(Exp(v)*a)
+    auto regroup_exp = graph::exp(graph::none<T> ()*variable)*(graph::exp(variable)*v1);
+    assert(regroup_exp->is_match(v1) && "Expected the v1 variable node.");
+//  Exp(-v)*(a*Exp(v))
+    auto regroup_exp2 = graph::exp(graph::none<T> ()*variable)*(v1*graph::exp(variable));
+    assert(regroup_exp2->is_match(v1) && "Expected the v1 variable node.");
+//  (Exp(-v)*a)*Exp(v)
+    auto regroup_exp3 = (graph::exp(graph::none<T> ()*variable)*v1)*graph::exp(variable);
+    assert(regroup_exp3->is_match(v1) && "Expected the v1 variable node.");
+//  (a*Exp(-v))*Exp(v)
+    auto regroup_exp4 = (graph::exp(graph::none<T> ()*variable)*v1)*graph::exp(variable);
+    assert(regroup_exp4->is_match(v1) && "Expected the v1 variable node.");
 }
 
 //------------------------------------------------------------------------------
@@ -1590,17 +1666,17 @@ template<typename T> void test_fma() {
                                            two*(var_b*sqrt(var_a)))).get() &&
            "Expected multiply node.");
 
-//  fma(a,b,fma(a,b,c)) -> fma(2a,b,c)
+//  fma(a,b,fma(a,b,2)) -> 2*fma(a,b,1)
     auto chained_fma = fma(var_a, var_b, fma(var_a, var_b, two));
-    auto chained_fma_cast = fma_cast(chained_fma);
-    assert(chained_fma_cast.get() && "Expected fma node.");
-    assert(constant_cast(chained_fma_cast->get_right()) &&
+    auto chained_fma_cast = multiply_cast(chained_fma);
+    assert(chained_fma_cast.get() && "Expected muliply node.");
+    assert(constant_cast(chained_fma_cast->get_left()) &&
            "Expected constant node.");
-//  fma(a,b,fma(b,a,c)) -> fma(2a,b,c)
+//  fma(a,b,fma(b,a,c)) -> 2*fma(a,b,1)
     auto chained_fma2 = fma(var_a, var_b, fma(var_b, var_a, two));
-    auto chained_fma_cast2 = fma_cast(chained_fma2);
-    assert(chained_fma_cast2.get() && "Expected fma node.");
-    assert(constant_cast(chained_fma_cast2->get_right()) &&
+    auto chained_fma_cast2 = multiply_cast(chained_fma2);
+    assert(chained_fma_cast2.get() && "Expected muliply node.");
+    assert(constant_cast(chained_fma_cast2->get_left()) &&
            "Expected constant node.");
     
 //  fma(a,b/c,fma(d,e/c,g)) -> (a*b + d*e)/c + g
@@ -1663,6 +1739,19 @@ template<typename T> void test_fma() {
     assert(!var_var_fma->is_constant_like() && "Did not expect a constant.");
     assert(var_var_fma->is_all_variables() && "Expected a variable.");
     assert(!var_var_fma->is_power_like() && "Did not expect a power like.");
+
+//  fma(c*a,b,d) -> fma(c,a*b,d)
+    auto constant_move = graph::fma(three*var_a, var_b, var_c);
+    auto constant_move_cast = graph::fma_cast(constant_move);
+    assert(constant_move_cast.get() && "Expected an fma cast");
+    assert(graph::constant_cast(constant_move_cast->get_left()) &&
+           "Expected a constant on the left.");
+//  fma(a,c*b,d) -> fma(c,a*b,d)
+    auto constant_move2 = graph::fma(var_a, three*var_b, var_c);
+    auto constant_move2_cast = graph::fma_cast(constant_move2);
+    assert(constant_move2_cast.get() && "Expected an fma cast");
+    assert(graph::constant_cast(constant_move2_cast->get_left()) &&
+           "Expected a constant on the left.");
 }
 
 //------------------------------------------------------------------------------

@@ -1078,6 +1078,38 @@ namespace graph {
                 }
             }
 
+//  Exp(a)*Exp(b) -> Exp(a + b)
+            auto le = exp_cast(this->left);
+            auto re = exp_cast(this->right);
+            if (le.get() && re.get()) {
+                return exp(le->get_arg() + re->get_arg());
+            }
+
+//  Exp(a)*(Exp(b)*c) -> (Exp(a)*Exp(b))*c
+//  Exp(a)*(c*Exp(b)) -> (Exp(a)*Exp(b))*c
+            if (le.get() && rm.get()) {
+                auto rmle = exp_cast(rm->get_left());
+                if (rmle.get()) {
+                    return (this->left*rm->get_left())*rm->get_right();
+                }
+                auto rmre = exp_cast(rm->get_right());
+                if (rmre.get()) {
+                    return (this->left*rm->get_right())*rm->get_left();
+                }
+            }
+//  (Exp(a)*c)*Exp(b) -> (Exp(a)*Exp(b))*c
+//  (c*Exp(a))*Exp(b) -> (Exp(a)*Exp(b))*c
+            if (re.get() && lm.get()) {
+                auto lmle = exp_cast(lm->get_left());
+                if (lmle.get()) {
+                    return (this->right*lm->get_left())*lm->get_right();
+                }
+                auto lmre = exp_cast(rm->get_right());
+                if (lmre.get()) {
+                    return (this->right*lm->get_right())*lm->get_left();
+                }
+            }
+
             return this->shared_from_this();
         }
 
@@ -1713,15 +1745,36 @@ namespace graph {
                                               (rm->get_left()/lm->get_left())*rm->get_right());
                 }
             }
-//  fma(c1*a,b,c2/d) -> c1*(a*b + c1/(c2*d))
-//  fma(c1*a,b,d/c2) -> c1*(a*b + d/(c1*c2))
+
+//  Move constant multiplies to the left.
+            if (lm.get()) {
+                auto lmc = constant_cast(lm->get_left());
+                if (lmc.get()) {
+                    return fma(lm->get_left(),
+                               lm->get_right()*this->middle,
+                               this->right);
+                }
+            } else if (mm.get()) {
+                auto mmc = constant_cast(mm->get_left());
+                if (mmc.get() && !l.get()) {
+                    return fma(mm->get_left(),
+                               this->left*mm->get_right(),
+                               this->right);
+                } else if (mmc.get() && l.get()) {
+                    return fma(this->left*mm->get_left(),
+                               mm->get_right(),
+                               this->right);
+                }
+            }
+
+//  fma(c1,a,c2/b) -> c1*(a + c1/(c2*b))
+//  fma(c1,a,b/c2) -> c1*(a + b/(c1*c2))
             auto rd = divide_cast(this->right);
-            if (lm.get() && rd.get()) {
+            if (l.get() && rd.get()) {
                 if (constant_cast(rd->get_left()).get() ||
                     constant_cast(rd->get_right()).get()) {
-                    return lm->get_left()*fma(lm->get_right(),
-                                              this->middle,
-                                              rd->get_left()/(lm->get_left()*rd->get_right()));
+                    return this->left*(this->middle +
+                                       rd->get_left()/(this->left*rd->get_right()));
                 }
             }
 

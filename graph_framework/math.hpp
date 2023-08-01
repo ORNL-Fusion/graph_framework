@@ -1003,7 +1003,7 @@ namespace graph {
         virtual void to_latex() const {
             std::cout << "erfi\\left(";
             this->arg->to_latex();
-            std::cout << "\\right)}";
+            std::cout << "\\right)";
         }
 
 //------------------------------------------------------------------------------
