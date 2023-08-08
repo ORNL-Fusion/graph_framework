@@ -405,7 +405,7 @@ template<typename T> void test_subtract() {
     assert(graph::add_cast(neg_one).get() && "Expected addition node.");
 
 //  (c1*v1 + c2) - (c3*v1 + c4) -> c5*(v1 - c6)
-    auto two = graph::constant(static_cast<T> (2.0));
+    auto two = graph::two<T> ();
     auto three = graph::constant(static_cast<T> (3.0));
     auto subfma = graph::fma(three, var_a, two)
                 - graph::fma(two, var_a, three);
@@ -588,7 +588,7 @@ template<typename T> void test_multiply() {
            "Expected zero.");
     
 //  Test constant times constant.
-    auto two = graph::constant(static_cast<T> (2));
+    auto two = graph::two<T> ();
     auto three = graph::constant(static_cast<T> (3));
     auto two_times_three = two*three;
     assert(graph::constant_cast(two_times_three).get() &&
@@ -691,7 +691,7 @@ template<typename T> void test_multiply() {
            "Expected a variable on he right");
     
 //  Test reduction of common constants c1*x*c2*y = c3*x*y.
-    auto x1 = graph::constant(static_cast<T> (2.0))*graph::variable<T> (1, "");
+    auto x1 = graph::two<T> ()*graph::variable<T> (1, "");
     auto x2 = graph::constant(static_cast<T> (5.0))*graph::variable<T> (1, "");
     auto x3 = x1*x2;
     auto x3_cast = graph::multiply_cast(x3);
@@ -702,7 +702,7 @@ template<typename T> void test_multiply() {
            "Expected a multipy node.");
 
 //  Test reduction of common constants x*c1*c2*y = c3*x*y.
-    auto x4 = graph::variable<T> (1, "")*graph::constant(static_cast<T> (2.0));
+    auto x4 = graph::variable<T> (1, "")*graph::two<T> ();
     auto x5 = graph::constant(static_cast<T> (5.0))*graph::variable<T> (1, "");
     auto x6 = x4*x5;
     auto x6_cast = graph::multiply_cast(x6);
@@ -713,7 +713,7 @@ template<typename T> void test_multiply() {
            "Expected multipy node.");
 
 //  Test reduction of common constants c1*x*y*c2 = c3*x*y.
-    auto x7 = graph::constant(static_cast<T> (2.0))*graph::variable<T> (1, "");
+    auto x7 = graph::two<T> ()*graph::variable<T> (1, "");
     auto x8 = graph::variable<T> (1, "")*graph::constant(static_cast<T> (5.0));
     auto x9 = x7*x8;
     auto x9_cast = graph::multiply_cast(x9);
@@ -724,7 +724,7 @@ template<typename T> void test_multiply() {
            "Expected multipy node.");
 
 //  Test reduction of common constants x*c1*y*c2 = c3*x*y.
-    auto x10 = graph::variable<T> (1, "")*graph::constant(static_cast<T> (2.0));
+    auto x10 = graph::variable<T> (1, "")*graph::two<T> ();
     auto x11 = graph::constant(static_cast<T> (5.0))*graph::variable<T> (1, "");
     auto x12 = x10*x11;
     auto x12_cast = graph::multiply_cast(x12);
@@ -1105,7 +1105,7 @@ template<typename T> void test_divide() {
     assert((one/one).get() == one.get() && "Expected to recover one.");
     assert((one/one)->evaluate()[0] == static_cast<T> (1.0) &&
            "Expected a value of one.");
-    auto two = graph::constant(static_cast<T> (2.0));
+    auto two = graph::two<T> ();
     assert((two/one).get() == two.get() && "Expected to recover two.");
     assert((two/one)->evaluate()[0] == static_cast<T> (2.0) &&
            "Expected a value of zero.");
@@ -1271,7 +1271,7 @@ template<typename T> void test_divide() {
            "Expected one constant for result.");
 
 //  Test reduction of common constants (c1*x)/(c2*y) = c3*x/y.
-    auto x1 = graph::constant(static_cast<T> (2.0))*graph::variable<T> (1, "");
+    auto x1 = graph::two<T> ()*graph::variable<T> (1, "");
     auto x2 = graph::constant(static_cast<T> (5.0))*graph::variable<T> (1, "");
     auto x3 = x1/x2;
     auto x3_cast = graph::multiply_cast(x3);
@@ -1282,7 +1282,7 @@ template<typename T> void test_divide() {
            "Expected multipy node.");
 
 //  Test reduction of common constants (c1*x)/(y*c2) = c3*x/y.
-    auto x4 = graph::variable<T> (1, "")*graph::constant(static_cast<T> (2.0));
+    auto x4 = graph::variable<T> (1, "")*graph::two<T> ();
     auto x5 = graph::constant(static_cast<T> (5.0))*graph::variable<T> (1, "");
     auto x6 = x4/x5;
     auto x6_cast = graph::multiply_cast(x6);
@@ -1293,7 +1293,7 @@ template<typename T> void test_divide() {
            "Expected multipy node.");
 
 //  Test reduction of common constants (x*c1)/(c2*y) = c3*x/y.
-    auto x7 = graph::constant(static_cast<T> (2.0))*graph::variable<T> (1, "");
+    auto x7 = graph::two<T> ()*graph::variable<T> (1, "");
     auto x8 = graph::variable<T> (1, "")*graph::constant(static_cast<T> (5.0));
     auto x9 = x7/x8;
     auto x9_cast = graph::multiply_cast(x9);
@@ -1304,7 +1304,7 @@ template<typename T> void test_divide() {
            "Expected multipy node.");
 
 //  Test reduction of common constants (x*c1)/(y*c2) = c3*x/y.
-    auto x10 = graph::variable<T> (1, "")*graph::constant(static_cast<T> (2.0));
+    auto x10 = graph::variable<T> (1, "")*graph::two<T> ();
     auto x11 = graph::constant(static_cast<T> (5.0))*graph::variable<T> (1, "");
     auto x12 = x10/x11;
     auto x12_cast = graph::multiply_cast(x12);

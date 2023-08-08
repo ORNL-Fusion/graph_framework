@@ -22,45 +22,62 @@ namespace solver {
     class solver_interface {
     protected:
 ///  w variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> w;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> w;
 ///  kx variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kx;
 ///  ky variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> ky;
 ///  kz variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kz;
 ///  x variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x;
 ///  y variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y;
 ///  z variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z;
 ///  t variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> t;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> t;
 
 ///  Dispersion function interface.
         dispersion::dispersion_interface<DISPERSION_FUNCTION> D;
 
 ///  Next kx value.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kx_next;
 ///  Next ky value.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> ky_next;
 ///  Next kz value.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kz_next;
 ///  Next kx value.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x_next;
 ///  Next ky value.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y_next;
 ///  Next kz value.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z_next;
 ///  Next t value.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> t_next;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> t_next;
 
 ///  Residule.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> residule;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> residule;
 
 ///  Workflow manager.
-        workflow::manager<typename DISPERSION_FUNCTION::base> work;
+        workflow::manager<typename DISPERSION_FUNCTION::base,
+                          DISPERSION_FUNCTION::safe_math> work;
 
 ///  Output file.
         output::result_file<typename DISPERSION_FUNCTION::base> file;
@@ -81,15 +98,24 @@ namespace solver {
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
-        solver_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
-                         equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+        solver_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> w,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> kx,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> ky,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> kz,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> x,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> y,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> z,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> t,
+                         equilibrium::shared<typename DISPERSION_FUNCTION::base,
+                                             DISPERSION_FUNCTION::safe_math> &eq,
                          const std::string &filename="",
                          const size_t num_rays=0) :
         D(w, kx, ky, kz, x, y, z, t, eq), w(w),
@@ -105,11 +131,14 @@ namespace solver {
 ///  @params[in]     max_iterations Maximum number of iterations to run.
 ///  @returns The residule graph.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::base>
-        init(graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                   DISPERSION_FUNCTION::safe_math>
+        init(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                DISPERSION_FUNCTION::safe_math> x,
              const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
              const size_t max_iterations = 1000) final {
-            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs {
+            graph::input_nodes<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> inputs {
                 graph::variable_cast(this->t),
                 graph::variable_cast(this->w),
                 graph::variable_cast(this->x),
@@ -129,7 +158,8 @@ namespace solver {
 ///  @brief Compile the solver function.
 //------------------------------------------------------------------------------
         virtual void compile() {
-            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs = {
+            graph::input_nodes<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> inputs = {
                 graph::variable_cast(this->t),
                 graph::variable_cast(this->w),
                 graph::variable_cast(this->x),
@@ -140,18 +170,20 @@ namespace solver {
                 graph::variable_cast(this->kz)
             };
 
-            graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
+            graph::output_nodes<typename DISPERSION_FUNCTION::base,
+                                DISPERSION_FUNCTION::safe_math> outputs = {
                 this->residule
             };
 
-            graph::map_nodes<typename DISPERSION_FUNCTION::base> setters = {
+            graph::map_nodes<typename DISPERSION_FUNCTION::base,
+                             DISPERSION_FUNCTION::safe_math> setters = {
                 {this->kx_next, graph::variable_cast(this->kx)},
                 {this->ky_next, graph::variable_cast(this->ky)},
                 {this->kz_next, graph::variable_cast(this->kz)},
-                {this->x_next, graph::variable_cast(this->x)},
-                {this->y_next, graph::variable_cast(this->y)},
-                {this->z_next, graph::variable_cast(this->z)},
-                {this->t_next, graph::variable_cast(this->t)}
+                {this->x_next,  graph::variable_cast(this->x)},
+                {this->y_next,  graph::variable_cast(this->y)},
+                {this->z_next,  graph::variable_cast(this->z)},
+                {this->t_next,  graph::variable_cast(this->t)}
             };
 
             work.add_item(inputs, outputs, setters, "solver_kernel");
@@ -159,10 +191,10 @@ namespace solver {
 
             file.create_variable("time", this->t, work.get_context());
             file.create_variable("residule", residule, work.get_context());
-            file.create_variable("w", this->w, work.get_context());
-            file.create_variable("x", this->x, work.get_context());
-            file.create_variable("y", this->y, work.get_context());
-            file.create_variable("z", this->z, work.get_context());
+            file.create_variable("w",  this->w, work.get_context());
+            file.create_variable("x",  this->x, work.get_context());
+            file.create_variable("y",  this->y, work.get_context());
+            file.create_variable("z",  this->z, work.get_context());
             file.create_variable("kx", this->kx, work.get_context());
             file.create_variable("ky", this->ky, work.get_context());
             file.create_variable("kz", this->kz, work.get_context());
@@ -174,11 +206,11 @@ namespace solver {
 ///  @brief Syncronize results from host to gpu.
 //------------------------------------------------------------------------------
         void sync_device() {
-            work.copy_to_device(this->t, graph::variable_cast(this->t)->data());
-            work.copy_to_device(this->w, graph::variable_cast(this->w)->data());
-            work.copy_to_device(this->x, graph::variable_cast(this->x)->data());
-            work.copy_to_device(this->y, graph::variable_cast(this->y)->data());
-            work.copy_to_device(this->z, graph::variable_cast(this->z)->data());
+            work.copy_to_device(this->t,  graph::variable_cast(this->t)->data());
+            work.copy_to_device(this->w,  graph::variable_cast(this->w)->data());
+            work.copy_to_device(this->x,  graph::variable_cast(this->x)->data());
+            work.copy_to_device(this->y,  graph::variable_cast(this->y)->data());
+            work.copy_to_device(this->z,  graph::variable_cast(this->z)->data());
             work.copy_to_device(this->kx, graph::variable_cast(this->kx)->data());
             work.copy_to_device(this->ky, graph::variable_cast(this->ky)->data());
             work.copy_to_device(this->kz, graph::variable_cast(this->kz)->data());
@@ -188,11 +220,11 @@ namespace solver {
 ///  @brief Syncronize results from gpu to host.
 //------------------------------------------------------------------------------
         void sync_host() {
-            work.copy_to_host(this->t, graph::variable_cast(this->t)->data());
-            work.copy_to_host(this->w, graph::variable_cast(this->w)->data());
-            work.copy_to_host(this->x, graph::variable_cast(this->x)->data());
-            work.copy_to_host(this->y, graph::variable_cast(this->y)->data());
-            work.copy_to_host(this->z, graph::variable_cast(this->z)->data());
+            work.copy_to_host(this->t,  graph::variable_cast(this->t)->data());
+            work.copy_to_host(this->w,  graph::variable_cast(this->w)->data());
+            work.copy_to_host(this->x,  graph::variable_cast(this->x)->data());
+            work.copy_to_host(this->y,  graph::variable_cast(this->y)->data());
+            work.copy_to_host(this->z,  graph::variable_cast(this->z)->data());
             work.copy_to_host(this->kx, graph::variable_cast(this->kx)->data());
             work.copy_to_host(this->ky, graph::variable_cast(this->ky)->data());
             work.copy_to_host(this->kz, graph::variable_cast(this->kz)->data());
@@ -357,30 +389,42 @@ namespace solver {
     class rk2 : public solver_interface<DISPERSION_FUNCTION> {
     protected:
 ///  kx1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kx1;
 ///  ky1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> ky1;
 ///  kz1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kz1;
 ///  x1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x1;
 ///  y1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y1;
 ///  z1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z1;
 
 ///  kx2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kx2;
 ///  ky2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> ky2;
 ///  kz2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kz2;
 ///  x2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x2;
 ///  y2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y2;
 ///  z2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z2;
 
     public:
 //------------------------------------------------------------------------------
@@ -398,21 +442,31 @@ namespace solver {
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
-        rk2(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
+        rk2(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> w,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> kx,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> ky,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> kz,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> x,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> y,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> z,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> t,
             const typename DISPERSION_FUNCTION::base dt,
-            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+            equilibrium::shared<typename DISPERSION_FUNCTION::base,
+                                DISPERSION_FUNCTION::safe_math> &eq,
             const std::string &filename="",
             const size_t num_rays=0) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq,
                                                filename, num_rays) {
-            auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
+            auto dt_const = graph::constant<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> (static_cast<typename DISPERSION_FUNCTION::base> (dt));
 
             this->kx1 = (dt_const*this->D.get_dkxdt())->remove_pseudo();
             this->ky1 = (dt_const*this->D.get_dkydt())->remove_pseudo();
@@ -438,7 +492,8 @@ namespace solver {
             this->y2  = (dt_const*D2.get_dydt())->remove_pseudo();
             this->z2  = (dt_const*D2.get_dzdt())->remove_pseudo();
 
-            auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
+            auto two = graph::two<typename DISPERSION_FUNCTION::base,
+                                  DISPERSION_FUNCTION::safe_math> ();
 
             this->kx_next = this->kx + (this->kx1 + this->kx2)/two;
             this->ky_next = this->ky + (this->ky1 + this->ky2)/two;
@@ -460,59 +515,84 @@ namespace solver {
     class rk4 : public solver_interface<DISPERSION_FUNCTION> {
     protected:
 ///  kx1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kx1;
 ///  ky1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> ky1;
 ///  kz1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kz1;
 ///  x1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x1;
 ///  y1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y1;
 ///  z1 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z1;
 
 ///  kx2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                        DISPERSION_FUNCTION::safe_math> kx2;
 ///  ky2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> ky2;
 ///  kz2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kz2;
 ///  x2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x2;
 ///  y2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y2;
 ///  z2 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z2;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z2;
 
 ///  kx3 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kx3;
 ///  ky3 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> ky3;
 ///  kz3 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kz3;
 ///  x3 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x3;
 ///  y3 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y3;
 ///  z3 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z3;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z3;
 
 ///  kx4 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kx4;
 ///  ky4 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> ky4;
 ///  kz4 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> kz4;
 ///  x4 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x4;
 ///  y4 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y4;
 ///  z4 subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z4;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z4;
 
 ///  t  subexpression.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> t_sub;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> t_sub;
 
     public:
 //------------------------------------------------------------------------------
@@ -530,20 +610,30 @@ namespace solver {
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
-        rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
+        rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> w,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> kx,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> ky,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> kz,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> x,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> y,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> z,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> t,
             const typename DISPERSION_FUNCTION::base dt,
-            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+            equilibrium::shared<typename DISPERSION_FUNCTION::base,
+                                DISPERSION_FUNCTION::safe_math> &eq,
             const std::string &filename="",
             const size_t num_rays=0) :
         rk4(w, kx, ky, kz, x, y, z, t,
-            graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt)), eq,
+            graph::constant<typename DISPERSION_FUNCTION::base,
+                            DISPERSION_FUNCTION::safe_math> (static_cast<typename DISPERSION_FUNCTION::base> (dt)), eq,
             filename, num_rays) {}
         
 //------------------------------------------------------------------------------
@@ -561,16 +651,26 @@ namespace solver {
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
-        rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base> dt,
-            equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+        rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> w,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> kx,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> ky,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> kz,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> x,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> y,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> z,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> t,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> dt,
+            equilibrium::shared<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> &eq,
             const std::string &filename="",
             const size_t num_rays=0) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq,
@@ -582,7 +682,8 @@ namespace solver {
             this->y1  = dt*this->D.get_dydt();
             this->z1  = dt*this->D.get_dzdt();
 
-            auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
+            auto two = graph::two<typename DISPERSION_FUNCTION::base,
+                                  DISPERSION_FUNCTION::safe_math> ();
 
             this->t_sub = this->t + dt/two;
 
@@ -639,7 +740,8 @@ namespace solver {
             this->y4  = (dt*D4.get_dydt())->remove_pseudo();
             this->z4  = (dt*D4.get_dzdt())->remove_pseudo();
 
-            auto six = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (6.0));
+            auto six = graph::constant<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math>(static_cast<typename DISPERSION_FUNCTION::base> (6.0));
 
             this->kx_next = this->kx + (this->kx1 + two*(this->kx2 + this->kx3) + this->kx4)/six;
             this->ky_next = this->ky + (this->ky1 + two*(this->ky2 + this->ky3) + this->ky4)/six;
@@ -662,7 +764,8 @@ namespace solver {
 ///  Dispersion residule.
         dispersion::dispersion_interface<DISPERSION_FUNCTION> D;
 ///  Time step variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dt_var;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> dt_var;
 
     public:
 //------------------------------------------------------------------------------
@@ -680,16 +783,26 @@ namespace solver {
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
-        adaptive_rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
-                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
-                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
-                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
-                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
-                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
-                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
-                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
-                     graph::shared_leaf<typename DISPERSION_FUNCTION::base> dt,
-                     equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+        adaptive_rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> w,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> kx,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> ky,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> kz,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> x,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> y,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> z,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> t,
+                     graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> dt,
+                     equilibrium::shared<typename DISPERSION_FUNCTION::base,
+                                         DISPERSION_FUNCTION::safe_math> &eq,
                      const std::string &filename="",
                      const size_t num_rays=0) :
         rk4<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, dt, eq),
@@ -710,9 +823,11 @@ namespace solver {
         virtual void compile() final {
             auto var = graph::variable_cast(dt_var);
             auto lambda = graph::variable(var->size(), static_cast<typename DISPERSION_FUNCTION::base> (1.0), "\\lambda");
-            auto loss = graph::one<typename DISPERSION_FUNCTION::base> ()/dt_var + lambda*D.get_d()*D.get_d();
+            auto loss = graph::one<typename DISPERSION_FUNCTION::base,
+                                   DISPERSION_FUNCTION::safe_math> ()/dt_var + lambda*D.get_d()*D.get_d();
 
-            graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs = {
+            graph::input_nodes<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> inputs = {
                 graph::variable_cast(this->t),
                 graph::variable_cast(this->w),
                 graph::variable_cast(this->x),
@@ -740,11 +855,13 @@ namespace solver {
                 var
             };
 
-            graph::output_nodes<typename DISPERSION_FUNCTION::base> outputs = {
+            graph::output_nodes<typename DISPERSION_FUNCTION::base,
+                                DISPERSION_FUNCTION::safe_math> outputs = {
                 this->residule
             };
 
-            graph::map_nodes<typename DISPERSION_FUNCTION::base> setters = {
+            graph::map_nodes<typename DISPERSION_FUNCTION::base,
+                             DISPERSION_FUNCTION::safe_math> setters = {
                 {this->kx_next, graph::variable_cast(this->kx)},
                 {this->ky_next, graph::variable_cast(this->ky)},
                 {this->kz_next, graph::variable_cast(this->kz)},
@@ -769,11 +886,14 @@ namespace solver {
     class split_simplextic : public solver_interface<DISPERSION_FUNCTION> {
     protected:
 ///  Half step x
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> x1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> x1;
 ///  Half step y
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> y1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> y1;
 ///  Half step z
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> z1;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> z1;
 
     public:
 //------------------------------------------------------------------------------
@@ -791,16 +911,25 @@ namespace solver {
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 //------------------------------------------------------------------------------
-        split_simplextic(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
-                         graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
+        split_simplextic(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> w,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> kx,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> ky,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> kz,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> x,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> y,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> z,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> t,
                          const typename DISPERSION_FUNCTION::base dt,
-                         equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
+                         equilibrium::shared<typename DISPERSION_FUNCTION::base,
+                                             DISPERSION_FUNCTION::safe_math> &eq,
                          const std::string &filename="",
                          const size_t num_rays=0) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq,
@@ -829,7 +958,8 @@ namespace solver {
                    zero->is_match(this->D.get_dzdt()->df(z))   &&
                    "Hamiltonian is not separable.");
 
-            auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
+            auto dt_const = graph::constant<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> (static_cast<typename DISPERSION_FUNCTION::base> (dt));
             auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
 
             this->t_next = this->t + dt_const;

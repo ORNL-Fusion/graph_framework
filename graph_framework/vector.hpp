@@ -18,15 +18,15 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class to represent vector quantities.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class vector_quantity {
+    template<typename T, bool SAFE_MATH=false>
+    class vector_quantity : public std::enable_shared_from_this<vector_quantity<T, SAFE_MATH>> {
     protected:
 ///  X component of the vector.
-        shared_leaf<T> x;
+        shared_leaf<T, SAFE_MATH> x;
 ///  Y component of the vector.
-        shared_leaf<T> y;
+        shared_leaf<T, SAFE_MATH> y;
 ///  Z component of the vector.
-        shared_leaf<T> z;
+        shared_leaf<T, SAFE_MATH> z;
 
     public:
 //------------------------------------------------------------------------------
@@ -36,9 +36,9 @@ namespace graph {
 ///  @params[in] y Y vector component.
 ///  @params[in] z Z Vector component.
 //------------------------------------------------------------------------------
-        vector_quantity(shared_leaf<T> x,
-                        shared_leaf<T> y,
-                        shared_leaf<T> z) :
+        vector_quantity(shared_leaf<T, SAFE_MATH> x,
+                        shared_leaf<T, SAFE_MATH> y,
+                        shared_leaf<T, SAFE_MATH> z) :
         x(x), y(y), z(z) {}
 
 //------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ namespace graph {
 ///
 ///  @return x
 //------------------------------------------------------------------------------
-        shared_leaf<T> get_x() const {
+        shared_leaf<T, SAFE_MATH> get_x() const {
             return x;
         }
 
@@ -56,7 +56,7 @@ namespace graph {
 ///
 ///  @return y
 //------------------------------------------------------------------------------
-        shared_leaf<T> get_y() const {
+        shared_leaf<T, SAFE_MATH> get_y() const {
             return y;
         }
 
@@ -65,7 +65,7 @@ namespace graph {
 ///
 ///  @return z
 //------------------------------------------------------------------------------
-        shared_leaf<T> get_z() const {
+        shared_leaf<T, SAFE_MATH> get_z() const {
             return z;
         }
 
@@ -75,7 +75,8 @@ namespace graph {
 ///  @params[in] v2 Second vector.
 ///  @returns v1.v2
 //------------------------------------------------------------------------------
-        shared_leaf<T> dot(std::shared_ptr<vector_quantity<T>> v2) {
+        shared_leaf<T, SAFE_MATH>
+        dot(std::shared_ptr<vector_quantity<T, SAFE_MATH>> v2) {
             return x*v2->get_x() +
                    y*v2->get_y() +
                    z*v2->get_z();
@@ -87,11 +88,11 @@ namespace graph {
 ///  @params[in] v2 Second vector.
 ///  @returns v1 X v2
 //------------------------------------------------------------------------------
-        std::shared_ptr<vector_quantity<T>>
-        cross(std::shared_ptr<vector_quantity<T>> v2) {
-            return std::make_shared<vector_quantity<T>> (y*v2->get_z() - z*v2->get_y(),
-                                                         z*v2->get_x() - x*v2->get_z(),
-                                                         x*v2->get_y() - y*v2->get_x());
+        std::shared_ptr<vector_quantity<T, SAFE_MATH>>
+        cross(std::shared_ptr<vector_quantity<T, SAFE_MATH>> v2) {
+            return std::make_shared<vector_quantity<T, SAFE_MATH>> (y*v2->get_z() - z*v2->get_y(),
+                                                                    z*v2->get_x() - x*v2->get_z(),
+                                                                    x*v2->get_y() - y*v2->get_x());
         }
 
 //------------------------------------------------------------------------------
@@ -99,8 +100,8 @@ namespace graph {
 ///
 ///  @returns |V|
 //------------------------------------------------------------------------------
-        shared_leaf<T> length() {
-            return sqrt(x*x + y*y + z*z);
+        shared_leaf<T, SAFE_MATH> length() {
+            return sqrt(this->dot(this->shared_from_this()));
         }
 
 //------------------------------------------------------------------------------
@@ -108,24 +109,24 @@ namespace graph {
 ///
 ///  @returns v_hat
 //------------------------------------------------------------------------------
-        std::shared_ptr<vector_quantity<T>> unit() {
+        std::shared_ptr<vector_quantity<T, SAFE_MATH>> unit() {
             auto l = length();
-            return std::make_shared<vector_quantity<T>> (x/l, y/l, z/l);
+            return std::make_shared<vector_quantity<T, SAFE_MATH>> (x/l, y/l, z/l);
         }
     };
 
 ///  Convenience type for shared vector quantities.
-    template<typename T>
-    using shared_vector = std::shared_ptr<vector_quantity<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_vector = std::shared_ptr<vector_quantity<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Build a shared vector quantity.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_vector<T> vector(shared_leaf<T> x,
-                            shared_leaf<T> y,
-                            shared_leaf<T> z) {
-        return std::make_shared<vector_quantity<T>> (x, y, z);
+    template<typename T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> vector(shared_leaf<T, SAFE_MATH> x,
+                                       shared_leaf<T, SAFE_MATH> y,
+                                       shared_leaf<T, SAFE_MATH> z) {
+        return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, y, z);
     }
 }
 

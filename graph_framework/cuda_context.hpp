@@ -22,7 +22,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<typename T, bool SAFE_MATH=false>
     class cuda_context {
     private:
 ///  The cuda device.
@@ -32,7 +32,7 @@ namespace gpu {
 ///  The cuda code library.
         CUmodule module;
 ///  Argument map.
-        std::map<graph::leaf_node<T> *, CUdeviceptr> kernel_arguments;
+        std::map<graph::leaf_node<T, SAFE_MATH> *, CUdeviceptr> kernel_arguments;
 ///  Result buffer.
         CUdeviceptr result_buffer;
 ///  Cuda stream.
@@ -217,8 +217,8 @@ namespace gpu {
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
-                                                     graph::input_nodes<T> inputs,
-                                                     graph::output_nodes<T> outputs,
+                                                     graph::input_nodes<T, SAFE_MATH> inputs,
+                                                     graph::output_nodes<T, SAFE_MATH> outputs,
                                                      const size_t num_rays) {
             CUfunction function;
             check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
@@ -277,7 +277,7 @@ namespace gpu {
 ///  @params[in] run      Function to run before reduction.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        std::function<T(void)> create_max_call(graph::shared_leaf<T> &argument,
+        std::function<T(void)> create_max_call(graph::shared_leaf<T, SAFE_MATH> &argument,
                                                std::function<void(void)> run) {
             check_error(cuMemAllocManaged(&result_buffer, sizeof(T),
                                           CU_MEM_ATTACH_GLOBAL),
@@ -321,7 +321,7 @@ namespace gpu {
 ///  @params[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
         void print_results(const size_t index,
-                           const graph::output_nodes<T> &nodes) {
+                           const graph::output_nodes<T, SAFE_MATH> &nodes) {
             wait();
             for (auto &out : nodes) {
                 const T temp = reinterpret_cast<T *> (kernel_arguments[out.get()])[index];
@@ -340,7 +340,7 @@ namespace gpu {
 ///  @params[in] node   Not to copy buffer to.
 ///  @params[in] source Host side buffer to copy from.
 //------------------------------------------------------------------------------
-        void copy_to_device(graph::shared_leaf<T> node,
+        void copy_to_device(graph::shared_leaf<T, SAFE_MATH> node,
                             T *source) {
             size_t size;
             check_error(cuMemGetAddressRange(NULL, &size, kernel_arguments[node.get()]), "cuMemGetAddressRange");
@@ -353,7 +353,7 @@ namespace gpu {
 ///  @params[in]     node        Node to copy buffer from.
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_to_host(graph::shared_leaf<T> node,
+        void copy_to_host(graph::shared_leaf<T, SAFE_MATH> node,
                           T *destination) {
             size_t size;
             check_error(cuMemGetAddressRange(NULL, &size, kernel_arguments[node.get()]), "cuMemGetAddressRange");
@@ -381,8 +381,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
-                                  graph::input_nodes<T> &inputs,
-                                  graph::output_nodes<T> &outputs,
+                                  graph::input_nodes<T, SAFE_MATH> &inputs,
+                                  graph::output_nodes<T, SAFE_MATH> &outputs,
                                   const size_t size,
                                   jit::register_map &registers) {
             source_buffer << std::endl;
@@ -431,8 +431,8 @@ namespace gpu {
 
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
-                                   graph::output_nodes<T> &outputs,
-                                   graph::map_nodes<T> &setters,
+                                   graph::output_nodes<T, SAFE_MATH> &outputs,
+                                   graph::map_nodes<T, SAFE_MATH> &setters,
                                    jit::register_map &registers) {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T> a = out->compile(source_buffer, registers);
@@ -546,7 +546,7 @@ namespace gpu {
 ///
 ///  @params[in] node Node to get the buffer for.
 //------------------------------------------------------------------------------
-        T *get_buffer(graph::shared_leaf<T> &node) {
+        T *get_buffer(graph::shared_leaf<T, SAFE_MATH> &node) {
             return reinterpret_cast<T *> (kernel_arguments[node.get()]);
         }
     };

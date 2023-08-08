@@ -16,6 +16,7 @@
 #include <type_traits>
 #include <limits>
 #include <charconv>
+#include <array>
 
 namespace jit {
 //------------------------------------------------------------------------------

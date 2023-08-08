@@ -18,23 +18,25 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Build plasma fequency expression.
 //------------------------------------------------------------------------------
-    template<typename T>
-    static graph::shared_leaf<T> build_plasma_fequency(graph::shared_leaf<T> n,
-                                                       graph::shared_leaf<T> q,
-                                                       graph::shared_leaf<T> m,
-                                                       graph::shared_leaf<T> c,
-                                                       graph::shared_leaf<T> epsion0) {
+    template<typename T, bool SAFE_MATH=false>
+    static graph::shared_leaf<T, SAFE_MATH>
+    build_plasma_fequency(graph::shared_leaf<T, SAFE_MATH> n,
+                          graph::shared_leaf<T, SAFE_MATH> q,
+                          graph::shared_leaf<T, SAFE_MATH> m,
+                          graph::shared_leaf<T, SAFE_MATH> c,
+                          graph::shared_leaf<T, SAFE_MATH> epsion0) {
         return n*q*q/(epsion0*m*c*c);
     }
 
 //------------------------------------------------------------------------------
 ///  @brief Build cyclotron fequency expression.
 //------------------------------------------------------------------------------
-    template<typename T>
-    static graph::shared_leaf<T> build_cyclotron_fequency(graph::shared_leaf<T> q,
-                                                          graph::shared_leaf<T> b,
-                                                          graph::shared_leaf<T> m,
-                                                          graph::shared_leaf<T> c) {
+    template<typename T, bool SAFE_MATH=false>
+    static graph::shared_leaf<T, SAFE_MATH>
+    build_cyclotron_fequency(graph::shared_leaf<T, SAFE_MATH> q,
+                             graph::shared_leaf<T, SAFE_MATH> b,
+                             graph::shared_leaf<T, SAFE_MATH> m,
+                             graph::shared_leaf<T, SAFE_MATH> c) {
         return q*b/(m*c);
     }
 
@@ -48,22 +50,30 @@ namespace dispersion {
     class dispersion_interface {
     protected:
 ///  Disperison function.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> D;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> D;
 
 ///  Derivative with respect to kx.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dxdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> dxdt;
 ///  Derivative with respect to ky.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dydt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> dydt;
 ///  Derivative with respect to kz.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dzdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> dzdt;
 ///  Derivative with respect to kx.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dkxdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> dkxdt;
 ///  Derivative with respect to ky.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dkydt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> dkydt;
 ///  Derivative with respect to kz.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dkzdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> dkzdt;
 ///  Derivative with respect to omega.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base> dsdt;
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> dsdt;
 
     public:
 //------------------------------------------------------------------------------
@@ -79,15 +89,24 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        dispersion_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base> w,
-                             graph::shared_leaf<typename DISPERSION_FUNCTION::base> kx,
-                             graph::shared_leaf<typename DISPERSION_FUNCTION::base> ky,
-                             graph::shared_leaf<typename DISPERSION_FUNCTION::base> kz,
-                             graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
-                             graph::shared_leaf<typename DISPERSION_FUNCTION::base> y,
-                             graph::shared_leaf<typename DISPERSION_FUNCTION::base> z,
-                             graph::shared_leaf<typename DISPERSION_FUNCTION::base> t,
-                             equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq) :
+        dispersion_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                                DISPERSION_FUNCTION::safe_math> w,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                                DISPERSION_FUNCTION::safe_math> kx,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                                DISPERSION_FUNCTION::safe_math> ky,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                                DISPERSION_FUNCTION::safe_math> kz,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                                DISPERSION_FUNCTION::safe_math> x,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                                DISPERSION_FUNCTION::safe_math> y,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                                DISPERSION_FUNCTION::safe_math> z,
+                             graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                                DISPERSION_FUNCTION::safe_math> t,
+                             equilibrium::shared<typename DISPERSION_FUNCTION::base,
+                                                 DISPERSION_FUNCTION::safe_math> &eq) :
         D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z, t, eq)) {
             auto dDdw = this->D->df(w);
             auto dDdkx = this->D->df(kx);
@@ -97,7 +116,8 @@ namespace dispersion {
             auto dDdy = this->D->df(y);
             auto dDdz = this->D->df(z);
 
-            auto neg_one = graph::none<typename DISPERSION_FUNCTION::base> ();
+            auto neg_one = graph::none<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> ();
             dxdt = neg_one*dDdkx/dDdw;
             dydt = neg_one*dDdky/dDdw;
             dzdt = neg_one*dDdkz/dDdw;
@@ -121,15 +141,19 @@ namespace dispersion {
 ///                                 up.
 ///  @returns The residule graph.
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
-        solve(graph::shared_leaf<typename DISPERSION_FUNCTION::base> x,
-              graph::input_nodes<typename DISPERSION_FUNCTION::base> inputs,
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
+        solve(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                 DISPERSION_FUNCTION::safe_math> x,
+              graph::input_nodes<typename DISPERSION_FUNCTION::base,
+                                 DISPERSION_FUNCTION::safe_math> inputs,
               const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
               const size_t max_iterations = 1000) {
             auto loss = D*D;
             auto x_var = graph::variable_cast(x);
 
-            workflow::manager<typename DISPERSION_FUNCTION::base> work;
+            workflow::manager<typename DISPERSION_FUNCTION::base,
+                              DISPERSION_FUNCTION::safe_math> work;
 
             solver::newton(work, {x}, inputs, loss, tolarance, max_iterations);
 
@@ -146,7 +170,8 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
         get_d() {
             return this->D;
         }
@@ -156,7 +181,8 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
         get_dsdt() {
             return this->dsdt;
         }
@@ -166,7 +192,8 @@ namespace dispersion {
 ///
 ///  @return dx/dt
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
         get_dxdt() {
             return this->dxdt;
         }
@@ -176,7 +203,8 @@ namespace dispersion {
 ///
 ///  @return dy/dt
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
         get_dydt() {
             return this->dydt;
         }
@@ -186,7 +214,8 @@ namespace dispersion {
 ///
 ///  @return dz/dt
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
         get_dzdt() {
             return this->dzdt;
         }
@@ -196,7 +225,8 @@ namespace dispersion {
 ///
 ///  @return dkx/dt
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
         get_dkxdt() {
             return this->dkxdt;
         }
@@ -206,7 +236,8 @@ namespace dispersion {
 ///
 ///  @return dky/dt
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
         get_dkydt() {
             return this->dkydt;
         }
@@ -216,7 +247,8 @@ namespace dispersion {
 ///
 ///  @return dkz/dt
 //------------------------------------------------------------------------------
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base>
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
         get_dkzdt() {
             return this->dkzdt;
         }
@@ -284,7 +316,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Interface for dispersion functions.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<typename T, bool SAFE_MATH=false>
     class dispersion_function {
     public:
 //------------------------------------------------------------------------------
@@ -300,25 +332,28 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) = 0;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) = 0;
 
 ///  Type def to retrieve the backend base type.
         typedef T base;
+///  Retrieve template parameter of safe math.
+        static constexpr bool safe_math = SAFE_MATH;
     };
 
 //------------------------------------------------------------------------------
 ///  @brief Stiff dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class stiff final : public dispersion_function<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class stiff final : public dispersion_function<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Stiff function.
@@ -352,17 +387,18 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
-            auto none = graph::none<T> ();
-            auto c = graph::constant(static_cast<T> (1.0E3));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto c = graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E3));
             return (c*(x - graph::exp(none*t)) - graph::exp(none*t))*kx + w;
         }
     };
@@ -370,8 +406,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Simple dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class simple final : public dispersion_function<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class simple final : public dispersion_function<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Simple dispersion function.
@@ -388,16 +424,17 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
-            auto c = graph::one<T> ();
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
+            auto c = graph::one<T, SAFE_MATH> ();
 
             auto npar2 = kz*kz*c*c/(w*w);
             auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
@@ -408,27 +445,31 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Physics
 //------------------------------------------------------------------------------
-    template<typename T>
-    class physics : public dispersion_function<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class physics : public dispersion_function<T, SAFE_MATH> {
     protected:
 //  Define some common constants.
 ///  Vacuum permitivity.
-        graph::shared_leaf<T> epsion0 = graph::constant(static_cast<T> (8.8541878138E-12));
+        graph::shared_leaf<T, SAFE_MATH> epsion0 =
+            graph::constant<T, SAFE_MATH> (static_cast<T> (8.8541878138E-12));
 ///  Vacuum permeability
-        graph::shared_leaf<T> mu0 = graph::constant(static_cast<T> (M_PI*4.0E-7));
+        graph::shared_leaf<T, SAFE_MATH> mu0 =
+            graph::constant<T, SAFE_MATH> (static_cast<T> (M_PI*4.0E-7));
 ///  Fundamental charge.
-        graph::shared_leaf<T> q = graph::constant(static_cast<T> (1.602176634E-19));
+        graph::shared_leaf<T, SAFE_MATH> q =
+            graph::constant<T, SAFE_MATH> (static_cast<T> (1.602176634E-19));
 ///  Electron mass.
-        graph::shared_leaf<T> me = graph::constant(static_cast<T> (9.1093837015E-31));
+        graph::shared_leaf<T, SAFE_MATH> me =
+            graph::constant<T, SAFE_MATH> (static_cast<T> (9.1093837015E-31));
 /// Speed of light.
-        graph::shared_leaf<T> c = graph::one<T> ()/graph::sqrt(epsion0*mu0);
+        graph::shared_leaf<T, SAFE_MATH> c = graph::one<T, SAFE_MATH> ()/graph::sqrt(epsion0*mu0);
     };
 
 //------------------------------------------------------------------------------
 ///  @brief Bohm-Gross dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class bohm_gross final : public physics<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class bohm_gross final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Bohm-Gross function.
@@ -447,32 +488,37 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
 
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne, physics<T>::q, physics<T>::me,
-                                              physics<T>::c, physics<T>::epsion0);
+            auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
+                                              physics<T, SAFE_MATH>::me,
+                                              physics<T, SAFE_MATH>::c,
+                                              physics<T, SAFE_MATH>::epsion0);
             auto te = eq->get_electron_temperature(x, y, z);
 //  2*1.602176634E-19 to convert eV to J.
             
-            auto temp = graph::two<T> ()*physics<T>::q*te;
-            auto vterm2 = temp/(physics<T>::me*physics<T>::c*physics<T>::c);
+            auto temp = graph::two<T, SAFE_MATH> ()*physics<T, SAFE_MATH>::q*te;
+            auto vterm2 = temp/(physics<T, SAFE_MATH>::me *
+                                physics<T, SAFE_MATH>::c *
+                                physics<T, SAFE_MATH>::c);
 
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto k = graph::vector(kx, ky, kz);
-            graph::shared_leaf<T> kpara2;
-            if (b_vec->length()->is_match(graph::zero<T> ())) {
+            graph::shared_leaf<T, SAFE_MATH> kpara2;
+            if (b_vec->length()->is_match(graph::zero<T, SAFE_MATH> ())) {
                 kpara2 = k->dot(k);
             } else {
                 auto b_hat = b_vec->unit();
@@ -481,7 +527,7 @@ namespace dispersion {
             }
             
             return wpe2 +
-                   graph::constant(static_cast<T> (3.0/2.0))*kpara2*vterm2 -
+                   graph::constant<T, SAFE_MATH> (static_cast<T> (3.0/2.0))*kpara2*vterm2 -
                    w*w;
         }
     };
@@ -489,8 +535,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Light Wave dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class light_wave final : public physics<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class light_wave final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Light-wave function.
@@ -509,24 +555,28 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
 
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne, physics<T>::q, physics<T>::me,
-                                              physics<T>::c, physics<T>::epsion0);
+            auto wpe2 = build_plasma_fequency(ne,
+                                              physics<T, SAFE_MATH>::q,
+                                              physics<T, SAFE_MATH>::me,
+                                              physics<T, SAFE_MATH>::c,
+                                              physics<T, SAFE_MATH>::epsion0);
 
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
-            assert(eq->get_magnetic_field(x, y, z)->length()->is_match(graph::zero<T> ()) &&
+            assert(eq->get_magnetic_field(x, y, z)->length()->is_match(graph::zero<T, SAFE_MATH> ()) &&
                    "Expected equilibrium with no magnetic field.");
 
             auto k = graph::vector(kx, ky, kz);
@@ -539,8 +589,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Ion wave dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class acoustic_wave final : public physics<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class acoustic_wave final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Ion acoustic wave function.
@@ -559,30 +609,31 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
 
 //  Equilibrium quantities.
-            auto mi = graph::constant(eq->get_ion_mass(0));
+            auto mi = graph::constant<T, SAFE_MATH> (eq->get_ion_mass(0));
             auto te = eq->get_electron_temperature(x, y, z);
             auto ti = eq->get_ion_temperature(0, x, y, z);
-            auto gamma = graph::constant(static_cast<T> (3.0));
-            auto vs2 = (physics<T>::q*te + gamma*physics<T>::q*ti)
-                     / (mi*physics<T>::c*physics<T>::c);
+            auto gamma = graph::constant<T, SAFE_MATH> (static_cast<T> (3.0));
+            auto vs2 = (physics<T, SAFE_MATH>::q*te + gamma*physics<T, SAFE_MATH>::q*ti)
+                     / (mi*physics<T, SAFE_MATH>::c*physics<T, SAFE_MATH>::c);
 
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto k = graph::vector(kx, ky, kz);
-            graph::shared_leaf<T> kpara2;
-            if (b_vec->length()->is_match(graph::zero<T> ())) {
+            graph::shared_leaf<T, SAFE_MATH> kpara2;
+            if (b_vec->length()->is_match(graph::zero<T, SAFE_MATH> ())) {
                 kpara2 = k->dot(k);
             } else {
                 auto b_hat = b_vec->unit();
@@ -597,8 +648,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Guassian Well dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class guassian_well final : public dispersion_function<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class guassian_well final : public dispersion_function<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Disperison relation with a non uniform well.
@@ -615,17 +666,19 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
-            auto c = graph::one<T> ();
-            auto well = c - graph::half<T> ()*exp(graph::constant(static_cast<T> (-1.0))*(x*x + y*y)/graph::constant(static_cast<T> (0.1)));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
+            auto c = graph::one<T, SAFE_MATH> ();
+            auto well = c - graph::half<T, SAFE_MATH> ()*exp(graph::none<T, SAFE_MATH> ()*(x*x + y*y) /
+                                                             graph::constant<T, SAFE_MATH> (static_cast<T> (0.1)));
             auto npar2 = kz*kz*c*c/(w*w);
             auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
             return npar2 + nperp2 - well;
@@ -635,8 +688,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Electrostatic ion cyclotron wave dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class ion_cyclotron final : public physics<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class ion_cyclotron final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Disperison relation for the O mode.
@@ -657,31 +710,35 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
 //  Constants
-            auto none = graph::constant(static_cast<T> (-1.0));
+            auto none = graph::none<T, SAFE_MATH> ();
                         
 //  Equilibrium quantities.
-            auto mi = graph::constant(eq->get_ion_mass(0));
+            auto mi = graph::constant<T, SAFE_MATH> (eq->get_ion_mass(0));
 
             auto te = eq->get_electron_temperature(x, y, z);
             auto ti = eq->get_ion_temperature(0, x, y, z);
-            auto gamma = graph::constant(static_cast<T> (3.0));
-            auto vs2 = (physics<T>::q*te + gamma*physics<T>::q*ti)
-                     / (mi*physics<T>::c*physics<T>::c);
+            auto gamma = graph::constant<T, SAFE_MATH> (static_cast<T> (3.0));
+            auto vs2 = (physics<T, SAFE_MATH>::q*te +
+                        gamma*physics<T, SAFE_MATH>::q*ti)
+                     / (mi*physics<T, SAFE_MATH>::c *
+                        physics<T, SAFE_MATH>::c);
             
             auto b_vec = eq->get_magnetic_field(x, y, z);
-            auto wce = build_cyclotron_fequency(none*physics<T>::q,
-                                                b_vec->length(), physics<T>::me,
-                                                physics<T>::c);
+            auto wce = build_cyclotron_fequency(none*physics<T, SAFE_MATH>::q,
+                                                b_vec->length(),
+                                                physics<T, SAFE_MATH>::me,
+                                                physics<T, SAFE_MATH>::c);
 
 //  Wave numbers.
             auto k = graph::vector(kx, ky, kz);
@@ -698,8 +755,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Ordinary wave dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class ordinary_wave final : public physics<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class ordinary_wave final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Disperison relation for the O mode.
@@ -718,22 +775,26 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
 //  Constants
-            auto one = graph::one<T> ();
+            auto one = graph::one<T, SAFE_MATH> ();
 
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne, physics<T>::q, physics<T>::me,
-                                              physics<T>::c, physics<T>::epsion0);
+            auto wpe2 = build_plasma_fequency(ne,
+                                              physics<T, SAFE_MATH>::q,
+                                              physics<T, SAFE_MATH>::me,
+                                              physics<T, SAFE_MATH>::c,
+                                              physics<T, SAFE_MATH>::epsion0);
 
 //  Wave numbers.
             auto n = graph::vector(kx/w, ky/w, kz/w);
@@ -751,8 +812,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Extra ordinary wave dispersion function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class extra_ordinary_wave final : public physics<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class extra_ordinary_wave final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Disperison relation for the X-Mode.
@@ -776,29 +837,34 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
 //  Constants
-            auto one = graph::one<T> ();
-            auto none = graph::constant(static_cast<T> (-1.0));
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
             
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne, physics<T>::q, physics<T>::me,
-                                              physics<T>::c,
-                                              physics<T>::epsion0);
+            auto wpe2 = build_plasma_fequency(ne,
+                                              physics<T, SAFE_MATH>::q,
+                                              physics<T, SAFE_MATH>::me,
+                                              physics<T, SAFE_MATH>::c,
+                                              physics<T, SAFE_MATH>::epsion0);
             
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_len = b_vec->length();
-            auto wec = build_cyclotron_fequency(none*physics<T>::q, b_len,
-                                                physics<T>::me, physics<T>::c);
+            auto wec = build_cyclotron_fequency(none*physics<T, SAFE_MATH>::q,
+                                                b_len,
+                                                physics<T, SAFE_MATH>::me,
+                                                physics<T, SAFE_MATH>::c);
             
 //  Wave numbers.
             auto n = graph::vector(kx/w, ky/w, kz/w);
@@ -817,8 +883,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Cold Plasma Disperison function.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class cold_plasma final : public physics<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class cold_plasma : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Cold Plasma Disperison function.
@@ -857,29 +923,34 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
 //  Constants
-            auto one = graph::one<T> ();
-            auto none = graph::none<T> ();
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
 
 //  Dielectric terms.
 //  Frequencies
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne, physics<T>::q, physics<T>::me,
-                                              physics<T>::c,
-                                              physics<T>::epsion0);
+            auto wpe2 = build_plasma_fequency(ne,
+                                              physics<T, SAFE_MATH>::q,
+                                              physics<T, SAFE_MATH>::me,
+                                              physics<T, SAFE_MATH>::c,
+                                              physics<T, SAFE_MATH>::epsion0);
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_len = b_vec->length();
-            auto ec = build_cyclotron_fequency(none*physics<T>::q, b_len,
-                                               physics<T>::me, physics<T>::c);
+            auto ec = build_cyclotron_fequency(none*physics<T, SAFE_MATH>::q,
+                                               b_len,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c);
 
             auto w2 = w*w;
             auto denome = one - ec*ec/w2;
@@ -888,15 +959,16 @@ namespace dispersion {
             auto e33 = wpe2;
 
             for (size_t i = 0, ie = eq->get_num_ion_species(); i < ie; i++) {
-                auto mi = graph::constant(eq->get_ion_mass(i));
-                auto charge = graph::constant(static_cast<T> (eq->get_ion_charge(i)))
-                            * physics<T>::q;
+                auto mi = graph::constant<T, SAFE_MATH> (eq->get_ion_mass(i));
+                auto charge = graph::constant<T, SAFE_MATH> (static_cast<T> (eq->get_ion_charge(i)))
+                            * physics<T, SAFE_MATH>::q;
 
                 auto ni = eq->get_ion_density(i, x, y, z);
-                auto wpi2 = build_plasma_fequency(ni, charge, mi, physics<T>::c,
-                                                  physics<T>::epsion0);
+                auto wpi2 = build_plasma_fequency(ni, charge, mi,
+                                                  physics<T, SAFE_MATH>::c,
+                                                  physics<T, SAFE_MATH>::epsion0);
                 auto ic = build_cyclotron_fequency(charge, b_len, mi,
-                                                   physics<T>::c);
+                                                   physics<T, SAFE_MATH>::c);
 
                 auto denomi = one - ic*ic/w2;
                 e11 = e11 - (wpi2/w2)/denomi;
@@ -930,15 +1002,15 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Hot Plasma Disperison function.
 //------------------------------------------------------------------------------
-    template<typename T, class Z>
-    class hot_plasma final : public physics<T> {
+    template<typename T, class Z, bool SAFE_MATH=false>
+    class hot_plasma final : public physics<T, SAFE_MATH> {
     private:
 ///  Z function.
         Z z;
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Cold Plasma Disperison function.
+///  @brief Hot Plasma Disperison function.
 ///
 ///  D = iσΓ0 + Γ1 + Γ2(1 + ζZ(ζ)) + Γ3ζZ(ζ)(1 + ζZ(ζ)) + Γ4iσF + Γ5F        (1)
 ///
@@ -978,19 +1050,20 @@ namespace dispersion {
 ///  @params[in] t  Current time.
 ///  @params[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> D(graph::shared_leaf<T> w,
-                                        graph::shared_leaf<T> kx,
-                                        graph::shared_leaf<T> ky,
-                                        graph::shared_leaf<T> kz,
-                                        graph::shared_leaf<T> x,
-                                        graph::shared_leaf<T> y,
-                                        graph::shared_leaf<T> z,
-                                        graph::shared_leaf<T> t,
-                                        equilibrium::shared<T> &eq) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
 //  Constants
-            auto one = graph::one<T> ();
-            auto none = graph::none<T> ();
-            auto two = graph::two<T> ();
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto two = graph::two<T, SAFE_MATH> ();
             auto four = two*two;
 
 //  Setup plasma parameters.
@@ -1000,14 +1073,18 @@ namespace dispersion {
             auto ne = eq->get_electron_density(x, y, z);
             auto te = eq->get_electron_temperature(x, y, z);
             
-            auto ve = graph::sqrt(two*physics<T>::q*te/physics<T>::me);
+            auto ve = graph::sqrt(two*physics<T, SAFE_MATH>::q*te /
+                                  physics<T, SAFE_MATH>::me);
 
 //  Setup characteristic frequencies.
-            auto ec = build_cyclotron_fequency(none*physics<T>::q, b_len,
-                                               physics<T>::me, physics<T>::c);
-            auto wpe2 = build_plasma_fequency(ne, physics<T>::q, physics<T>::me,
-                                              physics<T>::c,
-                                              physics<T>::epsion0);
+            auto ec = build_cyclotron_fequency(none*physics<T, SAFE_MATH>::q,
+                                               b_len,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c);
+            auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
+                                              physics<T, SAFE_MATH>::me,
+                                              physics<T, SAFE_MATH>::c,
+                                              physics<T, SAFE_MATH>::epsion0);
 
 //  Disperison quantities.
             auto q = wpe2/(two*w*(w + ec));
@@ -1020,10 +1097,10 @@ namespace dispersion {
             auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
 
-            auto zeta = physics<T>::c/(npara*ve)*(one - ec/w);
+            auto zeta = physics<T, SAFE_MATH>::c/(npara*ve)*(one - ec/w);
             auto Z_func = this->z.Z(zeta);
-            auto F = nperp2/(two*npara)*w*w/(ec*ec)*ve/physics<T>::c*zeta*(one + zeta*Z_func);
-            auto isigma = wpe2/(two*w*w)*Z_func*physics<T>::c/(npara*ve);
+            auto F = nperp2/(two*npara)*w*w/(ec*ec)*ve/physics<T, SAFE_MATH>::c*zeta*(one + zeta*Z_func);
+            auto isigma = wpe2/(two*w*w)*Z_func*physics<T, SAFE_MATH>::c/(npara*ve);
 
             auto q_func = one - two*q;
             auto n_func = n2 + npara2;
@@ -1043,13 +1120,130 @@ namespace dispersion {
         }
     };
 
+//------------------------------------------------------------------------------
+///  @brief Hot Plasma Explansion Disperison function.
+//------------------------------------------------------------------------------
+    template<typename T, class Z, bool SAFE_MATH=false>
+    class hot_plasma_expandion final : public cold_plasma<T, SAFE_MATH> {
+    private:
+///  Z function.
+        Z z;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Hot plasma expansion dispersion function.
+///
+///  D = Dc + Dw                                                             (1)
+///
+///  Where Dc is the cold plasma dispersion function and Dw us the warm plasma
+///  correction.
+///
+///  Dw = -(⍵ + Ω\_c)/⍵n||ve/c(Γ1 + Γ2 +
+///                            n⟂^2/(2n||)⍵^2/Ω^2\_cve/cζΓ5)(1/Z(ζ) + ζ)     (2)
+///
+///  Where:
+///
+///  Γ1 = (1 - q)n^2n⟂^2 + (1 - P)n^2n||^2 - (1 - q)(1 - P)(n^2 + n||^2)
+///     - (1 - 2q)n⟂^2 + (1 - 2q)(1 - P)                                     (3)
+///
+///  Γ2 = P⍵/Ωe(n^2n⟂^2 - (1 - 2q)n⟂^2)
+///     + P^2⍵^2/(4Ωe^2)(n⟂^2/n||^2(n^2 + n||^2) - 2(1 - 2q)n⟂^2/n||^2)      (4)
+///
+///  Γ5 = P(n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q))                      (5)
+///
+///  ζ = (⍵ - Ωe)/(k||ve)                                                    (6)
+///
+///  P = ⍵pe^2/⍵^2                                                           (7)
+///
+///  q = ⍵pe^2/(2⍵(⍵ + Ωe))                                                  (8)
+///
+///  ve = Sqrt(2*ne*te/me)                                                   (9)
+///
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
+//  Cold plasma dispersion.
+            auto Dc = cold_plasma<T, SAFE_MATH>::D(w, kx, ky, kz, x, y, z, t, eq);
+
+//  Constants
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto two = graph::two<T, SAFE_MATH> ();
+            auto four = two*two;
+
+//  Setup plasma parameters.
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto b_hat = b_vec->unit();
+            auto b_len = b_vec->length();
+            auto ne = eq->get_electron_density(x, y, z);
+            auto te = eq->get_electron_temperature(x, y, z);
+
+            auto ve = graph::sqrt(two*physics<T, SAFE_MATH>::q*te/physics<T, SAFE_MATH>::me);
+
+//  Setup characteristic frequencies.
+            auto ec = build_cyclotron_fequency(none*physics<T, SAFE_MATH>::q, b_len,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c);
+            auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
+                                              physics<T, SAFE_MATH>::me,
+                                              physics<T, SAFE_MATH>::c,
+                                              physics<T, SAFE_MATH>::epsion0);
+    
+//  Disperison quantities.
+            auto q = wpe2/(two*w*(w + ec));
+            auto P = wpe2/(w*w);
+
+            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto n2 = n->dot(n);
+            auto npara = b_hat->dot(n);
+            auto npara2 = npara*npara;
+            auto nperp = b_hat->cross(n)->length();
+            auto nperp2 = nperp*nperp;
+
+            auto zeta = physics<T, SAFE_MATH>::c/(npara*ve)*(one - ec/w);
+            auto Z_func = this->z.Z(zeta);
+
+            auto q_func = one - two*q;
+            auto n_func = n2 + npara2;
+            auto p_func = one - P;
+
+            auto gamma5 = P*(n2*npara2 - (one - q)*n_func + q_func);
+            auto gamma2 = P*w/ec*(n2 - q_func + P*w/(four*ec)*(n_func - two*q_func)/npara2)*nperp2;
+            auto gamma1 = ((one - q)*n2 - q_func)*nperp2
+                        + (n2*npara2 - (one - q)*n_func + q_func)*p_func;
+
+            auto Dw = none*(w + ec)/w*npara*ve/physics<T, SAFE_MATH>::c
+                    * (gamma1 + gamma2 +
+                       nperp2/(two*npara)*(w*w/(ec*ec))*ve/physics<T, SAFE_MATH>::c*zeta*gamma5)*(one/Z_func + zeta);
+
+            return Dc + Dw;
+        }
+    };
+
 //******************************************************************************
 //  Z Function interface.
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<typename T, bool SAFE_MATH=false>
     class z_function {
     public:
 //------------------------------------------------------------------------------
@@ -1058,14 +1252,15 @@ namespace dispersion {
 ///  @params[in] zeta The zeta argument.
 ///  @returns The constructed Z function.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> Z(graph::shared_leaf<T> zeta) = 0;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        Z(graph::shared_leaf<T, SAFE_MATH> zeta) = 0;
     };
 
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class z_power_series final : public z_function<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class z_power_series final : public z_function<T, SAFE_MATH> {
 
     static_assert(jit::is_complex<T> (), "Only supported for complex base types.");
 
@@ -1076,26 +1271,27 @@ namespace dispersion {
 ///  @params[in] zeta The zeta argument.
 ///  @returns The constructed Z function.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> Z(graph::shared_leaf<T> zeta) {
-            auto one = graph::one<T> ();
-            auto two = graph::two<T> ();
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        Z(graph::shared_leaf<T, SAFE_MATH> zeta) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto two = graph::two<T, SAFE_MATH> ();
             auto four = two*two;
             auto eight = four*two;
             auto zeta2 = zeta*zeta;
             auto zeta4 = zeta2*zeta2;
             auto zeta6 = zeta4*zeta2;
-            return graph::i<T> ()*graph::sqrt(graph::pi<T> ())/graph::exp(zeta2) -
-                   two*(one - two/graph::constant(static_cast<T> (3.0))*zeta2
-                            + four/graph::constant(static_cast<T> (15.0))*zeta4
-                            - eight/graph::constant(static_cast<T> (105.0))*zeta6)*zeta;
+            return graph::i<T, SAFE_MATH> ()*graph::sqrt(graph::pi<T, SAFE_MATH> ())/graph::exp(zeta2) -
+                   two*(one - two/graph::constant<T, SAFE_MATH> (static_cast<T> (3.0))*zeta2
+                            + four/graph::constant<T, SAFE_MATH> (static_cast<T> (15.0))*zeta4
+                            - eight/graph::constant<T, SAFE_MATH> (static_cast<T> (105.0))*zeta6)*zeta;
         }
     };
 
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class z_erfi final : public z_function<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class z_erfi final : public z_function<T, SAFE_MATH> {
 
     static_assert(jit::is_complex<T> (), "Only supported for complex base types.");
 
@@ -1106,11 +1302,12 @@ namespace dispersion {
 ///  @params[in] zeta The zeta argument.
 ///  @returns The constructed Z function.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> Z(graph::shared_leaf<T> zeta) {
-            auto i = graph::i<T> ();
-            return i*graph::exp(graph::none<T> ()*zeta*zeta) *
-                   graph::sqrt(graph::pi<T> ())*(graph::one<T> () +
-                                                 i*graph::erfi(zeta));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        Z(graph::shared_leaf<T, SAFE_MATH> zeta) {
+            auto i = graph::i<T, SAFE_MATH> ();
+            return i*graph::exp(graph::none<T, SAFE_MATH> ()*zeta*zeta) *
+                   graph::sqrt(graph::pi<T, SAFE_MATH> ())*(graph::one<T, SAFE_MATH> () +
+                                                            i*graph::erfi(zeta));
         }
     };
 }

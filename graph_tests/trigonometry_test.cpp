@@ -70,7 +70,7 @@ template<typename T> void test_atan() {
     assert(graph::constant_cast(graph::atan(graph::constant(static_cast<T> (10.0)),
                                             graph::constant(static_cast<T> (11.0)))).get() &&
            "Expected constant");
-    assert(graph::constant_cast(graph::atan(graph::constant(static_cast<T> (0.0)),
+    assert(graph::constant_cast(graph::atan(graph::zero<T> (),
                                             graph::constant(static_cast<T> (11.0)))).get() &&
            "Expected constant");
 

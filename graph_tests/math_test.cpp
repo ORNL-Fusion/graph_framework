@@ -49,7 +49,7 @@ void test_sqrt() {
            "Expected 0.5*sqrt(3)");
 
 //  Reduction sqrt(c*x*c*y) = c*Sqrt(x*y)
-    auto x1 = graph::constant(static_cast<T> (2.0))*graph::variable<T> (1, "x");
+    auto x1 = graph::two<T> ()*graph::variable<T> (1, "x");
     auto x2 = graph::constant(static_cast<T> (3.0))*graph::variable<T> (1, "y");
     auto x = graph::sqrt(x1*x2);
     auto x_cast = graph::multiply_cast(x);
@@ -158,7 +158,7 @@ void test_exp() {
 template<typename T>
 void test_pow() {
 //  a^0 = 1
-    auto zero = graph::constant(static_cast<T> (0.0));
+    auto zero = graph::zero<T> ();
     auto ten = graph::variable<T> (1, "10");
     ten->set(static_cast<T> (10.0));
     auto one = graph::pow(ten, zero);
@@ -172,7 +172,7 @@ void test_pow() {
            "Expected ten.");
 
 //  Sqrt(a)^2 = a
-    auto two = graph::constant(static_cast<T> (2.0));
+    auto two = graph::two<T> ();
     assert(graph::pow(graph::sqrt(ten), two)->is_match(ten) &&
            "Expected ten.");
     assert(graph::pow(graph::sqrt(ten), two)->evaluate().at(0) == static_cast<T> (10.0) &&
@@ -228,7 +228,7 @@ void test_pow() {
     assert(sqrd->evaluate().at(0) == static_cast<T> (non_int*non_int) &&
            "Expected x*x");
 
-    auto three = graph::constant(static_cast<T> (2.0));
+    auto three = graph::two<T> ();
     auto pow_pow1 = graph::pow(graph::pow(ten, three), two);
     auto pow_pow2 = graph::pow(ten, three*two);
     assert(pow_pow1->is_match(pow_pow2) &&

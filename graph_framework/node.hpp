@@ -23,8 +23,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a node leaf.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class leaf_node : public std::enable_shared_from_this<leaf_node<T>> {
+    template<typename T, bool SAFE_MATH=false>
+    class leaf_node : public std::enable_shared_from_this<leaf_node<T, SAFE_MATH>> {
     protected:
 ///  Hash for node.
         const size_t hash;
@@ -70,7 +70,8 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<T>> df(std::shared_ptr<leaf_node<T>> x) = 0;
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
@@ -93,8 +94,9 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<T>> compile(std::ostringstream &stream,
-                                                      jit::register_map &registers) = 0;
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
@@ -102,7 +104,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(std::shared_ptr<leaf_node<T>> x) = 0;
+        virtual bool is_match(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Check if the base of the powers match.
@@ -110,7 +112,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if the bases match.
 ///  @returns True if the powers of the nodes match.
 //------------------------------------------------------------------------------
-        bool is_power_base_match(std::shared_ptr<leaf_node<T>> x) {
+        bool is_power_base_match(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) {
             return this->get_power_base()->is_match(x->get_power_base());
         }
 
@@ -181,7 +183,7 @@ namespace graph {
 ///
 ///  @returns The base of a power like node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<T>> get_power_base() {
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>> get_power_base() {
             return this->shared_from_this();
         }
 
@@ -193,7 +195,7 @@ namespace graph {
 ///
 ///  @returns The exponent of a power like node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<T>> get_power_exponent() const = 0;
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>> get_power_exponent() const = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the hash for the node.
@@ -218,13 +220,13 @@ namespace graph {
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<T>> remove_pseudo() {
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>> remove_pseudo() {
             return this->shared_from_this();
         }
 
 ///  Cache for constructed nodes.
         inline thread_local static std::map<size_t,
-                                            std::shared_ptr<leaf_node<T>>> cache;
+                                            std::shared_ptr<leaf_node<T, SAFE_MATH>>> cache;
 ///  Cache for the backend buffers.
         inline thread_local static std::map<size_t,
                                             backend::buffer<T>> backend_cache;
@@ -234,18 +236,18 @@ namespace graph {
     };
 
 ///  Convenience type alias for shared leaf nodes.
-    template<typename T>
-    using shared_leaf = std::shared_ptr<leaf_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_leaf = std::shared_ptr<leaf_node<T, SAFE_MATH>>;
 ///  Convenience type alias for a vector of output nodes.
-    template<typename T>
-    using output_nodes = std::vector<shared_leaf<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using output_nodes = std::vector<shared_leaf<T, SAFE_MATH>>;
 
 ///  Forward declare for zero.
-    template<typename T>
-    constexpr shared_leaf<T> zero();
+    template<typename T, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> zero();
 ///  Forward declare for one.
-    template<typename T>
-    constexpr shared_leaf<T> one();
+    template<typename T, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> one();
 
 //******************************************************************************
 //  Constant node.
@@ -253,8 +255,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that cannot change.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class constant_node final : public leaf_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class constant_node final : public leaf_node<T, SAFE_MATH> {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
@@ -276,7 +278,7 @@ namespace graph {
 ///  @params[in] d Array buffer.
 //------------------------------------------------------------------------------
         constant_node(const backend::buffer<T> &d) :
-        leaf_node<T> (constant_node::to_string(d.at(0)), 1), data(d) {
+        leaf_node<T, SAFE_MATH> (constant_node::to_string(d.at(0)), 1), data(d) {
             assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
 
@@ -296,7 +298,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             return this->shared_from_this();
         }
 
@@ -306,8 +308,8 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
-            return zero<T> ();
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return zero<T, SAFE_MATH> ();
         }
 
 //------------------------------------------------------------------------------
@@ -317,8 +319,9 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -341,7 +344,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -400,7 +403,7 @@ namespace graph {
 ///
 ///  @returns The base of a power like node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> get_power_base() {
+        virtual shared_leaf<T, SAFE_MATH> get_power_base() {
             return this->shared_from_this();
         }
 
@@ -409,8 +412,8 @@ namespace graph {
 ///
 ///  @returns The exponent of a power like node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> get_power_exponent() const {
-            return one<T> ();
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
         }
     };
 
@@ -420,17 +423,17 @@ namespace graph {
 ///  @params[in] d Array buffer.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> constant(const backend::buffer<T> &d) {
-        auto temp = std::make_shared<constant_node<T>> (d);
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> constant(const backend::buffer<T> &d) {
+        auto temp = std::make_shared<constant_node<T, SAFE_MATH>> (d);
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T>::cache.find(i) ==
-                leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
         assert(false && "Should never reach.");
@@ -442,9 +445,9 @@ namespace graph {
 ///  @params[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> constant(const T d) {
-        return constant(backend::buffer<T> (1, d));
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> constant(const T d) {
+        return constant<T, SAFE_MATH> (backend::buffer<T> (1, d));
     }
 
 //  Define some common constants.
@@ -453,9 +456,9 @@ namespace graph {
 ///
 ///  @returns A zero constant.
 //------------------------------------------------------------------------------
-    template<typename T>
-    constexpr shared_leaf<T> zero() {
-        return constant(static_cast<T> (0.0));
+    template<typename T, bool SAFE_MATH>
+    constexpr shared_leaf<T, SAFE_MATH> zero() {
+        return constant<T, SAFE_MATH> (static_cast<T> (0.0));
     }
 
 //------------------------------------------------------------------------------
@@ -463,9 +466,9 @@ namespace graph {
 ///
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
-    template<typename T>
-    constexpr shared_leaf<T> one() {
-        return constant(static_cast<T> (1.0));
+    template<typename T, bool SAFE_MATH>
+    constexpr shared_leaf<T, SAFE_MATH> one() {
+        return constant<T, SAFE_MATH> (static_cast<T> (1.0));
     }
 
 //------------------------------------------------------------------------------
@@ -473,9 +476,9 @@ namespace graph {
 ///
 ///  @returns A negative one constant.
 //------------------------------------------------------------------------------
-    template<typename T>
-     constexpr shared_leaf<T> none() {
-        return constant(static_cast<T> (-1.0));
+    template<typename T, bool SAFE_MATH=false>
+     constexpr shared_leaf<T, SAFE_MATH> none() {
+        return constant<T, SAFE_MATH> (static_cast<T> (-1.0));
     }
 
 //------------------------------------------------------------------------------
@@ -483,9 +486,9 @@ namespace graph {
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
-    template<typename T>
-    constexpr shared_leaf<T> two() {
-        return constant(static_cast<T> (2.0));
+    template<typename T, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> two() {
+        return constant<T, SAFE_MATH> (static_cast<T> (2.0));
     }
 
 //------------------------------------------------------------------------------
@@ -493,9 +496,9 @@ namespace graph {
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
-    template<typename T>
-    constexpr shared_leaf<T> pi() {
-        return constant(static_cast<T> (M_PI));
+    template<typename T, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> pi() {
+        return constant<T, SAFE_MATH> (static_cast<T> (M_PI));
     }
 
 //------------------------------------------------------------------------------
@@ -503,24 +506,34 @@ namespace graph {
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
-    template<typename T>
-    constexpr shared_leaf<T> half() {
-        return constant(static_cast<T> (0.5));
+    template<typename T, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> half() {
+        return constant<T, SAFE_MATH> (static_cast<T> (0.5));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create a machine epsilon constant.
+///
+///  @returns A two constant.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> epsilon() {
+        return constant(std::numeric_limits<T>::epsilon());
     }
 
 //------------------------------------------------------------------------------
 /// @brief Create an imaginary constant.
 //------------------------------------------------------------------------------
-    template<typename T>
-    constexpr shared_leaf<T> i() {
+    template<typename T, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> i() {
         static_assert(jit::is_complex<T> (),
                       "Imaginary only valid for complex base types.");
-        return constant(T(0.0, 1.0));
+        return constant<T, SAFE_MATH> (T(0.0, 1.0));
     }
 
 ///  Convenience type alias for shared constant nodes.
-    template<typename T>
-    using shared_constant = std::shared_ptr<constant_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_constant = std::shared_ptr<constant_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a constant node.
@@ -528,9 +541,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_constant<T> constant_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<constant_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_constant<T, SAFE_MATH> constant_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<constant_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -542,11 +555,11 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class straight_node : public leaf_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class straight_node : public leaf_node<T, SAFE_MATH> {
     protected:
 ///  Argument
-        shared_leaf<T> arg;
+        shared_leaf<T, SAFE_MATH> arg;
 
     public:
 //------------------------------------------------------------------------------
@@ -555,9 +568,9 @@ namespace graph {
 ///  @params[in] a Argument.
 ///  @params[in] s Node string to hash.
 //------------------------------------------------------------------------------
-        straight_node(shared_leaf<T> a,
+        straight_node(shared_leaf<T, SAFE_MATH> a,
                       const std::string s) :
-        leaf_node<T> (s, a->get_complexity() + 1), arg(a) {}
+        leaf_node<T, SAFE_MATH> (s, a->get_complexity() + 1), arg(a) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a straight node with defered argument.
@@ -565,7 +578,7 @@ namespace graph {
 ///  @params[in] s Node string to hash.
 //------------------------------------------------------------------------------
         straight_node(const std::string s) :
-        leaf_node<T> (s) {}
+        leaf_node<T, SAFE_MATH> (s) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -598,15 +611,16 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             return this->arg->compile(stream, registers);
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the argument.
 //------------------------------------------------------------------------------
-        shared_leaf<T> get_arg() {
+        shared_leaf<T, SAFE_MATH> get_arg() {
             return this->arg;
         }
 
@@ -633,8 +647,8 @@ namespace graph {
 ///
 ///  @returns Returns a power of one.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> get_power_exponent() const {
-            return one<T> ();
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
         }
     };
 
@@ -647,13 +661,13 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class branch_node : public leaf_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class branch_node : public leaf_node<T, SAFE_MATH> {
     protected:
 //  Left branch of the tree.
-        shared_leaf<T> left;
+        shared_leaf<T, SAFE_MATH> left;
 //  Right branch of the tree.
-        shared_leaf<T> right;
+        shared_leaf<T, SAFE_MATH> right;
 
     public:
 
@@ -664,10 +678,10 @@ namespace graph {
 ///  @params[in] r Right branch.
 ///  @params[in] s Node string to hash.
 //------------------------------------------------------------------------------
-        branch_node(shared_leaf<T> l,
-                    shared_leaf<T> r,
+        branch_node(shared_leaf<T, SAFE_MATH> l,
+                    shared_leaf<T, SAFE_MATH> r,
                     const std::string s) :
-        leaf_node<T> (s, l->get_complexity() + r->get_complexity() + 1),
+        leaf_node<T, SAFE_MATH> (s, l->get_complexity() + r->get_complexity() + 1),
         left(l), right(r) {}
 
 //------------------------------------------------------------------------------
@@ -678,11 +692,11 @@ namespace graph {
 ///  @params[in] s     Node string to hash.
 ///  @params[in] count Number of nodes in the subgraph.
 //------------------------------------------------------------------------------
-                branch_node(shared_leaf<T> l,
-                            shared_leaf<T> r,
+                branch_node(shared_leaf<T, SAFE_MATH> l,
+                            shared_leaf<T, SAFE_MATH> r,
                             const std::string s,
                             const size_t count) :
-                leaf_node<T> (s, count),
+                leaf_node<T, SAFE_MATH> (s, count),
                 left(l), right(r) {}
 
 //------------------------------------------------------------------------------
@@ -705,14 +719,14 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Get the left branch.
 //------------------------------------------------------------------------------
-        shared_leaf<T> get_left() {
+        shared_leaf<T, SAFE_MATH> get_left() {
             return this->left;
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the right branch.
 //------------------------------------------------------------------------------
-        shared_leaf<T> get_right() {
+        shared_leaf<T, SAFE_MATH> get_right() {
             return this->right;
         }
 
@@ -741,8 +755,9 @@ namespace graph {
 ///
 ///  @returns Returns a power of one.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node<T>> get_power_exponent() const {
-            return one<T> ();
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
         }
     };
 
@@ -755,11 +770,11 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class triple_node : public branch_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class triple_node : public branch_node<T, SAFE_MATH> {
     protected:
 //  Middle branch of the tree.
-        shared_leaf<T> middle;
+        shared_leaf<T, SAFE_MATH> middle;
 
     public:
 
@@ -771,14 +786,14 @@ namespace graph {
 ///  @params[in] r Right branch.
 ///  @params[in] s Node string to hash.
 //------------------------------------------------------------------------------
-        triple_node(shared_leaf<T> l,
-                    shared_leaf<T> m,
-                    shared_leaf<T> r,
+        triple_node(shared_leaf<T, SAFE_MATH> l,
+                    shared_leaf<T, SAFE_MATH> m,
+                    shared_leaf<T, SAFE_MATH> r,
                     const std::string s) :
-        branch_node<T> (l, r, s,
-                        l->get_complexity() +
-                        m->get_complexity() +
-                        r->get_complexity()),
+        branch_node<T, SAFE_MATH> (l, r, s,
+                                   l->get_complexity() +
+                                   m->get_complexity() +
+                                   r->get_complexity()),
         middle(m) {}
 
 //------------------------------------------------------------------------------
@@ -802,7 +817,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Get the right branch.
 //------------------------------------------------------------------------------
-        shared_leaf<T> get_middle() {
+        shared_leaf<T, SAFE_MATH> get_middle() {
             return this->middle;
         }
 
@@ -835,8 +850,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that can change.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class variable_node final : public leaf_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class variable_node final : public leaf_node<T, SAFE_MATH> {
     private:
 ///  Storage buffer for the data.
         backend::buffer<T> buffer;
@@ -849,7 +864,7 @@ namespace graph {
 ///  @params[in] p Pointer to the node.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(variable_node<T> *p) {
+        static std::string to_string(variable_node<T, SAFE_MATH> *p) {
             return jit::format_to_string(reinterpret_cast<size_t> (p));
         }
 
@@ -862,7 +877,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s,
                       const std::string &symbol) :
-        leaf_node<T> (variable_node<T>::to_string(this), 1),
+        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1),
         buffer(s), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -874,7 +889,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s, const T d,
                       const std::string &symbol) :
-        leaf_node<T> (variable_node<T>::to_string(this), 1),
+        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1),
         buffer(s, d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -885,7 +900,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
-        leaf_node<T> (variable_node<T>::to_string(this), 1),
+        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1),
         buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -896,7 +911,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const backend::buffer<T> &d,
                       const std::string &symbol) :
-        leaf_node<T> (variable_node<T>::to_string(this), 1),
+        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1),
         buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -915,7 +930,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             return this->shared_from_this();
         }
 
@@ -925,8 +940,8 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
-            return constant(static_cast<T> (this->is_match(x)));
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return constant<T, SAFE_MATH> (static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------
@@ -936,8 +951,9 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
            return this->shared_from_this();
         }
 
@@ -947,7 +963,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             return this == x.get();
         }
 
@@ -1050,7 +1066,7 @@ namespace graph {
 ///
 ///  @returns The base of a power like node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> get_power_base() {
+        virtual shared_leaf<T, SAFE_MATH> get_power_base() {
             return this->shared_from_this();
         }
 
@@ -1059,8 +1075,8 @@ namespace graph {
 ///
 ///  @returns The exponent of a power like node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> get_power_exponent() const {
-            return one<T> ();
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
         }
     };
 
@@ -1070,10 +1086,10 @@ namespace graph {
 ///  @params[in] s      Size of the data buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> variable(const size_t s,
-                            const std::string &symbol) {
-        return (std::make_shared<variable_node<T>> (s, symbol))->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> variable(const size_t s,
+                                       const std::string &symbol) {
+        return (std::make_shared<variable_node<T, SAFE_MATH>> (s, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -1083,10 +1099,10 @@ namespace graph {
 ///  @params[in] d      Scalar data to initalize.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> variable(const size_t s, const T d,
-                            const std::string &symbol) {
-        return (std::make_shared<variable_node<T>> (s, d, symbol))->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> variable(const size_t s, const T d,
+                                       const std::string &symbol) {
+        return (std::make_shared<variable_node<T, SAFE_MATH>> (s, d, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -1095,10 +1111,10 @@ namespace graph {
 ///  @params[in] d      Array buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> variable(const std::vector<T> &d,
-                            const std::string &symbol) {
-        return (std::make_shared<variable_node<T>> (d, symbol))->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> variable(const std::vector<T> &d,
+                                       const std::string &symbol) {
+        return (std::make_shared<variable_node<T, SAFE_MATH>> (d, symbol))->reduce();
     }
 
 //------------------------------------------------------------------------------
@@ -1107,22 +1123,22 @@ namespace graph {
 ///  @params[in] d      Array buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> variable(const backend::buffer<T> &d,
-                            const std::string &symbol) {
-        return std::make_shared<variable_node<T>> (d, symbol)->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> variable(const backend::buffer<T> &d,
+                                       const std::string &symbol) {
+        return std::make_shared<variable_node<T, SAFE_MATH>> (d, symbol)->reduce();
     }
 
 ///  Convenience type alias for shared variable nodes.
-    template<typename T>
-    using shared_variable = std::shared_ptr<variable_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_variable = std::shared_ptr<variable_node<T, SAFE_MATH>>;
 ///  Convenience type alias for a vector of inputs.
-    template<typename T>
-    using input_nodes = std::vector<shared_variable<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using input_nodes = std::vector<shared_variable<T, SAFE_MATH>>;
 ///  Convenience type alias for maping end codes back to inputs.
-    template<typename T>
-    using map_nodes = std::vector<std::pair<graph::shared_leaf<T>,
-                                            shared_variable<T>>>;
+    template<typename T, bool SAFE_MATH=false>
+    using map_nodes = std::vector<std::pair<graph::shared_leaf<T, SAFE_MATH>,
+                                            shared_variable<T, SAFE_MATH>>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.
@@ -1130,9 +1146,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_variable<T> variable_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<variable_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_variable<T, SAFE_MATH> variable_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<variable_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -1145,8 +1161,8 @@ namespace graph {
 ///  ensures that the expression returns zero when taking a derivative with
 ///  something that is not itself.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class pseudo_variable_node final : public straight_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class pseudo_variable_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -1154,7 +1170,7 @@ namespace graph {
 ///  @params[in] p Pointer to the node argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *p) {
+        static std::string to_string(leaf_node<T, SAFE_MATH> *p) {
             return jit::format_to_string(reinterpret_cast<size_t> (p));
         }
 
@@ -1164,8 +1180,8 @@ namespace graph {
 ///
 ///  @params[in] a Argument.
 //------------------------------------------------------------------------------
-        pseudo_variable_node(shared_leaf<T> a) :
-        straight_node<T> (a, pseudo_variable_node<T>::to_string(a.get())) {}
+        pseudo_variable_node(shared_leaf<T, SAFE_MATH> a) :
+        straight_node<T, SAFE_MATH> (a, pseudo_variable_node::to_string(a.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Reduction method.
@@ -1174,7 +1190,7 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             return this->shared_from_this();
         }
 
@@ -1184,8 +1200,8 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
-            return constant(static_cast<T> (this == x.get()));
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return constant<T, SAFE_MATH> (static_cast<T> (this == x.get()));
         }
 
 //------------------------------------------------------------------------------
@@ -1194,7 +1210,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             return this == x.get();
         }
 
@@ -1239,7 +1255,7 @@ namespace graph {
 ///
 ///  @returns The base of a power like node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> get_power_base() {
+        virtual shared_leaf<T, SAFE_MATH> get_power_base() {
             return this->arg->get_power_base();
         }
 
@@ -1248,7 +1264,7 @@ namespace graph {
 ///
 ///  @returns The exponent of a power like node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> get_power_exponent() const {
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return this->arg->get_power_exponent();
         }
 
@@ -1257,7 +1273,7 @@ namespace graph {
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> remove_pseudo() {
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return this->arg;
         }
     };
@@ -1268,14 +1284,14 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced pseudo variable node.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> pseudo_variable(shared_leaf<T> x) {
-        return std::make_shared<pseudo_variable_node<T>> (x)->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> pseudo_variable(shared_leaf<T, SAFE_MATH> x) {
+        return std::make_shared<pseudo_variable_node<T, SAFE_MATH>> (x)->reduce();
     }
 
 ///  Convenience type alias for shared pseudo variable nodes.
-    template<typename T>
-    using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a pseudo variable node.
@@ -1283,9 +1299,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_pseudo_variable<T> pseudo_variable_cast(shared_leaf<T> &x) {
-        return std::dynamic_pointer_cast<pseudo_variable_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_pseudo_variable<T, SAFE_MATH> pseudo_variable_cast(shared_leaf<T, SAFE_MATH> &x) {
+        return std::dynamic_pointer_cast<pseudo_variable_node<T, SAFE_MATH>> (x);
     }
 }
 

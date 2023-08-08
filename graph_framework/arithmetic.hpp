@@ -19,8 +19,8 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class add_node final : public branch_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class add_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -29,8 +29,8 @@ namespace graph {
 ///  @params[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *l,
-                                     leaf_node<T> *r) {
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *r) {
             return jit::format_to_string(reinterpret_cast<size_t> (l)) + "+" +
                    jit::format_to_string(reinterpret_cast<size_t> (r));
         }
@@ -42,9 +42,10 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-        add_node(shared_leaf<T> l,
-                 shared_leaf<T> r) :
-        branch_node<T> (l, r, add_node<T>::to_string(l.get(), r.get())) {}
+        add_node(shared_leaf<T, SAFE_MATH> l,
+                 shared_leaf<T, SAFE_MATH> r) :
+        branch_node<T, SAFE_MATH> (l, r, add_node::to_string(l.get(),
+                                                             r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of addition.
@@ -64,7 +65,7 @@ namespace graph {
 ///
 ///  @returns A reduced addition node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
 //  Constant reductions.
             auto l = constant_cast(this->left);
             auto r = constant_cast(this->right);
@@ -74,14 +75,14 @@ namespace graph {
             } else if (r.get() && r->is(0)) {
                 return this->left;
             } else if (l.get() && r.get()) {
-                return constant(this->evaluate());
+                return constant<T, SAFE_MATH> (this->evaluate());
             } else if (r.get() && !l.get()) {
                 return this->right + this->left;
             }
 
 //  Idenity reductions.
             if (this->left->is_match(this->right)) {
-                return two<T> ()*this->left;
+                return two<T, SAFE_MATH> ()*this->left;
             }
             
 //  Common factor reduction. If the left and right are both muliply nodes check
@@ -138,17 +139,17 @@ namespace graph {
             auto la = add_cast(this->left);
             if (la.get()) {
                 if (this->right->is_match(la->get_left())) {
-                    return fma(two<T> (), this->right, la->get_right());
+                    return fma(two<T, SAFE_MATH> (), this->right, la->get_right());
                 } else if (this->right->is_match(la->get_right())) {
-                    return fma(two<T> (), this->right, la->get_left());
+                    return fma(two<T, SAFE_MATH> (), this->right, la->get_left());
                 }
             }
             auto ra = add_cast(this->right);
             if (ra.get()) {
                 if (this->left->is_match(ra->get_left())) {
-                    return fma(two<T> (), this->left, ra->get_right());
+                    return fma(two<T, SAFE_MATH> (), this->left, ra->get_right());
                 } else if (this->left->is_match(ra->get_right())) {
-                    return fma(two<T> (), this->left, ra->get_left());
+                    return fma(two<T, SAFE_MATH> (), this->left, ra->get_left());
                 }
             }
 
@@ -231,10 +232,10 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T>
-        df(shared_leaf<T> x) {
+        virtual shared_leaf<T, SAFE_MATH>
+        df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
-                return one<T> ();
+                return one<T, SAFE_MATH> ();
             } else {
                 return this->left->df(x) + this->right->df(x);
             }
@@ -247,11 +248,12 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> l = this->left->compile(stream, registers);
-                shared_leaf<T> r = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -271,7 +273,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -320,7 +322,7 @@ namespace graph {
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> remove_pseudo() {
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return this->left->remove_pseudo() +
                    this->right->remove_pseudo();
         }
@@ -335,18 +337,19 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> add(shared_leaf<T> l,
-                       shared_leaf<T> r) {
-        auto temp = std::make_shared<add_node<T>> (l, r)->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> add(shared_leaf<T, SAFE_MATH> l,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<add_node<T, SAFE_MATH>> (l, r)->reduce();
 //  Test for hash collisions.
-        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T>::cache.find(i) ==
-                leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
         assert(false && "Should never reach.");
@@ -361,15 +364,15 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> operator+(shared_leaf<T> l,
-                             shared_leaf<T> r) {
-        return add<T> (l, r);
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator+(shared_leaf<T, SAFE_MATH> l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return add<T, SAFE_MATH> (l, r);
     }
 
 ///  Convenience type alias for shared add nodes.
-    template<typename T>
-    using shared_add = std::shared_ptr<add_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_add = std::shared_ptr<add_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a add node.
@@ -377,9 +380,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_add<T> add_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<add_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_add<T, SAFE_MATH> add_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<add_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -390,8 +393,8 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class subtract_node final : public branch_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class subtract_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -400,8 +403,8 @@ namespace graph {
 ///  @params[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *l,
-                                     leaf_node<T> *r) {
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *r) {
             return jit::format_to_string(reinterpret_cast<size_t> (l)) + "-" +
                    jit::format_to_string(reinterpret_cast<size_t> (r));
         }
@@ -413,9 +416,10 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-        subtract_node(shared_leaf<T> l,
-                      shared_leaf<T> r) :
-        branch_node<T> (l, r, subtract_node<T>::to_string(l.get(), r.get())) {}
+        subtract_node(shared_leaf<T, SAFE_MATH> l,
+                      shared_leaf<T, SAFE_MATH> r) :
+        branch_node<T, SAFE_MATH> (l, r, subtract_node::to_string(l.get(),
+                                                                  r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of subtraction.
@@ -435,7 +439,7 @@ namespace graph {
 ///
 ///  @returns A reduced subtraction node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
 //  Idenity reductions.
             auto l = constant_cast(this->left);
             if (this->left->is_match(this->right)) {
@@ -444,18 +448,18 @@ namespace graph {
                     return this->left;
                 }
 
-                return zero<T> ();
+                return zero<T, SAFE_MATH> ();
             }
 
 //  Constant reductions.
             auto r = constant_cast(this->right);
 
             if (l.get() && l->is(0)) {
-                return none<T> ()*this->right;
+                return none<T, SAFE_MATH> ()*this->right;
             } else if (r.get() && r->is(0)) {
                 return this->left;
             } else if (l.get() && r.get()) {
-                return constant(this->evaluate());
+                return constant<T, SAFE_MATH> (this->evaluate());
             }
 
 //  Common factor reduction. If the left and right are both muliply nodes check
@@ -658,10 +662,10 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T>
-        df(shared_leaf<T> x) {
+        virtual shared_leaf<T, SAFE_MATH>
+        df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
-                return one<T> ();
+                return one<T, SAFE_MATH> ();
             } else {
                 return this->left->df(x) - this->right->df(x);
             }
@@ -674,11 +678,12 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> l = this->left->compile(stream, registers);
-                shared_leaf<T> r = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -698,7 +703,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -742,7 +747,7 @@ namespace graph {
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> remove_pseudo() {
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return this->left->remove_pseudo() -
                    this->right->remove_pseudo();
         }
@@ -754,18 +759,19 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> subtract(shared_leaf<T> l,
-                            shared_leaf<T> r) {
-        auto temp = std::make_shared<subtract_node<T>> (l, r)->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> subtract(shared_leaf<T, SAFE_MATH> l,
+                                       shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<subtract_node<T, SAFE_MATH>> (l, r)->reduce();
 //  Test for hash collisions.
-        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T>::cache.find(i) ==
-                leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
         assert(false && "Should never reach.");
@@ -777,15 +783,15 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> operator-(shared_leaf<T> l,
-                             shared_leaf<T> r) {
-        return subtract<T> (l, r);
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator-(shared_leaf<T, SAFE_MATH> l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return subtract<T, SAFE_MATH> (l, r);
     }
 
 ///  Convenience type alias for shared subtract nodes.
-    template<typename T>
-    using shared_subtract = std::shared_ptr<subtract_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_subtract = std::shared_ptr<subtract_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a subtract node.
@@ -793,9 +799,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_subtract<T> subtract_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<subtract_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_subtract<T, SAFE_MATH> subtract_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<subtract_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -804,8 +810,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief A multiplcation node.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class multiply_node final : public branch_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class multiply_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -814,8 +820,8 @@ namespace graph {
 ///  @params[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *l,
-                                     leaf_node<T> *r) {
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *r) {
             return jit::format_to_string(reinterpret_cast<size_t> (l)) + "*" +
                    jit::format_to_string(reinterpret_cast<size_t> (r));
         }
@@ -827,9 +833,9 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-        multiply_node(shared_leaf<T> l,
-                      shared_leaf<T> r) :
-        branch_node<T> (l, r, multiply_node<T>::to_string(l.get(), r.get())) {}
+        multiply_node(shared_leaf<T, SAFE_MATH> l,
+                      shared_leaf<T, SAFE_MATH> r) :
+        branch_node<T, SAFE_MATH> (l, r, multiply_node::to_string(l.get(), r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of multiplcation.
@@ -863,7 +869,7 @@ namespace graph {
 ///
 ///  @returns A reduced multiplcation node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             auto l = constant_cast(this->left);
             auto r = constant_cast(this->right);
 
@@ -876,7 +882,7 @@ namespace graph {
             } else if (r.get() && r->is(0)) {
                 return this->right;
             } else if (l.get() && r.get()) {
-                return constant(this->evaluate());
+                return constant<T, SAFE_MATH> (this->evaluate());
             }
 
 //  Move constants to the left.
@@ -908,7 +914,7 @@ namespace graph {
                 return this->right*this->left;
             }
 
-//  Disable if the right is power like to acoid infinite loop.
+//  Disable if the right is power like to avoid infinite loop.
             if (this->left->is_all_variables()   &&
                 !this->right->is_all_variables() &&
                 !this->right->is_power_like()) {
@@ -917,7 +923,7 @@ namespace graph {
 
 //  Reduce x*x to x^2
             if (this->left->is_match(this->right)) {
-                return pow(this->left, two<T> ());
+                return pow(this->left, two<T, SAFE_MATH> ());
             }
 
 //  Gather common terms.
@@ -1066,7 +1072,8 @@ namespace graph {
             if (rp.get()) {
                 auto exponent = constant_cast(rp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
-                    return this->left/pow(rp->get_left(), none<T> ()*rp->get_right());
+                    return this->left/pow(rp->get_left(),
+                                          none<T, SAFE_MATH> ()*rp->get_right());
                 }
             }
 //  b^-c*a -> a/b^c
@@ -1074,7 +1081,8 @@ namespace graph {
             if (lp.get()) {
                 auto exponent = constant_cast(lp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
-                    return this->right/pow(lp->get_left(), none<T> ()*lp->get_right());
+                    return this->right/pow(lp->get_left(),
+                                           none<T, SAFE_MATH> ()*lp->get_right());
                 }
             }
 
@@ -1085,13 +1093,13 @@ namespace graph {
                     return pow(lpd->get_left(), this->left->get_power_exponent()) *
                            pow(this->right->get_power_base(),
                                this->right->get_power_exponent() -
-                               this->left->get_power_exponent());
+                               this->left->get_power_exponent()*lpd->get_right()->get_power_exponent());
                 }
 //  (b/a)^c*b^d -> b^(c+d)/a^c
                 if (lpd->get_left()->is_power_base_match(this->right)) {
                     return pow(this->right->get_power_base(),
                                this->right->get_power_exponent() +
-                               this->left->get_power_exponent()) /
+                               this->left->get_power_exponent()*lpd->get_left()->get_power_exponent()) /
                            pow(lpd->get_right(), this->left->get_power_exponent());
                 }
             }
@@ -1102,13 +1110,13 @@ namespace graph {
                     return pow(rpd->get_left(), this->right->get_power_exponent()) *
                            pow(this->left->get_power_base(),
                                this->left->get_power_exponent() -
-                               this->right->get_power_exponent());
+                               this->right->get_power_exponent()*rpd->get_right()->get_power_exponent());
                 }
 //  b^d*(b/a)^c -> b^(c+d)/a^c
                 if (rpd->get_left()->is_power_base_match(this->left)) {
                     return pow(this->right->get_power_base(),
                                this->right->get_power_exponent() +
-                               this->right->get_power_exponent()) /
+                               this->right->get_power_exponent()*rpd->get_left()->get_power_exponent()) /
                            pow(rpd->get_right(), this->right->get_power_exponent());
                 }
             }
@@ -1156,9 +1164,9 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
-                return one<T> ();
+                return one<T, SAFE_MATH> ();
             }
 
             return this->left->df(x)*this->right +
@@ -1172,17 +1180,42 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> l = this->left->compile(stream, registers);
-                shared_leaf<T> r = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = "
-                       << registers[l.get()] << "*"
+                stream << " " << registers[this] << " = ";
+                if constexpr (SAFE_MATH) {
+                    stream << "(" << registers[l.get()] << " == ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(0, 0)";
+                    } else {
+                        stream << "0";
+                    }
+                    stream << " || " << registers[r.get()] << " == ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(0, 0)";
+                    } else {
+                        stream << "0";
+                    }
+                    stream << ") ? ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(0, 0)";
+                    } else {
+                        stream << "0";
+                    }
+                    stream << " : ";
+                }
+                stream << registers[l.get()] << "*"
                        << registers[r.get()] << ";"
                        << std::endl;
             }
@@ -1196,7 +1229,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -1245,7 +1278,7 @@ namespace graph {
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> remove_pseudo() {
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return this->left->remove_pseudo() *
                    this->right->remove_pseudo();
         }
@@ -1257,18 +1290,19 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> multiply(shared_leaf<T> l,
-                            shared_leaf<T> r) {
-        auto temp = std::make_shared<multiply_node<T>> (l, r)->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> multiply(shared_leaf<T, SAFE_MATH> l,
+                                       shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<multiply_node<T, SAFE_MATH>> (l, r)->reduce();
 //  Test for hash collisions.
-        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T>::cache.find(i) ==
-                leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
         assert(false && "Should never reach.");
@@ -1280,15 +1314,15 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> operator*(shared_leaf<T> l,
-                             shared_leaf<T> r) {
-        return multiply<T> (l, r);
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator*(shared_leaf<T, SAFE_MATH> l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return multiply<T, SAFE_MATH> (l, r);
     }
 
 ///  Convenience type alias for shared multiply nodes.
-    template<typename T>
-    using shared_multiply = std::shared_ptr<multiply_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_multiply = std::shared_ptr<multiply_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a multiply node.
@@ -1296,9 +1330,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_multiply<T> multiply_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<multiply_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_multiply<T, SAFE_MATH> multiply_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<multiply_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -1307,8 +1341,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief A division node.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class divide_node final : public branch_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class divide_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -1317,8 +1351,8 @@ namespace graph {
 ///  @params[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *l,
-                                     leaf_node<T> *r) {
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *r) {
             return jit::format_to_string(reinterpret_cast<size_t> (l)) + "/" +
                    jit::format_to_string(reinterpret_cast<size_t> (r));
         }
@@ -1330,9 +1364,10 @@ namespace graph {
 ///  @params[in] n Numerator branch.
 ///  @params[in] d Denominator branch.
 //------------------------------------------------------------------------------
-        divide_node(shared_leaf<T> n,
-                    shared_leaf<T> d) :
-        branch_node<T> (n, d, divide_node<T>::to_string(n.get(), d.get())) {}
+        divide_node(shared_leaf<T, SAFE_MATH> n,
+                    shared_leaf<T, SAFE_MATH> d) :
+        branch_node<T, SAFE_MATH> (n, d, divide_node::to_string(n.get(),
+                                                                d.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of division.
@@ -1360,7 +1395,7 @@ namespace graph {
 ///
 ///  @returns A reduced division node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
 //  Constant Reductions.
             auto l = constant_cast(this->left);
             auto r = constant_cast(this->right);
@@ -1369,7 +1404,7 @@ namespace graph {
                 (r.get() && r->is(1))) {
                 return this->left;
             } else if (l.get() && r.get()) {
-                return constant(this->evaluate());
+                return constant<T, SAFE_MATH> (this->evaluate());
             }
 
             if (this->left->is_match(this->right)) {
@@ -1377,12 +1412,12 @@ namespace graph {
                     return this->left;
                 }
 
-                return one<T> ();
+                return one<T, SAFE_MATH> ();
             }
 
 //  Reduce cases of a/c1 -> c2*a
             if (r.get()) {
-                return (one<T> ()/this->right) *
+                return (one<T, SAFE_MATH> ()/this->right) *
                        this->left;
             }
 
@@ -1507,7 +1542,8 @@ namespace graph {
             if (rp.get()) {
                 auto exponent = constant_cast(rp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
-                    return this->left*pow(rp->get_left(), none<T> ()*rp->get_right());
+                    return this->left*pow(rp->get_left(),
+                                          none<T, SAFE_MATH> ()*rp->get_right());
                 }
             }
 
@@ -1522,10 +1558,10 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T>
-        df(shared_leaf<T> x) {
+        virtual shared_leaf<T, SAFE_MATH>
+        df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
-                return one<T> ();
+                return one<T, SAFE_MATH> ();
             }
 
             return this->left->df(x)/this->right -
@@ -1539,17 +1575,35 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> l = this->left->compile(stream, registers);
-                shared_leaf<T> r = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = "
-                       << registers[l.get()] << "/"
+                stream << " " << registers[this] << " = ";
+                if constexpr (SAFE_MATH) {
+                    stream << registers[l.get()] << " == ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(0, 0)";
+                    } else {
+                        stream << "0";
+                    }
+                    stream << " ? ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(0, 0)";
+                    } else {
+                        stream << "0";
+                    }
+                    stream << " : ";
+                }
+                stream << registers[l.get()] << "/"
                        << registers[r.get()] << ";"
                        << std::endl;
             }
@@ -1562,7 +1616,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -1592,7 +1646,7 @@ namespace graph {
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> remove_pseudo() {
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return this->left->remove_pseudo() /
                    this->right->remove_pseudo();
         }
@@ -1604,18 +1658,19 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> divide(shared_leaf<T> l,
-                          shared_leaf<T> r) {
-        auto temp = std::make_shared<divide_node<T>> (l, r)->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> divide(shared_leaf<T, SAFE_MATH> l,
+                                     shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<divide_node<T, SAFE_MATH>> (l, r)->reduce();
 //  Test for hash collisions.
-        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T>::cache.find(i) ==
-                leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
         assert(false && "Should never reach.");
@@ -1627,15 +1682,15 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> operator/(shared_leaf<T> l,
-                             shared_leaf<T> r) {
-        return divide<T> (l, r);
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator/(shared_leaf<T, SAFE_MATH> l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return divide<T, SAFE_MATH> (l, r);
     }
 
 ///  Convenience type alias for shared divide nodes.
-    template<typename T>
-    using shared_divide = std::shared_ptr<divide_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_divide = std::shared_ptr<divide_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a divide node.
@@ -1643,9 +1698,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_divide<T> divide_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<divide_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_divide<T, SAFE_MATH> divide_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<divide_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -1656,8 +1711,8 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class fma_node final : public triple_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class fma_node final : public triple_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -1667,9 +1722,9 @@ namespace graph {
 ///  @params[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *l,
-                                     leaf_node<T> *m,
-                                     leaf_node<T> *r) {
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *m,
+                                     leaf_node<T, SAFE_MATH> *r) {
             return "fma" + jit::format_to_string(reinterpret_cast<size_t> (l))
                          + jit::format_to_string(reinterpret_cast<size_t> (m))
                          + jit::format_to_string(reinterpret_cast<size_t> (r));
@@ -1683,12 +1738,12 @@ namespace graph {
 ///  @params[in] m Middle branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-        fma_node(shared_leaf<T> l,
-                 shared_leaf<T> m,
-                 shared_leaf<T> r) :
-        triple_node<T> (l, m, r, fma_node<T>::to_string(l.get(),
-                                                        m.get(),
-                                                        r.get())) {}
+        fma_node(shared_leaf<T, SAFE_MATH> l,
+                 shared_leaf<T, SAFE_MATH> m,
+                 shared_leaf<T, SAFE_MATH> r) :
+        triple_node<T, SAFE_MATH> (l, m, r, fma_node::to_string(l.get(),
+                                                                m.get(),
+                                                                r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of fused multiply add.
@@ -1716,7 +1771,7 @@ namespace graph {
 ///
 ///  @returns A reduced fused multiply add node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             auto l = constant_cast(this->left);
             auto m = constant_cast(this->middle);
             auto r = constant_cast(this->right);
@@ -1727,7 +1782,7 @@ namespace graph {
             } else if (r.get() && r->is(0)) {
                 return this->left*this->middle;
             } else if (l.get() && m.get() && r.get()) {
-                return constant(this->evaluate());
+                return constant<T, SAFE_MATH> (this->evaluate());
             } else if (l.get() && m.get()) {
                 return this->left*this->middle + this->right;
             } else if (l.get() && l->evaluate().is_none()) {
@@ -1850,10 +1905,12 @@ namespace graph {
 //  fma(a,b,fma(b,a,c)) -> fma(2*a,b,c)
                 if (this->left->is_match(rfma->get_left()) &&
                     this->middle->is_match(rfma->get_middle())) {
-                    return fma(two<T> ()*this->left, this->middle, rfma->get_right());
+                    return fma(two<T, SAFE_MATH> ()*this->left, this->middle,
+                               rfma->get_right());
                 } else if (this->left->is_match(rfma->get_middle()) &&
                            this->middle->is_match(rfma->get_left())) {
-                    return fma(two<T> ()*this->left, this->middle, rfma->get_right());
+                    return fma(two<T, SAFE_MATH> ()*this->left, this->middle,
+                               rfma->get_right());
                 }
 
 //  fma(a,b/c,fma(e,f/c,g)) -> (a*b + e*f)/c + g
@@ -1916,7 +1973,7 @@ namespace graph {
                 auto exponent = constant_cast(lp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
                     return this->middle/pow(lp->get_left(),
-                                            none<T> ()*lp->get_right()) + this->right;
+                                            none<T, SAFE_MATH> ()*lp->get_right()) + this->right;
                 }
             }
             auto mp = pow_cast(this->middle);
@@ -1924,7 +1981,7 @@ namespace graph {
                 auto exponent = constant_cast(mp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
                     return this->left/pow(mp->get_left(),
-                                            none<T> ()*mp->get_right()) + this->right;
+                                            none<T, SAFE_MATH> ()*mp->get_right()) + this->right;
                 }
             }
 
@@ -1933,7 +1990,7 @@ namespace graph {
             if (md.get() && rd.get()) {
                 if (md->get_left()->is_match(rd->get_left())) {
                     return md->get_left()*(this->left/md->get_right() +
-                                           one<T> ()/rd->get_right());
+                                           one<T, SAFE_MATH> ()/rd->get_right());
                 } else if (md->get_right()->is_match(rd->get_right())) {
                     return (this->left*md->get_left() +
                             rd->get_left())/md->get_right();
@@ -1944,7 +2001,7 @@ namespace graph {
             if (ld.get() && rd.get()) {
                 if (ld->get_left()->is_match(rd->get_left())) {
                     return ld->get_left()*(this->middle/ld->get_right() +
-                                           one<T> ()/rd->get_right());
+                                           one<T, SAFE_MATH> ()/rd->get_right());
                 } else if (ld->get_right()->is_match(rd->get_right())) {
                     return (this->middle*ld->get_left() +
                             rd->get_left())/ld->get_right();
@@ -1962,10 +2019,10 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T>
-        df(shared_leaf<T> x) {
+        virtual shared_leaf<T, SAFE_MATH>
+        df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
-                return one<T> ();
+                return one<T, SAFE_MATH> ();
             }
 
             auto temp_right = fma(this->left,
@@ -1984,17 +2041,35 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::ostringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> l = this->left->compile(stream, registers);
-                shared_leaf<T> m = this->middle->compile(stream, registers);
-                shared_leaf<T> r = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> m = this->middle->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = ";
+                if constexpr (SAFE_MATH) {
+                    stream << "(" << registers[l.get()] << " == ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(0, 0)";
+                    } else {
+                        stream << "0";
+                    }
+                    stream << " || " << registers[m.get()] << " == ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(0, 0)";
+                    } else {
+                        stream << "0";
+                    }
+                    stream << ") ? " << registers[r.get()] << " : ";
+                }
                 if constexpr (jit::is_complex<T> ()) {
                     stream << registers[l.get()] << "*"
                            << registers[m.get()] << " + "
@@ -2018,7 +2093,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -2065,7 +2140,7 @@ namespace graph {
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> remove_pseudo() {
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return fma(this->left->remove_pseudo(),
                        this->middle->remove_pseudo(),
                        this->right->remove_pseudo());
@@ -2079,27 +2154,28 @@ namespace graph {
 ///  @params[in] m Middle branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> fma(shared_leaf<T> l,
-                       shared_leaf<T> m,
-                       shared_leaf<T> r) {
-        auto temp = std::make_shared<fma_node<T>> (l, m, r)->reduce();
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
+                                  shared_leaf<T, SAFE_MATH> m,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<fma_node<T, SAFE_MATH>> (l, m, r)->reduce();
 //  Test for hash collisions.
-        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T>::cache.find(i) ==
-                leaf_node<T>::cache.end()) {
-                leaf_node<T>::cache[i] = temp;
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T>::cache[i])) {
-                return leaf_node<T>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
         assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared add nodes.
-    template<typename T>
-    using shared_fma = std::shared_ptr<fma_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_fma = std::shared_ptr<fma_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a fma node.
@@ -2107,9 +2183,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_fma<T> fma_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<fma_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_fma<T, SAFE_MATH> fma_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<fma_node<T, SAFE_MATH>> (x);
     }
 }
 

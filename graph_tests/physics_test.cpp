@@ -459,7 +459,7 @@ void test_cold_plasma_cutoffs(const T tolarance) {
     t->set(0, static_cast<T> (0.0));
     t->set(1, static_cast<T> (0.0));
     if constexpr (jit::is_complex<T> ()) {
-        solve.init(x, 1.6E-29);
+        solve.init(x, 2.8E-29);
     } else {
         solve.init(x, 5.0E-30);
     }

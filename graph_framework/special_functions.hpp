@@ -1299,8 +1299,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
                 sum5 += a*(np*tp + nm*tm);
                 if (a*(np*tp + nm*tm) < std::numeric_limits<T>::epsilon()*sum5) {
                     return ret + std::complex<T> (static_cast<T> (0.5)*c*y*(sum2 + sum3),
-                                                  static_cast<T> (0.5)*c*copysign(sum5 - sum4,
-                                                                                  std::real(z)));
+                                                  static_cast<T> (0.5)*c*std::copysign(sum5 - sum4,
+                                                                                       std::real(z)));
                 }
             }
             while (true) {
@@ -1311,15 +1311,15 @@ constexpr std::complex<T> i(static_cast<T> (0),
                 sum5 += a*np*tp;
                 if (a*np*tp < std::numeric_limits<T>::epsilon()*sum5) {
                     return ret + std::complex<T> (static_cast<T> (0.5)*c*y*(sum2 + sum3),
-                                                  static_cast<T> (0.5)*c*copysign(sum5 - sum4,
-                                                                                  std::real(z)));
+                                                  static_cast<T> (0.5)*c*std::copysign(sum5 - sum4,
+                                                                                       std::real(z)));
                 }
             }
         }
 
         return ret + std::complex<T> (static_cast<T> (0.5)*c*y*(sum2 + sum3),
-                                      static_cast<T> (0.5)*c*copysign(sum5 - sum4,
-                                                                      std::real(z)));
+                                      static_cast<T> (0.5)*c*std::copysign(sum5 - sum4,
+                                                                           std::real(z)));
     }
 
 //------------------------------------------------------------------------------
@@ -1384,7 +1384,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///  @returns erf(z)
 //------------------------------------------------------------------------------
     template<typename T>
-    std::complex<T> erf(std::complex<T> z) {
+    std::complex<T> erf(const std::complex<T> z) {
         T x = std::real(z);
         T y = std::imag(z);
 
@@ -1392,11 +1392,18 @@ constexpr std::complex<T> i(static_cast<T> (0),
             return std::complex<T> (std::erf(x), y);
         } else if (x == static_cast<T> (0)) {
             const T y2 = sq(y);
-            return std::complex<T> (x, y2 > static_cast<T> (720) ? (y > static_cast<T> (0) ?  std::numeric_limits<T>::infinity() :
-                                                                                             -std::numeric_limits<T>::infinity()) :
+            return std::complex<T> (x, y2 > static_cast<T> (720) ? (y > static_cast<T> (0) ?  std::numeric_limits<T>::max() :
+                                                                                             -std::numeric_limits<T>::max()) :
                                                                    std::exp(y2)*w_im(y));
         }
 
+//  In this case, the denominator of the zeta function is zero so Exp(-zeta^2)
+//  is zero.
+        if (std::isinf(x) && std::isinf(y)) {
+            return std::complex<T> (static_cast<T> (0.0),
+                                    static_cast<T> (0.0));
+        }
+        
         T mRe_z2 = (y - x)*(x + y);
         T mIm_z2 = -static_cast<T> (2)*x*y;
     
@@ -1452,7 +1459,7 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///  @returns erfi(z)
 //------------------------------------------------------------------------------
     template<typename T>
-    std::complex<T> erfi(std::complex<T> z) {
+    std::complex<T> erfi(const std::complex<T> z) {
 //  Avoids NaN instead of doing i<T>*z and -i*temp;
         const std::complex<T> temp = erf<T> (std::complex<T> (-std::imag<T> (z), std::real<T> (z)));
         return std::complex<T> (std::imag(temp), -std::real(temp));

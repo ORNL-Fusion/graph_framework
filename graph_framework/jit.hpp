@@ -27,7 +27,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Class for JIT compile of the GPU kernels.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<typename T, bool SAFE_MATH=false>
     class context {
     private:
 ///  String stream to build the kernel source.
@@ -40,13 +40,13 @@ namespace jit {
 ///  Type for the GPU context.
         using gpu_context_type = typename std::conditional<use_gpu<T> (),
 #ifdef USE_CUDA
-                                                           gpu::cuda_context<T>,
+                                                           gpu::cuda_context<T, SAFE_MATH>,
 #elif defined(USE_METAL)
-                                                           gpu::metal_context<T>,
+                                                           gpu::metal_context<T, SAFE_MATH>,
 #else
-                                                           gpu::cpu_context<T>,
+                                                           gpu::cpu_context<T, SAFE_MATH>,
 #endif
-                                                           gpu::cpu_context<T>>::type;
+                                                           gpu::cpu_context<T, SAFE_MATH>>::type;
 
 ///  GPU Context.
         gpu_context_type gpu_context;
@@ -71,9 +71,9 @@ namespace jit {
 ///  @params[in] setters Map outputs back to input values.
 //------------------------------------------------------------------------------
         void add_kernel(const std::string name,
-                        graph::input_nodes<T> inputs,
-                        graph::output_nodes<T> outputs,
-                        graph::map_nodes<T> setters) {
+                        graph::input_nodes<T, SAFE_MATH> inputs,
+                        graph::output_nodes<T, SAFE_MATH> outputs,
+                        graph::map_nodes<T, SAFE_MATH> setters) {
             kernel_names.push_back(name);
             
             const size_t size = inputs[0]->size();
@@ -151,8 +151,8 @@ namespace jit {
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
-                                                     graph::input_nodes<T> inputs,
-                                                     graph::output_nodes<T> outputs,
+                                                     graph::input_nodes<T, SAFE_MATH> inputs,
+                                                     graph::output_nodes<T, SAFE_MATH> outputs,
                                                      const size_t num_rays) {
             return gpu_context.create_kernel_call(kernel_name, inputs, outputs,
                                                   num_rays);
@@ -165,7 +165,7 @@ namespace jit {
 ///  @params[in] run      Function to run before reduction.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        std::function<T(void)> create_max_call(graph::shared_leaf<T> &argument,
+        std::function<T(void)> create_max_call(graph::shared_leaf<T, SAFE_MATH> &argument,
                                                std::function<void(void)> run) {
             return gpu_context.create_max_call(argument, run);
         }
@@ -177,7 +177,7 @@ namespace jit {
 ///  @params[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
         void print(const size_t index,
-                   const graph::output_nodes<T> &nodes) {
+                   const graph::output_nodes<T, SAFE_MATH> &nodes) {
             gpu_context.print_results(index, nodes);
         }
 
@@ -194,7 +194,7 @@ namespace jit {
 ///  @params[in] node   Not to copy buffer to.
 ///  @params[in] source Host side buffer to copy from.
 //------------------------------------------------------------------------------
-        void copy_to_device(graph::shared_leaf<T> &node,
+        void copy_to_device(graph::shared_leaf<T, SAFE_MATH> &node,
                             T *source) {
             gpu_context.copy_to_device(node, source);
         }
@@ -205,7 +205,7 @@ namespace jit {
 ///  @params[in]     node        Node to copy buffer from.
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_to_host(graph::shared_leaf<T> &node,
+        void copy_to_host(graph::shared_leaf<T, SAFE_MATH> &node,
                           T *destination) {
             gpu_context.copy_to_host(node, destination);
         }
@@ -215,7 +215,7 @@ namespace jit {
 ///
 ///  @params[in] node Node to get the gpu buffer for.
 //------------------------------------------------------------------------------
-        T *get_buffer(graph::shared_leaf<T> &node) {
+        T *get_buffer(graph::shared_leaf<T, SAFE_MATH> &node) {
             return gpu_context.get_buffer(node);
         }
     };

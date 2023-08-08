@@ -79,9 +79,10 @@ namespace output {
 ///  @params[in] node    Node to create variable for.
 ///  @params[in] context Context for the gpu.
 //------------------------------------------------------------------------------
+        template<bool SAFE_MATH=false>
         void create_variable(const std::string &name,
-                             graph::shared_leaf<T> &node,
-                             jit::context<T> &context) {
+                             graph::shared_leaf<T, SAFE_MATH> &node,
+                             jit::context<T, SAFE_MATH> &context) {
             variable var;
             const std::array<int, 3> dims = {unlimited_dim, num_rays_dim, ray_dim};
             if constexpr (jit::is_float<T> ()) {

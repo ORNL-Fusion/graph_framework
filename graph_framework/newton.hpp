@@ -25,16 +25,16 @@ namespace solver {
 ///  @params[in]     max_iterations Maximum number of iterations before giving
 ///                                 up.
 //------------------------------------------------------------------------------
-    template<typename T>
-    void newton(workflow::manager<T> &work,
-                graph::output_nodes<T> vars,
-                graph::input_nodes<T> inputs,
-                graph::shared_leaf<T> loss,
+    template<typename T, bool SAFE_MATH=false>
+    void newton(workflow::manager<T, SAFE_MATH> &work,
+                graph::output_nodes<T, SAFE_MATH> vars,
+                graph::input_nodes<T, SAFE_MATH> inputs,
+                graph::shared_leaf<T, SAFE_MATH> loss,
                 const T tolarance = 1.0E-30,
                 const size_t max_iterations = 1000) {
-        auto fudge = graph::constant(tolarance);
+        auto fudge = graph::constant<T, SAFE_MATH> (tolarance);
 
-        graph::map_nodes<T> setters;
+        graph::map_nodes<T, SAFE_MATH> setters;
         for (auto x : vars) {
             setters.push_back({x - loss/(loss->df(x) + fudge),
                                graph::variable_cast(x)});
