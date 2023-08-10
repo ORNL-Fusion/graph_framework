@@ -365,6 +365,15 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Check if the value is an integer.
+//------------------------------------------------------------------------------
+        bool is_integer() {
+            const auto temp = this->evaluate().at(0);
+            return std::imag(temp) == 0 &&
+                   static_cast<size_t> (std::real(temp))%2 == 0;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {

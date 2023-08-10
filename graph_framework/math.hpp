@@ -750,15 +750,29 @@ namespace graph {
                 jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
-                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> r;
+                auto temp = constant_cast(this->right);
+                if (!temp.get() || !temp->is_integer()) {
+                    r = this->right->compile(stream, registers);
+                }
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = pow("
-                       << registers[l.get()] << ", "
-                       << registers[r.get()] << ");"
-                       << std::endl;
+                stream << " " << registers[this] << " = ";
+                if (temp.get() && temp->is_integer()) {
+                    stream << registers[l.get()];
+                    const size_t end = static_cast<size_t> (std::real(this->right->evaluate().at(0)));
+                    for (size_t i = 1; i < end; i++) {
+                        stream << "*" << registers[l.get()];
+                    }
+                    stream << ";";
+                } else {
+                    stream << "pow("
+                           << registers[l.get()] << ", "
+                           << registers[r.get()] << ");";
+                }
+                stream << std::endl;
             }
 
             return this->shared_from_this();

@@ -460,6 +460,111 @@ namespace equilibrium {
     }
 
 //******************************************************************************
+//  Slab field gradient equilibrium.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Vary density with uniform magnetic field equilibrium.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    class slab_field : public generic<T, SAFE_MATH> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a guassian density with uniform magnetic field.
+//------------------------------------------------------------------------------
+        slab_field() :
+        generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron density.
+///
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                    graph::one<T, SAFE_MATH> ());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion density.
+///
+///  @params[in] index The species index.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) final {
+            return get_electron_density(x, y, z);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron temperature.
+///
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                    graph::one<T, SAFE_MATH> ());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion temperature.
+///
+///  @params[in] index The species index.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) final {
+            return get_electron_temperature(x, y, z);
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Get the magnetic field.
+///
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns Magnetic field expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) final {
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(zero, zero,
+                                 graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                                 graph::one<T, SAFE_MATH> ());
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a slab density equilibrium.
+///
+///  @returns A constructed slab density equilibrium.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_slab_field() {
+        return std::make_shared<slab_field<T, SAFE_MATH>> ();
+    }
+//******************************************************************************
 //  Guassian density with a uniform magnetic field.
 //******************************************************************************
 //------------------------------------------------------------------------------
