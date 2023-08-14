@@ -487,7 +487,7 @@ namespace equilibrium {
                              graph::shared_leaf<T, SAFE_MATH> y,
                              graph::shared_leaf<T, SAFE_MATH> z) final {
             return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
-                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.01))*x +
                     graph::one<T, SAFE_MATH> ());
         }
 
@@ -517,8 +517,8 @@ namespace equilibrium {
         get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
                                  graph::shared_leaf<T, SAFE_MATH> y,
                                  graph::shared_leaf<T, SAFE_MATH> z) final {
-            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0)) *
-                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (2000.0)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.01))*x +
                     graph::one<T, SAFE_MATH> ());
         }
 
@@ -550,7 +550,7 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> z) final {
             auto zero = graph::zero<T, SAFE_MATH> ();
             return graph::vector(zero, zero,
-                                 graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                                 graph::constant<T, SAFE_MATH> (static_cast<T> (0.01))*x +
                                  graph::one<T, SAFE_MATH> ());
         }
     };

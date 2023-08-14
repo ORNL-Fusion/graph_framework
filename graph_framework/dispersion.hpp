@@ -1077,7 +1077,7 @@ namespace dispersion {
                                   physics<T, SAFE_MATH>::me);
 
 //  Setup characteristic frequencies.
-            auto ec = build_cyclotron_fequency(none*physics<T, SAFE_MATH>::q,
+            auto ec = build_cyclotron_fequency(physics<T, SAFE_MATH>::q,
                                                b_len,
                                                physics<T, SAFE_MATH>::me,
                                                physics<T, SAFE_MATH>::c);
@@ -1198,7 +1198,7 @@ namespace dispersion {
             auto ve = graph::sqrt(two*physics<T, SAFE_MATH>::q*te/physics<T, SAFE_MATH>::me);
 
 //  Setup characteristic frequencies.
-            auto ec = build_cyclotron_fequency(none*physics<T, SAFE_MATH>::q, b_len,
+            auto ec = build_cyclotron_fequency(physics<T, SAFE_MATH>::q, b_len,
                                                physics<T, SAFE_MATH>::me,
                                                physics<T, SAFE_MATH>::c);
             auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
