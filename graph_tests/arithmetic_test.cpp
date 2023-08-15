@@ -1770,6 +1770,26 @@ template<typename T> void test_fma() {
     assert(constant_move2_cast.get() && "Expected an fma cast");
     assert(graph::constant_cast(constant_move2_cast->get_left()) &&
            "Expected a constant on the left.");
+    
+//  fma(c, pwc*v, d) -> fma(pwc, v, d)
+    auto piecewise1 = graph::fma<T> (two,
+                                     graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                              static_cast<T> (2.0)}),
+                                                             var_a)*var_a,
+                                     var_b);
+    auto piecewise1_cast = graph::fma_cast(piecewise1);
+    assert(piecewise1_cast.get() && "Expected a fma node.");
+    assert(graph::piecewise_1D_cast(piecewise1_cast->get_left()) &&
+           "Expected a piecewise_1D node.");
+    auto piecewise2 = graph::fma<T> (two,
+                                     graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                              static_cast<T> (2.0)}),
+                                                             1, var_a, var_b)*var_a,
+                                     var_b);
+    auto piecewise2_cast = graph::fma_cast(piecewise2);
+    assert(piecewise2_cast.get() && "Expected a fma node.");
+    assert(graph::piecewise_2D_cast(piecewise2_cast->get_left()) &&
+           "Expected a piecewise_2D node.");
 }
 
 //------------------------------------------------------------------------------

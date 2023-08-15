@@ -1889,26 +1889,14 @@ namespace graph {
 
             auto pl1 = piecewise_1D_cast(this->left);
             auto pm1 = piecewise_1D_cast(this->middle);
-
-            if (pl1.get() && (m.get() || pl1->is_arg_match(this->middle))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg()) + this->right;
-            } else if (pm1.get() && (m.get() || pm1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pm1->get_arg()) + this->right;
-            }
-
             auto pl2 = piecewise_2D_cast(this->left);
             auto pm2 = piecewise_2D_cast(this->middle);
 
-            if (pl2.get() && (m.get() || pl2->is_arg_match(this->right))) {
-                return piecewise_2D(this->evaluate(),
-                                    pl2->get_num_columns(),
-                                    pl2->get_left(),
-                                    pl2->get_right()) + this->right;
-            } else if (pm2.get() && (l.get() || pm2->is_arg_match(this->left))) {
-                return piecewise_2D(this->evaluate(),
-                                    pm2->get_num_columns(),
-                                    pm2->get_left(),
-                                    pm2->get_right()) + this->right;
+            if ((pl1.get() && (m.get() || pl1->is_arg_match(this->middle))) ||
+                (pm1.get() && (l.get() || pm1->is_arg_match(this->left)))   ||
+                (pl2.get() && (m.get() || pl2->is_arg_match(this->middle))) ||
+                (pm2.get() && (l.get() || pm2->is_arg_match(this->left)))) {
+                return (this->left*this->middle) + this->right;
             }
 
 //  Common factor reduction. If the left and right are both multiply nodes check
@@ -1966,14 +1954,18 @@ namespace graph {
                 }
             } else if (mm.get()) {
                 auto mmc = constant_cast(mm->get_left());
-                if (mmc.get() && !l.get()) {
-                    return fma(mm->get_left(),
-                               this->left*mm->get_right(),
-                               this->right);
-                } else if (mmc.get() && l.get()) {
-                    return fma(this->left*mm->get_left(),
-                               mm->get_right(),
-                               this->right);
+                auto mmpw1c = piecewise_1D_cast(mm->get_left());
+                auto mmpw2c = piecewise_2D_cast(mm->get_left());
+                if (mmc.get() || mmpw1c.get() || mmpw2c.get()) {
+                    if (l.get() || pl1.get() || pl2.get()) {
+                        return fma(this->left*mm->get_left(),
+                                   mm->get_right(),
+                                   this->right);
+                    } else {
+                        return fma(mm->get_left(),
+                                   this->left*mm->get_right(),
+                                   this->right);
+                    }
                 }
             }
 

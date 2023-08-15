@@ -27,11 +27,11 @@ int main(int argc, const char * argv[]) {
     std::mutex sync;
 
     //typedef float base;
-    //typedef double base;
+    typedef double base;
     //typedef std::complex<float> base;
-    typedef std::complex<double> base;
-    constexpr bool use_safe_math = true;
-    //constexpr bool use_safe_math = false;
+    //typedef std::complex<double> base;
+    //constexpr bool use_safe_math = true;
+    constexpr bool use_safe_math = false;
 
     const timeing::measure_diagnostic total("Total Time");
 
@@ -91,15 +91,17 @@ int main(int argc, const char * argv[]) {
             kx->set(static_cast<base> (-600));
             //kx->set(static_cast<base> (600.0));
             ky->set(static_cast<base> (0.0));
-            kz->set(static_cast<base> (10.0));
+            kz->set(static_cast<base> (0.0));
+            //kz->set(static_cast<base> (10.0));
 
             auto eq = equilibrium::make_efit<base, use_safe_math> (NC_FILE, sync);
             //auto eq = equilibrium::make_slab_density<base, use_safe_math> ();
             //auto eq = equilibrium::make_slab_field<base, use_safe_math> ();
             //auto eq = equilibrium::make_no_magnetic_field<base, use_safe_math> ();
 
+            const base endtime = static_cast<base> (1.0);
             //const base endtime = static_cast<base> (10.0);
-            const base endtime = static_cast<base> (0.25);
+            //const base endtime = static_cast<base> (0.25);
             const base dt = endtime/static_cast<base> (num_times);
 
             //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");
@@ -113,9 +115,9 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::simple<base, use_safe_math>>
             //solver::rk4<dispersion::ordinary_wave<base, use_safe_math>>
             //solver::rk4<dispersion::extra_ordinary_wave<base, use_safe_math>>
-            //solver::rk4<dispersion::cold_plasma<base, use_safe_math>>
+            solver::rk4<dispersion::cold_plasma<base, use_safe_math>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<base, use_safe_math>>
-            solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>
+            //solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>
             //solver::rk4<dispersion::hot_plasma_expandion<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
                       stream.str(), local_num_rays);
