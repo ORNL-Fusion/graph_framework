@@ -887,8 +887,7 @@ namespace equilibrium {
         get_psi(graph::shared_leaf<T, SAFE_MATH> x,
                 graph::shared_leaf<T, SAFE_MATH> y,
                 graph::shared_leaf<T, SAFE_MATH> z) {
-            auto r = graph::sqrt(x*x + y*y);
-            return get_psi(r, z);
+            return get_psi(graph::sqrt(x*x + y*y), z);
         }
 
 //------------------------------------------------------------------------------
@@ -954,8 +953,7 @@ namespace equilibrium {
         get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
                              graph::shared_leaf<T, SAFE_MATH> y,
                              graph::shared_leaf<T, SAFE_MATH> z) {
-            auto psi = get_psi(x, y, z);
-            auto psi_norm = (psi - psimin)/dpsi;
+            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
 
             auto c0_temp = graph::piecewise_1D(ne_c0, psi_norm);
             auto c1_temp = graph::piecewise_1D(ne_c1, psi_norm);
@@ -997,8 +995,7 @@ namespace equilibrium {
         get_pressure(graph::shared_leaf<T, SAFE_MATH> x,
                      graph::shared_leaf<T, SAFE_MATH> y,
                      graph::shared_leaf<T, SAFE_MATH> z) {
-            auto psi = get_psi(x, y, z);
-            auto psi_norm = (psi - psimin)/dpsi;
+            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
 
             auto c0_temp = graph::piecewise_1D(pres_c0, psi_norm);
             auto c1_temp = graph::piecewise_1D(pres_c1, psi_norm);
@@ -1023,8 +1020,7 @@ namespace equilibrium {
         get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
                                  graph::shared_leaf<T, SAFE_MATH> y,
                                  graph::shared_leaf<T, SAFE_MATH> z) {
-            auto psi = get_psi(x, y, z);
-            auto psi_norm = (psi - psimin)/dpsi;
+            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
 
             auto c0_temp = graph::piecewise_1D(te_c0, psi_norm);
             auto c1_temp = graph::piecewise_1D(te_c1, psi_norm);
@@ -1093,7 +1089,7 @@ namespace equilibrium {
             auto r = graph::sqrt(x*x + y*y);
             auto phi = graph::atan(x, y);
             auto none = graph::none<T, SAFE_MATH> ();
-            auto psi = get_psi(x, y, z);
+            auto psi = get_psi(r, z);
 
             auto br = psi->df(z)/r;
             auto bp = get_b_phi(r);
@@ -1304,35 +1300,35 @@ namespace equilibrium {
 
         const auto c00 = backend::buffer(std::vector<T> (psi_c00_buffer.begin(), psi_c00_buffer.end()));
         const auto c01 = backend::buffer(std::vector<T> (psi_c01_buffer.begin(), psi_c01_buffer.end()));
-        auto c02 = backend::buffer(std::vector<T> (psi_c02_buffer.begin(), psi_c02_buffer.end()));
-        auto c03 = backend::buffer(std::vector<T> (psi_c03_buffer.begin(), psi_c03_buffer.end()));
-        auto c10 = backend::buffer(std::vector<T> (psi_c10_buffer.begin(), psi_c10_buffer.end()));
-        auto c11 = backend::buffer(std::vector<T> (psi_c11_buffer.begin(), psi_c11_buffer.end()));
-        auto c12 = backend::buffer(std::vector<T> (psi_c12_buffer.begin(), psi_c12_buffer.end()));
-        auto c13 = backend::buffer(std::vector<T> (psi_c13_buffer.begin(), psi_c13_buffer.end()));
-        auto c20 = backend::buffer(std::vector<T> (psi_c20_buffer.begin(), psi_c20_buffer.end()));
-        auto c21 = backend::buffer(std::vector<T> (psi_c21_buffer.begin(), psi_c21_buffer.end()));
-        auto c22 = backend::buffer(std::vector<T> (psi_c22_buffer.begin(), psi_c22_buffer.end()));
-        auto c23 = backend::buffer(std::vector<T> (psi_c23_buffer.begin(), psi_c23_buffer.end()));
-        auto c30 = backend::buffer(std::vector<T> (psi_c30_buffer.begin(), psi_c30_buffer.end()));
-        auto c31 = backend::buffer(std::vector<T> (psi_c31_buffer.begin(), psi_c31_buffer.end()));
-        auto c32 = backend::buffer(std::vector<T> (psi_c32_buffer.begin(), psi_c32_buffer.end()));
-        auto c33 = backend::buffer(std::vector<T> (psi_c33_buffer.begin(), psi_c33_buffer.end()));
+        const auto c02 = backend::buffer(std::vector<T> (psi_c02_buffer.begin(), psi_c02_buffer.end()));
+        const auto c03 = backend::buffer(std::vector<T> (psi_c03_buffer.begin(), psi_c03_buffer.end()));
+        const auto c10 = backend::buffer(std::vector<T> (psi_c10_buffer.begin(), psi_c10_buffer.end()));
+        const auto c11 = backend::buffer(std::vector<T> (psi_c11_buffer.begin(), psi_c11_buffer.end()));
+        const auto c12 = backend::buffer(std::vector<T> (psi_c12_buffer.begin(), psi_c12_buffer.end()));
+        const auto c13 = backend::buffer(std::vector<T> (psi_c13_buffer.begin(), psi_c13_buffer.end()));
+        const auto c20 = backend::buffer(std::vector<T> (psi_c20_buffer.begin(), psi_c20_buffer.end()));
+        const auto c21 = backend::buffer(std::vector<T> (psi_c21_buffer.begin(), psi_c21_buffer.end()));
+        const auto c22 = backend::buffer(std::vector<T> (psi_c22_buffer.begin(), psi_c22_buffer.end()));
+        const auto c23 = backend::buffer(std::vector<T> (psi_c23_buffer.begin(), psi_c23_buffer.end()));
+        const auto c30 = backend::buffer(std::vector<T> (psi_c30_buffer.begin(), psi_c30_buffer.end()));
+        const auto c31 = backend::buffer(std::vector<T> (psi_c31_buffer.begin(), psi_c31_buffer.end()));
+        const auto c32 = backend::buffer(std::vector<T> (psi_c32_buffer.begin(), psi_c32_buffer.end()));
+        const auto c33 = backend::buffer(std::vector<T> (psi_c33_buffer.begin(), psi_c33_buffer.end()));
 
-        auto pres_c0 = backend::buffer(std::vector<T> (pressure_c0_buffer.begin(), pressure_c0_buffer.end()));
-        auto pres_c1 = backend::buffer(std::vector<T> (pressure_c1_buffer.begin(), pressure_c1_buffer.end()));
-        auto pres_c2 = backend::buffer(std::vector<T> (pressure_c2_buffer.begin(), pressure_c2_buffer.end()));
-        auto pres_c3 = backend::buffer(std::vector<T> (pressure_c3_buffer.begin(), pressure_c3_buffer.end()));
+        const auto pres_c0 = backend::buffer(std::vector<T> (pressure_c0_buffer.begin(), pressure_c0_buffer.end()));
+        const auto pres_c1 = backend::buffer(std::vector<T> (pressure_c1_buffer.begin(), pressure_c1_buffer.end()));
+        const auto pres_c2 = backend::buffer(std::vector<T> (pressure_c2_buffer.begin(), pressure_c2_buffer.end()));
+        const auto pres_c3 = backend::buffer(std::vector<T> (pressure_c3_buffer.begin(), pressure_c3_buffer.end()));
 
-        auto te_c0 = backend::buffer(std::vector<T> (te_c0_buffer.begin(), te_c0_buffer.end()));
-        auto te_c1 = backend::buffer(std::vector<T> (te_c1_buffer.begin(), te_c1_buffer.end()));
-        auto te_c2 = backend::buffer(std::vector<T> (te_c2_buffer.begin(), te_c2_buffer.end()));
-        auto te_c3 = backend::buffer(std::vector<T> (te_c3_buffer.begin(), te_c3_buffer.end()));
+        const auto te_c0 = backend::buffer(std::vector<T> (te_c0_buffer.begin(), te_c0_buffer.end()));
+        const auto te_c1 = backend::buffer(std::vector<T> (te_c1_buffer.begin(), te_c1_buffer.end()));
+        const auto te_c2 = backend::buffer(std::vector<T> (te_c2_buffer.begin(), te_c2_buffer.end()));
+        const auto te_c3 = backend::buffer(std::vector<T> (te_c3_buffer.begin(), te_c3_buffer.end()));
 
-        auto ne_c0 = backend::buffer(std::vector<T> (ne_c0_buffer.begin(), ne_c0_buffer.end()));
-        auto ne_c1 = backend::buffer(std::vector<T> (ne_c1_buffer.begin(), ne_c1_buffer.end()));
-        auto ne_c2 = backend::buffer(std::vector<T> (ne_c2_buffer.begin(), ne_c2_buffer.end()));
-        auto ne_c3 = backend::buffer(std::vector<T> (ne_c3_buffer.begin(), ne_c3_buffer.end()));
+        const auto ne_c0 = backend::buffer(std::vector<T> (ne_c0_buffer.begin(), ne_c0_buffer.end()));
+        const auto ne_c1 = backend::buffer(std::vector<T> (ne_c1_buffer.begin(), ne_c1_buffer.end()));
+        const auto ne_c2 = backend::buffer(std::vector<T> (ne_c2_buffer.begin(), ne_c2_buffer.end()));
+        const auto ne_c3 = backend::buffer(std::vector<T> (ne_c3_buffer.begin(), ne_c3_buffer.end()));
 
         return std::make_shared<efit<T, SAFE_MATH>> (psimin, dpsi,
                                                      te_c0, te_c1, te_c2, te_c3, te_scale,

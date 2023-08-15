@@ -85,61 +85,61 @@ template<typename T> void piecewise_1D() {
 
     auto two = graph::two<T> ();
 
-    assert(graph::multiply_cast(p1*two).get() &&
-           "Expected a multiply node.");
+    assert(graph::piecewise_1D_cast(p1*two).get() &&
+           "Expected a piecewise_1D node.");
     assert(graph::multiply_cast(p1*p2).get() &&
            "Expected a multiply node.");
 
     assert(graph::piecewise_1D_cast(p1 + zero).get() &&
            "Expected a piecewise_1D node.");
-    assert(graph::add_cast(p1 + two).get() &&
-           "Expected an add node.");
+    assert(graph::piecewise_1D_cast(p1 + two).get() &&
+           "Expected a piecewise_1D node.");
     assert(graph::add_cast(p1 + p2).get() &&
            "Expected an add node.");
 
     assert(graph::piecewise_1D_cast(p1 - zero).get() &&
            "Expected a piecewise_1D node.");
-    assert(graph::subtract_cast(p1 - two).get() &&
-           "Expected a subtract node.");
+    assert(graph::piecewise_1D_cast(p1 - two).get() &&
+           "Expected a piecewise_1D node.");
     assert(graph::subtract_cast(p1 - p2).get() &&
            "Expected a subtract node.");
 
     assert(graph::constant_cast(zero/p1).get() &&
            "Expected a constant node.");
-    assert(graph::multiply_cast(p1/two).get() &&
-           "Expected a multiply node.");
+    assert(graph::piecewise_1D_cast(p1/two).get() &&
+           "Expected a piecewise_1D node.");
     assert(graph::divide_cast(p1/p2).get() &&
            "Expected a divide node.");
 
-    assert(graph::multiply_cast(graph::fma(p1, two, zero)).get() &&
-           "Expected a multiply node.");
-    assert(graph::fma_cast(graph::fma(p1, two, p2)).get() &&
-           "Expected a fma constant.");
+    assert(graph::piecewise_1D_cast(graph::fma(p1, two, zero)).get() &&
+           "Expected a piecewise_1D node.");
+    assert(graph::add_cast(graph::fma(p1, two, p2)).get() &&
+           "Expected an add node.");
     assert(graph::fma_cast(graph::fma(p1, p2, two)).get() &&
            "Expected a fma node.");
 
-    assert(graph::sqrt_cast(graph::sqrt(p1)).get() &&
-           "Expected a sqrt node.");
+    assert(graph::piecewise_1D_cast(graph::sqrt(p1)).get() &&
+           "Expected a piecewise_1D node.");
 
-    assert(graph::exp_cast(graph::exp(p1)).get() &&
-           "Expected a exp node.");
+    assert(graph::piecewise_1D_cast(graph::exp(p1)).get() &&
+           "Expected a piecewise_1D node.");
 
-    assert(graph::log_cast(graph::log(p1)).get() &&
-           "Expected a log node.");
+    assert(graph::piecewise_1D_cast(graph::log(p1)).get() &&
+           "Expected a piecewise_1D node.");
 
-    assert(graph::pow_cast(graph::pow(p1, two)).get() &&
-           "Expected a pow node.");
+    assert(graph::piecewise_1D_cast(graph::pow(p1, two)).get() &&
+           "Expected a piecewise_1D node.");
     assert(graph::pow_cast(graph::pow(p1, p2)).get() &&
            "Expected a pow constant.");
 
-    assert(graph::sin_cast(graph::sin(p1)).get() &&
-           "Expected a sin node.");
+    assert(graph::piecewise_1D_cast(graph::sin(p1)).get() &&
+           "Expected a piecewise_1D node.");
 
-    assert(graph::cos_cast(graph::cos(p1)).get() &&
-           "Expected a cos node.");
+    assert(graph::piecewise_1D_cast(graph::cos(p1)).get() &&
+           "Expected a piecewise_1D node.");
 
-    assert(graph::divide_cast(graph::tan(p1)).get() &&
-           "Expected a divide node.");
+    assert(graph::piecewise_1D_cast(graph::tan(p1)).get() &&
+           "Expected a piecewise_1D node.");
 
     assert(graph::atan_cast(graph::atan(p1, two)).get() &&
            "Expected an atan node.");
@@ -194,61 +194,61 @@ template<typename T> void piecewise_2D() {
 
     auto two = graph::two<T> ();
 
-    assert(graph::multiply_cast(p1*two).get() &&
-           "Expected a multiply node.");
+    assert(graph::piecewise_2D_cast(p1*two).get() &&
+           "Expected a piecewise_2D node.");
     assert(graph::multiply_cast(p1*p2).get() &&
            "Expected a multiply node.");
 
     assert(graph::piecewise_2D_cast(p1 + zero).get() &&
            "Expected a piecewise_2D node.");
-    assert(graph::add_cast(p1 + two).get() &&
-           "Expected an add node.");
+    assert(graph::piecewise_2D_cast(p1 + two).get() &&
+           "Expected a piecewise_2D node.");
     assert(graph::add_cast(p1 + p2).get() &&
            "Expected an add node.");
 
     assert(graph::piecewise_2D_cast(p1 - zero).get() &&
            "Expected a piecewise_2D node.");
-    assert(graph::subtract_cast(p1 - two).get() &&
-           "Expected a subtract node.");
+    assert(graph::piecewise_2D_cast(p1 - two).get() &&
+           "Expected a piecewise_2D node.");
     assert(graph::subtract_cast(p1 - p2).get() &&
            "Expected a subtract node.");
 
     assert(graph::constant_cast(zero/p1).get() &&
            "Expected a constant node.");
-    assert(graph::multiply_cast(p1/two).get() &&
-           "Expected a multiply node.");
+    assert(graph::piecewise_2D_cast(p1/two).get() &&
+           "Expected a piecewise_2D node.");
     assert(graph::divide_cast(p1/p2).get() &&
            "Expected a divide node.");
 
-    assert(graph::multiply_cast(graph::fma(p1, two, zero)).get() &&
-           "Expected a multiply node.");
-    assert(graph::fma_cast(graph::fma(p1, two, p2)).get() &&
-           "Expected a fma constant.");
+    assert(graph::piecewise_2D_cast(graph::fma(p1, two, zero)).get() &&
+           "Expected a piecewise_2D node.");
+    assert(graph::add_cast(graph::fma(p1, two, p2)).get() &&
+           "Expected an add node.");
     assert(graph::fma_cast(graph::fma(p1, p2, two)).get() &&
            "Expected a fma node.");
 
-    assert(graph::sqrt_cast(graph::sqrt(p1)).get() &&
-           "Expected a sqrt node.");
+    assert(graph::piecewise_2D_cast(graph::sqrt(p1)).get() &&
+           "Expected a piecewise_2D node.");
 
-    assert(graph::exp_cast(graph::exp(p1)).get() &&
-           "Expected a exp node.");
+    assert(graph::piecewise_2D_cast(graph::exp(p1)).get() &&
+           "Expected a piecewise_2D node.");
 
-    assert(graph::log_cast(graph::log(p1)).get() &&
-           "Expected a log node.");
+    assert(graph::piecewise_2D_cast(graph::log(p1)).get() &&
+           "Expected a piecewise_2D node.");
 
-    assert(graph::pow_cast(graph::pow(p1, two)).get() &&
-           "Expected a pow node.");
+    assert(graph::piecewise_2D_cast(graph::pow(p1, two)).get() &&
+           "Expected a piecewise_2D node.");
     assert(graph::pow_cast(graph::pow(p1, p2)).get() &&
            "Expected a pow constant.");
 
-    assert(graph::sin_cast(graph::sin(p1)).get() &&
-           "Expected a sin node.");
+    assert(graph::piecewise_2D_cast(graph::sin(p1)).get() &&
+           "Expected a piecewise_2D node.");
 
-    assert(graph::cos_cast(graph::cos(p1)).get() &&
-           "Expected a cos node.");
+    assert(graph::piecewise_2D_cast(graph::cos(p1)).get() &&
+           "Expected a piecewise_2D node.");
 
-    assert(graph::divide_cast(graph::tan(p1)).get() &&
-           "Expected a divide node.");
+    assert(graph::piecewise_2D_cast(graph::tan(p1)).get() &&
+           "Expected a piecewise_2D node.");
 
     assert(graph::atan_cast(graph::atan(p1, two)).get() &&
            "Expected an atan node.");

@@ -83,7 +83,8 @@ int main(int argc, const char * argv[]) {
             }
 
             omega->set(static_cast<base> (500.0));
-            x->set(static_cast<base> (-12.0));
+            //x->set(static_cast<base> (-12.0));
+            x->set(static_cast<base> (2.5));
             //x->set(static_cast<base> (0.0));
             y->set(static_cast<base> (0.0));
             z->set(static_cast<base> (0.0));
@@ -92,13 +93,13 @@ int main(int argc, const char * argv[]) {
             ky->set(static_cast<base> (0.0));
             kz->set(static_cast<base> (10.0));
 
-            //auto eq = equilibrium::make_efit<base, use_safe_math> (NC_FILE, sync);
+            auto eq = equilibrium::make_efit<base, use_safe_math> (NC_FILE, sync);
             //auto eq = equilibrium::make_slab_density<base, use_safe_math> ();
-            auto eq = equilibrium::make_slab_field<base, use_safe_math> ();
+            //auto eq = equilibrium::make_slab_field<base, use_safe_math> ();
             //auto eq = equilibrium::make_no_magnetic_field<base, use_safe_math> ();
 
-            const base endtime = static_cast<base> (10.0);
-            //const base endtime = static_cast<base> (0.25);
+            //const base endtime = static_cast<base> (10.0);
+            const base endtime = static_cast<base> (0.25);
             const base dt = endtime/static_cast<base> (num_times);
 
             //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");

@@ -63,6 +63,28 @@ namespace graph {
                 return constant<T, SAFE_MATH> (this->evaluate());
             }
 
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
+            }
+
+//  Sin(ArcTan(x, y)) -> y/Sqrt(x^2 + y^2)
+            auto temp = atan_cast(this->arg);
+            if (temp.get()) {
+                return temp->get_right() /
+                       (sqrt(temp->get_left()*temp->get_left() +
+                             temp->get_right()*temp->get_right()));
+            }
+            
             return this->shared_from_this();
         }
 
@@ -231,6 +253,29 @@ namespace graph {
             if (constant_cast(this->arg).get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
             }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
+            }
+
+//  Cos(ArcTan(x, y)) -> x/Sqrt(x^2 + y^2)
+            auto temp = atan_cast(this->arg);
+            if (temp.get()) {
+                return temp->get_left() /
+                       (sqrt(temp->get_left()*temp->get_left() +
+                             temp->get_right()*temp->get_right()));
+            }
+
             return this->shared_from_this();
         }
 
@@ -426,6 +471,7 @@ namespace graph {
             if (l.get() && r.get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
             }
+
             return this->shared_from_this();
         }
 

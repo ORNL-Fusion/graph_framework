@@ -303,6 +303,17 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return one<T, SAFE_MATH> ();
         }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the args match.
+///
+///  @param[in] x Node to match.
+///  @returns True if the arguments match.
+//------------------------------------------------------------------------------
+        bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = piecewise_1D_cast(x);
+            return temp.get() && this->arg->is_match(temp->get_arg());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -469,7 +480,7 @@ namespace graph {
 ///
 ///  @returns The number of columns in the constant.
 //------------------------------------------------------------------------------
-        size_t get_num_columns() {
+        size_t get_num_columns() const {
             return num_columns;
         }
 
@@ -498,6 +509,7 @@ namespace graph {
             if (evaluate().is_same()) {
                 return constant<T, SAFE_MATH> (evaluate().at(0));
             }
+
             return this->shared_from_this();
         }
 
@@ -686,6 +698,20 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return one<T, SAFE_MATH> ();
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Check if the args match.
+///
+///  @param[in] x Node to match.
+///  @returns True if the arguments match.
+//------------------------------------------------------------------------------
+        bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = piecewise_2D_cast(x);
+            return temp.get()                               &&
+                   this->left->is_match(temp->get_left())   &&
+                   this->right->is_match(temp->get_right()) &&
+                   (num_columns == this->get_num_columns());
         }
     };
 

@@ -60,11 +60,26 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             auto ac = constant_cast(this->arg);
+            
             if (ac.get()) {
                 if (ac->is(0) || ac->is(1)) {
                     return this->arg;
                 }
                 return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
             }
 
 //  Handle casses like sqrt(a^b).
@@ -83,10 +98,14 @@ namespace graph {
 //  sqrt((x^a)*y).
             auto am = multiply_cast(this->arg);
             if (am.get()) {
-                if (pow_cast(am->get_left()).get()      ||
-                    constant_cast(am->get_left()).get() ||
-                    pow_cast(am->get_right()).get()     ||
-                    constant_cast(am->get_right()).get()) {
+                if (pow_cast(am->get_left()).get()           ||
+                    constant_cast(am->get_left()).get()      ||
+                    piecewise_1D_cast(am->get_left()).get()  ||
+                    piecewise_2D_cast(am->get_left()).get()  ||
+                    pow_cast(am->get_right()).get()          ||
+                    constant_cast(am->get_right()).get()     ||
+                    piecewise_1D_cast(am->get_right()).get() ||
+                    piecewise_2D_cast(am->get_right()).get()) {
                     return sqrt(am->get_left()) *
                            sqrt(am->get_right());
                 }
@@ -96,10 +115,14 @@ namespace graph {
 //  where c is a constant.
             auto ad = divide_cast(this->arg);
             if (ad.get()) {
-                if (pow_cast(ad->get_left()).get()      ||
-                    constant_cast(ad->get_left()).get() ||
-                    pow_cast(ad->get_right()).get()     ||
-                    constant_cast(ad->get_right()).get()) {
+                if (pow_cast(ad->get_left()).get()           ||
+                    constant_cast(ad->get_left()).get()      ||
+                    piecewise_1D_cast(ad->get_left()).get()  ||
+                    piecewise_2D_cast(ad->get_left()).get()  ||
+                    pow_cast(ad->get_right()).get()          ||
+                    constant_cast(ad->get_right()).get()     ||
+                    piecewise_1D_cast(ad->get_right()).get() ||
+                    piecewise_2D_cast(ad->get_right()).get()) {
                     return sqrt(ad->get_left()) /
                            sqrt(ad->get_right());
                 }
@@ -306,6 +329,20 @@ namespace graph {
                 return constant<T, SAFE_MATH> (this->evaluate());
             }
 
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
+            }
+
 //  Reduce exp(log(x)) -> x
             auto a = log_cast(this->arg);
             if (a.get()) {
@@ -482,6 +519,20 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->arg).get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
             }
 
 //  Reduce log(exp(x)) -> x
@@ -678,6 +729,20 @@ namespace graph {
                 if (constant_cast(this->left).get()) {
                     return constant<T, SAFE_MATH> (this->evaluate());
                 }
+
+                auto pl1 = piecewise_1D_cast(this->left);
+                if (pl1.get()) {
+                    return piecewise_1D(this->evaluate(),
+                                        pl1->get_arg());
+                }
+
+                auto pl2 = piecewise_2D_cast(this->left);
+                if (pl2.get()) {
+                    return piecewise_2D(this->evaluate(),
+                                        pl2->get_num_columns(),
+                                        pl2->get_left(),
+                                        pl2->get_right());
+                }
             }
 
             auto lp = pow_cast(this->left);
@@ -688,11 +753,15 @@ namespace graph {
 //  Handle cases where (c*x)^a, (x*c)^a, (a*sqrt(b))^c and (a*b^c)^2.
             auto lm = multiply_cast(this->left);
             if (lm.get()) {
-                if (constant_cast(lm->get_left()).get()  ||
-                    constant_cast(lm->get_right()).get() ||
-                    sqrt_cast(lm->get_left()).get()      ||
-                    sqrt_cast(lm->get_right()).get()     ||
-                    pow_cast(lm->get_left()).get()       ||
+                if (constant_cast(lm->get_left()).get()      ||
+                    constant_cast(lm->get_right()).get()     ||
+                    piecewise_1D_cast(lm->get_left()).get()  ||
+                    piecewise_1D_cast(lm->get_right()).get() ||
+                    piecewise_2D_cast(lm->get_left()).get()  ||
+                    piecewise_2D_cast(lm->get_right()).get() ||
+                    sqrt_cast(lm->get_left()).get()          ||
+                    sqrt_cast(lm->get_right()).get()         ||
+                    pow_cast(lm->get_left()).get()           ||
                     pow_cast(lm->get_right()).get()) {
                     return pow(lm->get_left(), this->right) *
                            pow(lm->get_right(), this->right);
@@ -702,11 +771,15 @@ namespace graph {
 //  Handle cases where (c/x)^a, (x/c)^a, (a/sqrt(b))^c and (a/b^c)^2.
             auto ld = divide_cast(this->left);
             if (ld.get()) {
-                if (constant_cast(ld->get_left()).get()  ||
-                    constant_cast(ld->get_right()).get() ||
-                    sqrt_cast(ld->get_left()).get()      ||
-                    sqrt_cast(ld->get_right()).get()     ||
-                    pow_cast(ld->get_left()).get()       ||
+                if (constant_cast(ld->get_left()).get()      ||
+                    constant_cast(ld->get_right()).get()     ||
+                    piecewise_1D_cast(ld->get_left()).get()  ||
+                    piecewise_1D_cast(ld->get_right()).get() ||
+                    piecewise_2D_cast(ld->get_left()).get()  ||
+                    piecewise_2D_cast(ld->get_right()).get() ||
+                    sqrt_cast(ld->get_left()).get()          ||
+                    sqrt_cast(ld->get_right()).get()         ||
+                    pow_cast(ld->get_left()).get()           ||
                     pow_cast(ld->get_right()).get()) {
                     return pow(ld->get_left(), this->right) /
                            pow(ld->get_right(), this->right);
@@ -960,6 +1033,20 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->arg).get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
             }
 
             return this->shared_from_this();

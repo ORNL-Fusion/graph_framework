@@ -254,7 +254,7 @@ template<typename T> void test_add() {
                                                                          static_cast<T> (2.0)}), var_a);
     assert(constant_add->is_constant_like() && "Expected a constant.");
     assert(!constant_add->is_all_variables() && "Did not expect a variable.");
-    assert(!constant_add->is_power_like() && "Expected a power like.");
+    assert(constant_add->is_power_like() && "Expected a power like.");
     auto constant_var_add = three + var_a;
     assert(!constant_var_add->is_constant_like() && "Did not expect a constant.");
     assert(!constant_var_add->is_all_variables() && "Did not expect a variable.");
@@ -555,7 +555,7 @@ template<typename T> void test_subtract() {
                                                                        static_cast<T> (2.0)}), var_a);
     assert(constant_sub->is_constant_like() && "Expected a constant.");
     assert(!constant_sub->is_all_variables() && "Did not expect a variable.");
-    assert(!constant_sub->is_power_like() && "Expected a power like.");
+    assert(constant_sub->is_power_like() && "Expected a power like.");
     auto constant_var_sub = one - var_a;
     assert(!constant_var_sub->is_constant_like() && "Did not expect a constant.");
     assert(!constant_var_sub->is_all_variables() && "Did not expect a variable.");
@@ -998,7 +998,7 @@ template<typename T> void test_multiply() {
                                                                        static_cast<T> (2.0)}), variable);
     assert(constant_mul->is_constant_like() && "Expected a constant.");
     assert(!constant_mul->is_all_variables() && "Did not expect a variable.");
-    assert(!constant_mul->is_power_like() && "Expected a power like.");
+    assert(constant_mul->is_power_like() && "Expected a power like.");
     auto constant_var_mul = three*variable;
     assert(!constant_var_mul->is_constant_like() && "Did not expect a constant.");
     assert(!constant_var_mul->is_all_variables() && "Did not expect a variable.");
@@ -1491,7 +1491,7 @@ template<typename T> void test_divide() {
                                                                                    static_cast<T> (2.0)}), variable);
     assert(constant_div->is_constant_like() && "Expected a constant.");
     assert(!constant_div->is_all_variables() && "Did not expect a variable.");
-    assert(!constant_div->is_power_like() && "Expected a power like.");
+    assert(constant_div->is_power_like() && "Expected a power like.");
     auto constant_var_div = two_divided_three/variable;
     assert(!constant_var_div->is_constant_like() && "Did not expect a constant.");
     assert(!constant_var_div->is_all_variables() && "Did not expect a variable.");
@@ -1742,10 +1742,13 @@ template<typename T> void test_fma() {
     assert(one_two_three->is_constant_like() && "Expected a constant.");
     assert(!one_two_three->is_all_variables() && "Did not expect a variable.");
     assert(one_two_three->is_power_like() && "Expected a power like.");
-    auto constant_fma = graph::fma(one_two_three, graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                                           static_cast<T> (2.0)}), var_a), one);
+    auto constant_fma = graph::fma(one_two_three,
+                                   graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                            static_cast<T> (2.0)}),
+                                                           var_a),
+                                   one);
     assert(!constant_fma->is_all_variables() && "Did not expect a variable.");
-    assert(!constant_fma->is_power_like() && "Expected a power like.");
+    assert(constant_fma->is_power_like() && "Expected a power like.");
     auto constant_var_fma = graph::fma(var_a, var_b, one);
     assert(!constant_var_fma->is_constant_like() && "Did not expect a constant.");
     assert(!constant_var_fma->is_all_variables() && "Did not expect a variable.");

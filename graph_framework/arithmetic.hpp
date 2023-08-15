@@ -80,6 +80,30 @@ namespace graph {
                 return this->right + this->left;
             }
 
+            auto pl1 = piecewise_1D_cast(this->left);
+            auto pr1 = piecewise_1D_cast(this->right);
+
+            if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
+            } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
+            }
+
+            auto pl2 = piecewise_2D_cast(this->left);
+            auto pr2 = piecewise_2D_cast(this->right);
+
+            if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
+                return piecewise_2D(this->evaluate(),
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
+                return piecewise_2D(this->evaluate(),
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            }
+
 //  Idenity reductions.
             if (this->left->is_match(this->right)) {
                 return two<T, SAFE_MATH> ()*this->left;
@@ -460,6 +484,30 @@ namespace graph {
                 return this->left;
             } else if (l.get() && r.get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto pl1 = piecewise_1D_cast(this->left);
+            auto pr1 = piecewise_1D_cast(this->right);
+
+            if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
+            } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
+            }
+
+            auto pl2 = piecewise_2D_cast(this->left);
+            auto pr2 = piecewise_2D_cast(this->right);
+
+            if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
+                return piecewise_2D(this->evaluate(),
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
+                return piecewise_2D(this->evaluate(),
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Common factor reduction. If the left and right are both muliply nodes check
@@ -883,6 +931,30 @@ namespace graph {
                 return this->right;
             } else if (l.get() && r.get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto pl1 = piecewise_1D_cast(this->left);
+            auto pr1 = piecewise_1D_cast(this->right);
+
+            if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
+            } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
+            }
+
+            auto pl2 = piecewise_2D_cast(this->left);
+            auto pr2 = piecewise_2D_cast(this->right);
+
+            if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
+                return piecewise_2D(this->evaluate(),
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
+                return piecewise_2D(this->evaluate(),
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Move constants to the left.
@@ -1407,6 +1479,30 @@ namespace graph {
                 return constant<T, SAFE_MATH> (this->evaluate());
             }
 
+            auto pl1 = piecewise_1D_cast(this->left);
+            auto pr1 = piecewise_1D_cast(this->right);
+
+            if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
+            } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
+            }
+
+            auto pl2 = piecewise_2D_cast(this->left);
+            auto pr2 = piecewise_2D_cast(this->right);
+
+            if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
+                return piecewise_2D(this->evaluate(),
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
+                return piecewise_2D(this->evaluate(),
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            }
+
             if (this->left->is_match(this->right)) {
                 if (l.get() && l->is(1)) {
                     return this->left;
@@ -1789,6 +1885,30 @@ namespace graph {
                 return this->right - this->middle;
             } else if (m.get() && m->evaluate().is_none()) {
                 return this->right - this->left;
+            }
+
+            auto pl1 = piecewise_1D_cast(this->left);
+            auto pm1 = piecewise_1D_cast(this->middle);
+
+            if (pl1.get() && (m.get() || pl1->is_arg_match(this->middle))) {
+                return piecewise_1D(this->evaluate(), pl1->get_arg()) + this->right;
+            } else if (pm1.get() && (m.get() || pm1->is_arg_match(this->left))) {
+                return piecewise_1D(this->evaluate(), pm1->get_arg()) + this->right;
+            }
+
+            auto pl2 = piecewise_2D_cast(this->left);
+            auto pm2 = piecewise_2D_cast(this->middle);
+
+            if (pl2.get() && (m.get() || pl2->is_arg_match(this->right))) {
+                return piecewise_2D(this->evaluate(),
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right()) + this->right;
+            } else if (pm2.get() && (l.get() || pm2->is_arg_match(this->left))) {
+                return piecewise_2D(this->evaluate(),
+                                    pm2->get_num_columns(),
+                                    pm2->get_left(),
+                                    pm2->get_right()) + this->right;
             }
 
 //  Common factor reduction. If the left and right are both multiply nodes check

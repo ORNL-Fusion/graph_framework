@@ -24,11 +24,16 @@ template<typename T> void test_sin() {
 
     auto y = graph::variable<T> (1, "");
     auto siny = graph::sin(y);
-    assert(graph::sin_cast(siny) && "Expected a sine node");
+    assert(graph::sin_cast(siny).get() && "Expected a sine node");
 
 //  Test derivatives.
     auto dsiny = siny->df(y);
-    assert(graph::cos_cast(dsiny) && "Expected cosine node.");
+    assert(graph::cos_cast(dsiny).get() && "Expected cosine node.");
+
+//  Sin(Atan(x,y)) -> y/Sqrt(x^2 + y^2)
+    auto x = graph::variable<T> (1, "");
+    auto sinatan = graph::sin(graph::atan(x, y));
+    assert(graph::divide_cast(sinatan).get() && "Expected a divide node.");
 }
 
 //------------------------------------------------------------------------------
@@ -45,6 +50,11 @@ template<typename T> void test_cos() {
 //  Test derivatives.
     auto dcosy = cosy->df(y);
     assert(graph::multiply_cast(dcosy).get() && "Expected multiply node.");
+
+//  Cos(Atan(x,y)) -> x/Sqrt(x^2 + y^2)
+    auto x = graph::variable<T> (1, "");
+    auto cosatan = graph::cos(graph::atan(x, y));
+    assert(graph::divide_cast(cosatan).get() && "Expected a divide node.");
 }
 
 //------------------------------------------------------------------------------
