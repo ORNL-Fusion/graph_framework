@@ -370,7 +370,7 @@ namespace graph {
         bool is_integer() {
             const auto temp = this->evaluate().at(0);
             return std::imag(temp) == 0 &&
-                   static_cast<size_t> (std::real(temp))%2 == 0;
+                   fmod(std::real(temp), 1.0) == 0.0;
         }
 
 //------------------------------------------------------------------------------
