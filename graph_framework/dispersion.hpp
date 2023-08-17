@@ -1216,22 +1216,25 @@ namespace dispersion {
             auto npara2 = npara*npara;
             auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
+    
+            auto vtnorm = ve/physics<T, SAFE_MATH>::c;
 
-            auto zeta = physics<T, SAFE_MATH>::c/(npara*ve)*(one - ec/w);
+            auto zeta = (one - ec/w)/(npara*vtnorm);
             auto Z_func = this->z.Z(zeta);
 
             auto q_func = one - two*q;
             auto n_func = n2 + npara2;
+            auto n2nperp2 = n2*nperp2;
             auto p_func = one - P;
 
             auto gamma5 = P*(n2*npara2 - (one - q)*n_func + q_func);
-            auto gamma2 = P*w/ec*(n2 - q_func + P*w/(four*ec)*(n_func - two*q_func)/npara2)*nperp2;
-            auto gamma1 = ((one - q)*n2 - q_func)*nperp2
-                        + (n2*npara2 - (one - q)*n_func + q_func)*p_func;
+            auto gamma2 = P*w/ec*(n2nperp2 - q_func*nperp2)
+                        + P*P*w*w/(four*ec*ec)*(n_func - two*q_func)*nperp2/npara2;
+            auto gamma1 = (one - q)*n2nperp2 + p_func*n2*npara2
+                        - (one - q)*p_func*n_func - q_func*nperp2 + q_func*p_func;
 
-            auto Dw = none*(w + ec)/w*npara*ve/physics<T, SAFE_MATH>::c
-                    * (gamma1 + gamma2 +
-                       nperp2/(two*npara)*(w*w/(ec*ec))*ve/physics<T, SAFE_MATH>::c*zeta*gamma5)*(one/Z_func + zeta);
+            auto Dw = none*(one - ec/w)*npara*vtnorm*(gamma1 + gamma2 +
+                                                      nperp2/(two*npara)*(w*w/(ec*ec))*vtnorm*zeta*gamma5)*(one/Z_func + zeta);
 
             return Dc + Dw;
         }

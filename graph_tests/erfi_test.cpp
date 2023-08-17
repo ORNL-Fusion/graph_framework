@@ -9,6 +9,7 @@
 #endif
 
 #include <cassert>
+#include <vector>
 
 #include <netcdf.h>
 

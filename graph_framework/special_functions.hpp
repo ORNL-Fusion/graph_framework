@@ -13,8 +13,6 @@
 #include <cmath>
 #include <limits>
 
-#include <iostream>
-
 namespace special {
 
 ///  I constant.
