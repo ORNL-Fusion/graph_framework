@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "special_functions.hpp"
 #include "register.hpp"
 
 namespace backend {
@@ -175,6 +176,21 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Is every element negative one.
+///
+///  @returns Returns true if every element is negative one.
+//------------------------------------------------------------------------------
+        bool is_none() const {
+            for (T d : memory) {
+                if (d != static_cast<T> (-1.0)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Take sqrt.
 //------------------------------------------------------------------------------
         void sqrt() {
@@ -213,9 +229,19 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Take cos.
 //------------------------------------------------------------------------------
-        virtual void cos() {
+        void cos() {
             for (T &d : memory) {
                 d = std::cos(d);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Take cos.
+//------------------------------------------------------------------------------
+        template<typename D=T>
+        typename std::enable_if<jit::is_complex<D> (), void>::type erfi() {
+            for (D &d : memory) {
+                d = special::erfi(d);
             }
         }
 
@@ -224,7 +250,7 @@ namespace backend {
 ///
 ///  @returns The pointer to the buffer memory.
 //------------------------------------------------------------------------------
-        virtual T *data() {
+        T *data() {
             return memory.data();
         }
 
@@ -394,8 +420,7 @@ namespace backend {
     inline buffer<T> fma(buffer<T> &a,
                          buffer<T> &b,
                          buffer<T> &c) {
-        constexpr bool use_fma = !std::is_same<T, std::complex<float>>::value  &&
-                                 !std::is_same<T, std::complex<double>>::value &&
+        constexpr bool use_fma = !jit::is_complex<T> () &&
 #ifdef FP_FAST_FMA
                                  true;
 #else
@@ -573,13 +598,21 @@ namespace backend {
         if (y.size() == 1) {
             const T right = y.at(0);
             for (size_t i = 0, ie = x.size(); i < ie; i++) {
-                x[i] = std::atan(right/x[i]);
+                if constexpr (jit::is_complex<T> ()) {
+                    x[i] = std::atan(right/x[i]);
+                } else {
+                    x[i] = std::atan2(right, x[i]);
+                }
             }
             return x;
         } else if (x.size() == 1) {
             const T left = x.at(0);
             for (size_t i = 0, ie = y.size(); i < ie; i++) {
-                y[i] = std::atan(y[i]/left);
+                if constexpr (jit::is_complex<T> ()) {
+                    y[i] = std::atan(y[i]/left);
+                } else {
+                    y[i] = std::atan2(y[i], left);
+                }
             }
             return y;
         }
@@ -587,7 +620,11 @@ namespace backend {
         assert(x.size() == y.size() &&
                "Left and right sizes are incompatable.");
         for (size_t i = 0, ie = x.size(); i < ie; i++) {
-            x[i] = std::atan(y[i]/x[i]);
+            if constexpr (jit::is_complex<T> ()) {
+                x[i] = std::atan(y[i]/x[i]);
+            } else {
+                x[i] = std::atan2(y[i], x[i]);
+            }
         }
         return x;
     }

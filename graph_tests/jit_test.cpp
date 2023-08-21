@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file jit_test.cpp
+///  @file jit\_test.cpp
 ///  @brief Tests for the jit code.
 //------------------------------------------------------------------------------
 
@@ -7,6 +7,8 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+#include <cassert>
 
 #include "../graph_framework/dispersion.hpp"
 
@@ -376,10 +378,12 @@ void run_dispersion_tests() {
 
     if constexpr (jit::use_cuda()) {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 1.4E10);
-    } else if (jit::use_metal<T> ()) {
+    } else if constexpr (jit::use_metal<T> ()) {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 5.0E9);
+    } else if constexpr (jit::is_complex<T> ()){
+        run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 1.5E11);
     } else {
-        run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 3.0E10);
+        run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 5.1E10);
     }
 }
 

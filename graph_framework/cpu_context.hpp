@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <cstdlib>
+#include <cstring>
 
 #include <dlfcn.h>
 
@@ -19,7 +20,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cpu context.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<typename T, bool SAFE_MATH=false>
     class cpu_context {
     private:
 ///  Library name.
@@ -27,9 +28,9 @@ namespace gpu {
 ///  Handle for the dynamic library.
         void *lib_handle;
 ///  Argument map.
-        std::map<graph::leaf_node<T> *, std::vector<T>> kernel_arguments;
+        std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> kernel_arguments;
 ///  Argument index map.
-        std::map<graph::leaf_node<T> *, size_t> arg_index;
+        std::map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
 
     public:
 //------------------------------------------------------------------------------
@@ -43,7 +44,7 @@ namespace gpu {
         ~cpu_context() {
             dlclose(lib_handle);
             
-            std::stringstream temp_stream;
+            std::ostringstream temp_stream;
             temp_stream << "rm " << library_name;
             system(temp_stream.str().c_str());
         }
@@ -58,7 +59,7 @@ namespace gpu {
         void compile(const std::string kernel_source,
                      std::vector<std::string> names,
                      const bool add_reduction=false) {
-            std::stringstream temp_stream;
+            std::ostringstream temp_stream;
             temp_stream << reinterpret_cast<size_t> (this);
             const std::string thread_id = temp_stream.str();
 
@@ -87,7 +88,7 @@ namespace gpu {
             temp_stream << CXX << " -fPIC -shared ";
 #endif
 #ifndef NDEBUG
-            temp_stream << "-g -fsanitize=undefined -fsanitize=float-divide-by-zero ";
+            temp_stream << "-g -fsanitize=undefined -fsanitize=float-divide-by-zero -fsanitize-trap=all ";
 #else
             temp_stream << "-O3 ";
 #endif
@@ -130,8 +131,8 @@ namespace gpu {
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)>  create_kernel_call(const std::string kernel_name,
-                                                      graph::input_nodes<T> inputs,
-                                                      graph::output_nodes<T> outputs,
+                                                      graph::input_nodes<T, SAFE_MATH> inputs,
+                                                      graph::output_nodes<T, SAFE_MATH> outputs,
                                                       const size_t num_rays) {
             void *kernel = dlsym(lib_handle, kernel_name.c_str());
             if (!kernel) {
@@ -172,7 +173,7 @@ namespace gpu {
 ///  @params[in] argument Node to reduce.
 ///  @params[in] run      Function to run before reduction.
 //------------------------------------------------------------------------------
-        std::function<T(void)> create_max_call(graph::shared_leaf<T> &argument,
+        std::function<T(void)> create_max_call(graph::shared_leaf<T, SAFE_MATH> &argument,
                                                std::function<void(void)> run) {
             auto begin = kernel_arguments[argument.get()].cbegin();
             auto end = kernel_arguments[argument.get()].cend();
@@ -191,7 +192,7 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Hold the current thread until the current command buffer has complete.
+///  @brief Hold the current thread until the command buffer has completed.
 //------------------------------------------------------------------------------
         void wait() {}
 
@@ -199,10 +200,17 @@ namespace gpu {
 ///  @brief Print out the results.
 ///
 ///  @params[in] index Particle index to print.
+///  @params[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
-        void print_results(const size_t index) {
-            for (const auto &[key, value] : kernel_arguments) {
-                std::cout << value[index] << " ";
+        void print_results(const size_t index,
+                           const graph::output_nodes<T, SAFE_MATH> &nodes) {
+            for (auto &out : nodes) {
+                const T temp = kernel_arguments[out.get()][index];
+                if constexpr (jit::is_complex<T> ()) {
+                    std::cout << std::real(temp) << " " << std::imag(temp) << " ";
+                } else {
+                    std::cout << temp << " ";
+                }
             }
             std::cout << std::endl;
         }
@@ -213,7 +221,7 @@ namespace gpu {
 ///  @params[in] node   Not to copy buffer to.
 ///  @params[in] source Host side buffer to copy from.
 //------------------------------------------------------------------------------
-        void copy_to_device(graph::shared_leaf<T> node,
+        void copy_to_device(graph::shared_leaf<T, SAFE_MATH> node,
                             T *source) {
             memcpy(kernel_arguments[node.get()].data(),
                    source,
@@ -226,7 +234,7 @@ namespace gpu {
 ///  @params[in]     node        Node to copy buffer from.
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-        void copy_to_host(const graph::shared_leaf<T> node,
+        void copy_to_host(const graph::shared_leaf<T, SAFE_MATH> node,
                           T *destination) {
             memcpy(destination,
                    kernel_arguments[node.get()].data(),
@@ -238,11 +246,12 @@ namespace gpu {
 ///
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
-        void create_header(std::stringstream &source_buffer) {
+        void create_header(std::ostringstream &source_buffer) {
             source_buffer << "#include <map>" << std::endl;
             source_buffer << "#include <string>" << std::endl;
             if (jit::is_complex<T> ()) {
                 source_buffer << "#include <complex>" << std::endl;
+                source_buffer << "#include <special_functions.hpp>" << std::endl;
             } else {
                 source_buffer << "#include <cmath>" << std::endl;
             }
@@ -259,10 +268,10 @@ namespace gpu {
 ///  @params[in]     size          Size of the input buffer.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
-        void create_kernel_prefix(std::stringstream &source_buffer,
+        void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
-                                  graph::input_nodes<T> &inputs,
-                                  graph::output_nodes<T> &outputs,
+                                  graph::input_nodes<T, SAFE_MATH> &inputs,
+                                  graph::output_nodes<T, SAFE_MATH> &outputs,
                                   const size_t size,
                                   jit::register_map &registers) {
             source_buffer << std::endl;
@@ -292,17 +301,17 @@ namespace gpu {
 ///  @params[in]     setters       Map outputs back to input values.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
-        void create_kernel_postfix(std::stringstream &source_buffer,
-                                   graph::output_nodes<T> &outputs,
-                                   graph::map_nodes<T> &setters,
+        void create_kernel_postfix(std::ostringstream &source_buffer,
+                                   graph::output_nodes<T, SAFE_MATH> &outputs,
+                                   graph::map_nodes<T, SAFE_MATH> &setters,
                                    jit::register_map &registers) {
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        args[std::string(\"" << jit::to_string('v', in.get());
                 source_buffer << "\")][i] = " << registers[a.get()] << ";" << std::endl;
             }
             for (auto &out : outputs) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        args[std::string(\"" << jit::to_string('o', out.get());
                 source_buffer << "\")][i] = " << registers[a.get()] << ";" << std::endl;
             }
@@ -317,8 +326,17 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 ///  @params[in]     size          Size of the input buffer.
 //------------------------------------------------------------------------------
-        void create_reduction(std::stringstream &source_buffer,
+        void create_reduction(std::ostringstream &source_buffer,
                               const size_t size) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the buffer for a node.
+///
+///  @params[in] node Node to get the buffer for.
+//------------------------------------------------------------------------------
+        T *get_buffer(graph::shared_leaf<T, SAFE_MATH> &node) {
+            return kernel_arguments[node.get()].data();
+        }
     };
 }
 

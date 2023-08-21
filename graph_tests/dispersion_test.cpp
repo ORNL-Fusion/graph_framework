@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file dispersion_test.cpp
+///  @file dispersion\_test.cpp
 ///  @brief Tests for math nodes.
 //------------------------------------------------------------------------------
 
@@ -7,6 +7,8 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+#include <cassert>
 
 #include "../graph_framework/dispersion.hpp"
 

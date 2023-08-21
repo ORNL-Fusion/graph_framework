@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file vector_test.cpp
+///  @file vector\_test.cpp
 ///  @brief Tests for the vector interface.
 //------------------------------------------------------------------------------
 
@@ -7,6 +7,8 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+#include <cassert>
 
 #include "../graph_framework/vector.hpp"
 #include "../graph_framework/math.hpp"

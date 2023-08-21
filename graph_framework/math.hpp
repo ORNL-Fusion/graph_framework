@@ -18,8 +18,8 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class sqrt_node final : public straight_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class sqrt_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -27,11 +27,8 @@ namespace graph {
 ///  @params[in] a Argument node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *a) {
-            std::stringstream stream;
-            stream << "sqrt(" << reinterpret_cast<size_t> (a) << ")";
-                    
-            return stream.str();
+        static std::string to_string(leaf_node<T, SAFE_MATH> *a) {
+            return "sqrt" + jit::format_to_string(reinterpret_cast<size_t> (a));
         }
 
     public:
@@ -40,8 +37,8 @@ namespace graph {
 ///
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
-        sqrt_node(shared_leaf<T> x) :
-        straight_node<T> (x, sqrt_node<T>::to_string(x.get())) {}
+        sqrt_node(shared_leaf<T, SAFE_MATH> x) :
+        straight_node<T, SAFE_MATH> (x, sqrt_node::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of sqrt.
@@ -61,13 +58,28 @@ namespace graph {
 ///
 ///  @returns Reduced graph from sqrt.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             auto ac = constant_cast(this->arg);
+            
             if (ac.get()) {
                 if (ac->is(0) || ac->is(1)) {
                     return this->arg;
                 }
-                return constant(this->evaluate());
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
             }
 
 //  Handle casses like sqrt(a^b).
@@ -79,18 +91,21 @@ namespace graph {
                 }
 
                 return pow(ap->get_left(),
-                           ap->get_right() +
-                           constant(static_cast<T> (0.5)));
+                           ap->get_right()/two<T, SAFE_MATH> ());
             }
 
 //  Handle casses like sqrt(c*x) where c is constant or cases like
 //  sqrt((x^a)*y).
             auto am = multiply_cast(this->arg);
             if (am.get()) {
-                if (pow_cast(am->get_left()).get()      ||
-                    constant_cast(am->get_left()).get() ||
-                    pow_cast(am->get_right()).get()     ||
-                    constant_cast(am->get_right()).get()) {
+                if (pow_cast(am->get_left()).get()           ||
+                    constant_cast(am->get_left()).get()      ||
+                    piecewise_1D_cast(am->get_left()).get()  ||
+                    piecewise_2D_cast(am->get_left()).get()  ||
+                    pow_cast(am->get_right()).get()          ||
+                    constant_cast(am->get_right()).get()     ||
+                    piecewise_1D_cast(am->get_right()).get() ||
+                    piecewise_2D_cast(am->get_right()).get()) {
                     return sqrt(am->get_left()) *
                            sqrt(am->get_right());
                 }
@@ -100,14 +115,19 @@ namespace graph {
 //  where c is a constant.
             auto ad = divide_cast(this->arg);
             if (ad.get()) {
-                if (pow_cast(ad->get_left()).get()      ||
-                    constant_cast(ad->get_left()).get() ||
-                    pow_cast(ad->get_right()).get()     ||
-                    constant_cast(ad->get_right()).get()) {
+                if (pow_cast(ad->get_left()).get()           ||
+                    constant_cast(ad->get_left()).get()      ||
+                    piecewise_1D_cast(ad->get_left()).get()  ||
+                    piecewise_2D_cast(ad->get_left()).get()  ||
+                    pow_cast(ad->get_right()).get()          ||
+                    constant_cast(ad->get_right()).get()     ||
+                    piecewise_1D_cast(ad->get_right()).get() ||
+                    piecewise_2D_cast(ad->get_right()).get()) {
                     return sqrt(ad->get_left()) /
                            sqrt(ad->get_right());
                 }
             }
+
             return this->shared_from_this();
         }
 
@@ -119,12 +139,12 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
-                return one<T> ();
+                return one<T, SAFE_MATH> ();
             } else {
                 return this->arg->df(x) /
-                       (two<T> ()*this->shared_from_this());
+                       (two<T, SAFE_MATH> ()*this->shared_from_this());
             }
         }
 
@@ -135,10 +155,12 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> a = this->arg->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
+                                                                 registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -157,7 +179,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -178,6 +200,42 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "}";
         }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_base() {
+            return this->arg;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return half<T, SAFE_MATH> ();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
+            return sqrt(this->arg->remove_pseudo());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -186,21 +244,26 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> sqrt(shared_leaf<T> x) {
-        auto temp = std::make_shared<sqrt_node<T>> (x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> sqrt(shared_leaf<T, SAFE_MATH> x) {
+        auto temp = std::make_shared<sqrt_node<T, SAFE_MATH>> (x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
+            }
         }
-        
-        return leaf_node<T>::cache[h];
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared sqrt nodes.
-    template<typename T>
-    using shared_sqrt = std::shared_ptr<sqrt_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_sqrt = std::shared_ptr<sqrt_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a sqrt node.
@@ -208,9 +271,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_sqrt<T> sqrt_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<sqrt_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_sqrt<T, SAFE_MATH> sqrt_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<sqrt_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -221,8 +284,8 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class exp_node final : public straight_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class exp_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -230,11 +293,8 @@ namespace graph {
 ///  @params[in] a Argument node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *a) {
-            std::stringstream stream;
-            stream << "exp(" << reinterpret_cast<size_t> (a) << ")";
-                    
-            return stream.str();
+        static std::string to_string(leaf_node<T, SAFE_MATH> *a) {
+            return "exp" + jit::format_to_string(reinterpret_cast<size_t> (a));
         }
 
     public:
@@ -243,8 +303,8 @@ namespace graph {
 ///
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
-        exp_node(shared_leaf<T> x) :
-        straight_node<T> (x, exp_node<T>::to_string(x.get())) {}
+        exp_node(shared_leaf<T, SAFE_MATH> x) :
+        straight_node<T, SAFE_MATH> (x, exp_node::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of exp.
@@ -264,9 +324,23 @@ namespace graph {
 ///
 ///  @returns Reduced graph from exp.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->arg).get()) {
-                return constant(this->evaluate());
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
             }
 
 //  Reduce exp(log(x)) -> x
@@ -274,6 +348,7 @@ namespace graph {
             if (a.get()) {
                 return a->get_arg();
             }
+
             return this->shared_from_this();
         }
 
@@ -285,9 +360,9 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
-                return one<T> ();
+                return one<T, SAFE_MATH> ();
             }
 
             return this->shared_from_this()*this->arg->df(x);
@@ -300,10 +375,11 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> a = this->arg->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -322,7 +398,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -343,6 +419,15 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "\\right)}";
         }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
+            return exp(this->arg->remove_pseudo());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -351,21 +436,26 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> exp(shared_leaf<T> x) {
-        auto temp = std::make_shared<exp_node<T>> (x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> exp(shared_leaf<T, SAFE_MATH> x) {
+        auto temp = std::make_shared<exp_node<T, SAFE_MATH>> (x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
+            }
         }
-        
-        return leaf_node<T>::cache[h];
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared exp nodes.
-    template<typename T>
-    using shared_exp = std::shared_ptr<exp_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_exp = std::shared_ptr<exp_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a exp node.
@@ -373,9 +463,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_exp<T> exp_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<exp_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_exp<T, SAFE_MATH> exp_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<exp_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -386,8 +476,8 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class log_node final : public straight_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class log_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -395,11 +485,8 @@ namespace graph {
 ///  @params[in] a Argument node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *a) {
-            std::stringstream stream;
-            stream << "log(" << reinterpret_cast<size_t> (a) << ")";
-                            
-            return stream.str();
+        static std::string to_string(leaf_node<T, SAFE_MATH> *a) {
+            return "log" + jit::format_to_string(reinterpret_cast<size_t> (a));
         }
 
     public:
@@ -408,8 +495,8 @@ namespace graph {
 ///
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
-        log_node(shared_leaf<T> x) :
-        straight_node<T> (x, log_node<T>::to_string(x.get())) {}
+        log_node(shared_leaf<T, SAFE_MATH> x) :
+        straight_node<T, SAFE_MATH> (x, log_node::to_string(x.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of log.
@@ -429,9 +516,23 @@ namespace graph {
 ///
 ///  @returns Reduced graph from log.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->arg).get()) {
-                return constant(this->evaluate());
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
             }
 
 //  Reduce log(exp(x)) -> x
@@ -439,6 +540,7 @@ namespace graph {
             if (a.get()) {
                 return a->get_arg();
             }
+
             return this->shared_from_this();
         }
 
@@ -450,7 +552,7 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
             return this->arg->df(x)/this->arg;
         }
 
@@ -461,10 +563,11 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> a = this->arg->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -483,7 +586,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -504,6 +607,15 @@ namespace graph {
             this->arg->to_latex();
             std::cout << "\\right)}";
         }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
+            return log(this->arg->remove_pseudo());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -512,21 +624,25 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced log node.
 //------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> log(shared_leaf<T> x) {
-        auto temp = std::make_shared<log_node<T>> (x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> log(shared_leaf<T, SAFE_MATH> x) {
+        auto temp = std::make_shared<log_node<T, SAFE_MATH>> (x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
+            }
         }
-        
-        return leaf_node<T>::cache[h];
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared log nodes.
-    template<typename T>
-    using shared_log = std::shared_ptr<log_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_log = std::shared_ptr<log_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a exp node.
@@ -534,9 +650,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_log<T> log_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<log_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_log<T, SAFE_MATH> log_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<log_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -547,8 +663,8 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class pow_node final : public branch_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class pow_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -557,13 +673,10 @@ namespace graph {
 ///  @params[in] r Argument node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(leaf_node<T> *l,
-                                     leaf_node<T> *r) {
-            std::stringstream stream;
-            stream << "pow(" << reinterpret_cast<size_t> (l) << ","
-                             << reinterpret_cast<size_t> (r) << ")";
-                            
-            return stream.str();
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *r) {
+            return "pow" + jit::format_to_string(reinterpret_cast<size_t> (l))
+                         + jit::format_to_string(reinterpret_cast<size_t> (r));
         }
 
     public:
@@ -573,9 +686,10 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-        pow_node(shared_leaf<T> l,
-                 shared_leaf<T> r) :
-        branch_node<T> (l, r, pow_node<T>::to_string(l.get(), r.get())) {}
+        pow_node(shared_leaf<T, SAFE_MATH> l,
+                 shared_leaf<T, SAFE_MATH> r) :
+        branch_node<T, SAFE_MATH> (l, r, pow_node::to_string(l.get(),
+                                                             r.get())) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of addition.
@@ -595,12 +709,12 @@ namespace graph {
 ///
 ///  @returns A reduced power node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             auto rc = constant_cast(this->right);
 
             if (rc.get()) {
                 if (rc->is(0)) {
-                    return one<T> ();
+                    return one<T, SAFE_MATH> ();
                 } else if (rc->is(1)) {
                     return this->left;
                 } else if (rc->is(0.5)) {
@@ -613,7 +727,21 @@ namespace graph {
                 }
 
                 if (constant_cast(this->left).get()) {
-                    return constant(this->evaluate());
+                    return constant<T, SAFE_MATH> (this->evaluate());
+                }
+
+                auto pl1 = piecewise_1D_cast(this->left);
+                if (pl1.get()) {
+                    return piecewise_1D(this->evaluate(),
+                                        pl1->get_arg());
+                }
+
+                auto pl2 = piecewise_2D_cast(this->left);
+                if (pl2.get()) {
+                    return piecewise_2D(this->evaluate(),
+                                        pl2->get_num_columns(),
+                                        pl2->get_left(),
+                                        pl2->get_right());
                 }
             }
 
@@ -625,11 +753,15 @@ namespace graph {
 //  Handle cases where (c*x)^a, (x*c)^a, (a*sqrt(b))^c and (a*b^c)^2.
             auto lm = multiply_cast(this->left);
             if (lm.get()) {
-                if (constant_cast(lm->get_left()).get()  ||
-                    constant_cast(lm->get_right()).get() ||
-                    sqrt_cast(lm->get_left()).get()      ||
-                    sqrt_cast(lm->get_right()).get()     ||
-                    pow_cast(lm->get_left()).get()       ||
+                if (constant_cast(lm->get_left()).get()      ||
+                    constant_cast(lm->get_right()).get()     ||
+                    piecewise_1D_cast(lm->get_left()).get()  ||
+                    piecewise_1D_cast(lm->get_right()).get() ||
+                    piecewise_2D_cast(lm->get_left()).get()  ||
+                    piecewise_2D_cast(lm->get_right()).get() ||
+                    sqrt_cast(lm->get_left()).get()          ||
+                    sqrt_cast(lm->get_right()).get()         ||
+                    pow_cast(lm->get_left()).get()           ||
                     pow_cast(lm->get_right()).get()) {
                     return pow(lm->get_left(), this->right) *
                            pow(lm->get_right(), this->right);
@@ -639,11 +771,15 @@ namespace graph {
 //  Handle cases where (c/x)^a, (x/c)^a, (a/sqrt(b))^c and (a/b^c)^2.
             auto ld = divide_cast(this->left);
             if (ld.get()) {
-                if (constant_cast(ld->get_left()).get()  ||
-                    constant_cast(ld->get_right()).get() ||
-                    sqrt_cast(ld->get_left()).get()      ||
-                    sqrt_cast(ld->get_right()).get()     ||
-                    pow_cast(ld->get_left()).get()       ||
+                if (constant_cast(ld->get_left()).get()      ||
+                    constant_cast(ld->get_right()).get()     ||
+                    piecewise_1D_cast(ld->get_left()).get()  ||
+                    piecewise_1D_cast(ld->get_right()).get() ||
+                    piecewise_2D_cast(ld->get_left()).get()  ||
+                    piecewise_2D_cast(ld->get_right()).get() ||
+                    sqrt_cast(ld->get_left()).get()          ||
+                    sqrt_cast(ld->get_right()).get()         ||
+                    pow_cast(ld->get_left()).get()           ||
                     pow_cast(ld->get_right()).get()) {
                     return pow(ld->get_left(), this->right) /
                            pow(ld->get_right(), this->right);
@@ -654,8 +790,9 @@ namespace graph {
             auto lsq = sqrt_cast(this->left);
             if (lsq.get()) {
                 return pow(lsq->get_arg(),
-                           this->right/two<T> ());
+                           this->right/two<T, SAFE_MATH> ());
             }
+
             return this->shared_from_this();
         }
 
@@ -667,9 +804,9 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T>
-        df(shared_leaf<T> x) {
-            return pow(this->left, this->right - one<T> ()) *
+        virtual shared_leaf<T, SAFE_MATH>
+        df(shared_leaf<T, SAFE_MATH> x) {
+            return pow(this->left, this->right - one<T, SAFE_MATH> ()) *
                    (this->right*this->left->df(x) +
                     this->left*log(this->left)*this->right->df(x));
         }
@@ -681,19 +818,34 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> l = this->left->compile(stream, registers);
-                shared_leaf<T> r = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> r;
+                auto temp = constant_cast(this->right);
+                if (!temp.get() || !temp->is_integer()) {
+                    r = this->right->compile(stream, registers);
+                }
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = pow("
-                       << registers[l.get()] << ", "
-                       << registers[r.get()] << ");"
-                       << std::endl;
+                stream << " " << registers[this] << " = ";
+                if (temp.get() && temp->is_integer()) {
+                    stream << registers[l.get()];
+                    const size_t end = static_cast<size_t> (std::real(this->right->evaluate().at(0)));
+                    for (size_t i = 1; i < end; i++) {
+                        stream << "*" << registers[l.get()];
+                    }
+                    stream << ";";
+                } else {
+                    stream << "pow("
+                           << registers[l.get()] << ", "
+                           << registers[r.get()] << ");";
+                }
+                stream << std::endl;
             }
 
             return this->shared_from_this();
@@ -705,7 +857,7 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             if (this == x.get()) {
                 return true;
             }
@@ -743,10 +895,47 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
-            return this->left->is_variable_like() &&
-                   (this->right->is_variable_like() ||
+        virtual bool is_all_variables() const {
+            return this->left->is_all_variables() &&
+                   (this->right->is_all_variables() ||
                     constant_cast(this->right).get());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the base of a power.
+///
+///  @returns The base of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_base() {
+            return this->left;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return this->right;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
+            return pow(this->left->remove_pseudo(),
+                       this->right->remove_pseudo());
         }
     };
 
@@ -756,23 +945,27 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_leaf<T> pow(shared_leaf<T> l,
-                       shared_leaf<T> r) {
-        auto temp = std::make_shared<pow_node<T>> (l, r)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> pow(shared_leaf<T, SAFE_MATH> l,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<pow_node<T, SAFE_MATH>> (l, r)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
+            }
         }
-        
-        return leaf_node<T>::cache[h];
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared add nodes.
-    template<typename T>
-    using shared_pow = std::shared_ptr<pow_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_pow = std::shared_ptr<pow_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a power node.
@@ -780,9 +973,200 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_pow<T> pow_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<pow_node<T>> (x);
+    template<typename T, bool SAFE_MATH=false>
+    shared_pow<T, SAFE_MATH> pow_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<pow_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
+//  Erfi node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief An imaginary error function node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    class erfi_node final : public straight_node<T, SAFE_MATH> {
+    private:
+//  Limit node to complex base types.
+        static_assert(jit::is_complex<T> (),
+                      "erfi only valid for complex base types.");
+
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @params[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T, SAFE_MATH> *a) {
+            return "erfi" + jit::format_to_string(reinterpret_cast<size_t> (a));
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a exp node.
+///
+///  @params[in] x Argument.
+//------------------------------------------------------------------------------
+        erfi_node(shared_leaf<T, SAFE_MATH> x) :
+        straight_node<T, SAFE_MATH> (x, erfi_node::to_string(x.get())) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of erfi.
+///
+///  result = erfi(x)
+///
+///  @returns The value of erfi(x).
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> result = this->arg->evaluate();
+            result.erfi();
+            return result;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce the erfi(x).
+///
+///  @returns Reduced graph from exp.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
+            if (constant_cast(this->arg).get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  d erfi(z)/dx = 2/sqrt(pi)Exp(z^2)*dz/dx
+///
+///  @params[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            if (this->is_match(x)) {
+                return one<T, SAFE_MATH> ();
+            }
+
+            return two<T, SAFE_MATH> ()/sqrt(pi<T, SAFE_MATH> ()) *
+                   exp(this->arg*this->arg)*this->arg->df(x);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                stream << " " << registers[this] << " = special::erfi("
+                       << registers[a.get()] << ");"
+                       << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Querey if the nodes match.
+///
+///  @params[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = erfi_cast(x);
+            if (x_cast.get()) {
+                return this->arg->is_match(x_cast->get_arg());
+            }
+
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "erfi\\left(";
+            this->arg->to_latex();
+            std::cout << "\\right)";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
+            return erfi(this->arg->remove_pseudo());
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define erfi convience function.
+///
+///  @params[in] x Argument.
+///  @returns A reduced exp node.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> erfi(shared_leaf<T, SAFE_MATH> x) {
+        auto temp = std::make_shared<erfi_node<T, SAFE_MATH>> (x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
+            }
+        }
+        assert(false && "Should never reach.");
+    }
+
+///  Convenience type alias for shared exp nodes.
+    template<typename T, bool SAFE_MATH=false>
+    using shared_erfi = std::shared_ptr<erfi_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a exp node.
+///
+///  @params[in] x Leaf node to attempt cast.
+///  @returns An attemped dynamic case.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    shared_erfi<T, SAFE_MATH> erfi_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<erfi_node<T, SAFE_MATH>> (x);
     }
 }
 

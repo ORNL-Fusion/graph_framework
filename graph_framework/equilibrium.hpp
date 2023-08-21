@@ -25,7 +25,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a generic equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<typename T, bool SAFE_MATH=false>
     class generic {
     protected:
 ///  Ion masses for each species.
@@ -89,9 +89,10 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
-                                                           graph::shared_leaf<T> y,
-                                                           graph::shared_leaf<T> z) = 0;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
@@ -99,10 +100,11 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
-                                                      graph::shared_leaf<T> x,
-                                                      graph::shared_leaf<T> y,
-                                                      graph::shared_leaf<T> z) = 0;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
@@ -112,9 +114,10 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
-                                                               graph::shared_leaf<T> y,
-                                                               graph::shared_leaf<T> z) = 0;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
@@ -122,10 +125,11 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
-                                                          graph::shared_leaf<T> x,
-                                                          graph::shared_leaf<T> y,
-                                                          graph::shared_leaf<T> z) = 0;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) = 0;
         
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
@@ -135,15 +139,15 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<T>
-        get_magnetic_field(graph::shared_leaf<T> x,
-                           graph::shared_leaf<T> y,
-                           graph::shared_leaf<T> z) = 0;
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) = 0;
     };
 
 ///  Convenience type alias for shared equilibria.
-    template<typename T>
-    using shared = std::shared_ptr<generic<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared = std::shared_ptr<generic<T, SAFE_MATH>>;
 
 //******************************************************************************
 //  No Magnetic equilibrium.
@@ -151,14 +155,14 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Uniform density with varying magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class no_magnetic_field : public generic<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class no_magnetic_field : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a linear density with no magnetic field.
 //------------------------------------------------------------------------------
         no_magnetic_field() :
-        generic<T> ({3.34449469E-27}, {1}) {}
+        generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -168,11 +172,13 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
-                                                           graph::shared_leaf<T> y,
-                                                           graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1.0E19)) *
-                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                    graph::one<T, SAFE_MATH> ());
         }
 
 //------------------------------------------------------------------------------
@@ -181,12 +187,14 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
-                                                      graph::shared_leaf<T> x,
-                                                      graph::shared_leaf<T> y,
-                                                      graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1.0E19)) *
-                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                    graph::one<T, SAFE_MATH> ());
         }
 
 //------------------------------------------------------------------------------
@@ -197,10 +205,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
-                                                               graph::shared_leaf<T> y,
-                                                               graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1000.0));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -209,11 +218,12 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
-                                                          graph::shared_leaf<T> x,
-                                                          graph::shared_leaf<T> y,
-                                                          graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1000.0));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -224,11 +234,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<T>
-        get_magnetic_field(graph::shared_leaf<T> x,
-                           graph::shared_leaf<T> y,
-                           graph::shared_leaf<T> z) final {
-            auto zero = graph::zero<T> ();
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) final {
+            auto zero = graph::zero<T, SAFE_MATH> ();
             return graph::vector(zero, zero, zero);
         }
     };
@@ -238,9 +248,9 @@ namespace equilibrium {
 ///
 ///  @returns A constructed no magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared<T> make_no_magnetic_field() {
-        return std::make_shared<no_magnetic_field<T>> ();
+    template<typename T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_no_magnetic_field() {
+        return std::make_shared<no_magnetic_field<T, SAFE_MATH>> ();
     }
 
 //******************************************************************************
@@ -249,14 +259,14 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Uniform density with varying magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class slab : public generic<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class slab : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a guassian density with uniform magnetic field.
 //------------------------------------------------------------------------------
         slab() :
-        generic<T> ({3.34449469E-27}, {1}) {}
+        generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -266,10 +276,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
-                                                           graph::shared_leaf<T> y,
-                                                           graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1.0E19));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19));
         }
 
 //------------------------------------------------------------------------------
@@ -278,11 +289,12 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
-                                                      graph::shared_leaf<T> x,
-                                                      graph::shared_leaf<T> y,
-                                                      graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1.0E19));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19));
         }
 
 //------------------------------------------------------------------------------
@@ -293,10 +305,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
-                                                               graph::shared_leaf<T> y,
-                                                               graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1000.0));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -305,11 +318,12 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
-                                                          graph::shared_leaf<T> x,
-                                                          graph::shared_leaf<T> y,
-                                                          graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1000.0));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -320,13 +334,14 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<T>
-        get_magnetic_field(graph::shared_leaf<T> x,
-                           graph::shared_leaf<T> y,
-                           graph::shared_leaf<T> z) final {
-            auto zero = graph::zero<T> ();
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) final {
+            auto zero = graph::zero<T, SAFE_MATH> ();
             return graph::vector(zero, zero,
-                                 graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
+                                 graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                                 graph::one<T, SAFE_MATH> ());
         }
     };
 
@@ -335,9 +350,9 @@ namespace equilibrium {
 ///
 ///  @returns A constructed slab equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared<T> make_slab() {
-        return std::make_shared<slab<T>> ();
+    template<typename T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_slab() {
+        return std::make_shared<slab<T, SAFE_MATH>> ();
     }
 
 //******************************************************************************
@@ -346,14 +361,14 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Vary density with uniform magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class slab_density : public generic<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class slab_density : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a guassian density with uniform magnetic field.
 //------------------------------------------------------------------------------
         slab_density() :
-        generic<T> ({3.34449469E-27}, {1}) {}
+        generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -363,11 +378,13 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
-                                                           graph::shared_leaf<T> y,
-                                                           graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1.0E19)) *
-                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                    graph::one<T, SAFE_MATH> ());
         }
 
 //------------------------------------------------------------------------------
@@ -376,12 +393,14 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
-                                                      graph::shared_leaf<T> x,
-                                                      graph::shared_leaf<T> y,
-                                                      graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1.0E19)) *
-                   (graph::constant(static_cast<T> (0.1))*x + graph::one<T> ());
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
+                    graph::one<T, SAFE_MATH> ());
         }
 
 //------------------------------------------------------------------------------
@@ -392,10 +411,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
-                                                               graph::shared_leaf<T> y,
-                                                               graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1000.0));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
         }
 
 //------------------------------------------------------------------------------
@@ -404,11 +424,12 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
-                                                          graph::shared_leaf<T> x,
-                                                          graph::shared_leaf<T> y,
-                                                          graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1000.0));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
         }
         
 //------------------------------------------------------------------------------
@@ -419,12 +440,12 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<T>
-        get_magnetic_field(graph::shared_leaf<T> x,
-                           graph::shared_leaf<T> y,
-                           graph::shared_leaf<T> z) final {
-            auto zero = graph::zero<T> ();
-            return graph::vector(zero, zero, graph::one<T> ());
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) final {
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(zero, zero, graph::one<T, SAFE_MATH> ());
         }
     };
 
@@ -433,25 +454,25 @@ namespace equilibrium {
 ///
 ///  @returns A constructed slab density equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared<T> make_slab_density() {
-        return std::make_shared<slab_density<T>> ();
+    template<typename T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_slab_density() {
+        return std::make_shared<slab_density<T, SAFE_MATH>> ();
     }
 
 //******************************************************************************
-//  Guassian density with a uniform magnetic field.
+//  Slab field gradient equilibrium.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Guassian density with uniform magnetic field equilibrium.
+///  @brief Vary density with uniform magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class guassian_density : public generic<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class slab_field : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a guassian density with uniform magnetic field.
 //------------------------------------------------------------------------------
-        guassian_density() :
-        generic<T> ({3.34449469E-27}, {1}) {}
+        slab_field() :
+        generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -461,10 +482,13 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
-                                                           graph::shared_leaf<T> y,
-                                                           graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1.0E19))*graph::exp((x*x + y*y)/graph::constant(static_cast<T> (-0.2)));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.01))*x +
+                    graph::one<T, SAFE_MATH> ());
         }
 
 //------------------------------------------------------------------------------
@@ -473,11 +497,12 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
-                                                      graph::shared_leaf<T> x,
-                                                      graph::shared_leaf<T> y,
-                                                      graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1.0E19))*graph::exp((x*x + y*y)/graph::constant(static_cast<T> (-0.2)));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) final {
+            return get_electron_density(x, y, z);
         }
 
 //------------------------------------------------------------------------------
@@ -488,10 +513,13 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
-                                                               graph::shared_leaf<T> y,
-                                                               graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1000.0));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (2000.0)) *
+                   (graph::constant<T, SAFE_MATH> (static_cast<T> (0.01))*x +
+                    graph::one<T, SAFE_MATH> ());
         }
 
 //------------------------------------------------------------------------------
@@ -500,11 +528,12 @@ namespace equilibrium {
 ///  @params[in] index The species index.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
-                                                          graph::shared_leaf<T> x,
-                                                          graph::shared_leaf<T> y,
-                                                          graph::shared_leaf<T> z) final {
-            return graph::constant(static_cast<T> (1000.0));
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) final {
+            return get_electron_temperature(x, y, z);
         }
         
 //------------------------------------------------------------------------------
@@ -515,12 +544,115 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<T>
-        get_magnetic_field(graph::shared_leaf<T> x,
-                           graph::shared_leaf<T> y,
-                           graph::shared_leaf<T> z) final {
-            auto zero = graph::zero<T> ();
-            return graph::vector(graph::one<T> (), zero, zero);
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) final {
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(zero, zero,
+                                 graph::constant<T, SAFE_MATH> (static_cast<T> (0.01))*x +
+                                 graph::one<T, SAFE_MATH> ());
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a slab density equilibrium.
+///
+///  @returns A constructed slab density equilibrium.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_slab_field() {
+        return std::make_shared<slab_field<T, SAFE_MATH>> ();
+    }
+//******************************************************************************
+//  Guassian density with a uniform magnetic field.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Guassian density with uniform magnetic field equilibrium.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    class guassian_density : public generic<T, SAFE_MATH> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a guassian density with uniform magnetic field.
+//------------------------------------------------------------------------------
+        guassian_density() :
+        generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron density.
+///
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
+                   graph::exp((x*x + y*y)/graph::constant<T, SAFE_MATH> (static_cast<T> (-0.2)));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion density.
+///
+///  @params[in] index The species index.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19)) *
+                   graph::exp((x*x + y*y)/graph::constant<T, SAFE_MATH> (static_cast<T> (-0.2)));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron temperature.
+///
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion temperature.
+///
+///  @params[in] index The species index.
+///  @returns The electron expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) final {
+            return graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
+        }
+        
+//------------------------------------------------------------------------------
+///  @brief Get the magnetic field.
+///
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns Magnetic field expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) final {
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(graph::one<T, SAFE_MATH> (), zero, zero);
         }
     };
 
@@ -529,9 +661,9 @@ namespace equilibrium {
 ///
 ///  @returns A constructed guassian density equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared<T> make_guassian_density() {
-        return std::make_shared<guassian_density<T>> ();
+    template<typename T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_guassian_density() {
+        return std::make_shared<guassian_density<T, SAFE_MATH>> ();
     }
 
 //******************************************************************************
@@ -543,156 +675,200 @@ namespace equilibrium {
 ///  This takes a BiCublic spline representation of the psi and cubic splines for
 ///  ne, te, p, and fpol.
 //------------------------------------------------------------------------------
-    template<typename T>
-    class efit final : public generic<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class efit final : public generic<T, SAFE_MATH> {
     private:
 ///  Minimum psi.
-        graph::shared_leaf<T> psimin;
+        graph::shared_leaf<T, SAFE_MATH> psimin;
 ///  Psi grid spacing.
-        graph::shared_leaf<T> dpsi;
+        graph::shared_leaf<T, SAFE_MATH> dpsi;
 
 //  Temperature spline coefficients.
 ///  Temperature c0.
-        graph::shared_leaf<T> te_c0;
+        const backend::buffer<T> te_c0;
 ///  Temperature c1.
-        graph::shared_leaf<T> te_c1;
+        const backend::buffer<T> te_c1;
 ///  Temperature c2.
-        graph::shared_leaf<T> te_c2;
+        const backend::buffer<T> te_c2;
 ///  Temperature c3.
-        graph::shared_leaf<T> te_c3;
+        const backend::buffer<T> te_c3;
 ///  Temperature scale factor.
-        graph::shared_leaf<T> te_scale;
+        graph::shared_leaf<T, SAFE_MATH> te_scale;
 
 //  Density spline coefficients.
 ///  Density c0.
-        graph::shared_leaf<T> ne_c0;
+        const backend::buffer<T> ne_c0;
 ///  Density c1.
-        graph::shared_leaf<T> ne_c1;
+        const backend::buffer<T> ne_c1;
 ///  Density c2.
-        graph::shared_leaf<T> ne_c2;
+        const backend::buffer<T> ne_c2;
 ///  Density c3.
-        graph::shared_leaf<T> ne_c3;
+        const backend::buffer<T> ne_c3;
 ///  Density scale factor.
-        graph::shared_leaf<T> ne_scale;
+        graph::shared_leaf<T, SAFE_MATH> ne_scale;
 
 //  Pressure spline coefficients.
 ///  Pressure c0.
-        graph::shared_leaf<T> pres_c0;
+        const backend::buffer<T> pres_c0;
 ///  Pressure c1.
-        graph::shared_leaf<T> pres_c1;
+        const backend::buffer<T> pres_c1;
 ///  Pressure c2.
-        graph::shared_leaf<T> pres_c2;
+        const backend::buffer<T> pres_c2;
 ///  Pressure c3.
-        graph::shared_leaf<T> pres_c3;
+        const backend::buffer<T> pres_c3;
 ///  Pressure scale factor.
-        graph::shared_leaf<T> pres_scale;
+        graph::shared_leaf<T, SAFE_MATH> pres_scale;
 
 ///  Minimum R.
-        graph::shared_leaf<T> rmin;
+        graph::shared_leaf<T, SAFE_MATH> rmin;
 ///  R grid spacing.
-        graph::shared_leaf<T> dr;
+        graph::shared_leaf<T, SAFE_MATH> dr;
 ///  Minimum Z.
-        graph::shared_leaf<T> zmin;
+        graph::shared_leaf<T, SAFE_MATH> zmin;
 ///  Z grid spacing.
-        graph::shared_leaf<T> dz;
+        graph::shared_leaf<T, SAFE_MATH> dz;
 
 //  Fpol spline coefficients.
 ///  Fpol c0.
-        graph::shared_leaf<T> fpol_c0;
+        const backend::buffer<T> fpol_c0;
 ///  Fpol c1.
-        graph::shared_leaf<T> fpol_c1;
+        const backend::buffer<T> fpol_c1;
 ///  Fpol c2.
-        graph::shared_leaf<T> fpol_c2;
+        const backend::buffer<T> fpol_c2;
 ///  Fpol c3.
-        graph::shared_leaf<T> fpol_c3;
+        const backend::buffer<T> fpol_c3;
 
-//  Pressure spline coefficients.
+//  Psi spline coefficients.
+///  Number of columns.
+        const size_t num_cols;
 ///  Psi c00.
-        graph::shared_leaf<T> c00;
+        const backend::buffer<T> c00;
 ///  Psi c01.
-        graph::shared_leaf<T> c01;
+        const backend::buffer<T> c01;
 ///  Psi c02.
-        graph::shared_leaf<T> c02;
+        const backend::buffer<T> c02;
 ///  Psi c03.
-        graph::shared_leaf<T> c03;
+        const backend::buffer<T> c03;
 ///  Psi c10.
-        graph::shared_leaf<T> c10;
+        const backend::buffer<T> c10;
 ///  Psi c11.
-        graph::shared_leaf<T> c11;
+        const backend::buffer<T> c11;
 ///  Psi c12.
-        graph::shared_leaf<T> c12;
+        const backend::buffer<T> c12;
 ///  Psi c13.
-        graph::shared_leaf<T> c13;
+        const backend::buffer<T> c13;
 ///  Psi c20.
-        graph::shared_leaf<T> c20;
+        const backend::buffer<T> c20;
 ///  Psi c21.
-        graph::shared_leaf<T> c21;
+        const backend::buffer<T> c21;
 ///  Psi c22.
-        graph::shared_leaf<T> c22;
+        const backend::buffer<T> c22;
 ///  Psi c23.
-        graph::shared_leaf<T> c23;
+        const backend::buffer<T> c23;
 ///  Psi c30.
-        graph::shared_leaf<T> c30;
+        const backend::buffer<T> c30;
 ///  Psi c31.
-        graph::shared_leaf<T> c31;
+        const backend::buffer<T> c31;
 ///  Psi c32.
-        graph::shared_leaf<T> c32;
+        const backend::buffer<T> c32;
 ///  Psi c33.
-        graph::shared_leaf<T> c33;
+        const backend::buffer<T> c33;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a EFIT equilibrium.
 ///
-///  @params[in] psimin Minimum psi value.
+///  @params[in] psimin     Minimum psi value.
+///  @params[in] dpsi       Change in psi value.
+///  @params[in] te_c0      Te c0 spline coefficient.
+///  @params[in] te_c1      Te c1 spline coefficient.
+///  @params[in] te_c2      Te c2 spline coefficient.
+///  @params[in] te_c3      Te c3 spline coefficient.
+///  @params[in] te_scale   Temperatire scale.
+///  @params[in] ne_c0      Ne c0 spline coefficient.
+///  @params[in] ne_c1      Ne c1 spline coefficient.
+///  @params[in] ne_c2      Ne c2 spline coefficient.
+///  @params[in] ne_c3      Ne c3 spline coefficient.
+///  @params[in] ne_scale   Denisty scale.
+///  @params[in] pres_c0    Pressure c0 spline coefficient.
+///  @params[in] pres_c1    Pressure c1 spline coefficient.
+///  @params[in] pres_c2    Pressure c2 spline coefficient.
+///  @params[in] pres_c3    Pressure c3 spline coefficient.
+///  @params[in] pres_scale Pressure scale.
+///  @params[in] rmin       Radial gird minimum.
+///  @params[in] dr         Radial grid spacing.
+///  @params[in] zmin       Vertical grid minimum.
+///  @params[in] dz         Vertical grid spacing.
+///  @params[in] fpol_c0    Flux function c0 spline coefficient.
+///  @params[in] fpol_c1    Flux function c1 spline coefficient.
+///  @params[in] fpol_c2    Flux function c2 spline coefficient.
+///  @params[in] fpol_c3    Flux function c3 spline coefficient.
+///  @params[in] num_cols   Number of columns for the 2D splines.
+///  @params[in] c00        Psi c00 spline coefficient.
+///  @params[in] c01        Psi c01 spline coefficient.
+///  @params[in] c02        Psi c02 spline coefficient.
+///  @params[in] c03        Psi c03 spline coefficient.
+///  @params[in] c10        Psi c10 spline coefficient.
+///  @params[in] c11        Psi c11 spline coefficient.
+///  @params[in] c12        Psi c12 spline coefficient.
+///  @params[in] c13        Psi c13 spline coefficient.
+///  @params[in] c20        Psi c20 spline coefficient.
+///  @params[in] c21        Psi c21 spline coefficient.
+///  @params[in] c22        Psi c22 spline coefficient.
+///  @params[in] c23        Psi c23 spline coefficient.
+///  @params[in] c30        Psi c30 spline coefficient.
+///  @params[in] c31        Psi c31 spline coefficient.
+///  @params[in] c32        Psi c32 spline coefficient.
+///  @params[in] c33        Psi c33 spline coefficient.
 //------------------------------------------------------------------------------
-        efit(graph::shared_leaf<T> psimin,
-             graph::shared_leaf<T> dpsi,
-             graph::shared_leaf<T> te_c0,
-             graph::shared_leaf<T> te_c1,
-             graph::shared_leaf<T> te_c2,
-             graph::shared_leaf<T> te_c3,
-             graph::shared_leaf<T> te_scale,
-             graph::shared_leaf<T> ne_c0,
-             graph::shared_leaf<T> ne_c1,
-             graph::shared_leaf<T> ne_c2,
-             graph::shared_leaf<T> ne_c3,
-             graph::shared_leaf<T> ne_scale,
-             graph::shared_leaf<T> pres_c0,
-             graph::shared_leaf<T> pres_c1,
-             graph::shared_leaf<T> pres_c2,
-             graph::shared_leaf<T> pres_c3,
-             graph::shared_leaf<T> pres_scale,
-             graph::shared_leaf<T> rmin,
-             graph::shared_leaf<T> dr,
-             graph::shared_leaf<T> zmin,
-             graph::shared_leaf<T> dz,
-             graph::shared_leaf<T> fpol_c0,
-             graph::shared_leaf<T> fpol_c1,
-             graph::shared_leaf<T> fpol_c2,
-             graph::shared_leaf<T> fpol_c3,
-             graph::shared_leaf<T> c00,
-             graph::shared_leaf<T> c01,
-             graph::shared_leaf<T> c02,
-             graph::shared_leaf<T> c03,
-             graph::shared_leaf<T> c10,
-             graph::shared_leaf<T> c11,
-             graph::shared_leaf<T> c12,
-             graph::shared_leaf<T> c13,
-             graph::shared_leaf<T> c20,
-             graph::shared_leaf<T> c21,
-             graph::shared_leaf<T> c22,
-             graph::shared_leaf<T> c23,
-             graph::shared_leaf<T> c30,
-             graph::shared_leaf<T> c31,
-             graph::shared_leaf<T> c32,
-             graph::shared_leaf<T> c33) :
-        generic<T> ({3.34449469E-27} ,{1}),
-        psimin(psimin), dpsi(dpsi),
+        efit(graph::shared_leaf<T, SAFE_MATH> psimin,
+             graph::shared_leaf<T, SAFE_MATH> dpsi,
+             const backend::buffer<T> te_c0,
+             const backend::buffer<T> te_c1,
+             const backend::buffer<T> te_c2,
+             const backend::buffer<T> te_c3,
+             graph::shared_leaf<T, SAFE_MATH> te_scale,
+             const backend::buffer<T> ne_c0,
+             const backend::buffer<T> ne_c1,
+             const backend::buffer<T> ne_c2,
+             const backend::buffer<T> ne_c3,
+             graph::shared_leaf<T, SAFE_MATH> ne_scale,
+             const backend::buffer<T> pres_c0,
+             const backend::buffer<T> pres_c1,
+             const backend::buffer<T> pres_c2,
+             const backend::buffer<T> pres_c3,
+             graph::shared_leaf<T, SAFE_MATH> pres_scale,
+             graph::shared_leaf<T, SAFE_MATH> rmin,
+             graph::shared_leaf<T, SAFE_MATH> dr,
+             graph::shared_leaf<T, SAFE_MATH> zmin,
+             graph::shared_leaf<T, SAFE_MATH> dz,
+             const backend::buffer<T> fpol_c0,
+             const backend::buffer<T> fpol_c1,
+             const backend::buffer<T> fpol_c2,
+             const backend::buffer<T> fpol_c3,
+             const size_t num_cols,
+             const backend::buffer<T> c00,
+             const backend::buffer<T> c01,
+             const backend::buffer<T> c02,
+             const backend::buffer<T> c03,
+             const backend::buffer<T> c10,
+             const backend::buffer<T> c11,
+             const backend::buffer<T> c12,
+             const backend::buffer<T> c13,
+             const backend::buffer<T> c20,
+             const backend::buffer<T> c21,
+             const backend::buffer<T> c22,
+             const backend::buffer<T> c23,
+             const backend::buffer<T> c30,
+             const backend::buffer<T> c31,
+             const backend::buffer<T> c32,
+             const backend::buffer<T> c33) :
+        generic<T, SAFE_MATH> ({3.34449469E-27} ,{1}),
+        psimin(psimin), dpsi(dpsi), num_cols(num_cols),
         te_c0(te_c0), te_c1(te_c1), te_c2(te_c2), te_c3(te_c3), te_scale(te_scale),
         ne_c0(te_c0), ne_c1(te_c1), ne_c2(ne_c2), ne_c3(ne_c3), ne_scale(ne_scale),
-        pres_c0(pres_c0), pres_c1(pres_c1), pres_c2(pres_c2), pres_c3(pres_c3), pres_scale(pres_scale),
-        rmin(rmin), dr(dr), zmin(zmin), dz(dz),
+        pres_c0(pres_c0), pres_c1(pres_c1), pres_c2(pres_c2), pres_c3(pres_c3),
+        pres_scale(pres_scale), rmin(rmin), dr(dr), zmin(zmin), dz(dz),
         fpol_c0(fpol_c0), fpol_c1(fpol_c1), fpol_c2(fpol_c2), fpol_c3(fpol_c3),
         c00(c00), c01(c01), c02(c02), c03(c03),
         c10(c10), c11(c11), c12(c12), c13(c13),
@@ -707,11 +883,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The psi expression.
 //------------------------------------------------------------------------------
-        graph::shared_leaf<T> get_psi(graph::shared_leaf<T> x,
-                                      graph::shared_leaf<T> y,
-                                      graph::shared_leaf<T> z) {
-            auto r = graph::sqrt(x*x + y*y);
-            return get_psi(r, z);
+        graph::shared_leaf<T, SAFE_MATH>
+        get_psi(graph::shared_leaf<T, SAFE_MATH> x,
+                graph::shared_leaf<T, SAFE_MATH> y,
+                graph::shared_leaf<T, SAFE_MATH> z) {
+            return get_psi(graph::sqrt(x*x + y*y), z);
         }
 
 //------------------------------------------------------------------------------
@@ -721,47 +897,48 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The psi expression.
 //------------------------------------------------------------------------------
-        graph::shared_leaf<T> get_psi(graph::shared_leaf<T> r,
-                                      graph::shared_leaf<T> z) {
+        graph::shared_leaf<T, SAFE_MATH>
+        get_psi(graph::shared_leaf<T, SAFE_MATH> r,
+                graph::shared_leaf<T, SAFE_MATH> z) {
             auto r_norm = (r - rmin)/dr;
             auto z_norm = (z - zmin)/dz;
 
-            auto c00_temp = graph::piecewise_2D(c00, r_norm, z_norm);
-            auto c01_temp = graph::piecewise_2D(c01, r_norm, z_norm);
-            auto c02_temp = graph::piecewise_2D(c02, r_norm, z_norm);
-            auto c03_temp = graph::piecewise_2D(c03, r_norm, z_norm);
+            auto c00_temp = graph::piecewise_2D(c00, num_cols, r_norm, z_norm);
+            auto c01_temp = graph::piecewise_2D(c01, num_cols, r_norm, z_norm);
+            auto c02_temp = graph::piecewise_2D(c02, num_cols, r_norm, z_norm);
+            auto c03_temp = graph::piecewise_2D(c03, num_cols, r_norm, z_norm);
 
-            auto c10_temp = graph::piecewise_2D(c10, r_norm, z_norm);
-            auto c11_temp = graph::piecewise_2D(c11, r_norm, z_norm);
-            auto c12_temp = graph::piecewise_2D(c12, r_norm, z_norm);
-            auto c13_temp = graph::piecewise_2D(c13, r_norm, z_norm);
+            auto c10_temp = graph::piecewise_2D(c10, num_cols, r_norm, z_norm);
+            auto c11_temp = graph::piecewise_2D(c11, num_cols, r_norm, z_norm);
+            auto c12_temp = graph::piecewise_2D(c12, num_cols, r_norm, z_norm);
+            auto c13_temp = graph::piecewise_2D(c13, num_cols, r_norm, z_norm);
 
-            auto c20_temp = graph::piecewise_2D(c20, r_norm, z_norm);
-            auto c21_temp = graph::piecewise_2D(c21, r_norm, z_norm);
-            auto c22_temp = graph::piecewise_2D(c22, r_norm, z_norm);
-            auto c23_temp = graph::piecewise_2D(c23, r_norm, z_norm);
+            auto c20_temp = graph::piecewise_2D(c20, num_cols, r_norm, z_norm);
+            auto c21_temp = graph::piecewise_2D(c21, num_cols, r_norm, z_norm);
+            auto c22_temp = graph::piecewise_2D(c22, num_cols, r_norm, z_norm);
+            auto c23_temp = graph::piecewise_2D(c23, num_cols, r_norm, z_norm);
 
-            auto c30_temp = graph::piecewise_2D(c30, r_norm, z_norm);
-            auto c31_temp = graph::piecewise_2D(c31, r_norm, z_norm);
-            auto c32_temp = graph::piecewise_2D(c32, r_norm, z_norm);
-            auto c33_temp = graph::piecewise_2D(c33, r_norm, z_norm);
+            auto c30_temp = graph::piecewise_2D(c30, num_cols, r_norm, z_norm);
+            auto c31_temp = graph::piecewise_2D(c31, num_cols, r_norm, z_norm);
+            auto c32_temp = graph::piecewise_2D(c32, num_cols, r_norm, z_norm);
+            auto c33_temp = graph::piecewise_2D(c33, num_cols, r_norm, z_norm);
 
             return c00_temp +
                    c01_temp*z_norm +
-                   c02_temp*z_norm*z_norm +
-                   c03_temp*z_norm*z_norm*z_norm +
+                   c02_temp*(z_norm*z_norm) +
+                   c03_temp*(z_norm*z_norm*z_norm) +
                    c10_temp*r_norm +
                    c11_temp*r_norm*z_norm +
-                   c12_temp*r_norm*z_norm*z_norm +
-                   c13_temp*r_norm*z_norm*z_norm*z_norm +
-                   c20_temp*r_norm*r_norm +
-                   c21_temp*r_norm*r_norm*z_norm +
-                   c22_temp*r_norm*r_norm*z_norm*z_norm +
-                   c23_temp*r_norm*r_norm*z_norm*z_norm*z_norm +
-                   c30_temp*r_norm*r_norm*r_norm +
-                   c31_temp*r_norm*r_norm*r_norm*z_norm +
-                   c32_temp*r_norm*r_norm*r_norm*z_norm*z_norm +
-                   c33_temp*r_norm*r_norm*r_norm*z_norm*z_norm*z_norm;
+                   c12_temp*r_norm*(z_norm*z_norm) +
+                   c13_temp*r_norm*(z_norm*z_norm*z_norm) +
+                   c20_temp*(r_norm*r_norm) +
+                   c21_temp*(r_norm*r_norm)*z_norm +
+                   c22_temp*(r_norm*r_norm)*(z_norm*z_norm) +
+                   c23_temp*(r_norm*r_norm)*(z_norm*z_norm*z_norm) +
+                   c30_temp*(r_norm*r_norm*r_norm) +
+                   c31_temp*(r_norm*r_norm*r_norm)*z_norm +
+                   c32_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm) +
+                   c33_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm*z_norm);
         }
 
 //------------------------------------------------------------------------------
@@ -772,11 +949,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron density expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_density(graph::shared_leaf<T> x,
-                                                           graph::shared_leaf<T> y,
-                                                           graph::shared_leaf<T> z) {
-            auto psi = get_psi(x, y, z);
-            auto psi_norm = (psi - psimin)/dpsi;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) {
+            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
 
             auto c0_temp = graph::piecewise_1D(ne_c0, psi_norm);
             auto c1_temp = graph::piecewise_1D(ne_c1, psi_norm);
@@ -798,10 +975,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The ion density expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_density(const size_t index,
-                                                      graph::shared_leaf<T> x,
-                                                      graph::shared_leaf<T> y,
-                                                      graph::shared_leaf<T> z) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) {
             return get_electron_density(x, y, z);
         }
 
@@ -813,11 +991,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The pressure expression.
 //------------------------------------------------------------------------------
-        graph::shared_leaf<T> get_pressure(graph::shared_leaf<T> x,
-                                           graph::shared_leaf<T> y,
-                                           graph::shared_leaf<T> z) {
-            auto psi = get_psi(x, y, z);
-            auto psi_norm = (psi - psimin)/dpsi;
+        graph::shared_leaf<T, SAFE_MATH>
+        get_pressure(graph::shared_leaf<T, SAFE_MATH> x,
+                     graph::shared_leaf<T, SAFE_MATH> y,
+                     graph::shared_leaf<T, SAFE_MATH> z) {
+            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
 
             auto c0_temp = graph::piecewise_1D(pres_c0, psi_norm);
             auto c1_temp = graph::piecewise_1D(pres_c1, psi_norm);
@@ -838,11 +1016,11 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The electron temperature expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_electron_temperature(graph::shared_leaf<T> x,
-                                                               graph::shared_leaf<T> y,
-                                                               graph::shared_leaf<T> z) {
-            auto psi = get_psi(x, y, z);
-            auto psi_norm = (psi - psimin)/dpsi;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) {
+            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
 
             auto c0_temp = graph::piecewise_1D(te_c0, psi_norm);
             auto c1_temp = graph::piecewise_1D(te_c1, psi_norm);
@@ -864,14 +1042,15 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns The ion temperature expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T> get_ion_temperature(const size_t index,
-                                                          graph::shared_leaf<T> x,
-                                                          graph::shared_leaf<T> y,
-                                                          graph::shared_leaf<T> z) {
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) {
             auto pressure = get_pressure(x, y, z);
-            auto q = graph::constant(static_cast<T> (1.60218E-19));
+            auto q = graph::constant<T, SAFE_MATH> (static_cast<T> (1.60218E-19));
             return (pressure - get_electron_density(x, y, z)*get_electron_temperature(x, y, z)/q) /
-                   (get_ion_density(index, x, y, z) + graph::constant(static_cast<T> (1.0E-100)));
+                   (get_ion_density(index, x, y, z));
         }
 
 //------------------------------------------------------------------------------
@@ -880,7 +1059,8 @@ namespace equilibrium {
 ///  @params[in] r R position.
 ///  @returns The toroidal magnetic field expression.
 //------------------------------------------------------------------------------
-        graph::shared_leaf<T> get_b_phi(graph::shared_leaf<T> r) {
+        graph::shared_leaf<T, SAFE_MATH>
+        get_b_phi(graph::shared_leaf<T, SAFE_MATH> r) {
             auto r_norm = (r - rmin)/dr;
 
             auto c0_temp = graph::piecewise_1D(fpol_c0, r_norm);
@@ -902,14 +1082,14 @@ namespace equilibrium {
 ///  @params[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
-        virtual graph::shared_vector<T>
-        get_magnetic_field(graph::shared_leaf<T> x,
-                           graph::shared_leaf<T> y,
-                           graph::shared_leaf<T> z) {
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) {
             auto r = graph::sqrt(x*x + y*y);
             auto phi = graph::atan(x, y);
-            auto none = graph::none<T> ();
-            auto psi = get_psi(x, y, z);
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto psi = get_psi(r, z);
 
             auto br = psi->df(z)/r;
             auto bp = get_b_phi(r);
@@ -932,9 +1112,9 @@ namespace equilibrium {
 ///                          thread.
 ///  @returns A constructed EFIT equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared<T> make_efit(const std::string spline_file,
-                        std::mutex &sync) {
+    template<typename T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_efit(const std::string spline_file,
+                                   std::mutex &sync) {
         int ncid;
         sync.lock();
         nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);
@@ -1103,63 +1283,63 @@ namespace equilibrium {
         nc_close(ncid);
         sync.unlock();
 
-        auto rmin = graph::constant(static_cast<T> (rmin_value));
-        auto dr = graph::constant(static_cast<T> (dr_value));
-        auto zmin = graph::constant(static_cast<T> (zmin_value));
-        auto dz = graph::constant(static_cast<T> (dz_value));
-        auto psimin = graph::constant(static_cast<T> (psimin_value));
-        auto dpsi = graph::constant(static_cast<T> (dpsi_value));
-        auto pres_scale = graph::constant(static_cast<T> (pres_scale_value));
-        auto ne_scale = graph::constant(static_cast<T> (ne_scale_value));
-        auto te_scale = graph::constant(static_cast<T> (te_scale_value));
+        auto rmin = graph::constant<T, SAFE_MATH> (static_cast<T> (rmin_value));
+        auto dr = graph::constant<T, SAFE_MATH> (static_cast<T> (dr_value));
+        auto zmin = graph::constant<T, SAFE_MATH> (static_cast<T> (zmin_value));
+        auto dz = graph::constant<T, SAFE_MATH> (static_cast<T> (dz_value));
+        auto psimin = graph::constant<T, SAFE_MATH> (static_cast<T> (psimin_value));
+        auto dpsi = graph::constant<T, SAFE_MATH> (static_cast<T> (dpsi_value));
+        auto pres_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (pres_scale_value));
+        auto ne_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (ne_scale_value));
+        auto te_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (te_scale_value));
 
-        auto fpol_c0 = graph::piecewise_1D(std::vector<T> (fpol_c0_buffer.begin(), fpol_c0_buffer.end()));
-        auto fpol_c1 = graph::piecewise_1D(std::vector<T> (fpol_c1_buffer.begin(), fpol_c1_buffer.end()));
-        auto fpol_c2 = graph::piecewise_1D(std::vector<T> (fpol_c2_buffer.begin(), fpol_c2_buffer.end()));
-        auto fpol_c3 = graph::piecewise_1D(std::vector<T> (fpol_c3_buffer.begin(), fpol_c3_buffer.end()));
+        const auto fpol_c0 = backend::buffer(std::vector<T> (fpol_c0_buffer.begin(), fpol_c0_buffer.end()));
+        const auto fpol_c1 = backend::buffer(std::vector<T> (fpol_c1_buffer.begin(), fpol_c1_buffer.end()));
+        const auto fpol_c2 = backend::buffer(std::vector<T> (fpol_c2_buffer.begin(), fpol_c2_buffer.end()));
+        const auto fpol_c3 = backend::buffer(std::vector<T> (fpol_c3_buffer.begin(), fpol_c3_buffer.end()));
 
-        auto c00 = graph::piecewise_2D(std::vector<T> (psi_c00_buffer.begin(), psi_c00_buffer.end()), numz);
-        auto c01 = graph::piecewise_2D(std::vector<T> (psi_c01_buffer.begin(), psi_c01_buffer.end()), numz);
-        auto c02 = graph::piecewise_2D(std::vector<T> (psi_c02_buffer.begin(), psi_c02_buffer.end()), numz);
-        auto c03 = graph::piecewise_2D(std::vector<T> (psi_c03_buffer.begin(), psi_c03_buffer.end()), numz);
-        auto c10 = graph::piecewise_2D(std::vector<T> (psi_c10_buffer.begin(), psi_c10_buffer.end()), numz);
-        auto c11 = graph::piecewise_2D(std::vector<T> (psi_c11_buffer.begin(), psi_c11_buffer.end()), numz);
-        auto c12 = graph::piecewise_2D(std::vector<T> (psi_c12_buffer.begin(), psi_c12_buffer.end()), numz);
-        auto c13 = graph::piecewise_2D(std::vector<T> (psi_c13_buffer.begin(), psi_c13_buffer.end()), numz);
-        auto c20 = graph::piecewise_2D(std::vector<T> (psi_c20_buffer.begin(), psi_c20_buffer.end()), numz);
-        auto c21 = graph::piecewise_2D(std::vector<T> (psi_c21_buffer.begin(), psi_c21_buffer.end()), numz);
-        auto c22 = graph::piecewise_2D(std::vector<T> (psi_c22_buffer.begin(), psi_c22_buffer.end()), numz);
-        auto c23 = graph::piecewise_2D(std::vector<T> (psi_c23_buffer.begin(), psi_c23_buffer.end()), numz);
-        auto c30 = graph::piecewise_2D(std::vector<T> (psi_c30_buffer.begin(), psi_c30_buffer.end()), numz);
-        auto c31 = graph::piecewise_2D(std::vector<T> (psi_c31_buffer.begin(), psi_c31_buffer.end()), numz);
-        auto c32 = graph::piecewise_2D(std::vector<T> (psi_c32_buffer.begin(), psi_c32_buffer.end()), numz);
-        auto c33 = graph::piecewise_2D(std::vector<T> (psi_c33_buffer.begin(), psi_c33_buffer.end()), numz);
+        const auto c00 = backend::buffer(std::vector<T> (psi_c00_buffer.begin(), psi_c00_buffer.end()));
+        const auto c01 = backend::buffer(std::vector<T> (psi_c01_buffer.begin(), psi_c01_buffer.end()));
+        const auto c02 = backend::buffer(std::vector<T> (psi_c02_buffer.begin(), psi_c02_buffer.end()));
+        const auto c03 = backend::buffer(std::vector<T> (psi_c03_buffer.begin(), psi_c03_buffer.end()));
+        const auto c10 = backend::buffer(std::vector<T> (psi_c10_buffer.begin(), psi_c10_buffer.end()));
+        const auto c11 = backend::buffer(std::vector<T> (psi_c11_buffer.begin(), psi_c11_buffer.end()));
+        const auto c12 = backend::buffer(std::vector<T> (psi_c12_buffer.begin(), psi_c12_buffer.end()));
+        const auto c13 = backend::buffer(std::vector<T> (psi_c13_buffer.begin(), psi_c13_buffer.end()));
+        const auto c20 = backend::buffer(std::vector<T> (psi_c20_buffer.begin(), psi_c20_buffer.end()));
+        const auto c21 = backend::buffer(std::vector<T> (psi_c21_buffer.begin(), psi_c21_buffer.end()));
+        const auto c22 = backend::buffer(std::vector<T> (psi_c22_buffer.begin(), psi_c22_buffer.end()));
+        const auto c23 = backend::buffer(std::vector<T> (psi_c23_buffer.begin(), psi_c23_buffer.end()));
+        const auto c30 = backend::buffer(std::vector<T> (psi_c30_buffer.begin(), psi_c30_buffer.end()));
+        const auto c31 = backend::buffer(std::vector<T> (psi_c31_buffer.begin(), psi_c31_buffer.end()));
+        const auto c32 = backend::buffer(std::vector<T> (psi_c32_buffer.begin(), psi_c32_buffer.end()));
+        const auto c33 = backend::buffer(std::vector<T> (psi_c33_buffer.begin(), psi_c33_buffer.end()));
 
-        auto pres_c0 = graph::piecewise_1D(std::vector<T> (pressure_c0_buffer.begin(), pressure_c0_buffer.end()));
-        auto pres_c1 = graph::piecewise_1D(std::vector<T> (pressure_c1_buffer.begin(), pressure_c1_buffer.end()));
-        auto pres_c2 = graph::piecewise_1D(std::vector<T> (pressure_c2_buffer.begin(), pressure_c2_buffer.end()));
-        auto pres_c3 = graph::piecewise_1D(std::vector<T> (pressure_c3_buffer.begin(), pressure_c3_buffer.end()));
+        const auto pres_c0 = backend::buffer(std::vector<T> (pressure_c0_buffer.begin(), pressure_c0_buffer.end()));
+        const auto pres_c1 = backend::buffer(std::vector<T> (pressure_c1_buffer.begin(), pressure_c1_buffer.end()));
+        const auto pres_c2 = backend::buffer(std::vector<T> (pressure_c2_buffer.begin(), pressure_c2_buffer.end()));
+        const auto pres_c3 = backend::buffer(std::vector<T> (pressure_c3_buffer.begin(), pressure_c3_buffer.end()));
 
-        auto te_c0 = graph::piecewise_1D(std::vector<T> (te_c0_buffer.begin(), te_c0_buffer.end()));
-        auto te_c1 = graph::piecewise_1D(std::vector<T> (te_c1_buffer.begin(), te_c1_buffer.end()));
-        auto te_c2 = graph::piecewise_1D(std::vector<T> (te_c2_buffer.begin(), te_c2_buffer.end()));
-        auto te_c3 = graph::piecewise_1D(std::vector<T> (te_c3_buffer.begin(), te_c3_buffer.end()));
+        const auto te_c0 = backend::buffer(std::vector<T> (te_c0_buffer.begin(), te_c0_buffer.end()));
+        const auto te_c1 = backend::buffer(std::vector<T> (te_c1_buffer.begin(), te_c1_buffer.end()));
+        const auto te_c2 = backend::buffer(std::vector<T> (te_c2_buffer.begin(), te_c2_buffer.end()));
+        const auto te_c3 = backend::buffer(std::vector<T> (te_c3_buffer.begin(), te_c3_buffer.end()));
 
-        auto ne_c0 = graph::piecewise_1D(std::vector<T> (ne_c0_buffer.begin(), ne_c0_buffer.end()));
-        auto ne_c1 = graph::piecewise_1D(std::vector<T> (ne_c1_buffer.begin(), ne_c1_buffer.end()));
-        auto ne_c2 = graph::piecewise_1D(std::vector<T> (ne_c2_buffer.begin(), ne_c2_buffer.end()));
-        auto ne_c3 = graph::piecewise_1D(std::vector<T> (ne_c3_buffer.begin(), ne_c3_buffer.end()));
+        const auto ne_c0 = backend::buffer(std::vector<T> (ne_c0_buffer.begin(), ne_c0_buffer.end()));
+        const auto ne_c1 = backend::buffer(std::vector<T> (ne_c1_buffer.begin(), ne_c1_buffer.end()));
+        const auto ne_c2 = backend::buffer(std::vector<T> (ne_c2_buffer.begin(), ne_c2_buffer.end()));
+        const auto ne_c3 = backend::buffer(std::vector<T> (ne_c3_buffer.begin(), ne_c3_buffer.end()));
 
-        return std::make_shared<efit<T>> (psimin, dpsi,
-                                          te_c0, te_c1, te_c2, te_c3, te_scale,
-                                          ne_c0, ne_c1, ne_c2, ne_c3, ne_scale,
-                                          pres_c0, pres_c1, pres_c2, pres_c3, pres_scale,
-                                          rmin, dr, zmin, dz,
-                                          fpol_c0, fpol_c1, fpol_c2, fpol_c3,
-                                          c00, c01, c02, c03,
-                                          c10, c11, c12, c13,
-                                          c20, c21, c22, c23,
-                                          c30, c31, c32, c33);
+        return std::make_shared<efit<T, SAFE_MATH>> (psimin, dpsi,
+                                                     te_c0, te_c1, te_c2, te_c3, te_scale,
+                                                     ne_c0, ne_c1, ne_c2, ne_c3, ne_scale,
+                                                     pres_c0, pres_c1, pres_c2, pres_c3, pres_scale,
+                                                     rmin, dr, zmin, dz,
+                                                     fpol_c0, fpol_c1, fpol_c2, fpol_c3, numz,
+                                                     c00, c01, c02, c03,
+                                                     c10, c11, c12, c13,
+                                                     c20, c21, c22, c23,
+                                                     c30, c31, c32, c33);
     }
 }
 

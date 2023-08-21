@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file node_test.cpp
+///  @file node\_test.cpp
 ///  @brief Tests for the node interface.
 //------------------------------------------------------------------------------
 
@@ -7,6 +7,8 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+#include <cassert>
 
 #include "../graph_framework/piecewise.hpp"
 #include "../graph_framework/math.hpp"
@@ -54,6 +56,11 @@ void test_constant() {
     auto c2 = graph::constant(static_cast<T> (5.0));
     assert(c1.get() == c2.get() && "Expected same pointers");
     assert(c1->is_match(c2) && "Expected match.");
+
+//  Test node properties.
+    assert(c1->is_constant_like() && "Expected a constant.");
+    assert(!c1->is_all_variables() && "Did not expect a variable.");
+    assert(c1->is_power_like() && "Expected a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -111,6 +118,11 @@ void test_variable() {
     auto v2 = graph::variable<T> (1, "");
     assert(v1.get() != v2.get() && "Expected different pointers");
     assert(!v1->is_match(v2) && "Expected no match.");
+
+//  Test node properties.
+    assert(!v1->is_constant_like() && "Did not expect a constant.");
+    assert(v1->is_all_variables() && "Expected a variable.");
+    assert(v1->is_power_like() && "Expected a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -131,7 +143,17 @@ void test_pseudo_variable() {
 
     auto v2 = graph::pseudo_variable(a + b);
     assert(c.get() != v2.get() && "Expected different pointers");
-    assert(!c->is_match(v2) && "Expected no match.");
+    assert(!c->is_match(v2) && "Expected match.");
+    
+    auto remove = graph::two<T> () + graph::pseudo_variable(graph::one<T> ());
+    assert(add_cast(remove).get() && "Expected add node.");
+    assert(constant_cast(remove->remove_pseudo()).get() &&
+           "Expected constant node.");
+
+//  Test node properties.
+    assert(!c->is_constant_like() && "Did not expect a constant.");
+    assert(c->is_all_variables() && "Expected a variable.");
+    assert(c->is_power_like() && "Expected a power like.");
 }
 
 //------------------------------------------------------------------------------

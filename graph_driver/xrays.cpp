@@ -11,17 +11,9 @@
 #include "../graph_framework/solver.hpp"
 #include "../graph_framework/timing.hpp"
 
-void write_time(const std::string &name, const std::chrono::nanoseconds time);
-
-//------------------------------------------------------------------------------
-///  @brief Main program of the driver.
-///
-///  @params[in] t Current Time.
-//------------------------------------------------------------------------------
-template<typename base>
-static base solution(const base t) {
-    return std::exp(-t) - std::exp(-1000.0*t);
-}
+const bool print = true;
+const bool write_step = false;
+const bool print_expressions = false;
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
@@ -34,17 +26,19 @@ int main(int argc, const char * argv[]) {
 
     std::mutex sync;
 
-    typedef float base;
-    //typedef double base;
+    //typedef float base;
+    typedef double base;
     //typedef std::complex<float> base;
     //typedef std::complex<double> base;
+    //constexpr bool use_safe_math = true;
+    constexpr bool use_safe_math = false;
 
     const timeing::measure_diagnostic total("Total Time");
 
-    const size_t num_times = 10000;
-    const size_t sub_steps = 1;
+    const size_t num_times = 100000;
+    const size_t sub_steps = 10;
     const size_t num_steps = num_times/sub_steps;
-    const size_t num_rays = 1000000;
+    const size_t num_rays = 1;
 
     std::vector<std::thread> threads(0);
     if constexpr (jit::use_gpu<base> ()) {
@@ -63,70 +57,75 @@ int main(int argc, const char * argv[]) {
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
-            
-            auto omega = graph::variable<base> (local_num_rays, "\\omega");
-            auto kx = graph::variable<base> (local_num_rays, "k_{x}");
-            auto ky = graph::variable<base> (local_num_rays, "k_{y}");
-            auto kz = graph::variable<base> (local_num_rays, "k_{z}");
-            auto x = graph::variable<base> (local_num_rays, "x");
-            auto y = graph::variable<base> (local_num_rays, "y");
-            auto z = graph::variable<base> (local_num_rays, "z");
-            auto t = graph::variable<base> (local_num_rays, "t");
+
+            auto omega = graph::variable<base, use_safe_math> (local_num_rays, "\\omega");
+            auto kx = graph::variable<base, use_safe_math> (local_num_rays, "k_{x}");
+            auto ky = graph::variable<base, use_safe_math> (local_num_rays, "k_{y}");
+            auto kz = graph::variable<base, use_safe_math> (local_num_rays, "k_{z}");
+            auto x = graph::variable<base, use_safe_math> (local_num_rays, "x");
+            auto y = graph::variable<base, use_safe_math> (local_num_rays, "y");
+            auto z = graph::variable<base, use_safe_math> (local_num_rays, "z");
+            auto t = graph::variable<base, use_safe_math> (local_num_rays, "t");
 
             t->set(static_cast<base> (0.0));
 
 //  Inital conditions.
-            if constexpr (jit::is_complex<base> ()) {
-                if constexpr (jit::is_float<base> ()) {
-                    std::normal_distribution<float> norm_dist(static_cast<float> (1000.0), static_cast<float> (10.0));
-                    for (size_t j = 0; j < local_num_rays; j++) {
-                        omega->set(j, static_cast<base> (norm_dist(engine)));
-                    }
-                } else {
-                    std::normal_distribution<double> norm_dist(static_cast<double> (1000.0), static_cast<double> (10.0));
-                    for (size_t j = 0; j < local_num_rays; j++) {
-                        omega->set(j, static_cast<base> (norm_dist(engine)));
-                    }
+            if constexpr (jit::is_float<base> ()) {
+                std::normal_distribution<float> norm_dist(static_cast<float> (600.0), static_cast<float> (10.0));
+                for (size_t j = 0; j < local_num_rays; j++) {
+                    omega->set(j, static_cast<base> (norm_dist(engine)));
                 }
             } else {
-                std::normal_distribution<base> norm_dist(static_cast<base> (1000.0), static_cast<base> (10.0));
+                std::normal_distribution<float> norm_dist(static_cast<double> (600.0), static_cast<double> (10.0));
                 for (size_t j = 0; j < local_num_rays; j++) {
                     omega->set(j, static_cast<base> (norm_dist(engine)));
                 }
             }
 
-            x->set(static_cast<base> (1.5));
+            omega->set(static_cast<base> (500.0));
+            //x->set(static_cast<base> (-12.0));
+            x->set(static_cast<base> (2.5));
             //x->set(static_cast<base> (0.0));
             y->set(static_cast<base> (0.0));
             z->set(static_cast<base> (0.0));
-            kx->set(static_cast<base> (2000.0));
+            kx->set(static_cast<base> (-600));
             //kx->set(static_cast<base> (600.0));
             ky->set(static_cast<base> (0.0));
             kz->set(static_cast<base> (0.0));
+            //kz->set(static_cast<base> (10.0));
 
+            auto eq = equilibrium::make_efit<base, use_safe_math> (NC_FILE, sync);
+            //auto eq = equilibrium::make_slab_density<base, use_safe_math> ();
+            //auto eq = equilibrium::make_slab_field<base, use_safe_math> ();
+            //auto eq = equilibrium::make_no_magnetic_field<base, use_safe_math> ();
 
-            auto eq = equilibrium::make_efit<base> (NC_FILE, sync);
-            //auto eq = equilibrium::make_slab_density<base> ();
-            //auto eq = equilibrium::make_no_magnetic_field<base> ();
-
-            //const base endtime = static_cast<base> (4.0);
-            const base endtime = static_cast<base> (100.0);
+            const base endtime = static_cast<base> (1.0);
+            //const base endtime = static_cast<base> (10.0);
+            //const base endtime = static_cast<base> (0.25);
             const base dt = endtime/static_cast<base> (num_times);
 
             //auto dt_var = graph::variable(num_rays, static_cast<base> (dt), "dt");
 
-            //solver::split_simplextic<dispersion::bohm_gross<base>>
-            //solver::adaptive_rk4<dispersion::bohm_gross<base>>
-            //solver::rk4<dispersion::simple<base>>
-            //solver::rk4<dispersion::ordinary_wave<base>>
-            solver::rk4<dispersion::extra_ordinary_wave<base>>
-            //solver::rk4<dispersion::cold_plasma<base>>
-            //solver::adaptive_rk4<dispersion::ordinary_wave<base>>
-                solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
-                //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq);
-            solve.init(omega);
+            std::ostringstream stream;
+            stream << "result" << thread_number << ".nc";
+
+            //solver::split_simplextic<dispersion::bohm_gross<base, use_safe_math>>
+            //solver::rk4<dispersion::bohm_gross<base, use_safe_math>>
+            //solver::adaptive_rk4<dispersion::bohm_gross<base, use_safe_math>>
+            //solver::rk4<dispersion::simple<base, use_safe_math>>
+            //solver::rk4<dispersion::ordinary_wave<base, use_safe_math>>
+            //solver::rk4<dispersion::extra_ordinary_wave<base, use_safe_math>>
+            solver::rk4<dispersion::cold_plasma<base, use_safe_math>>
+            //solver::adaptive_rk4<dispersion::ordinary_wave<base, use_safe_math>>
+            //solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>
+            //solver::rk4<dispersion::hot_plasma_expandion<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>
+                solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
+                      stream.str(), local_num_rays);
+                //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq,
+                //      stream.str(), local_num_rays);
+            solve.init(kx);
             solve.compile();
-            if (thread_number == 0 && false) {
+            if (thread_number == 0 && print_expressions) {
                 solve.print_dispersion();
                 std::cout << std::endl;
                 solve.print_dkxdt();
@@ -140,6 +139,21 @@ int main(int argc, const char * argv[]) {
                 solve.print_dydt();
                 std::cout << std::endl;
                 solve.print_dzdt();
+                std::cout << std::endl;
+                solve.print_residule();
+                std::cout << std::endl;
+                solve.print_x_next();
+                std::cout << std::endl;
+                solve.print_y_next();
+                std::cout << std::endl;
+                solve.print_z_next();
+                std::cout << std::endl;
+                solve.print_kx_next();
+                std::cout << std::endl;
+                solve.print_ky_next();
+                std::cout << std::endl;
+                solve.print_kz_next();
+                std::cout << std::endl;
             }
 
             const size_t sample = int_dist(engine);
@@ -149,16 +163,21 @@ int main(int argc, const char * argv[]) {
             }
 
             for (size_t j = 0; j < num_steps; j++) {
-                if (thread_number == 0) {
+                if (thread_number == 0 && print) {
                     solve.print(sample);
+                }
+                if (write_step) {
+                    solve.write_step();
                 }
                 for(size_t k = 0; k < sub_steps; k++) {
                     solve.step();
                 }
             }
 
-            if (thread_number == 0) {
+            if (thread_number == 0 && print) {
                 solve.print(sample);
+            } else if (write_step) {
+                solve.write_step();
             } else {
                 solve.sync_host();
             }

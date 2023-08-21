@@ -8,9 +8,8 @@ target_compile_features (rays
 
 target_compile_definitions (rays
                             INTERFACE
-                            $<$<CONFIG:Release>:NDEBUG>
-                            $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT}">
-                            $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER}">
+                            $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a">
+                            $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a">
                             NC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"
 )
 target_include_directories (rays
@@ -41,6 +40,8 @@ target_precompile_headers (rays
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpu_context.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/piecewise.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/newton.hpp>>
+                           $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/special_functions.hpp>>
+                           $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/output.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<$<BOOL:${USE_METAL}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/metal_context.hpp>>>
                            $<$<BOOL:${USE_PCH}>:$<$<BOOL:${USE_CUDA}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cuda_context.hpp>>>
 )

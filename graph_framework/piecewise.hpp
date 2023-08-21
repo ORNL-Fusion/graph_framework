@@ -20,33 +20,33 @@ namespace graph {
 ///  This class is used to impliment the coefficent terms of cubic spline
 ///  interpolation. An function is interpolated using
 ///
-///    y(x) = a_i + b_i*x +c_i*x^2 + d_i*x^3                                   (1)
+///    y(x) = a_i + b_i*x +c_i*x^2 + d_i*x^3                                 (1)
 ///
 ///  The coeffients are defined as
 ///
-///    a_i = y_i                                                               (2)
-///    b_i = D_i                                                               (3)
-///    c_i = 3*(y_i+1 - y_i) - 2*D_i - D_i+1                                   (4)
-///    d_i = 2*(y_i - y_i+1) + D_i + D_i+1                                     (5)
+///    a_i = y_i                                                             (2)
+///    b_i = D_i                                                             (3)
+///    c_i = 3*(y_i+1 - y_i) - 2*D_i - D_i+1                                 (4)
+///    d_i = 2*(y_i - y_i+1) + D_i + D_i+1                                   (5)
 ///
 ///  The agument x is assumed to be the normalized argument
 ///
-///    x_norm = (x - xmin)/dx - i                                              (6)
+///    x_norm = (x - xmin)/dx - i                                            (6)
 ///
-///  To avoid tracking the index i which normaizes x to a zero to one interval the
-///  coefficients should be normalized to
+///  To avoid tracking the index i which normaizes x to a zero to one interval
+///  the coefficients should be normalized to
 ///
-///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                  (7)
-///    b'_i = b_i - 2*c_i*i+3*d_i*i^2                                          (8)
-///    c'_i = c_i - 3*d_i*i                                                    (9)
-///    d'_i = d_i                                                             (10)
+///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                (7)
+///    b'_i = b_i - 2*c_i*i+3*d_i*i^2                                        (8)
+///    c'_i = c_i - 3*d_i*i                                                  (9)
+///    d'_i = d_i                                                           (10)
 ///
 ///  This makes the normalized argument (6) become
 ///
-///    x_norm' = (x - xmin)/dx                                                (11)
+///    x_norm' = (x - xmin)/dx                                              (11)
 //------------------------------------------------------------------------------
-    template<typename T>
-    class piecewise_1D_node final : public straight_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class piecewise_1D_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -55,16 +55,12 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d) {
-            std::stringstream stream;
-            stream << std::setprecision(jit::max_digits10<T> ());
-
-            stream << "{" << d[0];
-            for (size_t i = 1, ie = d.size(); i < ie; i++) {
-                stream << "," << d[i];
+            std::string temp;
+            for (size_t i = 0, ie = d.size(); i < ie; i++) {
+                temp += jit::format_to_string(d[i]);
             }
-            stream << "}";
-                    
-            return stream.str();
+
+            return temp;
         }
 
 //------------------------------------------------------------------------------
@@ -75,12 +71,29 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
-                                     shared_leaf<T> x) {
-            std::stringstream stream;
-            stream << piecewise_1D_node<T>::to_string(d);
-            stream << x->get_hash();
+                                     shared_leaf<T, SAFE_MATH> x) {
+            return piecewise_1D_node::to_string(d) +
+                   jit::format_to_string(x->get_hash());
+        }
 
-            return stream.str();
+//------------------------------------------------------------------------------
+///  @brief Stores the data in a hash.
+///
+///  @params[in] d Backend buffer.
+///  @returns The hash the node is stored in.
+//------------------------------------------------------------------------------
+        static size_t hash_data(const backend::buffer<T> &d) {
+            const size_t h = std::hash<std::string>{} (piecewise_1D_node::to_string(d));
+            for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
+                if (leaf_node<T, SAFE_MATH>::backend_cache.find(i) ==
+                    leaf_node<T, SAFE_MATH>::backend_cache.end()) {
+                    leaf_node<T, SAFE_MATH>::backend_cache[i] = d;
+                    return i;
+                } else if (d == leaf_node<T, SAFE_MATH>::backend_cache[i]) {
+                    return i;
+                }
+            }
+            assert(false && "Should never reach.");
         }
 
 ///  Data buffer hash.
@@ -94,28 +107,9 @@ namespace graph {
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
         piecewise_1D_node(const backend::buffer<T> &d,
-                          shared_leaf<T> x) :
-        straight_node<T> (x, piecewise_1D_node<T>::to_string(d, x)),
-        data_hash(std::hash<std::string>{} (piecewise_1D_node<T>::to_string(d))) {
-            if (piecewise_1D_node<T>::backend_cache.find(data_hash) ==
-                piecewise_1D_node<T>::backend_cache.end()) {
-                piecewise_1D_node<T>::backend_cache[data_hash] = d;
-            }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Construct 1D a piecewise constant node with defered argument.
-///
-///  @params[in] d Data to initalize the piecewise constant.
-//------------------------------------------------------------------------------
-        piecewise_1D_node(const backend::buffer<T> &d) :
-        straight_node<T> (piecewise_1D_node<T>::to_string(d)),
-        data_hash(std::hash<std::string>{} (piecewise_1D_node<T>::to_string(d))) {
-            if (piecewise_1D_node<T>::backend_cache.find(data_hash) ==
-                piecewise_1D_node<T>::backend_cache.end()) {
-                piecewise_1D_node<T>::backend_cache[data_hash] = d;
-            }
-        }
+                          shared_leaf<T, SAFE_MATH> x) :
+        straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x)),
+        data_hash(piecewise_1D_node::hash_data(d)) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of the piecewise constant.
@@ -127,7 +121,7 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return piecewise_1D_node<T>::backend_cache[data_hash];
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash];
         }
 
 //------------------------------------------------------------------------------
@@ -138,9 +132,9 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (evaluate().is_same()) {
-                return constant(evaluate().at(0));
+                return constant<T, SAFE_MATH> (evaluate().at(0));
             }
             return this->shared_from_this();
         }
@@ -151,8 +145,8 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
-            return zero<T> ();
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return zero<T, SAFE_MATH> ();
         }
 
 //------------------------------------------------------------------------------
@@ -162,29 +156,30 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
-        virtual void compile_preamble(std::stringstream &stream,
+        virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {
             if (visited.find(this) == visited.end()) {
-                if (registers.find(piecewise_1D_node<T>::backend_cache[data_hash].data()) == registers.end()) {
-                    registers[piecewise_1D_node<T>::backend_cache[data_hash].data()] =
-                        jit::to_string('a', piecewise_1D_node<T>::backend_cache[data_hash].data());
+                if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
+                    registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
+                        jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
                     if constexpr (jit::use_metal<T> ()) {
                         stream << "constant ";
                     }
                     stream << "const ";
                     jit::add_type<T> (stream);
-                    stream << " " << registers[piecewise_1D_node<T>::backend_cache[data_hash].data()] << "[] = {";
+                    stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
                     if constexpr (jit::is_complex<T> ()) {
                         jit::add_type<T> (stream);
                     }
-                    stream << piecewise_1D_node<T>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = piecewise_1D_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
+                    stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
+                    for (size_t i = 1, ie = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                         i < ie; i++) {
                         stream << ", ";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << piecewise_1D_node<T>::backend_cache[data_hash][i];
+                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
                     }
                     stream << "};" << std::endl;
                     visited[this] = 0;
@@ -198,27 +193,29 @@ namespace graph {
 ///  This node first evaluates the value of the argument then chooses the correct
 ///  piecewise index. This assumes that the argument is
 ///
-///    x' = (x - xmin)/dx                                                      (1)
+///    x' = (x - xmin)/dx                                                    (1)
 ///
 ///  and the spline coefficients are of the form.
 ///
-///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                  (2)
-///    b'_i = b_i - 2*c_i*i+3*d_i*i^2                                          (3)
-///    c'_i = c_i - 3*d_i*i                                                    (4)
-///    d'_i = d_i                                                              (5)
+///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                (2)
+///    b'_i = b_i - 2*c_i*i+3*d_i*i^2                                        (3)
+///    c'_i = c_i - 3*d_i*i                                                  (4)
+///    d'_i = d_i                                                            (5)
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T> a = this->arg->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = " << registers[piecewise_1D_node<T>::backend_cache[data_hash].data()];
+                stream << " " << registers[this] << " = "
+                       << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
                 stream << "[max(min((int)";
                 if constexpr (jit::is_complex<T> ()) {
                     stream << "real(";
@@ -227,31 +224,29 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     stream << ")";
                 }
-                stream <<", " << piecewise_1D_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];" << std::endl;
+                stream << ", "
+                       << leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() - 1 << "), 0)];"
+                       << std::endl;
             }
-            
+
             return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  The argument of this node can be defered so we need to check if the arguments
-///  are null.
+///  The argument of this node can be defered so we need to check if the
+///  arguments are null.
 ///
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             auto x_cast = piecewise_1D_cast(x);
+
             if (x_cast.get()) {
-                if (this->arg.get() && x_cast->get_arg().get()) {
-                    return this->evaluate() == x->evaluate() &&
-                           this->arg->is_match(x_cast->get_arg());
-                } else {
-                    return this->arg.get() == x_cast->get_arg().get() &&
-                           this->evaluate() == x->evaluate();
-                }
+                return this->data_hash == x_cast->data_hash &&
+                       this->arg->is_match(x_cast->get_arg());
             }
 
             return false;
@@ -262,11 +257,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
             std::cout << "r\\_" << reinterpret_cast<size_t> (this) << "_{i}";
-            if (this->arg.get()) {
-                std::cout << "\\left(";
-                this->arg->to_latex();
-                std::cout << "\\right)";
-            }
         }
 
 //------------------------------------------------------------------------------
@@ -283,31 +273,48 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
+        virtual bool is_all_variables() const {
             return false;
         }
 
-///  Cache for the backend buffers.
-        inline thread_local static std::map<size_t, backend::buffer<T>> backend_cache;
-    };
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise\_1D convience function with defered argument.
+///  @brief Get the base of a power.
 ///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @returns A reduced piecewise\_1D node.
+///  @returns The base of a power like node.
 //------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_1D(const std::vector<T> &d) {
-        auto temp = std::make_shared<piecewise_1D_node<T>> (d)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
+        virtual shared_leaf<T, SAFE_MATH> get_power_base() {
+            return this->shared_from_this();
         }
-        
-        return leaf_node<T>::cache[h];
-    }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the args match.
+///
+///  @param[in] x Node to match.
+///  @returns True if the arguments match.
+//------------------------------------------------------------------------------
+        bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = piecewise_1D_cast(x);
+            return temp.get() && this->arg->is_match(temp->get_arg());
+        }
+    };
 
 //------------------------------------------------------------------------------
 ///  @brief Define piecewise\_1D convience function.
@@ -316,22 +323,26 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced piecewise\_1D node.
 //------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_1D(const backend::buffer<T> &d,
-                                                     shared_leaf<T> x) {
-        auto temp = std::make_shared<piecewise_1D_node<T>> (d, x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
+    template<typename T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> piecewise_1D(const backend::buffer<T> &d,
+                                           shared_leaf<T, SAFE_MATH> x) {
+        auto temp = std::make_shared<piecewise_1D_node<T, SAFE_MATH>> (d, x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
+            }
         }
-        
-        return leaf_node<T>::cache[h];
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared piecewise 1D nodes.
-    template<typename T>
-    using shared_piecewise_1D = std::shared_ptr<piecewise_1D_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_piecewise_1D = std::shared_ptr<piecewise_1D_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a piecewise 1D node.
@@ -339,27 +350,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_piecewise_1D<T> piecewise_1D_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<piecewise_1D_node<T>> (x);
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Set the argument of a piecewise\_1D node.
-///
-///  Piecewise functions could be reduced to a single constant so we need to check
-///  if it can be cast.
-///
-///  @params[in] p Existing piecewise constant.
-///  @params[in] x Argument.
-///  @returns The 1D piecewise constant with the argument set.
-//------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_1D(shared_leaf<T> p,
-                                                     shared_leaf<T> x) {
-        if (piecewise_1D_cast(p).get()) {
-            return piecewise_1D(p->evaluate(), x);
-        }
-        return p;
+    template<typename T, bool SAFE_MATH=false>
+    shared_piecewise_1D<T, SAFE_MATH> piecewise_1D_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<piecewise_1D_node<T, SAFE_MATH>> (x);
     }
 
 //******************************************************************************
@@ -371,40 +364,40 @@ namespace graph {
 ///  This class is used to impliment the coefficent terms of bicubic spline
 ///  interpolation. An function is interpolated using
 ///
-///    z(x,y) = Σ_i,3Σ_j,3 c_ij*x^i*y^j                                        (1)
+///    z(x,y) = Σ_i,3Σ_j,3 c_ij*x^i*y^j                                      (1)
 ///
 ///  The aguments x and y are assumed to be the normalized arguments
 ///
-///    x_norm = (x - xmin)/dx - i                                              (2)
-///    y_norm = (y - ymin)/dy - j                                              (3)
+///    x_norm = (x - xmin)/dx - i                                            (2)
+///    y_norm = (y - ymin)/dy - j                                            (3)
 ///
 ///  To avoid tracking the indices i and j which normaizes x and y to a zero to
 ///  one interval the coefficients should be normalized to
 ///
-///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                               (4)
-///    c10'_ij = Σ_k,3Σ_l,3 k*(-i)^(k-1)*(-j)^l*ckl_ij                         (5)
-///    c01'_ij = Σ_k,3Σ_l,3 l*(-i)^k*(-j)^(l-1)*ckl_ij                         (6)
-///    c20'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*(-i)^(k-2)*(-j)^l*ckl_ij              (7)
-///    c02'_ij = Σ_k,3Σ_l,3 Max(2*l-3,0)*(-i)^k*(-j)^(l-2)*ckl_ij              (8)
-///    c30'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*(-i)^(k-3)*(-j)^l*ckl_ij                (9)
-///    c03'_ij = Σ_k,3Σ_l,3 Max(l-2,0)*(-i)^k*(-j)^(l-3)*ckl_ij               (10)
-///    c11'_ij = Σ_k,3Σ_l,3 k*l*(-i)^(k-1)*(-j)^(j-1)                         (11)
-///    c21'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*l*(-i)^(k-2)*(-j)^(j-1)              (12)
-///    c12'_ij = Σ_k,3Σ_l,3 k*Max(2*l-3,0)*(-i)^(k-1)*(-j)^(j-2)              (13)
-///    c31'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*l*(-i)^(k-3)*(-j)^(j-1)                (14)
-///    c13'_ij = Σ_k,3Σ_l,3 k*Max(l-2,0)*(-i)^(k-1)*(-j)^(j-3)                (15)
-///    c22'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(2*l-3,0)*(-i)^(k-2)*(-j)^(j-2)   (16)
-///    c32'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(2*l-3,0)*(-i)^(k-3)*(-j)^(j-2)     (17)
-///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)     (18)
-///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)       (19)
+///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                             (4)
+///    c10'_ij = Σ_k,3Σ_l,3 k*(-i)^(k-1)*(-j)^l*ckl_ij                       (5)
+///    c01'_ij = Σ_k,3Σ_l,3 l*(-i)^k*(-j)^(l-1)*ckl_ij                       (6)
+///    c20'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*(-i)^(k-2)*(-j)^l*ckl_ij            (7)
+///    c02'_ij = Σ_k,3Σ_l,3 Max(2*l-3,0)*(-i)^k*(-j)^(l-2)*ckl_ij            (8)
+///    c30'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*(-i)^(k-3)*(-j)^l*ckl_ij              (9)
+///    c03'_ij = Σ_k,3Σ_l,3 Max(l-2,0)*(-i)^k*(-j)^(l-3)*ckl_ij             (10)
+///    c11'_ij = Σ_k,3Σ_l,3 k*l*(-i)^(k-1)*(-j)^(j-1)                       (11)
+///    c21'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*l*(-i)^(k-2)*(-j)^(j-1)            (12)
+///    c12'_ij = Σ_k,3Σ_l,3 k*Max(2*l-3,0)*(-i)^(k-1)*(-j)^(j-2)            (13)
+///    c31'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*l*(-i)^(k-3)*(-j)^(j-1)              (14)
+///    c13'_ij = Σ_k,3Σ_l,3 k*Max(l-2,0)*(-i)^(k-1)*(-j)^(j-3)              (15)
+///    c22'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(2*l-3,0)*(-i)^(k-2)*(-j)^(j-2) (16)
+///    c32'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(2*l-3,0)*(-i)^(k-3)*(-j)^(j-2)   (17)
+///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)   (18)
+///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)     (19)
 ///
 ///  This makes the normalized arguments (6,7) become
 ///
-///    x_norm' = (x - xmin)/dx                                                (20)
-///    y_norm' = (y - ymin)/dy                                                (21)
+///    x_norm' = (x - xmin)/dx                                              (20)
+///    y_norm' = (y - ymin)/dy                                              (21)
 //------------------------------------------------------------------------------
-    template<typename T>
-    class piecewise_2D_node final : public branch_node<T> {
+    template<typename T, bool SAFE_MATH=false>
+    class piecewise_2D_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -413,16 +406,12 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d) {
-            std::stringstream stream;
-            stream << std::setprecision(jit::max_digits10<T> ());
-
-            stream << "{" << d[0];
-            for (size_t i = 1, ie = d.size(); i < ie; i++) {
-                stream << "," << d[i];
+            std::string temp;
+            for (size_t i = 0, ie = d.size(); i < ie; i++) {
+                temp += jit::format_to_string(d[i]);
             }
-            stream << "}";
-                    
-            return stream.str();
+
+            return temp;
         }
 
 //------------------------------------------------------------------------------
@@ -434,14 +423,31 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
-                                     shared_leaf<T> x,
-                                     shared_leaf<T> y) {
-            std::stringstream stream;
-            stream << piecewise_2D_node<T>::to_string(d);
-            stream << x->get_hash();
-            stream << y->get_hash();
+                                     shared_leaf<T, SAFE_MATH> x,
+                                     shared_leaf<T, SAFE_MATH> y) {
+            return piecewise_2D_node::to_string(d) +
+                   jit::format_to_string(x->get_hash()) +
+                   jit::format_to_string(y->get_hash());
+        }
 
-            return stream.str();
+//------------------------------------------------------------------------------
+///  @brief Stores the data in a hash.
+///
+///  @params[in] d Backend buffer.
+///  @returns The hash the node is stored in.
+//------------------------------------------------------------------------------
+        static size_t hash_data(const backend::buffer<T> &d) {
+            const size_t h = std::hash<std::string>{} (piecewise_2D_node::to_string(d));
+            for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
+                if (leaf_node<T, SAFE_MATH>::backend_cache.find(i) ==
+                    leaf_node<T, SAFE_MATH>::backend_cache.end()) {
+                    leaf_node<T, SAFE_MATH>::backend_cache[i] = d;
+                    return i;
+                } else if (d == leaf_node<T, SAFE_MATH>::backend_cache[i]) {
+                    return i;
+                }
+            }
+            assert(false && "Should never reach.");
         }
 
 ///  Data buffer hash.
@@ -460,38 +466,13 @@ namespace graph {
 //------------------------------------------------------------------------------
         piecewise_2D_node(const backend::buffer<T> &d,
                           const size_t n,
-                          shared_leaf<T> x,
-                          shared_leaf<T> y) :
-        branch_node<T> (x, y, piecewise_2D_node<T>::to_string(d, x, y)),
-        data_hash(std::hash<std::string>{} (piecewise_2D_node<T>::to_string(d))),
+                          shared_leaf<T, SAFE_MATH> x,
+                          shared_leaf<T, SAFE_MATH> y) :
+        branch_node<T, SAFE_MATH> (x, y, piecewise_2D_node::to_string(d, x, y)),
+        data_hash(piecewise_2D_node::hash_data(d)),
         num_columns(n) {
             assert(d.size()/n &&
                    "Expected the data buffer to be a multiple of the number of columns.");
-
-            if (piecewise_2D_node<T>::backend_cache.find(data_hash) ==
-                piecewise_2D_node<T>::backend_cache.end()) {
-                piecewise_2D_node<T>::backend_cache[data_hash] = d;
-            }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Construct 2D a piecewise constant node with defered arguments.
-///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] n Number of columns.
-//------------------------------------------------------------------------------
-        piecewise_2D_node(const backend::buffer<T> &d,
-                          const size_t n) :
-        branch_node<T> (piecewise_2D_node<T>::to_string(d)),
-        data_hash(std::hash<std::string>{} (piecewise_2D_node<T>::to_string(d))),
-        num_columns(n) {
-            assert(d.size()/n &&
-                   "Expected the data buffer to be a multiple of the number of columns.");
-
-            if (piecewise_2D_node<T>::backend_cache.find(data_hash) ==
-                piecewise_2D_node<T>::backend_cache.end()) {
-                piecewise_2D_node<T>::backend_cache[data_hash] = d;
-            }
         }
 
 //------------------------------------------------------------------------------
@@ -499,7 +480,7 @@ namespace graph {
 ///
 ///  @returns The number of columns in the constant.
 //------------------------------------------------------------------------------
-        size_t get_num_columns() {
+        size_t get_num_columns() const {
             return num_columns;
         }
 
@@ -513,7 +494,7 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return piecewise_2D_node<T>::backend_cache[data_hash];
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash];
         }
 
 //------------------------------------------------------------------------------
@@ -524,10 +505,11 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> reduce() {
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (evaluate().is_same()) {
-                return constant(evaluate().at(0));
+                return constant<T, SAFE_MATH> (evaluate().at(0));
             }
+
             return this->shared_from_this();
         }
 
@@ -537,8 +519,8 @@ namespace graph {
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> df(shared_leaf<T> x) {
-            return zero<T> ();
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return zero<T, SAFE_MATH> ();
         }
 
 //------------------------------------------------------------------------------
@@ -548,29 +530,29 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @params[in,out] visited   List of visited nodes.
 //------------------------------------------------------------------------------
-        virtual void compile_preamble(std::stringstream &stream,
+        virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited) {
             if (visited.find(this) == visited.end()) {
-                if (registers.find(piecewise_2D_node<T>::backend_cache[data_hash].data()) == registers.end()) {
-                    registers[piecewise_2D_node<T>::backend_cache[data_hash].data()] =
-                        jit::to_string('a', piecewise_2D_node<T>::backend_cache[data_hash].data());
+                if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
+                    registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
+                        jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
                     if constexpr (jit::use_metal<T> ()) {
                         stream << "constant ";
                     }
                     stream << "const ";
                     jit::add_type<T> (stream);
-                    stream << " " << registers[piecewise_2D_node<T>::backend_cache[data_hash].data()] << "[] = {";
+                    stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
                     if constexpr (jit::is_complex<T> ()) {
                         jit::add_type<T> (stream);
                     }
-                    stream << piecewise_2D_node<T>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = piecewise_2D_node<T>::backend_cache[data_hash].size(); i < ie; i++) {
+                    stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
+                    for (size_t i = 1, ie = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size(); i < ie; i++) {
                         stream << ", ";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << piecewise_2D_node<T>::backend_cache[data_hash][i];
+                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
                     }
                     stream << "};" << std::endl;
                 }
@@ -583,41 +565,43 @@ namespace graph {
 ///  This node first evaluates the value of the argument then chooses the correct
 ///  piecewise index. This assumes that the argument is
 ///
-///    x' = (x - xmin)/dx                                                      (1)
-///    y' = (y - ymin)/dy                                                      (2)
+///    x' = (x - xmin)/dx                                                    (1)
+///    y' = (y - ymin)/dy                                                    (2)
 ///
 ///  and the spline coefficients are of the form.
 ///
-///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                               (3)
-///    c10'_ij = Σ_k,3Σ_l,3 k*(-i)^(k-1)*(-j)^l*ckl_ij                         (4)
-///    c01'_ij = Σ_k,3Σ_l,3 l*(-i)^k*(-j)^(l-1)*ckl_ij                         (5)
-///    c20'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*(-i)^(k-2)*(-j)^l*ckl_ij              (6)
-///    c02'_ij = Σ_k,3Σ_l,3 Max(2*l-3,0)*(-i)^k*(-j)^(l-2)*ckl_ij              (7)
-///    c30'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*(-i)^(k-3)*(-j)^l*ckl_ij                (8)
-///    c03'_ij = Σ_k,3Σ_l,3 Max(l-2,0)*(-i)^k*(-j)^(l-3)*ckl_ij                (9)
-///    c11'_ij = Σ_k,3Σ_l,3 k*l*(-i)^(k-1)*(-j)^(j-1)                         (10)
-///    c21'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*l*(-i)^(k-2)*(-j)^(j-1)              (11)
-///    c12'_ij = Σ_k,3Σ_l,3 k*Max(2*l-3,0)*(-i)^(k-1)*(-j)^(j-2)              (12)
-///    c31'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*l*(-i)^(k-3)*(-j)^(j-1)                (13)
-///    c13'_ij = Σ_k,3Σ_l,3 k*Max(l-2,0)*(-i)^(k-1)*(-j)^(j-3)                (14)
-///    c22'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(2*l-3,0)*(-i)^(k-2)*(-j)^(j-2)   (15)
-///    c32'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(2*l-3,0)*(-i)^(k-3)*(-j)^(j-2)     (16)
-///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)     (17)
-///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)       (18)
+///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                             (3)
+///    c10'_ij = Σ_k,3Σ_l,3 k*(-i)^(k-1)*(-j)^l*ckl_ij                       (4)
+///    c01'_ij = Σ_k,3Σ_l,3 l*(-i)^k*(-j)^(l-1)*ckl_ij                       (5)
+///    c20'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*(-i)^(k-2)*(-j)^l*ckl_ij            (6)
+///    c02'_ij = Σ_k,3Σ_l,3 Max(2*l-3,0)*(-i)^k*(-j)^(l-2)*ckl_ij            (7)
+///    c30'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*(-i)^(k-3)*(-j)^l*ckl_ij              (8)
+///    c03'_ij = Σ_k,3Σ_l,3 Max(l-2,0)*(-i)^k*(-j)^(l-3)*ckl_ij              (9)
+///    c11'_ij = Σ_k,3Σ_l,3 k*l*(-i)^(k-1)*(-j)^(j-1)                       (10)
+///    c21'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*l*(-i)^(k-2)*(-j)^(j-1)            (11)
+///    c12'_ij = Σ_k,3Σ_l,3 k*Max(2*l-3,0)*(-i)^(k-1)*(-j)^(j-2)            (12)
+///    c31'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*l*(-i)^(k-3)*(-j)^(j-1)              (13)
+///    c13'_ij = Σ_k,3Σ_l,3 k*Max(l-2,0)*(-i)^(k-1)*(-j)^(j-3)              (14)
+///    c22'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(2*l-3,0)*(-i)^(k-2)*(-j)^(j-2) (15)
+///    c32'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(2*l-3,0)*(-i)^(k-3)*(-j)^(j-2)   (16)
+///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)   (17)
+///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)     (18)
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> compile(std::stringstream &stream,
-                                       jit::register_map &registers) {
-            if (registers.find(this) == registers.end()) {                
-                shared_leaf<T> x = this->left->compile(stream, registers);
-                shared_leaf<T> y = this->right->compile(stream, registers);
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<T, SAFE_MATH> x = this->left->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream, registers);
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = " << registers[piecewise_2D_node<T>::backend_cache[data_hash].data()];
+                stream << " " << registers[this] << " = "
+                       << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
                 stream << "[max(min((int)";
                 if constexpr (jit::is_complex<T> ()) {
                     stream << "real(";
@@ -634,9 +618,11 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     stream << ")";
                 }
-                stream <<", " << piecewise_2D_node<T>::backend_cache[data_hash].size() - 1 << "), 0)];" << std::endl;
+                stream << ", "
+                       << leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() - 1 << "), 0)];"
+                       << std::endl;
             }
-            
+
             return this->shared_from_this();
         }
 
@@ -648,19 +634,13 @@ namespace graph {
 ///  @params[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T> x) {
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             auto x_cast = piecewise_2D_cast(x);
+
             if (x_cast.get()) {
-                if (this->left.get() &&
-                    x_cast->get_left().get()) {
-                    return this->evaluate() == x->evaluate()        &&
-                           this->left->is_match(x_cast->get_left()) &&
-                           this->right->is_match(x_cast->get_right());
-                } else {
-                    return this->left.get() == x_cast->get_left().get()   &&
-                           this->right.get() == x_cast->get_right().get() &&
-                           this->evaluate() == x->evaluate();
-                }
+                return this->data_hash == x_cast->data_hash     &&
+                       this->left->is_match(x_cast->get_left()) &&
+                       this->right->is_match(x_cast->get_right());
             }
 
             return false;
@@ -673,13 +653,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
             std::cout  << "r\\_" << reinterpret_cast<size_t> (this) << "_{ij}";
-            if (this->left.get()) {
-                std::cout << "\\left(";
-                this->left->to_latex();
-                std::cout << ",";
-                this->right->to_latex();
-                std::cout << "\\right)";
-            }
         }
 
 //------------------------------------------------------------------------------
@@ -696,33 +669,51 @@ namespace graph {
 ///
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
-        virtual bool is_variable_like() const {
+        virtual bool is_all_variables() const {
             return false;
         }
 
-///  Cache for the backend buffers.
-        inline thread_local static std::map<size_t, backend::buffer<T>> backend_cache;
-    };
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise\_2D convience function with defered arguments.
+///  @brief Get the base of a power.
 ///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] n Number of columns.
-///  @returns A reduced sqrt node.
+///  @returns The base of a power like node.
 //------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_2D(const std::vector<T> &d,
-                                                     const size_t n) {
-        auto temp = std::make_shared<piecewise_2D_node<T>> (d, n)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
-            return temp;
+        virtual shared_leaf<T, SAFE_MATH> get_power_base() {
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
         }
         
-        return leaf_node<T>::cache[h];
-    }
+//------------------------------------------------------------------------------
+///  @brief Check if the args match.
+///
+///  @param[in] x Node to match.
+///  @returns True if the arguments match.
+//------------------------------------------------------------------------------
+        bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = piecewise_2D_cast(x);
+            return temp.get()                               &&
+                   this->left->is_match(temp->get_left())   &&
+                   this->right->is_match(temp->get_right()) &&
+                   (num_columns == this->get_num_columns());
+        }
+    };
 
 //------------------------------------------------------------------------------
 ///  @brief Define piecewise\_2D convience function.
@@ -733,24 +724,28 @@ namespace graph {
 ///  @params[in] y Argument.
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_2D(const backend::buffer<T> &d,
-                                                     const size_t n,
-                                                     shared_leaf<T> x,
-                                                     shared_leaf<T> y) {
-        auto temp = std::make_shared<piecewise_2D_node<T>> (d, n, x, y)->reduce();
-        const size_t h = temp->get_hash();
-        if (piecewise_2D_node<T>::cache.find(h) ==
-            piecewise_2D_node<T>::cache.end()) {
-            piecewise_2D_node<T>::cache[h] = temp;
-            return temp;
+    template<typename T, bool SAFE_MATH=false> shared_leaf<T, SAFE_MATH>
+    piecewise_2D(const backend::buffer<T> &d,
+                 const size_t n,
+                 shared_leaf<T, SAFE_MATH> x,
+                 shared_leaf<T, SAFE_MATH> y) {
+        auto temp = std::make_shared<piecewise_2D_node<T, SAFE_MATH>> (d, n, x, y)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::cache.end()) {
+                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
+                return leaf_node<T, SAFE_MATH>::cache[i];
+            }
         }
-        
-        return piecewise_2D_node<T>::cache[h];
+        assert(false && "Should never reach.");
     }
 
 ///  Convenience type alias for shared piecewise 2D nodes.
-    template<typename T>
-    using shared_piecewise_2D = std::shared_ptr<piecewise_2D_node<T>>;
+    template<typename T, bool SAFE_MATH=false>
+    using shared_piecewise_2D = std::shared_ptr<piecewise_2D_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a piecewise 2D node.
@@ -758,32 +753,9 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T>
-    shared_piecewise_2D<T> piecewise_2D_cast(shared_leaf<T> x) {
-        return std::dynamic_pointer_cast<piecewise_2D_node<T>> (x);
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Set the argument of a piecewise\_1D node.
-///
-///  Piecewise functions could be reduced to a single constant so we need to check
-///  if it can be cast.
-///
-///  @params[in] p Existing piecewise constant.
-///  @params[in] x X Argument.
-///  @params[in] y Y Argument.
-///  @returns The 1D piecewise constant with the argument set.
-//------------------------------------------------------------------------------
-    template<typename T> shared_leaf<T> piecewise_2D(shared_leaf<T> p,
-                                                     shared_leaf<T> x,
-                                                     shared_leaf<T> y) {
-        auto temp = piecewise_2D_cast(p);
-        if (temp.get()) {
-            return piecewise_2D(temp->evaluate(),
-                                temp->get_num_columns(),
-                                x, y);
-        }
-        return p;
+    template<typename T, bool SAFE_MATH=false>
+    shared_piecewise_2D<T, SAFE_MATH> piecewise_2D_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<piecewise_2D_node<T, SAFE_MATH>> (x);
     }
 }
 

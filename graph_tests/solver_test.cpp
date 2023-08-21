@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file solver_test.cpp
+///  @file solver\_test.cpp
 ///  @brief Tests for solvers.
 //------------------------------------------------------------------------------
 
@@ -7,6 +7,8 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+#include <cassert>
 
 #include "../graph_framework/backend.hpp"
 #include "../graph_framework/solver.hpp"

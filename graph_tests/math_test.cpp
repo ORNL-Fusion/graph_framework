@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file math_test.cpp
+///  @file math\_test.cpp
 ///  @brief Tests for math nodes.
 //------------------------------------------------------------------------------
 
@@ -7,6 +7,8 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+#include <cassert>
 
 #include "../graph_framework/math.hpp"
 #include "../graph_framework/arithmetic.hpp"
@@ -47,7 +49,7 @@ void test_sqrt() {
            "Expected 0.5*sqrt(3)");
 
 //  Reduction sqrt(c*x*c*y) = c*Sqrt(x*y)
-    auto x1 = graph::constant(static_cast<T> (2.0))*graph::variable<T> (1, "x");
+    auto x1 = graph::two<T> ()*graph::variable<T> (1, "x");
     auto x2 = graph::constant(static_cast<T> (3.0))*graph::variable<T> (1, "y");
     auto x = graph::sqrt(x1*x2);
     auto x_cast = graph::multiply_cast(x);
@@ -91,6 +93,26 @@ void test_sqrt() {
            "Expected a constant coefficent.");
     assert(graph::sqrt_cast(cxby_sqrt_cast->get_right()).get() &&
            "Expected sqrt node.");
+
+//  Reduction Sqrt(x^a) -> x^(a/2)
+    auto sqpow = graph::sqrt(graph::pow(x_var, y_var));
+    auto sqpow_cast = graph::pow_cast(sqpow);
+    assert(sqpow_cast.get() && "Expected pow node.");
+    auto exp_cast = graph::multiply_cast(sqpow_cast->get_right());
+    assert(exp_cast.get() && "Expected a mutliply node.");
+    auto constant_cast = graph::constant_cast(exp_cast->get_left());
+    assert(constant_cast.get() && "Expected constant node on the left.");
+    assert(constant_cast->is(0.5) && "Expected a value of 0.5");
+
+//  Test node properties.
+    auto sqrt_const = graph::sqrt(graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                           static_cast<T> (2.0)}), var));
+    assert(sqrt_const->is_constant_like() && "Expected a constant.");
+    assert(!sqrt_const->is_all_variables() && "Did not expect a variable.");
+    assert(sqrt_const->is_power_like() && "Expected a power like.");
+    assert(!sqrt_var->is_constant_like() && "Did not expect a constant.");
+    assert(sqrt_var->is_all_variables() && "Expected a variable.");
+    assert(sqrt_var->is_power_like() && "Expected a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -123,6 +145,11 @@ void test_exp() {
     auto dexp_var = exp_var->df(var);
     assert(graph::exp_cast(dexp_var).get() && "Expected a exp node.");
     assert(dexp_var->evaluate().at(0) == std::exp(static_cast<T> (3.0)));
+
+//  Test node properties.
+    assert(!exp_var->is_constant_like() && "Did not expect a constant.");
+    assert(exp_var->is_all_variables() && "Expected a variable.");
+    assert(!exp_var->is_power_like() && "Did not expect a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -131,7 +158,7 @@ void test_exp() {
 template<typename T>
 void test_pow() {
 //  a^0 = 1
-    auto zero = graph::constant(static_cast<T> (0.0));
+    auto zero = graph::zero<T> ();
     auto ten = graph::variable<T> (1, "10");
     ten->set(static_cast<T> (10.0));
     auto one = graph::pow(ten, zero);
@@ -145,11 +172,21 @@ void test_pow() {
            "Expected ten.");
 
 //  Sqrt(a)^2 = a
-    auto two = graph::constant(static_cast<T> (2.0));
+    auto two = graph::two<T> ();
     assert(graph::pow(graph::sqrt(ten), two)->is_match(ten) &&
            "Expected ten.");
     assert(graph::pow(graph::sqrt(ten), two)->evaluate().at(0) == static_cast<T> (10.0) &&
            "Expected ten.");
+
+//  (Sqrt(a))^b -> a^(b/2)
+    auto powsq = graph::pow(graph::sqrt(ten), ten);
+    auto powsq_cast = graph::pow_cast(powsq);
+    assert(powsq_cast.get() && "Expected pow node.");
+    auto exp_cast = graph::multiply_cast(powsq_cast->get_right());
+    assert(exp_cast.get() && "Expected a mutliply node.");
+    auto constant_cast = graph::constant_cast(exp_cast->get_left());
+    assert(constant_cast.get() && "Expected constant node on the left.");
+    assert(constant_cast->is(0.5) && "Expected a value of 0.5");
 
 //  (c*Sqrt(b))^a -> c^a*b^a/2
     assert(graph::multiply_cast(graph::pow(two*graph::sqrt(ten), ten)).get() &&
@@ -191,7 +228,7 @@ void test_pow() {
     assert(sqrd->evaluate().at(0) == static_cast<T> (non_int*non_int) &&
            "Expected x*x");
 
-    auto three = graph::constant(static_cast<T> (2.0));
+    auto three = graph::two<T> ();
     auto pow_pow1 = graph::pow(graph::pow(ten, three), two);
     auto pow_pow2 = graph::pow(ten, three*two);
     assert(pow_pow1->is_match(pow_pow2) &&
@@ -220,6 +257,23 @@ void test_pow() {
     auto x3 = graph::pow(two, ten);
     auto dx3dx = x3->df(ten);
     assert(graph::multiply_cast(dx3dx).get() && "Expected multiply node.");
+
+//  Test node properties.
+    auto var_a = graph::variable<T> (1, "");
+    auto pow_const = graph::pow(three, graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                                static_cast<T> (2.0)}), var_a));
+    assert(pow_const->is_constant_like() && "Expected a constant.");
+    assert(!pow_const->is_all_variables() && "Did not expect a variable.");
+    assert(pow_const->is_power_like() && "Expected a power like.");
+    auto pow_var = graph::pow(var_a, three);
+    assert(!pow_var->is_constant_like() && "Did not expect a constant.");
+    assert(pow_var->is_all_variables() && "Expected a variable.");
+    assert(pow_var->is_power_like() && "Expected a power like.");
+    auto var_b = graph::variable<T> (1, "");
+    auto pow_var_var = graph::pow(var_a, var_b);
+    assert(!pow_var->is_constant_like() && "Did not expect a constant.");
+    assert(pow_var->is_all_variables() && "Expected a variable.");
+    assert(pow_var->is_power_like() && "Expected a power like.");
 }
 
 //------------------------------------------------------------------------------
@@ -237,16 +291,70 @@ void test_log() {
 //  Test derivatives.
     auto dlogy = logy->df(y);
     assert(graph::divide_cast(dlogy) && "Expected divide node.");
+
+    assert(!logy->is_constant_like() && "Did not expect a constant.");
+    assert(logy->is_all_variables() && "Expected a variable.");
+    assert(!logy->is_power_like() && "Did not expect a power like.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Tests for log nodes.
+//------------------------------------------------------------------------------
+template<typename T>
+void test_erfi() {
+    auto a = graph::variable<T> (1, "");
+    auto erfi = graph::erfi(a);
+    
+    assert(graph::erfi_cast(erfi) &&
+           "Expected an erfi node.");
+
+    auto derfida = erfi->df(a);
+    assert(graph::multiply_cast(derfida) &&
+           "Expected a multiply node.");
+    
+    auto erfic = graph::erfi(graph::one<T> ());
+    assert(graph::constant_cast(erfic) &&
+           "Expected a constant node.");
+
+//  Test node properties.
+    assert(!erfi->is_constant_like() && "Did not expect a constant.");
+    assert(erfi->is_all_variables() && "Expected a variable.");
+    assert(!erfi->is_power_like() && "Did not expect a power like.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Tests function for variable like expressions.
+//------------------------------------------------------------------------------
+template<typename T> void test_variable_like() {
+    auto a = graph::variable<T> (1, "");
+    auto c = graph::one<T> ();
+    
+    assert(a->is_all_variables() && "Expected a to be variable like.");
+    assert(graph::sqrt(a)->is_all_variables() &&
+           "Expected sqrt(a) to be variable like.");
+    assert(graph::pow(a, c)->is_all_variables() &&
+           "Expected a^c to be variable like.");
+    
+    assert(!c->is_all_variables() &&
+           "Expected c to not be variable like.");
+    assert(!graph::sqrt(c)->is_all_variables() &&
+           "Expected sqrt(c) to not be variable like.");
+    assert(!graph::pow(c, a)->is_all_variables() &&
+           "Expected c^a to not be variable like.");
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
+    test_variable_like<T> ();
     test_sqrt<T> ();
     test_exp<T> ();
     test_pow<T> ();
     test_log<T> ();
+    if constexpr (jit::is_complex<T> ()) {
+        test_erfi<T> ();
+    }
 }
 
 //------------------------------------------------------------------------------

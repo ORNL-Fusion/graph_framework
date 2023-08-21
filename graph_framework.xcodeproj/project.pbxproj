@@ -7,11 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C70D93152A30FF4E006A4227 /* special_functions.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C70D93132A30FF4E006A4227 /* special_functions.hpp */; };
 		C713426A2947F39400672AD4 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
-		C73BBE6A29F7117E0027BB7F /* trigonometry_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C73BBE6929F7117E0027BB7F /* trigonometry_test.cpp */; };
+		C73690382A38C958001733B0 /* node.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C79141AE22DA9C3000E0BA0D /* node.hpp */; };
+		C73690392A38C958001733B0 /* piecewise.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C70B705629F4F86A00098AA0 /* piecewise.hpp */; };
+		C736903A2A38C958001733B0 /* workflow.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C7922EEB29E0ABDF000BB9C7 /* workflow.hpp */; };
+		C736903B2A38C958001733B0 /* math.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C71C1FF727F61DFA006997C2 /* math.hpp */; };
+		C736903C2A38C958001733B0 /* vector.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C71C1FF827F621E7006997C2 /* vector.hpp */; };
+		C736903D2A38C958001733B0 /* arithmetic.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C723210222DC0D0A006BBF13 /* arithmetic.hpp */; };
+		C736903E2A38C958001733B0 /* trigonometry.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C77E6DF522DD64E700469621 /* trigonometry.hpp */; };
+		C736903F2A38C958001733B0 /* dispersion.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C71C1FF527F5379D006997C2 /* dispersion.hpp */; };
+		C73690402A38C958001733B0 /* solver.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C71C1FF627F5F5A8006997C2 /* solver.hpp */; };
+		C73690412A38C958001733B0 /* backend.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C7B677D829E45C9500D3ADC6 /* backend.hpp */; };
+		C73690422A38C958001733B0 /* equilibrium.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C721EA992833FF7800EAFB2D /* equilibrium.hpp */; };
+		C73690432A38C958001733B0 /* jit.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C713425B29413F0500672AD4 /* jit.hpp */; };
+		C73690442A38C958001733B0 /* register.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C713425C2942665300672AD4 /* register.hpp */; };
+		C73690452A38C958001733B0 /* metal_context.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C71342652947D57900672AD4 /* metal_context.hpp */; };
+		C73690462A38C958001733B0 /* cpu_context.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C7B677DA29E464AE00D3ADC6 /* cpu_context.hpp */; };
+		C73690472A38C958001733B0 /* cuda_context.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */; };
+		C73690482A38C958001733B0 /* timing.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C7CEA0042948D02A00F61D09 /* timing.hpp */; };
+		C73690492A38C958001733B0 /* newton.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C73BBE9629F8669F0027BB7F /* newton.hpp */; };
+		C736904A2A38D1C7001733B0 /* erfi_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C736902B2A38AC0E001733B0 /* erfi_test.cpp */; };
 		C73BBE7629F72C2A0027BB7F /* trigonometry_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C73BBE6929F7117E0027BB7F /* trigonometry_test.cpp */; };
 		C73BBE7E29F816E60027BB7F /* piecewise_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */; };
 		C73BBE8229F820810027BB7F /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
+		C73E2A7A2A4A216400BED03A /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C79141B622DAAD0C00E0BA0D /* xrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C79141B522DAAD0C00E0BA0D /* xrays.cpp */; };
 		C7D371132A0595A40074676E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C7E5644528A2A1AA000F31A2 /* backend_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E7328074F540033B488 /* backend_test.cpp */; };
@@ -27,6 +47,15 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		C736902F2A38C498001733B0 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		C73BBE6D29F72BC50027BB7F /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -139,6 +168,7 @@
 
 /* Begin PBXFileReference section */
 		C70B705629F4F86A00098AA0 /* piecewise.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = piecewise.hpp; sourceTree = "<group>"; };
+		C70D93132A30FF4E006A4227 /* special_functions.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = special_functions.hpp; sourceTree = "<group>"; };
 		C713425B29413F0500672AD4 /* jit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jit.hpp; sourceTree = "<group>"; };
 		C713425C2942665300672AD4 /* register.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = register.hpp; sourceTree = "<group>"; };
 		C71342652947D57900672AD4 /* metal_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = metal_context.hpp; sourceTree = "<group>"; };
@@ -151,6 +181,8 @@
 		C721EA992833FF7800EAFB2D /* equilibrium.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = equilibrium.hpp; sourceTree = "<group>"; };
 		C723210222DC0D0A006BBF13 /* arithmetic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arithmetic.hpp; sourceTree = "<group>"; };
 		C725CD792840088000D0EDE2 /* physics_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = physics_test.cpp; sourceTree = "<group>"; };
+		C736902B2A38AC0E001733B0 /* erfi_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = erfi_test.cpp; sourceTree = "<group>"; };
+		C73690312A38C498001733B0 /* erfi_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = erfi_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C73BBE6929F7117E0027BB7F /* trigonometry_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = trigonometry_test.cpp; sourceTree = "<group>"; };
 		C73BBE6F29F72BC50027BB7F /* trigonometry_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = trigonometry_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C73BBE7B29F816E50027BB7F /* piecewise_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = piecewise_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -176,6 +208,7 @@
 		C7B677DA29E464AE00D3ADC6 /* cpu_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cpu_context.hpp; sourceTree = "<group>"; };
 		C7CEA0042948D02A00F61D09 /* timing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = timing.hpp; sourceTree = "<group>"; };
 		C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cuda_context.hpp; sourceTree = "<group>"; };
+		C7E134492A3CB3EC0083F6A7 /* output.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = output.hpp; sourceTree = "<group>"; };
 		C7E5643E28A2A16F000F31A2 /* backend_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = backend_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E5644A28A2A1C5000F31A2 /* dispersion_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dispersion_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E5645628A2A204000F31A2 /* solver_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = solver_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -190,6 +223,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C736902E2A38C498001733B0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C73BBE6C29F72BC50027BB7F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -239,6 +279,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C73E2A7A2A4A216400BED03A /* Metal.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,6 +374,7 @@
 				C7FA0E0329590EF300A31E4D /* jit_test */,
 				C73BBE6F29F72BC50027BB7F /* trigonometry_test */,
 				C73BBE7B29F816E50027BB7F /* piecewise_test */,
+				C73690312A38C498001733B0 /* erfi_test */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -351,6 +393,7 @@
 				C71C1FF527F5379D006997C2 /* dispersion.hpp */,
 				C71C1FF627F5F5A8006997C2 /* solver.hpp */,
 				C7B677D829E45C9500D3ADC6 /* backend.hpp */,
+				C70D93132A30FF4E006A4227 /* special_functions.hpp */,
 				C721EA992833FF7800EAFB2D /* equilibrium.hpp */,
 				C713425B29413F0500672AD4 /* jit.hpp */,
 				C713425C2942665300672AD4 /* register.hpp */,
@@ -359,6 +402,7 @@
 				C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */,
 				C7CEA0042948D02A00F61D09 /* timing.hpp */,
 				C73BBE9629F8669F0027BB7F /* newton.hpp */,
+				C7E134492A3CB3EC0083F6A7 /* output.hpp */,
 			);
 			path = graph_framework;
 			sourceTree = "<group>";
@@ -376,6 +420,7 @@
 			isa = PBXGroup;
 			children = (
 				C7931E6A28073BCA0033B488 /* CMakeLists.txt */,
+				C736902B2A38AC0E001733B0 /* erfi_test.cpp */,
 				C7931E7328074F540033B488 /* backend_test.cpp */,
 				C7931E6B28073BCA0033B488 /* dispersion_test.cpp */,
 				C7931E6C28073BCA0033B488 /* solver_test.cpp */,
@@ -398,12 +443,48 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C73690382A38C958001733B0 /* node.hpp in Headers */,
+				C73690392A38C958001733B0 /* piecewise.hpp in Headers */,
+				C736903A2A38C958001733B0 /* workflow.hpp in Headers */,
+				C736903B2A38C958001733B0 /* math.hpp in Headers */,
+				C736903C2A38C958001733B0 /* vector.hpp in Headers */,
+				C736903D2A38C958001733B0 /* arithmetic.hpp in Headers */,
+				C736903E2A38C958001733B0 /* trigonometry.hpp in Headers */,
+				C736903F2A38C958001733B0 /* dispersion.hpp in Headers */,
+				C73690402A38C958001733B0 /* solver.hpp in Headers */,
+				C73690412A38C958001733B0 /* backend.hpp in Headers */,
+				C73690422A38C958001733B0 /* equilibrium.hpp in Headers */,
+				C73690432A38C958001733B0 /* jit.hpp in Headers */,
+				C73690442A38C958001733B0 /* register.hpp in Headers */,
+				C73690452A38C958001733B0 /* metal_context.hpp in Headers */,
+				C73690462A38C958001733B0 /* cpu_context.hpp in Headers */,
+				C73690472A38C958001733B0 /* cuda_context.hpp in Headers */,
+				C73690482A38C958001733B0 /* timing.hpp in Headers */,
+				C73690492A38C958001733B0 /* newton.hpp in Headers */,
+				C70D93152A30FF4E006A4227 /* special_functions.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		C73690302A38C498001733B0 /* erfi_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C73690352A38C498001733B0 /* Build configuration list for PBXNativeTarget "erfi_test" */;
+			buildPhases = (
+				C736902D2A38C498001733B0 /* Sources */,
+				C736902E2A38C498001733B0 /* Frameworks */,
+				C736902F2A38C498001733B0 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = erfi_test;
+			productName = erfi_test;
+			productReference = C73690312A38C498001733B0 /* erfi_test */;
+			productType = "com.apple.product-type.tool";
+		};
 		C73BBE6E29F72BC50027BB7F /* trigonometry_test */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C73BBE7329F72BC50027BB7F /* Build configuration list for PBXNativeTarget "trigonometry_test" */;
@@ -635,6 +716,9 @@
 				LastUpgradeCheck = 1430;
 				ORGANIZATIONNAME = "Cianciosa, Mark R.";
 				TargetAttributes = {
+					C73690302A38C498001733B0 = {
+						CreatedOnToolsVersion = 14.3;
+					};
 					C73BBE6E29F72BC50027BB7F = {
 						CreatedOnToolsVersion = 14.3;
 					};
@@ -702,11 +786,20 @@
 				C7FA0E0229590EF300A31E4D /* jit_test */,
 				C73BBE6E29F72BC50027BB7F /* trigonometry_test */,
 				C73BBE7A29F816E50027BB7F /* piecewise_test */,
+				C73690302A38C498001733B0 /* erfi_test */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C736902D2A38C498001733B0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C736904A2A38D1C7001733B0 /* erfi_test.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C73BBE6B29F72BC50027BB7F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -727,7 +820,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C73BBE6A29F7117E0027BB7F /* trigonometry_test.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -814,6 +906,50 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		C73690362A38C498001733B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"ERFI_FILE=\\\"/Users/m4c/test_erfi.nc\\\"",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-fsanitize=float-divide-by-zero",
+					"-fsanitize=undefined",
+					"-fsanitize=float-cast-overflow",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C73690372A38C498001733B0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					USE_METAL,
+					"CXX=\\\"c++\\\"",
+					"$(inherited)",
+					"ERFI_FILE=\\\"/Users/m4c/test_erfi.nc\\\"",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-fsanitize=float-divide-by-zero",
+					"-fsanitize=undefined",
+					"-fsanitize=float-cast-overflow",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		C73BBE7429F72BC50027BB7F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -911,7 +1047,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					USE_METAL,
-					"CXX=\\\"c++\\\"",
+					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -982,7 +1118,7 @@
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					USE_METAL,
-					"CXX=\\\"c++\\\"",
+					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
 					"$(inherited)",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1016,10 +1152,15 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2M4J3Y9U5K;
 				EXECUTABLE_PREFIX = lib;
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					USE_METAL,
+					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\ -g\" DEBUG=1 $(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1031,10 +1172,15 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2M4J3Y9U5K;
 				EXECUTABLE_PREFIX = lib;
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					USE_METAL,
+					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\ -g\" $(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -1051,9 +1197,10 @@
 					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				OTHER_CPLUSPLUSFLAGS = "-fsanitize=float-divide-by-zero";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 			};
 			name = Debug;
 		};
@@ -1069,10 +1216,11 @@
 					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = "-lnetcdf";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 			};
 			name = Release;
 		};
@@ -1107,7 +1255,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1119,7 +1267,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1131,8 +1279,9 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 			};
 			name = Debug;
 		};
@@ -1143,8 +1292,9 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx13.3;
 			};
 			name = Release;
 		};
@@ -1155,7 +1305,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1167,7 +1317,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1179,7 +1329,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1191,7 +1341,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1203,7 +1353,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1215,7 +1365,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1258,7 +1408,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1276,7 +1426,7 @@
 					"CXX=\\\"c++\\\"",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1289,7 +1439,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 12.6;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1301,7 +1451,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
-				MACOSX_DEPLOYMENT_TARGET = 12.6;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1309,6 +1459,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C73690352A38C498001733B0 /* Build configuration list for PBXNativeTarget "erfi_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C73690362A38C498001733B0 /* Debug */,
+				C73690372A38C498001733B0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C73BBE7329F72BC50027BB7F /* Build configuration list for PBXNativeTarget "trigonometry_test" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
