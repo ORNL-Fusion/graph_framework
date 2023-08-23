@@ -1049,8 +1049,8 @@ namespace equilibrium {
                             graph::shared_leaf<T, SAFE_MATH> z) {
             auto pressure = get_pressure(x, y, z);
             auto q = graph::constant<T, SAFE_MATH> (static_cast<T> (1.60218E-19));
-            return (pressure - get_electron_density(x, y, z)*get_electron_temperature(x, y, z)/q) /
-                   (get_ion_density(index, x, y, z));
+            return (pressure - get_electron_density(x, y, z)*get_electron_temperature(x, y, z)*q) /
+                   (get_ion_density(index, x, y, z)*q);
         }
 
 //------------------------------------------------------------------------------
