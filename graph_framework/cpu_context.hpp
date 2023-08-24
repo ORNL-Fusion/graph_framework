@@ -77,7 +77,7 @@ namespace gpu {
             temp_stream.str(std::string());
             temp_stream.clear();
 
-            temp_stream << filename << ".so";
+            temp_stream << "./" << filename << ".so";
             library_name = temp_stream.str();
 
             temp_stream.str(std::string());
