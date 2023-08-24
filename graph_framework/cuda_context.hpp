@@ -100,7 +100,7 @@ namespace gpu {
 ///
 ///  @params[in] index Concurrent index.
 //------------------------------------------------------------------------------
-        cuda_context() : result_buffer(0), module(0) {
+        cuda_context(const size_t index) : result_buffer(0), module(0) {
             check_error(cuDeviceGet(&device, index), "cuDeviceGet");
             check_error(cuDevicePrimaryCtxRetain(&context, device), "cuDevicePrimaryCtxRetain");
             check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
