@@ -52,10 +52,15 @@ namespace jit {
         gpu_context_type gpu_context;
 
     public:
+///  The maximum available concurrency.
+        static inline size_t max_concurrency = gpu_context_type::max_concurrency();
+
 //------------------------------------------------------------------------------
 ///  @brief Construct a jit context object.
+///
+///  @params[in] index Concurrent index. Not used.
 //------------------------------------------------------------------------------
-        context() {
+        context(const size_t index) : gpu_context(index) {
             source_buffer << std::setprecision(max_digits10<T> ());
             gpu_context.create_header(source_buffer);
         }

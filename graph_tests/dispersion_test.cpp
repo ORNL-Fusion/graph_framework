@@ -46,18 +46,18 @@ void test_solve(const typename DISPERSION::base tolarance,
         graph::variable_cast(kz),
         graph::variable_cast(t),
     });
-    D.solve(kx, inputs, tolarance);
+    D.solve(kx, inputs, 0, tolarance);
 
     kx->set(static_cast<typename DISPERSION::base> (0.2));
-    D.solve(ky, inputs, tolarance);
+    D.solve(ky, inputs, 0, tolarance);
 
     ky->set(static_cast<typename DISPERSION::base> (0.25));
     kz->set(k_guess);
-    D.solve(kz, inputs, tolarance);
+    D.solve(kz, inputs, 0, tolarance);
 
     kz->set(static_cast<typename DISPERSION::base> (0.15));
     kx->set(k_guess);
-    D.solve(w, inputs, tolarance);
+    D.solve(w, inputs, 0, tolarance);
 }
 
 //------------------------------------------------------------------------------

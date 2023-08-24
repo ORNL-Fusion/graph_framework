@@ -85,10 +85,23 @@ namespace gpu {
 
     public:
 //------------------------------------------------------------------------------
+///  @brief Get the maximum number of concurrent instances.
+///
+///  @returns The maximum available concurrency.
+//------------------------------------------------------------------------------
+        static size_t max_concurrency() {
+            int count;
+            check_error(cuDeviceGetCount(&count), "cuDeviceGetCount");
+            return count;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Cuda context constructor.
+///
+///  @params[in] index Concurrent index.
 //------------------------------------------------------------------------------
         cuda_context() : result_buffer(0), module(0) {
-            check_error(cuDeviceGet(&device, 0), "cuDeviceGet");
+            check_error(cuDeviceGet(&device, index), "cuDeviceGet");
             check_error(cuDevicePrimaryCtxRetain(&context, device), "cuDevicePrimaryCtxRetain");
             check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
             check_error(cuStreamCreate(&stream, CU_STREAM_DEFAULT), "cuStreamCreate");

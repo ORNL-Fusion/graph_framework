@@ -46,7 +46,7 @@ template<typename T> void compile(graph::input_nodes<T> inputs,
                                   graph::map_nodes<T> setters,
                                   const T expected,
                                   const T tolarance) {
-    jit::context<T> source;
+    jit::context<T> source(0);
     source.add_kernel("test_kernel", inputs, outputs, setters);
 
     source.compile();

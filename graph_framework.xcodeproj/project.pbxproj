@@ -1047,6 +1047,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					USE_METAL,
+					"CXX_FLAGS=\\\"-g\\ -fsanitize=undefined\\ -fsanitize=float-divide-by-zero\\ -fsanitize-trap=all\\\"",
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
 					"DEBUG=1",
 					"$(inherited)",
@@ -1154,7 +1155,10 @@
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					USE_METAL,
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\ -g\" DEBUG=1 $(inherited)",
+					"CXX_FLAGS=\\\"-g\\ -fsanitize=undefined\\ -fsanitize=float-divide-by-zero\\ -fsanitize-trap=all\\\"",
+					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					"DEBUG=1",
+					"$(inherited)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
