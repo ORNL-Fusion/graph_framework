@@ -21,6 +21,7 @@ target_link_libraries (rays
                        sanitizer
                        gpu_lib
                        NetCDF::NetCDF
+                       $<$<PLATFORM_ID:Linux>:${CMAKE_DL_LIBS}>
 )
 target_precompile_headers (rays
                            INTERFACE
