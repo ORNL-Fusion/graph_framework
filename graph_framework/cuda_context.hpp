@@ -42,8 +42,8 @@ namespace gpu {
 ///  @brief  Check results of realtime compile.
 ///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
-        void check_nvrtc_error(nvrtcResult result,
-                               const std::string &name) {
+        static void check_nvrtc_error(nvrtcResult result,
+                                      const std::string &name) {
 #ifndef NDEBUG
             std::cout << name << " " << result << " "
                       << nvrtcGetErrorString(result) << std::endl;
@@ -57,8 +57,8 @@ namespace gpu {
 ///  @params[in] result Result code of the operation.
 ///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
-        void check_error(CUresult result,
-                         const std::string &name) {
+        static void check_error(CUresult result,
+                                const std::string &name) {
 #ifndef NDEBUG
             const char *error;
             cuGetErrorString(result, &error);
@@ -74,8 +74,8 @@ namespace gpu {
 ///  @params[in] result Result code of the operation.
 ///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
-        void check_error_async(CUresult result,
-                               const std::string &name) {
+        static void check_error_async(CUresult result,
+                                      const std::string &name) {
             check_error(result, name);
 #ifndef NDEBUG
             std::string async_name = name + "_async";
