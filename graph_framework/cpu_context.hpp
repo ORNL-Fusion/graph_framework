@@ -43,7 +43,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         ~cpu_context() {
             dlclose(lib_handle);
-            
+
             std::ostringstream temp_stream;
             temp_stream << "rm " << library_name;
             system(temp_stream.str().c_str());
@@ -77,7 +77,7 @@ namespace gpu {
             temp_stream.str(std::string());
             temp_stream.clear();
 
-            temp_stream << filename << ".so";
+            temp_stream << "./" << filename << ".so";
             library_name = temp_stream.str();
 
             temp_stream.str(std::string());
@@ -114,6 +114,7 @@ namespace gpu {
             if (!lib_handle) {
                 std::cout << "Failed to load library. " << library_name
                           << std::endl;
+                std::cout << dlerror() << std::endl;
                 exit(1);
             }
 
