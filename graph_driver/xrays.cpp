@@ -11,8 +11,8 @@
 #include "../graph_framework/solver.hpp"
 #include "../graph_framework/timing.hpp"
 
-const bool print = true;
-const bool write_step = false;
+const bool print = false;
+const bool write_step = true;
 const bool print_expressions = false;
 
 //------------------------------------------------------------------------------
@@ -26,8 +26,8 @@ int main(int argc, const char * argv[]) {
 
     std::mutex sync;
 
-    //typedef float base;
-    typedef double base;
+    typedef float base;
+    //typedef double base;
     //typedef std::complex<float> base;
     //typedef std::complex<double> base;
     //constexpr bool use_safe_math = true;
@@ -38,16 +38,11 @@ int main(int argc, const char * argv[]) {
     const size_t num_times = 100000;
     const size_t sub_steps = 10;
     const size_t num_steps = num_times/sub_steps;
-    const size_t num_rays = 1;
+    const size_t num_rays = 100000;
 
-    std::vector<std::thread> threads(0);
-    if constexpr (jit::use_gpu<base> ()) {
-        threads.resize(1);
-    } else {
-        threads.resize(std::max(std::min(std::thread::hardware_concurrency(),
-                                         static_cast<unsigned int> (num_rays)),
-                                static_cast<unsigned int> (1)));
-    }
+    std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<base, use_safe_math>::max_concurrency),
+                                                       static_cast<unsigned int> (num_rays)),
+                                              static_cast<unsigned int> (1)));
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         threads[i] = std::thread([num_times, num_rays, &sync] (const size_t thread_number,
@@ -59,13 +54,13 @@ int main(int argc, const char * argv[]) {
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 
             auto omega = graph::variable<base, use_safe_math> (local_num_rays, "\\omega");
-            auto kx = graph::variable<base, use_safe_math> (local_num_rays, "k_{x}");
-            auto ky = graph::variable<base, use_safe_math> (local_num_rays, "k_{y}");
-            auto kz = graph::variable<base, use_safe_math> (local_num_rays, "k_{z}");
-            auto x = graph::variable<base, use_safe_math> (local_num_rays, "x");
-            auto y = graph::variable<base, use_safe_math> (local_num_rays, "y");
-            auto z = graph::variable<base, use_safe_math> (local_num_rays, "z");
-            auto t = graph::variable<base, use_safe_math> (local_num_rays, "t");
+            auto kx    = graph::variable<base, use_safe_math> (local_num_rays, "k_{x}");
+            auto ky    = graph::variable<base, use_safe_math> (local_num_rays, "k_{y}");
+            auto kz    = graph::variable<base, use_safe_math> (local_num_rays, "k_{z}");
+            auto x     = graph::variable<base, use_safe_math> (local_num_rays, "x");
+            auto y     = graph::variable<base, use_safe_math> (local_num_rays, "y");
+            auto z     = graph::variable<base, use_safe_math> (local_num_rays, "z");
+            auto t     = graph::variable<base, use_safe_math> (local_num_rays, "t");
 
             t->set(static_cast<base> (0.0));
 

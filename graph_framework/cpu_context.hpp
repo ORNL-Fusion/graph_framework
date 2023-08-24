@@ -11,6 +11,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 
 #include <dlfcn.h>
 
@@ -34,9 +35,20 @@ namespace gpu {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a cpu context.
+///  @brief Get the maximum number of concurrent instances.
+///
+///  @returns The maximum available concurrency.
 //------------------------------------------------------------------------------
-        cpu_context() {}
+        static size_t max_concurrency() {
+            return std::thread::hardware_concurrency();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Construct a cpu context.
+///
+///  @params[in] index Concurrent index. Not used.
+//------------------------------------------------------------------------------
+        cpu_context(const size_t index) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Destruct a cpu context.

@@ -78,6 +78,8 @@ namespace solver {
 ///  Workflow manager.
         workflow::manager<typename DISPERSION_FUNCTION::base,
                           DISPERSION_FUNCTION::safe_math> work;
+///  Concurrent index.
+        const size_t index;
 
 ///  Output file.
         output::result_file<typename DISPERSION_FUNCTION::base> file;
@@ -97,6 +99,7 @@ namespace solver {
 ///  @params[in] eq       The plasma equilibrium.
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
+///  @params[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         solver_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                             DISPERSION_FUNCTION::safe_math> w,
@@ -117,10 +120,12 @@ namespace solver {
                          equilibrium::shared<typename DISPERSION_FUNCTION::base,
                                              DISPERSION_FUNCTION::safe_math> &eq,
                          const std::string &filename="",
-                         const size_t num_rays=0) :
+                         const size_t num_rays=0,
+                         const size_t index=0) :
         D(w, kx, ky, kz, x, y, z, t, eq), w(w),
         kx(kx), ky(ky), kz(kz),
-        x(x), y(y), z(z), t(t), file(filename, num_rays) {}
+        x(x), y(y), z(z), t(t), file(filename, num_rays),
+        index(index), work(index) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Method to initalize the rays.
@@ -149,7 +154,8 @@ namespace solver {
                 graph::variable_cast(this->kz)
             };
 
-            residule = this->D.solve(x, inputs, tolarance, max_iterations);
+            residule = this->D.solve(x, inputs, index,
+                                     tolarance, max_iterations);
 
             return residule;
         }

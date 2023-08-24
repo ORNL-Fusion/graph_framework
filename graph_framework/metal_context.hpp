@@ -37,10 +37,21 @@ namespace gpu {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a metal context.
+///  @brief Get the maximum number of concurrent instances.
+///
+///  @returns The maximum available concurrency.
 //------------------------------------------------------------------------------
-        metal_context() :
-        device(MTLCopyAllDevices().firstObject),
+        static size_t max_concurrency() {
+            return MTLCopyAllDevices().count;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Construct a metal context.
+///
+///  @params[in] index Concurrent index.
+//------------------------------------------------------------------------------
+        metal_context(const size_t index) :
+        device([MTLCopyAllDevices() objectAtIndex:index]),
         queue([device newCommandQueue]) {}
 
 //------------------------------------------------------------------------------

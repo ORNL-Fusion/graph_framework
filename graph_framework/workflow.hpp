@@ -151,8 +151,10 @@ namespace workflow {
     public:
 //------------------------------------------------------------------------------
 ///  @brief Workflow manager constructor.
+///
+///  @params[in] index Concurrent index.
 //------------------------------------------------------------------------------
-        manager() : add_reduction(false) {}
+        manager(const size_t index) : context(index), add_reduction(false) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Add a workflow item.

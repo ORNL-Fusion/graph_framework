@@ -135,6 +135,7 @@ namespace dispersion {
 ///
 ///  @params[in,out] x              The unknown to solver for.
 ///  @params[in]     inputs         Inputs for jit compile.
+///  @params[in]     index          Concurrent index.
 ///  @params[in]     tolarance      Tolarance to solve the dispersion function
 ///                                 to.
 ///  @params[in]     max_iterations Maximum number of iterations before giving
@@ -147,13 +148,14 @@ namespace dispersion {
                                  DISPERSION_FUNCTION::safe_math> x,
               graph::input_nodes<typename DISPERSION_FUNCTION::base,
                                  DISPERSION_FUNCTION::safe_math> inputs,
+              const size_t index=0,
               const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
               const size_t max_iterations = 1000) {
             auto loss = D*D;
             auto x_var = graph::variable_cast(x);
 
             workflow::manager<typename DISPERSION_FUNCTION::base,
-                              DISPERSION_FUNCTION::safe_math> work;
+                              DISPERSION_FUNCTION::safe_math> work(index);
 
             solver::newton(work, {x}, inputs, loss, tolarance, max_iterations);
 
