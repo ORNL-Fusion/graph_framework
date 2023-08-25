@@ -16,8 +16,12 @@
 #include "node.hpp"
 
 namespace gpu {
-//  Initialize the cuda driver.
-    static const CUresult init = cuInit(0);
+//------------------------------------------------------------------------------
+///   @brief Initalize cuda.
+//------------------------------------------------------------------------------
+    static void init() {
+        cuInit(0);
+    }
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
@@ -74,8 +78,8 @@ namespace gpu {
 ///  @params[in] result Result code of the operation.
 ///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
-        static void check_error_async(CUresult result,
-                                      const std::string &name) {
+        void check_error_async(CUresult result,
+                               const std::string &name) {
             check_error(result, name);
 #ifndef NDEBUG
             std::string async_name = name + "_async";
