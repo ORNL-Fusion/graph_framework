@@ -40,7 +40,7 @@ int main(int argc, const char * argv[]) {
     const size_t num_steps = num_times/sub_steps;
     const size_t num_rays = 100000;
 
-    std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<base, use_safe_math>::max_concurrency),
+    std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<base, use_safe_math>::max_concurrency()),
                                                        static_cast<unsigned int> (num_rays)),
                                               static_cast<unsigned int> (1)));
 

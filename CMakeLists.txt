@@ -6,7 +6,7 @@ project (rays CXX)
 #  Build Options
 #-------------------------------------------------------------------------------
 option (USE_PCH "Enable the use of precompiled headers" ON)
-    
+
 #-------------------------------------------------------------------------------
 #  Set the cmake module path.
 #-------------------------------------------------------------------------------
@@ -108,11 +108,11 @@ register_sanitizer_option (float-divide-by-zero ON)
 
 target_compile_options (sanitizer
                         INTERFACE
-                        $<$<CONFIG:Sanitized>:-fsanitize-trap=all>
+                        $<$<AND:$<CONFIG:Sanitized>,$<PLATFORM_ID:Darwin>>:-fsanitize-trap=all>
 )
 target_link_options (sanitizer
                      INTERFACE
-                     $<$<CONFIG:Sanitized>:-fsanitize-trap=all>
+                     $<$<AND:$<CONFIG:Sanitized>,$<PLATFORM_ID:Darwin>>:-fsanitize-trap=all>
 )
 
 #-------------------------------------------------------------------------------
@@ -130,14 +130,14 @@ macro (add_tool_target target)
                     PRIVATE
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp>
     )
-    
+
     if (${USE_METAL})
         set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp
                                      PROPERTIES
                                      LANGUAGE OBJCXX
         )
     endif ()
-    
+
     target_link_libraries (${target}
                            PUBLIC
                            rays
