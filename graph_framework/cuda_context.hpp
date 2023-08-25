@@ -17,11 +17,45 @@
 
 namespace gpu {
 //------------------------------------------------------------------------------
+///  @brief  Check results of realtime compile.
+///  @params[in] name   Name of the operation.
+//------------------------------------------------------------------------------
+    static void check_nvrtc_error(nvrtcResult result,
+                                  const std::string &name) {
+#ifndef NDEBUG
+        std::cout << name << " " << result << " "
+                  << nvrtcGetErrorString(result) << std::endl;
+        assert(result == NVRTC_SUCCESS && "NVTRC Error");
+#endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief  Check results of cuda functions.
+///
+///  @params[in] result Result code of the operation.
+///  @params[in] name   Name of the operation.
+//------------------------------------------------------------------------------
+    static void check_error(CUresult result,
+                            const std::string &name) {
+#ifndef NDEBUG
+        const char *error;
+        cuGetErrorString(result, &error);
+        std::cout << name << " "
+                  << result << " " << error << std::endl;
+        assert(result == CUDA_SUCCESS && "Cuda Error");
+#endif
+    }
+
+//------------------------------------------------------------------------------
 ///   @brief Initalize cuda.
 //------------------------------------------------------------------------------
-    static void init() {
-        cuInit(0);
+    static CUresult cuda_init() {
+        const CUresult result = cuInit(0);
+        check_error(result, "cuInit");
+        return result;
     }
+///  Initalize Cuda.
+    static const CUresult result = cuda_init();
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
@@ -41,36 +75,6 @@ namespace gpu {
         CUdeviceptr result_buffer;
 ///  Cuda stream.
         CUstream stream;
-
-//------------------------------------------------------------------------------
-///  @brief  Check results of realtime compile.
-///  @params[in] name   Name of the operation.
-//------------------------------------------------------------------------------
-        static void check_nvrtc_error(nvrtcResult result,
-                                      const std::string &name) {
-#ifndef NDEBUG
-            std::cout << name << " " << result << " "
-                      << nvrtcGetErrorString(result) << std::endl;
-            assert(result == NVRTC_SUCCESS && "NVTRC Error");
-#endif
-        }
-
-//------------------------------------------------------------------------------
-///  @brief  Check results of cuda functions.
-///
-///  @params[in] result Result code of the operation.
-///  @params[in] name   Name of the operation.
-//------------------------------------------------------------------------------
-        static void check_error(CUresult result,
-                                const std::string &name) {
-#ifndef NDEBUG
-            const char *error;
-            cuGetErrorString(result, &error);
-            std::cout << name << " "
-                      << result << " " << error << std::endl;
-            assert(result == CUDA_SUCCESS && "Cuda Error");
-#endif
-        }
 
 //------------------------------------------------------------------------------
 ///  @brief  Check results of async cuda functions.

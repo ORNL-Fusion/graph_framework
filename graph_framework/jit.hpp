@@ -18,24 +18,12 @@
 #ifdef USE_METAL
 #define START_GPU @autoreleasepool {
 #define END_GPU }
-#elif defined (USE_CUDA)
-#define START_GPU jit::init();
-#define END_GPU
 #else
 #define START_GPU
 #define END_GPU
 #endif
 
 namespace jit {
-//------------------------------------------------------------------------------
-///   @brief Initalize the gpu\_context.
-//------------------------------------------------------------------------------
-    static void init() {
-#ifdef USE_CUDA
-        gpu::init();
-#endif
-    }
-
 //------------------------------------------------------------------------------
 ///  @brief Class for JIT compile of the GPU kernels.
 //------------------------------------------------------------------------------
@@ -70,7 +58,9 @@ namespace jit {
 ///  @returns The maximum available concurrency.
 //------------------------------------------------------------------------------
         static size_t max_concurrency() {
-            return gpu_context_type::max_concurrency();
+            const size_t num = gpu_context_type::max_concurrency();
+            std::cout << "Located " << num << " devices." << std::endl;
+            return num;
         }
 
 //------------------------------------------------------------------------------
@@ -82,7 +72,7 @@ namespace jit {
             source_buffer << std::setprecision(max_digits10<T> ());
             gpu_context.create_header(source_buffer);
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Add a kernel.
 ///

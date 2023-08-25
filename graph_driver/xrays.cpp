@@ -24,8 +24,6 @@ const bool print_expressions = false;
 int main(int argc, const char * argv[]) {
     START_GPU
 
-    std::mutex sync;
-
     typedef float base;
     //typedef double base;
     //typedef std::complex<float> base;
@@ -45,8 +43,8 @@ int main(int argc, const char * argv[]) {
                                               static_cast<unsigned int> (1)));
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, num_rays, &sync] (const size_t thread_number,
-                                                               const size_t num_threads) -> void {
+        threads[i] = std::thread([num_times, num_rays] (const size_t thread_number,
+                                                        const size_t num_threads) -> void {
             const size_t local_num_rays = num_rays/num_threads
                                         + std::min(thread_number, num_rays%num_threads);
 
@@ -89,7 +87,7 @@ int main(int argc, const char * argv[]) {
             kz->set(static_cast<base> (0.0));
             //kz->set(static_cast<base> (10.0));
 
-            auto eq = equilibrium::make_efit<base, use_safe_math> (NC_FILE, sync);
+            auto eq = equilibrium::make_efit<base, use_safe_math> (NC_FILE);
             //auto eq = equilibrium::make_slab_density<base, use_safe_math> ();
             //auto eq = equilibrium::make_slab_field<base, use_safe_math> ();
             //auto eq = equilibrium::make_no_magnetic_field<base, use_safe_math> ();

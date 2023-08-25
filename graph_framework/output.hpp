@@ -6,11 +6,16 @@
 #ifndef output_h
 #define output_h
 
+#include <mutex>
+
 #include <netcdf.h>
 
 #include "jit.hpp"
 
 namespace output {
+///  Lock to syncronize netcdf accross threads.
+    static std::mutex sync;
+
 //------------------------------------------------------------------------------
 ///  @brief Class representing a netcdf based output file.
 //------------------------------------------------------------------------------
@@ -50,6 +55,7 @@ namespace output {
         result_file(const std::string &filename="",
                     const size_t num_rays=0) : num_rays(num_rays) {
             
+            sync.lock();
             nc_create(filename.c_str(),
                       filename.empty() || num_rays == 0 ? NC_DISKLESS : NC_CLOBBER,
                       &ncid);
@@ -63,6 +69,7 @@ namespace output {
                 nc_def_dim(ncid, "ray_dim", 1, &ray_dim);
                 nc_def_dim(ncid, "num_rays", num_rays*1, &num_rays_dim);
             }
+            sync.unlock();
         }
 
 //------------------------------------------------------------------------------
@@ -85,6 +92,7 @@ namespace output {
                              jit::context<T, SAFE_MATH> &context) {
             variable var;
             const std::array<int, 3> dims = {unlimited_dim, num_rays_dim, ray_dim};
+            sync.lock();
             if constexpr (jit::is_float<T> ()) {
                 nc_def_var(ncid, name.c_str(), NC_FLOAT, dims.size(),
                            dims.data(), &var.id);
@@ -92,6 +100,7 @@ namespace output {
                 nc_def_var(ncid, name.c_str(), NC_DOUBLE, dims.size(),
                            dims.data(), &var.id);
             }
+            sync.unlock();
 
             var.buffer = context.get_buffer(node);
 
@@ -102,7 +111,9 @@ namespace output {
 ///  @brief End define mode.
 //------------------------------------------------------------------------------
         void end_define_mode() const {
+            sync.lock();
             nc_enddef(ncid);
+            sync.unlock();
         }
 
 //------------------------------------------------------------------------------
@@ -110,9 +121,12 @@ namespace output {
 //------------------------------------------------------------------------------
         void write() {
             size_t size;
+            sync.lock();
             nc_inq_dimlen(ncid, unlimited_dim, &size);
+            sync.unlock();
             const std::array<size_t, 3> start = {size, 0, 0};
             for (variable &var : variables) {
+                sync.lock();
                 if constexpr (jit::is_float<T> ()) {
                     if constexpr (jit::is_complex<T> ()) {
                         const std::array<size_t, 3> count = {1, num_rays, 2};
@@ -134,9 +148,12 @@ namespace output {
                                            var.buffer);
                     }
                 }
+                sync.unlock();
             }
-            
+
+            sync.lock();
             nc_sync(ncid);
+            sync.unlock();
         }
     };
 }

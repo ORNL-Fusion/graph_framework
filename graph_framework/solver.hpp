@@ -641,7 +641,7 @@ namespace solver {
             graph::constant<typename DISPERSION_FUNCTION::base,
                             DISPERSION_FUNCTION::safe_math> (static_cast<typename DISPERSION_FUNCTION::base> (dt)), eq,
             filename, num_rays) {}
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
@@ -943,7 +943,7 @@ namespace solver {
 
 //  Test if the function is separatable.
             auto zero = graph::zero<typename DISPERSION_FUNCTION::base> ();
-            
+
             assert(zero->is_match(this->D.get_dkxdt()->df(kx)) &&
                    zero->is_match(this->D.get_dkxdt()->df(ky)) &&
                    zero->is_match(this->D.get_dkxdt()->df(kz)) &&
