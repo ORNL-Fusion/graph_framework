@@ -35,7 +35,7 @@ namespace gpu {
 ///  @params[in] result Result code of the operation.
 ///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
-    static check_error(CUresult result,
+    static void check_error(CUresult result,
                             const std::string &name) {
 #ifndef NDEBUG
         const char *error;

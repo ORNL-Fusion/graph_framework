@@ -58,7 +58,9 @@ namespace jit {
 ///  @returns The maximum available concurrency.
 //------------------------------------------------------------------------------
         static size_t max_concurrency() {
-            return gpu_context_type::max_concurrency();
+            const size_t num = gpu_context_type::max_concurrency();
+            std::cout << "Located " << num << " devices." << std::endl;
+            return num;
         }
 
 //------------------------------------------------------------------------------
@@ -70,7 +72,7 @@ namespace jit {
             source_buffer << std::setprecision(max_digits10<T> ());
             gpu_context.create_header(source_buffer);
         }
-        
+
 //------------------------------------------------------------------------------
 ///  @brief Add a kernel.
 ///
