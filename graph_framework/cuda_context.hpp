@@ -55,7 +55,7 @@ namespace gpu {
         return result;
     }
 ///  Initalize Cuda.
-    static const result = cuda_init();
+    static const CUresult result = cuda_init();
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
