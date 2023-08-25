@@ -19,6 +19,9 @@
 #include "arithmetic.hpp"
 
 namespace equilibrium {
+///  Lock to syncronize netcdf accross threads.
+    static std::mutex sync;
+
 //******************************************************************************
 //  Equilibrium interface
 //******************************************************************************
@@ -1108,13 +1111,10 @@ namespace equilibrium {
 ///  @brief Convenience function to build an EFIT equilibrium.
 ///
 ///  @params[in] spline_file File name of contains the spline functions.
-///  @params[in,out] sync    Mutex to ensure the netcdf file is read only by one
-///                          thread.
 ///  @returns A constructed EFIT equilibrium.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
-    shared<T, SAFE_MATH> make_efit(const std::string spline_file,
-                                   std::mutex &sync) {
+    shared<T, SAFE_MATH> make_efit(const std::string spline_file) {
         int ncid;
         sync.lock();
         nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);

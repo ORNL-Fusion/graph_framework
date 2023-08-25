@@ -583,10 +583,8 @@ template<typename T> void test_efit() {
     y->set(static_cast<T> (0.0));
     z->set(static_cast<T> (0.0));
     t->set(static_cast<T> (0.0));
-
-    std::mutex sync;
     
-    auto eq = equilibrium::make_efit<T> (NC_FILE, sync);
+    auto eq = equilibrium::make_efit<T> (NC_FILE);
     solver::rk4<dispersion::ordinary_wave<T>>
         solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
     solve.init(kx);
