@@ -113,9 +113,9 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>
             //solver::rk4<dispersion::hot_plasma_expandion<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
-                      stream.str(), local_num_rays);
+                      stream.str(), local_num_rays, thread_number);
                 //solve(omega, kx, ky, kz, x, y, z, t, dt_var, eq,
-                //      stream.str(), local_num_rays);
+                //      stream.str(), local_num_rays, thread_number);
             solve.init(kx);
             solve.compile();
             if (thread_number == 0 && print_expressions) {
