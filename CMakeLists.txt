@@ -145,6 +145,7 @@ macro (add_tool_target target)
 endmacro ()
 
 add_subdirectory (graph_driver)
+add_subdirectory (graph_benchmark)
 
 #-------------------------------------------------------------------------------
 #  Setup testing

@@ -18,6 +18,8 @@ namespace timeing {
         const std::string label;
 ///  Starting time of the measure.
         const std::chrono::high_resolution_clock::time_point start;
+///  Ending time of the measure.
+        std::chrono::high_resolution_clock::time_point end;
 
     public:
 //------------------------------------------------------------------------------
@@ -31,9 +33,14 @@ namespace timeing {
 //------------------------------------------------------------------------------
 ///  @brief Stop the timer.
 //------------------------------------------------------------------------------
-        void stop() const {
-            const std::chrono::high_resolution_clock::time_point end =
-                      std::chrono::high_resolution_clock::now();
+        void stop() {
+            end = std::chrono::high_resolution_clock::now();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Print the result.
+//------------------------------------------------------------------------------
+        void print() const {
             const auto total_time = end - start;
             const std::chrono::nanoseconds total_time_ns =
                       std::chrono::duration_cast<std::chrono::nanoseconds> (total_time);

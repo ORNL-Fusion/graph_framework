@@ -4,7 +4,6 @@
 //------------------------------------------------------------------------------
 
 #include <iostream>
-#include <chrono>
 #include <thread>
 #include <random>
 
@@ -31,7 +30,7 @@ int main(int argc, const char * argv[]) {
     //constexpr bool use_safe_math = true;
     constexpr bool use_safe_math = false;
 
-    const timeing::measure_diagnostic total("Total Time");
+    timeing::measure_diagnostic total("Total Time");
 
     const size_t num_times = 100000;
     const size_t sub_steps = 10;
@@ -162,7 +161,7 @@ int main(int argc, const char * argv[]) {
                 if (write_step) {
                     solve.write_step();
                 }
-                for(size_t k = 0; k < sub_steps; k++) {
+                for (size_t k = 0; k < sub_steps; k++) {
                     solve.step();
                 }
             }
@@ -184,6 +183,7 @@ int main(int argc, const char * argv[]) {
 
     std::cout << std::endl << "Timing:" << std::endl;
     total.stop();
+    total.print();
 
     END_GPU
 }
