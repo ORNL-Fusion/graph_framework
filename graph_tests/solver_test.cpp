@@ -39,21 +39,21 @@ void test_solver(const typename SOLVER::base tolarance,
     auto eq = equilibrium::make_guassian_density<typename SOLVER::base> ();
 
     SOLVER solve(w, kx, ky, kz, x, y, z, t, dt, eq);
-    timeing::measure_diagnostic solver("init");
+    const timeing::measure_diagnostic solver("init");
     auto residule = solve.init(kx, tolarance);
-    solver.stop();
+    solver.print();
 
-    timeing::measure_diagnostic compile("compile");
+    const timeing::measure_diagnostic compile("compile");
     solve.compile();
-    compile.stop();
+    compile.print();
 
-    timeing::measure_diagnostic step("step");
+    const timeing::measure_diagnostic step("step");
     for (size_t i = 0; i < 5; i++) {
         solve.step();
         assert(std::abs(residule->evaluate().at(0)) < std::abs(tolarance) &&
                "Solver failed to retain initial acuracy");
     }
-    step.stop();
+    step.print();
 }
 
 //------------------------------------------------------------------------------

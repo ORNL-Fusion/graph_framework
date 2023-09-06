@@ -19,6 +19,9 @@
 #include <array>
 
 namespace jit {
+///  Verbose output.
+    static bool verbose = false;
+
 //------------------------------------------------------------------------------
 ///  @brief Test if a type is complex.
 ///

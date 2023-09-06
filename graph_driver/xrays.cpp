@@ -13,6 +13,7 @@
 const bool print = false;
 const bool write_step = true;
 const bool print_expressions = false;
+const bool verbose = true;
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
@@ -23,6 +24,8 @@ const bool print_expressions = false;
 int main(int argc, const char * argv[]) {
     START_GPU
 
+    jit::verbose = verbose;
+
     typedef float base;
     //typedef double base;
     //typedef std::complex<float> base;
@@ -30,7 +33,7 @@ int main(int argc, const char * argv[]) {
     //constexpr bool use_safe_math = true;
     constexpr bool use_safe_math = false;
 
-    timeing::measure_diagnostic total("Total Time");
+    const timeing::measure_diagnostic total("Total Time");
 
     const size_t num_times = 100000;
     const size_t sub_steps = 10;
@@ -182,7 +185,6 @@ int main(int argc, const char * argv[]) {
     }
 
     std::cout << std::endl << "Timing:" << std::endl;
-    total.stop();
     total.print();
 
     END_GPU

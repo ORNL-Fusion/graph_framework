@@ -12,16 +12,14 @@
 template<typename T, size_t NUM_TIMES, size_t SUB_STEPS, size_t NUM_RAYS>
 void bench_runner() {
     if constexpr (std::is_same<T, float>::value) {
-        std::cout << "Float ";
+        std::cout << "Float --------------------------------------------------------------------------" << std::endl;
     } else if constexpr (std::is_same<T, double>::value) {
-        std::cout << "Double ";
+        std::cout << "Double -------------------------------------------------------------------------" << std::endl;
     } else if constexpr (std::is_same<T, std::complex<float>>::value) {
-        std::cout << "Complex Float ";
+        std::cout << "Complex Float ------------------------------------------------------------------" << std::endl;
     } else {
-        std::cout << "Complex Double ";
+        std::cout << "Complex Double -----------------------------------------------------------------" << std::endl;
     }
-    
-    std::cout << "--------------------------------------------------------------------------------" << std::endl;
 
     const size_t num_steps = NUM_TIMES/SUB_STEPS;
 
@@ -29,10 +27,10 @@ void bench_runner() {
                                                        static_cast<unsigned int> (NUM_RAYS)),
                                               static_cast<unsigned int> (1)));
 
-    std::vector<timeing::measure_diagnostic> timers;
+    timeing::measure_diagnostic_threaded timing;
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([&timers] (const size_t thread_number,
+        threads[i] = std::thread([&timing] (const size_t thread_number,
                                             const size_t num_threads) -> void {
             const size_t local_num_rays = NUM_RAYS/num_threads
                                         + std::min(thread_number, NUM_RAYS%num_threads);
@@ -73,28 +71,24 @@ void bench_runner() {
             solve.init(kx);
             solve.compile();
 
-            std::ostringstream step_label;
-            step_label << "Step Time thread " << thread_number;
-            timers.emplace_back(step_label.str());
+            timing.start_time(thread_number);
             for (size_t j = 0; j < num_steps; j++) {
                 for (size_t k = 0; k < SUB_STEPS; k++) {
                     solve.step();
                 }
             }
             solve.sync_host();
-            timers[thread_number].stop();
+            timing.end_time(thread_number);
         }, i, threads.size());
     }
     
     for (std::thread &t : threads) {
         t.join();
     }
+    timing.print();
 
-    for (auto &time : timers) {
-        time.print();
-    }
-
-    std::cout << "--------------------------------------------------------------------------------" << std::endl;
+    std::cout << "--------------------------------------------------------------------------------"
+              << std::endl << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -105,11 +99,11 @@ void bench_runner() {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
-
-    bench_runner<float,                100000, 10, 100000> ();
-    bench_runner<double,               100000, 10, 100000> ();
-    bench_runner<std::complex<float>,  100000, 10, 100000> ();
-    bench_runner<std::complex<double>, 100000, 10, 100000> ();
+    
+    bench_runner<float,                1000, 10, 100000> ();
+    bench_runner<double,               1000, 10, 100000> ();
+    bench_runner<std::complex<float>,  1000, 10, 100000> ();
+    bench_runner<std::complex<double>, 1000, 10, 100000> ();
 
     END_GPU
 }
