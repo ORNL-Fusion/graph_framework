@@ -44,6 +44,13 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Device discription.
+//------------------------------------------------------------------------------
+        static std::string device_type() {
+            return "CPU";
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Construct a cpu context.
 ///
 ///  @params[in] index Concurrent index. Not used.
@@ -106,8 +113,10 @@ namespace gpu {
 #endif
             temp_stream << filename << " -o " << library_name;
 
-            std::cout << "CPU info." << std::endl;
-            std::cout << "  Command Line    : " << temp_stream.str() << std::endl;
+            if (jit::verbose) {
+                std::cout << "CPU info." << std::endl;
+                std::cout << "  Command Line    : " << temp_stream.str() << std::endl;
+            }
             int error = system(temp_stream.str().c_str());
             if (error) {
                 std::cerr << "Failed to compile cpu kernel. Check source code in "
@@ -130,8 +139,10 @@ namespace gpu {
                 exit(1);
             }
 
-            std::cout << "  Library name    : " << library_name << std::endl;
-            std::cout << "  Library handle  : " << reinterpret_cast<size_t> (lib_handle) << std::endl;
+            if (jit::verbose) {
+                std::cout << "  Library name    : " << library_name << std::endl;
+                std::cout << "  Library handle  : " << reinterpret_cast<size_t> (lib_handle) << std::endl;
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -173,7 +184,9 @@ namespace gpu {
                 buffers[jit::to_string('o', output.get())] = kernel_arguments[output.get()].data();
             }
 
-            std::cout << "  Function pointer: " << reinterpret_cast<size_t> (kernel) << std::endl;
+            if (jit::verbose) {
+                std::cout << "  Function pointer: " << reinterpret_cast<size_t> (kernel) << std::endl;
+            }
 
             return [kernel, buffers] () mutable {
                 ((void (*)(std::map<std::string, T *> &))kernel)(buffers);

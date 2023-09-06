@@ -104,6 +104,13 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Device discription.
+//------------------------------------------------------------------------------
+        static std::string device_type() {
+            return "Cuda GPU";
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Cuda context constructor.
 ///
 ///  @params[in] index Concurrent index.
@@ -175,18 +182,24 @@ namespace gpu {
                                              device), "cuDeviceGetAttribute");
             arch << "--gpu-architecture=compute_";
             arch << compute_version;
-            std::cout << "CUDA GPU info." << std::endl;
-            std::cout << "  Major compute capability : " << compute_version << std::endl;
+            if (jit::verbose) {
+                std::cout << "CUDA GPU info." << std::endl;
+                std::cout << "  Major compute capability : " << compute_version << std::endl;
+            }
 
             check_error(cuDeviceGetAttribute(&compute_version,
                                              CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
                                              device), "cuDeviceGetAttribute");
             arch << compute_version;
-            std::cout << "  Minor compute capability : " << compute_version << std::endl;
+            if (jit::verbose) {
+                std::cout << "  Minor compute capability : " << compute_version << std::endl;
+            }
 
             char device_name[100];
             check_error(cuDeviceGetName(device_name, 100, device), "cuDeviceGetName");
-            std::cout << "  Device name              : " << device_name << std::endl;
+            if (jit::verbose) {
+                std::cout << "  Device name              : " << device_name << std::endl;
+            }
 
             const std::string temp = arch.str();
             std::array<const char *, 3> options({
@@ -211,7 +224,9 @@ namespace gpu {
             check_error(cuDeviceGetAttribute(&compute_version,
                                              CU_DEVICE_ATTRIBUTE_MANAGED_MEMORY,
                                              device), "cuDeviceGetAttribute");
-            std::cout << "  Managed Memory           : " << compute_version << std::endl;
+            if (jit::verbose) {
+                std::cout << "  Managed Memory           : " << compute_version << std::endl;
+            }
 
             size_t ptx_size;
             check_nvrtc_error(nvrtcGetPTXSize(kernel_program, &ptx_size),
@@ -278,10 +293,12 @@ namespace gpu {
                                            function), "cuFuncGetAttribute");
             unsigned int threads_per_group = value;
             unsigned int thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
-            std::cout << "  Kernel name              : " << kernel_name << std::endl;
-            std::cout << "    Threads per group  : " << threads_per_group << std::endl;
-            std::cout << "    Number of groups   : " << thread_groups << std::endl;
-            std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+            if (jit::verbose) {
+                std::cout << "  Kernel name              : " << kernel_name << std::endl;
+                std::cout << "    Threads per group  : " << threads_per_group << std::endl;
+                std::cout << "    Number of groups   : " << thread_groups << std::endl;
+                std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+            }
 
             return [this, function, thread_groups, threads_per_group, buffers] () mutable {
                 check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
@@ -313,7 +330,9 @@ namespace gpu {
             check_error(cuModuleGetFunction(&function, module, "max_reduction"),
                         "cuModuleGetFunction");
 
-            std::cout << "  Kernel name              : max_reduction" << std::endl;
+            if (jit::verbose) {
+                std::cout << "  Kernel name              : max_reduction" << std::endl;
+            }
 
             return [this, function, run, buffers] () mutable {
                 run();

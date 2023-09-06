@@ -46,6 +46,13 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Device discription.
+//------------------------------------------------------------------------------
+        static std::string device_type() {
+            return "Metal GPU";
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Construct a metal context.
 ///
 ///  @params[in] index Concurrent index.
@@ -73,8 +80,10 @@ namespace gpu {
             if (error) {
                 NSLog(@"%@", error);
             }
-            
-            std::cout << "Metal GPU info." << std::endl;
+
+            if (jit::verbose) {
+                std::cout << "Metal GPU info." << std::endl;
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -134,11 +143,13 @@ namespace gpu {
             NSUInteger threads_per_group = state.maxTotalThreadsPerThreadgroup;
             NSUInteger thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
 
-            std::cout << "  Kernel name : " << kernel_name << std::endl;
-            std::cout << "    Threads per group  : " << threads_per_group << std::endl;
-            std::cout << "    Number of groups   : " << thread_groups << std::endl;
-            std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
-            
+            if (jit::verbose) {
+                std::cout << "  Kernel name : " << kernel_name << std::endl;
+                std::cout << "    Threads per group  : " << threads_per_group << std::endl;
+                std::cout << "    Number of groups   : " << thread_groups << std::endl;
+                std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+            }
+
             return [this, state, buffers, offsets, range, thread_groups, threads_per_group] () mutable {
                 command_buffer = [queue commandBuffer];
                 id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];

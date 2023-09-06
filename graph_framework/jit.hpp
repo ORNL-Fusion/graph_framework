@@ -59,7 +59,10 @@ namespace jit {
 //------------------------------------------------------------------------------
         static size_t max_concurrency() {
             const size_t num = gpu_context_type::max_concurrency();
-            std::cout << "Located " << num << " devices." << std::endl;
+            std::cout << "Located " << num << " "
+                      << gpu_context_type::device_type() << " device"
+                      << (num == 1 ? "." : "s.")
+                      << std::endl;
             return num;
         }
 

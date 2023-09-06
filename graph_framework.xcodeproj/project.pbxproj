@@ -32,6 +32,7 @@
 		C73BBE7E29F816E60027BB7F /* piecewise_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */; };
 		C73BBE8229F820810027BB7F /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C73E2A7A2A4A216400BED03A /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
+		C74DF4602AA8BD1900319113 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C79141B622DAAD0C00E0BA0D /* xrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C79141B522DAAD0C00E0BA0D /* xrays.cpp */; };
 		C7D371132A0595A40074676E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C7E5644528A2A1AA000F31A2 /* backend_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E7328074F540033B488 /* backend_test.cpp */; };
@@ -45,6 +46,107 @@
 		C7FA0E0A29590F9100A31E4D /* jit_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7FA0DFD29590B7400A31E4D /* jit_test.cpp */; };
 		C7FA0E0B29590F9F00A31E4D /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C74DF4612AA8BD2600319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4632AA8BD3400319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4652AA8BD3900319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4672AA8BD3E00319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4692AA8BD4200319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF46B2AA8BD4600319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF46D2AA8BD4B00319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF46F2AA8BD4F00319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4712AA8BD5300319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4732AA8BD5700319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4752AA8BD5B00319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4772AA8BD5F00319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF4792AA8BD6200319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+		C74DF47B2AA8BD6600319113 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
+			remoteInfo = graph_framework;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		C736902F2A38C498001733B0 /* CopyFiles */ = {
@@ -66,6 +168,15 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		C73BBE7929F816E50027BB7F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		C74DF4552AA8BC7300319113 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -188,6 +299,9 @@
 		C73BBE7B29F816E50027BB7F /* piecewise_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = piecewise_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = piecewise_test.cpp; sourceTree = "<group>"; };
 		C73BBE9629F8669F0027BB7F /* newton.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = newton.hpp; sourceTree = "<group>"; };
+		C74DF4572AA8BC7300319113 /* graph_benchmark */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_benchmark; sourceTree = BUILT_PRODUCTS_DIR; };
+		C74DF4592AA8BC7300319113 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		C74DF45F2AA8BCE600319113 /* graph_benchmark */ = {isa = PBXFileReference; lastKnownFileType = folder; path = graph_benchmark; sourceTree = "<group>"; };
 		C77E6DF522DD64E700469621 /* trigonometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trigonometry.hpp; sourceTree = "<group>"; };
 		C79141A622DA9BF200E0BA0D /* libgraph_framework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgraph_framework.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		C79141AE22DA9C3000E0BA0D /* node.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = node.hpp; sourceTree = "<group>"; };
@@ -242,6 +356,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				C73BBE8229F820810027BB7F /* Metal.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C74DF4542AA8BC7300319113 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C74DF4602AA8BD1900319113 /* Metal.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,6 +467,14 @@
 			path = cmake;
 			sourceTree = "<group>";
 		};
+		C74DF4582AA8BC7300319113 /* graph_benchmark */ = {
+			isa = PBXGroup;
+			children = (
+				C74DF4592AA8BC7300319113 /* main.cpp */,
+			);
+			path = graph_benchmark;
+			sourceTree = "<group>";
+		};
 		C791419D22DA9BF200E0BA0D = {
 			isa = PBXGroup;
 			children = (
@@ -352,7 +482,9 @@
 				C79141AD22DA9C0600E0BA0D /* graph_framework */,
 				C7931E6928073BCA0033B488 /* graph_tests */,
 				C79141B422DAAD0C00E0BA0D /* graph_driver */,
+				C74DF45F2AA8BCE600319113 /* graph_benchmark */,
 				C717CB8C2A02E361008FBDD8 /* cmake */,
+				C74DF4582AA8BC7300319113 /* graph_benchmark */,
 				C79141A722DA9BF200E0BA0D /* Products */,
 				C71342672947F36100672AD4 /* Frameworks */,
 			);
@@ -375,6 +507,7 @@
 				C73BBE6F29F72BC50027BB7F /* trigonometry_test */,
 				C73BBE7B29F816E50027BB7F /* piecewise_test */,
 				C73690312A38C498001733B0 /* erfi_test */,
+				C74DF4572AA8BC7300319113 /* graph_benchmark */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -479,6 +612,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF47C2AA8BD6600319113 /* PBXTargetDependency */,
 			);
 			name = erfi_test;
 			productName = erfi_test;
@@ -496,6 +630,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF4782AA8BD5F00319113 /* PBXTargetDependency */,
 			);
 			name = trigonometry_test;
 			productName = trigonometry_test;
@@ -513,10 +648,29 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF47A2AA8BD6200319113 /* PBXTargetDependency */,
 			);
 			name = piecewise_test;
 			productName = piecewise_test;
 			productReference = C73BBE7B29F816E50027BB7F /* piecewise_test */;
+			productType = "com.apple.product-type.tool";
+		};
+		C74DF4562AA8BC7300319113 /* graph_benchmark */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C74DF45D2AA8BC7300319113 /* Build configuration list for PBXNativeTarget "graph_benchmark" */;
+			buildPhases = (
+				C74DF4532AA8BC7300319113 /* Sources */,
+				C74DF4542AA8BC7300319113 /* Frameworks */,
+				C74DF4552AA8BC7300319113 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C74DF4622AA8BD2600319113 /* PBXTargetDependency */,
+			);
+			name = graph_benchmark;
+			productName = graph_benchmark;
+			productReference = C74DF4572AA8BC7300319113 /* graph_benchmark */;
 			productType = "com.apple.product-type.tool";
 		};
 		C79141A522DA9BF200E0BA0D /* graph_framework */ = {
@@ -547,6 +701,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF4642AA8BD3400319113 /* PBXTargetDependency */,
 			);
 			name = graph_driver;
 			productName = graph_driver;
@@ -564,6 +719,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF4662AA8BD3900319113 /* PBXTargetDependency */,
 			);
 			name = backend_test;
 			productName = graph_tests;
@@ -581,6 +737,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF4682AA8BD3E00319113 /* PBXTargetDependency */,
 			);
 			name = dispersion_test;
 			productName = graph_tests;
@@ -598,6 +755,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF46A2AA8BD4200319113 /* PBXTargetDependency */,
 			);
 			name = solver_test;
 			productName = graph_tests;
@@ -615,6 +773,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF46C2AA8BD4600319113 /* PBXTargetDependency */,
 			);
 			name = arithmetic_test;
 			productName = graph_tests;
@@ -632,6 +791,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF46E2AA8BD4B00319113 /* PBXTargetDependency */,
 			);
 			name = math_test;
 			productName = graph_tests;
@@ -649,6 +809,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF4702AA8BD4F00319113 /* PBXTargetDependency */,
 			);
 			name = node_test;
 			productName = graph_tests;
@@ -666,6 +827,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF4722AA8BD5300319113 /* PBXTargetDependency */,
 			);
 			name = vector_test;
 			productName = graph_tests;
@@ -683,6 +845,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF4742AA8BD5700319113 /* PBXTargetDependency */,
 			);
 			name = physics_test;
 			productName = graph_tests;
@@ -700,6 +863,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C74DF4762AA8BD5B00319113 /* PBXTargetDependency */,
 			);
 			name = jit_test;
 			productName = jit_test;
@@ -724,6 +888,9 @@
 					};
 					C73BBE7A29F816E50027BB7F = {
 						CreatedOnToolsVersion = 14.3;
+					};
+					C74DF4562AA8BC7300319113 = {
+						CreatedOnToolsVersion = 14.3.1;
 					};
 					C79141A522DA9BF200E0BA0D = {
 						CreatedOnToolsVersion = 10.2.1;
@@ -787,6 +954,7 @@
 				C73BBE6E29F72BC50027BB7F /* trigonometry_test */,
 				C73BBE7A29F816E50027BB7F /* piecewise_test */,
 				C73690302A38C498001733B0 /* erfi_test */,
+				C74DF4562AA8BC7300319113 /* graph_benchmark */,
 			);
 		};
 /* End PBXProject section */
@@ -813,6 +981,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				C73BBE7E29F816E60027BB7F /* piecewise_test.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C74DF4532AA8BC7300319113 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -905,6 +1080,79 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		C74DF4622AA8BD2600319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4612AA8BD2600319113 /* PBXContainerItemProxy */;
+		};
+		C74DF4642AA8BD3400319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4632AA8BD3400319113 /* PBXContainerItemProxy */;
+		};
+		C74DF4662AA8BD3900319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4652AA8BD3900319113 /* PBXContainerItemProxy */;
+		};
+		C74DF4682AA8BD3E00319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4672AA8BD3E00319113 /* PBXContainerItemProxy */;
+		};
+		C74DF46A2AA8BD4200319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4692AA8BD4200319113 /* PBXContainerItemProxy */;
+		};
+		C74DF46C2AA8BD4600319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF46B2AA8BD4600319113 /* PBXContainerItemProxy */;
+		};
+		C74DF46E2AA8BD4B00319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF46D2AA8BD4B00319113 /* PBXContainerItemProxy */;
+		};
+		C74DF4702AA8BD4F00319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF46F2AA8BD4F00319113 /* PBXContainerItemProxy */;
+		};
+		C74DF4722AA8BD5300319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4712AA8BD5300319113 /* PBXContainerItemProxy */;
+		};
+		C74DF4742AA8BD5700319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4732AA8BD5700319113 /* PBXContainerItemProxy */;
+		};
+		C74DF4762AA8BD5B00319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4752AA8BD5B00319113 /* PBXContainerItemProxy */;
+		};
+		C74DF4782AA8BD5F00319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4772AA8BD5F00319113 /* PBXContainerItemProxy */;
+		};
+		C74DF47A2AA8BD6200319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF4792AA8BD6200319113 /* PBXContainerItemProxy */;
+		};
+		C74DF47C2AA8BD6600319113 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
+			targetProxy = C74DF47B2AA8BD6600319113 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		C73690362A38C498001733B0 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -992,6 +1240,32 @@
 			name = Debug;
 		};
 		C73BBE8129F816E60027BB7F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		C74DF45B2AA8BC7300319113 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C74DF45C2AA8BC7300319113 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -1486,6 +1760,15 @@
 			buildConfigurations = (
 				C73BBE8029F816E60027BB7F /* Debug */,
 				C73BBE8129F816E60027BB7F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C74DF45D2AA8BC7300319113 /* Build configuration list for PBXNativeTarget "graph_benchmark" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C74DF45B2AA8BC7300319113 /* Debug */,
+				C74DF45C2AA8BC7300319113 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

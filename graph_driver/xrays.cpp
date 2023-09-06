@@ -4,7 +4,6 @@
 //------------------------------------------------------------------------------
 
 #include <iostream>
-#include <chrono>
 #include <thread>
 #include <random>
 
@@ -14,6 +13,7 @@
 const bool print = false;
 const bool write_step = true;
 const bool print_expressions = false;
+const bool verbose = true;
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
@@ -23,6 +23,8 @@ const bool print_expressions = false;
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
+
+    jit::verbose = verbose;
 
     typedef float base;
     //typedef double base;
@@ -162,7 +164,7 @@ int main(int argc, const char * argv[]) {
                 if (write_step) {
                     solve.write_step();
                 }
-                for(size_t k = 0; k < sub_steps; k++) {
+                for (size_t k = 0; k < sub_steps; k++) {
                     solve.step();
                 }
             }
@@ -183,7 +185,7 @@ int main(int argc, const char * argv[]) {
     }
 
     std::cout << std::endl << "Timing:" << std::endl;
-    total.stop();
+    total.print();
 
     END_GPU
 }
