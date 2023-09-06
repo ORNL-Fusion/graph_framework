@@ -6,6 +6,9 @@
 #include <iostream>
 #include <thread>
 
+#include "../graph_framework/solver.hpp"
+#include "../graph_framework/timing.hpp"
+
 //------------------------------------------------------------------------------
 ///  @brief Bench runner.
 //------------------------------------------------------------------------------
@@ -81,7 +84,7 @@ void bench_runner() {
             timing.end_time(thread_number);
         }, i, threads.size());
     }
-    
+
     for (std::thread &t : threads) {
         t.join();
     }
@@ -99,7 +102,7 @@ void bench_runner() {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
-    
+
     bench_runner<float,                1000, 10, 100000> ();
     bench_runner<double,               1000, 10, 100000> ();
     bench_runner<std::complex<float>,  1000, 10, 100000> ();

@@ -1335,7 +1335,7 @@ namespace graph {
             }
             std::cout << " ";
             if (constant_cast(this->right).get() ||
-                add_cast(this->right).get()     ||
+                add_cast(this->right).get()      ||
                 subtract_cast(this->right).get()) {
                 std::cout << "\\left(";
                 this->right->to_latex();
@@ -1873,7 +1873,7 @@ namespace graph {
             auto r = constant_cast(this->right);
 
             if ((l.get() && l->is(0)) ||
-                (m.get() && m->is(0)) ) {
+                (m.get() && m->is(0))) {
                 return this->right;
             } else if (r.get() && r->is(0)) {
                 return this->left*this->middle;
