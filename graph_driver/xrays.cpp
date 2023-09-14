@@ -26,8 +26,8 @@ int main(int argc, const char * argv[]) {
 
     jit::verbose = verbose;
 
-    typedef float base;
-    //typedef double base;
+    //typedef float base;
+    typedef double base;
     //typedef std::complex<float> base;
     //typedef std::complex<double> base;
     //constexpr bool use_safe_math = true;
@@ -35,8 +35,8 @@ int main(int argc, const char * argv[]) {
 
     const timeing::measure_diagnostic total("Total Time");
 
-    const size_t num_times = 100000;
-    const size_t sub_steps = 10;
+    const size_t num_times = 200000;
+    const size_t sub_steps = 100;
     const size_t num_steps = num_times/sub_steps;
     const size_t num_rays = 100000;
 
@@ -44,11 +44,15 @@ int main(int argc, const char * argv[]) {
                                                        static_cast<unsigned int> (num_rays)),
                                               static_cast<unsigned int> (1)));
 
+    const size_t batch = num_rays/threads.size();
+    const size_t extra = num_rays%threads.size();
+
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, num_rays] (const size_t thread_number,
-                                                        const size_t num_threads) -> void {
-            const size_t local_num_rays = num_rays/num_threads
-                                        + std::min(thread_number, num_rays%num_threads);
+        threads[i] = std::thread([num_times, num_rays, batch, extra] (const size_t thread_number,
+                                                                      const size_t num_threads) -> void {
+
+            const size_t local_num_rays = batch
+                                        + (extra > thread_number ? 1 : 0);
 
             std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
@@ -66,35 +70,41 @@ int main(int argc, const char * argv[]) {
 
 //  Inital conditions.
             if constexpr (jit::is_float<base> ()) {
-                std::normal_distribution<float> norm_dist(static_cast<float> (600.0), static_cast<float> (10.0));
+                std::normal_distribution<float> norm_dist(static_cast<float> (700.0), static_cast<float> (10.0));
+                std::normal_distribution<float> norm_dist2(static_cast<float> (0.0), static_cast<float> (0.05));
+                std::normal_distribution<float> norm_dist3(static_cast<float> (-100.0), static_cast<float> (10.0));
+                std::normal_distribution<float> norm_dist4(static_cast<float> (0.0), static_cast<float> (10.0));
+
                 for (size_t j = 0; j < local_num_rays; j++) {
                     omega->set(j, static_cast<base> (norm_dist(engine)));
+                    y->set(j, static_cast<base> (norm_dist2(engine)));
+                    z->set(j, static_cast<base> (norm_dist2(engine)));
+                    ky->set(j, static_cast<base> (norm_dist3(engine)));
+                    kz->set(j, static_cast<base> (norm_dist4(engine)));
                 }
             } else {
-                std::normal_distribution<float> norm_dist(static_cast<double> (600.0), static_cast<double> (10.0));
+                std::normal_distribution<float> norm_dist(static_cast<double> (700.0), static_cast<double> (10.0));
+                std::normal_distribution<float> norm_dist2(static_cast<double> (0.0), static_cast<double> (0.05));
+                std::normal_distribution<float> norm_dist3(static_cast<float> (-100.0), static_cast<float> (10.0));
+                std::normal_distribution<float> norm_dist4(static_cast<float> (0.0), static_cast<float> (10.0));
+
                 for (size_t j = 0; j < local_num_rays; j++) {
                     omega->set(j, static_cast<base> (norm_dist(engine)));
+                    y->set(j, static_cast<base> (norm_dist2(engine)));
+                    z->set(j, static_cast<base> (norm_dist2(engine)));
+                    ky->set(j, static_cast<base> (norm_dist3(engine)));
+                    kz->set(j, static_cast<base> (norm_dist4(engine)));
                 }
             }
-
-            omega->set(static_cast<base> (500.0));
-            //x->set(static_cast<base> (-12.0));
             x->set(static_cast<base> (2.5));
-            //x->set(static_cast<base> (0.0));
-            y->set(static_cast<base> (0.0));
-            z->set(static_cast<base> (0.0));
-            kx->set(static_cast<base> (-600));
-            //kx->set(static_cast<base> (600.0));
-            ky->set(static_cast<base> (0.0));
-            kz->set(static_cast<base> (0.0));
-            //kz->set(static_cast<base> (10.0));
+            kx->set(static_cast<base> (-700));
 
             auto eq = equilibrium::make_efit<base, use_safe_math> (NC_FILE);
             //auto eq = equilibrium::make_slab_density<base, use_safe_math> ();
             //auto eq = equilibrium::make_slab_field<base, use_safe_math> ();
             //auto eq = equilibrium::make_no_magnetic_field<base, use_safe_math> ();
 
-            const base endtime = static_cast<base> (1.0);
+            const base endtime = static_cast<base> (1.5);
             //const base endtime = static_cast<base> (10.0);
             //const base endtime = static_cast<base> (0.25);
             const base dt = endtime/static_cast<base> (num_times);
@@ -108,9 +118,9 @@ int main(int argc, const char * argv[]) {
             //solver::rk4<dispersion::bohm_gross<base, use_safe_math>>
             //solver::adaptive_rk4<dispersion::bohm_gross<base, use_safe_math>>
             //solver::rk4<dispersion::simple<base, use_safe_math>>
-            //solver::rk4<dispersion::ordinary_wave<base, use_safe_math>>
+            solver::rk4<dispersion::ordinary_wave<base, use_safe_math>>
             //solver::rk4<dispersion::extra_ordinary_wave<base, use_safe_math>>
-            solver::rk4<dispersion::cold_plasma<base, use_safe_math>>
+            //solver::rk4<dispersion::cold_plasma<base, use_safe_math>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<base, use_safe_math>>
             //solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>
             //solver::rk4<dispersion::hot_plasma_expandion<base, dispersion::z_erfi<base, use_safe_math>, use_safe_math>>

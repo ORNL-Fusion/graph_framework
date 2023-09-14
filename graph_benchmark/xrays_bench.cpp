@@ -26,26 +26,30 @@ void bench_runner() {
 
     const size_t num_steps = NUM_TIMES/SUB_STEPS;
 
-    std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, false>::max_concurrency()),
+    std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T>::max_concurrency()),
                                                        static_cast<unsigned int> (NUM_RAYS)),
                                               static_cast<unsigned int> (1)));
+
+    const size_t batch = NUM_RAYS/threads.size();
+    const size_t extra = NUM_RAYS%threads.size();
 
     timeing::measure_diagnostic_threaded timing;
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([&timing] (const size_t thread_number,
-                                            const size_t num_threads) -> void {
-            const size_t local_num_rays = NUM_RAYS/num_threads
-                                        + std::min(thread_number, NUM_RAYS%num_threads);
+        threads[i] = std::thread([&timing, batch, extra] (const size_t thread_number,
+                                                   const size_t num_threads) -> void {
 
-            auto omega = graph::variable<T, false> (local_num_rays, "\\omega");
-            auto kx    = graph::variable<T, false> (local_num_rays, "k_{x}");
-            auto ky    = graph::variable<T, false> (local_num_rays, "k_{y}");
-            auto kz    = graph::variable<T, false> (local_num_rays, "k_{z}");
-            auto x     = graph::variable<T, false> (local_num_rays, "x");
-            auto y     = graph::variable<T, false> (local_num_rays, "y");
-            auto z     = graph::variable<T, false> (local_num_rays, "z");
-            auto t     = graph::variable<T, false> (local_num_rays, "t");
+            const size_t local_num_rays = batch
+                                        + (extra > thread_number ? 1 : 0);
+
+            auto omega = graph::variable<T> (local_num_rays, "\\omega");
+            auto kx    = graph::variable<T> (local_num_rays, "k_{x}");
+            auto ky    = graph::variable<T> (local_num_rays, "k_{y}");
+            auto kz    = graph::variable<T> (local_num_rays, "k_{z}");
+            auto x     = graph::variable<T> (local_num_rays, "x");
+            auto y     = graph::variable<T> (local_num_rays, "y");
+            auto z     = graph::variable<T> (local_num_rays, "z");
+            auto t     = graph::variable<T> (local_num_rays, "t");
 
             t->set(static_cast<T> (0.0));
 
@@ -58,18 +62,18 @@ void bench_runner() {
             ky->set(static_cast<T> (0.0));
             kz->set(static_cast<T> (0.0));
 
-            auto eq = equilibrium::make_efit<T, false> (NC_FILE);
+            auto eq = equilibrium::make_efit<T> (NC_FILE);
 
             const T endtime = static_cast<T> (1.0);
             const T dt = endtime/static_cast<T> (NUM_TIMES);
 
-            solver::rk4<dispersion::cold_plasma<T, false>> solve(omega,
-                                                                 kx, ky, kz,
-                                                                 x, y, z,
-                                                                 t, dt,
-                                                                 eq, "",
-                                                                 local_num_rays,
-                                                                 thread_number);
+            solver::rk4<dispersion::cold_plasma<T>> solve(omega,
+                                                          kx, ky, kz,
+                                                          x, y, z,
+                                                          t, dt,
+                                                          eq, "",
+                                                          local_num_rays,
+                                                          thread_number);
 
             solve.init(kx);
             solve.compile();

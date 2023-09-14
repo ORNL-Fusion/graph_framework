@@ -201,7 +201,7 @@ namespace workflow {
 //------------------------------------------------------------------------------
         void compile() {
             context.compile(add_reduction);
-            
+
             for (auto &item : items) {
                 item->create_kernel_call(context);
             }
