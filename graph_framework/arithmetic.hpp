@@ -18,6 +18,9 @@ namespace graph {
 ///  @brief An addition node.
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class add_node final : public branch_node<T, SAFE_MATH> {
@@ -358,6 +361,9 @@ namespace graph {
 ///  Note use templates here to defer this so it can be used in the above
 ///  classes.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -385,6 +391,9 @@ namespace graph {
 ///  Note use templates here to defer this so it can be used in the above
 ///  classes.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -401,6 +410,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a add node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
@@ -416,6 +428,9 @@ namespace graph {
 ///  @brief A subtraction node.
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class subtract_node final : public branch_node<T, SAFE_MATH> {
@@ -804,6 +819,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build subtract node from two leaves.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -828,6 +846,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build subtract operator from two leaves.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -844,6 +865,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a subtract node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
@@ -857,6 +881,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief A multiplcation node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class multiply_node final : public branch_node<T, SAFE_MATH> {
@@ -1359,6 +1386,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build multiply node from two leaves.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -1383,6 +1413,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build multiply operator from two leaves.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -1399,6 +1432,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a multiply node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
@@ -1412,6 +1448,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief A division node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class divide_node final : public branch_node<T, SAFE_MATH> {
@@ -1751,6 +1790,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build divide node from two leaves.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -1775,6 +1817,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build divide operator from two leaves.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -1791,6 +1836,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a divide node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
@@ -1806,6 +1854,9 @@ namespace graph {
 ///  @brief A fused multiply add node.
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class fma_node final : public triple_node<T, SAFE_MATH> {
@@ -2262,6 +2313,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build fused multiply add node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] m Middle branch.
 ///  @params[in] r Right branch.
@@ -2291,6 +2345,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a fma node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.

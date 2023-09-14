@@ -14,6 +14,8 @@
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_backend() {
     backend::buffer<T> size_one(1);

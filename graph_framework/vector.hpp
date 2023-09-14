@@ -17,6 +17,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class to represent vector quantities.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class vector_quantity : public std::enable_shared_from_this<vector_quantity<T, SAFE_MATH>> {
@@ -121,6 +124,13 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     shared_vector<T, SAFE_MATH> vector(shared_leaf<T, SAFE_MATH> x,

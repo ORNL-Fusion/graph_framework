@@ -11,6 +11,11 @@
 
 //------------------------------------------------------------------------------
 ///  @brief Bench runner.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam NUM_TIMES Total number of times steps.
+///  @tparam SUB_STEPS Number of substeps.
+///  @tparam NUM_RAYS  Number of rays.
 //------------------------------------------------------------------------------
 template<typename T, size_t NUM_TIMES, size_t SUB_STEPS, size_t NUM_RAYS>
 void bench_runner() {

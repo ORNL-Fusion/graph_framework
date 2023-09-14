@@ -17,6 +17,8 @@ namespace solver {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class interface the solver.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class solver_interface {
@@ -382,14 +384,10 @@ namespace solver {
 //******************************************************************************
 //  Second Order Runge Kutta.
 //******************************************************************************
-//    template<class DISPERSION_FUNCTION>
-//    class leap_frog : public
-
-//******************************************************************************
-//  Second Order Runge Kutta.
-//******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Second Order Runge Kutta class.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class rk2 : public solver_interface<DISPERSION_FUNCTION> {
@@ -518,6 +516,8 @@ namespace solver {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Fourth Order Runge Kutta class.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class rk4 : public solver_interface<DISPERSION_FUNCTION> {
@@ -769,6 +769,8 @@ namespace solver {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Adaptive Fourth Order Runge Kutta class.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class adaptive_rk4 : public rk4<DISPERSION_FUNCTION> {
@@ -896,6 +898,8 @@ namespace solver {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Predictor corrector that trys to minimize the disperison residule.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class split_simplextic : public solver_interface<DISPERSION_FUNCTION> {

@@ -16,7 +16,9 @@
 #include "../graph_framework/piecewise.hpp"
 
 //------------------------------------------------------------------------------
-///  @brief Tests for cosine nodes.
+///  @brief Tests for sine nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_sin() {
     assert(graph::constant_cast(graph::sin(graph::constant(static_cast<T> (10.0)))).get() &&
@@ -38,6 +40,8 @@ template<typename T> void test_sin() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for cosine nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_cos() {
     assert(graph::constant_cast(graph::cos(graph::constant(static_cast<T> (10.0)))).get() &&
@@ -59,6 +63,8 @@ template<typename T> void test_cos() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for tan nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_tan() {
     assert(graph::constant_cast(graph::tan(graph::constant(static_cast<T> (10.0)))).get() &&
@@ -75,6 +81,8 @@ template<typename T> void test_tan() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for tan nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_atan() {
     assert(graph::constant_cast(graph::atan(graph::constant(static_cast<T> (10.0)),
@@ -98,6 +106,8 @@ template<typename T> void test_atan() {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
     test_sin<T> ();

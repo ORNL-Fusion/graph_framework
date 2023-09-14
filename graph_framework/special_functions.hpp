@@ -16,12 +16,14 @@
 namespace special {
 
 ///  I constant.
-template<typename T>
-constexpr std::complex<T> i(static_cast<T> (0),
-                            static_cast<T> (1));
+    template<typename T>
+    constexpr std::complex<T> i(static_cast<T> (0),
+                                static_cast<T> (1));
 
 //------------------------------------------------------------------------------
 ///  @brief Compute erfcx(z) = exp(z^2)\*erfz(z)
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] z The complex argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
@@ -33,6 +35,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 
 //------------------------------------------------------------------------------
 ///  @brief x^2
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] x Argument.
 ///  @returns x^2
@@ -51,6 +55,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///  for large |x|, a lookup table of Chebyshev polynomials for smaller |x|, and
 ///  finally a Taylor expansion for |x|<0.01.
 ///  Given y100 = 100*y, where y = 1/(1 + x) for x >= 0, compute w_im(x).
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] x The real argument.
 //------------------------------------------------------------------------------
@@ -475,6 +481,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///
 ///  Specialized for imaginary arguments.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] x The argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
 //------------------------------------------------------------------------------
@@ -536,6 +544,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///  with the help of Maple and a little shell script.   This allows
 ///  the Chebyshev polynomials to be of significantly lower degree (about 1/4)
 ///  compared to fitting the whole [0,1] interval with a single polynomial.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] y100 Interval argument.
 ///  @returns erfcx(x) = exp(x^2)\*erfc(x) function, for real x
@@ -952,6 +962,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 //------------------------------------------------------------------------------
 ///  @brief erfcx(x) = exp(x^2)\*erfc(x) function, for real x
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] x The argument.
 ///  @returns erfcx(x) = exp(x^2)\*erfc(x)
 //------------------------------------------------------------------------------
@@ -1040,6 +1052,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///
 ///  sinh(x) via Taylor series, accurate to machine precision for |x| < 1E-2
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] x Argument.
 ///  @returns sinh(x)
 //------------------------------------------------------------------------------
@@ -1057,6 +1071,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///  Note: Since we only use this in cases where sin(x) has already been
 ///        computed.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] x    Argument of sine.
 ///  @params[in] sinx Precomputed sine.
 ///  @returns sinc(x) = sin(x)/x
@@ -1068,6 +1084,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 
 //------------------------------------------------------------------------------
 ///  @brief Compute w(z) = exp(z^2)\*erfz(z).
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] z The complex argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
@@ -1326,6 +1344,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///  Use Taylor series for small |z|, to avoid cancellation inaccuracy
 ///  erf(z) = 2/sqrt(pi) * z * (1 - z^2/3 + z^4/10 - z^6/42 + z^8/216 + ...)
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] z      Complex argument.
 ///  @params[in] mRe_z2 Real argument squared.
 ///  @params[in] mIm_z2 Imaginary argument squared.
@@ -1353,6 +1373,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///
 ///  where: erf(iy) = exp(y^2)Im[w(y)]
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] x Real argument.
 ///  @params[in] y imaginary argument.
 ///  @returns erf(x+iy)
@@ -1377,6 +1399,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 ///  @brief Compute the error function erf(z)
 ///
 ///  Using w\_of\_z except for certain regions.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] z The complex argument.
 ///  @returns erf(z)
@@ -1452,6 +1476,8 @@ constexpr std::complex<T> i(static_cast<T> (0),
 
 //------------------------------------------------------------------------------
 ///  @brief erfi(z) = -i erf(iz)
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] z Complex argument.
 ///  @returns erfi(z)

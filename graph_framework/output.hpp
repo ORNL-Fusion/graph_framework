@@ -18,6 +18,8 @@ namespace output {
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a netcdf based output file.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
     template<typename T>
     class result_file {
@@ -81,6 +83,8 @@ namespace output {
 
 //------------------------------------------------------------------------------
 ///  @brief Create a variable.
+///
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] name    Name of the variable.
 ///  @params[in] node    Node to create variable for.

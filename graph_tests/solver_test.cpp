@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 ///  @brief Test the solver.
 ///
+///  @tparam SOLVER Class of solver to use.
+///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 ///  @params[in] omega0    Ray frequency.
 ///  @params[in] kx0       Wave number guess.
@@ -59,15 +61,18 @@ void test_solver(const typename SOLVER::base tolarance,
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified disperions Relation.
 ///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
+///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 ///  @params[in] omega0    Ray frequency.
 ///  @params[in] kx0       Wave number guess.
 ///  @params[in] dt        Timestep for the solver.
 //------------------------------------------------------------------------------
-template<typename DISPERSION> void run_disperions_tests(const typename DISPERSION::base tolarance,
-                                                        const typename DISPERSION::base omega0,
-                                                        const typename DISPERSION::base kx0,
-                                                        const typename DISPERSION::base dt) {
+template<typename DISPERSION>
+void run_disperions_tests(const typename DISPERSION::base tolarance,
+                          const typename DISPERSION::base omega0,
+                          const typename DISPERSION::base kx0,
+                          const typename DISPERSION::base dt) {
     test_solver<solver::rk2<DISPERSION>> (tolarance, omega0, kx0, dt);
     std::cout << "Test completed for rk2 solver." << std::endl;
 
@@ -77,6 +82,8 @@ template<typename DISPERSION> void run_disperions_tests(const typename DISPERSIO
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------

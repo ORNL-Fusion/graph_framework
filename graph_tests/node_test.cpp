@@ -16,6 +16,8 @@
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for constant nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_constant() {
@@ -65,6 +67,8 @@ void test_constant() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for variable nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_variable() {
@@ -127,6 +131,8 @@ void test_variable() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for pseudo variable nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_pseudo_variable() {
@@ -158,6 +164,8 @@ void test_pseudo_variable() {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
     test_constant<T> ();

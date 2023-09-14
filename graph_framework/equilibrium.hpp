@@ -27,6 +27,9 @@ namespace equilibrium {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing a generic equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class generic {
@@ -157,6 +160,9 @@ namespace equilibrium {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Uniform density with varying magnetic field equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class no_magnetic_field : public generic<T, SAFE_MATH> {
@@ -249,6 +255,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Convenience function to build a no magnetic field equilibrium.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A constructed no magnetic field equilibrium.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
@@ -261,6 +270,9 @@ namespace equilibrium {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Uniform density with varying magnetic field equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class slab : public generic<T, SAFE_MATH> {
@@ -351,6 +363,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Convenience function to build a slab equilibrium.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A constructed slab equilibrium.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
@@ -363,6 +378,9 @@ namespace equilibrium {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Vary density with uniform magnetic field equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class slab_density : public generic<T, SAFE_MATH> {
@@ -455,6 +473,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Convenience function to build a slab density equilibrium.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A constructed slab density equilibrium.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
@@ -467,6 +488,9 @@ namespace equilibrium {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Vary density with uniform magnetic field equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class slab_field : public generic<T, SAFE_MATH> {
@@ -561,6 +585,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Convenience function to build a slab density equilibrium.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A constructed slab density equilibrium.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
@@ -572,6 +599,9 @@ namespace equilibrium {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Guassian density with uniform magnetic field equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class guassian_density : public generic<T, SAFE_MATH> {
@@ -662,6 +692,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Convenience function to build a guassian density equilibrium.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A constructed guassian density equilibrium.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
@@ -677,6 +710,9 @@ namespace equilibrium {
 ///
 ///  This takes a BiCublic spline representation of the psi and cubic splines for
 ///  ne, te, p, and fpol.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class efit final : public generic<T, SAFE_MATH> {
@@ -1109,6 +1145,9 @@ namespace equilibrium {
 
 //------------------------------------------------------------------------------
 ///  @brief Convenience function to build an EFIT equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] spline_file File name of contains the spline functions.
 ///  @returns A constructed EFIT equilibrium.

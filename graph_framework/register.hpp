@@ -25,6 +25,9 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Test if a type is complex.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
     template<typename BASE, typename T>
@@ -34,6 +37,9 @@ namespace jit {
 
 //------------------------------------------------------------------------------
 ///  @brief Test if the base type is float.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
@@ -45,6 +51,9 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Test if the base type is float.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
     template<typename T>
@@ -54,6 +63,9 @@ namespace jit {
 
 //------------------------------------------------------------------------------
 ///  @brief Test if the base type is double.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
@@ -65,6 +77,9 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Test if a type is complex.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
     template<typename T>
@@ -75,6 +90,9 @@ namespace jit {
 
 //------------------------------------------------------------------------------
 ///  @brief Convert a base type to a string.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @returns A constant string literal of the type.
 //------------------------------------------------------------------------------
@@ -103,6 +121,8 @@ namespace jit {
 
 //------------------------------------------------------------------------------
 ///  @brief Test to use metal.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
     template<typename T>
     constexpr bool use_metal() {
@@ -115,6 +135,8 @@ namespace jit {
 
 //------------------------------------------------------------------------------
 ///  @brief  Test to use the GPU.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
     template<typename T>
     constexpr bool use_gpu() {
@@ -123,6 +145,8 @@ namespace jit {
 
 //------------------------------------------------------------------------------
 ///  @brief Write out the node base type to a general stream.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in, out] stream Generic stream.
 //------------------------------------------------------------------------------
@@ -143,6 +167,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief The maximum number of digits to represent a type literal.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @returns The maximum number of digits needed.
 //------------------------------------------------------------------------------
     template<typename T>
@@ -158,6 +184,8 @@ namespace jit {
 ///  @brief Convert a value to a string while avoiding locale.
 ///
 ///  The standard streams use localizarion that interfers with multiple threads.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] value Value to convert.
 ///  @returns String with the value.
@@ -189,6 +217,8 @@ namespace jit {
 ///  -# v Variable
 ///  -# r Register
 ///
+///  @tparam NODE Node class type.
+///
 ///  @params[in] prefix  Type prefix for the name.
 ///  @params[in] pointer Address of the @ref{leaf_node}.
 ///  @returns The pointer value as a string.
@@ -210,6 +240,8 @@ namespace jit {
 
 //------------------------------------------------------------------------------
 ///  @brief  Define a custom comparitor class.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
     template<typename T>
     class float_compare {

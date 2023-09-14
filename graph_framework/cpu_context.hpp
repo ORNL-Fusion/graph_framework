@@ -20,6 +20,9 @@
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cpu context.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class cpu_context {

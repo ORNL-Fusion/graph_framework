@@ -19,6 +19,8 @@
 //------------------------------------------------------------------------------
 ///  @brief Tests of the erfi
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
 template<typename T> void test_erfi(const T tolarance) {

@@ -15,6 +15,8 @@
 //------------------------------------------------------------------------------
 ///  @brief The newton solve for dispersion relation.
 ///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
+///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 ///  @params[in] omega   Ray frequency.
 ///  @params[in] k_guess Inital guess for the wave number.
@@ -62,6 +64,8 @@ void test_solve(const typename DISPERSION::base tolarance,
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------

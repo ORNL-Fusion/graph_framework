@@ -20,6 +20,8 @@ namespace backend {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing a generic buffer.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
     template<typename T>
     class buffer {
@@ -261,6 +263,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Add operation.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] a Left operand.
 ///  @params[in] b Right operand.
 ///  @returns a + b.
@@ -293,6 +297,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Equal operation.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] a Left operand.
 ///  @params[in] b Right operand.
 ///  @returns a == b.
@@ -314,6 +320,8 @@ namespace backend {
 
 //------------------------------------------------------------------------------
 ///  @brief Subtract operation.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] a Left operand.
 ///  @params[in] b Right operand.
@@ -347,6 +355,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Multiply operation.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] a Left operand.
 ///  @params[in] b Right operand.
 ///  @returns a * b.
@@ -379,6 +389,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Divide operation.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] a Numerator.
 ///  @params[in] b Denominator.
 ///  @returns a / b.
@@ -410,6 +422,8 @@ namespace backend {
 
 //------------------------------------------------------------------------------
 ///  @brief Fused multiply add operation.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] a Left operand.
 ///  @params[in] b Middle operand.
@@ -517,6 +531,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Take the power.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] base     Base to raise to the power of.
 ///  @params[in] exponent Power to apply to the base.
 ///  @returns base^exponent.
@@ -587,6 +603,8 @@ namespace backend {
 
 //------------------------------------------------------------------------------
 ///  @brief Take the inverse tangent.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] x X argument.
 ///  @params[in] y Y argument.

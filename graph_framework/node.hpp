@@ -22,6 +22,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing a node leaf.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class leaf_node : public std::enable_shared_from_this<leaf_node<T, SAFE_MATH>> {
@@ -254,6 +257,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that cannot change.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class constant_node final : public leaf_node<T, SAFE_MATH> {
@@ -429,6 +435,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] d Array buffer.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
@@ -451,6 +460,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
@@ -463,6 +475,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Create a zero constant.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A zero constant.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH>
@@ -472,6 +487,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Create a one constant.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
@@ -483,6 +501,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Create a negative one constant.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A negative one constant.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
@@ -492,6 +513,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Create a two constant.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
@@ -503,6 +527,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Create a two constant.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
@@ -512,6 +539,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Create a two constant.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
@@ -523,6 +553,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Create a machine epsilon constant.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
@@ -532,6 +565,11 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 /// @brief Create an imaginary constant.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @returns An imaginary constant.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> i() {
@@ -547,6 +585,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a constant node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
@@ -560,6 +601,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing a straight node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
@@ -666,6 +710,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing a branch node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
@@ -776,6 +823,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a triple branch node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
@@ -858,6 +908,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing data that can change.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class variable_node final : public leaf_node<T, SAFE_MATH> {
@@ -1092,6 +1145,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] s      Size of the data buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
@@ -1103,6 +1159,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] s      Size of he data buffer.
 ///  @params[in] d      Scalar data to initalize.
@@ -1117,6 +1176,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] d      Array buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
@@ -1128,6 +1190,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] d      Array buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
@@ -1152,6 +1217,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
@@ -1169,6 +1237,9 @@ namespace graph {
 ///  Pseudo variable nodes treat sub trees as if they were a variable. This
 ///  ensures that the expression returns zero when taking a derivative with
 ///  something that is not itself.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class pseudo_variable_node final : public straight_node<T, SAFE_MATH> {
@@ -1290,6 +1361,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define pseudo variable convience function.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Argument.
 ///  @returns A reduced pseudo variable node.
 //------------------------------------------------------------------------------
@@ -1304,6 +1378,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a pseudo variable node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.

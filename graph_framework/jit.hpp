@@ -26,6 +26,9 @@
 namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Class for JIT compile of the GPU kernels.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class context {

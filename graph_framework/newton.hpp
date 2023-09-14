@@ -16,6 +16,9 @@ namespace solver {
 ///
 ///  This uses newtons methods to solver for D(x) = 0.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in,out] work           Workflow manager.
 ///  @params[in]     vars           The unknowns to solver for.
 ///  @params[in]     inputs         Inputs for jit compile.

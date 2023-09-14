@@ -59,6 +59,9 @@ namespace gpu {
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class cuda_context {

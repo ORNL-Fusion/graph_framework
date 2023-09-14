@@ -16,6 +16,8 @@
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for addition nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_add() {
 //  Three constant nodes should reduce to a single constant node with added
@@ -267,6 +269,8 @@ template<typename T> void test_add() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for subtract nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_subtract() {
 //  Three constant nodes should reduce to a single constant node with added
@@ -568,6 +572,8 @@ template<typename T> void test_subtract() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for multiply nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_multiply() {
 //  Three constant nodes should reduce to a single constant node with multiplied
@@ -1087,6 +1093,8 @@ template<typename T> void test_multiply() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for divide nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_divide() {
 // Check for potential divide by zero.
@@ -1504,6 +1512,8 @@ template<typename T> void test_divide() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for fma nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_fma() {
 //  Three constant nodes should reduce to a single constant node with a*b + c.
@@ -1794,6 +1804,8 @@ template<typename T> void test_fma() {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
     test_add<T> ();

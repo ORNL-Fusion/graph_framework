@@ -15,6 +15,9 @@
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a metal gpu context.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class metal_context {

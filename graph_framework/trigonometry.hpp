@@ -17,6 +17,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing a sine_node leaf.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class sine_node final : public straight_node<T, SAFE_MATH> {
@@ -169,6 +172,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define sine convience function.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Argument.
 ///  @returns A reduced sin node.
 //------------------------------------------------------------------------------
@@ -195,6 +201,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a sine node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
@@ -208,6 +217,9 @@ namespace graph {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cosine_node leaf.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class cosine_node final : public straight_node<T, SAFE_MATH> {
@@ -361,6 +373,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define cosine convience function.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Argument.
 ///  @returns A reduced cos node.
 //------------------------------------------------------------------------------
@@ -387,6 +402,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Cast to a cosine node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
@@ -403,6 +421,9 @@ namespace graph {
 ///
 ///  tan(x) = sin(x)/cos(x)
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] x Argument.
 ///  @returns A reduced tan node.
 //------------------------------------------------------------------------------
@@ -414,11 +435,11 @@ namespace graph {
 //******************************************************************************
 //  Arctangent node.
 //******************************************************************************
-//******************************************************************************
-//  arctan node.
-//******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class representing a sine_node leaf.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class arctan_node final : public branch_node<T, SAFE_MATH> {
@@ -571,6 +592,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build arctan node.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
@@ -597,6 +621,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a power node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
