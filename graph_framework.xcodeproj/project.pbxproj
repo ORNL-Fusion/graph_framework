@@ -272,6 +272,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C70AA9792AB48FE2002DAF1C /* absorption.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = absorption.hpp; sourceTree = "<group>"; };
 		C70B705629F4F86A00098AA0 /* piecewise.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = piecewise.hpp; sourceTree = "<group>"; };
 		C70D93132A30FF4E006A4227 /* special_functions.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = special_functions.hpp; sourceTree = "<group>"; };
 		C713425B29413F0500672AD4 /* jit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jit.hpp; sourceTree = "<group>"; };
@@ -518,6 +519,7 @@
 				C723210222DC0D0A006BBF13 /* arithmetic.hpp */,
 				C77E6DF522DD64E700469621 /* trigonometry.hpp */,
 				C71C1FF527F5379D006997C2 /* dispersion.hpp */,
+				C70AA9792AB48FE2002DAF1C /* absorption.hpp */,
 				C71C1FF627F5F5A8006997C2 /* solver.hpp */,
 				C7B677D829E45C9500D3ADC6 /* backend.hpp */,
 				C70D93132A30FF4E006A4227 /* special_functions.hpp */,

@@ -18,10 +18,7 @@ namespace output {
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a netcdf based output file.
-///
-///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-    template<typename T>
     class result_file {
     private:
 ///  Netcdf file id.
@@ -30,26 +27,12 @@ namespace output {
         int unlimited_dim;
 ///  Number of rays dimension.
         int num_rays_dim;
-///  Dimension of ray. 1 for real, 2 for complex.
-        int ray_dim;
 ///  Number of rays.
-        const size_t num_rays;
-
-//------------------------------------------------------------------------------
-///  @brief Struct map variables to a gpu buffer.
-//------------------------------------------------------------------------------
-        struct variable {
-///  Variable id.
-            int id;
-///  Pointer to the gpu buffer.
-            T *buffer;
-        };
-///  Variable list.
-        std::vector<variable> variables;
+        size_t num_rays;
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a result file.
+///  @brief Construct a new result file.
 ///
 ///  @params[in] filename Name of the result file.
 ///  @params[in] num_rays Number of rays.
@@ -64,13 +47,23 @@ namespace output {
 
             nc_def_dim(ncid, "time", NC_UNLIMITED, &unlimited_dim);
             nc_def_dim(ncid, "num_rays", num_rays, &num_rays_dim);
-            if constexpr (jit::is_complex<T> ()) {
-                nc_def_dim(ncid, "ray_dim", 2, &ray_dim);
-                nc_def_dim(ncid, "num_rays", num_rays*2, &num_rays_dim);
-            } else {
-                nc_def_dim(ncid, "ray_dim", 1, &ray_dim);
-                nc_def_dim(ncid, "num_rays", num_rays*1, &num_rays_dim);
-            }
+            sync.unlock();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Open a new result file.
+///
+///  @params[in] filename Name of the result file.
+//------------------------------------------------------------------------------
+        result_file(const std::string &filename="") {
+
+            sync.lock();
+            nc_open(filename.c_str(), NC_WRITE, &ncid);
+
+            nc_inq_dimid(ncid, "time", &unlimited_dim);
+            nc_inq_dimid(ncid, "num_rays", &num_rays_dim);
+            nc_inq_dimlen(ncid, num_rays_dim, &num_rays);
+            nc_redef(ncid);
             sync.unlock();
         }
 
@@ -79,36 +72,6 @@ namespace output {
 //------------------------------------------------------------------------------
         ~result_file() {
             nc_close(ncid);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Create a variable.
-///
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @params[in] name    Name of the variable.
-///  @params[in] node    Node to create variable for.
-///  @params[in] context Context for the gpu.
-//------------------------------------------------------------------------------
-        template<bool SAFE_MATH=false>
-        void create_variable(const std::string &name,
-                             graph::shared_leaf<T, SAFE_MATH> &node,
-                             jit::context<T, SAFE_MATH> &context) {
-            variable var;
-            const std::array<int, 3> dims = {unlimited_dim, num_rays_dim, ray_dim};
-            sync.lock();
-            if constexpr (jit::is_float<T> ()) {
-                nc_def_var(ncid, name.c_str(), NC_FLOAT, dims.size(),
-                           dims.data(), &var.id);
-            } else {
-                nc_def_var(ncid, name.c_str(), NC_DOUBLE, dims.size(),
-                           dims.data(), &var.id);
-            }
-            sync.unlock();
-
-            var.buffer = context.get_buffer(node);
-
-            variables.push_back(var);
         }
 
 //------------------------------------------------------------------------------
@@ -121,43 +84,294 @@ namespace output {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Write step.
+///  @brief Get ncid.
+///
+///  @returns The netcdf file id.
 //------------------------------------------------------------------------------
-        void write() {
+        int get_ncid() const {
+            return ncid;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of rays.
+///
+///  @returns The number of rays.
+//------------------------------------------------------------------------------
+        size_t get_num_rays() const {
+            return num_rays;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of rays dimension.
+///
+///  @returns The number of rays dimension.
+//------------------------------------------------------------------------------
+        int get_num_rays_dim() const {
+            return num_rays_dim;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get unlimited dimension.
+///
+///  @returns The unlimited dimension.
+//------------------------------------------------------------------------------
+        int get_unlimited_dim() const {
+            return unlimited_dim;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get unlimited size.
+///
+///  @returns The size of the unlimited dimension.
+//------------------------------------------------------------------------------
+        size_t get_unlimited_size() const {
             size_t size;
             sync.lock();
             nc_inq_dimlen(ncid, unlimited_dim, &size);
             sync.unlock();
-            const std::array<size_t, 3> start = {size, 0, 0};
+
+            return size;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Sync the file.
+//------------------------------------------------------------------------------
+        void sync_file() const {
+            sync.lock();
+            nc_sync(ncid);
+            sync.unlock();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Class representing a netcdf dataset.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+    template<typename T>
+    class data_set {
+    private:
+///  Dimension of ray. 1 for real, 2 for complex.
+        int ray_dim;
+///  Dimension of a data item.
+        std::array<int, 3> dims;
+///  Data sizes.
+        std::array<size_t, 3> count;
+///  Get the ray dimension size.
+        const size_t ray_dim_size = 1 + jit::is_complex<T> ();
+///  The NetCDF type.
+        const nc_type type = jit::is_float<T> () ? NC_FLOAT : NC_DOUBLE;
+
+//------------------------------------------------------------------------------
+///  @brief Struct to map variables to a gpu buffer.
+//------------------------------------------------------------------------------
+        struct variable {
+///  Variable id.
+            int id;
+///  Pointer to the gpu buffer.
+            T *buffer;
+        };
+///  Variable list.
+        std::vector<variable> variables;
+
+//------------------------------------------------------------------------------
+///  @brief Struct to map references to a gpu buffer.
+//------------------------------------------------------------------------------
+        struct reference {
+///  Variable id.
+            int id;
+///  Pointer to the gpu buffer.
+            T *buffer;
+///  Count stride.
+            size_t ray_dim_size;
+///  Stride length.
+            std::ptrdiff_t stride;
+        };
+///  References list.
+        std::vector<reference> references;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a dataset.
+///
+///  @params[in] result A result file reference.
+//------------------------------------------------------------------------------
+        data_set(const result_file &result) {
+            sync.lock();
+            if constexpr (jit::is_complex<T> ()) {
+                if (NC_NOERR != nc_inq_dimid(result.get_ncid(), "ray_dim_cplx", &ray_dim)) {
+                    nc_def_dim(result.get_ncid(), "ray_dim_cplx", ray_dim_size, &ray_dim);
+                }
+            } else {
+                if (NC_NOERR != nc_inq_dimid(result.get_ncid(), "ray_dim", &ray_dim)) {
+                    nc_def_dim(result.get_ncid(), "ray_dim", ray_dim_size, &ray_dim);
+                }
+            }
+            sync.unlock();
+
+            dims = {
+                result.get_unlimited_dim(),
+                result.get_num_rays_dim(),
+                ray_dim
+            };
+
+            count = {
+                1,
+                result.get_num_rays(),
+                ray_dim_size
+            };
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create a variable.
+///
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] result  A result file reference.
+///  @params[in] name    Name of the variable.
+///  @params[in] node    Node to create variable for.
+///  @params[in] context Context for the gpu.
+//------------------------------------------------------------------------------
+        template<bool SAFE_MATH=false>
+        void create_variable(const result_file &result,
+                             const std::string &name,
+                             graph::shared_leaf<T, SAFE_MATH> &node,
+                             jit::context<T, SAFE_MATH> &context) {
+            variable var;
+            sync.lock();
+            nc_def_var(result.get_ncid(), name.c_str(), type,
+                       static_cast<int> (dims.size()), dims.data(),
+                       &var.id);
+            sync.unlock();
+
+            var.buffer = context.get_buffer(node);
+            variables.push_back(var);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Load reference.
+///
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] result  A result file reference.
+///  @params[in] name    Name of the variable.
+///  @params[in] node    Node to create variable for.
+///  @params[in] context Context for the gpu.
+//------------------------------------------------------------------------------
+        template<bool SAFE_MATH=false>
+        void reference_variable(const result_file &result,
+                                const std::string &name,
+                                graph::shared_leaf<T, SAFE_MATH> &node,
+                                jit::context<T, SAFE_MATH> &context) {
+            reference ref;
+            nc_type type;
+            std::array<int, 3> ref_dims;
+            size_t ref_dim_size;
+
+            sync.lock();
+            nc_inq_varid(result.get_ncid(), name, &ref.id);
+            nc_inq_var(result.get_ncid(), ref.id, NULL, &type,
+                       NULL, ref_dims.data());
+            nc_inq_dimlen(result.get_ncid(), ref.id, &ref.ray_dim_size);
+            sync.unlock();
+
+            assert(ref_dim_size <= ray_dim_size &&
+                   "Context variable too small to read reference.");
+
+            ref.stride = ref.ray_dim_size < ray_dim_size ? 2 : 1;
+            ref.buffer = context.get_buffer(node);
+            references.push_back(ref);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Write step.
+///
+///  @params[in] result A result file reference.
+//------------------------------------------------------------------------------
+        void write(const result_file &result) {
+            const std::array<size_t, 3> start = {
+                result.get_unlimited_size(), 0, 0
+            };
+
             for (variable &var : variables) {
                 sync.lock();
                 if constexpr (jit::is_float<T> ()) {
                     if constexpr (jit::is_complex<T> ()) {
-                        const std::array<size_t, 3> count = {1, num_rays, 2};
-                        nc_put_vara_float(ncid, var.id, start.data(), count.data(),
+                        nc_put_vara_float(result.get_ncid(), var.id,
+                                          start.data(), count.data(),
                                           reinterpret_cast<float *> (var.buffer));
                     } else {
-                        const std::array<size_t, 3> count = {1, num_rays, 1};
-                        nc_put_vara_float(ncid, var.id, start.data(), count.data(),
+                        nc_put_vara_float(result.get_ncid(), var.id,
+                                          start.data(), count.data(),
                                           var.buffer);
                     }
                 } else {
                     if constexpr (jit::is_complex<T> ()) {
-                        const std::array<size_t, 3> count = {1, num_rays, 2};
-                        nc_put_vara_double(ncid, var.id, start.data(), count.data(),
+                        nc_put_vara_double(result.get_ncid(), var.id,
+                                           start.data(), count.data(),
                                            reinterpret_cast<double *> (var.buffer));
                     } else {
-                        const std::array<size_t, 3> count = {1, num_rays, 1};
-                        nc_put_vara_double(ncid, var.id, start.data(), count.data(),
+                        nc_put_vara_double(result.get_ncid(), var.id,
+                                           start.data(), count.data(),
                                            var.buffer);
                     }
                 }
                 sync.unlock();
             }
 
-            sync.lock();
-            nc_sync(ncid);
-            sync.unlock();
+            result.sync_file();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Read step.
+///
+///  @params[in] result A result file reference.
+//------------------------------------------------------------------------------
+        void read(const result_file &result,
+                  const size_t index) {
+            const std::array<size_t, 3> ref_start = {
+                index, 0, 0
+            };
+
+            for (reference &ref : references) {
+                const std::array<size_t, 3> ref_count = {
+                    1,
+                    result.get_num_rays(),
+                    ref.ray_dim_size
+                };
+                const std::array<std::ptrdiff_t, 3> stride = {
+                    1, 1, ref.stride
+                };
+                const std::array<std::ptrdiff_t, 3> map = {
+                    0, 0, 0
+                };
+
+                sync.lock();
+                if constexpr (jit::is_float<T> ()) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        nc_get_varm_float(result.get_ncid(), ref.id,
+                                          ref_start.data(), ref_count.data(),
+                                          stride.data(), map.data(),
+                                          reinterpret_cast<float *> (ref.buffer));
+                    } else {
+                        nc_get_varm_float(result.get_ncid(), ref.id,
+                                          ref_start.data(), ref_count.data(),
+                                          stride.data(), map.data(), ref.buffer);
+                    }
+                } else {
+                    if constexpr (jit::is_complex<T> ()) {
+                        nc_get_varm_double(result.get_ncid(), ref.id,
+                                           ref_start.data(), ref_count.data(),
+                                           stride.data(), map.data(),
+                                           reinterpret_cast<double *> (ref.buffer));
+                    } else {
+                        nc_get_varm_double(result.get_ncid(), ref.id,
+                                           ref_start.data(), ref_count.data(),
+                                           stride.data(), map.data(), ref.buffer);
+                    }
+                }
+                sync.unlock();
+            }
         }
     };
 }

@@ -84,7 +84,9 @@ namespace solver {
         const size_t index;
 
 ///  Output file.
-        output::result_file<typename DISPERSION_FUNCTION::base> file;
+        output::result_file file;
+///  Output dataset.
+        output::data_set<typename DISPERSION_FUNCTION::base> dataset;
 
     public:
 //------------------------------------------------------------------------------
@@ -126,7 +128,7 @@ namespace solver {
                          const size_t index=0) :
         D(w, kx, ky, kz, x, y, z, t, eq), w(w),
         kx(kx), ky(ky), kz(kz),
-        x(x), y(y), z(z), t(t), file(filename, num_rays),
+        x(x), y(y), z(z), t(t), file(filename, num_rays), dataset(file),
         index(index), work(index) {}
 
 //------------------------------------------------------------------------------
@@ -197,15 +199,15 @@ namespace solver {
             work.add_item(inputs, outputs, setters, "solver_kernel");
             work.compile();
 
-            file.create_variable("time", this->t, work.get_context());
-            file.create_variable("residule", residule, work.get_context());
-            file.create_variable("w",  this->w, work.get_context());
-            file.create_variable("x",  this->x, work.get_context());
-            file.create_variable("y",  this->y, work.get_context());
-            file.create_variable("z",  this->z, work.get_context());
-            file.create_variable("kx", this->kx, work.get_context());
-            file.create_variable("ky", this->ky, work.get_context());
-            file.create_variable("kz", this->kz, work.get_context());
+            dataset.create_variable(file, "time", this->t, work.get_context());
+            dataset.create_variable(file, "residule", residule, work.get_context());
+            dataset.create_variable(file, "w",  this->w, work.get_context());
+            dataset.create_variable(file, "x",  this->x, work.get_context());
+            dataset.create_variable(file, "y",  this->y, work.get_context());
+            dataset.create_variable(file, "z",  this->z, work.get_context());
+            dataset.create_variable(file, "kx", this->kx, work.get_context());
+            dataset.create_variable(file, "ky", this->ky, work.get_context());
+            dataset.create_variable(file, "kz", this->kz, work.get_context());
 
             file.end_define_mode();
         }
@@ -269,7 +271,7 @@ namespace solver {
 //------------------------------------------------------------------------------
         void write_step() {
             work.wait();
-            file.write();
+            dataset.write(file);
         }
 
 //------------------------------------------------------------------------------

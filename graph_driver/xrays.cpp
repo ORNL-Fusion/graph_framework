@@ -191,6 +191,48 @@ void trace_ray(const size_t num_times,
 }
 
 //------------------------------------------------------------------------------
+///  @brief Calculate absorption.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+template<typename T, bool SAFE_MATH=false>
+void calculate_power(const size_t num_times,
+                     const size_t sub_steps,
+                     const size_t num_rays) {
+    std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, SAFE_MATH>::max_concurrency()),
+                                                       static_cast<unsigned int> (num_rays)),
+                                              static_cast<unsigned int> (1)));
+
+    const size_t batch = num_rays/threads.size();
+    const size_t extra = num_rays%threads.size();
+
+    for (size_t i = 0, ie = threads.size(); i < ie; i++) {
+        threads[i] = std::thread([num_times, sub_steps, num_rays, batch, extra] (const size_t thread_number,
+                                                                                 const size_t num_threads) -> void {
+
+            const size_t num_steps = num_times/sub_steps;
+            const size_t local_num_rays = batch
+                                        + (extra > thread_number ? 1 : 0);
+
+            auto omega = graph::variable<T, SAFE_MATH> (local_num_rays, "\\omega");
+            auto kx    = graph::variable<T, SAFE_MATH> (local_num_rays, "k_{x}");
+            auto ky    = graph::variable<T, SAFE_MATH> (local_num_rays, "k_{y}");
+            auto kz    = graph::variable<T, SAFE_MATH> (local_num_rays, "k_{z}");
+            auto x     = graph::variable<T, SAFE_MATH> (local_num_rays, "x");
+            auto y     = graph::variable<T, SAFE_MATH> (local_num_rays, "y");
+            auto z     = graph::variable<T, SAFE_MATH> (local_num_rays, "z");
+            auto t     = graph::variable<T, SAFE_MATH> (local_num_rays, "t");
+
+        }, i, threads.size());
+    }
+
+    for (std::thread &t : threads) {
+        t.join();
+    }
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
 ///
 ///  @params[in] argc Number of commandline arguments.
@@ -206,7 +248,12 @@ int main(int argc, const char * argv[]) {
     const size_t sub_steps = 100;
     const size_t num_rays = 100000;
 
+    const bool use_safe_math = true;
+
     trace_ray<double> (num_times, sub_steps, num_rays);
+    calculate_power<std::complex<double>, use_safe_math> (num_times,
+                                                          sub_steps,
+                                                          num_rays);
 
     std::cout << std::endl << "Timing:" << std::endl;
     total.print();

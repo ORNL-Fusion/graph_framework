@@ -52,8 +52,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class dispersion_interface {
