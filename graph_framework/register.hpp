@@ -25,8 +25,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Test if a type is complex.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam BASE Base type.
+///  @tparam T    Type to check against.
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
@@ -38,8 +38,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Test if the base type is float.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam BASE Base type.
+///  @tparam T    Type to check against.
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
@@ -51,8 +51,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Test if the base type is float.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam T Base type of the calculation.
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
@@ -64,8 +63,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Test if the base type is double.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam T Base type of the calculation.
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
@@ -77,8 +75,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Test if a type is complex.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam T Base type of the calculation.
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
@@ -91,8 +88,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Convert a base type to a string.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam T Base type of the calculation.
 ///
 ///  @returns A constant string literal of the type.
 //------------------------------------------------------------------------------

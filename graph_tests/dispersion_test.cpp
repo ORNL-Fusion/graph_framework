@@ -15,7 +15,7 @@
 //------------------------------------------------------------------------------
 ///  @brief The newton solve for dispersion relation.
 ///
-///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
+///  @tparam DISPERSION Class of dispersion function to use.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 ///  @params[in] omega   Ray frequency.

@@ -9,6 +9,8 @@
 
 #include "../graph_framework/solver.hpp"
 #include "../graph_framework/timing.hpp"
+#include "../graph_framework/output.hpp"
+#include "../graph_framework/absorption.hpp"
 
 const bool print = false;
 const bool write_step = true;
@@ -119,8 +121,8 @@ void trace_ray(const size_t num_times,
             //solver::rk4<dispersion::extra_ordinary_wave<T, SAFE_MATH>>
             //solver::rk4<dispersion::cold_plasma<T, SAFE_MATH>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<T, SAFE_MATH>>
-            //solver::rk4<dispersion::hot_plasma<base, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
-            //solver::rk4<dispersion::hot_plasma_expandion<base, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
+            //solver::rk4<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
+            //solver::rk4<dispersion::hot_plasma_expandion<T, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
                       stream.str(), local_num_rays, thread_number);
             solve.init(kx);
@@ -210,11 +212,13 @@ void calculate_power(const size_t num_times,
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         threads[i] = std::thread([num_times, sub_steps, num_rays, batch, extra] (const size_t thread_number,
                                                                                  const size_t num_threads) -> void {
+            std::ostringstream stream;
+            stream << "result" << thread_number << ".nc";
 
             const size_t num_steps = num_times/sub_steps;
             const size_t local_num_rays = batch
-                                        + (extra > thread_number ? 1 : 0);
-
+            + (extra > thread_number ? 1 : 0);
+            
             auto omega = graph::variable<T, SAFE_MATH> (local_num_rays, "\\omega");
             auto kx    = graph::variable<T, SAFE_MATH> (local_num_rays, "k_{x}");
             auto ky    = graph::variable<T, SAFE_MATH> (local_num_rays, "k_{y}");
@@ -223,7 +227,31 @@ void calculate_power(const size_t num_times,
             auto y     = graph::variable<T, SAFE_MATH> (local_num_rays, "y");
             auto z     = graph::variable<T, SAFE_MATH> (local_num_rays, "z");
             auto t     = graph::variable<T, SAFE_MATH> (local_num_rays, "t");
+            auto kamp  = graph::variable<T, SAFE_MATH> (local_num_rays, "kamp");
 
+            omega->set(static_cast<T> (0.0));
+            graph::shared_variable<T, SAFE_MATH> omega_var = graph::variable_cast(omega);
+            graph::shared_variable<T, SAFE_MATH> kx_var = graph::variable_cast(kx);
+            graph::shared_variable<T, SAFE_MATH> ky_var = graph::variable_cast(ky);
+            graph::shared_variable<T, SAFE_MATH> kz_var = graph::variable_cast(kz);
+            graph::shared_variable<T, SAFE_MATH> x_var = graph::variable_cast(x);
+            graph::shared_variable<T, SAFE_MATH> y_var = graph::variable_cast(y);
+            graph::shared_variable<T, SAFE_MATH> z_var = graph::variable_cast(z);
+            graph::shared_variable<T, SAFE_MATH> t_var = graph::variable_cast(t);
+
+            auto eq = equilibrium::make_efit<T, SAFE_MATH> (NC_FILE);
+            //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();
+            //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
+            //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
+
+            absorption::root_finder<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, SAFE_MATH>>
+                root(kamp, omega, kx, ky, kz, x, y, z, t, eq,
+                     stream.str(), local_num_rays, thread_number);
+            root.compile();
+            
+            for (size_t i = 0; i < num_steps; i++) {
+                root.run(i);
+            }
         }, i, threads.size());
     }
 
@@ -246,14 +274,16 @@ int main(int argc, const char * argv[]) {
 
     const size_t num_times = 100000;
     const size_t sub_steps = 100;
-    const size_t num_rays = 100000;
+    const size_t num_rays = 36; //100000;
 
     const bool use_safe_math = true;
 
-    trace_ray<double> (num_times, sub_steps, num_rays);
-    calculate_power<std::complex<double>, use_safe_math> (num_times,
-                                                          sub_steps,
-                                                          num_rays);
+    typedef double base;
+
+    trace_ray<base> (num_times, sub_steps, num_rays);
+    calculate_power<std::complex<base>, use_safe_math> (num_times,
+                                                        sub_steps,
+                                                        num_rays);
 
     std::cout << std::endl << "Timing:" << std::endl;
     total.print();

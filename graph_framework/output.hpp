@@ -17,6 +17,15 @@ namespace output {
     static std::mutex sync;
 
 //------------------------------------------------------------------------------
+///  @brief Check the error status.
+///
+///  @params[in] status Error status code.
+//------------------------------------------------------------------------------
+    static void check_error(const int status) {
+        assert(status == NC_NOERR && nc_strerror(status));
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Class representing a netcdf based output file.
 //------------------------------------------------------------------------------
     class result_file {
@@ -37,16 +46,16 @@ namespace output {
 ///  @params[in] filename Name of the result file.
 ///  @params[in] num_rays Number of rays.
 //------------------------------------------------------------------------------
-        result_file(const std::string &filename="",
-                    const size_t num_rays=0) : num_rays(num_rays) {
-            
+        result_file(const std::string &filename,
+                    const size_t num_rays) :
+        num_rays(num_rays) {
             sync.lock();
-            nc_create(filename.c_str(),
-                      filename.empty() || num_rays == 0 ? NC_DISKLESS : NC_CLOBBER,
-                      &ncid);
+            check_error(nc_create(filename.c_str(),
+                                  filename.empty() || num_rays == 0 ? NC_DISKLESS : NC_CLOBBER,
+                                  &ncid));
 
-            nc_def_dim(ncid, "time", NC_UNLIMITED, &unlimited_dim);
-            nc_def_dim(ncid, "num_rays", num_rays, &num_rays_dim);
+            check_error(nc_def_dim(ncid, "time", NC_UNLIMITED, &unlimited_dim));
+            check_error(nc_def_dim(ncid, "num_rays", num_rays, &num_rays_dim));
             sync.unlock();
         }
 
@@ -55,15 +64,14 @@ namespace output {
 ///
 ///  @params[in] filename Name of the result file.
 //------------------------------------------------------------------------------
-        result_file(const std::string &filename="") {
-
+        result_file(const std::string &filename) {
             sync.lock();
-            nc_open(filename.c_str(), NC_WRITE, &ncid);
+            check_error(nc_open(filename.c_str(), NC_WRITE, &ncid));
 
-            nc_inq_dimid(ncid, "time", &unlimited_dim);
-            nc_inq_dimid(ncid, "num_rays", &num_rays_dim);
-            nc_inq_dimlen(ncid, num_rays_dim, &num_rays);
-            nc_redef(ncid);
+            check_error(nc_inq_dimid(ncid, "time", &unlimited_dim));
+            check_error(nc_inq_dimid(ncid, "num_rays", &num_rays_dim));
+            check_error(nc_inq_dimlen(ncid, num_rays_dim, &num_rays));
+            check_error(nc_redef(ncid));
             sync.unlock();
         }
 
@@ -71,7 +79,7 @@ namespace output {
 ///  @brief Destructor.
 //------------------------------------------------------------------------------
         ~result_file() {
-            nc_close(ncid);
+            check_error(nc_close(ncid));
         }
 
 //------------------------------------------------------------------------------
@@ -79,7 +87,7 @@ namespace output {
 //------------------------------------------------------------------------------
         void end_define_mode() const {
             sync.lock();
-            nc_enddef(ncid);
+            check_error(nc_enddef(ncid));
             sync.unlock();
         }
 
@@ -127,7 +135,7 @@ namespace output {
         size_t get_unlimited_size() const {
             size_t size;
             sync.lock();
-            nc_inq_dimlen(ncid, unlimited_dim, &size);
+            check_error(nc_inq_dimlen(ncid, unlimited_dim, &size));
             sync.unlock();
 
             return size;
@@ -138,7 +146,7 @@ namespace output {
 //------------------------------------------------------------------------------
         void sync_file() const {
             sync.lock();
-            nc_sync(ncid);
+            check_error(nc_sync(ncid));
             sync.unlock();
         }
     };
@@ -199,12 +207,20 @@ namespace output {
         data_set(const result_file &result) {
             sync.lock();
             if constexpr (jit::is_complex<T> ()) {
-                if (NC_NOERR != nc_inq_dimid(result.get_ncid(), "ray_dim_cplx", &ray_dim)) {
-                    nc_def_dim(result.get_ncid(), "ray_dim_cplx", ray_dim_size, &ray_dim);
+                if (NC_NOERR != nc_inq_dimid(result.get_ncid(),
+                                             "ray_dim_cplx",
+                                             &ray_dim)) {
+                    check_error(nc_def_dim(result.get_ncid(),
+                                           "ray_dim_cplx", ray_dim_size,
+                                           &ray_dim));
                 }
             } else {
-                if (NC_NOERR != nc_inq_dimid(result.get_ncid(), "ray_dim", &ray_dim)) {
-                    nc_def_dim(result.get_ncid(), "ray_dim", ray_dim_size, &ray_dim);
+                if (NC_NOERR != nc_inq_dimid(result.get_ncid(),
+                                             "ray_dim",
+                                             &ray_dim)) {
+                    check_error(nc_def_dim(result.get_ncid(),
+                                           "ray_dim", ray_dim_size,
+                                           &ray_dim));
                 }
             }
             sync.unlock();
@@ -239,9 +255,9 @@ namespace output {
                              jit::context<T, SAFE_MATH> &context) {
             variable var;
             sync.lock();
-            nc_def_var(result.get_ncid(), name.c_str(), type,
-                       static_cast<int> (dims.size()), dims.data(),
-                       &var.id);
+            check_error(nc_def_var(result.get_ncid(), name.c_str(), type,
+                                   static_cast<int> (dims.size()), dims.data(),
+                                   &var.id));
             sync.unlock();
 
             var.buffer = context.get_buffer(node);
@@ -256,30 +272,30 @@ namespace output {
 ///  @params[in] result  A result file reference.
 ///  @params[in] name    Name of the variable.
 ///  @params[in] node    Node to create variable for.
-///  @params[in] context Context for the gpu.
 //------------------------------------------------------------------------------
         template<bool SAFE_MATH=false>
         void reference_variable(const result_file &result,
                                 const std::string &name,
-                                graph::shared_leaf<T, SAFE_MATH> &node,
-                                jit::context<T, SAFE_MATH> &context) {
+                                graph::shared_variable<T, SAFE_MATH> &&node) {
             reference ref;
             nc_type type;
             std::array<int, 3> ref_dims;
-            size_t ref_dim_size;
 
             sync.lock();
-            nc_inq_varid(result.get_ncid(), name, &ref.id);
-            nc_inq_var(result.get_ncid(), ref.id, NULL, &type,
-                       NULL, ref_dims.data());
-            nc_inq_dimlen(result.get_ncid(), ref.id, &ref.ray_dim_size);
+            check_error(nc_inq_varid(result.get_ncid(),
+                                     name.c_str(),
+                                     &ref.id));
+            check_error(nc_inq_var(result.get_ncid(), ref.id, NULL, &type,
+                                   NULL, ref_dims.data(), NULL));
+            check_error(nc_inq_dimlen(result.get_ncid(), ref_dims[2],
+                                      &ref.ray_dim_size));
             sync.unlock();
 
-            assert(ref_dim_size <= ray_dim_size &&
+            assert(ref.ray_dim_size <= ray_dim_size &&
                    "Context variable too small to read reference.");
 
             ref.stride = ref.ray_dim_size < ray_dim_size ? 2 : 1;
-            ref.buffer = context.get_buffer(node);
+            ref.buffer = node->data();
             references.push_back(ref);
         }
 
@@ -297,23 +313,31 @@ namespace output {
                 sync.lock();
                 if constexpr (jit::is_float<T> ()) {
                     if constexpr (jit::is_complex<T> ()) {
-                        nc_put_vara_float(result.get_ncid(), var.id,
-                                          start.data(), count.data(),
-                                          reinterpret_cast<float *> (var.buffer));
+                        check_error(nc_put_vara_float(result.get_ncid(),
+                                                      var.id,
+                                                      start.data(),
+                                                      count.data(),
+                                                      reinterpret_cast<float *> (var.buffer)));
                     } else {
-                        nc_put_vara_float(result.get_ncid(), var.id,
-                                          start.data(), count.data(),
-                                          var.buffer);
+                        check_error(nc_put_vara_float(result.get_ncid(),
+                                                      var.id,
+                                                      start.data(),
+                                                      count.data(),
+                                                      var.buffer));
                     }
                 } else {
                     if constexpr (jit::is_complex<T> ()) {
-                        nc_put_vara_double(result.get_ncid(), var.id,
-                                           start.data(), count.data(),
-                                           reinterpret_cast<double *> (var.buffer));
+                        check_error(nc_put_vara_double(result.get_ncid(),
+                                                       var.id,
+                                                       start.data(),
+                                                       count.data(),
+                                                       reinterpret_cast<double *> (var.buffer)));
                     } else {
-                        nc_put_vara_double(result.get_ncid(), var.id,
-                                           start.data(), count.data(),
-                                           var.buffer);
+                            check_error(nc_put_vara_double(result.get_ncid(),
+                                                           var.id,
+                                                           start.data(),
+                                                           count.data(),
+                                                           var.buffer));
                     }
                 }
                 sync.unlock();
@@ -332,6 +356,9 @@ namespace output {
             const std::array<size_t, 3> ref_start = {
                 index, 0, 0
             };
+            const std::array<std::ptrdiff_t, 3> stride = {
+                1, 1, 1
+            };
 
             for (reference &ref : references) {
                 const std::array<size_t, 3> ref_count = {
@@ -339,37 +366,49 @@ namespace output {
                     result.get_num_rays(),
                     ref.ray_dim_size
                 };
-                const std::array<std::ptrdiff_t, 3> stride = {
-                    1, 1, ref.stride
-                };
                 const std::array<std::ptrdiff_t, 3> map = {
-                    0, 0, 0
+                    1, ref.stride, 1
                 };
 
                 sync.lock();
                 if constexpr (jit::is_float<T> ()) {
                     if constexpr (jit::is_complex<T> ()) {
-                        nc_get_varm_float(result.get_ncid(), ref.id,
-                                          ref_start.data(), ref_count.data(),
-                                          stride.data(), map.data(),
-                                          reinterpret_cast<float *> (ref.buffer));
+                        check_error(nc_get_varm_float(result.get_ncid(),
+                                                      ref.id,
+                                                      ref_start.data(),
+                                                      ref_count.data(),
+                                                      stride.data(),
+                                                      map.data(),
+                                                      reinterpret_cast<float *> (ref.buffer)));
                     } else {
-                        nc_get_varm_float(result.get_ncid(), ref.id,
-                                          ref_start.data(), ref_count.data(),
-                                          stride.data(), map.data(), ref.buffer);
+                        check_error(nc_get_varm_float(result.get_ncid(),
+                                                      ref.id,
+                                                      ref_start.data(),
+                                                      ref_count.data(),
+                                                      stride.data(),
+                                                      map.data(),
+                                                      ref.buffer));
                     }
                 } else {
                     if constexpr (jit::is_complex<T> ()) {
-                        nc_get_varm_double(result.get_ncid(), ref.id,
-                                           ref_start.data(), ref_count.data(),
-                                           stride.data(), map.data(),
-                                           reinterpret_cast<double *> (ref.buffer));
+                        check_error(nc_get_varm_double(result.get_ncid(),
+                                                       ref.id,
+                                                       ref_start.data(),
+                                                       ref_count.data(),
+                                                       stride.data(),
+                                                       map.data(),
+                                                       reinterpret_cast<double *> (ref.buffer)));
                     } else {
-                        nc_get_varm_double(result.get_ncid(), ref.id,
-                                           ref_start.data(), ref_count.data(),
-                                           stride.data(), map.data(), ref.buffer);
+                        check_error(nc_get_varm_double(result.get_ncid(),
+                                                       ref.id,
+                                                       ref_start.data(),
+                                                       ref_count.data(),
+                                                       stride.data(),
+                                                       map.data(),
+                                                       ref.buffer));
                     }
                 }
+
                 sync.unlock();
             }
         }

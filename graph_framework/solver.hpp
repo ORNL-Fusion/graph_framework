@@ -60,13 +60,13 @@ namespace solver {
 ///  Next kz value.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> kz_next;
-///  Next kx value.
+///  Next x value.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> x_next;
-///  Next ky value.
+///  Next y value.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> y_next;
-///  Next kz value.
+///  Next z value.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> z_next;
 ///  Next t value.

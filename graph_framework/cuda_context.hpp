@@ -18,14 +18,14 @@
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief  Check results of realtime compile.
+///
+///  @params[in] result Result code of the operation.
 ///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
     static void check_nvrtc_error(nvrtcResult result,
                                   const std::string &name) {
 #ifndef NDEBUG
-        std::cout << name << " " << result << " "
-                  << nvrtcGetErrorString(result) << std::endl;
-        assert(result == NVRTC_SUCCESS && "NVTRC Error");
+        assert(result == NVRTC_SUCCESS && nvrtcGetErrorString(result));
 #endif
     }
 
@@ -40,9 +40,7 @@ namespace gpu {
 #ifndef NDEBUG
         const char *error;
         cuGetErrorString(result, &error);
-        std::cout << name << " "
-                  << result << " " << error << std::endl;
-        assert(result == CUDA_SUCCESS && "Cuda Error");
+        assert(result == CUDA_SUCCESS && error);
 #endif
     }
 

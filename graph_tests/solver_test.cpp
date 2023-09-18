@@ -61,7 +61,7 @@ void test_solver(const typename SOLVER::base tolarance,
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified disperions Relation.
 ///
-///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
+///  @tparam DISPERSION Class of dispersion function to use.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 ///  @params[in] omega0    Ray frequency.
