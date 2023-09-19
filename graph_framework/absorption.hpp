@@ -113,9 +113,9 @@ namespace absorption {
             auto kunit = kvec->unit();
             auto klen = kvec->length();
 
-            auto kx_amp = kamp*kvec->get_x();
-            auto ky_amp = kamp*kvec->get_y();
-            auto kz_amp = kamp*kvec->get_z();
+            auto kx_amp = kamp*kunit->get_x();
+            auto ky_amp = kamp*kunit->get_y();
+            auto kz_amp = kamp*kunit->get_z();
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx_amp, ky_amp, kz_amp, x, y, z, t, eq);
 
@@ -180,7 +180,7 @@ namespace absorption {
 
             work.run();
             work.wait();
-            dataset.write(file);
+            dataset.write(file, time_index);
         }
     };
 }

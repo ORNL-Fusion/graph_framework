@@ -217,7 +217,7 @@ void calculate_power(const size_t num_times,
 
             const size_t num_steps = num_times/sub_steps;
             const size_t local_num_rays = batch
-            + (extra > thread_number ? 1 : 0);
+                                        + (extra > thread_number ? 1 : 0);
             
             auto omega = graph::variable<T, SAFE_MATH> (local_num_rays, "\\omega");
             auto kx    = graph::variable<T, SAFE_MATH> (local_num_rays, "k_{x}");
@@ -249,8 +249,8 @@ void calculate_power(const size_t num_times,
                      stream.str(), local_num_rays, thread_number);
             root.compile();
             
-            for (size_t i = 0; i < num_steps; i++) {
-                root.run(i);
+            for (size_t j = 0; j < num_steps; j++) {
+                root.run(j);
             }
         }, i, threads.size());
     }
@@ -274,7 +274,7 @@ int main(int argc, const char * argv[]) {
 
     const size_t num_times = 100000;
     const size_t sub_steps = 100;
-    const size_t num_rays = 36; //100000;
+    const size_t num_rays = 100000;
 
     const bool use_safe_math = true;
 
