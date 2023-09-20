@@ -408,6 +408,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
             if constexpr (jit::is_complex<T> ()) {
+                source_buffer << "#define CUDA_DEVICE_CODE" << std::endl;
                 source_buffer << "#include <cuda/std/complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
             }

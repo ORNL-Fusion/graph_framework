@@ -8,10 +8,17 @@
 #ifndef special_functions_h
 #define special_functions_h
 
+#ifdef CUDA_DEVICE_CODE
+#include <cuda/std/complex>
+
+using namespace cuda
+
+#else
 #include <complex>
 #include <cfloat>
 #include <cmath>
 #include <limits>
+#endif
 
 namespace special {
 
