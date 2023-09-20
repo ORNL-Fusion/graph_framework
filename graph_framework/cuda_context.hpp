@@ -476,14 +476,14 @@ namespace gpu {
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    jit::register_map &registers) {
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('v',  in.get())
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;
             }
 
             for (auto &out : outputs) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('o',  out.get())
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;
