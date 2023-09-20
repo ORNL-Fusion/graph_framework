@@ -66,9 +66,11 @@ namespace gpu {
         ~cpu_context() {
             dlclose(lib_handle);
 
-            std::ostringstream temp_stream;
-            temp_stream << "rm " << library_name;
-            system(temp_stream.str().c_str());
+            if (!library_name.empty()) {
+                std::ostringstream temp_stream;
+                temp_stream << "rm " << library_name;
+                system(temp_stream.str().c_str());
+            }
         }
 
 //------------------------------------------------------------------------------

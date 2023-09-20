@@ -49,13 +49,18 @@ namespace output {
         result_file(const std::string &filename,
                     const size_t num_rays) :
         num_rays(num_rays) {
+            const std::string temp = filename.empty() ? jit::format_to_string(reinterpret_cast<size_t> (this)) :
+                                                        filename;
+
             sync.lock();
-            check_error(nc_create(filename.c_str(),
+            check_error(nc_create(temp.c_str(),
                                   filename.empty() || num_rays == 0 ? NC_DISKLESS : NC_CLOBBER,
                                   &ncid));
 
             check_error(nc_def_dim(ncid, "time", NC_UNLIMITED, &unlimited_dim));
-            check_error(nc_def_dim(ncid, "num_rays", num_rays, &num_rays_dim));
+            check_error(nc_def_dim(ncid, "num_rays",
+                                   num_rays ? num_rays : 1,
+                                   &num_rays_dim));
             sync.unlock();
         }
 
