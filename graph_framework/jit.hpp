@@ -201,6 +201,18 @@ namespace jit {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Check the value.
+///
+///  @params[in] index Ray index to check value for.
+///  @params[in] node  Node to check the value for.
+///  @returns The value at the index.
+//------------------------------------------------------------------------------
+        T check_value(const size_t index,
+                      const graph::shared_leaf<T, SAFE_MATH> &node) {
+            return gpu_context.check_value(index, node);
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Wait for kernel to finish.
 //------------------------------------------------------------------------------
         void wait() {

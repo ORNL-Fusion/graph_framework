@@ -74,7 +74,8 @@ void trace_ray(const size_t num_times,
 
                 for (size_t j = 0; j < local_num_rays; j++) {
                     omega->set(j, static_cast<T> (norm_dist1(engine)));
-                    y->set(j, static_cast<T> (norm_dist2(engine)));
+                    x->set(j, static_cast<T> (2.5*cos(norm_dist2(engine)/2.5)));
+                    y->set(j, static_cast<T> (2.5*sin(norm_dist2(engine)/2.5)));
                     z->set(j, static_cast<T> (norm_dist2(engine)));
                     ky->set(j, static_cast<T> (norm_dist3(engine)));
                     kz->set(j, static_cast<T> (norm_dist4(engine)));
@@ -91,13 +92,13 @@ void trace_ray(const size_t num_times,
 
                 for (size_t j = 0; j < local_num_rays; j++) {
                     omega->set(j, static_cast<T> (norm_dist1(engine)));
-                    y->set(j, static_cast<T> (norm_dist2(engine)));
+                    x->set(j, static_cast<T> (2.5*cos(norm_dist2(engine)/2.5)));
+                    y->set(j, static_cast<T> (2.5*sin(norm_dist2(engine)/2.5)));
                     z->set(j, static_cast<T> (norm_dist2(engine)));
                     ky->set(j, static_cast<T> (norm_dist3(engine)));
                     kz->set(j, static_cast<T> (norm_dist4(engine)));
                 }
             }
-            x->set(static_cast<T> (2.5));
             kx->set(static_cast<T> (-700));
 
             auto eq = equilibrium::make_efit<T, SAFE_MATH> (NC_FILE);
@@ -249,7 +250,7 @@ void calculate_power(const size_t num_times,
                      stream.str(), local_num_rays, thread_number);
             root.compile();
             
-            for (size_t j = 0; j < num_steps; j++) {
+            for (size_t j = 0, je = num_steps + 1; j < je; j++) {
                 root.run(j);
             }
         }, i, threads.size());

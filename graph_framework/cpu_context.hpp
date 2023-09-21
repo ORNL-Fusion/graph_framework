@@ -247,6 +247,18 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Check the value.
+///
+///  @params[in] index Ray index to check value for.
+///  @params[in] node  Node to check the value for.
+///  @returns The value at the index.
+//------------------------------------------------------------------------------
+        T check_value(const size_t index,
+                      const graph::shared_leaf<T, SAFE_MATH> &node) {
+            return kernel_arguments[node.get()][index];
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
 ///  @params[in] node   Not to copy buffer to.

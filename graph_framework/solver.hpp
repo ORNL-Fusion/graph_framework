@@ -248,6 +248,16 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Check the residule.
+///
+///  @params[in] index Ray index to check residule for.
+///  @returns The value of the residule at the index.
+//------------------------------------------------------------------------------
+        typename DISPERSION_FUNCTION::base check_residule(const size_t index) {
+            return work.check_value(index, this->residule);
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
 ///  @params[in] index Ray index to print results of.

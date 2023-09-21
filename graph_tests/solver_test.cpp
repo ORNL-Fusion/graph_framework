@@ -52,7 +52,7 @@ void test_solver(const typename SOLVER::base tolarance,
     const timeing::measure_diagnostic step("step");
     for (size_t i = 0; i < 5; i++) {
         solve.step();
-        assert(std::abs(residule->evaluate().at(0)) < std::abs(tolarance) &&
+        assert(std::abs(solve.check_residule(0)) < std::abs(tolarance) &&
                "Solver failed to retain initial acuracy");
     }
     step.print();
@@ -105,13 +105,9 @@ void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
-#if defined(USE_METAL) || defined(USE_CUDA)
-    run_tests<float> (2.0E-14);
-#else
-    run_tests<float> (1.0E-14);
-#endif
+    run_tests<float> (4.0E-15);
     run_tests<double> (1.0E-30);
-    run_tests<std::complex<float>> (2.0E-14);
+    run_tests<std::complex<float>> (3.0E-15);
     run_tests<std::complex<double>> (1.0E-30);
     END_GPU
 }

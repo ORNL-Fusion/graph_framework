@@ -140,7 +140,7 @@ namespace absorption {
             inputs.push_back(graph::variable_cast(this->t));
             inputs.push_back(graph::variable_cast(this->w));
 
-            solver::newton(work, {kamp}, inputs, {D.get_d()*D.get_d()});
+            solver::newton(work, {kamp}, inputs, {D.get_d()});
         }
 
 //------------------------------------------------------------------------------

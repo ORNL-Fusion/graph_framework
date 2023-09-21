@@ -91,9 +91,8 @@ int main(int argc, const char * argv[]) {
     if constexpr (jit::use_cuda()) {
         run_tests<float> (3.2E-14);
     } else {
-        run_tests<float> (2.0E-14);
+        run_tests<float> (4.0E-15);
     }
-
     run_tests<double> (1.0E-30);
     if constexpr (jit::use_cuda()) {
         run_tests<std::complex<float>> (5.7E-14);

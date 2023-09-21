@@ -22,7 +22,7 @@ namespace solver {
 ///  @params[in,out] work           Workflow manager.
 ///  @params[in]     vars           The unknowns to solver for.
 ///  @params[in]     inputs         Inputs for jit compile.
-///  @params[in]     loss           Loss function.
+///  @params[in]     func           Function to find the root of.
 ///  @params[in]     tolarance      Tolarance to solve the dispersion function
 ///                                 to.
 ///  @params[in]     max_iterations Maximum number of iterations before giving
@@ -32,18 +32,18 @@ namespace solver {
     void newton(workflow::manager<T, SAFE_MATH> &work,
                 graph::output_nodes<T, SAFE_MATH> vars,
                 graph::input_nodes<T, SAFE_MATH> inputs,
-                graph::shared_leaf<T, SAFE_MATH> loss,
+                graph::shared_leaf<T, SAFE_MATH> func,
                 const T tolarance = 1.0E-30,
                 const size_t max_iterations = 1000) {
         auto fudge = graph::constant<T, SAFE_MATH> (tolarance);
 
         graph::map_nodes<T, SAFE_MATH> setters;
         for (auto x : vars) {
-            setters.push_back({x - loss/(loss->df(x) + fudge),
+            setters.push_back({x - func/func->df(x),
                                graph::variable_cast(x)});
         }
 
-        work.add_converge_item(inputs, {loss}, setters, "loss_kernel",
+        work.add_converge_item(inputs, {func*func}, setters, "loss_kernel",
                                tolarance, max_iterations);
     }
 }
