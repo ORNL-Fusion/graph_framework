@@ -106,7 +106,7 @@ void trace_ray(const size_t num_times,
             //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
 
-            const T endtime = static_cast<T> (1.5);
+            const T endtime = static_cast<T> (2.0);
             const T dt = endtime/static_cast<T> (num_times);
 
             //auto dt_var = graph::variable(num_rays, static_cast<T> (dt), "dt");
