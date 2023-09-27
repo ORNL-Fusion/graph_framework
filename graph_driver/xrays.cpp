@@ -99,7 +99,7 @@ void trace_ray(const size_t num_times,
                     kz->set(j, static_cast<T> (norm_dist4(engine)));
                 }
             }
-            kx->set(static_cast<T> (-700));
+            kx->set(static_cast<T> (-700.0));
 
             auto eq = equilibrium::make_efit<T, SAFE_MATH> (NC_FILE);
             //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();

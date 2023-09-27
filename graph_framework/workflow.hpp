@@ -123,8 +123,11 @@ namespace workflow {
         virtual void run() {
             size_t iterations = 0;
             T max_residule = max_kernel();
+            T last_max = std::numeric_limits<T>::max();
             while (std::abs(max_residule) > std::abs(tolarance) &&
+                   std::abs(last_max - max_residule) > 0.0      &&
                    iterations++ < max_iterations) {
+                last_max = max_residule;
                 max_residule = max_kernel();
             }
 
