@@ -279,6 +279,7 @@
 		C713425C2942665300672AD4 /* register.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = register.hpp; sourceTree = "<group>"; };
 		C71342652947D57900672AD4 /* metal_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = metal_context.hpp; sourceTree = "<group>"; };
 		C71342682947F36100672AD4 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		C7167B222AC5CE8500E03131 /* fix_NaN.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = fix_NaN.py; sourceTree = "<group>"; };
 		C717CB8D2A02E361008FBDD8 /* FindNetCDF.cmake */ = {isa = PBXFileReference; lastKnownFileType = text; path = FindNetCDF.cmake; sourceTree = "<group>"; };
 		C71C1FF527F5379D006997C2 /* dispersion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dispersion.hpp; sourceTree = "<group>"; };
 		C71C1FF627F5F5A8006997C2 /* solver.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = solver.hpp; sourceTree = "<group>"; };
@@ -454,6 +455,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		C7167B212AC5CE8500E03131 /* utilities */ = {
+			isa = PBXGroup;
+			children = (
+				C7167B222AC5CE8500E03131 /* fix_NaN.py */,
+			);
+			path = utilities;
+			sourceTree = "<group>";
+		};
 		C717CB8C2A02E361008FBDD8 /* cmake */ = {
 			isa = PBXGroup;
 			children = (
@@ -479,6 +488,7 @@
 				C7931E6928073BCA0033B488 /* graph_tests */,
 				C79141B422DAAD0C00E0BA0D /* graph_driver */,
 				C74DF4582AA8BC7300319113 /* graph_benchmark */,
+				C7167B212AC5CE8500E03131 /* utilities */,
 				C717CB8C2A02E361008FBDD8 /* cmake */,
 				C79141A722DA9BF200E0BA0D /* Products */,
 				C71342672947F36100672AD4 /* Frameworks */,

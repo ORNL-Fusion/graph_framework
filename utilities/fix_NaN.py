@@ -1,9 +1,20 @@
+#-------------------------------------------------------------------------------
+##  @file fix_NaN.py
+##  @brief Post processes result files.
+#-------------------------------------------------------------------------------
+
 import netCDF4
 import argparse
 import numpy
 
 #-------------------------------------------------------------------------------
-#  Clean up k imaginary and calculate the power absorbed.
+##  @brief Clean up result files.
+##
+##  Removes NaN's and noise spikes in the results. Also computes the power
+##  absorption and bins the power into a 2D grid.
+##
+##  @params params[in] args Command line arguments.
+#-------------------------------------------------------------------------------
 def main(**args):
     with netCDF4.Dataset('{}/bins.nc'.format(args['directory']), 'w') as bin_ref:
         nr = bin_ref.createDimension('nr', 64)
@@ -38,6 +49,12 @@ def main(**args):
                                                                                                 numpy.less(z[1:], zbin[k + 1])))), dpower), axis=0)
                         bins[j, k] += numpy.where(numpy.isnan(bin_power), 0.0, bin_power)
 
+#-------------------------------------------------------------------------------
+##  @brief Script entry point.
+##
+##  Defines command line arguments for.
+##  * --directory Directory to search for the result files.
+#-------------------------------------------------------------------------------
 if __name__ == '__main__':
     command_line_parser = argparse.ArgumentParser()
 
