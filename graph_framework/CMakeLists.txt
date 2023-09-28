@@ -6,6 +6,10 @@ target_compile_features (rays
                          cxx_std_20
 )
 
+if (${USE_CUDA})
+    file (READ ${CMAKE_CURRENT_SOURCE_DIR}/special_functions.hpp header)
+endif ()
+
 target_compile_definitions (rays
                             INTERFACE
                             $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a">
@@ -13,7 +17,7 @@ target_compile_definitions (rays
                             $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a">
                             $<$<PLATFORM_ID:Linux>:CXX_FLAGS="-g -fsanitize=undefined -fsanitize=float-divide-by-zero">
                             NC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"
-                            $<$<BOOL:${USE_CUDA}>:HEADERS=$<BUILD_INTERFACE:"${CMAKE_CURRENT_SOURCE_DIR}/special_functions.hpp">>
+                            $<$<BOOL:${USE_CUDA}>:HEADERS=$<BUILD_INTERFACE:${header}>>
 )
 target_include_directories (rays
                             INTERFACE
