@@ -160,25 +160,10 @@ namespace gpu {
             }
 
             nvrtcProgram kernel_program;
-            if constexpr (jit::is_complex<T> ()) {
-                std::array<char *, 1> headers = {
-                    HEADERS
-                };
-                std::array<char *, 1> includeNames = {
-                    "special_functions.hpp"
-                };
-                check_nvrtc_error(nvrtcCreateProgram(&kernel_program,
-                                                     kernel_source.c_str(),
-                                                     NULL, headers.size(),
-                                                     headers.data(),
-                                                     includeNames.data()),
-                                  "nvrtcCreateProgram");
-            } else {
-                check_nvrtc_error(nvrtcCreateProgram(&kernel_program,
-                                                     kernel_source.c_str(),
-                                                     NULL, 0, NULL, NULL),
-                                  "nvrtcCreateProgram");
-            }
+            check_nvrtc_error(nvrtcCreateProgram(&kernel_program,
+                                                 kernel_source.c_str(),
+                                                 NULL, 0, NULL, NULL),
+                              "nvrtcCreateProgram");
 
             for (std::string &name : names) {
                 check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
@@ -218,10 +203,11 @@ namespace gpu {
             }
 
             const std::string temp = arch.str();
-            std::array<const char *, 3> options({
+            std::array<const char *, 4> options({
                 temp.c_str(),
                 "--std=c++17",
-                "--include-path=" CUDA_INCLUDE
+                "--include-path=" CUDA_INCLUDE,
+                "--include-path=" HEADERS
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
