@@ -203,11 +203,12 @@ namespace gpu {
             }
 
             const std::string temp = arch.str();
-            std::array<const char *, 4> options({
+            std::array<const char *, 5> options({
                 temp.c_str(),
                 "--std=c++17",
                 "--include-path=" CUDA_INCLUDE,
-                "--include-path=" HEADERS
+                "--include-path=" HEADER_DIR,
+                "--extra-device-vectorization"
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
