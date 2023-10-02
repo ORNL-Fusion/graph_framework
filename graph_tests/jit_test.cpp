@@ -17,6 +17,8 @@
 ///
 ///  Specialize to check for complex numbers since complex has not <= operator.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] test      Test value.
 ///  @params[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
@@ -34,6 +36,8 @@ template<typename T> void check(const T test,
 
 //------------------------------------------------------------------------------
 ///  @brief Compile kernal and check the result of the output.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] inputs    Kernel input nodes.
 ///  @params[in] outputs   Kernel output nodes.
@@ -63,6 +67,8 @@ template<typename T> void compile(graph::input_nodes<T> inputs,
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests to test simple math operations are the same.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void run_math_tests() {
     auto v1 = graph::variable<T> (1, "v1");
@@ -317,6 +323,8 @@ template<typename T> void run_math_tests() {
 //------------------------------------------------------------------------------
 ///  @brief Run dispersion tests.
 ///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
+///
 ///  @params[in] eq Equilibrium for the dispersion function.
 //------------------------------------------------------------------------------
 template<class DISPERSION_FUNCTION>
@@ -359,8 +367,10 @@ void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base>
 
 //------------------------------------------------------------------------------
 ///  @brief Run dispersion tests.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<class T>
+template<typename T>
 void run_dispersion_tests() {
     auto no_mag_eq = equilibrium::make_no_magnetic_field<T> ();
 
@@ -389,6 +399,8 @@ void run_dispersion_tests() {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
     run_math_tests<T> ();

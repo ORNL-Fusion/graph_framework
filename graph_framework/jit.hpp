@@ -26,6 +26,9 @@
 namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Class for JIT compile of the GPU kernels.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class context {
@@ -195,6 +198,18 @@ namespace jit {
         void print(const size_t index,
                    const graph::output_nodes<T, SAFE_MATH> &nodes) {
             gpu_context.print_results(index, nodes);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Check the value.
+///
+///  @params[in] index Ray index to check value for.
+///  @params[in] node  Node to check the value for.
+///  @returns The value at the index.
+//------------------------------------------------------------------------------
+        T check_value(const size_t index,
+                      const graph::shared_leaf<T, SAFE_MATH> &node) {
+            return gpu_context.check_value(index, node);
         }
 
 //------------------------------------------------------------------------------

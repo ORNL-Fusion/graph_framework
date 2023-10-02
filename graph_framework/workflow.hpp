@@ -13,6 +13,9 @@
 namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a workitem.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class work_item {
@@ -65,6 +68,9 @@ namespace workflow {
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a convergence workitem.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class converge_item final : public work_item<T, SAFE_MATH> {
@@ -117,8 +123,11 @@ namespace workflow {
         virtual void run() {
             size_t iterations = 0;
             T max_residule = max_kernel();
+            T last_max = std::numeric_limits<T>::max();
             while (std::abs(max_residule) > std::abs(tolarance) &&
+                   std::abs(last_max - max_residule) > 0.0      &&
                    iterations++ < max_iterations) {
+                last_max = max_residule;
                 max_residule = max_kernel();
             }
 
@@ -137,6 +146,9 @@ namespace workflow {
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a workflow manager.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class manager {
@@ -201,7 +213,7 @@ namespace workflow {
 //------------------------------------------------------------------------------
         void compile() {
             context.compile(add_reduction);
-            
+
             for (auto &item : items) {
                 item->create_kernel_call(context);
             }
@@ -254,6 +266,18 @@ namespace workflow {
         void print(const size_t index,
                    const graph::output_nodes<T, SAFE_MATH> &nodes) {
             context.print(index, nodes);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Check the value.
+///
+///  @params[in] index Ray index to check value for.
+///  @params[in] node  Node to check the value for.
+///  @returns The value at the index.
+//------------------------------------------------------------------------------
+        T check_value(const size_t index,
+                      const graph::shared_leaf<T, SAFE_MATH> &node) {
+            return context.check_value(index, node);
         }
 
 //------------------------------------------------------------------------------

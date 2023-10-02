@@ -17,6 +17,8 @@ namespace solver {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class interface the solver.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class solver_interface {
@@ -58,13 +60,13 @@ namespace solver {
 ///  Next kz value.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> kz_next;
-///  Next kx value.
+///  Next x value.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> x_next;
-///  Next ky value.
+///  Next y value.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> y_next;
-///  Next kz value.
+///  Next z value.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> z_next;
 ///  Next t value.
@@ -82,7 +84,9 @@ namespace solver {
         const size_t index;
 
 ///  Output file.
-        output::result_file<typename DISPERSION_FUNCTION::base> file;
+        output::result_file file;
+///  Output dataset.
+        output::data_set<typename DISPERSION_FUNCTION::base> dataset;
 
     public:
 //------------------------------------------------------------------------------
@@ -124,7 +128,7 @@ namespace solver {
                          const size_t index=0) :
         D(w, kx, ky, kz, x, y, z, t, eq), w(w),
         kx(kx), ky(ky), kz(kz),
-        x(x), y(y), z(z), t(t), file(filename, num_rays),
+        x(x), y(y), z(z), t(t), file(filename, num_rays), dataset(file),
         index(index), work(index) {}
 
 //------------------------------------------------------------------------------
@@ -195,15 +199,15 @@ namespace solver {
             work.add_item(inputs, outputs, setters, "solver_kernel");
             work.compile();
 
-            file.create_variable("time", this->t, work.get_context());
-            file.create_variable("residule", residule, work.get_context());
-            file.create_variable("w",  this->w, work.get_context());
-            file.create_variable("x",  this->x, work.get_context());
-            file.create_variable("y",  this->y, work.get_context());
-            file.create_variable("z",  this->z, work.get_context());
-            file.create_variable("kx", this->kx, work.get_context());
-            file.create_variable("ky", this->ky, work.get_context());
-            file.create_variable("kz", this->kz, work.get_context());
+            dataset.create_variable(file, "time", this->t, work.get_context());
+            dataset.create_variable(file, "residule", residule, work.get_context());
+            dataset.create_variable(file, "w",  this->w, work.get_context());
+            dataset.create_variable(file, "x",  this->x, work.get_context());
+            dataset.create_variable(file, "y",  this->y, work.get_context());
+            dataset.create_variable(file, "z",  this->z, work.get_context());
+            dataset.create_variable(file, "kx", this->kx, work.get_context());
+            dataset.create_variable(file, "ky", this->ky, work.get_context());
+            dataset.create_variable(file, "kz", this->kz, work.get_context());
 
             file.end_define_mode();
         }
@@ -244,6 +248,16 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Check the residule.
+///
+///  @params[in] index Ray index to check residule for.
+///  @returns The value of the residule at the index.
+//------------------------------------------------------------------------------
+        typename DISPERSION_FUNCTION::base check_residule(const size_t index) {
+            return work.check_value(index, this->residule);
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
 ///  @params[in] index Ray index to print results of.
@@ -267,7 +281,7 @@ namespace solver {
 //------------------------------------------------------------------------------
         void write_step() {
             work.wait();
-            file.write();
+            dataset.write(file);
         }
 
 //------------------------------------------------------------------------------
@@ -382,14 +396,10 @@ namespace solver {
 //******************************************************************************
 //  Second Order Runge Kutta.
 //******************************************************************************
-//    template<class DISPERSION_FUNCTION>
-//    class leap_frog : public
-
-//******************************************************************************
-//  Second Order Runge Kutta.
-//******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Second Order Runge Kutta class.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class rk2 : public solver_interface<DISPERSION_FUNCTION> {
@@ -518,6 +528,8 @@ namespace solver {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Fourth Order Runge Kutta class.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class rk4 : public solver_interface<DISPERSION_FUNCTION> {
@@ -769,6 +781,8 @@ namespace solver {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Adaptive Fourth Order Runge Kutta class.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class adaptive_rk4 : public rk4<DISPERSION_FUNCTION> {
@@ -896,6 +910,8 @@ namespace solver {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Predictor corrector that trys to minimize the disperison residule.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class split_simplextic : public solver_interface<DISPERSION_FUNCTION> {

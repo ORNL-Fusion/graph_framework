@@ -18,14 +18,14 @@
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief  Check results of realtime compile.
+///
+///  @params[in] result Result code of the operation.
 ///  @params[in] name   Name of the operation.
 //------------------------------------------------------------------------------
     static void check_nvrtc_error(nvrtcResult result,
                                   const std::string &name) {
 #ifndef NDEBUG
-        std::cout << name << " " << result << " "
-                  << nvrtcGetErrorString(result) << std::endl;
-        assert(result == NVRTC_SUCCESS && "NVTRC Error");
+        assert(result == NVRTC_SUCCESS && nvrtcGetErrorString(result));
 #endif
     }
 
@@ -40,9 +40,7 @@ namespace gpu {
 #ifndef NDEBUG
         const char *error;
         cuGetErrorString(result, &error);
-        std::cout << name << " "
-                  << result << " " << error << std::endl;
-        assert(result == CUDA_SUCCESS && "Cuda Error");
+        assert(result == CUDA_SUCCESS && error);
 #endif
     }
 
@@ -59,6 +57,9 @@ namespace gpu {
 
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cuda gpu context.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class cuda_context {
@@ -202,10 +203,13 @@ namespace gpu {
             }
 
             const std::string temp = arch.str();
-            std::array<const char *, 3> options({
+            std::array<const char *, 6> options({
                 temp.c_str(),
                 "--std=c++17",
-                "--include-path=" CUDA_INCLUDE
+                "--include-path=" CUDA_INCLUDE,
+                "--include-path=" HEADER_DIR,
+                "--extra-device-vectorization",
+		"--device-as-default-execution-space"
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
@@ -375,6 +379,19 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Check the value.
+///
+///  @params[in] index Ray index to check value for.
+///  @params[in] node  Node to check the value for.
+///  @returns The value at the index.
+//------------------------------------------------------------------------------
+        T check_value(const size_t index,
+                      const graph::shared_leaf<T, SAFE_MATH> &node) {
+            wait();
+            return reinterpret_cast<T *> (kernel_arguments[node.get()])[index];
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
 ///  @params[in] node   Not to copy buffer to.
@@ -406,7 +423,12 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
-            source_buffer << "#include <cuda/std/complex>" << std::endl;
+            if constexpr (jit::is_complex<T> ()) {
+                source_buffer << "#define CUDA_DEVICE_CODE" << std::endl;
+		source_buffer << "#define M_PI " << M_PI << std::endl;
+                source_buffer << "#include <cuda/std/complex>" << std::endl;
+                source_buffer << "#include <special_functions.hpp>" << std::endl;
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -475,14 +497,14 @@ namespace gpu {
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    jit::register_map &registers) {
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('v',  in.get())
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;
             }
 
             for (auto &out : outputs) {
-                graph::shared_leaf<T> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('o',  out.get())
                               << "[index] = " << registers[a.get()] << ";"
                               << std::endl;

@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 ///  @brief Test the solver.
 ///
+///  @tparam SOLVER Class of solver to use.
+///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 ///  @params[in] omega0    Ray frequency.
 ///  @params[in] kx0       Wave number guess.
@@ -50,7 +52,7 @@ void test_solver(const typename SOLVER::base tolarance,
     const timeing::measure_diagnostic step("step");
     for (size_t i = 0; i < 5; i++) {
         solve.step();
-        assert(std::abs(residule->evaluate().at(0)) < std::abs(tolarance) &&
+        assert(std::abs(solve.check_residule(0)) < std::abs(tolarance) &&
                "Solver failed to retain initial acuracy");
     }
     step.print();
@@ -59,15 +61,18 @@ void test_solver(const typename SOLVER::base tolarance,
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified disperions Relation.
 ///
+///  @tparam DISPERSION Class of dispersion function to use.
+///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 ///  @params[in] omega0    Ray frequency.
 ///  @params[in] kx0       Wave number guess.
 ///  @params[in] dt        Timestep for the solver.
 //------------------------------------------------------------------------------
-template<typename DISPERSION> void run_disperions_tests(const typename DISPERSION::base tolarance,
-                                                        const typename DISPERSION::base omega0,
-                                                        const typename DISPERSION::base kx0,
-                                                        const typename DISPERSION::base dt) {
+template<typename DISPERSION>
+void run_disperions_tests(const typename DISPERSION::base tolarance,
+                          const typename DISPERSION::base omega0,
+                          const typename DISPERSION::base kx0,
+                          const typename DISPERSION::base dt) {
     test_solver<solver::rk2<DISPERSION>> (tolarance, omega0, kx0, dt);
     std::cout << "Test completed for rk2 solver." << std::endl;
 
@@ -77,6 +82,8 @@ template<typename DISPERSION> void run_disperions_tests(const typename DISPERSIO
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
@@ -98,13 +105,9 @@ void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
-#if defined(USE_METAL) || defined(USE_CUDA)
-    run_tests<float> (2.0E-14);
-#else
-    run_tests<float> (1.0E-14);
-#endif
+    run_tests<float> (4.0E-15);
     run_tests<double> (1.0E-30);
-    run_tests<std::complex<float>> (2.0E-14);
+    run_tests<std::complex<float>> (3.0E-15);
     run_tests<std::complex<double>> (1.0E-30);
     END_GPU
 }

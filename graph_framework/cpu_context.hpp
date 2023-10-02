@@ -20,6 +20,9 @@
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cpu context.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class cpu_context {
@@ -63,9 +66,11 @@ namespace gpu {
         ~cpu_context() {
             dlclose(lib_handle);
 
-            std::ostringstream temp_stream;
-            temp_stream << "rm " << library_name;
-            system(temp_stream.str().c_str());
+            if (!library_name.empty()) {
+                std::ostringstream temp_stream;
+                temp_stream << "rm " << library_name;
+                system(temp_stream.str().c_str());
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -203,7 +208,7 @@ namespace gpu {
                                                std::function<void(void)> run) {
             auto begin = kernel_arguments[argument.get()].cbegin();
             auto end = kernel_arguments[argument.get()].cend();
-            
+
             return [run, begin, end] () mutable {
                 run();
                 if constexpr (jit::is_complex<T> ()) {
@@ -239,6 +244,18 @@ namespace gpu {
                 }
             }
             std::cout << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Check the value.
+///
+///  @params[in] index Ray index to check value for.
+///  @params[in] node  Node to check the value for.
+///  @returns The value at the index.
+//------------------------------------------------------------------------------
+        T check_value(const size_t index,
+                      const graph::shared_leaf<T, SAFE_MATH> &node) {
+            return kernel_arguments[node.get()][index];
         }
 
 //------------------------------------------------------------------------------

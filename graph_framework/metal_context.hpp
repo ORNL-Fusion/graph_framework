@@ -15,6 +15,9 @@
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a metal gpu context.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class metal_context {
@@ -261,6 +264,19 @@ namespace gpu {
                 }
             }
             std::cout << std::endl;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Check the value.
+///
+///  @params[in] index Ray index to check value for.
+///  @params[in] node  Node to check the value for.
+///  @returns The value at the index.
+//------------------------------------------------------------------------------
+        T check_value(const size_t index,
+                      const graph::shared_leaf<T, SAFE_MATH> &node) {
+            wait();
+            return static_cast<T *> ([kernel_arguments[node.get()] contents])[index];
         }
 
 //------------------------------------------------------------------------------

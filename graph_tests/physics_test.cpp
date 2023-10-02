@@ -21,6 +21,8 @@
 ///  that
 ///
 ///  k.x - wt = Constant
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_constant() {
@@ -100,6 +102,8 @@ void test_constant() {
 ///  x(t) = -3/8*vth^2/⍵*⍵pe'(x)/⍵*t^2 + 3/2*vth^2/⍵*k0*t + x0               (8)
 ///
 ///  B = 0 or k || B
+///
+///  @tparam SOLVER Class of solver to use.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
@@ -197,6 +201,8 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 ///
 ///  B = 0
 ///
+///  @tparam SOLVER Class of solver to use.
+///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename SOLVER>
@@ -273,6 +279,8 @@ void test_light_wave(const typename SOLVER::base tolarance) {
 ///
 ///  dx/dt = vs^2                                                            (4)
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<typename T>
@@ -344,6 +352,8 @@ void test_acoustic_wave(const T tolarance) {
 ///  Solving for x
 ///
 ///  (⍵^2 - 1 - ne0*q^2/(ϵ0*m))/(ne0*q^2/(ϵ0*m)*0.1) = x                     (5)
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_o_mode_wave() {
@@ -396,6 +406,8 @@ void test_o_mode_wave() {
 ///  off at the Plasma frequency. The x-mode is cut off by the right cutoff for
 ///  frequencies above and trapped between the left and cutoff and the upper
 ///  hybird resonance.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
@@ -498,6 +510,8 @@ void test_cold_plasma_cutoffs(const T tolarance) {
 ///
 ///  Given a wave frequency, a wave with zero k will not propagate.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 ///  @params[in] n0        Starting nz value.
 ///  @params[in] x0        Starting x guess.
@@ -561,6 +575,8 @@ void test_reflection(const T tolarance,
 
 //------------------------------------------------------------------------------
 ///  @brief Efit equilibrium test.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_efit() {
     auto omega = graph::variable<T> (1, "\\omega");
@@ -600,6 +616,8 @@ template<typename T> void test_efit() {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------

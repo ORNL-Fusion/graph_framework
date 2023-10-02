@@ -44,6 +44,9 @@ namespace graph {
 ///  This makes the normalized argument (6) become
 ///
 ///    x_norm' = (x - xmin)/dx                                              (11)
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class piecewise_1D_node final : public straight_node<T, SAFE_MATH> {
@@ -319,6 +322,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define piecewise\_1D convience function.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] d Data to initalize the piecewise constant.
 ///  @params[in] x Argument.
 ///  @returns A reduced piecewise\_1D node.
@@ -346,6 +352,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a piecewise 1D node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -395,6 +404,9 @@ namespace graph {
 ///
 ///    x_norm' = (x - xmin)/dx                                              (20)
 ///    y_norm' = (y - ymin)/dy                                              (21)
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class piecewise_2D_node final : public branch_node<T, SAFE_MATH> {
@@ -718,6 +730,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Define piecewise\_2D convience function.
 ///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
 ///  @params[in] d Data to initalize the piecewise constant.
 ///  @params[in] n Number of columns.
 ///  @params[in] x Argument.
@@ -749,6 +764,9 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a piecewise 2D node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.

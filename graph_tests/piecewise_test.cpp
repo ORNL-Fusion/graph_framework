@@ -21,6 +21,8 @@
 ///
 ///  Specialize to check for complex numbers since complex has not <= operator.
 ///
+///  @tparam T Base type of the calculation.
+///
 ///  @params[in] test      Test value.
 ///  @params[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
@@ -38,6 +40,8 @@ template<typename T> void check(const T test,
 
 //------------------------------------------------------------------------------
 ///  @brief Compile kernal and check the result of the output.
+///
+///  @tparam T Base type of the calculation.
 ///
 ///  @params[in] inputs    Kernel input nodes.
 ///  @params[in] outputs   Kernel output nodes.
@@ -68,6 +72,8 @@ template<typename T> void compile(graph::input_nodes<T> inputs,
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for 1D piecewise nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void piecewise_1D() {
     auto a = graph::variable<T> (1, "");
@@ -170,6 +176,8 @@ template<typename T> void piecewise_1D() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for 2D piecewise nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void piecewise_2D() {
     auto ax = graph::variable<T> (1, "");
@@ -294,6 +302,8 @@ template<typename T> void piecewise_2D() {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
     piecewise_1D<T> ();

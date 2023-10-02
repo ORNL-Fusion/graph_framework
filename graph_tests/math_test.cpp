@@ -16,6 +16,8 @@
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for sqrt nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_sqrt() {
@@ -117,6 +119,8 @@ void test_sqrt() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for exp nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_exp() {
@@ -154,6 +158,8 @@ void test_exp() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for pow nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_pow() {
@@ -278,6 +284,8 @@ void test_pow() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for log nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_log() {
@@ -299,6 +307,8 @@ void test_log() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for log nodes.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T>
 void test_erfi() {
@@ -324,6 +334,8 @@ void test_erfi() {
 
 //------------------------------------------------------------------------------
 ///  @brief Tests function for variable like expressions.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void test_variable_like() {
     auto a = graph::variable<T> (1, "");
@@ -345,6 +357,8 @@ template<typename T> void test_variable_like() {
 
 //------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
+///
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<typename T> void run_tests() {
     test_variable_like<T> ();

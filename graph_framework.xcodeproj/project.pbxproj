@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 53;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -34,6 +34,7 @@
 		C73E2A7A2A4A216400BED03A /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C74DF4602AA8BD1900319113 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C79141B622DAAD0C00E0BA0D /* xrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C79141B522DAAD0C00E0BA0D /* xrays.cpp */; };
+		C7B676082AA9023F005AB34C /* xrays_bench.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7B676072AA9023F005AB34C /* xrays_bench.cpp */; };
 		C7D371132A0595A40074676E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C7E5644528A2A1AA000F31A2 /* backend_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E7328074F540033B488 /* backend_test.cpp */; };
 		C7E5645128A2A1DD000F31A2 /* dispersion_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E6B28073BCA0033B488 /* dispersion_test.cpp */; };
@@ -48,13 +49,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		C74DF4612AA8BD2600319113 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = C79141A522DA9BF200E0BA0D;
-			remoteInfo = graph_framework;
-		};
 		C74DF4632AA8BD3400319113 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C791419E22DA9BF200E0BA0D /* Project object */;
@@ -278,12 +272,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C70AA9792AB48FE2002DAF1C /* absorption.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = absorption.hpp; sourceTree = "<group>"; };
 		C70B705629F4F86A00098AA0 /* piecewise.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = piecewise.hpp; sourceTree = "<group>"; };
 		C70D93132A30FF4E006A4227 /* special_functions.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = special_functions.hpp; sourceTree = "<group>"; };
 		C713425B29413F0500672AD4 /* jit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jit.hpp; sourceTree = "<group>"; };
 		C713425C2942665300672AD4 /* register.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = register.hpp; sourceTree = "<group>"; };
 		C71342652947D57900672AD4 /* metal_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = metal_context.hpp; sourceTree = "<group>"; };
 		C71342682947F36100672AD4 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		C7167B222AC5CE8500E03131 /* fix_NaN.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = fix_NaN.py; sourceTree = "<group>"; };
 		C717CB8D2A02E361008FBDD8 /* FindNetCDF.cmake */ = {isa = PBXFileReference; lastKnownFileType = text; path = FindNetCDF.cmake; sourceTree = "<group>"; };
 		C71C1FF527F5379D006997C2 /* dispersion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dispersion.hpp; sourceTree = "<group>"; };
 		C71C1FF627F5F5A8006997C2 /* solver.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = solver.hpp; sourceTree = "<group>"; };
@@ -300,8 +296,6 @@
 		C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = piecewise_test.cpp; sourceTree = "<group>"; };
 		C73BBE9629F8669F0027BB7F /* newton.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = newton.hpp; sourceTree = "<group>"; };
 		C74DF4572AA8BC7300319113 /* graph_benchmark */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_benchmark; sourceTree = BUILT_PRODUCTS_DIR; };
-		C74DF4592AA8BC7300319113 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		C74DF45F2AA8BCE600319113 /* graph_benchmark */ = {isa = PBXFileReference; lastKnownFileType = folder; path = graph_benchmark; sourceTree = "<group>"; };
 		C77E6DF522DD64E700469621 /* trigonometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trigonometry.hpp; sourceTree = "<group>"; };
 		C79141A622DA9BF200E0BA0D /* libgraph_framework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgraph_framework.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		C79141AE22DA9C3000E0BA0D /* node.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = node.hpp; sourceTree = "<group>"; };
@@ -318,6 +312,8 @@
 		C7931E7128073BF30033B488 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		C7931E7228073BFC0033B488 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		C7931E7328074F540033B488 /* backend_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = backend_test.cpp; sourceTree = "<group>"; };
+		C7B676072AA9023F005AB34C /* xrays_bench.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = xrays_bench.cpp; sourceTree = "<group>"; };
+		C7B676092AA90243005AB34C /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		C7B677D829E45C9500D3ADC6 /* backend.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = backend.hpp; sourceTree = "<group>"; };
 		C7B677DA29E464AE00D3ADC6 /* cpu_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cpu_context.hpp; sourceTree = "<group>"; };
 		C7CEA0042948D02A00F61D09 /* timing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = timing.hpp; sourceTree = "<group>"; };
@@ -459,6 +455,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		C7167B212AC5CE8500E03131 /* utilities */ = {
+			isa = PBXGroup;
+			children = (
+				C7167B222AC5CE8500E03131 /* fix_NaN.py */,
+			);
+			path = utilities;
+			sourceTree = "<group>";
+		};
 		C717CB8C2A02E361008FBDD8 /* cmake */ = {
 			isa = PBXGroup;
 			children = (
@@ -470,7 +474,8 @@
 		C74DF4582AA8BC7300319113 /* graph_benchmark */ = {
 			isa = PBXGroup;
 			children = (
-				C74DF4592AA8BC7300319113 /* main.cpp */,
+				C7B676092AA90243005AB34C /* CMakeLists.txt */,
+				C7B676072AA9023F005AB34C /* xrays_bench.cpp */,
 			);
 			path = graph_benchmark;
 			sourceTree = "<group>";
@@ -482,9 +487,9 @@
 				C79141AD22DA9C0600E0BA0D /* graph_framework */,
 				C7931E6928073BCA0033B488 /* graph_tests */,
 				C79141B422DAAD0C00E0BA0D /* graph_driver */,
-				C74DF45F2AA8BCE600319113 /* graph_benchmark */,
-				C717CB8C2A02E361008FBDD8 /* cmake */,
 				C74DF4582AA8BC7300319113 /* graph_benchmark */,
+				C7167B212AC5CE8500E03131 /* utilities */,
+				C717CB8C2A02E361008FBDD8 /* cmake */,
 				C79141A722DA9BF200E0BA0D /* Products */,
 				C71342672947F36100672AD4 /* Frameworks */,
 			);
@@ -524,6 +529,7 @@
 				C723210222DC0D0A006BBF13 /* arithmetic.hpp */,
 				C77E6DF522DD64E700469621 /* trigonometry.hpp */,
 				C71C1FF527F5379D006997C2 /* dispersion.hpp */,
+				C70AA9792AB48FE2002DAF1C /* absorption.hpp */,
 				C71C1FF627F5F5A8006997C2 /* solver.hpp */,
 				C7B677D829E45C9500D3ADC6 /* backend.hpp */,
 				C70D93132A30FF4E006A4227 /* special_functions.hpp */,
@@ -567,7 +573,7 @@
 				C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */,
 			);
 			path = graph_tests;
-			sourceTree = SOURCE_ROOT;
+			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
@@ -666,7 +672,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				C74DF4622AA8BD2600319113 /* PBXTargetDependency */,
 			);
 			name = graph_benchmark;
 			productName = graph_benchmark;
@@ -877,7 +882,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1500;
 				ORGANIZATIONNAME = "Cianciosa, Mark R.";
 				TargetAttributes = {
 					C73690302A38C498001733B0 = {
@@ -988,6 +993,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C7B676082AA9023F005AB34C /* xrays_bench.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1081,11 +1087,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		C74DF4622AA8BD2600319113 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
-			targetProxy = C74DF4612AA8BD2600319113 /* PBXContainerItemProxy */;
-		};
 		C74DF4642AA8BD3400319113 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C79141A522DA9BF200E0BA0D /* graph_framework */;
@@ -1257,6 +1258,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -1271,6 +1273,12 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					USE_METAL,
+					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1315,6 +1323,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1334,7 +1343,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1389,6 +1398,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1404,7 +1414,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1434,11 +1444,11 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx13.3;
+				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1454,11 +1464,11 @@
 					USE_METAL,
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\ -g\" $(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx13.3;
+				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -1475,10 +1485,10 @@
 					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "-fsanitize=float-divide-by-zero";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx13.3;
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -1494,11 +1504,11 @@
 					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = "-lnetcdf";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx13.3;
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};
@@ -1559,7 +1569,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx13.3;
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -1572,7 +1582,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx13.3;
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};

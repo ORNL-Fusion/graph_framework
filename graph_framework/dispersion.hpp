@@ -17,6 +17,9 @@ namespace dispersion {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Build plasma fequency expression.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     static graph::shared_leaf<T, SAFE_MATH>
@@ -30,6 +33,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Build cyclotron fequency expression.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     static graph::shared_leaf<T, SAFE_MATH>
@@ -45,6 +51,8 @@ namespace dispersion {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
+///
+///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
     template<class DISPERSION_FUNCTION>
     class dispersion_interface {
@@ -151,20 +159,19 @@ namespace dispersion {
               const size_t index=0,
               const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
               const size_t max_iterations = 1000) {
-            auto loss = D*D;
             auto x_var = graph::variable_cast(x);
 
             workflow::manager<typename DISPERSION_FUNCTION::base,
                               DISPERSION_FUNCTION::safe_math> work(index);
 
-            solver::newton(work, {x}, inputs, loss, tolarance, max_iterations);
+            solver::newton(work, {x}, inputs, this->D, tolarance, max_iterations);
 
             work.compile();
             work.run();
 
             work.copy_to_host(x, x_var->data());
 
-            return loss;
+            return this->D*this->D;
         }
 
 //------------------------------------------------------------------------------
@@ -317,6 +324,9 @@ namespace dispersion {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Interface for dispersion functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class dispersion_function {
@@ -353,6 +363,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Stiff dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class stiff final : public dispersion_function<T, SAFE_MATH> {
@@ -407,6 +420,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Simple dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class simple final : public dispersion_function<T, SAFE_MATH> {
@@ -446,6 +462,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Physics
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class physics : public dispersion_function<T, SAFE_MATH> {
@@ -469,6 +488,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Bohm-Gross dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class bohm_gross final : public physics<T, SAFE_MATH> {
@@ -536,6 +558,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Light Wave dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class light_wave final : public physics<T, SAFE_MATH> {
@@ -590,6 +615,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Ion wave dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class acoustic_wave final : public physics<T, SAFE_MATH> {
@@ -649,6 +677,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Guassian Well dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class guassian_well final : public dispersion_function<T, SAFE_MATH> {
@@ -689,6 +720,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Electrostatic ion cyclotron wave dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class ion_cyclotron final : public physics<T, SAFE_MATH> {
@@ -756,6 +790,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Ordinary wave dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class ordinary_wave final : public physics<T, SAFE_MATH> {
@@ -813,6 +850,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Extra ordinary wave dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class extra_ordinary_wave final : public physics<T, SAFE_MATH> {
@@ -884,6 +924,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Cold Plasma Disperison function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class cold_plasma : public physics<T, SAFE_MATH> {
@@ -1124,6 +1167,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Hot Plasma Explansion Disperison function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, class Z, bool SAFE_MATH=false>
     class hot_plasma_expandion final : public cold_plasma<T, SAFE_MATH> {
@@ -1247,6 +1293,9 @@ namespace dispersion {
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class z_function {
@@ -1263,6 +1312,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class z_power_series final : public z_function<T, SAFE_MATH> {
@@ -1294,6 +1346,9 @@ namespace dispersion {
 
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<typename T, bool SAFE_MATH=false>
     class z_erfi final : public z_function<T, SAFE_MATH> {
