@@ -117,8 +117,6 @@ namespace absorption {
             auto ky_amp = kamp*kunit->get_y();
             auto kz_amp = kamp*kunit->get_z();
 
-            dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx_amp, ky_amp, kz_amp, x, y, z, t, eq);
-
             graph::input_nodes<typename DISPERSION_FUNCTION::base,
                                DISPERSION_FUNCTION::safe_math> inputs = {
                 graph::variable_cast(this->kamp),
@@ -140,6 +138,7 @@ namespace absorption {
             inputs.push_back(graph::variable_cast(this->t));
             inputs.push_back(graph::variable_cast(this->w));
 
+            dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx_amp, ky_amp, kz_amp, x, y, z, t, eq);
             solver::newton(work, {kamp}, inputs, {D.get_d()});
         }
 

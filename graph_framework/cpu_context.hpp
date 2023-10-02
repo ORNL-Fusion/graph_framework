@@ -208,7 +208,7 @@ namespace gpu {
                                                std::function<void(void)> run) {
             auto begin = kernel_arguments[argument.get()].cbegin();
             auto end = kernel_arguments[argument.get()].cend();
-            
+
             return [run, begin, end] () mutable {
                 run();
                 if constexpr (jit::is_complex<T> ()) {

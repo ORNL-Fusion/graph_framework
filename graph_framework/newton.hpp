@@ -35,8 +35,6 @@ namespace solver {
                 graph::shared_leaf<T, SAFE_MATH> func,
                 const T tolarance = 1.0E-30,
                 const size_t max_iterations = 1000) {
-        auto fudge = graph::constant<T, SAFE_MATH> (tolarance);
-
         graph::map_nodes<T, SAFE_MATH> setters;
         for (auto x : vars) {
             setters.push_back({x - func/func->df(x),

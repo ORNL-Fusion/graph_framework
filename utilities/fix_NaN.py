@@ -23,7 +23,14 @@ def main(**args):
         bins = bin_ref.createVariable('bins', 'f8', ('nr','nz'))
         bins[:,:] = 0
 
-        for i in range(0, 12):
+        rbin = numpy.linspace(args['min_r'],
+                              args['max_r'],
+                              args['num_r'])
+        zbin = numpy.linspace(args['min_z'],
+                              args['max_z'],
+                              args['num_z'])
+
+        for i in range(args['num_files']):
             with netCDF4.Dataset('{}/result{}.nc'.format(args['directory'], i), 'r+') as result:
                 result.variables['kamp'][:] = numpy.where(numpy.isnan(result.variables['kamp'][:]), 0.0, result.variables['kamp'][:])
                 result.variables['kamp'][:-1] = numpy.where(numpy.abs(result.variables['kamp'][1:] - result.variables['kamp'][:-1]) > 2.0, 0.0, result.variables['kamp'][:-1])
@@ -38,8 +45,6 @@ def main(**args):
                 dpower = numpy.abs(power[1:,:] - power[:-1,:])
 
                 r = numpy.sqrt(x*x + y*y)
-                rbin = numpy.linspace(0.84, 2.5, 65)
-                zbin = numpy.linspace(-1.6, 1.6, 129)
                 for j in range(64):
                     print(i, j)
                     for k in range(128) :
@@ -54,6 +59,7 @@ def main(**args):
 ##
 ##  Defines command line arguments for.
 ##  * --directory Directory to search for the result files.
+##  * --num_files Number of result files to read.
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     command_line_parser = argparse.ArgumentParser()
@@ -63,8 +69,57 @@ if __name__ == '__main__':
                                      action='store',
                                      required=True,
                                      dest='directory',
-                                     help='Directory',
+                                     help='Directory to read result files from.',
                                      metavar='DIRECTORY')
+    command_line_parser.add_argument('-n',
+                                     '--num_files',
+                                     action='store',
+                                     required=True,
+                                     dest='num_files',
+                                     help='Number of result files.'
+                                     metavar='NUM_FILES')
+    command_line_parser.add_argument('-nr',
+                                     '--num_r',
+                                     action='store',
+                                     required=True,
+                                     dest='num_r',
+                                     help='Number of radial bin points.',
+                                     metavar='NUM_R')
+    command_line_parser.add_argument('-r',
+                                     '--min_r',
+                                     action='store',
+                                     required=True,
+                                     dest='min_r',
+                                     help='Miniumum radial bin.',
+                                     metavar='MIN_R')
+    command_line_parser.add_argument('-mr',
+                                     '--max_r',
+                                     action='store',
+                                     required=True,
+                                     dest='max_r',
+                                     help='Maximum radial bin.',
+                                     metavar='MAX_R')
+    command_line_parser.add_argument('-j',
+                                     '--num_z',
+                                     action='store',
+                                     required=True,
+                                     dest='num_z',
+                                     help='Number of vertical bin points.',
+                                     metavar='NUM_Z')
+    command_line_parser.add_argument('-z',
+                                     '--min_z',
+                                     action='store',
+                                     required=True,
+                                     dest='min_z',
+                                     help='Miniumum vertical bin.',
+                                     metavar='MIN_Z')
+    command_line_parser.add_argument('-mz',
+                                     '--max_z',
+                                     action='store',
+                                     required=True,
+                                     dest='max_z',
+                                     help='Maximum vertical bin.',
+                                     metavar='MAX_R')
 
     args = vars(command_line_parser.parse_args())
 
