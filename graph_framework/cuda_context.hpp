@@ -203,12 +203,13 @@ namespace gpu {
             }
 
             const std::string temp = arch.str();
-            std::array<const char *, 5> options({
+            std::array<const char *, 6> options({
                 temp.c_str(),
                 "--std=c++17",
                 "--include-path=" CUDA_INCLUDE,
                 "--include-path=" HEADER_DIR,
-                "--extra-device-vectorization"
+                "--extra-device-vectorization",
+		"--device-as-default-execution-space"
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
@@ -424,6 +425,7 @@ namespace gpu {
         void create_header(std::ostringstream &source_buffer) {
             if constexpr (jit::is_complex<T> ()) {
                 source_buffer << "#define CUDA_DEVICE_CODE" << std::endl;
+		source_buffer << "#define M_PI " << M_PI << std::endl;
                 source_buffer << "#include <cuda/std/complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
             }
