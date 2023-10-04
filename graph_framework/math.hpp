@@ -247,8 +247,8 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;
@@ -470,8 +470,8 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;
@@ -689,8 +689,8 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;
@@ -993,8 +993,8 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;
@@ -1254,6 +1254,28 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return erfi(this->arg->remove_pseudo());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"erfi\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto a = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
         }
     };
 

@@ -269,8 +269,8 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;
@@ -697,8 +697,8 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;

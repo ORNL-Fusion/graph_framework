@@ -118,11 +118,7 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> compile(std::ostringstream &stream,
                                                   jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-<<<<<<< HEAD
                 shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
-=======
-                auto a = this->arg->compile(stream, registers);
->>>>>>> 5d7a377 (Add ability to draw the graph. WIP)
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -164,22 +160,23 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-<<<<<<< HEAD
 ///  @brief Remove pseudo variable nodes.
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return sin(this->arg->remove_pseudo());
-=======
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;
@@ -191,7 +188,6 @@ namespace graph {
             }
 
             return this->shared_from_this();
->>>>>>> 5d7a377 (Add ability to draw the graph. WIP)
         }
     };
 
@@ -204,7 +200,6 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced sin node.
 //------------------------------------------------------------------------------
-<<<<<<< HEAD
     template<typename T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> sin(shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<sine_node<T, SAFE_MATH>> (x)->reduce();
@@ -217,15 +212,6 @@ namespace graph {
             } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
-=======
-    template<typename T>
-    shared_leaf<T> sin(shared_leaf<T> x) {
-        auto temp = std::make_shared<sine_node<T>> (x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
->>>>>>> 5d7a377 (Add ability to draw the graph. WIP)
         }
         assert(false && "Should never reach.");
     }
@@ -355,11 +341,7 @@ namespace graph {
         compile(std::ostringstream &stream,
                 jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-<<<<<<< HEAD
                 shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
-=======
-                auto a = this->arg->compile(stream, registers);
->>>>>>> 5d7a377 (Add ability to draw the graph. WIP)
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -401,22 +383,23 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-<<<<<<< HEAD
 ///  @brief Remove pseudo variable nodes.
 ///
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return cos(this->arg->remove_pseudo());
-=======
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;
@@ -428,7 +411,6 @@ namespace graph {
             }
 
             return this->shared_from_this();
->>>>>>> 5d7a377 (Add ability to draw the graph. WIP)
         }
     };
 
@@ -441,7 +423,6 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced cos node.
 //------------------------------------------------------------------------------
-<<<<<<< HEAD
     template<typename T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> cos(shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<cosine_node<T, SAFE_MATH>> (x)->reduce();
@@ -454,15 +435,6 @@ namespace graph {
             } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
-=======
-    template<typename T>
-    shared_leaf<T> cos(shared_leaf<T> x) {
-        auto temp = std::make_shared<cosine_node<T>> (x)->reduce();
-        const size_t h = temp->get_hash();
-        if (leaf_node<T>::cache.find(h) ==
-            leaf_node<T>::cache.end()) {
-            leaf_node<T>::cache[h] = temp;
->>>>>>> 5d7a377 (Add ability to draw the graph. WIP)
         }
         assert(false && "Should never reach.");
     }
@@ -598,15 +570,9 @@ namespace graph {
         compile(std::ostringstream &stream,
                 jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
-<<<<<<< HEAD
                 shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
                 shared_leaf<T, SAFE_MATH> r = this->right->compile(stream, registers);
-                
-=======
-                auto l = this->left->compile(stream, registers);
-                auto r = this->right->compile(stream, registers);
 
->>>>>>> 5d7a377 (Add ability to draw the graph. WIP)
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
@@ -673,8 +639,8 @@ namespace graph {
 ///  @params[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T> to_vizgraph(std::stringstream &stream,
-                                           jit::register_map &registers) {
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
             if (registers.find(this) == registers.end()) {
                 const std::string name = jit::to_string('r', this);
                 registers[this] = name;
