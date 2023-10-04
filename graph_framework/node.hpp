@@ -155,6 +155,16 @@ namespace graph {
         virtual void to_latex() const = 0;
 
 //------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>> to_vizgraph(std::stringstream &stream,
+                                                                     jit::register_map &registers) = 0;
+
+//------------------------------------------------------------------------------
 ///  @brief Test if node acts like a constant.
 ///
 ///  @returns True if the node acts like a constant.
@@ -251,6 +261,25 @@ namespace graph {
 ///  Forward declare for one.
     template<typename T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> one();
+
+//------------------------------------------------------------------------------
+///  @brief Build the vizgraph input.
+///
+///  @params[in] node      Node to build the graph of.
+//------------------------------------------------------------------------------
+    template<typename T, bool SAFE_MATH=false>
+    void make_vizgraph(shared_leaf<T, SAFE_MATH> node) {
+        std::stringstream stream;
+        jit::register_map registers;
+        stream << std::setprecision(jit::max_digits10<T> ());
+
+        stream << "graph \"\" {" << std::endl;
+        stream << "    node [fontname = \"Helvetica\", ordering = out]" << std::endl << std::endl;
+        node->to_vizgraph(stream, registers);
+        stream << "}" << std::endl;
+
+        std::cout << stream.str() << std::endl;
+    }
 
 //******************************************************************************
 //  Constant node.
@@ -384,6 +413,26 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
             std::cout << data.at(0);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"" << this->evaluate().at(0)
+                       << "\", shape = box, style = \"rounded,filled\", fillcolor = black, fontcolor = white];" << std::endl;
+            }
+
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -1081,6 +1130,26 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"" << this->get_symbol()
+                       << "\", shape = box];" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Get the size of the variable buffer.
 //------------------------------------------------------------------------------
         size_t size() {
@@ -1355,6 +1424,28 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
             return this->arg;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @params[in,out] stream    String buffer stream.
+///  @params[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"pseudo_variable\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto a = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
         }
     };
 
