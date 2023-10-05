@@ -31,7 +31,8 @@ template<typename T, bool SAFE_MATH=false>
 void trace_ray(const size_t num_times,
                const size_t sub_steps,
                const size_t num_rays) {
-
+    const timeing::measure_diagnostic total("Total Ray Time");
+    
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, SAFE_MATH>::max_concurrency()),
                                                        static_cast<unsigned int> (num_rays)),
                                               static_cast<unsigned int> (1)));
@@ -191,6 +192,8 @@ void trace_ray(const size_t num_times,
     for (std::thread &t : threads) {
         t.join();
     }
+
+    total.print();
 }
 
 //------------------------------------------------------------------------------
@@ -203,6 +206,8 @@ template<typename T, bool SAFE_MATH=false>
 void calculate_power(const size_t num_times,
                      const size_t sub_steps,
                      const size_t num_rays) {
+    const timeing::measure_diagnostic total("Power Time");
+
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, SAFE_MATH>::max_concurrency()),
                                                        static_cast<unsigned int> (num_rays)),
                                               static_cast<unsigned int> (1)));
@@ -259,6 +264,8 @@ void calculate_power(const size_t num_times,
     for (std::thread &t : threads) {
         t.join();
     }
+
+    total.print();
 }
 
 //------------------------------------------------------------------------------

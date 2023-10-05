@@ -8,6 +8,8 @@
 #ifndef solver_h
 #define solver_h
 
+#include <thread>
+
 #include "dispersion.hpp"
 #include "output.hpp"
 
@@ -88,6 +90,9 @@ namespace solver {
 ///  Output dataset.
         output::data_set<typename DISPERSION_FUNCTION::base> dataset;
 
+///  Async thread to write data files.
+        std::thread sync;
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a new solver_interface with inital conditions.
@@ -127,10 +132,17 @@ namespace solver {
                          const size_t num_rays=0,
                          const size_t index=0) :
         D(w, kx, ky, kz, x, y, z, t, eq), w(w),
-        kx(kx), ky(ky), kz(kz),
-        x(x), y(y), z(z), t(t), file(filename, num_rays), dataset(file),
-        index(index), work(index) {}
+        kx(kx), ky(ky), kz(kz), x(x), y(y), z(z), t(t),
+        file(filename, num_rays), dataset(file),
+        index(index), work(index), sync([]{}) {}
 
+//------------------------------------------------------------------------------
+///  @brief Destructor.
+//------------------------------------------------------------------------------
+        ~solver_interface() {
+            sync.join();
+        }
+        
 //------------------------------------------------------------------------------
 ///  @brief Method to initalize the rays.
 ///
@@ -281,7 +293,10 @@ namespace solver {
 //------------------------------------------------------------------------------
         void write_step() {
             work.wait();
-            dataset.write(file);
+            sync.join();
+            sync = std::thread([this] {
+                dataset.write(file);
+            });
         }
 
 //------------------------------------------------------------------------------

@@ -8,6 +8,8 @@
 #ifndef absorption_h
 #define absorption_h
 
+#include <thread>
+
 #include "newton.hpp"
 
 namespace absorption {
@@ -66,6 +68,9 @@ namespace absorption {
 ///  Output dataset.
         output::data_set<typename DISPERSION_FUNCTION::base> dataset;
 
+///  Async thread to write data files.
+        std::thread sync;
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Constructor for root finding.
@@ -108,7 +113,7 @@ namespace absorption {
                     const size_t num_rays=0,
                     const size_t index=0) :
         kamp(kamp), w(w), kx(kx), ky(ky), kz(kz), x(x), y(y), z(z), t(t),
-        file(filename), dataset(file), index(index), work(index) {
+        file(filename), dataset(file), index(index), work(index), sync([]{}) {
             auto kvec = graph::vector(kx, ky, kz);
             auto kunit = kvec->unit();
             auto klen = kvec->length();
@@ -140,6 +145,13 @@ namespace absorption {
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx_amp, ky_amp, kz_amp, x, y, z, t, eq);
             solver::newton(work, {kamp}, inputs, {D.get_d()});
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Destructor.
+//------------------------------------------------------------------------------
+        ~root_finder() {
+            sync.join();
         }
 
 //------------------------------------------------------------------------------
@@ -179,7 +191,11 @@ namespace absorption {
 
             work.run();
             work.wait();
-            dataset.write(file, time_index);
+            
+            sync.join();
+            sync = std::thread([this] (const size_t index) -> void {
+                dataset.write(file, index);
+            }, time_index);
         }
     };
 }
