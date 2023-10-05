@@ -25,6 +25,7 @@ target_link_libraries (rays
                        gpu_lib
                        NetCDF::NetCDF
                        $<$<PLATFORM_ID:Linux>:${CMAKE_DL_LIBS}>
+                       $<$<PLATFORM_ID:Linux>:pthread>
 )
 target_precompile_headers (rays
                            INTERFACE
