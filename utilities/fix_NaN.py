@@ -25,10 +25,10 @@ def main(**args):
 
         rbin = numpy.linspace(args['min_r'],
                               args['max_r'],
-                              args['num_r'])
+                              args['num_r'] + 1)
         zbin = numpy.linspace(args['min_z'],
                               args['max_z'],
-                              args['num_z'])
+                              args['num_z'] + 1)
 
         for i in range(args['num_files']):
             with netCDF4.Dataset('{}/result{}.nc'.format(args['directory'], i), 'r+') as result:
@@ -45,9 +45,9 @@ def main(**args):
                 dpower = numpy.abs(power[1:,:] - power[:-1,:])
 
                 r = numpy.sqrt(x*x + y*y)
-                for j in range(64):
+                for j in range(args['num_r']):
                     print(i, j)
-                    for k in range(128) :
+                    for k in range(args['num_z']) :
                         bin_power = numpy.sum(numpy.extract(numpy.logical_and(numpy.greater(r[1:], rbin[j]),
                                                             numpy.logical_and(numpy.less(r[1:], rbin[j + 1]),
                                                                               numpy.logical_and(numpy.greater(z[1:], zbin[k]),
@@ -76,7 +76,8 @@ if __name__ == '__main__':
                                      action='store',
                                      required=True,
                                      dest='num_files',
-                                     help='Number of result files.'
+                                     help='Number of result files.',
+                                     type=int,
                                      metavar='NUM_FILES')
     command_line_parser.add_argument('-nr',
                                      '--num_r',
@@ -84,6 +85,7 @@ if __name__ == '__main__':
                                      required=True,
                                      dest='num_r',
                                      help='Number of radial bin points.',
+                                     type=int,
                                      metavar='NUM_R')
     command_line_parser.add_argument('-r',
                                      '--min_r',
@@ -91,6 +93,7 @@ if __name__ == '__main__':
                                      required=True,
                                      dest='min_r',
                                      help='Miniumum radial bin.',
+                                     type=float,
                                      metavar='MIN_R')
     command_line_parser.add_argument('-mr',
                                      '--max_r',
@@ -98,6 +101,7 @@ if __name__ == '__main__':
                                      required=True,
                                      dest='max_r',
                                      help='Maximum radial bin.',
+                                     type=float,
                                      metavar='MAX_R')
     command_line_parser.add_argument('-j',
                                      '--num_z',
@@ -105,6 +109,7 @@ if __name__ == '__main__':
                                      required=True,
                                      dest='num_z',
                                      help='Number of vertical bin points.',
+                                     type=int,
                                      metavar='NUM_Z')
     command_line_parser.add_argument('-z',
                                      '--min_z',
@@ -112,6 +117,7 @@ if __name__ == '__main__':
                                      required=True,
                                      dest='min_z',
                                      help='Miniumum vertical bin.',
+                                     type=float,
                                      metavar='MIN_Z')
     command_line_parser.add_argument('-mz',
                                      '--max_z',
@@ -119,6 +125,7 @@ if __name__ == '__main__':
                                      required=True,
                                      dest='max_z',
                                      help='Maximum vertical bin.',
+                                     type=float,
                                      metavar='MAX_R')
 
     args = vars(command_line_parser.parse_args())
