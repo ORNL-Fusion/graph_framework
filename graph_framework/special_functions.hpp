@@ -20,6 +20,7 @@ using complex_type = complex<T>;
 #include <complex>
 #include <cfloat>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 
 using namespace std;
