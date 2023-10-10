@@ -17,7 +17,7 @@ namespace workflow {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class work_item {
     protected:
 ///  Name of the GPU kernel.
@@ -72,7 +72,7 @@ namespace workflow {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class converge_item final : public work_item<T, SAFE_MATH> {
     private:
 ///  Kernel function.
@@ -150,7 +150,7 @@ namespace workflow {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class manager {
     private:
 ///  JIT context.

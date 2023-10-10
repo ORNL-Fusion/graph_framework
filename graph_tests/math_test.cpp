@@ -19,7 +19,7 @@
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_sqrt() {
     auto ten = graph::constant(static_cast<T> (10.0));
     auto sqrt_ten = graph::sqrt(ten);
@@ -122,7 +122,7 @@ void test_sqrt() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_exp() {
     auto ten = graph::constant(static_cast<T> (10.0));
     auto exp_ten = graph::exp(ten);
@@ -161,7 +161,7 @@ void test_exp() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_pow() {
 //  a^0 = 1
     auto zero = graph::zero<T> ();
@@ -287,7 +287,7 @@ void test_pow() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_log() {
     assert(graph::constant_cast(graph::log(graph::constant(static_cast<T> (10.0)))) &&
            "Expected constant");
@@ -310,7 +310,7 @@ void test_log() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::complex_scalar T>
 void test_erfi() {
     auto a = graph::variable<T> (1, "");
     auto erfi = graph::erfi(a);
@@ -337,7 +337,7 @@ void test_erfi() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_variable_like() {
+template<jit::float_scalar T> void test_variable_like() {
     auto a = graph::variable<T> (1, "");
     auto c = graph::one<T> ();
     
@@ -360,7 +360,7 @@ template<typename T> void test_variable_like() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void run_tests() {
+template<jit::float_scalar T> void run_tests() {
     test_variable_like<T> ();
     test_sqrt<T> ();
     test_exp<T> ();

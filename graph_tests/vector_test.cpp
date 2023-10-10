@@ -20,7 +20,7 @@
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void run_tests() {
+template<jit::float_scalar T> void run_tests() {
     auto one = graph::one<T> ();
     auto zero = graph::zero<T> ();
 

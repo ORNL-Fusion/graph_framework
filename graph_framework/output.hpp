@@ -161,7 +161,7 @@ namespace output {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     class data_set {
     private:
 ///  Dimension of ray. 1 for real, 2 for complex.

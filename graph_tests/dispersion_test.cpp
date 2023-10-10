@@ -69,7 +69,7 @@ void test_solve(const typename DISPERSION::base tolarance,
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void run_tests(const T tolarance) {
     auto eq_den = equilibrium::make_guassian_density<T> ();
     auto eq_no = equilibrium::make_no_magnetic_field<T> ();

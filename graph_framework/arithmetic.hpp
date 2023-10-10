@@ -22,7 +22,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class add_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -391,7 +391,7 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> add(shared_leaf<T, SAFE_MATH> l,
                                   shared_leaf<T, SAFE_MATH> r) {
         auto temp = std::make_shared<add_node<T, SAFE_MATH>> (l, r)->reduce();
@@ -421,14 +421,14 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator+(shared_leaf<T, SAFE_MATH> l,
                                         shared_leaf<T, SAFE_MATH> r) {
         return add<T, SAFE_MATH> (l, r);
     }
 
 ///  Convenience type alias for shared add nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_add = std::shared_ptr<add_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -440,7 +440,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_add<T, SAFE_MATH> add_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<add_node<T, SAFE_MATH>> (x);
     }
@@ -456,7 +456,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class subtract_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -873,7 +873,7 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> subtract(shared_leaf<T, SAFE_MATH> l,
                                        shared_leaf<T, SAFE_MATH> r) {
         auto temp = std::make_shared<subtract_node<T, SAFE_MATH>> (l, r)->reduce();
@@ -900,14 +900,14 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator-(shared_leaf<T, SAFE_MATH> l,
                                         shared_leaf<T, SAFE_MATH> r) {
         return subtract<T, SAFE_MATH> (l, r);
     }
 
 ///  Convenience type alias for shared subtract nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_subtract = std::shared_ptr<subtract_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -919,7 +919,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_subtract<T, SAFE_MATH> subtract_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<subtract_node<T, SAFE_MATH>> (x);
     }
@@ -933,7 +933,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class multiply_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -1464,7 +1464,7 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> multiply(shared_leaf<T, SAFE_MATH> l,
                                        shared_leaf<T, SAFE_MATH> r) {
         auto temp = std::make_shared<multiply_node<T, SAFE_MATH>> (l, r)->reduce();
@@ -1491,14 +1491,14 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator*(shared_leaf<T, SAFE_MATH> l,
                                         shared_leaf<T, SAFE_MATH> r) {
         return multiply<T, SAFE_MATH> (l, r);
     }
 
 ///  Convenience type alias for shared multiply nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_multiply = std::shared_ptr<multiply_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -1510,7 +1510,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_multiply<T, SAFE_MATH> multiply_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<multiply_node<T, SAFE_MATH>> (x);
     }
@@ -1524,7 +1524,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class divide_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -1892,7 +1892,7 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> divide(shared_leaf<T, SAFE_MATH> l,
                                      shared_leaf<T, SAFE_MATH> r) {
         auto temp = std::make_shared<divide_node<T, SAFE_MATH>> (l, r)->reduce();
@@ -1919,14 +1919,14 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator/(shared_leaf<T, SAFE_MATH> l,
                                         shared_leaf<T, SAFE_MATH> r) {
         return divide<T, SAFE_MATH> (l, r);
     }
 
 ///  Convenience type alias for shared divide nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_divide = std::shared_ptr<divide_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -1938,7 +1938,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_divide<T, SAFE_MATH> divide_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<divide_node<T, SAFE_MATH>> (x);
     }
@@ -1954,7 +1954,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class fma_node final : public triple_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -2442,7 +2442,7 @@ namespace graph {
 ///  @params[in] m Middle branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
                                   shared_leaf<T, SAFE_MATH> m,
                                   shared_leaf<T, SAFE_MATH> r) {
@@ -2462,7 +2462,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared add nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_fma = std::shared_ptr<fma_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -2474,7 +2474,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_fma<T, SAFE_MATH> fma_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<fma_node<T, SAFE_MATH>> (x);
     }

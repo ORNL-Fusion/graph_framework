@@ -26,7 +26,7 @@
 ///  @params[in] test      Test value.
 ///  @params[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
-template<typename T> void check(const T test,
+template<jit::float_scalar T> void check(const T test,
                                 const T tolarance) {
     if constexpr (jit::is_complex<T> ()) {
         assert(std::real(test) <= std::real(tolarance) &&
@@ -49,11 +49,11 @@ template<typename T> void check(const T test,
 ///  @params[in] expected  Expected result.
 ///  @params[in] tolarance Check tolarances.
 //------------------------------------------------------------------------------
-template<typename T> void compile(graph::input_nodes<T> inputs,
-                                  graph::output_nodes<T> outputs,
-                                  graph::map_nodes<T> setters,
-                                  const T expected,
-                                  const T tolarance) {
+template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
+                                           graph::output_nodes<T> outputs,
+                                           graph::map_nodes<T> setters,
+                                           const T expected,
+                                           const T tolarance) {
     jit::context<T> source(0);
     source.add_kernel("test_kernel", inputs, outputs, setters);
 
@@ -75,7 +75,7 @@ template<typename T> void compile(graph::input_nodes<T> inputs,
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void piecewise_1D() {
+template<jit::float_scalar T> void piecewise_1D() {
     auto a = graph::variable<T> (1, "");
     auto b = graph::variable<T> (1, "");
     auto p1 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
@@ -179,7 +179,7 @@ template<typename T> void piecewise_1D() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void piecewise_2D() {
+template<jit::float_scalar T> void piecewise_2D() {
     auto ax = graph::variable<T> (1, "");
     auto ay = graph::variable<T> (1, "");
     auto bx = graph::variable<T> (1, "");
@@ -305,7 +305,7 @@ template<typename T> void piecewise_2D() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void run_tests() {
+template<jit::float_scalar T> void run_tests() {
     piecewise_1D<T> ();
     piecewise_2D<T> ();
 }

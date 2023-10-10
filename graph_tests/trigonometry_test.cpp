@@ -20,7 +20,7 @@
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_sin() {
+template<jit::float_scalar T> void test_sin() {
     assert(graph::constant_cast(graph::sin(graph::constant(static_cast<T> (10.0)))).get() &&
            "Expected constant");
 
@@ -43,7 +43,7 @@ template<typename T> void test_sin() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_cos() {
+template<jit::float_scalar T> void test_cos() {
     assert(graph::constant_cast(graph::cos(graph::constant(static_cast<T> (10.0)))).get() &&
            "Expected constant");
 
@@ -66,7 +66,7 @@ template<typename T> void test_cos() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_tan() {
+template<jit::float_scalar T> void test_tan() {
     assert(graph::constant_cast(graph::tan(graph::constant(static_cast<T> (10.0)))).get() &&
            "Expected constant");
 
@@ -84,7 +84,7 @@ template<typename T> void test_tan() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_atan() {
+template<jit::float_scalar T> void test_atan() {
     assert(graph::constant_cast(graph::atan(graph::constant(static_cast<T> (10.0)),
                                             graph::constant(static_cast<T> (11.0)))).get() &&
            "Expected constant");
@@ -109,7 +109,7 @@ template<typename T> void test_atan() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void run_tests() {
+template<jit::float_scalar T> void run_tests() {
     test_sin<T> ();
     test_cos<T> ();
     test_tan<T> ();

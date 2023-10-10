@@ -48,7 +48,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class piecewise_1D_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -352,7 +352,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced piecewise\_1D node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> piecewise_1D(const backend::buffer<T> &d,
                                            shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<piecewise_1D_node<T, SAFE_MATH>> (d, x)->reduce();
@@ -370,7 +370,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared piecewise 1D nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_piecewise_1D = std::shared_ptr<piecewise_1D_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -382,7 +382,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_piecewise_1D<T, SAFE_MATH> piecewise_1D_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<piecewise_1D_node<T, SAFE_MATH>> (x);
     }
@@ -431,7 +431,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class piecewise_2D_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -787,8 +787,8 @@ namespace graph {
 ///  @params[in] y Argument.
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false> shared_leaf<T, SAFE_MATH>
-    piecewise_2D(const backend::buffer<T> &d,
+    template<jit::float_scalar T, bool SAFE_MATH=false> 
+    shared_leaf<T, SAFE_MATH> piecewise_2D(const backend::buffer<T> &d,
                  const size_t n,
                  shared_leaf<T, SAFE_MATH> x,
                  shared_leaf<T, SAFE_MATH> y) {
@@ -807,7 +807,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared piecewise 2D nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_piecewise_2D = std::shared_ptr<piecewise_2D_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -819,7 +819,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_piecewise_2D<T, SAFE_MATH> piecewise_2D_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<piecewise_2D_node<T, SAFE_MATH>> (x);
     }

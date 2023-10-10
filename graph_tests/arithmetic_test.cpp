@@ -19,7 +19,7 @@
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_add() {
+template<jit::float_scalar T> void test_add() {
 //  Three constant nodes should reduce to a single constant node with added
 //  operands.
     auto one = graph::one<T> ();
@@ -272,7 +272,7 @@ template<typename T> void test_add() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_subtract() {
+template<jit::float_scalar T> void test_subtract() {
 //  Three constant nodes should reduce to a single constant node with added
 //  operands.
     auto one = graph::one<T> ();
@@ -575,7 +575,7 @@ template<typename T> void test_subtract() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_multiply() {
+template<jit::float_scalar T> void test_multiply() {
 //  Three constant nodes should reduce to a single constant node with multiplied
 //  operands.
     auto one = graph::one<T> ();
@@ -1096,7 +1096,7 @@ template<typename T> void test_multiply() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_divide() {
+template<jit::float_scalar T> void test_divide() {
 // Check for potential divide by zero.
     auto zero = graph::zero<T> ();
     assert((zero/zero).get() == zero.get() && "Expected to recover zero.");
@@ -1515,7 +1515,7 @@ template<typename T> void test_divide() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_fma() {
+template<jit::float_scalar T> void test_fma() {
 //  Three constant nodes should reduce to a single constant node with a*b + c.
     auto zero = graph::zero<T> ();
     auto one = graph::one<T> ();
@@ -1807,7 +1807,7 @@ template<typename T> void test_fma() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void run_tests() {
+template<jit::float_scalar T> void run_tests() {
     test_add<T> ();
     test_subtract<T> ();
     test_multiply<T> ();

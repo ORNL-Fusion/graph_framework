@@ -22,8 +22,8 @@
 ///  @params[in] test      Test value.
 ///  @params[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
-template<typename T> void check(const T test,
-                                const T tolarance) {
+template<jit::float_scalar T> 
+void check(const T test, const T tolarance) {
     if constexpr (jit::is_complex<T> ()) {
         assert(std::real(test) <= std::real(tolarance) &&
                "Real GPU and CPU values differ.");
@@ -45,11 +45,12 @@ template<typename T> void check(const T test,
 ///  @params[in] expected  Expected result.
 ///  @params[in] tolarance Check tolarances.
 //------------------------------------------------------------------------------
-template<typename T> void compile(graph::input_nodes<T> inputs,
-                                  graph::output_nodes<T> outputs,
-                                  graph::map_nodes<T> setters,
-                                  const T expected,
-                                  const T tolarance) {
+template<jit::float_scalar T>
+void compile(graph::input_nodes<T> inputs,
+             graph::output_nodes<T> outputs,
+             graph::map_nodes<T> setters,
+             const T expected,
+             const T tolarance) {
     jit::context<T> source(0);
     source.add_kernel("test_kernel", inputs, outputs, setters);
 
@@ -70,7 +71,7 @@ template<typename T> void compile(graph::input_nodes<T> inputs,
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void run_math_tests() {
+template<jit::float_scalar T> void run_math_tests() {
     auto v1 = graph::variable<T> (1, "v1");
     auto v2 = graph::variable<T> (1, "v2");
     auto v3 = graph::variable<T> (1, "v3");
@@ -402,7 +403,7 @@ void run_dispersion_tests() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void run_tests() {
+template<jit::float_scalar T> void run_tests() {
     run_math_tests<T> ();
     run_dispersion_tests<T> ();
 }

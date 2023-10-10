@@ -23,7 +23,7 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     class buffer {
     private:
 ///  The data buffer to hold the data.
@@ -240,7 +240,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Take cos.
 //------------------------------------------------------------------------------
-        template<typename D=T>
+        template<jit::float_scalar D=T>
         typename std::enable_if<jit::is_complex<D> (), void>::type erfi() {
             for (D &d : memory) {
                 d = special::erfi(d);
@@ -269,7 +269,7 @@ namespace backend {
 ///  @params[in] b Right operand.
 ///  @returns a + b.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     inline buffer<T> operator+(buffer<T> &a,
                                buffer<T> &b) {
         if (b.size() == 1) {
@@ -303,7 +303,7 @@ namespace backend {
 ///  @params[in] b Right operand.
 ///  @returns a == b.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     inline bool operator==(const buffer<T> &a,
                            const buffer<T> &b) {
         if (a.size() != b.size()) {
@@ -327,7 +327,7 @@ namespace backend {
 ///  @params[in] b Right operand.
 ///  @returns a - b.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     inline buffer<T> operator-(buffer<T> &a,
                                buffer<T> &b) {
         if (b.size() == 1) {
@@ -361,7 +361,7 @@ namespace backend {
 ///  @params[in] b Right operand.
 ///  @returns a * b.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     inline buffer<T> operator*(buffer<T> &a,
                                buffer<T> &b) {
         if (b.size() == 1) {
@@ -395,7 +395,7 @@ namespace backend {
 ///  @params[in] b Denominator.
 ///  @returns a / b.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     inline buffer<T> operator/(buffer<T> &a,
                                buffer<T> &b) {
         if (b.size() == 1) {
@@ -430,7 +430,7 @@ namespace backend {
 ///  @params[in] c Right operand.
 ///  @returns a*b + c.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     inline buffer<T> fma(buffer<T> &a,
                          buffer<T> &b,
                          buffer<T> &c) {
@@ -537,7 +537,7 @@ namespace backend {
 ///  @params[in] exponent Power to apply to the base.
 ///  @returns base^exponent.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     inline buffer<T> pow(buffer<T> &base,
                          buffer<T> &exponent) {
         if (exponent.size() == 1) {
@@ -610,7 +610,7 @@ namespace backend {
 ///  @params[in] y Y argument.
 ///  @returns atan2(y, x)
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<jit::float_scalar T>
     inline buffer<T> atan(buffer<T> &x,
                           buffer<T> &y) {
         if (y.size() == 1) {

@@ -27,7 +27,7 @@ const bool verbose = true;
 ///  @params[in] sub_steps Number of substeps to push the rays.
 ///  @params[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
-template<typename T, bool SAFE_MATH=false>
+template<std::floating_point T, bool SAFE_MATH=false>
 void trace_ray(const size_t num_times,
                const size_t sub_steps,
                const size_t num_rays) {
@@ -202,7 +202,7 @@ void trace_ray(const size_t num_times,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-template<typename T, bool SAFE_MATH=false>
+template<jit::float_scalar T, bool SAFE_MATH=false>
 void calculate_power(const size_t num_times,
                      const size_t sub_steps,
                      const size_t num_rays) {

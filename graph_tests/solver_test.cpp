@@ -87,7 +87,7 @@ void run_disperions_tests(const typename DISPERSION::base tolarance,
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void run_tests(const T tolarance) {
     run_disperions_tests<dispersion::simple<T>> (tolarance, 0.5, 0.25, 1.0);
     run_disperions_tests<dispersion::guassian_well<T>> (tolarance, 0.5, 0.25, 0.00001);

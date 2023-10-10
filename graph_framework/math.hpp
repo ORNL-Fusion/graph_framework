@@ -21,7 +21,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class sqrt_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -272,7 +272,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> sqrt(shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<sqrt_node<T, SAFE_MATH>> (x)->reduce();
 //  Test for hash collisions.
@@ -290,7 +290,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared sqrt nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_sqrt = std::shared_ptr<sqrt_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_sqrt<T, SAFE_MATH> sqrt_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<sqrt_node<T, SAFE_MATH>> (x);
     }
@@ -318,7 +318,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class exp_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -495,7 +495,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> exp(shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<exp_node<T, SAFE_MATH>> (x)->reduce();
 //  Test for hash collisions.
@@ -513,7 +513,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared exp nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_exp = std::shared_ptr<exp_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -525,7 +525,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_exp<T, SAFE_MATH> exp_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<exp_node<T, SAFE_MATH>> (x);
     }
@@ -541,7 +541,7 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class log_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -714,7 +714,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced log node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> log(shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<log_node<T, SAFE_MATH>> (x)->reduce();
 //  Test for hash collisions.
@@ -731,7 +731,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared log nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_log = std::shared_ptr<log_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -743,7 +743,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_log<T, SAFE_MATH> log_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<log_node<T, SAFE_MATH>> (x);
     }
@@ -759,7 +759,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class pow_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -1068,7 +1068,7 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> pow(shared_leaf<T, SAFE_MATH> l,
                                   shared_leaf<T, SAFE_MATH> r) {
         auto temp = std::make_shared<pow_node<T, SAFE_MATH>> (l, r)->reduce();
@@ -1087,7 +1087,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared add nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_pow = std::shared_ptr<pow_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -1096,7 +1096,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_pow<T, SAFE_MATH> pow_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<pow_node<T, SAFE_MATH>> (x);
     }
@@ -1112,13 +1112,9 @@ namespace graph {
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::complex_scalar T, bool SAFE_MATH=false>
     class erfi_node final : public straight_node<T, SAFE_MATH> {
     private:
-//  Limit node to complex base types.
-        static_assert(jit::is_complex<T> (),
-                      "erfi only valid for complex base types.");
-
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
@@ -1288,7 +1284,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced exp node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::complex_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> erfi(shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<erfi_node<T, SAFE_MATH>> (x)->reduce();
 //  Test for hash collisions.
@@ -1306,7 +1302,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared exp nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::complex_scalar T, bool SAFE_MATH=false>
     using shared_erfi = std::shared_ptr<erfi_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -1318,7 +1314,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::complex_scalar T, bool SAFE_MATH=false>
     shared_erfi<T, SAFE_MATH> erfi_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<erfi_node<T, SAFE_MATH>> (x);
     }

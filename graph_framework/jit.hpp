@@ -30,7 +30,7 @@ namespace jit {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<float_scalar T, bool SAFE_MATH=false>
     class context {
     private:
 ///  String stream to build the kernel source.
@@ -45,7 +45,7 @@ namespace jit {
 #ifdef USE_CUDA
                                                            gpu::cuda_context<T, SAFE_MATH>,
 #elif defined(USE_METAL)
-                                                           gpu::metal_context<T, SAFE_MATH>,
+                                                           gpu::metal_context<SAFE_MATH>,
 #else
                                                            gpu::cpu_context<T, SAFE_MATH>,
 #endif

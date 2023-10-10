@@ -9,6 +9,7 @@
 #ifndef register_h
 #define register_h
 
+#include <concepts>
 #include <cassert>
 #include <map>
 #include <sstream>
@@ -19,6 +20,19 @@
 #include <array>
 
 namespace jit {
+///  Complex scalar concept.
+    template<typename T>
+    concept complex_scalar = std::same_as<T, std::complex<float>> ||
+                             std::same_as<T, std::complex<double>>;
+
+///  Float scalar concept.
+    template<typename T>
+    concept float_scalar = std::floating_point<T> || complex_scalar<T>;
+
+///  General scalar concept.
+    template<typename T>
+    concept scalar = float_scalar<T> || std::integral<T>;
+
 ///  Verbose output.
     static bool verbose = false;
 
@@ -30,7 +44,7 @@ namespace jit {
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
-    template<typename BASE, typename T>
+    template<float_scalar BASE, std::floating_point T>
     constexpr bool is_complex() {
         return std::is_same<BASE, std::complex<T>>::value;
     }
@@ -43,7 +57,7 @@ namespace jit {
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
-    template<typename BASE, typename T>
+    template<float_scalar BASE, std::floating_point T>
     constexpr bool is_base() {
         return is_complex<BASE, T> () || std::is_same<BASE, T>::value;
     }
@@ -55,7 +69,7 @@ namespace jit {
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     constexpr bool is_float() {
         return is_base<T, float> ();
     }
@@ -67,7 +81,7 @@ namespace jit {
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     constexpr bool is_double() {
         return is_base<T, double> ();
     }
@@ -79,7 +93,7 @@ namespace jit {
 ///
 ///  @returns A constant expression true or false type.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     constexpr bool is_complex() {
         return is_complex<T, float> () ||
                is_complex<T, double> ();
@@ -92,15 +106,12 @@ namespace jit {
 ///
 ///  @returns A constant string literal of the type.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     std::string type_to_string() {
         if constexpr (is_float<T> ()) {
             return "float";
         } else if constexpr (is_double<T> ()) {
             return "double";
-        } else {
-            static_assert(!is_float<T> () &&
-                          !is_double<T> (), "Unsupported base type.");
         }
     }
 
@@ -120,7 +131,7 @@ namespace jit {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     constexpr bool use_metal() {
 #if USE_METAL
         return is_float<T>() && !is_complex<T> ();
@@ -134,7 +145,7 @@ namespace jit {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     constexpr bool use_gpu() {
         return use_cuda() || use_metal<T> ();
     }
@@ -146,7 +157,7 @@ namespace jit {
 ///
 ///  @params[in, out] stream Generic stream.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     void add_type(std::basic_ostream<char> &stream) {
         if constexpr (is_complex<T> ()) {
             if constexpr (use_cuda()) {
@@ -167,7 +178,7 @@ namespace jit {
 ///
 ///  @returns The maximum number of digits needed.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     constexpr int max_digits10() {
         if constexpr (is_float<T> ()) {
             return std::numeric_limits<float>::max_digits10;
@@ -186,7 +197,7 @@ namespace jit {
 ///  @params[in] value Value to convert.
 ///  @returns String with the value.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<scalar T>
     std::string format_to_string(const T value) {
         std::array<char, 36> buffer;
         char *end;
@@ -239,7 +250,7 @@ namespace jit {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-    template<typename T>
+    template<float_scalar T>
     class float_compare {
     public:
 //------------------------------------------------------------------------------
