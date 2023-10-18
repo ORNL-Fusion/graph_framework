@@ -328,7 +328,7 @@ template<jit::float_scalar T> void run_math_tests() {
 ///
 ///  @params[in] eq Equilibrium for the dispersion function.
 //------------------------------------------------------------------------------
-template<class DISPERSION_FUNCTION>
+template<dispersion::function DISPERSION_FUNCTION>
 void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
                          const typename DISPERSION_FUNCTION::base tolarance) {
 

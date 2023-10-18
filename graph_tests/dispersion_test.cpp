@@ -21,7 +21,7 @@
 ///  @params[in] omega   Ray frequency.
 ///  @params[in] k_guess Inital guess for the wave number.
 //------------------------------------------------------------------------------
-template<typename DISPERSION>
+template<dispersion::function DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,
                 const typename DISPERSION::base omega,
                 const typename DISPERSION::base k_guess,

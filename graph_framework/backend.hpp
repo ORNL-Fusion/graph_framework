@@ -238,7 +238,7 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Take cos.
+///  @brief Take erfi.
 //------------------------------------------------------------------------------
         template<jit::float_scalar D=T>
         typename std::enable_if<jit::is_complex<D> (), void>::type erfi() {

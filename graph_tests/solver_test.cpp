@@ -24,7 +24,7 @@
 ///  @params[in] kx0       Wave number guess.
 ///  @params[in] dt        Timestep for the solver.
 //------------------------------------------------------------------------------
-template<typename SOLVER>
+template<solver::method SOLVER>
 void test_solver(const typename SOLVER::base tolarance,
                  const typename SOLVER::base omega0,
                  const typename SOLVER::base kx0,

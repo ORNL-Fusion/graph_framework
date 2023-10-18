@@ -107,7 +107,7 @@ void test_constant() {
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename SOLVER>
+template<solver::method SOLVER>
 void test_bohm_gross(const typename SOLVER::base tolarance) {
     auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
     auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
@@ -205,7 +205,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename SOLVER>
+template<solver::method SOLVER>
 void test_light_wave(const typename SOLVER::base tolarance) {
     auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
     auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");

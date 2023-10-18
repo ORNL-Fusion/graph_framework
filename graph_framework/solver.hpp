@@ -22,7 +22,7 @@ namespace solver {
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
-    template<class DISPERSION_FUNCTION>
+    template<dispersion::function DISPERSION_FUNCTION>
     class solver_interface {
     protected:
 ///  w variable.
@@ -211,15 +211,15 @@ namespace solver {
             work.add_item(inputs, outputs, setters, "solver_kernel");
             work.compile();
 
-            dataset.create_variable(file, "time", this->t, work.get_context());
+            dataset.create_variable(file, "time",     this->t, work.get_context());
             dataset.create_variable(file, "residule", residule, work.get_context());
-            dataset.create_variable(file, "w",  this->w, work.get_context());
-            dataset.create_variable(file, "x",  this->x, work.get_context());
-            dataset.create_variable(file, "y",  this->y, work.get_context());
-            dataset.create_variable(file, "z",  this->z, work.get_context());
-            dataset.create_variable(file, "kx", this->kx, work.get_context());
-            dataset.create_variable(file, "ky", this->ky, work.get_context());
-            dataset.create_variable(file, "kz", this->kz, work.get_context());
+            dataset.create_variable(file, "w",        this->w, work.get_context());
+            dataset.create_variable(file, "x",        this->x, work.get_context());
+            dataset.create_variable(file, "y",        this->y, work.get_context());
+            dataset.create_variable(file, "z",        this->z, work.get_context());
+            dataset.create_variable(file, "kx",       this->kx, work.get_context());
+            dataset.create_variable(file, "ky",       this->ky, work.get_context());
+            dataset.create_variable(file, "kz",       this->kz, work.get_context());
 
             file.end_define_mode();
         }
@@ -403,10 +403,15 @@ namespace solver {
             kz_next->to_latex();
             std::cout << std::endl;
         }
-
+///  Type def to retrieve the dispersion function.
+        typedef DISPERSION_FUNCTION dispersion_function;
 ///  Type def to retrieve the backend base type.
         typedef typename DISPERSION_FUNCTION::base base;
     };
+
+///  Solver method concept.
+    template<class S>
+    concept method = std::is_base_of<solver_interface<typename S::dispersion_function>, S>::value;
 
 //******************************************************************************
 //  Second Order Runge Kutta.
@@ -416,7 +421,7 @@ namespace solver {
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
-    template<class DISPERSION_FUNCTION>
+    template<dispersion::function DISPERSION_FUNCTION>
     class rk2 : public solver_interface<DISPERSION_FUNCTION> {
     protected:
 ///  kx1 subexpression.
@@ -546,7 +551,7 @@ namespace solver {
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
-    template<class DISPERSION_FUNCTION>
+    template<dispersion::function DISPERSION_FUNCTION>
     class rk4 : public solver_interface<DISPERSION_FUNCTION> {
     protected:
 ///  kx1 subexpression.
@@ -799,7 +804,7 @@ namespace solver {
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
-    template<class DISPERSION_FUNCTION>
+    template<dispersion::function DISPERSION_FUNCTION>
     class adaptive_rk4 : public rk4<DISPERSION_FUNCTION> {
     protected:
 ///  Dispersion residule.
@@ -928,7 +933,7 @@ namespace solver {
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
-    template<class DISPERSION_FUNCTION>
+    template<dispersion::function DISPERSION_FUNCTION>
     class split_simplextic : public solver_interface<DISPERSION_FUNCTION> {
     protected:
 ///  Half step x

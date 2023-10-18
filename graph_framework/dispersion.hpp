@@ -1095,12 +1095,16 @@ namespace dispersion {
 //******************************************************************************
 //  Dispersion interface.
 //******************************************************************************
+///  Dispersion concept.
+    template<class D>
+    concept function = std::is_base_of<dispersion_function<typename D::base, D::safe_math>, D>::value;
+
 //------------------------------------------------------------------------------
 ///  @brief Class interface to build dispersion relation functions.
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
-    template<class DISPERSION_FUNCTION>
+    template<function DISPERSION_FUNCTION>
     class dispersion_interface {
     protected:
 ///  Disperison function.
