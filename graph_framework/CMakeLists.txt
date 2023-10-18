@@ -66,4 +66,5 @@ target_precompile_headers (graph_framework
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/random.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<$<BOOL:${USE_METAL}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/metal_context.hpp>>>
                            $<$<BOOL:${USE_PCH}>:$<$<BOOL:${USE_CUDA}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cuda_context.hpp>>>
+                           $<$<BOOL:${USE_HIP}>:$<$<BOOL:${USE_HIP}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hip_context.hpp>>>
 )

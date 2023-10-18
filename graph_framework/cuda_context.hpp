@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file cuda_context.hpp
-///  @brief Cuda context for metal based gpus.
+///  @brief Cuda context for nvidia based gpus.
 ///
 ///  Defines context for cuda gpu.
 //------------------------------------------------------------------------------
@@ -22,12 +22,12 @@
 
 namespace gpu {
 //------------------------------------------------------------------------------
-///  @brief  Check results of realtime compile.
+///  @brief Check results of realtime compile.
 ///
 ///  @param[in] result Result code of the operation.
 ///  @param[in] name   Name of the operation.
 //------------------------------------------------------------------------------
-    static void check_nvrtc_error(nvrtcResult result,
+    static void check_nvrtc_error(const nvrtcResult result,
                                   const std::string &name) {
 #ifndef NDEBUG
         assert(result == NVRTC_SUCCESS && nvrtcGetErrorString(result));
@@ -35,12 +35,12 @@ namespace gpu {
     }
 
 //------------------------------------------------------------------------------
-///  @brief  Check results of cuda functions.
+///  @brief Check results of cuda functions.
 ///
 ///  @param[in] result Result code of the operation.
 ///  @param[in] name   Name of the operation.
 //------------------------------------------------------------------------------
-    static void check_error(CUresult result,
+    static void check_error(const CUresult result,
                             const std::string &name) {
 #ifndef NDEBUG
         const char *error;
@@ -53,7 +53,7 @@ namespace gpu {
     }
 
 //------------------------------------------------------------------------------
-///   @brief Initialize cuda.
+///  @brief Initialize cuda.
 //------------------------------------------------------------------------------
     static CUresult cuda_init() {
         const CUresult result = cuInit(0);
@@ -207,11 +207,6 @@ namespace gpu {
             for (std::string &name : names) {
                 check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
                                                          name.c_str()),
-                                  "nvrtcAddNameExpression");
-            }
-            if (add_reduction) {
-                check_nvrtc_error(nvrtcAddNameExpression(kernel_program,
-                                                         "max_reduction"),
                                   "nvrtcAddNameExpression");
             }
 
