@@ -28,7 +28,7 @@ namespace solver {
 ///  @params[in]     max_iterations Maximum number of iterations before giving
 ///                                 up.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     void newton(workflow::manager<T, SAFE_MATH> &work,
                 graph::output_nodes<T, SAFE_MATH> vars,
                 graph::input_nodes<T, SAFE_MATH> inputs,

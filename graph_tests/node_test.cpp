@@ -19,7 +19,7 @@
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_constant() {
     auto zero = graph::zero<T> ();
     auto zero_cast = graph::constant_cast(zero);
@@ -70,7 +70,7 @@ void test_constant() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_variable() {
     auto zero = graph::variable<T> (1, "");
     zero->set(static_cast<T> (0.0));
@@ -134,7 +134,7 @@ void test_variable() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_pseudo_variable() {
     auto a = graph::variable<T> (1, "");
     auto b = graph::variable<T> (1, "");
@@ -167,7 +167,7 @@ void test_pseudo_variable() {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void run_tests() {
+template<jit::float_scalar T> void run_tests() {
     test_constant<T> ();
     test_variable<T> ();
     test_pseudo_variable<T> ();

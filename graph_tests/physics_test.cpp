@@ -24,7 +24,7 @@
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_constant() {
     std::mt19937_64 engine(static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     std::uniform_real_distribution<double> real_dist(0.1, 1.0);
@@ -107,7 +107,7 @@ void test_constant() {
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename SOLVER>
+template<solver::method SOLVER>
 void test_bohm_gross(const typename SOLVER::base tolarance) {
     auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
     auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
@@ -205,7 +205,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename SOLVER>
+template<solver::method SOLVER>
 void test_light_wave(const typename SOLVER::base tolarance) {
     auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
     auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
@@ -283,7 +283,7 @@ void test_light_wave(const typename SOLVER::base tolarance) {
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_acoustic_wave(const T tolarance) {
     auto omega = graph::variable<T> (1, "\\omega");
     auto kx = graph::variable<T> (1, "k_{x}");
@@ -355,7 +355,7 @@ void test_acoustic_wave(const T tolarance) {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_o_mode_wave() {
     auto omega = graph::variable<T> (1, "\\omega");
     auto kx = graph::variable<T> (1, "k_{x}");
@@ -411,7 +411,7 @@ void test_o_mode_wave() {
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_cold_plasma_cutoffs(const T tolarance) {
     const T omega0 = 1100.0;
 
@@ -517,7 +517,7 @@ void test_cold_plasma_cutoffs(const T tolarance) {
 ///  @params[in] x0        Starting x guess.
 ///  @params[in] kx0       Starting kx guess.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void test_reflection(const T tolarance,
                      const T n0,
                      const T x0,
@@ -578,7 +578,7 @@ void test_reflection(const T tolarance,
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_efit() {
+template<jit::float_scalar T> void test_efit() {
     auto omega = graph::variable<T> (1, "\\omega");
     auto kx = graph::variable<T> (1, "k_{x}");
     auto ky = graph::variable<T> (1, "k_{y}");
@@ -621,7 +621,7 @@ template<typename T> void test_efit() {
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename T> void run_tests(const T tolarance) {
+template<jit::float_scalar T> void run_tests(const T tolarance) {
     test_constant<T> ();
     test_bohm_gross<solver::rk4<dispersion::bohm_gross<T>>> (tolarance);
     test_bohm_gross<solver::split_simplextic<dispersion::bohm_gross<T>>> (tolarance);

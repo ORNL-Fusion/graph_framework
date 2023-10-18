@@ -31,7 +31,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class generic {
     protected:
 ///  Ion masses for each species.
@@ -152,7 +152,7 @@ namespace equilibrium {
     };
 
 ///  Convenience type alias for shared equilibria.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared = std::shared_ptr<generic<T, SAFE_MATH>>;
 
 //******************************************************************************
@@ -164,7 +164,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class no_magnetic_field : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
@@ -260,7 +260,7 @@ namespace equilibrium {
 ///
 ///  @returns A constructed no magnetic field equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_no_magnetic_field() {
         return std::make_shared<no_magnetic_field<T, SAFE_MATH>> ();
     }
@@ -274,7 +274,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class slab : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
@@ -368,7 +368,7 @@ namespace equilibrium {
 ///
 ///  @returns A constructed slab equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_slab() {
         return std::make_shared<slab<T, SAFE_MATH>> ();
     }
@@ -382,7 +382,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class slab_density : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
@@ -478,7 +478,7 @@ namespace equilibrium {
 ///
 ///  @returns A constructed slab density equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_slab_density() {
         return std::make_shared<slab_density<T, SAFE_MATH>> ();
     }
@@ -492,7 +492,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class slab_field : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
@@ -590,7 +590,7 @@ namespace equilibrium {
 ///
 ///  @returns A constructed slab density equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_slab_field() {
         return std::make_shared<slab_field<T, SAFE_MATH>> ();
     }
@@ -603,7 +603,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class guassian_density : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
@@ -697,7 +697,7 @@ namespace equilibrium {
 ///
 ///  @returns A constructed guassian density equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_guassian_density() {
         return std::make_shared<guassian_density<T, SAFE_MATH>> ();
     }
@@ -714,7 +714,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class efit final : public generic<T, SAFE_MATH> {
     private:
 ///  Minimum psi.
@@ -1152,7 +1152,7 @@ namespace equilibrium {
 ///  @params[in] spline_file File name of contains the spline functions.
 ///  @returns A constructed EFIT equilibrium.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_efit(const std::string spline_file) {
         int ncid;
         sync.lock();

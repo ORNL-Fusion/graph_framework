@@ -21,7 +21,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class sine_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -200,7 +200,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced sin node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> sin(shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<sine_node<T, SAFE_MATH>> (x)->reduce();
 //  Test for hash collisions.
@@ -217,7 +217,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared sine nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_sine = std::shared_ptr<sine_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -229,7 +229,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_sine<T, SAFE_MATH> sin_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<sine_node<T, SAFE_MATH>> (x);
     }
@@ -243,7 +243,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class cosine_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -423,7 +423,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced cos node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> cos(shared_leaf<T, SAFE_MATH> x) {
         auto temp = std::make_shared<cosine_node<T, SAFE_MATH>> (x)->reduce();
 //  Test for hash collisions.
@@ -440,7 +440,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared cosine nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_cosine = std::shared_ptr<cosine_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -452,7 +452,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_cosine<T, SAFE_MATH> cos_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<cosine_node<T, SAFE_MATH>> (x);
     }
@@ -471,7 +471,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced tan node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> tan(shared_leaf<T, SAFE_MATH> x) {
         return sin(x)/cos(x);
     }
@@ -485,7 +485,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class arctan_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -666,7 +666,7 @@ namespace graph {
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> atan(shared_leaf<T, SAFE_MATH> l,
                                    shared_leaf<T, SAFE_MATH> r) {
         auto temp = std::make_shared<arctan_node<T, SAFE_MATH>> (l, r)->reduce();
@@ -684,7 +684,7 @@ namespace graph {
     }
 
 ///  Convenience type alias for shared add nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_atan = std::shared_ptr<arctan_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -696,7 +696,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_atan<T, SAFE_MATH> atan_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<arctan_node<T, SAFE_MATH>> (x);
     }

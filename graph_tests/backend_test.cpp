@@ -17,7 +17,7 @@
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T> void test_backend() {
+template<jit::float_scalar T> void test_backend() {
     backend::buffer<T> size_one(1);
     assert(size_one.size() == 1 && "Expected a size of one.");
     size_one[0] = 10;

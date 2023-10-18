@@ -21,7 +21,7 @@
 ///  @params[in] omega   Ray frequency.
 ///  @params[in] k_guess Inital guess for the wave number.
 //------------------------------------------------------------------------------
-template<typename DISPERSION>
+template<dispersion::function DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,
                 const typename DISPERSION::base omega,
                 const typename DISPERSION::base k_guess,
@@ -69,7 +69,7 @@ void test_solve(const typename DISPERSION::base tolarance,
 ///
 ///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void run_tests(const T tolarance) {
     auto eq_den = equilibrium::make_guassian_density<T> ();
     auto eq_no = equilibrium::make_no_magnetic_field<T> ();

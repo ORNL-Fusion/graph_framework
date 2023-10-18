@@ -21,7 +21,7 @@ namespace absorption {
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
-    template<class DISPERSION_FUNCTION>
+    template<dispersion::function DISPERSION_FUNCTION>
     class root_finder {
     private:
 ///  kamp variable.

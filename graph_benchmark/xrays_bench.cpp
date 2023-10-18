@@ -17,7 +17,7 @@
 ///  @tparam SUB_STEPS Number of substeps.
 ///  @tparam NUM_RAYS  Number of rays.
 //------------------------------------------------------------------------------
-template<typename T, size_t NUM_TIMES, size_t SUB_STEPS, size_t NUM_RAYS>
+template<jit::float_scalar T, size_t NUM_TIMES, size_t SUB_STEPS, size_t NUM_RAYS>
 void bench_runner() {
     if constexpr (std::is_same<T, float>::value) {
         std::cout << "Float --------------------------------------------------------------------------" << std::endl;

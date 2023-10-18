@@ -25,7 +25,11 @@ using complex_type = complex<T>;
 
 using namespace std;
 
+#if __cplusplus >= 202002L
+template<std::floating_point T>
+#else
 template<typename T>
+#endif
 using complex_type = std::complex<T>;
 
 #endif
@@ -33,7 +37,11 @@ using complex_type = std::complex<T>;
 namespace special {
 
 ///  I constant.
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     constexpr complex_type<T> i(static_cast<T> (0),
                                 static_cast<T> (1));
 
@@ -45,7 +53,11 @@ namespace special {
 ///  @params[in] z The complex argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     complex_type<T> erfcx(complex_type<T> z) {
         return w(i<T>*z);
     }
@@ -58,7 +70,12 @@ namespace special {
 ///  @params[in] x Argument.
 ///  @returns x^2
 //------------------------------------------------------------------------------
-    template<typename T> T sq(T x) {
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
+    template<typename T>
+#endif
+    T sq(T x) {
         return x*x;
     }
 
@@ -77,7 +94,11 @@ namespace special {
 ///
 ///  @params[in] x The real argument.
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     T w_im_y100(T x) {
         const T y100 = static_cast<T> (100)/(static_cast<T> (1) + x);
         switch (static_cast<uint8_t> (y100)) {
@@ -509,7 +530,12 @@ namespace special {
 ///  @params[in] x The argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
 //------------------------------------------------------------------------------
-    template<typename T> T w_im(T x) {
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
+    template<typename T>
+#endif
+    T w_im(T x) {
 // Continued-fraction expansion is faster.
         if (abs(x) > static_cast<T> (45)) {
 // 1-term expansion, important to avoid overflow.
@@ -573,7 +599,12 @@ namespace special {
 ///  @params[in] y100 Interval argument.
 ///  @returns erfcx(x) = exp(x^2)\*erfc(x) function, for real x
 //------------------------------------------------------------------------------
-    template<typename T> T erfcx_y100(const T y100) {
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
+    template<typename T>
+#endif
+    T erfcx_y100(const T y100) {
         switch (static_cast<uint8_t> (y100)) {
             case 0: {
                 const T t = static_cast<T> (2)*y100 - static_cast<T> (1);
@@ -990,7 +1021,11 @@ namespace special {
 ///  @params[in] x The argument.
 ///  @returns erfcx(x) = exp(x^2)\*erfc(x)
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     T erfcx(T x) {
         if (x >= static_cast<T> (0)) {
             if (x > static_cast<T> (50)) {
@@ -1013,7 +1048,11 @@ namespace special {
     }
 
 ///  Precomputed table of expa2n2[n-1] = exp(-a2*n*n) for double-precision a2 = 0.26865... in w, below.
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     constexpr T expa2n2[] = {
         7.64405281671221563E-01,
         3.41424527166548425E-01,
@@ -1080,7 +1119,11 @@ namespace special {
 ///  @params[in] x Argument.
 ///  @returns sinh(x)
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     T sinh_taylor(T x) {
         const T x2 = sq<T> (x);
         return x*(static_cast<T> (1) + x2*(static_cast<T> (0.1666666666666666666667) +
@@ -1100,7 +1143,11 @@ namespace special {
 ///  @params[in] sinx Precomputed sine.
 ///  @returns sinc(x) = sin(x)/x
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     T sinc(T x, T sinx) {
         return abs(x) < static_cast<T> (1.0E-4) ? static_cast<T> (1) - static_cast<T> (0.1666666666666666666667)*sq(x) : sinx/x;
     }
@@ -1113,7 +1160,11 @@ namespace special {
 ///  @params[in] z The complex argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     complex_type<T> w(complex_type<T> z) {
         if (real(z) == static_cast<T> (0)) {
 //  Give correct sign of 0 in cimag(w)
@@ -1374,7 +1425,11 @@ namespace special {
 ///  @params[in] mIm_z2 Imaginary argument squared.
 ///  @returns erf(z) where z = x + Iy.
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     complex_type<T> taylor(const complex_type<T> z, const T mRe_z2, const T mIm_z2) {
         const complex_type<T> mz2(mRe_z2, mIm_z2); // -z^2
         return z*(static_cast<T> (1.1283791670955125739) +
@@ -1428,7 +1483,11 @@ namespace special {
 ///  @params[in] z The complex argument.
 ///  @returns erf(z)
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     complex_type<T> erf_complex(const complex_type<T> z) {
         T x = real(z);
         T y = imag(z);
@@ -1509,7 +1568,11 @@ namespace special {
 ///  @params[in] z Complex argument.
 ///  @returns erfi(z)
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     complex_type<T> erfi(const complex_type<T> z) {
 //  Avoids NaN instead of doing i<T>*z and -i*temp;
         const complex_type<T> temp = erf_complex<T> (complex_type<T> (-imag<T> (z), real<T> (z)));

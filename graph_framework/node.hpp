@@ -26,7 +26,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class leaf_node : public std::enable_shared_from_this<leaf_node<T, SAFE_MATH>> {
     protected:
 ///  Hash for node.
@@ -249,17 +249,17 @@ namespace graph {
     };
 
 ///  Convenience type alias for shared leaf nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_leaf = std::shared_ptr<leaf_node<T, SAFE_MATH>>;
 ///  Convenience type alias for a vector of output nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using output_nodes = std::vector<shared_leaf<T, SAFE_MATH>>;
 
 ///  Forward declare for zero.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> zero();
 ///  Forward declare for one.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> one();
 
 //------------------------------------------------------------------------------
@@ -267,7 +267,7 @@ namespace graph {
 ///
 ///  @params[in] node      Node to build the graph of.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     void make_vizgraph(shared_leaf<T, SAFE_MATH> node) {
         std::stringstream stream;
         jit::register_map registers;
@@ -290,7 +290,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class constant_node final : public leaf_node<T, SAFE_MATH> {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -490,7 +490,7 @@ namespace graph {
 ///  @params[in] d Array buffer.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> constant(const backend::buffer<T> &d) {
         auto temp = std::make_shared<constant_node<T, SAFE_MATH>> (d);
 //  Test for hash collisions.
@@ -515,7 +515,7 @@ namespace graph {
 ///  @params[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> constant(const T d) {
         return constant<T, SAFE_MATH> (backend::buffer<T> (1, d));
     }
@@ -529,7 +529,7 @@ namespace graph {
 ///
 ///  @returns A zero constant.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH>
+    template<jit::float_scalar T, bool SAFE_MATH>
     constexpr shared_leaf<T, SAFE_MATH> zero() {
         return constant<T, SAFE_MATH> (static_cast<T> (0.0));
     }
@@ -542,7 +542,7 @@ namespace graph {
 ///
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH>
+    template<jit::float_scalar T, bool SAFE_MATH>
     constexpr shared_leaf<T, SAFE_MATH> one() {
         return constant<T, SAFE_MATH> (static_cast<T> (1.0));
     }
@@ -555,7 +555,7 @@ namespace graph {
 ///
 ///  @returns A negative one constant.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
      constexpr shared_leaf<T, SAFE_MATH> none() {
         return constant<T, SAFE_MATH> (static_cast<T> (-1.0));
     }
@@ -568,7 +568,7 @@ namespace graph {
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> two() {
         return constant<T, SAFE_MATH> (static_cast<T> (2.0));
     }
@@ -581,7 +581,7 @@ namespace graph {
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> pi() {
         return constant<T, SAFE_MATH> (static_cast<T> (M_PI));
     }
@@ -594,7 +594,7 @@ namespace graph {
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> half() {
         return constant<T, SAFE_MATH> (static_cast<T> (0.5));
     }
@@ -607,7 +607,7 @@ namespace graph {
 ///
 ///  @returns A two constant.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> epsilon() {
         return constant(std::numeric_limits<T>::epsilon());
     }
@@ -620,15 +620,13 @@ namespace graph {
 ///
 ///  @returns An imaginary constant.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::complex_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> i() {
-        static_assert(jit::is_complex<T> (),
-                      "Imaginary only valid for complex base types.");
         return constant<T, SAFE_MATH> (T(0.0, 1.0));
     }
 
 ///  Convenience type alias for shared constant nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_constant = std::shared_ptr<constant_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -640,7 +638,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_constant<T, SAFE_MATH> constant_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<constant_node<T, SAFE_MATH>> (x);
     }
@@ -657,7 +655,7 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class straight_node : public leaf_node<T, SAFE_MATH> {
     protected:
 ///  Argument
@@ -766,7 +764,7 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class branch_node : public leaf_node<T, SAFE_MATH> {
     protected:
 //  Left branch of the tree.
@@ -878,7 +876,7 @@ namespace graph {
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class triple_node : public branch_node<T, SAFE_MATH> {
     protected:
 //  Middle branch of the tree.
@@ -961,7 +959,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class variable_node final : public leaf_node<T, SAFE_MATH> {
     private:
 ///  Storage buffer for the data.
@@ -1220,7 +1218,7 @@ namespace graph {
 ///  @params[in] s      Size of the data buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const size_t s,
                                        const std::string &symbol) {
         return (std::make_shared<variable_node<T, SAFE_MATH>> (s, symbol))->reduce();
@@ -1236,7 +1234,7 @@ namespace graph {
 ///  @params[in] d      Scalar data to initalize.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const size_t s, const T d,
                                        const std::string &symbol) {
         return (std::make_shared<variable_node<T, SAFE_MATH>> (s, d, symbol))->reduce();
@@ -1251,7 +1249,7 @@ namespace graph {
 ///  @params[in] d      Array buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const std::vector<T> &d,
                                        const std::string &symbol) {
         return (std::make_shared<variable_node<T, SAFE_MATH>> (d, symbol))->reduce();
@@ -1266,20 +1264,20 @@ namespace graph {
 ///  @params[in] d      Array buffer.
 ///  @params[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const backend::buffer<T> &d,
                                        const std::string &symbol) {
         return std::make_shared<variable_node<T, SAFE_MATH>> (d, symbol)->reduce();
     }
 
 ///  Convenience type alias for shared variable nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_variable = std::shared_ptr<variable_node<T, SAFE_MATH>>;
 ///  Convenience type alias for a vector of inputs.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using input_nodes = std::vector<shared_variable<T, SAFE_MATH>>;
 ///  Convenience type alias for maping end codes back to inputs.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using map_nodes = std::vector<std::pair<graph::shared_leaf<T, SAFE_MATH>,
                                             shared_variable<T, SAFE_MATH>>>;
 
@@ -1292,7 +1290,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_variable<T, SAFE_MATH> variable_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<variable_node<T, SAFE_MATH>> (x);
     }
@@ -1310,7 +1308,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class pseudo_variable_node final : public straight_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
@@ -1458,13 +1456,13 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @returns A reduced pseudo variable node.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> pseudo_variable(shared_leaf<T, SAFE_MATH> x) {
         return std::make_shared<pseudo_variable_node<T, SAFE_MATH>> (x)->reduce();
     }
 
 ///  Convenience type alias for shared pseudo variable nodes.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_pseudo_variable = std::shared_ptr<pseudo_variable_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -1476,7 +1474,7 @@ namespace graph {
 ///  @params[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_pseudo_variable<T, SAFE_MATH> pseudo_variable_cast(shared_leaf<T, SAFE_MATH> &x) {
         return std::dynamic_pointer_cast<pseudo_variable_node<T, SAFE_MATH>> (x);
     }

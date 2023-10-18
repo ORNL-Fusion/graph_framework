@@ -23,7 +23,7 @@
 ///
 ///  @params[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
-template<typename T> void test_erfi(const T tolarance) {
+template<std::floating_point T> void test_erfi(const T tolarance) {
     int ncid;
     nc_open(ERFI_FILE, NC_NOWRITE, &ncid);
 

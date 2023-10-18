@@ -21,7 +21,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     class vector_quantity : public std::enable_shared_from_this<vector_quantity<T, SAFE_MATH>> {
     protected:
 ///  X component of the vector.
@@ -119,7 +119,7 @@ namespace graph {
     };
 
 ///  Convenience type for shared vector quantities.
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_vector = std::shared_ptr<vector_quantity<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ namespace graph {
 ///  @params[in] y Y vector component.
 ///  @params[in] z Z Vector component.
 //------------------------------------------------------------------------------
-    template<typename T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_vector<T, SAFE_MATH> vector(shared_leaf<T, SAFE_MATH> x,
                                        shared_leaf<T, SAFE_MATH> y,
                                        shared_leaf<T, SAFE_MATH> z) {
