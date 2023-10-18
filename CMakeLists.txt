@@ -65,8 +65,13 @@ if (${APPLE})
     endif ()
 else ()
     option (USE_CUDA "Enable the cuda backend" OFF)
+    option (USE_HIP "Enable the hip backend" OFF)
 
     if (${USE_CUDA})
+        if (${USE_HIP})
+            message (FATAL_ERROR "Cannot use hip and cuda at the same time.")
+        endif ()
+
         add_library (cuda_lib INTERFACE)
 
         find_package (CUDAToolkit REQUIRED)
@@ -84,6 +89,15 @@ else ()
                                $<$<BOOL:${CUDAToolkit_FOUND}>:CUDA::cuda_driver>
                                $<$<BOOL:${CUDAToolkit_FOUND}>:CUDA::nvrtc>
         )
+    elseif (${USE_HIP})
+        add_library (hip_lib INTERFACE)
+
+        find_package (hip REQUIRED)
+
+        target_link_libraries (hip_lib
+                               INTERFACE
+                               $<$<BOOL:${HIP_FOUND}>:hip::host>
+        )
     endif ()
 endif ()
 
@@ -92,6 +106,7 @@ target_link_libraries (gpu_lib
                        INTERFACE
                        $<$<BOOL:${USE_METAL}>:metal_lib>
                        $<$<BOOL:${USE_CUDA}>:cuda_lib>
+                       $<$<BOOL:${USE_HIP}>:hip_lib>
 )
 target_compile_definitions (gpu_lib
                             INTERFACE
