@@ -67,7 +67,7 @@ namespace gpu {
 ///  Hip module.
         hipModule_t module;
 ///  Result Buffer.
-	hipDeviceptr_t result_buffer;
+        hipDeviceptr_t result_buffer;
 ///  Argument map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, hipDeviceptr_t> kernel_arguments;
 
@@ -112,7 +112,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         hip_context(const size_t index) :
         device(index), result_buffer(0), module(0) {
-            check_error(hipSetDevice(device), "hipSetDevice");            
+            check_error(hipSetDevice(device), "hipSetDevice");
             check_error(hipStreamCreate(&stream), "hipStreamCreate");
         }
 
