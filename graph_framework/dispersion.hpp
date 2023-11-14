@@ -788,7 +788,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Hot Plasma Disperison function.
 //------------------------------------------------------------------------------
-    template<jit::float_scalar T, class Z, bool SAFE_MATH=false>
+    template<jit::complex_scalar T, class Z, bool SAFE_MATH=false>
     class hot_plasma final : public physics<T, SAFE_MATH> {
     private:
 ///  Z function.
@@ -911,6 +911,7 @@ namespace dispersion {
 ///  @brief Hot Plasma Expansion Disperison function.
 ///
 ///  @tparam T         Base type of the calculation.
+///  @tparam Z         Z function class.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, class Z, bool SAFE_MATH=false>
@@ -923,31 +924,26 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Hot plasma expansion dispersion function.
 ///
-///  D = Dc + Dw                                                             (1)
-///
-///  Where Dc is the cold plasma dispersion function and Dw us the warm plasma
-///  correction.
-///
 ///  Dw = -(⍵ + Ω\_c)/⍵n||ve/c(Γ1 + Γ2 +
-///                            n⟂^2/(2n||)⍵^2/Ω^2\_cve/cζΓ5)(1/Z(ζ) + ζ)     (2)
+///                            n⟂^2/(2n||)⍵^2/Ω^2\_cve/cζΓ5)(1/Z(ζ) + ζ)     (1)
 ///
 ///  Where:
 ///
 ///  Γ1 = (1 - q)n^2n⟂^2 + (1 - P)n^2n||^2 - (1 - q)(1 - P)(n^2 + n||^2)
-///     - (1 - 2q)n⟂^2 + (1 - 2q)(1 - P)                                     (3)
+///     - (1 - 2q)n⟂^2 + (1 - 2q)(1 - P)                                     (2)
 ///
 ///  Γ2 = P⍵/Ωe(n^2n⟂^2 - (1 - 2q)n⟂^2)
-///     + P^2⍵^2/(4Ωe^2)(n⟂^2/n||^2(n^2 + n||^2) - 2(1 - 2q)n⟂^2/n||^2)      (4)
+///     + P^2⍵^2/(4Ωe^2)(n⟂^2/n||^2(n^2 + n||^2) - 2(1 - 2q)n⟂^2/n||^2)      (3)
 ///
-///  Γ5 = P(n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q))                      (5)
+///  Γ5 = P(n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q))                      (4)
 ///
-///  ζ = (⍵ - Ωe)/(k||ve)                                                    (6)
+///  ζ = (⍵ - Ωe)/(k||ve)                                                    (5)
 ///
-///  P = ⍵pe^2/⍵^2                                                           (7)
+///  P = ⍵pe^2/⍵^2                                                           (6)
 ///
-///  q = ⍵pe^2/(2⍵(⍵ + Ωe))                                                  (8)
+///  q = P/(2(1 + Ωe/⍵))                                                     (7)
 ///
-///  ve = Sqrt(2*ne*te/me)                                                   (9)
+///  ve = Sqrt(2*ne*te/me)                                                   (8)
 ///
 ///  @params[in] w  Omega variable.
 ///  @params[in] kx Kx variable.
@@ -969,9 +965,6 @@ namespace dispersion {
           graph::shared_leaf<T, SAFE_MATH> z,
           graph::shared_leaf<T, SAFE_MATH> t,
           equilibrium::shared<T, SAFE_MATH> &eq) {
-//  Cold plasma dispersion.
-            auto Dc = cold_plasma<T, SAFE_MATH>::D(w, kx, ky, kz, x, y, z, t, eq);
-
 //  Constants
             auto one = graph::one<T, SAFE_MATH> ();
             auto none = graph::none<T, SAFE_MATH> ();
@@ -1026,10 +1019,8 @@ namespace dispersion {
                         + p_func*(n2*npara2 - (one - q)*n_func)
                         - q_func*(nperp2 - p_func);
 
-            auto Dw = none*(one - ec/w)*npara*vtnorm*(gamma1 + gamma2 +
-                                                      nperp2/(two*npara)*(w*w/(ec*ec))*vtnorm*zeta*gamma5)*(one/Z_func + zeta);
-
-            return Dc + Dw;
+            return none*(one - ec/w)*npara*vtnorm*(gamma1 + gamma2 +
+                                                   nperp2/(two*npara)*(w*w/(ec*ec))*vtnorm*zeta*gamma5)*(one/Z_func + zeta);
         }
     };
 
