@@ -427,9 +427,34 @@ namespace graph {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = exp("
-                       << registers[a.get()] << ");"
-                       << std::endl;
+                stream << " " << registers[this] << " = ";
+                if constexpr (SAFE_MATH) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << "real(";
+                    }
+                    stream << registers[a.get()];
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                    stream << " < 709.8 ? ";
+                }
+                stream << "exp("  << registers[a.get()] << ")";
+                if constexpr (SAFE_MATH) {
+                    stream << " : ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(";
+                    }
+                    if constexpr (jit::is_float<T> ()) {
+                        stream << std::numeric_limits<float>::max();
+                    } else {
+                        stream << std::numeric_limits<double>::max();
+                    }
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                }
+                stream << ";" << std::endl;
             }
 
             return this->shared_from_this();

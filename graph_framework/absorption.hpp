@@ -297,7 +297,7 @@ namespace absorption {
                                                                        kx_amp, ky_amp, kz_amp, 
                                                                        x, y, z, t, eq);
 
-            auto kamp1 = graph::none<T, SAFE_MATH> ()*this->kamp*Dw/Dc->df(kamp);
+            auto kamp1 = this->kamp - Dw/Dc->df(kamp);
 
             graph::input_nodes<T, SAFE_MATH> inputs = {
                 graph::variable_cast(this->kamp),

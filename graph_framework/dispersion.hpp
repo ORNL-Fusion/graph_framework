@@ -13,6 +13,91 @@
 
 namespace dispersion {
 //******************************************************************************
+//  Z Function interface.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class interface to build dispersion relation functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class z_function {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Method to build the Z function.
+///
+///  @params[in] zeta The zeta argument.
+///  @returns The constructed Z function.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        Z(graph::shared_leaf<T, SAFE_MATH> zeta) = 0;
+
+///  Type def to retrieve the backend base type.
+        typedef T base;
+///  Retrieve template parameter of safe math.
+        static constexpr bool safe_math = SAFE_MATH;
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Class interface to build dispersion relation functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+    template<jit::complex_scalar T, bool SAFE_MATH=false>
+    class z_power_series final : public z_function<T, SAFE_MATH> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Method to build the Z function.
+///
+///  @params[in] zeta The zeta argument.
+///  @returns The constructed Z function.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        Z(graph::shared_leaf<T, SAFE_MATH> zeta) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto two = graph::two<T, SAFE_MATH> ();
+            auto four = two*two;
+            auto eight = four*two;
+            auto zeta2 = zeta*zeta;
+            auto zeta4 = zeta2*zeta2;
+            auto zeta6 = zeta4*zeta2;
+            return graph::i<T, SAFE_MATH> ()*graph::sqrt(graph::pi<T, SAFE_MATH> ())/graph::exp(zeta2) -
+                   two*(one - two/graph::constant<T, SAFE_MATH> (static_cast<T> (3.0))*zeta2
+                            + four/graph::constant<T, SAFE_MATH> (static_cast<T> (15.0))*zeta4
+                            - eight/graph::constant<T, SAFE_MATH> (static_cast<T> (105.0))*zeta6)*zeta;
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Class interface to build dispersion relation functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+    template<jit::complex_scalar T, bool SAFE_MATH=false>
+    class z_erfi final : public z_function<T, SAFE_MATH> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Method to build the Z function.
+///
+///  @params[in] zeta The zeta argument.
+///  @returns The constructed Z function.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        Z(graph::shared_leaf<T, SAFE_MATH> zeta) {
+            auto i = graph::i<T, SAFE_MATH> ();
+            return graph::none<T, SAFE_MATH> ()*graph::sqrt(graph::pi<T, SAFE_MATH> ())/graph::exp(zeta*zeta) *
+                   (graph::erfi(zeta) - i);
+        }
+    };
+
+///  Dispersion concept.
+    template<class Z>
+    concept z_func = std::is_base_of<z_function<typename Z::base, Z::safe_math>, Z>::value;
+
+//******************************************************************************
 //  Common physics expressions.
 //******************************************************************************
 //------------------------------------------------------------------------------
@@ -788,7 +873,7 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Hot Plasma Disperison function.
 //------------------------------------------------------------------------------
-    template<jit::complex_scalar T, class Z, bool SAFE_MATH=false>
+    template<jit::complex_scalar T, z_func Z, bool SAFE_MATH=false>
     class hot_plasma final : public physics<T, SAFE_MATH> {
     private:
 ///  Z function.
@@ -1021,81 +1106,6 @@ namespace dispersion {
 
             return none*(one - ec/w)*npara*vtnorm*(gamma1 + gamma2 +
                                                    nperp2/(two*npara)*(w*w/(ec*ec))*vtnorm*zeta*gamma5)*(one/Z_func + zeta);
-        }
-    };
-
-//******************************************************************************
-//  Z Function interface.
-//******************************************************************************
-//------------------------------------------------------------------------------
-///  @brief Class interface to build dispersion relation functions.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-//------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH=false>
-    class z_function {
-    public:
-//------------------------------------------------------------------------------
-///  @brief Method to build the Z function.
-///
-///  @params[in] zeta The zeta argument.
-///  @returns The constructed Z function.
-//------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T, SAFE_MATH>
-        Z(graph::shared_leaf<T, SAFE_MATH> zeta) = 0;
-    };
-
-//------------------------------------------------------------------------------
-///  @brief Class interface to build dispersion relation functions.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-//------------------------------------------------------------------------------
-    template<jit::complex_scalar T, bool SAFE_MATH=false>
-    class z_power_series final : public z_function<T, SAFE_MATH> {
-    public:
-//------------------------------------------------------------------------------
-///  @brief Method to build the Z function.
-///
-///  @params[in] zeta The zeta argument.
-///  @returns The constructed Z function.
-//------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T, SAFE_MATH>
-        Z(graph::shared_leaf<T, SAFE_MATH> zeta) {
-            auto one = graph::one<T, SAFE_MATH> ();
-            auto two = graph::two<T, SAFE_MATH> ();
-            auto four = two*two;
-            auto eight = four*two;
-            auto zeta2 = zeta*zeta;
-            auto zeta4 = zeta2*zeta2;
-            auto zeta6 = zeta4*zeta2;
-            return graph::i<T, SAFE_MATH> ()*graph::sqrt(graph::pi<T, SAFE_MATH> ())/graph::exp(zeta2) -
-                   two*(one - two/graph::constant<T, SAFE_MATH> (static_cast<T> (3.0))*zeta2
-                            + four/graph::constant<T, SAFE_MATH> (static_cast<T> (15.0))*zeta4
-                            - eight/graph::constant<T, SAFE_MATH> (static_cast<T> (105.0))*zeta6)*zeta;
-        }
-    };
-
-//------------------------------------------------------------------------------
-///  @brief Class interface to build dispersion relation functions.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-//------------------------------------------------------------------------------
-    template<jit::complex_scalar T, bool SAFE_MATH=false>
-    class z_erfi final : public z_function<T, SAFE_MATH> {
-    public:
-//------------------------------------------------------------------------------
-///  @brief Method to build the Z function.
-///
-///  @params[in] zeta The zeta argument.
-///  @returns The constructed Z function.
-//------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T, SAFE_MATH>
-        Z(graph::shared_leaf<T, SAFE_MATH> zeta) {
-            return graph::none<T, SAFE_MATH> ()*graph::sqrt(graph::pi<T, SAFE_MATH> ()) /
-                   graph::exp(zeta*zeta)*(graph::erfi(zeta) - graph::i<T, SAFE_MATH> ());
         }
     };
 
