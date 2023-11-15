@@ -281,6 +281,9 @@ namespace gpu {
 
 //------------------------------------------------------------------------------
 ///  @brief Hold the current thread until the command buffer has completed.
+///
+///  This syncs the host buffers with the kernel arguments so a kernel can run
+///  while another thread reads the results.
 //------------------------------------------------------------------------------
         void wait() {
             for (auto &item : host_buffers) {
