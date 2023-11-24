@@ -138,9 +138,11 @@ void trace_ray(const size_t num_times,
             const size_t local_num_rays = batch
                                         + (extra > thread_number ? 1 : 0);
 
-            const uint64_t seed = static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-            //const uint64_t seed = 0;
-            std::mt19937_64 engine((thread_number + 1)*seed);
+#ifndef STATIC
+            std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+#else
+            std::mt19937_64 engine(thread_number + 1);
+#endif
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 
             auto omega = graph::variable<T, SAFE_MATH> (local_num_rays, "\\omega");
@@ -492,7 +494,11 @@ int main(int argc, const char * argv[]) {
 
     const size_t num_times = 100000;
     const size_t sub_steps = 100;
+#ifndef STATIC
     const size_t num_rays = 100000;
+#else
+    const size_t num_rays = 1;
+#endif
 
     const bool use_safe_math = true;
 
