@@ -267,7 +267,9 @@ namespace dispersion {
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
             auto b_vec = eq->get_magnetic_field(x, y, z);
-            auto k = graph::vector(kx, ky, kz);
+            auto k = kx*eq->get_esup1(x, y, z)
+                   + ky*eq->get_esup2(x, y, z)
+                   + kz*eq->get_esup3(x, y, z);
             graph::shared_leaf<T, SAFE_MATH> kpara2;
             if (b_vec->length()->is_match(graph::zero<T, SAFE_MATH> ())) {
                 kpara2 = k->dot(k);
@@ -333,7 +335,9 @@ namespace dispersion {
             assert(eq->get_magnetic_field(x, y, z)->length()->is_match(graph::zero<T, SAFE_MATH> ()) &&
                    "Expected equilibrium with no magnetic field.");
 
-            auto k = graph::vector(kx, ky, kz);
+            auto k = kx*eq->get_esup1(x, y, z)
+                   + ky*eq->get_esup2(x, y, z)
+                   + kz*eq->get_esup3(x, y, z);
             auto k2 = k->dot(k);
             
             return wpe2 + k2 - w*w;
@@ -388,7 +392,9 @@ namespace dispersion {
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
             auto b_vec = eq->get_magnetic_field(x, y, z);
-            auto k = graph::vector(kx, ky, kz);
+            auto k = kx*eq->get_esup1(x, y, z)
+                   + ky*eq->get_esup2(x, y, z)
+                   + kz*eq->get_esup3(x, y, z);
             graph::shared_leaf<T, SAFE_MATH> kpara2;
             if (b_vec->length()->is_match(graph::zero<T, SAFE_MATH> ())) {
                 kpara2 = k->dot(k);
@@ -504,7 +510,9 @@ namespace dispersion {
                                                 physics<T, SAFE_MATH>::c);
 
 //  Wave numbers.
-            auto k = graph::vector(kx, ky, kz);
+            auto k = kx*eq->get_esup1(x, y, z)
+                   + ky*eq->get_esup2(x, y, z)
+                   + kz*eq->get_esup3(x, y, z);
             auto b_hat = b_vec->unit();
             auto kperp = b_hat->cross(k)->length();
             auto kperp2 = kperp*kperp;
@@ -563,7 +571,9 @@ namespace dispersion {
                                               physics<T, SAFE_MATH>::epsion0);
 
 //  Wave numbers.
-            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto n = (kx/w)*eq->get_esup1(x, y, z)
+                   + (ky/w)*eq->get_esup2(x, y, z)
+                   + (kz/w)*eq->get_esup3(x, y, z);
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_hat = b_vec->unit();
             auto nperp = b_hat->cross(n)->length();
@@ -636,7 +646,9 @@ namespace dispersion {
                                                 physics<T, SAFE_MATH>::c);
             
 //  Wave numbers.
-            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto n = (kx/w)*eq->get_esup1(x, y, z)
+                   + (ky/w)*eq->get_esup2(x, y, z)
+                   + (kz/w)*eq->get_esup3(x, y, z);
             auto b_hat = b_vec->unit();
             auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
@@ -752,7 +764,9 @@ namespace dispersion {
             e33 = one - e33/w2;
 
 //  Wave numbers.
-            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto n = (kx/w)*eq->get_esup1(x, y, z)
+                   + (ky/w)*eq->get_esup2(x, y, z)
+                   + (kz/w)*eq->get_esup3(x, y, z);
             auto b_hat = b_vec->unit();
 
             auto npara = b_hat->dot(n);
@@ -862,7 +876,9 @@ namespace dispersion {
             auto q = wpe2/(two*w*(w + ec));
             auto P = wpe2/(w*w);
 
-            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto n = (kx/w)*eq->get_esup1(x, y, z)
+                   + (ky/w)*eq->get_esup2(x, y, z)
+                   + (kz/w)*eq->get_esup3(x, y, z);
             auto n2 = n->dot(n);
             auto npara = b_hat->dot(n);
             auto npara2 = npara*npara;
@@ -985,7 +1001,9 @@ namespace dispersion {
             auto q = wpe2/(two*w*(w + ec));
             auto P = wpe2/(w*w);
 
-            auto n = graph::vector(kx/w, ky/w, kz/w);
+            auto n = (kx/w)*eq->get_esup1(x, y, z)
+                   + (ky/w)*eq->get_esup2(x, y, z)
+                   + (kz/w)*eq->get_esup3(x, y, z);
             auto n2 = n->dot(n);
             auto npara = b_hat->dot(n);
             auto npara2 = npara*npara;

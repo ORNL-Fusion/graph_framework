@@ -93,7 +93,7 @@ namespace equilibrium {
 ///  @params[in] x X position.
 ///  @params[in] y Y position.
 ///  @params[in] z Z position.
-///  @returns The electron expression.
+///  @returns The electron density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
@@ -104,7 +104,10 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @params[in] index The species index.
-///  @returns The electron expression.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns The ion density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         get_ion_density(const size_t index,
@@ -118,7 +121,7 @@ namespace equilibrium {
 ///  @params[in] x X position.
 ///  @params[in] y Y position.
 ///  @params[in] z Z position.
-///  @returns The electron expression.
+///  @returns The electron temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
@@ -129,7 +132,10 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @params[in] index The species index.
-///  @returns The electron expression.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns The ion temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         get_ion_temperature(const size_t index,
@@ -149,6 +155,57 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
                            graph::shared_leaf<T, SAFE_MATH> y,
                            graph::shared_leaf<T, SAFE_MATH> z) = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the x1 direction.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The contravaraiant basis vector in x1.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup1(graph::shared_leaf<T, SAFE_MATH> x1,
+                  graph::shared_leaf<T, SAFE_MATH> x2,
+                  graph::shared_leaf<T, SAFE_MATH> x3) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(one, zero, zero);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the x2 direction.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The contravaraiant basis vector in x2.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup2(graph::shared_leaf<T, SAFE_MATH> x1,
+                  graph::shared_leaf<T, SAFE_MATH> x2,
+                  graph::shared_leaf<T, SAFE_MATH> x3) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(zero, one, zero);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the x3 direction.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The contravaraiant basis vector in x3.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup3(graph::shared_leaf<T, SAFE_MATH> x1,
+                  graph::shared_leaf<T, SAFE_MATH> x2,
+                  graph::shared_leaf<T, SAFE_MATH> x3) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(zero, zero, one);
+        }
     };
 
 ///  Convenience type alias for shared equilibria.
@@ -1534,10 +1591,10 @@ namespace equilibrium {
                 auto c2_temp = graph::piecewise_1D(rmnc_c2[i], s_norm);
                 auto c3_temp = graph::piecewise_1D(rmnc_c3[i], s_norm);
 
-                auto rmnc = c0_temp +
-                            c1_temp*s_norm +
-                            c2_temp*s_norm*s_norm +
-                            c3_temp*s_norm*s_norm*s_norm;
+                auto rmnc = c0_temp
+                          + c1_temp*s_norm
+                          + c2_temp*s_norm*s_norm
+                          + c3_temp*s_norm*s_norm*s_norm;
 
                 auto m = graph::constant<T, SAFE_MATH> (xm[i]);
                 auto n = graph::constant<T, SAFE_MATH> (xn[i]);
@@ -1569,10 +1626,10 @@ namespace equilibrium {
                 auto c2_temp = graph::piecewise_1D(zmns_c2[i], s_norm);
                 auto c3_temp = graph::piecewise_1D(zmns_c3[i], s_norm);
 
-                auto zmns = c0_temp +
-                            c1_temp*s_norm +
-                            c2_temp*s_norm*s_norm +
-                            c3_temp*s_norm*s_norm*s_norm;
+                auto zmns = c0_temp
+                          + c1_temp*s_norm
+                          + c2_temp*s_norm*s_norm
+                          + c3_temp*s_norm*s_norm*s_norm;
 
                 auto m = graph::constant<T, SAFE_MATH> (xm[i]);
                 auto n = graph::constant<T, SAFE_MATH> (xn[i]);
@@ -1584,17 +1641,92 @@ namespace equilibrium {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Get the lambda.
+///
+///  @params[in] s S position.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns λ(s,u,v)
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_lambda(graph::shared_leaf<T, SAFE_MATH> s,
+                   graph::shared_leaf<T, SAFE_MATH> u,
+                   graph::shared_leaf<T, SAFE_MATH> v) {
+            auto s_norm = (s - sminh)/ds;
+
+            auto l = graph::zero<T, SAFE_MATH> ();
+            for (size_t i = 0, ie = xm.size(); i < ie; i++) {
+                auto c0_temp = graph::piecewise_1D(lmns_c0[i], s_norm);
+                auto c1_temp = graph::piecewise_1D(lmns_c1[i], s_norm);
+                auto c2_temp = graph::piecewise_1D(lmns_c2[i], s_norm);
+                auto c3_temp = graph::piecewise_1D(lmns_c3[i], s_norm);
+
+                auto lmns = c0_temp
+                          + c1_temp*s_norm
+                          + c2_temp*s_norm*s_norm
+                          + c3_temp*s_norm*s_norm*s_norm;
+
+                auto m = graph::constant<T, SAFE_MATH> (xm[i]);
+                auto n = graph::constant<T, SAFE_MATH> (xn[i]);
+
+                l = l + lmns*graph::sin(m*u - n*v);
+            }
+
+            return l;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the poloidal flux.
+///
+///  @params[in] s S position.
+///  @returns χ(s,u,v)
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_chi(graph::shared_leaf<T, SAFE_MATH> s) {
+            auto s_norm = (s - sminf)/ds;
+
+            auto c0_temp = graph::piecewise_1D(chi_c0, s_norm);
+            auto c1_temp = graph::piecewise_1D(chi_c1, s_norm);
+            auto c2_temp = graph::piecewise_1D(chi_c2, s_norm);
+            auto c3_temp = graph::piecewise_1D(chi_c3, s_norm);
+
+            return c0_temp +
+                   c1_temp*s_norm +
+                   c2_temp*s_norm*s_norm +
+                   c3_temp*s_norm*s_norm*s_norm;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the toroidal flux.
+///
+///  @params[in] s S position.
+///  @returns φ(s,u,v)
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_phi(graph::shared_leaf<T, SAFE_MATH> s) {
+            auto s_norm = (s - sminf)/ds;
+
+            auto c0_temp = graph::piecewise_1D(phi_c0, s_norm);
+            auto c1_temp = graph::piecewise_1D(phi_c1, s_norm);
+
+            return c0_temp + c1_temp*s_norm;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the s direction.
 ///
 ///  @params[in] s S posiiton.
-///  @params[in] r R(s) position.
-///  @params[in] z Z(s) position.
+///  @params[in] u U position.
+///  @params[in] v V position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
         graph::shared_vector<T, SAFE_MATH>
         get_esubs(graph::shared_leaf<T, SAFE_MATH> s,
-                  graph::shared_leaf<T, SAFE_MATH> r,
-                  graph::shared_leaf<T, SAFE_MATH> z) {
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            auto r = get_r(s, u, v);
+            auto z = get_z(s, u, v);
+
             return graph::vector(r->df(s),
                                  graph::zero<T, SAFE_MATH> (),
                                  z->df(s));
@@ -1603,15 +1735,18 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the u direction.
 ///
-///  @params[in] u U posiiton.
-///  @params[in] r R(u) position.
-///  @params[in] z Z(u) position.
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
         graph::shared_vector<T, SAFE_MATH>
-        get_esubu(graph::shared_leaf<T, SAFE_MATH> u,
-                  graph::shared_leaf<T, SAFE_MATH> r,
-                  graph::shared_leaf<T, SAFE_MATH> z) {
+        get_esubu(graph::shared_leaf<T, SAFE_MATH> s,
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            auto r = get_r(s, u, v);
+            auto z = get_z(s, u, v);
+
             return graph::vector(r->df(u),
                                  graph::zero<T, SAFE_MATH> (),
                                  z->df(u));
@@ -1620,18 +1755,193 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the v direction.
 ///
-///  @params[in] v V posiiton.
-///  @params[in] r R(V) position.
-///  @params[in] z Z(V) position.
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
         graph::shared_vector<T, SAFE_MATH>
-        get_esubv(graph::shared_leaf<T, SAFE_MATH> v,
-                  graph::shared_leaf<T, SAFE_MATH> r,
-                  graph::shared_leaf<T, SAFE_MATH> z) {
+        get_esubv(graph::shared_leaf<T, SAFE_MATH> s,
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            auto r = get_r(s, u, v);
+            auto z = get_z(s, u, v);
+
             return graph::vector(r->df(v),
                                  r,
                                  z->df(v));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the Jacobian.
+///
+///  J = e_s.e_u✕e_v
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The covariant basis vectors.
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH> 
+        get_jacobian(graph::shared_leaf<T, SAFE_MATH> s,
+                     graph::shared_leaf<T, SAFE_MATH> u,
+                     graph::shared_leaf<T, SAFE_MATH> v) {
+            auto esub_s = get_esubs(s, u, v);
+            auto esub_u = get_esubu(s, u, v);
+            auto esub_v = get_esubv(s, u, v);
+
+            return esub_s->dot(esub_u->cross(esub_v));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the S direction.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The contravaraiant basis vector in s.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup1(graph::shared_leaf<T, SAFE_MATH> s,
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            auto esub_u = get_esubu(s, u, v);
+            auto esub_v = get_esubv(s, u, v);
+
+            return esub_u->cross(esub_v)/get_jacobian(s, u, v);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the U direction.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The contravaraiant basis vector in u.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup2(graph::shared_leaf<T, SAFE_MATH> s,
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            auto esub_s = get_esubs(s, u, v);
+            auto esub_v = get_esubv(s, u, v);
+
+            return esub_v->cross(esub_s)/get_jacobian(s, u, v);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the V direction.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The contravaraiant basis vector in v.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup3(graph::shared_leaf<T, SAFE_MATH> s,
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            auto esub_s = get_esubs(s, u, v);
+            auto esub_u = get_esubu(s, u, v);
+
+            return esub_s->cross(esub_u)/get_jacobian(s, u, v);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the profile function.
+///
+///  @params[in] s S posiiton.
+///  @returns The profile function.
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_profile(graph::shared_leaf<T, SAFE_MATH> s) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto half = graph::half<T, SAFE_MATH> ();
+            auto two = graph::two<T, SAFE_MATH> ();
+            return graph::pow((one - graph::pow(s, half)), two);
+        }
+//------------------------------------------------------------------------------
+///  @brief Get the electron density.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The electron density expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> s,
+                             graph::shared_leaf<T, SAFE_MATH> u,
+                             graph::shared_leaf<T, SAFE_MATH> v) {
+            auto ne_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19));
+            return ne_scale*get_profile(s);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion density.
+///
+///  @params[in] index The species index.
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The ion density expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> s,
+                        graph::shared_leaf<T, SAFE_MATH> u,
+                        graph::shared_leaf<T, SAFE_MATH> v) {
+            return get_electron_density(s, u, v);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron temperature.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The electron temperature expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> s,
+                                 graph::shared_leaf<T, SAFE_MATH> u,
+                                 graph::shared_leaf<T, SAFE_MATH> v) {
+            auto te_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19));
+            return te_scale*get_profile(s);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion temperature.
+///
+///  @params[in] index The species index.
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The ion temperature expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> s,
+                            graph::shared_leaf<T, SAFE_MATH> u,
+                            graph::shared_leaf<T, SAFE_MATH> v) {
+            return get_electron_temperature(s, u, v);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the magnetic field.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns Magnetic field expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> s,
+                           graph::shared_leaf<T, SAFE_MATH> u,
+                           graph::shared_leaf<T, SAFE_MATH> v) {
+            auto phip = get_phi(s)->df(s);
+            auto bsupu = (get_chi(s)->df(s) - phip*get_lambda(s, u, v)->df(v))/get_jacobian(s, u, v);
+            auto bsupv = (phip + phip*get_lambda(s, u, v)->df(v))/get_jacobian(s, u, v);
+            return bsupu*get_esubu(s, u, v) + bsupv*get_esubv(s, u, v);
         }
     };
 

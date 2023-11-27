@@ -138,6 +138,60 @@ namespace graph {
                                        shared_leaf<T, SAFE_MATH> z) {
         return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, y, z);
     }
+
+//------------------------------------------------------------------------------
+///  @brief Addition operator.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left vector.
+///  @params[in] r Right vector.
+///  @returns The vector vector addition.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> operator+(shared_vector<T, SAFE_MATH> l,
+                                          shared_vector<T, SAFE_MATH> r) {
+        return vector(l->get_x() + r->get_x(),
+                      l->get_y() + r->get_y(),
+                      l->get_z() + r->get_z());
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Multiplication operator.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] s Scalar term.
+///  @params[in] v Vector term.
+///  @returns The scalar vector multiply.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> operator*(shared_leaf<T, SAFE_MATH> s,
+                                          shared_vector<T, SAFE_MATH> v) {
+        return vector(s*v->get_x(),
+                      s*v->get_y(),
+                      s*v->get_z());
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Division operator.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] v Vector numerator.
+///  @params[in] s Scalar denominator.
+///  @returns The vector scalar division.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> operator/(shared_vector<T, SAFE_MATH> v,
+                                          shared_leaf<T, SAFE_MATH> s) {
+        return vector(v->get_x()/s,
+                      v->get_y()/s,
+                      v->get_z()/s);
+    }
 }
 
 #endif /* vector_h */
