@@ -114,7 +114,9 @@ namespace absorption {
                     const size_t index=0) :
         kamp(kamp), w(w), kx(kx), ky(ky), kz(kz), x(x), y(y), z(z), t(t),
         file(filename), dataset(file), index(index), work(index), sync([]{}) {
-            auto kvec = graph::vector(kx, ky, kz);
+            auto kvec = kx*eq->get_esup1(x, y, z)
+                      + ky*eq->get_esup2(x, y, z)
+                      + kz*eq->get_esup3(x, y, z);
             auto kunit = kvec->unit();
             auto klen = kvec->length();
 

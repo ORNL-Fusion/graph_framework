@@ -67,7 +67,7 @@ void bench_runner() {
             ky->set(static_cast<T> (0.0));
             kz->set(static_cast<T> (0.0));
 
-            auto eq = equilibrium::make_efit<T> (NC_FILE);
+            auto eq = equilibrium::make_efit<T> (EFIT_FILE);
 
             const T endtime = static_cast<T> (1.0);
             const T dt = endtime/static_cast<T> (NUM_TIMES);

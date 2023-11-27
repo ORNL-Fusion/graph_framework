@@ -1258,7 +1258,8 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
+					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -1274,7 +1275,8 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
+					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					USE_METAL,
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
 					"$(inherited)",
@@ -1329,6 +1331,8 @@
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
 					USE_METAL,
 					"CXX_FLAGS=\\\"-g\\ -fsanitize=undefined\\ -fsanitize=float-divide-by-zero\\ -fsanitize-trap=all\\\"",
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
@@ -1402,6 +1406,8 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
 					USE_METAL,
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
 					"$(inherited)",
@@ -1481,10 +1487,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
-					"$(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "-fsanitize=float-divide-by-zero";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1500,10 +1503,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
-					"$(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = "-lnetcdf";
@@ -1690,7 +1690,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					USE_METAL,
 					"CXX=\\\"c++\\\"",
 					"DEBUG=1",
@@ -1709,7 +1709,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"NC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
+					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					USE_METAL,
 					"CXX=\\\"c++\\\"",
 					"$(inherited)",

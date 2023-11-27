@@ -1727,9 +1727,18 @@ namespace equilibrium {
             auto r = get_r(s, u, v);
             auto z = get_z(s, u, v);
 
-            return graph::vector(r->df(s),
-                                 graph::zero<T, SAFE_MATH> (),
-                                 z->df(s));
+            auto cosv = graph::cos(v);
+            auto sinv = graph::sin(v);
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+
+            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
+                                   graph::vector(sinv, cosv,      zero), 
+                                   graph::vector(zero, zero,      one ));
+            return m->dot(graph::vector(r->df(s),
+                                        graph::zero<T, SAFE_MATH> (),
+                                        z->df(s)));
         }
 
 //------------------------------------------------------------------------------
@@ -1747,9 +1756,18 @@ namespace equilibrium {
             auto r = get_r(s, u, v);
             auto z = get_z(s, u, v);
 
-            return graph::vector(r->df(u),
-                                 graph::zero<T, SAFE_MATH> (),
-                                 z->df(u));
+            auto cosv = graph::cos(v);
+            auto sinv = graph::sin(v);
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+
+            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
+                                   graph::vector(sinv, cosv,      zero),
+                                   graph::vector(zero, zero,      one ));
+            return m->dot(graph::vector(r->df(u),
+                                        graph::zero<T, SAFE_MATH> (),
+                                        z->df(u)));
         }
 
 //------------------------------------------------------------------------------
@@ -1767,9 +1785,18 @@ namespace equilibrium {
             auto r = get_r(s, u, v);
             auto z = get_z(s, u, v);
 
-            return graph::vector(r->df(v),
-                                 r,
-                                 z->df(v));
+            auto cosv = graph::cos(v);
+            auto sinv = graph::sin(v);
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+
+            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
+                                   graph::vector(sinv, cosv,      zero),
+                                   graph::vector(zero, zero,      one ));
+            return m->dot(graph::vector(r->df(v),
+                                        r,
+                                        z->df(v)));
         }
 
 //------------------------------------------------------------------------------
@@ -1856,9 +1883,9 @@ namespace equilibrium {
         graph::shared_leaf<T, SAFE_MATH>
         get_profile(graph::shared_leaf<T, SAFE_MATH> s) {
             auto one = graph::one<T, SAFE_MATH> ();
-            auto half = graph::half<T, SAFE_MATH> ();
+            auto five = graph::constant<T, SAFE_MATH> (static_cast<T> (5.0));
             auto two = graph::two<T, SAFE_MATH> ();
-            return graph::pow((one - graph::pow(s, half)), two);
+            return graph::pow((one - graph::pow(graph::sqrt(s*s), five)), two);
         }
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
@@ -1905,7 +1932,7 @@ namespace equilibrium {
         get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> s,
                                  graph::shared_leaf<T, SAFE_MATH> u,
                                  graph::shared_leaf<T, SAFE_MATH> v) {
-            auto te_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19));
+            auto te_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
             return te_scale*get_profile(s);
         }
 
@@ -1939,9 +1966,9 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> u,
                            graph::shared_leaf<T, SAFE_MATH> v) {
             auto phip = get_phi(s)->df(s);
-            auto bsupu = (get_chi(s)->df(s) - phip*get_lambda(s, u, v)->df(v))/get_jacobian(s, u, v);
-            auto bsupv = (phip + phip*get_lambda(s, u, v)->df(v))/get_jacobian(s, u, v);
-            return bsupu*get_esubu(s, u, v) + bsupv*get_esubv(s, u, v);
+            auto jbsupu = (get_chi(s)->df(s) - phip*get_lambda(s, u, v)->df(v));
+            auto jbsupv = (phip + phip*get_lambda(s, u, v)->df(u));
+            return (jbsupu*get_esubu(s, u, v) + jbsupv*get_esubv(s, u, v))/get_jacobian(s, u, v);
         }
     };
 
@@ -2130,13 +2157,13 @@ namespace equilibrium {
         auto sminh = graph::constant<T, SAFE_MATH> (static_cast<T> (sminh_value));
         auto ds = graph::constant<T, SAFE_MATH> (static_cast<T> (ds_value));
 
-        const backend::buffer<T> chi_c0(chi_c0_buffer.begin(), chi_c0_buffer.end());
-        const backend::buffer<T> chi_c1(chi_c1_buffer.begin(), chi_c1_buffer.end());
-        const backend::buffer<T> chi_c2(chi_c2_buffer.begin(), chi_c2_buffer.end());
-        const backend::buffer<T> chi_c3(chi_c3_buffer.begin(), chi_c3_buffer.end());
+        const backend::buffer<T> chi_c0(std::vector<T> (chi_c0_buffer.begin(), chi_c0_buffer.end()));
+        const backend::buffer<T> chi_c1(std::vector<T> (chi_c1_buffer.begin(), chi_c1_buffer.end()));
+        const backend::buffer<T> chi_c2(std::vector<T> (chi_c2_buffer.begin(), chi_c2_buffer.end()));
+        const backend::buffer<T> chi_c3(std::vector<T> (chi_c3_buffer.begin(), chi_c3_buffer.end()));
 
-        const backend::buffer<T> phi_c0(phi_c0_buffer.begin(), phi_c0_buffer.end());
-        const backend::buffer<T> phi_c1(phi_c1_buffer.begin(), phi_c1_buffer.end());
+        const backend::buffer<T> phi_c0(std::vector<T> (phi_c0_buffer.begin(), phi_c0_buffer.end()));
+        const backend::buffer<T> phi_c1(std::vector<T> (phi_c1_buffer.begin(), phi_c1_buffer.end()));
 
         std::vector<backend::buffer<T>> rmnc_c0(nummn);
         std::vector<backend::buffer<T>> rmnc_c1(nummn);
@@ -2154,24 +2181,24 @@ namespace equilibrium {
         std::vector<backend::buffer<T>> lmns_c3(nummn);
         
         for (size_t i = 0; i < nummn; i++) {
-            rmnc_c0[i] = backend::buffer(std::vector<T> (rmnc_c0_buffer.begin(), rmnc_c0_buffer.end()));
-            rmnc_c1[i] = backend::buffer(std::vector<T> (rmnc_c1_buffer.begin(), rmnc_c1_buffer.end()));
-            rmnc_c2[i] = backend::buffer(std::vector<T> (rmnc_c2_buffer.begin(), rmnc_c2_buffer.end()));
-            rmnc_c3[i] = backend::buffer(std::vector<T> (rmnc_c3_buffer.begin(), rmnc_c3_buffer.end()));
+            rmnc_c0[i] = backend::buffer(std::vector<T> (rmnc_c0_buffer[i].begin(), rmnc_c0_buffer[i].end()));
+            rmnc_c1[i] = backend::buffer(std::vector<T> (rmnc_c1_buffer[i].begin(), rmnc_c1_buffer[i].end()));
+            rmnc_c2[i] = backend::buffer(std::vector<T> (rmnc_c2_buffer[i].begin(), rmnc_c2_buffer[i].end()));
+            rmnc_c3[i] = backend::buffer(std::vector<T> (rmnc_c3_buffer[i].begin(), rmnc_c3_buffer[i].end()));
 
-            zmns_c0[i] = backend::buffer(std::vector<T> (zmns_c0_buffer.begin(), zmns_c0_buffer.end()));
-            zmns_c1[i] = backend::buffer(std::vector<T> (zmns_c1_buffer.begin(), zmns_c1_buffer.end()));
-            zmns_c2[i] = backend::buffer(std::vector<T> (zmns_c2_buffer.begin(), zmns_c2_buffer.end()));
-            zmns_c3[i] = backend::buffer(std::vector<T> (zmns_c3_buffer.begin(), zmns_c3_buffer.end()));
+            zmns_c0[i] = backend::buffer(std::vector<T> (zmns_c0_buffer[i].begin(), zmns_c0_buffer[i].end()));
+            zmns_c1[i] = backend::buffer(std::vector<T> (zmns_c1_buffer[i].begin(), zmns_c1_buffer[i].end()));
+            zmns_c2[i] = backend::buffer(std::vector<T> (zmns_c2_buffer[i].begin(), zmns_c2_buffer[i].end()));
+            zmns_c3[i] = backend::buffer(std::vector<T> (zmns_c3_buffer[i].begin(), zmns_c3_buffer[i].end()));
 
-            lmns_c0[i] = backend::buffer(std::vector<T> (lmns_c0_buffer.begin(), lmns_c0_buffer.end()));
-            lmns_c1[i] = backend::buffer(std::vector<T> (lmns_c1_buffer.begin(), lmns_c1_buffer.end()));
-            lmns_c2[i] = backend::buffer(std::vector<T> (lmns_c2_buffer.begin(), lmns_c2_buffer.end()));
-            lmns_c3[i] = backend::buffer(std::vector<T> (lmns_c3_buffer.begin(), lmns_c3_buffer.end()));
+            lmns_c0[i] = backend::buffer(std::vector<T> (lmns_c0_buffer[i].begin(), lmns_c0_buffer[i].end()));
+            lmns_c1[i] = backend::buffer(std::vector<T> (lmns_c1_buffer[i].begin(), lmns_c1_buffer[i].end()));
+            lmns_c2[i] = backend::buffer(std::vector<T> (lmns_c2_buffer[i].begin(), lmns_c2_buffer[i].end()));
+            lmns_c3[i] = backend::buffer(std::vector<T> (lmns_c3_buffer[i].begin(), lmns_c3_buffer[i].end()));
         }
 
-        const backend::buffer<T> xm(xm_buffer.begin(), xm_buffer.end());
-        const backend::buffer<T> xn(xn_buffer.begin(), xn_buffer.end());
+        const backend::buffer<T> xm(std::vector<T> (xm_buffer.begin(), xm_buffer.end()));
+        const backend::buffer<T> xn(std::vector<T> (xn_buffer.begin(), xn_buffer.end()));
 
         return std::make_shared<vmec<T, SAFE_MATH>> (sminf, sminh, ds,
                                                      chi_c0, chi_c1, chi_c2, chi_c3,
