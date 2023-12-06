@@ -113,8 +113,7 @@ namespace graph {
 ///  @returns v_hat
 //------------------------------------------------------------------------------
         std::shared_ptr<vector_quantity<T, SAFE_MATH>> unit() {
-            auto l = length();
-            return std::make_shared<vector_quantity<T, SAFE_MATH>> (x/l, y/l, z/l);
+            return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, y, z)/length();
         }
     };
 

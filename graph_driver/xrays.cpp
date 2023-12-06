@@ -86,21 +86,23 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
                graph::shared_leaf<T, SAFE_MATH> kz,
                std::mt19937_64 engine,
                const size_t num_rays) {
-    std::normal_distribution<float> norm_dist1(static_cast<B> (500.0),
-                                               static_cast<B> (10.0));
-    std::normal_distribution<float> norm_dist2(static_cast<B> (0.0),
-                                               static_cast<B> (0.05));
-    std::normal_distribution<float> norm_dist3(static_cast<B> (-10.0),
+    std::normal_distribution<float> norm_dist1(static_cast<B> (430.0),
                                                static_cast<B> (1.0));
-    std::normal_distribution<float> norm_dist4(static_cast<B> (0.0),
+    std::normal_distribution<float> norm_dist2(static_cast<B> (M_PI),
+                                               static_cast<B> (0.05));
+    std::normal_distribution<float> norm_dist3(static_cast<B> (0.0),
+                                               static_cast<B> (0.05));
+    std::normal_distribution<float> norm_dist4(static_cast<B> (-20.0),
+                                               static_cast<B> (1.0));
+    std::normal_distribution<float> norm_dist5(static_cast<B> (0.0),
                                                static_cast<B> (1.0));
     
     x->set(static_cast<T> (1.0));
     for (size_t j = 0; j < num_rays; j++) {
         omega->set(j, static_cast<T> (norm_dist1(engine)));
         y->set(j, static_cast<T> (norm_dist2(engine)));
-        z->set(j, static_cast<T> (norm_dist2(engine)));
-        ky->set(j, static_cast<T> (norm_dist3(engine)));
+        z->set(j, static_cast<T> (norm_dist3(engine)));
+        ky->set(j, static_cast<T> (norm_dist4(engine)));
         kz->set(j, static_cast<T> (norm_dist4(engine)));
     }
 }
@@ -175,7 +177,7 @@ void trace_ray(const size_t num_times,
 #if 0
             kx->set(static_cast<T> (-700.0));
 #else
-            kx->set(static_cast<T> (-500.0));
+            kx->set(static_cast<T> (-30.0));
 #endif
             auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
             //auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
@@ -186,7 +188,7 @@ void trace_ray(const size_t num_times,
 #if 0
             const T endtime = static_cast<T> (2.0);
 #else
-            const T endtime = static_cast<T> (0.051);
+            const T endtime = static_cast<T> (0.15);
 #endif
             const T dt = endtime/static_cast<T> (num_times);
 
@@ -204,7 +206,7 @@ void trace_ray(const size_t num_times,
             //solver::rk4<dispersion::cold_plasma<T, SAFE_MATH>>
             //solver::adaptive_rk4<dispersion::ordinary_wave<T, SAFE_MATH>>
             //solver::rk4<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
-            //solver::rk4<dispersion::hot_plasma_expandion<T, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
+            //solver::rk4<dispersion::hot_plasma_expansion<T, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
                 solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
                       stream.str(), local_num_rays, thread_number);
             solve.init(kx);
@@ -317,7 +319,8 @@ void calculate_power(const size_t num_times,
 
             omega->set(static_cast<T> (0.0));
 
-            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+            auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            //auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
             //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
@@ -352,20 +355,15 @@ int main(int argc, const char * argv[]) {
 
     jit::verbose = verbose;
 
-#if 0
     const size_t num_times = 100000;
     const size_t sub_steps = 100;
-#else
-    const size_t num_times = 100000;
-    const size_t sub_steps = 100;
-#endif
     const size_t num_rays = 1;//00000;
 
     const bool use_safe_math = true;
 
     typedef double base;
 
-    trace_ray<base> (num_times, sub_steps, num_rays);
+    //trace_ray<base> (num_times, sub_steps, num_rays);
     calculate_power<std::complex<base>, use_safe_math> (num_times,
                                                         sub_steps,
                                                         num_rays);

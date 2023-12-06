@@ -571,9 +571,9 @@ namespace dispersion {
                                               physics<T, SAFE_MATH>::epsion0);
 
 //  Wave numbers.
-            auto n = (kx/w)*eq->get_esup1(x, y, z)
-                   + (ky/w)*eq->get_esup2(x, y, z)
-                   + (kz/w)*eq->get_esup3(x, y, z);
+            auto n = (kx*eq->get_esup1(x, y, z) +
+                      ky*eq->get_esup2(x, y, z) +
+                      kz*eq->get_esup3(x, y, z))/w;
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_hat = b_vec->unit();
             auto nperp = b_hat->cross(n)->length();
@@ -646,9 +646,9 @@ namespace dispersion {
                                                 physics<T, SAFE_MATH>::c);
             
 //  Wave numbers.
-            auto n = (kx/w)*eq->get_esup1(x, y, z)
-                   + (ky/w)*eq->get_esup2(x, y, z)
-                   + (kz/w)*eq->get_esup3(x, y, z);
+            auto n = (kx*eq->get_esup1(x, y, z) +
+                      ky*eq->get_esup2(x, y, z) +
+                      kz*eq->get_esup3(x, y, z))/w;
             auto b_hat = b_vec->unit();
             auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
@@ -764,9 +764,9 @@ namespace dispersion {
             e33 = one - e33/w2;
 
 //  Wave numbers.
-            auto n = (kx/w)*eq->get_esup1(x, y, z)
-                   + (ky/w)*eq->get_esup2(x, y, z)
-                   + (kz/w)*eq->get_esup3(x, y, z);
+            auto n = (kx*eq->get_esup1(x, y, z) +
+                      ky*eq->get_esup2(x, y, z) +
+                      kz*eq->get_esup3(x, y, z))/w;
             auto b_hat = b_vec->unit();
 
             auto npara = b_hat->dot(n);
@@ -854,13 +854,14 @@ namespace dispersion {
 
 //  Setup plasma parameters.
             auto b_vec = eq->get_magnetic_field(x, y, z);
-            auto b_hat = b_vec->unit();
             auto b_len = b_vec->length();
+            auto b_hat = b_vec/b_len;
             auto ne = eq->get_electron_density(x, y, z);
             auto te = eq->get_electron_temperature(x, y, z);
             
             auto ve = graph::sqrt(two*physics<T, SAFE_MATH>::q*te /
-                                  physics<T, SAFE_MATH>::me);
+                                  physics<T, SAFE_MATH>::me)
+                    / physics<T, SAFE_MATH>::c;
 
 //  Setup characteristic frequencies.
             auto ec = build_cyclotron_fequency(physics<T, SAFE_MATH>::q,
@@ -873,49 +874,54 @@ namespace dispersion {
                                               physics<T, SAFE_MATH>::epsion0);
 
 //  Disperison quantities.
-            auto q = wpe2/(two*w*(w + ec));
             auto P = wpe2/(w*w);
+            auto q = P/(two*(one + ec/w));
 
-            auto n = (kx/w)*eq->get_esup1(x, y, z)
-                   + (ky/w)*eq->get_esup2(x, y, z)
-                   + (kz/w)*eq->get_esup3(x, y, z);
+            auto n = (kx*eq->get_esup1(x, y, z) +
+                      ky*eq->get_esup2(x, y, z) +
+                      kz*eq->get_esup3(x, y, z))/w;
             auto n2 = n->dot(n);
-            auto npara = b_hat->dot(n);
+            auto npara = n->dot(b_hat);
             auto npara2 = npara*npara;
             auto nperp = b_hat->cross(n)->length();
             auto nperp2 = nperp*nperp;
 
-            auto zeta = physics<T, SAFE_MATH>::c/(npara*ve)*(one - ec/w);
+            auto zeta = (one - ec/w)/(npara*ve);
+            b_hat->get_x()->to_latex();
+            std::cout << std::endl;
+            b_hat->get_y()->to_latex();
+            std::cout << std::endl;
+            b_hat->get_z()->to_latex();
+            std::cout << std::endl;
+            exit(0);
             auto Z_func = this->z.Z(zeta);
-            auto F = nperp2/(two*npara)*w*w/(ec*ec)*ve/physics<T, SAFE_MATH>::c*zeta*(one + zeta*Z_func);
-            auto isigma = wpe2/(two*w*w)*Z_func*physics<T, SAFE_MATH>::c/(npara*ve);
+            auto zeta_func = one + zeta*Z_func;
+            auto F = (ve*zeta)/(two*npara)*w*w/(ec*ec);
+            auto isigma = wpe2/(two*w*w)*Z_func/(npara*ve);
 
             auto q_func = one - two*q;
             auto n_func = n2 + npara2;
-            auto n2nperp2 = n2*nperp2;
             auto p_func = one - P;
 
-            auto gamma5 = P*(n2*npara2 - (one - q)*n_func + q_func);
-            auto gamma2 = P*w/ec*(n2nperp2 - q_func*nperp2)
-                        + P*P*w*w/(four*ec*ec)*(n_func - two*q_func)*nperp2/npara2;
-            auto gamma1 = (one - q)*n2nperp2 + p_func*n2*npara2
-                        - (one - q)*p_func*n_func - q_func*nperp2 + q_func*p_func;
-            auto gamma0 = n2nperp2 - p_func*n_func - two*q_func*nperp2 + two*p_func*q_func;
+            auto gamma5 = n2*npara2 - (one - q)*n_func + q_func;
+            auto gamma2 = w/ec*(n2 - q_func)
+                        + P*w*w/(four*ec*ec)*(n_func - two*q_func)/npara2;
+            auto gamma1 = nperp2*((one - q)*n2 - q_func)
+                        + p_func*(n2*npara2 - (one - q)*n_func + q_func);
+            auto gamma0 = nperp2*(n2 - two*q_func) + p_func*(two*q_func - n_func);
 
-            auto zeta_func = one + zeta*Z_func;
-
-            return isigma*gamma0 + gamma1 + gamma2*zeta_func + gamma5*F;
+            return isigma*gamma0 + gamma1 + nperp2*P*zeta_func*(gamma2 + gamma5*F);
         }
     };
 
 //------------------------------------------------------------------------------
-///  @brief Hot Plasma Explansion Disperison function.
+///  @brief Hot Plasma Expansion Disperison function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, class Z, bool SAFE_MATH=false>
-    class hot_plasma_expandion final : public cold_plasma<T, SAFE_MATH> {
+    class hot_plasma_expansion final : public cold_plasma<T, SAFE_MATH> {
     private:
 ///  Z function.
         Z z;
@@ -998,12 +1004,12 @@ namespace dispersion {
                                               physics<T, SAFE_MATH>::epsion0);
     
 //  Disperison quantities.
-            auto q = wpe2/(two*w*(w + ec));
             auto P = wpe2/(w*w);
+            auto q = P/(two*(one + ec/w));
 
-            auto n = (kx/w)*eq->get_esup1(x, y, z)
-                   + (ky/w)*eq->get_esup2(x, y, z)
-                   + (kz/w)*eq->get_esup3(x, y, z);
+            auto n = (kx*eq->get_esup1(x, y, z) +
+                      ky*eq->get_esup2(x, y, z) +
+                      kz*eq->get_esup3(x, y, z))/w;
             auto n2 = n->dot(n);
             auto npara = b_hat->dot(n);
             auto npara2 = npara*npara;
@@ -1021,10 +1027,11 @@ namespace dispersion {
             auto p_func = one - P;
 
             auto gamma5 = P*(n2*npara2 - (one - q)*n_func + q_func);
-            auto gamma2 = P*w/ec*(n2nperp2 - q_func*nperp2)
+            auto gamma2 = P*w/ec*nperp2*(n2 - q_func)
                         + P*P*w*w/(four*ec*ec)*(n_func - two*q_func)*nperp2/npara2;
-            auto gamma1 = (one - q)*n2nperp2 + p_func*n2*npara2
-                        - (one - q)*p_func*n_func - q_func*nperp2 + q_func*p_func;
+            auto gamma1 = (one - q)*n2nperp2 
+                        + p_func*(n2*npara2 - (one - q)*n_func)
+                        - q_func*(nperp2 - p_func);
 
             auto Dw = none*(one - ec/w)*npara*vtnorm*(gamma1 + gamma2 +
                                                       nperp2/(two*npara)*(w*w/(ec*ec))*vtnorm*zeta*gamma5)*(one/Z_func + zeta);
@@ -1103,10 +1110,8 @@ namespace dispersion {
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         Z(graph::shared_leaf<T, SAFE_MATH> zeta) {
-            auto i = graph::i<T, SAFE_MATH> ();
-            return i*graph::exp(graph::none<T, SAFE_MATH> ()*zeta*zeta) *
-                   graph::sqrt(graph::pi<T, SAFE_MATH> ())*(graph::one<T, SAFE_MATH> () +
-                                                            i*graph::erfi(zeta));
+            return graph::none<T, SAFE_MATH> ()*graph::sqrt(graph::pi<T, SAFE_MATH> ()) /
+                   graph::exp(zeta*zeta)*(graph::erfi(zeta) - graph::i<T, SAFE_MATH> ());
         }
     };
 

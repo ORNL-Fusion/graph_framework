@@ -159,10 +159,10 @@ namespace gpu {
 ///  @params[in] num_rays      Number of rays to trace.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        std::function<void(void)>  create_kernel_call(const std::string kernel_name,
-                                                      graph::input_nodes<T, SAFE_MATH> inputs,
-                                                      graph::output_nodes<T, SAFE_MATH> outputs,
-                                                      const size_t num_rays) {
+        std::function<void(void)> create_kernel_call(const std::string kernel_name,
+                                                     graph::input_nodes<T, SAFE_MATH> inputs,
+                                                     graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     const size_t num_rays) {
             void *kernel = dlsym(lib_handle, kernel_name.c_str());
             if (!kernel) {
                 std::cerr << "Failed to load function. " << kernel_name

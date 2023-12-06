@@ -87,7 +87,16 @@ namespace graph {
                        (sqrt(temp->get_left()*temp->get_left() +
                              temp->get_right()*temp->get_right()));
             }
-            
+
+//  Remove negative constants from the arguments.
+            auto am = multiply_cast(this->arg);
+            if (am.get()) {
+                auto lc = constant_cast(am->get_left());
+                if (lc.get() && lc->evaluate().is_negative()) {
+                    return none<T, SAFE_MATH> ()*sin(none<T, SAFE_MATH> ()*this->arg);
+                }
+            }
+
             return this->shared_from_this();
         }
 
@@ -103,9 +112,13 @@ namespace graph {
         df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
                 return one<T, SAFE_MATH> ();
-            } else {
-                return cos(this->arg)*this->arg->df(x);
             }
+            
+            const size_t hash = x->get_hash();
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = cos(this->arg)*this->arg->df(x);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -310,6 +323,15 @@ namespace graph {
                              temp->get_right()*temp->get_right()));
             }
 
+//  Remove negative constants from the arguments.
+            auto am = multiply_cast(this->arg);
+            if (am.get()) {
+                auto lc = constant_cast(am->get_left());
+                if (lc.get() && lc->evaluate().is_negative()) {
+                    return cos(none<T, SAFE_MATH> ()*this->arg);
+                }
+            }
+
             return this->shared_from_this();
         }
 
@@ -325,9 +347,13 @@ namespace graph {
         df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
                 return one<T, SAFE_MATH> ();
-            } else {
-                return none<T, SAFE_MATH> ()*sin(this->arg)*this->arg->df(x);
             }
+
+            const size_t hash = x->get_hash();
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = none<T, SAFE_MATH> ()*sin(this->arg)*this->arg->df(x);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -543,7 +569,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  d tan(x,y)/dx = 1/(1 + (y/x)^2)*d (y/x)/dx
+///  d atan(x,y)/dx = 1/(1 + (y/x)^2)*d (y/x)/dx
 ///
 ///  @params[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
@@ -553,10 +579,14 @@ namespace graph {
             auto one_constant = one<T, SAFE_MATH> ();
             if (this->is_match(x)) {
                 return one_constant;
-            } else {
-                auto z = this->right/this->left;
-                return (one_constant/(one_constant + z*z))*z->df(x);
             }
+
+            const size_t hash = x->get_hash();
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                auto z = this->right/this->left;
+                this->df_cache[hash] = (one_constant/(one_constant + z*z))*z->df(x);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------

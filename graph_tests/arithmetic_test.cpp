@@ -402,7 +402,7 @@ template<jit::float_scalar T> void test_subtract() {
 
 //  v1 - -c*v2 -> v1 + c*v2
     auto negate = var_a - graph::constant(static_cast<T> (-2.0))*var_b;
-    assert(graph::subtract_cast(negate).get() && "Expected subtraction node.");
+    assert(graph::fma_cast(negate).get() && "Expected addition node.");
 
 //  v1 - -1*v2 -> v1 + v2
     neg_one = var_a - graph::none<T> ()*var_b;
@@ -568,6 +568,11 @@ template<jit::float_scalar T> void test_subtract() {
     assert(!var_var_sub->is_constant_like() && "Did not expect a constant.");
     assert(var_var_sub->is_all_variables() && "Expected a variable.");
     assert(!var_var_sub->is_power_like() && "Did not expect a power like.");
+
+//  a/b*c - d/b*e -> (a*b - d*e)/b
+//  a/b*c - d*e/b -> (a*b - d*e)/b
+//  a*c/b - d/b*e -> (a*b - d*e)/b
+//  a*c/b - d*e/b -> (a*b - d*e)/b
 }
 
 //------------------------------------------------------------------------------
@@ -1800,6 +1805,15 @@ template<jit::float_scalar T> void test_fma() {
     assert(piecewise2_cast.get() && "Expected a fma node.");
     assert(graph::piecewise_2D_cast(piecewise2_cast->get_left()) &&
            "Expected a piecewise_2D node.");
+
+//  fma(a/b,c,(d/b)*e) -> fma(a,c,d*e)/b
+//  fma(a/b,c,e*(d/b)) -> fma(a,c,d*e)/b
+//  fma(a,c/b,(d/b)*e) -> fma(a,c,d*e)/b
+//  fma(a,c/b,e*(d/b)) -> fma(a,c,d*e)/b
+//  fma(a/b*c,d,e/b) -> fma(a*c,d,e)/b
+//  fma(a*c/b,d,e/b) -> fma(a*c,d,e)/b
+//  fma(a,c/b*d,e/b) -> fma(a,c*d,e)/b
+//  fma(a,c/b*d,e/b) -> fma(a,c*d,e)/b
 }
 
 //------------------------------------------------------------------------------

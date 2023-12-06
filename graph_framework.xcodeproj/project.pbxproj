@@ -1358,6 +1358,9 @@
 				OTHER_LDFLAGS = (
 					"-fsanitize=float-divide-by-zero",
 					"-lnetcdf",
+					"-ld_classic",
+					"-rpath",
+					/usr/local/lib,
 				);
 				SDKROOT = macosx;
 			};
@@ -1431,6 +1434,9 @@
 				OTHER_LDFLAGS = (
 					"-fsanitize=float-divide-by-zero",
 					"-lnetcdf",
+					"-ld_classic",
+					"-rpath",
+					/usr/local/lib,
 				);
 				SDKROOT = macosx;
 			};

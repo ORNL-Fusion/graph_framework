@@ -33,6 +33,8 @@ namespace graph {
         const size_t hash;
 ///  Graph complexity.
         const size_t complexity;
+///  Cache derivative terms.
+        std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> df_cache;
 
     public:
 //------------------------------------------------------------------------------
