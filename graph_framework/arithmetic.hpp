@@ -1073,12 +1073,8 @@ namespace graph {
             }
 
 //  Move piecewise constants to the left.
-            auto lpw1d = piecewise_1D_cast(this->left);
-            auto rpw1d = piecewise_1D_cast(this->right);
-            auto lpw2d = piecewise_2D_cast(this->left);
-            auto rpw2d = piecewise_2D_cast(this->right);
-            if ((rpw1d.get() || rpw2d.get()) &&
-                (!lpw1d.get() && !lpw2d.get() && !l.get())) {
+            if ((pr1.get() || pr2.get()) &&
+                (!pl1.get() && !pl2.get() && !l.get())) {
                 return this->right*this->left;
             }
 
