@@ -363,7 +363,7 @@ int main(int argc, const char * argv[]) {
 
     typedef double base;
 
-    //trace_ray<base> (num_times, sub_steps, num_rays);
+    trace_ray<base> (num_times, sub_steps, num_rays);
     calculate_power<std::complex<base>, use_safe_math> (num_times,
                                                         sub_steps,
                                                         num_rays);

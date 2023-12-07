@@ -1726,6 +1726,8 @@ namespace equilibrium {
                 esupu_cache = esubv->cross(esubs)/jacobian;
                 esupv_cache = esubs->cross(esubu)/jacobian;
 
+                auto temp = esubs->cross(esubu);
+
                 auto one = graph::one<T, SAFE_MATH> ();
                 auto phip = get_phi(s_norm_f)->df(s);
                 auto jbsupu = (get_chi(s_norm_f)->df(s) - phip*l->df(v));

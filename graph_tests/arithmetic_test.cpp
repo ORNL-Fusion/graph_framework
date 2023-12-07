@@ -570,9 +570,18 @@ template<jit::float_scalar T> void test_subtract() {
     assert(!var_var_sub->is_power_like() && "Did not expect a power like.");
 
 //  a/b*c - d/b*e -> (a*b - d*e)/b
+    auto var_e = graph::variable<T> (1, "");
+    assert(graph::divide_cast((var_a/var_b)*var_c - (var_d/var_b)*var_e).get() &&
+           "Expected a divide node.");
 //  a/b*c - d*e/b -> (a*b - d*e)/b
+    assert(graph::divide_cast((var_a/var_b)*var_c - var_d*(var_e/var_b)).get() &&
+           "Expected a divide node.");
 //  a*c/b - d/b*e -> (a*b - d*e)/b
+    assert(graph::divide_cast(var_a*(var_c/var_b) - (var_d/var_b)*var_e).get() &&
+           "Expected a divide node.");
 //  a*c/b - d*e/b -> (a*b - d*e)/b
+    assert(graph::divide_cast(var_a*(var_c/var_b) - var_d*(var_e/var_b)).get() &&
+           "Expected a divide node.");
 }
 
 //------------------------------------------------------------------------------
@@ -1807,13 +1816,45 @@ template<jit::float_scalar T> void test_fma() {
            "Expected a piecewise_2D node.");
 
 //  fma(a/b,c,(d/b)*e) -> fma(a,c,d*e)/b
+    assert(graph::divide_cast(graph::fma(var_a/var_b, 
+                                         var_c,
+                                         (var_d/var_b)*var_e)).get() &&
+           "Expected a divide node.");
 //  fma(a/b,c,e*(d/b)) -> fma(a,c,d*e)/b
+    assert(graph::divide_cast(graph::fma(var_a/var_b, 
+                                         var_c,
+                                         var_e*(var_d/var_b))).get() &&
+           "Expected a divide node.");
 //  fma(a,c/b,(d/b)*e) -> fma(a,c,d*e)/b
+    assert(graph::divide_cast(graph::fma(var_a, 
+                                         var_c/var_b,
+                                         (var_d/var_b)*var_e)).get() &&
+           "Expected a divide node.");
 //  fma(a,c/b,e*(d/b)) -> fma(a,c,d*e)/b
+    assert(graph::divide_cast(graph::fma(var_a, 
+                                         var_c/var_b,
+                                         var_e*(var_d/var_b))).get() &&
+           "Expected a divide node.");
 //  fma(a/b*c,d,e/b) -> fma(a*c,d,e)/b
+    assert(graph::divide_cast(graph::fma((var_a/var_b)*var_c,
+                                         var_d,
+                                         var_e/var_b)).get() &&
+           "Expected a divide node.");
 //  fma(a*c/b,d,e/b) -> fma(a*c,d,e)/b
+    assert(graph::divide_cast(graph::fma(var_a*(var_c/var_b),
+                                         var_d,
+                                         var_e/var_b)).get() &&
+           "Expected a divide node.");
 //  fma(a,c/b*d,e/b) -> fma(a,c*d,e)/b
-//  fma(a,c/b*d,e/b) -> fma(a,c*d,e)/b
+    assert(graph::divide_cast(graph::fma(var_a,
+                                         (var_c/var_b)*var_d,
+                                         var_e/var_b)).get() &&
+           "Expected a divide node.");
+//  fma(a,c*d/b,e/b) -> fma(a,c*d,e)/b
+    assert(graph::divide_cast(graph::fma(var_a,
+                                         var_c*(var_d/var_b),
+                                         var_e/var_b)).get() &&
+           "Expected a divide node.");
 }
 
 //------------------------------------------------------------------------------

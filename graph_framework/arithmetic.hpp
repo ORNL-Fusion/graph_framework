@@ -651,10 +651,10 @@ namespace graph {
                    return (lmld->get_left()*lm->get_right() - rmrd->get_left()*rm->get_left())/lmld->get_right();
                 } else if (lmrd.get() && rmld.get() &&
                            lmrd->get_right()->is_match(rmld->get_right())) {
-                    return (lmrd->get_left()*lm->get_left() - rmld->get_left()*rm->get_right())/lmld->get_right();
+                    return (lmrd->get_left()*lm->get_left() - rmld->get_left()*rm->get_right())/lmrd->get_right();
                 } else if (lmrd.get() && rmrd.get() &&
                            lmrd->get_right()->is_match(rmrd->get_right())) {
-                    return (lmrd->get_left()*lm->get_left() - rmrd->get_left()*rm->get_left())/lmld->get_right();
+                    return (lmrd->get_left()*lm->get_left() - rmrd->get_left()*rm->get_left())/lmrd->get_right();
                 }
             }
 
@@ -2326,12 +2326,12 @@ namespace graph {
 //  fma(a,c/b,e*(d/b)) -> fma(a,c,d*e)/b
             if (rm.get() && md.get()) {
                 auto rmld = divide_cast(rm->get_left());
-                if (rmld.get() && ld->get_right()->is_match(rmld->get_right())) {
-                    return fma(this->left, md->get_left(), rmld->get_left()*rm->get_right())/ld->get_right();
+                if (rmld.get() && md->get_right()->is_match(rmld->get_right())) {
+                    return fma(this->left, md->get_left(), rmld->get_left()*rm->get_right())/md->get_right();
                 }
                 auto rmrd = divide_cast(rm->get_right());
-                if (rmrd.get() && ld->get_right()->is_match(rmrd->get_right())) {
-                    return fma(this->left, md->get_left(), rmrd->get_left()*rm->get_left())/ld->get_right();
+                if (rmrd.get() && md->get_right()->is_match(rmrd->get_right())) {
+                    return fma(this->left, md->get_left(), rmrd->get_left()*rm->get_left())/md->get_right();
                 }
             }
 
@@ -2348,7 +2348,7 @@ namespace graph {
                 }
             }
 //  fma(a,c/b*d,e/b) -> fma(a,c*d,e)/b
-//  fma(a,c/b*d,e/b) -> fma(a,c*d,e)/b
+//  fma(a,c*d/b,e/b) -> fma(a,c*d,e)/b
             if (rd.get() && mm.get()) {
                 auto mmld = divide_cast(mm->get_left());
                 if (mmld.get() && rd->get_right()->is_match(mmld->get_right())) {
