@@ -580,7 +580,7 @@ namespace dispersion {
             auto nperp2 = nperp*nperp;
 
             auto w2 = w*w;
-                        
+
             return one - wpe2/w2 - nperp2;
         }
     };
@@ -887,13 +887,6 @@ namespace dispersion {
             auto nperp2 = nperp*nperp;
 
             auto zeta = (one - ec/w)/(npara*ve);
-            b_hat->get_x()->to_latex();
-            std::cout << std::endl;
-            b_hat->get_y()->to_latex();
-            std::cout << std::endl;
-            b_hat->get_z()->to_latex();
-            std::cout << std::endl;
-            exit(0);
             auto Z_func = this->z.Z(zeta);
             auto zeta_func = one + zeta*Z_func;
             auto F = (ve*zeta)/(two*npara)*w*w/(ec*ec);

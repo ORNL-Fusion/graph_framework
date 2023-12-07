@@ -1726,14 +1726,26 @@ namespace equilibrium {
                 esupu_cache = esubv->cross(esubs)/jacobian;
                 esupv_cache = esubs->cross(esubu)/jacobian;
 
-                auto temp = esubs->cross(esubu);
-
                 auto one = graph::one<T, SAFE_MATH> ();
                 auto phip = get_phi(s_norm_f)->df(s);
                 auto jbsupu = (get_chi(s_norm_f)->df(s) - phip*l->df(v));
                 auto jbsupv = phip*(one + l->df(u));
                 bvec_cache = (jbsupu*esubu + jbsupv*esubv)/jacobian;
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the profile function.
+///
+///  @params[in] s S posiiton.
+///  @returns The profile function.
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_profile(graph::shared_leaf<T, SAFE_MATH> s) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto alpha = graph::constant<T, SAFE_MATH> (static_cast<T> (1.5));
+            auto beta = graph::two<T, SAFE_MATH> ();
+            return graph::pow((one - graph::pow(graph::sqrt(s*s), alpha)), beta);
         }
 
     public:
@@ -1849,19 +1861,6 @@ namespace equilibrium {
             return esupv_cache;
         }
 
-//------------------------------------------------------------------------------
-///  @brief Get the profile function.
-///
-///  @params[in] s S posiiton.
-///  @returns The profile function.
-//------------------------------------------------------------------------------
-        graph::shared_leaf<T, SAFE_MATH>
-        get_profile(graph::shared_leaf<T, SAFE_MATH> s) {
-            auto one = graph::one<T, SAFE_MATH> ();
-            auto alpha = graph::constant<T, SAFE_MATH> (static_cast<T> (1.5));
-            auto beta = graph::two<T, SAFE_MATH> ();
-            return graph::pow((one - graph::pow(graph::sqrt(s*s), alpha)), beta);
-        }
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///

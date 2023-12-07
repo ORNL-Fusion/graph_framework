@@ -1149,6 +1149,79 @@ template<jit::float_scalar T> void test_multiply() {
            "Expected a multiply node.");
     assert(graph::sin_cast(move_sin4_cast->get_right()) &&
            "Expected a sine node on the right.");
+
+//  a*(b*sin) -> (a*b)*sin
+    auto move_sin5 = (one + variable)*((two + variable)*sine);
+    auto move_sin5_cast = graph::multiply_cast(move_sin5);
+    assert(move_sin5_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::sin_cast(move_sin5_cast->get_right()).get() &&
+           "Expected a sine node on the right.");
+//  (a*sin)*b -> (a*b)*sin
+    auto move_sin6 = ((one + variable)*sine)*(two + variable);
+    auto move_sin6_cast = graph::multiply_cast(move_sin6);
+    assert(move_sin6_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::sin_cast(move_sin6_cast->get_right()).get() &&
+           "Expected a sine node on the right.");
+//  a*(b*cos) -> (a*b)*cos
+    auto move_cos5 = (one + variable)*((two + variable)*cosine);
+    auto move_cos5_cast = graph::multiply_cast(move_cos5);
+    assert(move_cos5_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::cos_cast(move_cos5_cast->get_right()).get() &&
+           "Expected a sine node on the right.");
+//  (a*cos)*b -> (a*b)*cos
+    auto move_cos6 = ((one + variable)*cosine)*(two + variable);
+    auto move_cos6_cast = graph::multiply_cast(move_cos6);
+    assert(move_cos6_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::cos_cast(move_cos6_cast->get_right()).get() &&
+           "Expected a sine node on the right.");
+
+//  (a*sin)*cos -> (a*cos)*sin
+    auto move_sin7 = ((one + variable)*sine)*cosine;
+    auto move_sin7_cast = graph::multiply_cast(move_sin7);
+    assert(move_sin7_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::sin_cast(move_sin7_cast->get_right()).get() &&
+           "Expected a sine node on the right.");
+//  (a*cos)*sin -> (a*cos)*sin
+    auto move_cos7 = ((one + variable)*sine)*cosine;
+    auto move_cos7_cast = graph::multiply_cast(move_cos7);
+    assert(move_cos7_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::sin_cast(move_sin7_cast->get_right()).get() &&
+           "Expected a sine node on the right.");
+//  (a*sin)*v -> (a*sin)*v
+    auto move_sin8 = ((one + variable)*sine)*variable;
+    auto move_sin8_cast = graph::multiply_cast(move_sin8);
+    assert(move_sin8_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::variable_cast(move_sin8_cast->get_right()).get() &&
+           "Expected a variable node on the right.");
+//  (a*cos)*v -> (a*cos)*v
+    auto move_cos8 = ((one + variable)*cosine)*variable;
+    auto move_cos8_cast = graph::multiply_cast(move_cos8);
+    assert(move_cos8_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::variable_cast(move_cos8_cast->get_right()).get() &&
+           "Expected a variable node on the right.");
+
+//  c*(a*sin) -> c*(a*sin)
+    auto move_sin9 = two*((one + variable)*sine);
+    auto move_sin9_cast = graph::multiply_cast(move_sin9);
+    assert(move_sin9_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::constant_cast(move_sin9_cast->get_left()).get() &&
+           "Expected a constant node on the left.");
+//  c*(a*cos) -> c*(a*cos)
+    auto move_cos9 = two*((one + variable)*cosine);
+    auto move_cos9_cast = graph::multiply_cast(move_cos9);
+    assert(move_cos9_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::constant_cast(move_cos9_cast->get_left()).get() &&
+           "Expected a constant node on the left.");
 }
 
 //------------------------------------------------------------------------------

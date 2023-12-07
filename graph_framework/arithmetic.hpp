@@ -1174,6 +1174,24 @@ namespace graph {
                 return rm->get_left()*(this->left*rm->get_right());
             }
 
+// Assume trig on the right.
+//  a*(b*sin) -> (a*b)*sin
+//  a*(b*cos) -> (a*b)*cos
+//  (a*sin)*b -> (a*b)*sin
+//  (a*cos)*b -> (a*b)*cos
+            if (lm.get() && 
+                (sin_cast(lm->get_right()).get() ||
+                 cos_cast(lm->get_right()).get()) &&
+                !sin_cast(this->right).get() &&
+                !this->right->is_power_like()) {
+                return (lm->get_left()*this->right)*lm->get_right();
+            } else if (rm.get() && 
+                       (sin_cast(rm->get_right()).get() ||
+                        cos_cast(rm->get_right()).get()) &&
+                       !this->left->is_constant_like()) {
+                return (this->left*rm->get_left())*rm->get_right();
+            }
+
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
 //  the second pass.
             if (lm.get() && rm.get()) {
