@@ -1855,6 +1855,40 @@ template<jit::float_scalar T> void test_fma() {
                                          var_c*(var_d/var_b),
                                          var_e/var_b)).get() &&
            "Expected a divide node.");
+
+//  fma(a, b/c, ((f/c)*e)*d) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, ((f/c)*e)*d) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, (e*(f/c))*d) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, (e*(f/c))*d) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, d*((f/c)*e)) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, d*((f/c)*e)) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
+    auto var_f = graph::variable<T> (1, "");
+    assert(graph::divide_cast(fma(var_a, var_b/var_c, 
+                                  ((var_f/var_c)*var_e)*var_d)).get() &&
+           "Expected a divide node.");
+    assert(graph::divide_cast(fma(var_a/var_c, var_b,
+                                  ((var_f/var_c)*var_e)*var_d)).get() &&
+           "Expected a divide node.");
+    assert(graph::divide_cast(fma(var_a, var_b/var_c,
+                                  (var_e*(var_f/var_c))*var_d)).get() &&
+           "Expected a divide node.");
+    assert(graph::divide_cast(fma(var_a/var_c, var_b,
+                                  (var_e*(var_f/var_c))*var_d)).get() &&
+           "Expected a divide node.");
+    assert(graph::divide_cast(fma(var_a, var_b/var_c,
+                                  var_d*((var_f/var_c)*var_e))).get() &&
+           "Expected a divide node.");
+    assert(graph::divide_cast(fma(var_a/var_c, var_b,
+                                  var_d*((var_f/var_c)*var_e))).get() &&
+           "Expected a divide node.");
+    assert(graph::divide_cast(fma(var_a, var_b/var_c,
+                                  var_d*(var_e*(var_f/var_c)))).get() &&
+           "Expected a divide node.");
+    assert(graph::divide_cast(fma(var_a/var_c, var_b,
+                                  var_d*(var_e*(var_f/var_c)))).get() &&
+           "Expected a divide node.");
 }
 
 //------------------------------------------------------------------------------

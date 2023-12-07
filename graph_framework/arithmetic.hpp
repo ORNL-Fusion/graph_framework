@@ -2359,6 +2359,35 @@ namespace graph {
                     return fma(this->left, mmrd->get_left()*mm->get_left(), rd->get_left())/rd->get_right();
                 }
             }
+
+//  fma(a, b/c, ((f/c)*e)*d) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, ((f/c)*e)*d) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, (e*(f/c))*d) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, (e*(f/c))*d) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, d*((f/c)*e)) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, d*((f/c)*e)) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
+            if (md.get() && rm.get()) {
+                auto rmlm = multiply_cast(rm->get_left());
+                if (rmlm.get()) {
+                    auto rmlmld = divide_cast(rmlm->get_left());
+                    if (rmlmld.get()) {
+                        return fma(this->left, md->get_left(),
+                                   rmlmld->get_left()*rmlm->get_right()*rm->get_right())/md->get_right();
+                    }
+                }
+            } else if (ld.get() && rm.get()) {
+                auto rmlm = multiply_cast(rm->get_left());
+                if (rmlm.get()) {
+                    auto rmlmld = divide_cast(rmlm->get_left());
+                    if (rmlmld.get()) {
+                        return fma(ld->get_left(), this->middle,
+                                   rmlmld->get_left()*rmlm->get_right()*rm->get_right())/ld->get_right();
+                    }
+                }
+            }
+
             return this->shared_from_this();
         }
 
