@@ -1103,6 +1103,18 @@ namespace graph {
                 return this->right*this->left;
             }
 
+//  Move trig to the right.
+            auto cl = cos_cast(this->left);
+            auto sl = sin_cast(this->left);
+            if ((cl.get() && !this->right->is_power_like() &&
+                 !this->right->is_all_variables() &&
+                 !sin_cast(this->right).get()) ||
+                (sl.get() && !this->right->is_power_like() &&
+                 !this->right->is_all_variables()) ||
+                (sl.get() && cos_cast(this->right).get())) {
+                return this->right*this->left;
+            }
+
 //  Reduce x*x to x^2
             if (this->left->is_match(this->right)) {
                 return pow(this->left, two<T, SAFE_MATH> ());
@@ -2372,18 +2384,54 @@ namespace graph {
                 auto rmlm = multiply_cast(rm->get_left());
                 if (rmlm.get()) {
                     auto rmlmld = divide_cast(rmlm->get_left());
-                    if (rmlmld.get()) {
+                    if (rmlmld.get() && rmlmld->get_right()->is_match(md->get_right())) {
                         return fma(this->left, md->get_left(),
                                    rmlmld->get_left()*rmlm->get_right()*rm->get_right())/md->get_right();
+                    }
+                    auto rmlmrd = divide_cast(rmlm->get_right());
+                    if (rmlmrd.get() && rmlmrd->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rmlmrd->get_left()*rmlm->get_left()*rm->get_right())/md->get_right();
+                    }
+                }
+                auto rmrm = multiply_cast(rm->get_right());
+                if (rmrm.get()) {
+                    auto rmrmld = divide_cast(rmrm->get_left());
+                    if (rmrmld.get() && rmrmld->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rmrmld->get_left()*rmrm->get_right()*rm->get_left())/md->get_right();
+                    }
+                    auto rmrmrd = divide_cast(rmrm->get_right());
+                    if (rmrmrd.get() && rmrmrd->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rmrmrd->get_left()*rmrm->get_left()*rm->get_left())/md->get_right();
                     }
                 }
             } else if (ld.get() && rm.get()) {
                 auto rmlm = multiply_cast(rm->get_left());
                 if (rmlm.get()) {
                     auto rmlmld = divide_cast(rmlm->get_left());
-                    if (rmlmld.get()) {
+                    if (rmlmld.get() && rmlmld->get_right()->is_match(ld->get_right())) {
                         return fma(ld->get_left(), this->middle,
                                    rmlmld->get_left()*rmlm->get_right()*rm->get_right())/ld->get_right();
+                    }
+                    auto rmlmrd = divide_cast(rmlm->get_right());
+                    if (rmlmrd.get() && rmlmrd->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rmlmrd->get_left()*rmlm->get_right()*rm->get_right())/ld->get_right();
+                    }
+                }
+                auto rmrm = multiply_cast(rm->get_right());
+                if (rmrm.get()) {
+                    auto rmrmld = divide_cast(rmrm->get_left());
+                    if (rmrmld.get() && rmrmld->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rmrmld->get_left()*rmrm->get_right()*rm->get_left())/ld->get_right();
+                    }
+                    auto rmrmrd = divide_cast(rmrm->get_right());
+                    if (rmrmrd.get() && rmrmrd->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rmrmrd->get_left()*rmrm->get_left()*rm->get_left())/ld->get_right();
                     }
                 }
             }

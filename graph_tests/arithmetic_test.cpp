@@ -13,6 +13,7 @@
 #include "../graph_framework/math.hpp"
 #include "../graph_framework/arithmetic.hpp"
 #include "../graph_framework/piecewise.hpp"
+#include "../graph_framework/trigonometry.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for addition nodes.
@@ -1103,6 +1104,51 @@ template<jit::float_scalar T> void test_multiply() {
 //  (a*Exp(-v))*Exp(v)
     auto regroup_exp4 = (graph::exp(graph::none<T> ()*variable)*v1)*graph::exp(variable);
     assert(regroup_exp4->is_match(v1) && "Expected the v1 variable node.");
+
+//  cos(v)*a -> a*cos(v)
+    auto cosine = graph::cos(variable);
+    auto sine = graph::sin(variable);
+    auto move_cos1 = cosine*(one + variable);
+    auto move_cos1_cast = graph::multiply_cast(move_cos1);
+    assert(move_cos1_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::cos_cast(move_cos1_cast->get_right()) &&
+           "Expected a cosine node on the right.");
+//  cos(v)*v -> cos(v)*v
+    auto move_cos2 = cosine*variable;
+    auto move_cos2_cast = graph::multiply_cast(move_cos2);
+    assert(move_cos2_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::cos_cast(move_cos2_cast->get_left()) &&
+           "Expected a cosine node on the left.");
+//  sin(v)*a -> a*sin(v)
+    auto move_sin1 = sine*(one + variable);
+    auto move_sin1_cast = graph::multiply_cast(move_sin1);
+    assert(move_sin1_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::sin_cast(move_sin1_cast->get_right()) &&
+           "Expected a sine node on the right.");
+//  sin(v)*v -> sin(v)*v
+    auto move_sin2 = sine*variable;
+    auto move_sin2_cast = graph::multiply_cast(move_sin2);
+    assert(move_sin2_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::sin_cast(move_sin2_cast->get_left()) &&
+           "Expected a sine node on the left.");
+//  sin(v)*cos(v) -> cos(v)*sin(v)
+    auto move_sin3 = sine*cosine;
+    auto move_sin3_cast = graph::multiply_cast(move_sin3);
+    assert(move_sin3_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::sin_cast(move_sin3_cast->get_right()) &&
+           "Expected a sine node on the right.");
+//  cos(v)*sin(v) -> cos(v)*sin(v)
+    auto move_sin4 = cosine*sine;
+    auto move_sin4_cast = graph::multiply_cast(move_sin4);
+    assert(move_sin4_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::sin_cast(move_sin4_cast->get_right()) &&
+           "Expected a sine node on the right.");
 }
 
 //------------------------------------------------------------------------------
@@ -1865,29 +1911,61 @@ template<jit::float_scalar T> void test_fma() {
 //  fma(a, b/c, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
 //  fma(a/c, b, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
     auto var_f = graph::variable<T> (1, "");
-    assert(graph::divide_cast(fma(var_a, var_b/var_c, 
-                                  ((var_f/var_c)*var_e)*var_d)).get() &&
+    auto exp_a = (one + var_a);
+    auto exp_b = (one + var_b);
+    auto exp_c = (one + var_c);
+    auto exp_d = (one + var_d);
+    auto exp_e = (one + var_e);
+    auto exp_f = (one + var_f);
+    assert(graph::divide_cast(fma(exp_a, exp_b/exp_c,
+                                  ((var_f/exp_c)*exp_e)*exp_d)).get() &&
            "Expected a divide node.");
-    assert(graph::divide_cast(fma(var_a/var_c, var_b,
-                                  ((var_f/var_c)*var_e)*var_d)).get() &&
+    assert(graph::divide_cast(fma(exp_a/exp_c, exp_b,
+                                  ((exp_f/exp_c)*exp_e)*exp_d)).get() &&
            "Expected a divide node.");
-    assert(graph::divide_cast(fma(var_a, var_b/var_c,
-                                  (var_e*(var_f/var_c))*var_d)).get() &&
+    assert(graph::divide_cast(fma(exp_a, exp_b/exp_c,
+                                  (exp_e*(exp_f/exp_c))*exp_d)).get() &&
            "Expected a divide node.");
-    assert(graph::divide_cast(fma(var_a/var_c, var_b,
-                                  (var_e*(var_f/var_c))*var_d)).get() &&
+    assert(graph::divide_cast(fma(exp_a/exp_c, exp_b,
+                                  (exp_e*(exp_f/exp_c))*exp_d)).get() &&
            "Expected a divide node.");
-    assert(graph::divide_cast(fma(var_a, var_b/var_c,
-                                  var_d*((var_f/var_c)*var_e))).get() &&
+    assert(graph::divide_cast(fma(exp_a, exp_b/exp_c,
+                                  exp_d*((exp_f/exp_c)*exp_e))).get() &&
            "Expected a divide node.");
-    assert(graph::divide_cast(fma(var_a/var_c, var_b,
-                                  var_d*((var_f/var_c)*var_e))).get() &&
+    assert(graph::divide_cast(fma(exp_a/exp_c, exp_b,
+                                  exp_d*((exp_f/exp_c)*exp_e))).get() &&
            "Expected a divide node.");
-    assert(graph::divide_cast(fma(var_a, var_b/var_c,
-                                  var_d*(var_e*(var_f/var_c)))).get() &&
+    assert(graph::divide_cast(fma(exp_a, exp_b/exp_c,
+                                  exp_d*(exp_e*(exp_f/exp_c)))).get() &&
            "Expected a divide node.");
-    assert(graph::divide_cast(fma(var_a/var_c, var_b,
-                                  var_d*(var_e*(var_f/var_c)))).get() &&
+    assert(graph::divide_cast(fma(exp_a/exp_c, exp_b,
+                                  exp_d*(exp_e*(exp_f/exp_c)))).get() &&
+           "Expected a divide node.");
+    auto var_j = graph::variable<T> (1, "");
+    auto exp_j = (one + var_j);
+    assert(graph::fma_cast(fma(exp_a, exp_b/exp_j,
+                               ((var_f/exp_c)*exp_e)*exp_d)).get() &&
+           "Expected a divide node.");
+    assert(graph::fma_cast(fma(exp_a/exp_j, exp_b,
+                               ((exp_f/exp_c)*exp_e)*exp_d)).get() &&
+           "Expected a divide node.");
+    assert(graph::fma_cast(fma(exp_a, exp_b/exp_j,
+                               (exp_e*(exp_f/exp_c))*exp_d)).get() &&
+           "Expected a divide node.");
+    assert(graph::fma_cast(fma(exp_a/exp_j, exp_b,
+                               (exp_e*(exp_f/exp_c))*exp_d)).get() &&
+           "Expected a divide node.");
+    assert(graph::fma_cast(fma(exp_a, exp_b/exp_j,
+                               exp_d*((exp_f/exp_c)*exp_e))).get() &&
+           "Expected a divide node.");
+    assert(graph::fma_cast(fma(exp_a/exp_j, exp_b,
+                               exp_d*((exp_f/exp_c)*exp_e))).get() &&
+           "Expected a divide node.");
+    assert(graph::fma_cast(fma(exp_a, exp_b/exp_j,
+                               exp_d*(exp_e*(exp_f/exp_c)))).get() &&
+           "Expected a divide node.");
+    assert(graph::fma_cast(fma(exp_a/exp_j, exp_b,
+                               exp_d*(exp_e*(exp_f/exp_c)))).get() &&
            "Expected a divide node.");
 }
 
