@@ -619,19 +619,19 @@ namespace graph {
                 if (lmrm.get()) {
 //  c*(d*b) - a*b -> (c*d - a)*b
                     if (rm->get_right()->is_match(lmrm->get_right())) {
-                        return (lm->get_left()*lmrm->get_left() - lm->get_left())*rm->get_right();
+                        return (lm->get_left()*lmrm->get_left() - rm->get_left())*rm->get_right();
                     }
 //  c*(b*d) - a*b -> (c*d - a)*b
                     if (rm->get_right()->is_match(lmrm->get_left())) {
-                        return (lm->get_left()*lmrm->get_right() - lm->get_left())*rm->get_right();
+                        return (lm->get_left()*lmrm->get_right() - rm->get_left())*rm->get_right();
                     }
 //  c*(d*b) - b*a -> (c*d - a)*b
                     if (rm->get_left()->is_match(lmrm->get_right())) {
-                        return (lm->get_left()*lmrm->get_left() - lm->get_right())*rm->get_left();
+                        return (lm->get_left()*lmrm->get_left() - rm->get_right())*rm->get_left();
                     }
 //  c*(b*d) - b*a -> (c*d - a)*b
                     if (rm->get_left()->is_match(lmrm->get_left())) {
-                        return (lm->get_left()*lmrm->get_right() - lm->get_right())*rm->get_left();
+                        return (lm->get_left()*lmrm->get_right() - rm->get_right())*rm->get_left();
                     }
                 }
 

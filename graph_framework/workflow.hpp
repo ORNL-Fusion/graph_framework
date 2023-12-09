@@ -253,7 +253,7 @@ namespace workflow {
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_host(graph::shared_leaf<T, SAFE_MATH> &node,
-                         T *destination) {
+                          T *destination) {
             context.copy_to_host(node, destination);
         }
 

@@ -1470,10 +1470,7 @@ namespace equilibrium {
         const backend::buffer<T> chi_c3;
 
 //  Toroidal flux coefficients.
-///  Toroidal flux c0.
-        const backend::buffer<T> phi_c0;
-///  Toroidal flux c1.
-        const backend::buffer<T> phi_c1;
+        graph::shared_leaf<T, SAFE_MATH> dphi;
 
 //  Radial coefficients.
 ///  rmnc c0.
@@ -1639,15 +1636,12 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the toroidal flux.
 ///
-///  @params[in] s_norm Normalized S position.
+///  @params[in] s S position.
 ///  @returns φ(s,u,v)
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
-        get_phi(graph::shared_leaf<T, SAFE_MATH> s_norm) {
-            auto c0_temp = graph::piecewise_1D(phi_c0, s_norm);
-            auto c1_temp = graph::piecewise_1D(phi_c1, s_norm);
-
-            return c0_temp + c1_temp*s_norm;
+        get_phi(graph::shared_leaf<T, SAFE_MATH> s) {
+            return dphi*s;
         }
 
 //------------------------------------------------------------------------------
@@ -1670,7 +1664,7 @@ namespace equilibrium {
                 v_cache = v;
                 
                 auto s_norm_f = (s - sminf)/ds;
-                auto s_norm_h = (s - sminf)/ds;
+                auto s_norm_h = (s - sminh)/ds;
 
                 auto zero = graph::zero<T, SAFE_MATH> ();
                 auto r = zero;
@@ -1727,7 +1721,7 @@ namespace equilibrium {
                 esupv_cache = esubs->cross(esubu)/jacobian;
 
                 auto one = graph::one<T, SAFE_MATH> ();
-                auto phip = get_phi(s_norm_f)->df(s);
+                auto phip = get_phi(s)->df(s);
                 auto jbsupu = (get_chi(s_norm_f)->df(s) - phip*l->df(v));
                 auto jbsupv = phip*(one + l->df(u));
                 bvec_cache = (jbsupu*esubu + jbsupv*esubv)/jacobian;
@@ -1755,12 +1749,11 @@ namespace equilibrium {
 ///  @params[in] sminh   Minimum s on the half grid.
 ///  @params[in] sminf   Minimum s on the full grid.
 ///  @params[in] ds      Change in s grid.
+///  @params[in] dphi    Change in torodial flux.
 ///  @params[in] chi_c0  Poloidal flux c0.
 ///  @params[in] chi_c1  Poloidal flux c1.
 ///  @params[in] chi_c2  Poloidal flux c2.
 ///  @params[in] chi_c3  Poloidal flux c3.
-///  @params[in] phi_c0  Toroidal flux c0.
-///  @params[in] phi_c1  Toroidal flux c1.
 ///  @params[in] rmnc_c0 rmnc c0.
 ///  @params[in] rmnc_c1 rmnc c1.
 ///  @params[in] rmnc_c2 rmnc c2.
@@ -1779,12 +1772,11 @@ namespace equilibrium {
         vmec(graph::shared_leaf<T, SAFE_MATH> sminh,
              graph::shared_leaf<T, SAFE_MATH> sminf,
              graph::shared_leaf<T, SAFE_MATH> ds,
+             graph::shared_leaf<T, SAFE_MATH> dphi,
              const backend::buffer<T> chi_c0,
              const backend::buffer<T> chi_c1,
              const backend::buffer<T> chi_c2,
              const backend::buffer<T> chi_c3,
-             const backend::buffer<T> phi_c0,
-             const backend::buffer<T> phi_c1,
              const std::vector<backend::buffer<T>> rmnc_c0,
              const std::vector<backend::buffer<T>> rmnc_c1,
              const std::vector<backend::buffer<T>> rmnc_c2,
@@ -1800,9 +1792,8 @@ namespace equilibrium {
              const backend::buffer<T> xm,
              const backend::buffer<T> xn) :
         generic<T, SAFE_MATH> ({3.34449469E-27} ,{1}),
-        sminh(sminh), sminf(sminf), ds(ds),
+        sminh(sminh), sminf(sminf), ds(ds), dphi(dphi),
         chi_c0(chi_c0), chi_c1(chi_c1), chi_c2(chi_c2), chi_c3(chi_c3),
-        phi_c0(phi_c0), phi_c1(chi_c1),
         rmnc_c0(rmnc_c0), rmnc_c1(rmnc_c1), rmnc_c2(rmnc_c2), rmnc_c3(rmnc_c3),
         zmns_c0(zmns_c0), zmns_c1(zmns_c1), zmns_c2(zmns_c2), zmns_c3(zmns_c3),
         lmns_c0(lmns_c0), lmns_c1(lmns_c1), lmns_c2(lmns_c2), lmns_c3(lmns_c3),
@@ -1974,6 +1965,10 @@ namespace equilibrium {
         nc_inq_varid(ncid, "ds", &varid);
         nc_get_var(ncid, varid, &ds_value);
 
+        double dphi_value;
+        nc_inq_varid(ncid, "dphi", &varid);
+        nc_get_var(ncid, varid, &dphi_value);
+
 //  Load 1D quantities.
         int dimid;
 
@@ -1994,14 +1989,6 @@ namespace equilibrium {
         nc_get_var(ncid, varid, chi_c2_buffer.data());
         nc_inq_varid(ncid, "chi_c3", &varid);
         nc_get_var(ncid, varid, chi_c3_buffer.data());
-
-        std::vector<double> phi_c0_buffer(numsf);
-        std::vector<double> phi_c1_buffer(numsf);
-
-        nc_inq_varid(ncid, "phi_c0", &varid);
-        nc_get_var(ncid, varid, phi_c0_buffer.data());
-        nc_inq_varid(ncid, "phi_c1", &varid);
-        nc_get_var(ncid, varid, phi_c1_buffer.data());
 
 //  Load 2D quantities.
         size_t numsh;
@@ -2080,10 +2067,10 @@ namespace equilibrium {
                         zmns_c3_buffer[i].data());
         }
 
-        std::vector<std::vector<double>> lmns_c0_buffer(nummn, std::vector<double> (numsf));
-        std::vector<std::vector<double>> lmns_c1_buffer(nummn, std::vector<double> (numsf));
-        std::vector<std::vector<double>> lmns_c2_buffer(nummn, std::vector<double> (numsf));
-        std::vector<std::vector<double>> lmns_c3_buffer(nummn, std::vector<double> (numsf));
+        std::vector<std::vector<double>> lmns_c0_buffer(nummn, std::vector<double> (numsh));
+        std::vector<std::vector<double>> lmns_c1_buffer(nummn, std::vector<double> (numsh));
+        std::vector<std::vector<double>> lmns_c2_buffer(nummn, std::vector<double> (numsh));
+        std::vector<std::vector<double>> lmns_c3_buffer(nummn, std::vector<double> (numsh));
 
         nc_inq_varid(ncid, "lmns_c0", &varid);
         for (size_t i = 0; i < nummn; i++) {
@@ -2128,14 +2115,12 @@ namespace equilibrium {
         auto sminf = graph::constant<T, SAFE_MATH> (static_cast<T> (sminf_value));
         auto sminh = graph::constant<T, SAFE_MATH> (static_cast<T> (sminh_value));
         auto ds = graph::constant<T, SAFE_MATH> (static_cast<T> (ds_value));
+        auto dphi = graph::constant<T, SAFE_MATH> (static_cast<T> (dphi_value));
 
         const backend::buffer<T> chi_c0(std::vector<T> (chi_c0_buffer.begin(), chi_c0_buffer.end()));
         const backend::buffer<T> chi_c1(std::vector<T> (chi_c1_buffer.begin(), chi_c1_buffer.end()));
         const backend::buffer<T> chi_c2(std::vector<T> (chi_c2_buffer.begin(), chi_c2_buffer.end()));
         const backend::buffer<T> chi_c3(std::vector<T> (chi_c3_buffer.begin(), chi_c3_buffer.end()));
-
-        const backend::buffer<T> phi_c0(std::vector<T> (phi_c0_buffer.begin(), phi_c0_buffer.end()));
-        const backend::buffer<T> phi_c1(std::vector<T> (phi_c1_buffer.begin(), phi_c1_buffer.end()));
 
         std::vector<backend::buffer<T>> rmnc_c0(nummn);
         std::vector<backend::buffer<T>> rmnc_c1(nummn);
@@ -2172,9 +2157,8 @@ namespace equilibrium {
         const backend::buffer<T> xm(std::vector<T> (xm_buffer.begin(), xm_buffer.end()));
         const backend::buffer<T> xn(std::vector<T> (xn_buffer.begin(), xn_buffer.end()));
 
-        return std::make_shared<vmec<T, SAFE_MATH>> (sminh, sminf, ds,
+        return std::make_shared<vmec<T, SAFE_MATH>> (sminh, sminf, ds, dphi,
                                                      chi_c0, chi_c1, chi_c2, chi_c3,
-                                                     phi_c0, phi_c1,
                                                      rmnc_c0, rmnc_c1, rmnc_c2, rmnc_c3,
                                                      zmns_c0, zmns_c1, zmns_c2, zmns_c3,
                                                      lmns_c0, lmns_c1, lmns_c2, lmns_c3,
