@@ -265,7 +265,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = this->left->df(x) + this->right->df(x);
             }
@@ -786,7 +786,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = this->left->df(x) - this->right->df(x);
             }
@@ -1377,7 +1377,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = this->left->df(x)*this->right 
                                      + this->left*this->right->df(x);
@@ -1836,7 +1836,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = this->left->df(x)/this->right 
                                      - this->left*this->right->df(x)/(this->right*this->right);
@@ -2467,7 +2467,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 auto temp_right = fma(this->left,
                                       this->middle->df(x),

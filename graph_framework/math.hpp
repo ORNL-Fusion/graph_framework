@@ -147,7 +147,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = this->arg->df(x)
                                      / (two<T, SAFE_MATH> ()*this->shared_from_this());
@@ -403,7 +403,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = this->shared_from_this()*this->arg->df(x);
             }
@@ -630,7 +630,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = this->arg->df(x)/this->arg;
             }
@@ -922,7 +922,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = pow(this->left, this->right - one<T, SAFE_MATH> ()) 
                                      * (this->right*this->left->df(x) +
@@ -1211,7 +1211,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = two<T, SAFE_MATH> ()/sqrt(pi<T, SAFE_MATH> ())
                                      * exp(this->arg*this->arg)*this->arg->df(x);

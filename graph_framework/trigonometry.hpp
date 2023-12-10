@@ -114,7 +114,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
             
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = cos(this->arg)*this->arg->df(x);
             }
@@ -349,7 +349,7 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = none<T, SAFE_MATH> ()*sin(this->arg)*this->arg->df(x);
             }
@@ -581,7 +581,7 @@ namespace graph {
                 return one_constant;
             }
 
-            const size_t hash = x->get_hash();
+            const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 auto z = this->right/this->left;
                 this->df_cache[hash] = (one_constant/(one_constant + z*z))*z->df(x);
