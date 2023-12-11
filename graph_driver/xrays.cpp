@@ -42,15 +42,15 @@ void init_efit(graph::shared_leaf<T, SAFE_MATH> omega,
                graph::shared_leaf<T, SAFE_MATH> kz,
                std::mt19937_64 engine,
                const size_t num_rays) {
-    std::normal_distribution<float> norm_dist1(static_cast<B> (700.0),
-                                               static_cast<B> (10.0));
-    std::normal_distribution<float> norm_dist2(static_cast<B> (0.0),
-                                               static_cast<B> (0.05));
-    std::normal_distribution<float> norm_dist3(static_cast<B> (-100.0),
-                                               static_cast<B> (10.0));
-    std::normal_distribution<float> norm_dist4(static_cast<B> (0.0),
-                                               static_cast<B> (10.0));
-    
+    std::normal_distribution<B> norm_dist1(static_cast<B> (700.0),
+                                           static_cast<B> (10.0));
+    std::normal_distribution<B> norm_dist2(static_cast<B> (0.0),
+                                           static_cast<B> (0.05));
+    std::normal_distribution<B> norm_dist3(static_cast<B> (-100.0),
+                                           static_cast<B> (10.0));
+    std::normal_distribution<B> norm_dist4(static_cast<B> (0.0),
+                                           static_cast<B> (10.0));
+
     for (size_t j = 0; j < num_rays; j++) {
         omega->set(j, static_cast<T> (norm_dist1(engine)));
         x->set(j, static_cast<T> (2.5*cos(norm_dist2(engine)/2.5)));
@@ -86,17 +86,17 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
                graph::shared_leaf<T, SAFE_MATH> kz,
                std::mt19937_64 engine,
                const size_t num_rays) {
-    std::normal_distribution<float> norm_dist1(static_cast<B> (430.0),
-                                               static_cast<B> (1.0));
-    std::normal_distribution<float> norm_dist2(static_cast<B> (M_PI),
-                                               static_cast<B> (0.05));
-    std::normal_distribution<float> norm_dist3(static_cast<B> (0.0),
-                                               static_cast<B> (0.05));
-    std::normal_distribution<float> norm_dist4(static_cast<B> (-20.0),
-                                               static_cast<B> (1.0));
-    std::normal_distribution<float> norm_dist5(static_cast<B> (0.0),
-                                               static_cast<B> (1.0));
-    
+    std::normal_distribution<B> norm_dist1(static_cast<B> (430.0),
+                                           static_cast<B> (1.0));
+    std::normal_distribution<B> norm_dist2(static_cast<B> (M_PI),
+                                           static_cast<B> (0.05));
+    std::normal_distribution<B> norm_dist3(static_cast<B> (0.0),
+                                           static_cast<B> (0.05));
+    std::normal_distribution<B> norm_dist4(static_cast<B> (-20.0),
+                                           static_cast<B> (1.0));
+    std::normal_distribution<B> norm_dist5(static_cast<B> (0.0),
+                                           static_cast<B> (1.0));
+
     x->set(static_cast<T> (1.0));
     for (size_t j = 0; j < num_rays; j++) {
         omega->set(j, static_cast<T> (norm_dist1(engine)));

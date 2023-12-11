@@ -1458,6 +1458,8 @@ namespace equilibrium {
         graph::shared_leaf<T, SAFE_MATH> sminf;
 ///  Change in s grid.
         graph::shared_leaf<T, SAFE_MATH> ds;
+///  Sign of the jacobian.
+        graph::shared_leaf<T, SAFE_MATH> signj;
 
 //  Poloidal flux coefficients.
 ///  Poloidal flux c0.
@@ -1611,7 +1613,7 @@ namespace equilibrium {
         get_jacobian(graph::shared_vector<T, SAFE_MATH> esub_s,
                      graph::shared_vector<T, SAFE_MATH> esub_u,
                      graph::shared_vector<T, SAFE_MATH> esub_v) {
-            return esub_s->dot(esub_u->cross(esub_v));
+            return signj*esub_s->dot(esub_u->cross(esub_v));
         }
 
 //------------------------------------------------------------------------------
@@ -1627,10 +1629,10 @@ namespace equilibrium {
             auto c2_temp = graph::piecewise_1D(chi_c2, s_norm);
             auto c3_temp = graph::piecewise_1D(chi_c3, s_norm);
 
-            return c0_temp +
-                   c1_temp*s_norm +
-                   c2_temp*s_norm*s_norm +
-                   c3_temp*s_norm*s_norm*s_norm;
+            return signj*(c0_temp +
+                          c1_temp*s_norm +
+                          c2_temp*s_norm*s_norm +
+                          c3_temp*s_norm*s_norm*s_norm);
         }
 
 //------------------------------------------------------------------------------
@@ -1750,6 +1752,7 @@ namespace equilibrium {
 ///  @params[in] sminf   Minimum s on the full grid.
 ///  @params[in] ds      Change in s grid.
 ///  @params[in] dphi    Change in torodial flux.
+///  @params[in] signj   Sign of the jacobian.
 ///  @params[in] chi_c0  Poloidal flux c0.
 ///  @params[in] chi_c1  Poloidal flux c1.
 ///  @params[in] chi_c2  Poloidal flux c2.
@@ -1773,6 +1776,7 @@ namespace equilibrium {
              graph::shared_leaf<T, SAFE_MATH> sminf,
              graph::shared_leaf<T, SAFE_MATH> ds,
              graph::shared_leaf<T, SAFE_MATH> dphi,
+             graph::shared_leaf<T, SAFE_MATH> signj,
              const backend::buffer<T> chi_c0,
              const backend::buffer<T> chi_c1,
              const backend::buffer<T> chi_c2,
@@ -1792,7 +1796,7 @@ namespace equilibrium {
              const backend::buffer<T> xm,
              const backend::buffer<T> xn) :
         generic<T, SAFE_MATH> ({3.34449469E-27} ,{1}),
-        sminh(sminh), sminf(sminf), ds(ds), dphi(dphi),
+        sminh(sminh), sminf(sminf), ds(ds), dphi(dphi), signj(signj),
         chi_c0(chi_c0), chi_c1(chi_c1), chi_c2(chi_c2), chi_c3(chi_c3),
         rmnc_c0(rmnc_c0), rmnc_c1(rmnc_c1), rmnc_c2(rmnc_c2), rmnc_c3(rmnc_c3),
         zmns_c0(zmns_c0), zmns_c1(zmns_c1), zmns_c2(zmns_c2), zmns_c3(zmns_c3),
@@ -1969,6 +1973,10 @@ namespace equilibrium {
         nc_inq_varid(ncid, "dphi", &varid);
         nc_get_var(ncid, varid, &dphi_value);
 
+        double signj_value;
+        nc_inq_varid(ncid, "signj", &varid);
+        nc_get_var(ncid, varid, &signj_value);
+
 //  Load 1D quantities.
         int dimid;
 
@@ -2116,6 +2124,7 @@ namespace equilibrium {
         auto sminh = graph::constant<T, SAFE_MATH> (static_cast<T> (sminh_value));
         auto ds = graph::constant<T, SAFE_MATH> (static_cast<T> (ds_value));
         auto dphi = graph::constant<T, SAFE_MATH> (static_cast<T> (dphi_value));
+        auto signj = graph::constant<T, SAFE_MATH> (static_cast<T> (signj_value));
 
         const backend::buffer<T> chi_c0(std::vector<T> (chi_c0_buffer.begin(), chi_c0_buffer.end()));
         const backend::buffer<T> chi_c1(std::vector<T> (chi_c1_buffer.begin(), chi_c1_buffer.end()));
@@ -2157,7 +2166,7 @@ namespace equilibrium {
         const backend::buffer<T> xm(std::vector<T> (xm_buffer.begin(), xm_buffer.end()));
         const backend::buffer<T> xn(std::vector<T> (xn_buffer.begin(), xn_buffer.end()));
 
-        return std::make_shared<vmec<T, SAFE_MATH>> (sminh, sminf, ds, dphi,
+        return std::make_shared<vmec<T, SAFE_MATH>> (sminh, sminf, ds, dphi, signj,
                                                      chi_c0, chi_c1, chi_c2, chi_c3,
                                                      rmnc_c0, rmnc_c1, rmnc_c2, rmnc_c3,
                                                      zmns_c0, zmns_c1, zmns_c2, zmns_c3,

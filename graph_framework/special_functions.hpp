@@ -1577,7 +1577,6 @@ namespace special {
     complex_type<T> erfi(const complex_type<T> z) {
 //  Avoids NaN instead of doing i<T>*z and -i*temp;
         const complex_type<T> temp = erf_complex<T> (complex_type<T> (-imag<T> (z), real<T> (z)));
-        std::cout << z << " " << temp << std::endl;
         return complex_type<T> (imag(temp), -real(temp));
     }
 }

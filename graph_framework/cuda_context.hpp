@@ -209,7 +209,7 @@ namespace gpu {
                 "--include-path=" CUDA_INCLUDE,
                 "--include-path=" HEADER_DIR,
                 "--extra-device-vectorization",
-		"--device-as-default-execution-space"
+		        "--device-as-default-execution-space"
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
