@@ -92,9 +92,9 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
                                            static_cast<B> (0.05));
     std::normal_distribution<B> norm_dist3(static_cast<B> (0.0),
                                            static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist4(static_cast<B> (-20.0),
+    std::normal_distribution<B> norm_dist4(static_cast<B> (20.0),
                                            static_cast<B> (1.0));
-    std::normal_distribution<B> norm_dist5(static_cast<B> (0.0),
+    std::normal_distribution<B> norm_dist5(static_cast<B> (20.0),
                                            static_cast<B> (1.0));
 
     x->set(static_cast<T> (1.0));
@@ -103,7 +103,7 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
         y->set(j, static_cast<T> (norm_dist2(engine)));
         z->set(j, static_cast<T> (norm_dist3(engine)));
         ky->set(j, static_cast<T> (norm_dist4(engine)));
-        kz->set(j, static_cast<T> (norm_dist4(engine)));
+        kz->set(j, static_cast<T> (norm_dist5(engine)));
     }
 }
 
