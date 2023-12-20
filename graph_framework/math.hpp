@@ -89,12 +89,10 @@ namespace graph {
             auto ap = pow_cast(this->arg);
             if (ap.get()) {
                 auto bc = constant_cast(ap->get_right());
-                if (bc.get() && bc->is(2)) {
-                    return ap->get_left();
+                if ((bc.get() && !bc->is(2)) || !bc.get()) {
+                    return pow(ap->get_left(),
+                               ap->get_right()/two<T, SAFE_MATH> ());
                 }
-
-                return pow(ap->get_left(),
-                           ap->get_right()/two<T, SAFE_MATH> ());
             }
 
 //  Handle casses like sqrt(c*x) where c is constant or cases like

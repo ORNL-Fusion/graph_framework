@@ -92,9 +92,9 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
                                            static_cast<B> (0.05));
     std::normal_distribution<B> norm_dist3(static_cast<B> (0.0),
                                            static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist4(static_cast<B> (20.0),
+    std::normal_distribution<B> norm_dist4(static_cast<B> (-20.0),
                                            static_cast<B> (1.0));
-    std::normal_distribution<B> norm_dist5(static_cast<B> (20.0),
+    std::normal_distribution<B> norm_dist5(static_cast<B> (-20.0),
                                            static_cast<B> (1.0));
 
     x->set(static_cast<T> (1.0));
@@ -138,7 +138,9 @@ void trace_ray(const size_t num_times,
             const size_t local_num_rays = batch
                                         + (extra > thread_number ? 1 : 0);
 
-            std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+            const uint64_t seed = static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+//            const uint64_t seed = 0;
+            std::mt19937_64 engine((thread_number + 1)*seed);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 
             auto omega = graph::variable<T, SAFE_MATH> (local_num_rays, "\\omega");
@@ -188,7 +190,7 @@ void trace_ray(const size_t num_times,
 #if 0
             const T endtime = static_cast<T> (2.0);
 #else
-            const T endtime = static_cast<T> (0.15);
+            const T endtime = static_cast<T> (0.2);
 #endif
             const T dt = endtime/static_cast<T> (num_times);
 

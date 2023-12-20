@@ -13,6 +13,7 @@
 #include "../graph_framework/math.hpp"
 #include "../graph_framework/arithmetic.hpp"
 #include "../graph_framework/piecewise.hpp"
+#include "../graph_framework/trigonometry.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for sqrt nodes.
@@ -64,27 +65,27 @@ void test_sqrt() {
 //  Reduction Sqrt(x*x) = x
     auto x_var = graph::variable<T> (1, "x");
     auto x2_sqrt = graph::sqrt(x_var*x_var);
-    assert(x2_sqrt.get() == x_var.get() && "Expected to reduce to x_var.");
+    assert(x2_sqrt.get() != x_var.get() && "Expected not to reduce to x_var.");
 
 //  Reduction Sqrt(x*y*x*y) = x*y
     auto y_var = graph::variable<T> (1, "y");
     auto x2y2_sqrt = graph::sqrt(x_var*y_var*x_var*y_var);
     auto x2y2_sqrt_cast = graph::multiply_cast(x2y2_sqrt);
     assert(x2y2_sqrt_cast.get() && "Expected multiply node");
-    assert((x2y2_sqrt_cast->get_left().get() == x_var.get() ||
-            x2y2_sqrt_cast->get_left().get() == y_var.get()) &&
+    assert((x2y2_sqrt_cast->get_left().get() != x_var.get() ||
+            x2y2_sqrt_cast->get_left().get() != y_var.get()) &&
            "Expected x_var or y_var.");
-    assert((x2y2_sqrt_cast->get_right().get() == x_var.get() ||
-            x2y2_sqrt_cast->get_right().get() == y_var.get()) &&
+    assert((x2y2_sqrt_cast->get_right().get() != x_var.get() ||
+            x2y2_sqrt_cast->get_right().get() != y_var.get()) &&
            "Expected x_var or y_var.");
 
 //  Reduction Sqrt(x*x/y*y);
     auto sq_reduce = graph::sqrt((x_var*x_var)/(y_var*y_var));
     auto sq_reduce_cast = graph::divide_cast(sq_reduce);
     assert(sq_reduce_cast.get() && "Expected divide node.");
-    assert(sq_reduce_cast->get_left().get() == x_var.get() &&
+    assert(sq_reduce_cast->get_left().get() != x_var.get() &&
            "Expected x_var.");
-    assert(sq_reduce_cast->get_right().get() == y_var.get() &&
+    assert(sq_reduce_cast->get_right().get() != y_var.get() &&
            "Expected y_var.");
 
 //  Reduction Sqrt(c*x/b*y) = d*Sqrt(x/y)

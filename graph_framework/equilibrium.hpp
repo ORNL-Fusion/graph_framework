@@ -1613,7 +1613,7 @@ namespace equilibrium {
         get_jacobian(graph::shared_vector<T, SAFE_MATH> esub_s,
                      graph::shared_vector<T, SAFE_MATH> esub_u,
                      graph::shared_vector<T, SAFE_MATH> esub_v) {
-            return signj*esub_s->dot(esub_u->cross(esub_v));
+            return esub_s->dot(esub_u->cross(esub_v));
         }
 
 //------------------------------------------------------------------------------
@@ -1629,10 +1629,10 @@ namespace equilibrium {
             auto c2_temp = graph::piecewise_1D(chi_c2, s_norm);
             auto c3_temp = graph::piecewise_1D(chi_c3, s_norm);
 
-            return signj*(c0_temp +
-                          c1_temp*s_norm +
-                          c2_temp*s_norm*s_norm +
-                          c3_temp*s_norm*s_norm*s_norm);
+            return c0_temp +
+                   c1_temp*s_norm +
+                   c2_temp*s_norm*s_norm +
+                   c3_temp*s_norm*s_norm*s_norm;
         }
 
 //------------------------------------------------------------------------------
@@ -1643,7 +1643,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
         get_phi(graph::shared_leaf<T, SAFE_MATH> s) {
-            return dphi*s;
+            return signj*dphi*s;
         }
 
 //------------------------------------------------------------------------------
