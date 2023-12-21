@@ -14,10 +14,53 @@
 #include <thread>
 
 #include <dlfcn.h>
+#include <unistd.h>
 
 #include "node.hpp"
 
 namespace gpu {
+//------------------------------------------------------------------------------
+///  @brief Split a string by the space delimiter.
+///
+///  The exec functions need the arguments split into individual calls. So this
+///  splits the strings that come from cmake into a char \* vector. Note the
+///  first token will be duplacted in the first two elements.
+///
+///  @param[in] string Input string.
+///  @returns The string split into an array of arguments.
+//------------------------------------------------------------------------------
+    std::vector<std::string> split_string(const std::string &string) {
+        std::vector<std::string> args;
+        
+        size_t end_position = string.find(" ");
+        std::string token = string.substr(0, end_position);
+        args.push_back(token);
+
+        while (end_position < string.size()) {
+            const size_t start_position = end_position + 1;
+            end_position = string.find(" ", start_position);
+            token = string.substr(start_position, end_position - start_position);
+            args.push_back(token);
+        }
+
+        return args;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Convert args to c string.
+///
+///  @param[in] args Input string.
+///  @returns Args as an array of C strings.
+//------------------------------------------------------------------------------
+    std::vector<char *> to_c_str(const std::vector<std::string> &args) {
+        std::vector<char *> c_args;
+        for (auto &string : args) {
+            c_args.push_back(const_cast<char *> (string.c_str()));
+        }
+        c_args.push_back(static_cast<char *> (NULL));
+        return c_args;
+    }
+
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cpu context.
 ///
@@ -124,7 +167,17 @@ namespace gpu {
                 std::cout << "CPU info." << std::endl;
                 std::cout << "  Command Line    : " << temp_stream.str() << std::endl;
             }
-            int error = system(temp_stream.str().c_str());
+
+            auto pid = fork();
+            int error = 0;
+            if (pid == 0) {
+                auto args = split_string(temp_stream.str());
+                auto c_args = to_c_str(args);
+                error = execvp(c_args[0], c_args.data());
+                std::cerr << "Child process launch failed." << std::endl;
+                exit(error);
+            }
+            waitpid(pid, &error, 0);
             if (error) {
                 std::cerr << "Failed to compile cpu kernel. Check source code in "
                           << filename << std::endl;

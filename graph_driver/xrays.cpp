@@ -359,7 +359,7 @@ int main(int argc, const char * argv[]) {
 
     const size_t num_times = 100000;
     const size_t sub_steps = 100;
-    const size_t num_rays = 1;//00000;
+    const size_t num_rays = 100000;
 
     const bool use_safe_math = true;
 
