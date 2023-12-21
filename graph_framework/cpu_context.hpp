@@ -33,6 +33,8 @@ namespace gpu {
         void *lib_handle;
 ///  Argument map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> kernel_arguments;
+///  Host buffer map.
+        std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> host_buffers;
 ///  Argument index map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
 
@@ -225,7 +227,13 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Hold the current thread until the command buffer has completed.
 //------------------------------------------------------------------------------
-        void wait() {}
+        void wait() {
+            for (auto &item : host_buffers) {
+                memcpy(item.second.data(),
+                       kernel_arguments[item.first].data(),
+                       sizeof(T)*kernel_arguments[item.first].size());
+            }
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
@@ -375,10 +383,18 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Get the buffer for a node.
 ///
+///  GPU contexts have the concept of a host side and device side buffer which
+///  the CPU doesn't. Create a second map of host buffers and reference the
+///  memory pointer from that. This allows one thread to run the kernel while a
+///  different thread can use the results.
+///
 ///  @params[in] node Node to get the buffer for.
 //------------------------------------------------------------------------------
         T *get_buffer(graph::shared_leaf<T, SAFE_MATH> &node) {
-            return kernel_arguments[node.get()].data();
+            if (!host_buffers.contains(node.get())) {
+                host_buffers[node.get()] = kernel_arguments[node.get()];
+            }
+            return host_buffers[node.get()].data();
         }
     };
 }

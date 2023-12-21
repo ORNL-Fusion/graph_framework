@@ -292,8 +292,8 @@ namespace solver {
 ///  @brief Write result step.
 //------------------------------------------------------------------------------
         void write_step() {
-            work.wait();
             sync.join();
+            work.wait();
             sync = std::thread([this] {
                 dataset.write(file);
             });

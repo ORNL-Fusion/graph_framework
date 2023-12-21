@@ -319,48 +319,48 @@ namespace output {
 ///  @params[in] result A result file reference.
 ///  @params[in] index  Time index.
 //------------------------------------------------------------------------------
-                void write(const result_file &result,
-                           const size_t index) {
-                    const std::array<size_t, 3> start = {
-                        index, 0, 0
-                    };
+        void write(const result_file &result,
+                   const size_t index) {
+            const std::array<size_t, 3> start = {
+                index, 0, 0
+            };
 
-                    for (variable &var : variables) {
-                        sync.lock();
-                        if constexpr (jit::is_float<T> ()) {
-                            if constexpr (jit::is_complex<T> ()) {
-                                check_error(nc_put_vara_float(result.get_ncid(),
-                                                              var.id,
-                                                              start.data(),
-                                                              count.data(),
-                                                              reinterpret_cast<float *> (var.buffer)));
-                            } else {
-                                check_error(nc_put_vara_float(result.get_ncid(),
-                                                              var.id,
-                                                              start.data(),
-                                                              count.data(),
-                                                              var.buffer));
-                            }
-                        } else {
-                            if constexpr (jit::is_complex<T> ()) {
-                                check_error(nc_put_vara_double(result.get_ncid(),
-                                                               var.id,
-                                                               start.data(),
-                                                               count.data(),
-                                                               reinterpret_cast<double *> (var.buffer)));
-                            } else {
-                                    check_error(nc_put_vara_double(result.get_ncid(),
-                                                                   var.id,
-                                                                   start.data(),
-                                                                   count.data(),
-                                                                   var.buffer));
-                            }
-                        }
-                        sync.unlock();
+            for (variable &var : variables) {
+                sync.lock();
+                if constexpr (jit::is_float<T> ()) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        check_error(nc_put_vara_float(result.get_ncid(),
+                                                      var.id,
+                                                      start.data(),
+                                                      count.data(),
+                                                      reinterpret_cast<float *> (var.buffer)));
+                    } else {
+                        check_error(nc_put_vara_float(result.get_ncid(),
+                                                      var.id,
+                                                      start.data(),
+                                                      count.data(),
+                                                      var.buffer));
                     }
-
-                    result.sync_file();
+                } else {
+                    if constexpr (jit::is_complex<T> ()) {\
+                        check_error(nc_put_vara_double(result.get_ncid(),
+                                                       var.id,
+                                                       start.data(),
+                                                       count.data(),
+                                                       reinterpret_cast<double *> (var.buffer)));
+                    } else {
+                        check_error(nc_put_vara_double(result.get_ncid(),
+                                                       var.id,
+                                                       start.data(),
+                                                       count.data(),
+                                                       var.buffer));
+                    }
                 }
+                sync.unlock();
+            }
+
+            result.sync_file();
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Read step.

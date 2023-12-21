@@ -192,11 +192,11 @@ namespace absorption {
             work.copy_to_device(t,  graph::variable_cast(this->t)->data());
 
             work.run();
-            work.wait();
             
             sync.join();
-            sync = std::thread([this] (const size_t index) -> void {
-                dataset.write(file, index);
+            work.wait();
+            sync = std::thread([this] (const size_t i) -> void {
+                dataset.write(file, i);
             }, time_index);
         }
     };
