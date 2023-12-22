@@ -139,7 +139,7 @@ void trace_ray(const size_t num_times,
                                         + (extra > thread_number ? 1 : 0);
 
             const uint64_t seed = static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-//            const uint64_t seed = 0;
+            //const uint64_t seed = 0;
             std::mt19937_64 engine((thread_number + 1)*seed);
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 

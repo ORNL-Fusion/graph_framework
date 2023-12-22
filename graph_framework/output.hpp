@@ -263,6 +263,9 @@ namespace output {
             check_error(nc_def_var(result.get_ncid(), name.c_str(), type,
                                    static_cast<int> (dims.size()), dims.data(),
                                    &var.id));
+            const T fill = static_cast<T> (0.0);
+            check_error(nc_def_var_fill(result.get_ncid(), var.id,
+                                        NC_FILL, &fill));
             sync.unlock();
 
             var.buffer = context.get_buffer(node);
