@@ -206,6 +206,51 @@ namespace equilibrium {
             auto zero = graph::zero<T, SAFE_MATH> ();
             return graph::vector(zero, zero, one);
         }
+
+//------------------------------------------------------------------------------
+///  @brief Get the x position.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The x position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_x(graph::shared_leaf<T, SAFE_MATH> x1,
+              graph::shared_leaf<T, SAFE_MATH> x2,
+              graph::shared_leaf<T, SAFE_MATH> x3) {
+            return x1;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the y position.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The y position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_y(graph::shared_leaf<T, SAFE_MATH> x1,
+              graph::shared_leaf<T, SAFE_MATH> x2,
+              graph::shared_leaf<T, SAFE_MATH> x3) {
+            return x2;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the z position.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The z position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_z(graph::shared_leaf<T, SAFE_MATH> x1,
+              graph::shared_leaf<T, SAFE_MATH> x2,
+              graph::shared_leaf<T, SAFE_MATH> x3) {
+            return x3;
+        }
     };
 
 ///  Convenience type alias for shared equilibria.
@@ -1516,6 +1561,12 @@ namespace equilibrium {
         graph::shared_leaf<T, SAFE_MATH> u_cache;
 ///  v position cache.
         graph::shared_leaf<T, SAFE_MATH> v_cache;
+///  x position cache.
+        graph::shared_leaf<T, SAFE_MATH> x_cache;
+///  y position cache.
+        graph::shared_leaf<T, SAFE_MATH> y_cache;
+///  z position cache.
+        graph::shared_leaf<T, SAFE_MATH> z_cache;
 
 ///  Contravaraint s basis cache.
         graph::shared_vector<T, SAFE_MATH> esups_cache;
@@ -1711,6 +1762,10 @@ namespace equilibrium {
                     z = z + zmns*sinmn;
                     l = l + lmns*sinmn;
                 }
+
+                x_cache = r*graph::cos(v);
+                y_cache = r*graph::sin(v);
+                z_cache = z;
 
                 auto esubs = get_esubs(r, z);
                 auto esubu = get_esubu(r, z);
@@ -1936,6 +1991,54 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> v) {
             set_cache(s, u, v);
             return bvec_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the x position.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The x position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_x(graph::shared_leaf<T, SAFE_MATH> s,
+              graph::shared_leaf<T, SAFE_MATH> u,
+              graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return x_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the y position.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The y position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_y(graph::shared_leaf<T, SAFE_MATH> s,
+              graph::shared_leaf<T, SAFE_MATH> u,
+              graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return y_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the z position.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The z position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_z(graph::shared_leaf<T, SAFE_MATH> s,
+              graph::shared_leaf<T, SAFE_MATH> u,
+              graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return z_cache;
         }
     };
 

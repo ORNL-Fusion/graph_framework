@@ -112,9 +112,10 @@ namespace gpu {
             dlclose(lib_handle);
 
             if (!library_name.empty()) {
-                std::ostringstream temp_stream;
-                temp_stream << "rm " << library_name;
-                system(temp_stream.str().c_str());
+                if (fork() == 0) {
+                    execlp("rm", "rm", library_name.c_str(), NULL);
+                    exit(0);
+                }
             }
         }
 
@@ -185,10 +186,10 @@ namespace gpu {
             }
 
 #ifdef NDEBUG
-            temp_stream.str(std::string());
-            temp_stream.clear();
-            temp_stream << "rm " << filename;
-            system(temp_stream.str().c_str());
+            if (fork() == 0) {
+                execlp("rm", "rm", filename.c_str(), NULL);
+                exit(0);
+            }
 #endif
 
             lib_handle = dlopen(library_name.c_str(), RTLD_LAZY);
@@ -412,12 +413,48 @@ namespace gpu {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        args[std::string(\"" << jit::to_string('v', in.get());
-                source_buffer << "\")][i] = " << registers[a.get()] << ";" << std::endl;
+                source_buffer << "\")][i] = ";
+                if constexpr (SAFE_MATH) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " (";
+                        source_buffer << "isnan(real(" << registers[a.get()]
+                                      << ")) ? 0.0 : real(" << registers[a.get()]
+                                      << "), ";
+                        source_buffer << "isnan(imag(" << registers[a.get()]
+                                      << ")) ? 0.0 : imag(" << registers[a.get()]
+                                      << "));" << std::endl;
+                    } else {
+                        source_buffer << "isnan(" << registers[a.get()]
+                                      << ") ? 0.0 : " << registers[a.get()]
+                                      << ";" << std::endl;
+                    }
+                } else {
+                    source_buffer << registers[a.get()] << ";" << std::endl;
+                }
             }
             for (auto &out : outputs) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        args[std::string(\"" << jit::to_string('o', out.get());
-                source_buffer << "\")][i] = " << registers[a.get()] << ";" << std::endl;
+                source_buffer << "\")][i] = ";
+                if constexpr (SAFE_MATH) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " (";
+                        source_buffer << "isnan(real(" << registers[a.get()]
+                                      << ")) ? 0.0 : real(" << registers[a.get()]
+                                      << "), ";
+                        source_buffer << "isnan(imag(" << registers[a.get()]
+                                      << ")) ? 0.0 : imag(" << registers[a.get()]
+                                      << "));" << std::endl;
+                    } else {
+                        source_buffer << "isnan(" << registers[a.get()]
+                                      << ") ? 0.0 : " << registers[a.get()]
+                                      << ";" << std::endl;
+                    }
+                } else {
+                    source_buffer << registers[a.get()] << ";" << std::endl;
+                }
             }
                     
             source_buffer << "    }" << std::endl;
