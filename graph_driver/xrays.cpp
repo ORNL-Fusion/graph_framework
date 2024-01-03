@@ -92,9 +92,9 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
                                            static_cast<B> (0.05));
     std::normal_distribution<B> norm_dist3(static_cast<B> (0.0),
                                            static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist4(static_cast<B> (-20.0),
+    std::normal_distribution<B> norm_dist4(static_cast<B> (0.0),
                                            static_cast<B> (1.0));
-    std::normal_distribution<B> norm_dist5(static_cast<B> (-20.0),
+    std::normal_distribution<B> norm_dist5(static_cast<B> (-150.0),
                                            static_cast<B> (1.0));
 
     x->set(static_cast<T> (1.0));
@@ -388,7 +388,6 @@ void bin_power(const size_t num_times,
             auto z_last     = graph::variable<T, SAFE_MATH> (local_num_rays, "z_last");
             auto kamp       = graph::variable<T, SAFE_MATH> (local_num_rays, "kamp");
             auto power      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (1.0), "power");
-            auto power_last = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (1.0), "power_last");
             auto k_sum      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (0.0), "k_sum");
 
             auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
@@ -406,7 +405,7 @@ void bin_power(const size_t num_times,
             auto kdl = kamp*dl;
             auto k_next = kdl + k_sum;
             auto p_next = graph::exp(graph::none<T, SAFE_MATH> ()*graph::two<T, SAFE_MATH> ()*k_sum);
-            auto d_power = power - power_last;
+            auto d_power = p_next - power;
             d_power = graph::sqrt(d_power*d_power);
 
             workflow::manager<T, SAFE_MATH> work(thread_number);
@@ -419,13 +418,11 @@ void bin_power(const size_t num_times,
                 graph::variable_cast(z_last),
                 graph::variable_cast(kamp),
                 graph::variable_cast(power),
-                graph::variable_cast(power_last),
                 graph::variable_cast(k_sum),
             }, {d_power}, {
                 {x, graph::variable_cast(x_last)},
                 {y, graph::variable_cast(y_last)},
                 {z, graph::variable_cast(z_last)},
-                {power, graph::variable_cast(power_last)},
                 {p_next, graph::variable_cast(power)},
                 {k_next, graph::variable_cast(k_sum)}
             }, "power");
