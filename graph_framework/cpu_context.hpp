@@ -15,6 +15,7 @@
 
 #include <dlfcn.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "node.hpp"
 
@@ -31,7 +32,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
     std::vector<std::string> split_string(const std::string &string) {
         std::vector<std::string> args;
-        
+
         size_t end_position = string.find(" ");
         std::string token = string.substr(0, end_position);
         args.push_back(token);
