@@ -856,7 +856,8 @@ namespace graph {
             }
 
             auto lp = pow_cast(this->left);
-            if (lp.get()) {
+//  Only run this reduction if the right is an integer constant value.
+            if (lp.get() && rc.get() && rc->is_integer()) {
                 return pow(lp->get_left(), lp->get_right()*this->right);
             }
 

@@ -1779,7 +1779,7 @@ namespace equilibrium {
 
                 auto one = graph::one<T, SAFE_MATH> ();
                 auto phip = get_phi(s)->df(s);
-                auto jbsupu = (get_chi(s_norm_f)->df(s) - phip*l->df(v));
+                auto jbsupu = get_chi(s_norm_f)->df(s) - phip*l->df(v);
                 auto jbsupv = phip*(one + l->df(u));
                 bvec_cache = (jbsupu*esubu + jbsupv*esubv)/jacobian;
             }
