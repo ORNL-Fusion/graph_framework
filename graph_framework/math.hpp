@@ -239,12 +239,10 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto temp = this->arg->remove_pseudo();
-            if (temp->is_match(this->arg)) {
-                return this->shared_from_this();
-            } else {
-                return sqrt(temp);
+            if (this->has_pseudo()) {
+                return sqrt(this->arg->remove_pseudo());
             }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -471,12 +469,10 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto temp = this->arg->remove_pseudo();
-            if (temp->is_match(this->arg)) {
-                return this->shared_from_this();
-            } else {
-                return exp(temp);
+            if (this->has_pseudo()) {
+                return exp(this->arg->remove_pseudo());
             }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -703,12 +699,10 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto temp = this->arg->remove_pseudo();
-            if (temp->is_match(this->arg)) {
-                return this->shared_from_this();
-            } else {
-                return log(temp);
+            if (this->has_pseudo()) {
+                return log(this->arg->remove_pseudo());
             }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -1092,14 +1086,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto l = this->left->remove_pseudo();
-            auto r = this->right->remove_pseudo();
-            if (l->is_match(this->left) &&
-                r->is_match(this->right)) {
-                return this->shared_from_this();
-            } else {
-                return pow(l, r);
+            if (this->has_pseudo()) {
+                return pow(this->left->remove_pseudo(),
+                           this->right->remove_pseudo());
             }
+            return this->shared_from_this();
         }
     };
 
@@ -1297,12 +1288,10 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto temp = this->arg->remove_pseudo();
-            if (temp->is_match(this->arg)) {
-                return this->shared_from_this();
-            } else {
-                return erfi(temp);
+            if (this->has_pseudo()) {
+                return erfi(this->arg->remove_pseudo());
             }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------

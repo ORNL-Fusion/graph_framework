@@ -354,13 +354,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto l = this->left->remove_pseudo();
-            auto r = this->right->remove_pseudo();
-            if (l->is_match(this->left) &&
-                r->is_match(this->right)) {
-                return this->shared_from_this();
+            if (this->has_pseudo()) {
+                return this->left->remove_pseudo() +
+                       this->right->remove_pseudo();
             }
-            return l + r;
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -875,14 +873,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto l = this->left->remove_pseudo();
-            auto r = this->right->remove_pseudo();
-            if (l->is_match(this->left) &&
-                r->is_match(this->right)) {
-                return this->shared_from_this();
-            } else {
-                return l - r;
+            if (this->has_pseudo()) {
+                return this->left->remove_pseudo() -
+                       this->right->remove_pseudo();
             }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -1502,14 +1497,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto l = this->left->remove_pseudo();
-            auto r = this->right->remove_pseudo();
-            if (l->is_match(this->left) &&
-                r->is_match(this->right)) {
-                return this->shared_from_this();
-            } else {
-                return l*r;
+            if (this->has_pseudo()) {
+                return this->left->remove_pseudo() *
+                       this->right->remove_pseudo();
             }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -1940,14 +1932,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto l = this->left->remove_pseudo();
-            auto r = this->right->remove_pseudo();
-            if (l->is_match(this->left) &&
-                r->is_match(this->right)) {
-                return this->shared_from_this();
-            } else {
-                return l/r;
+            if (this->has_pseudo()) {
+                return this->left->remove_pseudo() /
+                       this->right->remove_pseudo();
             }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -2610,16 +2599,12 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            auto l = this->left->remove_pseudo();
-            auto m = this->middle->remove_pseudo();
-            auto r = this->right->remove_pseudo();
-            if (l->is_match(this->left)   &&
-                m->is_match(this->middle) &&
-                r->is_match(this->right)) {
-                return this->shared_from_this();
-            } else {
-                return fma(l, m, r);
+            if (this->has_pseudo()) {
+                return fma(this->left->remove_pseudo(),
+                           this->middle->remove_pseudo(),
+                           this->right->remove_pseudo());
             }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------

@@ -35,18 +35,22 @@ namespace graph {
         const size_t complexity;
 ///  Cache derivative terms.
         std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> df_cache;
+///  Node contains pseudo variables.
+        const bool contains_pseudo;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a basic node.
 ///
-///  @params[in] s     Node string to hash.
-///  @params[in] count Number of nodes in the subgraph.
+///  @params[in] s      Node string to hash.
+///  @params[in] count  Number of nodes in the subgraph.
+///  @params[in] pseudo Node contains pseudo variable.
 //------------------------------------------------------------------------------
         leaf_node(const std::string s,
-                  const size_t count) :
+                  const size_t count,
+                  const bool pseudo) :
         hash(std::hash<std::string>{} (s)),
-        complexity(count) {}
+        complexity(count), contains_pseudo(pseudo) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Destructor
@@ -231,6 +235,15 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Query if the node contains pseudo variables.
+///
+///  @return True if the node contains pseudo variables.
+//------------------------------------------------------------------------------
+        virtual bool has_pseudo() const {
+            return contains_pseudo;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Remove pseudo variable nodes.
 ///
 ///  @returns A tree without variable nodes.
@@ -315,7 +328,7 @@ namespace graph {
 ///  @params[in] d Array buffer.
 //------------------------------------------------------------------------------
         constant_node(const backend::buffer<T> &d) :
-        leaf_node<T, SAFE_MATH> (constant_node::to_string(d.at(0)), 1), data(d) {
+        leaf_node<T, SAFE_MATH> (constant_node::to_string(d.at(0)), 1, false), data(d) {
             assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
 
@@ -672,15 +685,8 @@ namespace graph {
 //------------------------------------------------------------------------------
         straight_node(shared_leaf<T, SAFE_MATH> a,
                       const std::string s) :
-        leaf_node<T, SAFE_MATH> (s, a->get_complexity() + 1), arg(a) {}
-
-//------------------------------------------------------------------------------
-///  @brief Construct a straight node with defered argument.
-///
-///  @params[in] s Node string to hash.
-//------------------------------------------------------------------------------
-        straight_node(const std::string s) :
-        leaf_node<T, SAFE_MATH> (s) {}
+        leaf_node<T, SAFE_MATH> (s, a->get_complexity() + 1, a->has_pseudo()),
+        arg(a) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -786,7 +792,8 @@ namespace graph {
         branch_node(shared_leaf<T, SAFE_MATH> l,
                     shared_leaf<T, SAFE_MATH> r,
                     const std::string s) :
-        leaf_node<T, SAFE_MATH> (s, l->get_complexity() + r->get_complexity() + 1),
+        leaf_node<T, SAFE_MATH> (s, l->get_complexity() + r->get_complexity() + 1,
+                                 l->has_pseudo() || r->has_pseudo()),
         left(l), right(r) {}
 
 //------------------------------------------------------------------------------
@@ -796,13 +803,15 @@ namespace graph {
 ///  @params[in] r     Right branch.
 ///  @params[in] s     Node string to hash.
 ///  @params[in] count Number of nodes in the subgraph.
+///  @params[in] pseudo Node contains pseudo variable.
 //------------------------------------------------------------------------------
-                branch_node(shared_leaf<T, SAFE_MATH> l,
-                            shared_leaf<T, SAFE_MATH> r,
-                            const std::string s,
-                            const size_t count) :
-                leaf_node<T, SAFE_MATH> (s, count),
-                left(l), right(r) {}
+        branch_node(shared_leaf<T, SAFE_MATH> l,
+                    shared_leaf<T, SAFE_MATH> r,
+                    const std::string s,
+                    const size_t count,
+                    const bool pseudo) :
+        leaf_node<T, SAFE_MATH> (s, count, pseudo),
+        left(l), right(r) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
@@ -901,7 +910,10 @@ namespace graph {
         branch_node<T, SAFE_MATH> (l, r, s,
                                    l->get_complexity() +
                                    m->get_complexity() +
-                                   r->get_complexity()),
+                                   r->get_complexity(),
+                                   l->has_pseudo() ||
+                                   m->has_pseudo() ||
+                                   r->has_pseudo()),
         middle(m) {}
 
 //------------------------------------------------------------------------------
@@ -988,7 +1000,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s,
                       const std::string &symbol) :
-        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1),
+        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
         buffer(s), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -1000,7 +1012,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const size_t s, const T d,
                       const std::string &symbol) :
-        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1),
+        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
         buffer(s, d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -1011,7 +1023,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
-        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1),
+        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
         buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -1022,7 +1034,7 @@ namespace graph {
 //------------------------------------------------------------------------------
         variable_node(const backend::buffer<T> &d,
                       const std::string &symbol) :
-        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1),
+        leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
         buffer(d), symbol(symbol) {}
 
 //------------------------------------------------------------------------------
@@ -1415,6 +1427,15 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return this->arg->get_power_exponent();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the node contains pseudo variables.
+///
+///  @return True if the node contains pseudo variables.
+//------------------------------------------------------------------------------
+        virtual bool has_pseudo() const {
+            return true;
         }
 
 //------------------------------------------------------------------------------
