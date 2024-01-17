@@ -8,7 +8,7 @@
 #ifndef arithmetic_h
 #define arithmetic_h
 
-#include "node.hpp"
+#include "trigonometry.hpp"
 
 namespace graph {
 //******************************************************************************
@@ -354,8 +354,13 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return this->left->remove_pseudo() +
-                   this->right->remove_pseudo();
+            auto l = this->left->remove_pseudo();
+            auto r = this->right->remove_pseudo();
+            if (l->is_match(this->left) &&
+                r->is_match(this->right)) {
+                return this->shared_from_this();
+            }
+            return l + r;
         }
 
 //------------------------------------------------------------------------------
@@ -870,8 +875,14 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return this->left->remove_pseudo() -
-                   this->right->remove_pseudo();
+            auto l = this->left->remove_pseudo();
+            auto r = this->right->remove_pseudo();
+            if (l->is_match(this->left) &&
+                r->is_match(this->right)) {
+                return this->shared_from_this();
+            } else {
+                return l - r;
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -1100,8 +1111,8 @@ namespace graph {
             }
 
 //  Move trig to the right.
-            auto cl = cos_cast(this->left);
-            auto sl = sin_cast(this->left);
+            auto cl = graph::cos_cast(this->left);
+            auto sl = graph::sin_cast(this->left);
             if ((cl.get() && !this->right->is_power_like() &&
                  !this->right->is_all_variables() &&
                  !sin_cast(this->right).get()) ||
@@ -1491,8 +1502,14 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return this->left->remove_pseudo() *
-                   this->right->remove_pseudo();
+            auto l = this->left->remove_pseudo();
+            auto r = this->right->remove_pseudo();
+            if (l->is_match(this->left) &&
+                r->is_match(this->right)) {
+                return this->shared_from_this();
+            } else {
+                return l*r;
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -1923,8 +1940,14 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return this->left->remove_pseudo() /
-                   this->right->remove_pseudo();
+            auto l = this->left->remove_pseudo();
+            auto r = this->right->remove_pseudo();
+            if (l->is_match(this->left) &&
+                r->is_match(this->right)) {
+                return this->shared_from_this();
+            } else {
+                return l/r;
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -2587,9 +2610,16 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return fma(this->left->remove_pseudo(),
-                       this->middle->remove_pseudo(),
-                       this->right->remove_pseudo());
+            auto l = this->left->remove_pseudo();
+            auto m = this->middle->remove_pseudo();
+            auto r = this->right->remove_pseudo();
+            if (l->is_match(this->left)   &&
+                m->is_match(this->middle) &&
+                r->is_match(this->right)) {
+                return this->shared_from_this();
+            } else {
+                return fma(l, m, r);
+            }
         }
 
 //------------------------------------------------------------------------------

@@ -1190,6 +1190,16 @@ namespace dispersion {
             auto dDdy = this->D->df(y);
             auto dDdz = this->D->df(z);
 
+            if (graph::pseudo_variable_cast(x).get()) {
+                dDdw = dDdw->remove_pseudo();
+                dDdkx = dDdkx->remove_pseudo();
+                dDdky = dDdky->remove_pseudo();
+                dDdkz = dDdkz->remove_pseudo();
+                dDdx = dDdx->remove_pseudo();
+                dDdy = dDdy->remove_pseudo();
+                dDdz = dDdz->remove_pseudo();
+            }
+
             auto neg_one = graph::none<typename DISPERSION_FUNCTION::base,
                                        DISPERSION_FUNCTION::safe_math> ();
             dxdt = neg_one*dDdkx/dDdw;
