@@ -291,16 +291,16 @@ namespace absorption {
             auto Dc = dispersion::cold_plasma<T, SAFE_MATH> ().D(w, 
                                                                  kx_amp, ky_amp, kz_amp,
                                                                  x, y, z, t, eq);
-//            auto Dw = dispersion::hot_plasma<T,
-//                                             dispersion::z_erfi<T, SAFE_MATH>,
-//                                             SAFE_MATH> ().D(w,
-//                                                             kx_amp, ky_amp, kz_amp,
-//                                                             x, y, z, t, eq);
-            auto Dw = dispersion::hot_plasma_expandion<T,
-                                                       dispersion::z_erfi<T, SAFE_MATH>,
-                                                       SAFE_MATH> ().D(w,
-                                                                       kx_amp, ky_amp, kz_amp,
-                                                                       x, y, z, t, eq);
+            auto Dw = dispersion::hot_plasma<T,
+                                             dispersion::z_erfi<T, SAFE_MATH>,
+                                             SAFE_MATH> ().D(w,
+                                                             kx_amp, ky_amp, kz_amp,
+                                                             x, y, z, t, eq);
+//            auto Dw = dispersion::hot_plasma_expandion<T,
+//                                                       dispersion::z_erfi<T, SAFE_MATH>,
+//                                                       SAFE_MATH> ().D(w,
+//                                                                       kx_amp, ky_amp, kz_amp,
+//                                                                       x, y, z, t, eq);
 
             auto kamp1 = this->kamp - Dw/Dc->df(kamp);
 
