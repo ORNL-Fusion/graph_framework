@@ -124,10 +124,15 @@ namespace workflow {
             size_t iterations = 0;
             T max_residule = max_kernel();
             T last_max = std::numeric_limits<T>::max();
-            while (std::abs(max_residule) > std::abs(tolarance) &&
-                   std::abs(last_max - max_residule) > 0.0      &&
+            T off_last_max = std::numeric_limits<T>::max();
+            while (std::abs(max_residule) > std::abs(tolarance)                 &&
+                   std::abs(last_max - max_residule) > std::abs(tolarance)      &&
+                   std::abs(off_last_max - max_residule) > std::abs(tolarance)  &&
                    iterations++ < max_iterations) {
                 last_max = max_residule;
+                if (!(iterations%2)) {
+                    off_last_max = max_residule;
+                }
                 max_residule = max_kernel();
             }
 
@@ -253,7 +258,7 @@ namespace workflow {
 ///  @params[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_host(graph::shared_leaf<T, SAFE_MATH> &node,
-                         T *destination) {
+                          T *destination) {
             context.copy_to_host(node, destination);
         }
 

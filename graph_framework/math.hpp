@@ -89,12 +89,10 @@ namespace graph {
             auto ap = pow_cast(this->arg);
             if (ap.get()) {
                 auto bc = constant_cast(ap->get_right());
-                if (bc.get() && bc->is(2)) {
-                    return ap->get_left();
+                if ((bc.get() && !bc->is(2)) || !bc.get()) {
+                    return pow(ap->get_left(),
+                               ap->get_right()/two<T, SAFE_MATH> ());
                 }
-
-                return pow(ap->get_left(),
-                           ap->get_right()/two<T, SAFE_MATH> ());
             }
 
 //  Handle casses like sqrt(c*x) where c is constant or cases like
@@ -145,10 +143,14 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
                 return one<T, SAFE_MATH> ();
-            } else {
-                return this->arg->df(x) /
-                       (two<T, SAFE_MATH> ()*this->shared_from_this());
             }
+
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = this->arg->df(x)
+                                     / (two<T, SAFE_MATH> ()*this->shared_from_this());
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -237,7 +239,10 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return sqrt(this->arg->remove_pseudo());
+            if (this->has_pseudo()) {
+                return sqrt(this->arg->remove_pseudo());
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -399,7 +404,11 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            return this->shared_from_this()*this->arg->df(x);
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = this->shared_from_this()*this->arg->df(x);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -460,7 +469,10 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return exp(this->arg->remove_pseudo());
+            if (this->has_pseudo()) {
+                return exp(this->arg->remove_pseudo());
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -618,7 +630,15 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
-            return this->arg->df(x)/this->arg;
+            if (this->is_match(x)) {
+                return one<T, SAFE_MATH> ();
+            }
+
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = this->arg->df(x)/this->arg;
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -679,7 +699,10 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return log(this->arg->remove_pseudo());
+            if (this->has_pseudo()) {
+                return log(this->arg->remove_pseudo());
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -842,7 +865,8 @@ namespace graph {
             }
 
             auto lp = pow_cast(this->left);
-            if (lp.get()) {
+//  Only run this reduction if the right is an integer constant value.
+            if (lp.get() && rc.get() && rc->is_integer()) {
                 return pow(lp->get_left(), lp->get_right()*this->right);
             }
 
@@ -902,9 +926,17 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         df(shared_leaf<T, SAFE_MATH> x) {
-            return pow(this->left, this->right - one<T, SAFE_MATH> ()) *
-                   (this->right*this->left->df(x) +
-                    this->left*log(this->left)*this->right->df(x));
+            if (this->is_match(x)) {
+                return one<T, SAFE_MATH> ();
+            }
+
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = pow(this->left, this->right - one<T, SAFE_MATH> ()) 
+                                     * (this->right*this->left->df(x) +
+                                        this->left*log(this->left)*this->right->df(x));
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -1054,8 +1086,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return pow(this->left->remove_pseudo(),
-                       this->right->remove_pseudo());
+            if (this->has_pseudo()) {
+                return pow(this->left->remove_pseudo(),
+                           this->right->remove_pseudo());
+            }
+            return this->shared_from_this();
         }
     };
 
@@ -1187,8 +1222,12 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            return two<T, SAFE_MATH> ()/sqrt(pi<T, SAFE_MATH> ()) *
-                   exp(this->arg*this->arg)*this->arg->df(x);
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = two<T, SAFE_MATH> ()/sqrt(pi<T, SAFE_MATH> ())
+                                     * exp(this->arg*this->arg)*this->arg->df(x);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -1249,7 +1288,10 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return erfi(this->arg->remove_pseudo());
+            if (this->has_pseudo()) {
+                return erfi(this->arg->remove_pseudo());
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------

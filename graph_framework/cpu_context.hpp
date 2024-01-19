@@ -14,10 +14,54 @@
 #include <thread>
 
 #include <dlfcn.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include "node.hpp"
 
 namespace gpu {
+//------------------------------------------------------------------------------
+///  @brief Split a string by the space delimiter.
+///
+///  The exec functions need the arguments split into individual calls. So this
+///  splits the strings that come from cmake into a char \* vector. Note the
+///  first token will be duplacted in the first two elements.
+///
+///  @param[in] string Input string.
+///  @returns The string split into an array of arguments.
+//------------------------------------------------------------------------------
+    std::vector<std::string> split_string(const std::string &string) {
+        std::vector<std::string> args;
+
+        size_t end_position = string.find(" ");
+        std::string token = string.substr(0, end_position);
+        args.push_back(token);
+
+        while (end_position < string.size()) {
+            const size_t start_position = end_position + 1;
+            end_position = string.find(" ", start_position);
+            token = string.substr(start_position, end_position - start_position);
+            args.push_back(token);
+        }
+
+        return args;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Convert args to c string.
+///
+///  @param[in] args Input string.
+///  @returns Args as an array of C strings.
+//------------------------------------------------------------------------------
+    std::vector<char *> to_c_str(const std::vector<std::string> &args) {
+        std::vector<char *> c_args;
+        for (auto &string : args) {
+            c_args.push_back(const_cast<char *> (string.c_str()));
+        }
+        c_args.push_back(static_cast<char *> (NULL));
+        return c_args;
+    }
+
 //------------------------------------------------------------------------------
 ///  @brief Class representing a cpu context.
 ///
@@ -33,6 +77,8 @@ namespace gpu {
         void *lib_handle;
 ///  Argument map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> kernel_arguments;
+///  Host buffer map.
+        std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> host_buffers;
 ///  Argument index map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
 
@@ -67,9 +113,10 @@ namespace gpu {
             dlclose(lib_handle);
 
             if (!library_name.empty()) {
-                std::ostringstream temp_stream;
-                temp_stream << "rm " << library_name;
-                system(temp_stream.str().c_str());
+                if (fork() == 0) {
+                    execlp("rm", "rm", library_name.c_str(), NULL);
+                    exit(0);
+                }
             }
         }
 
@@ -122,7 +169,17 @@ namespace gpu {
                 std::cout << "CPU info." << std::endl;
                 std::cout << "  Command Line    : " << temp_stream.str() << std::endl;
             }
-            int error = system(temp_stream.str().c_str());
+
+            auto pid = fork();
+            int error = 0;
+            if (pid == 0) {
+                auto args = split_string(temp_stream.str());
+                auto c_args = to_c_str(args);
+                error = execvp(c_args[0], c_args.data());
+                std::cerr << "Child process launch failed." << std::endl;
+                exit(error);
+            }
+            waitpid(pid, &error, 0);
             if (error) {
                 std::cerr << "Failed to compile cpu kernel. Check source code in "
                           << filename << std::endl;
@@ -130,10 +187,10 @@ namespace gpu {
             }
 
 #ifdef NDEBUG
-            temp_stream.str(std::string());
-            temp_stream.clear();
-            temp_stream << "rm " << filename;
-            system(temp_stream.str().c_str());
+            if (fork() == 0) {
+                execlp("rm", "rm", filename.c_str(), NULL);
+                exit(0);
+            }
 #endif
 
             lib_handle = dlopen(library_name.c_str(), RTLD_LAZY);
@@ -159,10 +216,10 @@ namespace gpu {
 ///  @params[in] num_rays      Number of rays to trace.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        std::function<void(void)>  create_kernel_call(const std::string kernel_name,
-                                                      graph::input_nodes<T, SAFE_MATH> inputs,
-                                                      graph::output_nodes<T, SAFE_MATH> outputs,
-                                                      const size_t num_rays) {
+        std::function<void(void)> create_kernel_call(const std::string kernel_name,
+                                                     graph::input_nodes<T, SAFE_MATH> inputs,
+                                                     graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     const size_t num_rays) {
             void *kernel = dlsym(lib_handle, kernel_name.c_str());
             if (!kernel) {
                 std::cerr << "Failed to load function. " << kernel_name
@@ -225,7 +282,13 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Hold the current thread until the command buffer has completed.
 //------------------------------------------------------------------------------
-        void wait() {}
+        void wait() {
+            for (auto &item : host_buffers) {
+                memcpy(item.second.data(),
+                       kernel_arguments[item.first].data(),
+                       sizeof(T)*kernel_arguments[item.first].size());
+            }
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
@@ -351,12 +414,48 @@ namespace gpu {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        args[std::string(\"" << jit::to_string('v', in.get());
-                source_buffer << "\")][i] = " << registers[a.get()] << ";" << std::endl;
+                source_buffer << "\")][i] = ";
+                if constexpr (SAFE_MATH) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " (";
+                        source_buffer << "isnan(real(" << registers[a.get()]
+                                      << ")) ? 0.0 : real(" << registers[a.get()]
+                                      << "), ";
+                        source_buffer << "isnan(imag(" << registers[a.get()]
+                                      << ")) ? 0.0 : imag(" << registers[a.get()]
+                                      << "));" << std::endl;
+                    } else {
+                        source_buffer << "isnan(" << registers[a.get()]
+                                      << ") ? 0.0 : " << registers[a.get()]
+                                      << ";" << std::endl;
+                    }
+                } else {
+                    source_buffer << registers[a.get()] << ";" << std::endl;
+                }
             }
             for (auto &out : outputs) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        args[std::string(\"" << jit::to_string('o', out.get());
-                source_buffer << "\")][i] = " << registers[a.get()] << ";" << std::endl;
+                source_buffer << "\")][i] = ";
+                if constexpr (SAFE_MATH) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " (";
+                        source_buffer << "isnan(real(" << registers[a.get()]
+                                      << ")) ? 0.0 : real(" << registers[a.get()]
+                                      << "), ";
+                        source_buffer << "isnan(imag(" << registers[a.get()]
+                                      << ")) ? 0.0 : imag(" << registers[a.get()]
+                                      << "));" << std::endl;
+                    } else {
+                        source_buffer << "isnan(" << registers[a.get()]
+                                      << ") ? 0.0 : " << registers[a.get()]
+                                      << ";" << std::endl;
+                    }
+                } else {
+                    source_buffer << registers[a.get()] << ";" << std::endl;
+                }
             }
                     
             source_buffer << "    }" << std::endl;
@@ -375,10 +474,18 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Get the buffer for a node.
 ///
+///  GPU contexts have the concept of a host side and device side buffer which
+///  the CPU doesn't. Create a second map of host buffers and reference the
+///  memory pointer from that. This allows one thread to run the kernel while a
+///  different thread can use the results.
+///
 ///  @params[in] node Node to get the buffer for.
 //------------------------------------------------------------------------------
         T *get_buffer(graph::shared_leaf<T, SAFE_MATH> &node) {
-            return kernel_arguments[node.get()].data();
+            if (!host_buffers.contains(node.get())) {
+                host_buffers[node.get()] = kernel_arguments[node.get()];
+            }
+            return host_buffers[node.get()].data();
         }
     };
 }

@@ -93,7 +93,7 @@ namespace equilibrium {
 ///  @params[in] x X position.
 ///  @params[in] y Y position.
 ///  @params[in] z Z position.
-///  @returns The electron expression.
+///  @returns The electron density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
@@ -104,7 +104,10 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @params[in] index The species index.
-///  @returns The electron expression.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns The ion density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         get_ion_density(const size_t index,
@@ -118,7 +121,7 @@ namespace equilibrium {
 ///  @params[in] x X position.
 ///  @params[in] y Y position.
 ///  @params[in] z Z position.
-///  @returns The electron expression.
+///  @returns The electron temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
@@ -129,7 +132,10 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @params[in] index The species index.
-///  @returns The electron expression.
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+///  @returns The ion temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         get_ion_temperature(const size_t index,
@@ -149,6 +155,102 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
                            graph::shared_leaf<T, SAFE_MATH> y,
                            graph::shared_leaf<T, SAFE_MATH> z) = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the x1 direction.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The contravaraiant basis vector in x1.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup1(graph::shared_leaf<T, SAFE_MATH> x1,
+                  graph::shared_leaf<T, SAFE_MATH> x2,
+                  graph::shared_leaf<T, SAFE_MATH> x3) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(one, zero, zero);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the x2 direction.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The contravaraiant basis vector in x2.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup2(graph::shared_leaf<T, SAFE_MATH> x1,
+                  graph::shared_leaf<T, SAFE_MATH> x2,
+                  graph::shared_leaf<T, SAFE_MATH> x3) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(zero, one, zero);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the x3 direction.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The contravaraiant basis vector in x3.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup3(graph::shared_leaf<T, SAFE_MATH> x1,
+                  graph::shared_leaf<T, SAFE_MATH> x2,
+                  graph::shared_leaf<T, SAFE_MATH> x3) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            return graph::vector(zero, zero, one);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the x position.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The x position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_x(graph::shared_leaf<T, SAFE_MATH> x1,
+              graph::shared_leaf<T, SAFE_MATH> x2,
+              graph::shared_leaf<T, SAFE_MATH> x3) {
+            return x1;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the y position.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The y position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_y(graph::shared_leaf<T, SAFE_MATH> x1,
+              graph::shared_leaf<T, SAFE_MATH> x2,
+              graph::shared_leaf<T, SAFE_MATH> x3) {
+            return x2;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the z position.
+///
+///  @params[in] x1 X1 posiiton.
+///  @params[in] x2 X2 position.
+///  @params[in] x3 X3 position.
+///  @returns The z position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_z(graph::shared_leaf<T, SAFE_MATH> x1,
+              graph::shared_leaf<T, SAFE_MATH> x2,
+              graph::shared_leaf<T, SAFE_MATH> x3) {
+            return x3;
+        }
     };
 
 ///  Convenience type alias for shared equilibria.
@@ -1379,6 +1481,800 @@ namespace equilibrium {
                                                      c10, c11, c12, c13,
                                                      c20, c21, c22, c23,
                                                      c30, c31, c32, c33);
+    }
+
+//******************************************************************************
+//  3D VMEC equilibrium.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief 3D VMEC equilibrium.
+///
+///  This takes a Cublic spline interpolations of the vmec quantities.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class vmec final : public generic<T, SAFE_MATH> {
+    private:
+///  Minimum s on the half grid.
+        graph::shared_leaf<T, SAFE_MATH> sminh;
+///  Minimum s on the full grid.
+        graph::shared_leaf<T, SAFE_MATH> sminf;
+///  Change in s grid.
+        graph::shared_leaf<T, SAFE_MATH> ds;
+///  Sign of the jacobian.
+        graph::shared_leaf<T, SAFE_MATH> signj;
+
+//  Poloidal flux coefficients.
+///  Poloidal flux c0.
+        const backend::buffer<T> chi_c0;
+///  Poloidal flux c1.
+        const backend::buffer<T> chi_c1;
+///  Poloidal flux c2.
+        const backend::buffer<T> chi_c2;
+///  Poloidal flux c3.
+        const backend::buffer<T> chi_c3;
+
+//  Toroidal flux coefficients.
+        graph::shared_leaf<T, SAFE_MATH> dphi;
+
+//  Radial coefficients.
+///  rmnc c0.
+        const std::vector<backend::buffer<T>> rmnc_c0;
+///  rmnc c1.
+        const std::vector<backend::buffer<T>> rmnc_c1;
+///  rmnc c2.
+        const std::vector<backend::buffer<T>> rmnc_c2;
+///  rmnc c3.
+        const std::vector<backend::buffer<T>> rmnc_c3;
+
+//  Vertical coefficients.
+///  zmns c0.
+        const std::vector<backend::buffer<T>> zmns_c0;
+///  zmns c1.
+        const std::vector<backend::buffer<T>> zmns_c1;
+///  zmns c2.
+        const std::vector<backend::buffer<T>> zmns_c2;
+///  zmns c3.
+        const std::vector<backend::buffer<T>> zmns_c3;
+        
+//  Lambda coefficients.
+///  lmns c0.
+        const std::vector<backend::buffer<T>> lmns_c0;
+///  lmns c1.
+        const std::vector<backend::buffer<T>> lmns_c1;
+///  lmns c2.
+        const std::vector<backend::buffer<T>> lmns_c2;
+///  lmns c3.
+        const std::vector<backend::buffer<T>> lmns_c3;
+
+///  Poloidal mode numbers.
+        const backend::buffer<T> xm;
+///  Toroidal mode numbers.
+        const backend::buffer<T> xn;
+
+//  Cached values.
+///  s position cache.
+        graph::shared_leaf<T, SAFE_MATH> s_cache;
+///  u position cache.
+        graph::shared_leaf<T, SAFE_MATH> u_cache;
+///  v position cache.
+        graph::shared_leaf<T, SAFE_MATH> v_cache;
+///  x position cache.
+        graph::shared_leaf<T, SAFE_MATH> x_cache;
+///  y position cache.
+        graph::shared_leaf<T, SAFE_MATH> y_cache;
+///  z position cache.
+        graph::shared_leaf<T, SAFE_MATH> z_cache;
+
+///  Contravaraint s basis cache.
+        graph::shared_vector<T, SAFE_MATH> esups_cache;
+///  Contravaraint u basis cache.
+        graph::shared_vector<T, SAFE_MATH> esupu_cache;
+///  Contravaraint v basis cache.
+        graph::shared_vector<T, SAFE_MATH> esupv_cache;
+ 
+///  Contravaraint v basis cache.
+        graph::shared_vector<T, SAFE_MATH> bvec_cache;
+
+//------------------------------------------------------------------------------
+///  @brief Get the covariant basis vectors in the s direction.
+///
+///  @params[in] r Radial posirtion.
+///  @params[in] z Vertical position.
+///  @returns The covariant basis vectors.
+//------------------------------------------------------------------------------
+        graph::shared_vector<T, SAFE_MATH>
+        get_esubs(graph::shared_leaf<T, SAFE_MATH> r,
+                  graph::shared_leaf<T, SAFE_MATH> z) {
+            auto cosv = graph::cos(v_cache);
+            auto sinv = graph::sin(v_cache);
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+
+            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
+                                   graph::vector(sinv, cosv,      zero),
+                                   graph::vector(zero, zero,      one ));
+            return m->dot(graph::vector(r->df(s_cache),
+                                        zero,
+                                        z->df(s_cache)));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the covariant basis vectors in the u direction.
+///
+///  @params[in] r Radial posirtion.
+///  @params[in] z Vertical position.
+///  @returns The covariant basis vectors.
+//------------------------------------------------------------------------------
+        graph::shared_vector<T, SAFE_MATH>
+        get_esubu(graph::shared_leaf<T, SAFE_MATH> r,
+                  graph::shared_leaf<T, SAFE_MATH> z) {
+            auto cosv = graph::cos(v_cache);
+            auto sinv = graph::sin(v_cache);
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+                        
+            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
+                                   graph::vector(sinv, cosv,      zero),
+                                   graph::vector(zero, zero,      one ));
+            return m->dot(graph::vector(r->df(u_cache),
+                                        zero,
+                                        z->df(u_cache)));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the covariant basis vectors in the u direction.
+///
+///  @params[in] r Radial posirtion.
+///  @params[in] z Vertical position.
+///  @returns The covariant basis vectors.
+//------------------------------------------------------------------------------
+        graph::shared_vector<T, SAFE_MATH>
+        get_esubv(graph::shared_leaf<T, SAFE_MATH> r,
+                  graph::shared_leaf<T, SAFE_MATH> z) {
+            auto cosv = graph::cos(v_cache);
+            auto sinv = graph::sin(v_cache);
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto zero = graph::zero<T, SAFE_MATH> ();
+
+            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
+                                   graph::vector(sinv, cosv,      zero),
+                                   graph::vector(zero, zero,      one ));
+            return m->dot(graph::vector(r->df(v_cache),
+                                        r,
+                                        z->df(v_cache)));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the Jacobian.
+///
+///  J = e_s.e_u✕e_v
+///
+///  @params[in] esub_s Covariant s basis.
+///  @params[in] esub_u Covariant u basis.
+///  @params[in] esub_v Covariant v basis.
+///  @returns The jacobian.
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_jacobian(graph::shared_vector<T, SAFE_MATH> esub_s,
+                     graph::shared_vector<T, SAFE_MATH> esub_u,
+                     graph::shared_vector<T, SAFE_MATH> esub_v) {
+            return esub_s->dot(esub_u->cross(esub_v));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the poloidal flux.
+///
+///  @params[in] s_norm Normalized S position.
+///  @returns χ(s,u,v)
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_chi(graph::shared_leaf<T, SAFE_MATH> s_norm) {
+            auto c0_temp = graph::piecewise_1D(chi_c0, s_norm);
+            auto c1_temp = graph::piecewise_1D(chi_c1, s_norm);
+            auto c2_temp = graph::piecewise_1D(chi_c2, s_norm);
+            auto c3_temp = graph::piecewise_1D(chi_c3, s_norm);
+
+            return c0_temp +
+                   c1_temp*s_norm +
+                   c2_temp*s_norm*s_norm +
+                   c3_temp*s_norm*s_norm*s_norm;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the toroidal flux.
+///
+///  @params[in] s S position.
+///  @returns φ(s,u,v)
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_phi(graph::shared_leaf<T, SAFE_MATH> s) {
+            return signj*dphi*s;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Set cache values.
+///
+///  Sets the cached values if s, u, and v do not match.
+///
+///  @params[in] s S position.
+///  @params[in] u U position.
+///  @params[in] v V position.
+//------------------------------------------------------------------------------
+        void set_cache(graph::shared_leaf<T, SAFE_MATH> s,
+                       graph::shared_leaf<T, SAFE_MATH> u,
+                       graph::shared_leaf<T, SAFE_MATH> v) {
+            if (!s->is_match(s_cache) ||
+                !u->is_match(u_cache) ||
+                !v->is_match(v_cache)) {
+                s_cache = s;
+                u_cache = u;
+                v_cache = v;
+                
+                auto s_norm_f = (s - sminf)/ds;
+                auto s_norm_h = (s - sminh)/ds;
+
+                auto zero = graph::zero<T, SAFE_MATH> ();
+                auto r = zero;
+                auto z = zero;
+                auto l = zero;
+
+                for (size_t i = 0, ie = xm.size(); i < ie; i++) {
+                    auto rmnc_c0_temp = graph::piecewise_1D(rmnc_c0[i], s_norm_f);
+                    auto rmnc_c1_temp = graph::piecewise_1D(rmnc_c1[i], s_norm_f);
+                    auto rmnc_c2_temp = graph::piecewise_1D(rmnc_c2[i], s_norm_f);
+                    auto rmnc_c3_temp = graph::piecewise_1D(rmnc_c3[i], s_norm_f);
+
+                    auto zmns_c0_temp = graph::piecewise_1D(zmns_c0[i], s_norm_f);
+                    auto zmns_c1_temp = graph::piecewise_1D(zmns_c1[i], s_norm_f);
+                    auto zmns_c2_temp = graph::piecewise_1D(zmns_c2[i], s_norm_f);
+                    auto zmns_c3_temp = graph::piecewise_1D(zmns_c3[i], s_norm_f);
+
+                    auto lmns_c0_temp = graph::piecewise_1D(lmns_c0[i], s_norm_h);
+                    auto lmns_c1_temp = graph::piecewise_1D(lmns_c1[i], s_norm_h);
+                    auto lmns_c2_temp = graph::piecewise_1D(lmns_c2[i], s_norm_h);
+                    auto lmns_c3_temp = graph::piecewise_1D(lmns_c3[i], s_norm_h);
+
+                    auto rmnc = rmnc_c0_temp
+                              + rmnc_c1_temp*s_norm_f
+                              + rmnc_c2_temp*s_norm_f*s_norm_f
+                              + rmnc_c3_temp*s_norm_f*s_norm_f*s_norm_f;
+                    auto zmns = zmns_c0_temp
+                              + zmns_c1_temp*s_norm_f
+                              + zmns_c2_temp*s_norm_f*s_norm_f
+                              + zmns_c3_temp*s_norm_f*s_norm_f*s_norm_f;
+                    auto lmns = lmns_c0_temp
+                              + lmns_c1_temp*s_norm_h
+                              + lmns_c2_temp*s_norm_h*s_norm_h
+                              + lmns_c3_temp*s_norm_h*s_norm_h*s_norm_h;
+
+                    auto m = graph::constant<T, SAFE_MATH> (xm[i]);
+                    auto n = graph::constant<T, SAFE_MATH> (xn[i]);
+
+                    auto sinmn = graph::sin(m*u - n*v);
+
+                    r = r + rmnc*graph::cos(m*u - n*v);
+                    z = z + zmns*sinmn;
+                    l = l + lmns*sinmn;
+                }
+
+                x_cache = r*graph::cos(v);
+                y_cache = r*graph::sin(v);
+                z_cache = z;
+
+                auto esubs = get_esubs(r, z);
+                auto esubu = get_esubu(r, z);
+                auto esubv = get_esubv(r, z);
+
+                auto jacobian = get_jacobian(esubs, esubu, esubv);
+
+                esups_cache = esubu->cross(esubv)/jacobian;
+                esupu_cache = esubv->cross(esubs)/jacobian;
+                esupv_cache = esubs->cross(esubu)/jacobian;
+
+                auto one = graph::one<T, SAFE_MATH> ();
+                auto phip = get_phi(s)->df(s);
+                auto jbsupu = get_chi(s_norm_f)->df(s) - phip*l->df(v);
+                auto jbsupv = phip*(one + l->df(u));
+                bvec_cache = (jbsupu*esubu + jbsupv*esubv)/jacobian;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the profile function.
+///
+///  @params[in] s S posiiton.
+///  @returns The profile function.
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        get_profile(graph::shared_leaf<T, SAFE_MATH> s) {
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto alpha = graph::constant<T, SAFE_MATH> (static_cast<T> (1.5));
+            auto beta = graph::two<T, SAFE_MATH> ();
+            return graph::pow((one - graph::pow(graph::sqrt(s*s), alpha)), beta);
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a EFIT equilibrium.
+///
+///  @params[in] sminh   Minimum s on the half grid.
+///  @params[in] sminf   Minimum s on the full grid.
+///  @params[in] ds      Change in s grid.
+///  @params[in] dphi    Change in torodial flux.
+///  @params[in] signj   Sign of the jacobian.
+///  @params[in] chi_c0  Poloidal flux c0.
+///  @params[in] chi_c1  Poloidal flux c1.
+///  @params[in] chi_c2  Poloidal flux c2.
+///  @params[in] chi_c3  Poloidal flux c3.
+///  @params[in] rmnc_c0 rmnc c0.
+///  @params[in] rmnc_c1 rmnc c1.
+///  @params[in] rmnc_c2 rmnc c2.
+///  @params[in] rmnc_c3 rmnc c3.
+///  @params[in] zmns_c0 zmns c0.
+///  @params[in] zmns_c1 zmns c1.
+///  @params[in] zmns_c2 zmns c2.
+///  @params[in] zmns_c3 zmns c3.
+///  @params[in] lmns_c0 lmns c0.
+///  @params[in] lmns_c1 lmns c1.
+///  @params[in] lmns_c2 lmns c2.
+///  @params[in] lmns_c3 lmns c3.
+///  @params[in] xm      Poloidal mode numbers.
+///  @params[in] xn      Toroidal mode numbers.
+//------------------------------------------------------------------------------
+        vmec(graph::shared_leaf<T, SAFE_MATH> sminh,
+             graph::shared_leaf<T, SAFE_MATH> sminf,
+             graph::shared_leaf<T, SAFE_MATH> ds,
+             graph::shared_leaf<T, SAFE_MATH> dphi,
+             graph::shared_leaf<T, SAFE_MATH> signj,
+             const backend::buffer<T> chi_c0,
+             const backend::buffer<T> chi_c1,
+             const backend::buffer<T> chi_c2,
+             const backend::buffer<T> chi_c3,
+             const std::vector<backend::buffer<T>> rmnc_c0,
+             const std::vector<backend::buffer<T>> rmnc_c1,
+             const std::vector<backend::buffer<T>> rmnc_c2,
+             const std::vector<backend::buffer<T>> rmnc_c3,
+             const std::vector<backend::buffer<T>> zmns_c0,
+             const std::vector<backend::buffer<T>> zmns_c1,
+             const std::vector<backend::buffer<T>> zmns_c2,
+             const std::vector<backend::buffer<T>> zmns_c3,
+             const std::vector<backend::buffer<T>> lmns_c0,
+             const std::vector<backend::buffer<T>> lmns_c1,
+             const std::vector<backend::buffer<T>> lmns_c2,
+             const std::vector<backend::buffer<T>> lmns_c3,
+             const backend::buffer<T> xm,
+             const backend::buffer<T> xn) :
+        generic<T, SAFE_MATH> ({3.34449469E-27} ,{1}),
+        sminh(sminh), sminf(sminf), ds(ds), dphi(dphi), signj(signj),
+        chi_c0(chi_c0), chi_c1(chi_c1), chi_c2(chi_c2), chi_c3(chi_c3),
+        rmnc_c0(rmnc_c0), rmnc_c1(rmnc_c1), rmnc_c2(rmnc_c2), rmnc_c3(rmnc_c3),
+        zmns_c0(zmns_c0), zmns_c1(zmns_c1), zmns_c2(zmns_c2), zmns_c3(zmns_c3),
+        lmns_c0(lmns_c0), lmns_c1(lmns_c1), lmns_c2(lmns_c2), lmns_c3(lmns_c3),
+        xm(xm), xn(xn) {
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            s_cache = zero;
+            u_cache = zero;
+            v_cache = zero;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the S direction.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The contravaraiant basis vector in s.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup1(graph::shared_leaf<T, SAFE_MATH> s,
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return esups_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the U direction.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The contravaraiant basis vector in u.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup2(graph::shared_leaf<T, SAFE_MATH> s,
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return esupu_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the contravariant basis vector in the V direction.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The contravaraiant basis vector in v.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_esup3(graph::shared_leaf<T, SAFE_MATH> s,
+                  graph::shared_leaf<T, SAFE_MATH> u,
+                  graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return esupv_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron density.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The electron density expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> s,
+                             graph::shared_leaf<T, SAFE_MATH> u,
+                             graph::shared_leaf<T, SAFE_MATH> v) {
+            auto ne_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (1.0E19));
+            return ne_scale*get_profile(s);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion density.
+///
+///  @params[in] index The species index.
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The ion density expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> s,
+                        graph::shared_leaf<T, SAFE_MATH> u,
+                        graph::shared_leaf<T, SAFE_MATH> v) {
+            return get_electron_density(s, u, v);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron temperature.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The electron temperature expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> s,
+                                 graph::shared_leaf<T, SAFE_MATH> u,
+                                 graph::shared_leaf<T, SAFE_MATH> v) {
+            auto te_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (1000.0));
+            return te_scale*get_profile(s);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion temperature.
+///
+///  @params[in] index The species index.
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The ion temperature expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> s,
+                            graph::shared_leaf<T, SAFE_MATH> u,
+                            graph::shared_leaf<T, SAFE_MATH> v) {
+            return get_electron_temperature(s, u, v);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the magnetic field.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns Magnetic field expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> s,
+                           graph::shared_leaf<T, SAFE_MATH> u,
+                           graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return bvec_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the x position.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The x position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_x(graph::shared_leaf<T, SAFE_MATH> s,
+              graph::shared_leaf<T, SAFE_MATH> u,
+              graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return x_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the y position.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The y position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_y(graph::shared_leaf<T, SAFE_MATH> s,
+              graph::shared_leaf<T, SAFE_MATH> u,
+              graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return y_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the z position.
+///
+///  @params[in] s S posiiton.
+///  @params[in] u U position.
+///  @params[in] v V position.
+///  @returns The z position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_z(graph::shared_leaf<T, SAFE_MATH> s,
+              graph::shared_leaf<T, SAFE_MATH> u,
+              graph::shared_leaf<T, SAFE_MATH> v) {
+            set_cache(s, u, v);
+            return z_cache;
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build an VMEC equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] spline_file File name of contains the spline functions.
+///  @returns A constructed VMEC equilibrium.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_vmec(const std::string spline_file) {
+        int ncid;
+        sync.lock();
+        nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);
+
+//  Load scalar quantities.
+        int varid;
+
+        double sminf_value;
+        nc_inq_varid(ncid, "sminf", &varid);
+        nc_get_var(ncid, varid, &sminf_value);
+
+        double sminh_value;
+        nc_inq_varid(ncid, "sminh", &varid);
+        nc_get_var(ncid, varid, &sminh_value);
+
+        double ds_value;
+        nc_inq_varid(ncid, "ds", &varid);
+        nc_get_var(ncid, varid, &ds_value);
+
+        double dphi_value;
+        nc_inq_varid(ncid, "dphi", &varid);
+        nc_get_var(ncid, varid, &dphi_value);
+
+        double signj_value;
+        nc_inq_varid(ncid, "signj", &varid);
+        nc_get_var(ncid, varid, &signj_value);
+
+//  Load 1D quantities.
+        int dimid;
+
+        size_t numsf;
+        nc_inq_dimid(ncid, "numsf", &dimid);
+        nc_inq_dimlen(ncid, dimid, &numsf);
+
+        std::vector<double> chi_c0_buffer(numsf);
+        std::vector<double> chi_c1_buffer(numsf);
+        std::vector<double> chi_c2_buffer(numsf);
+        std::vector<double> chi_c3_buffer(numsf);
+
+        nc_inq_varid(ncid, "chi_c0", &varid);
+        nc_get_var(ncid, varid, chi_c0_buffer.data());
+        nc_inq_varid(ncid, "chi_c1", &varid);
+        nc_get_var(ncid, varid, chi_c1_buffer.data());
+        nc_inq_varid(ncid, "chi_c2", &varid);
+        nc_get_var(ncid, varid, chi_c2_buffer.data());
+        nc_inq_varid(ncid, "chi_c3", &varid);
+        nc_get_var(ncid, varid, chi_c3_buffer.data());
+
+//  Load 2D quantities.
+        size_t numsh;
+        nc_inq_dimid(ncid, "numsh", &dimid);
+        nc_inq_dimlen(ncid, dimid, &numsh);
+
+        size_t nummn;
+        nc_inq_dimid(ncid, "nummn", &dimid);
+        nc_inq_dimlen(ncid, dimid, &nummn);
+
+        std::vector<std::vector<double>> rmnc_c0_buffer(nummn, std::vector<double> (numsf));
+        std::vector<std::vector<double>> rmnc_c1_buffer(nummn, std::vector<double> (numsf));
+        std::vector<std::vector<double>> rmnc_c2_buffer(nummn, std::vector<double> (numsf));
+        std::vector<std::vector<double>> rmnc_c3_buffer(nummn, std::vector<double> (numsf));
+
+        nc_inq_varid(ncid, "rmnc_c0", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsf};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        rmnc_c0_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "rmnc_c1", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsf};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        rmnc_c1_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "rmnc_c2", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsf};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        rmnc_c2_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "rmnc_c3", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsf};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        rmnc_c3_buffer[i].data());
+        }
+
+        std::vector<std::vector<double>> zmns_c0_buffer(nummn, std::vector<double> (numsf));
+        std::vector<std::vector<double>> zmns_c1_buffer(nummn, std::vector<double> (numsf));
+        std::vector<std::vector<double>> zmns_c2_buffer(nummn, std::vector<double> (numsf));
+        std::vector<std::vector<double>> zmns_c3_buffer(nummn, std::vector<double> (numsf));
+
+        nc_inq_varid(ncid, "zmns_c0", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsf};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        zmns_c0_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "zmns_c1", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsf};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        zmns_c1_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "zmns_c2", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsf};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        zmns_c2_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "zmns_c3", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsf};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        zmns_c3_buffer[i].data());
+        }
+
+        std::vector<std::vector<double>> lmns_c0_buffer(nummn, std::vector<double> (numsh));
+        std::vector<std::vector<double>> lmns_c1_buffer(nummn, std::vector<double> (numsh));
+        std::vector<std::vector<double>> lmns_c2_buffer(nummn, std::vector<double> (numsh));
+        std::vector<std::vector<double>> lmns_c3_buffer(nummn, std::vector<double> (numsh));
+
+        nc_inq_varid(ncid, "lmns_c0", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsh};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        lmns_c0_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "lmns_c1", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsh};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        lmns_c1_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "lmns_c2", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsh};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        lmns_c2_buffer[i].data());
+        }
+        nc_inq_varid(ncid, "lmns_c3", &varid);
+        for (size_t i = 0; i < nummn; i++) {
+            const array<size_t, 2> start = {i, 0};
+            const array<size_t, 2> count = {1, numsh};
+            nc_get_vara(ncid, varid, start.data(), count.data(),
+                        lmns_c3_buffer[i].data());
+        }
+
+        std::vector<double> xm_buffer(nummn);
+        nc_inq_varid(ncid, "xm", &varid);
+        nc_get_var(ncid, varid, xm_buffer.data());
+
+        std::vector<double> xn_buffer(nummn);
+        nc_inq_varid(ncid, "xn", &varid);
+        nc_get_var(ncid, varid, xn_buffer.data());
+
+        nc_close(ncid);
+        sync.unlock();
+
+        auto sminf = graph::constant<T, SAFE_MATH> (static_cast<T> (sminf_value));
+        auto sminh = graph::constant<T, SAFE_MATH> (static_cast<T> (sminh_value));
+        auto ds = graph::constant<T, SAFE_MATH> (static_cast<T> (ds_value));
+        auto dphi = graph::constant<T, SAFE_MATH> (static_cast<T> (dphi_value));
+        auto signj = graph::constant<T, SAFE_MATH> (static_cast<T> (signj_value));
+
+        const backend::buffer<T> chi_c0(std::vector<T> (chi_c0_buffer.begin(), chi_c0_buffer.end()));
+        const backend::buffer<T> chi_c1(std::vector<T> (chi_c1_buffer.begin(), chi_c1_buffer.end()));
+        const backend::buffer<T> chi_c2(std::vector<T> (chi_c2_buffer.begin(), chi_c2_buffer.end()));
+        const backend::buffer<T> chi_c3(std::vector<T> (chi_c3_buffer.begin(), chi_c3_buffer.end()));
+
+        std::vector<backend::buffer<T>> rmnc_c0(nummn);
+        std::vector<backend::buffer<T>> rmnc_c1(nummn);
+        std::vector<backend::buffer<T>> rmnc_c2(nummn);
+        std::vector<backend::buffer<T>> rmnc_c3(nummn);
+
+        std::vector<backend::buffer<T>> zmns_c0(nummn);
+        std::vector<backend::buffer<T>> zmns_c1(nummn);
+        std::vector<backend::buffer<T>> zmns_c2(nummn);
+        std::vector<backend::buffer<T>> zmns_c3(nummn);
+
+        std::vector<backend::buffer<T>> lmns_c0(nummn);
+        std::vector<backend::buffer<T>> lmns_c1(nummn);
+        std::vector<backend::buffer<T>> lmns_c2(nummn);
+        std::vector<backend::buffer<T>> lmns_c3(nummn);
+        
+        for (size_t i = 0; i < nummn; i++) {
+            rmnc_c0[i] = backend::buffer(std::vector<T> (rmnc_c0_buffer[i].begin(), rmnc_c0_buffer[i].end()));
+            rmnc_c1[i] = backend::buffer(std::vector<T> (rmnc_c1_buffer[i].begin(), rmnc_c1_buffer[i].end()));
+            rmnc_c2[i] = backend::buffer(std::vector<T> (rmnc_c2_buffer[i].begin(), rmnc_c2_buffer[i].end()));
+            rmnc_c3[i] = backend::buffer(std::vector<T> (rmnc_c3_buffer[i].begin(), rmnc_c3_buffer[i].end()));
+
+            zmns_c0[i] = backend::buffer(std::vector<T> (zmns_c0_buffer[i].begin(), zmns_c0_buffer[i].end()));
+            zmns_c1[i] = backend::buffer(std::vector<T> (zmns_c1_buffer[i].begin(), zmns_c1_buffer[i].end()));
+            zmns_c2[i] = backend::buffer(std::vector<T> (zmns_c2_buffer[i].begin(), zmns_c2_buffer[i].end()));
+            zmns_c3[i] = backend::buffer(std::vector<T> (zmns_c3_buffer[i].begin(), zmns_c3_buffer[i].end()));
+
+            lmns_c0[i] = backend::buffer(std::vector<T> (lmns_c0_buffer[i].begin(), lmns_c0_buffer[i].end()));
+            lmns_c1[i] = backend::buffer(std::vector<T> (lmns_c1_buffer[i].begin(), lmns_c1_buffer[i].end()));
+            lmns_c2[i] = backend::buffer(std::vector<T> (lmns_c2_buffer[i].begin(), lmns_c2_buffer[i].end()));
+            lmns_c3[i] = backend::buffer(std::vector<T> (lmns_c3_buffer[i].begin(), lmns_c3_buffer[i].end()));
+        }
+
+        const backend::buffer<T> xm(std::vector<T> (xm_buffer.begin(), xm_buffer.end()));
+        const backend::buffer<T> xn(std::vector<T> (xn_buffer.begin(), xn_buffer.end()));
+
+        return std::make_shared<vmec<T, SAFE_MATH>> (sminh, sminf, ds, dphi, signj,
+                                                     chi_c0, chi_c1, chi_c2, chi_c3,
+                                                     rmnc_c0, rmnc_c1, rmnc_c2, rmnc_c3,
+                                                     zmns_c0, zmns_c1, zmns_c2, zmns_c3,
+                                                     lmns_c0, lmns_c1, lmns_c2, lmns_c3,
+                                                     xm, xn);
     }
 }
 

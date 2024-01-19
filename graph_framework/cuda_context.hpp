@@ -209,7 +209,7 @@ namespace gpu {
                 "--include-path=" CUDA_INCLUDE,
                 "--include-path=" HEADER_DIR,
                 "--extra-device-vectorization",
-		"--device-as-default-execution-space"
+		        "--device-as-default-execution-space"
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
@@ -499,15 +499,49 @@ namespace gpu {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('v',  in.get())
-                              << "[index] = " << registers[a.get()] << ";"
-                              << std::endl;
+                              << "[index] = ";
+                if constexpr (SAFE_MATH) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " (";
+                        source_buffer << "isnan(real(" << registers[a.get()]
+                                      << ")) ? 0.0 : real(" << registers[a.get()]
+                                      << "), ";
+                        source_buffer << "isnan(imag(" << registers[a.get()]
+                                      << ")) ? 0.0 : imag(" << registers[a.get()]
+                                      << "));" << std::endl;
+                    } else {
+                        source_buffer << "isnan(" << registers[a.get()]
+                                      << ") ? 0.0 : " << registers[a.get()]
+                                      << ";" << std::endl;
+                    }
+                } else {
+                    source_buffer << registers[a.get()] << ";" << std::endl;
+                }
             }
 
             for (auto &out : outputs) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('o',  out.get())
-                              << "[index] = " << registers[a.get()] << ";"
-                              << std::endl;
+                              << "[index] = ";
+                if constexpr (SAFE_MATH) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " (";
+                        source_buffer << "isnan(real(" << registers[a.get()]
+                                      << ")) ? 0.0 : real(" << registers[a.get()]
+                                      << "), ";
+                        source_buffer << "isnan(imag(" << registers[a.get()]
+                                      << ")) ? 0.0 : imag(" << registers[a.get()]
+                                      << "));" << std::endl;
+                    } else {
+                        source_buffer << "isnan(" << registers[a.get()]
+                                      << ") ? 0.0 : " << registers[a.get()]
+                                      << ";" << std::endl;
+                    }
+                } else {
+                    source_buffer << registers[a.get()] << ";" << std::endl;
+                }
             }
 
             source_buffer << "    }" << std::endl << "}" << std::endl;

@@ -8,7 +8,7 @@
 #ifndef arithmetic_h
 #define arithmetic_h
 
-#include "node.hpp"
+#include "trigonometry.hpp"
 
 namespace graph {
 //******************************************************************************
@@ -263,9 +263,13 @@ namespace graph {
         df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
                 return one<T, SAFE_MATH> ();
-            } else {
-                return this->left->df(x) + this->right->df(x);
             }
+
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = this->left->df(x) + this->right->df(x);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -350,8 +354,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return this->left->remove_pseudo() +
-                   this->right->remove_pseudo();
+            if (this->has_pseudo()) {
+                return this->left->remove_pseudo() +
+                       this->right->remove_pseudo();
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -523,6 +530,8 @@ namespace graph {
                 return this->left;
             } else if (l.get() && r.get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
+            } else if (r.get() && r->evaluate().is_negative()) {
+                return this->left + none<T, SAFE_MATH> ()*this->right;
             }
 
             auto pl1 = piecewise_1D_cast(this->left);
@@ -556,10 +565,13 @@ namespace graph {
 
 //  Assume constants are on the left.
 //  v1 - -1*v2 -> v1 + v2
+//  v1 - -c*v2 -> v1 + c*v2
             if (rm.get()) {
                 auto rmc = constant_cast(rm->get_left());
                 if (rmc.get() && rmc->evaluate().is_none()) {
                     return this->left + rm->get_right();
+                } else if (rmc.get() && rmc->evaluate().is_negative()) {
+                    return this->left + (none<T, SAFE_MATH> ()*rm->get_left())*rm->get_right();
                 }
             }
 
@@ -610,20 +622,42 @@ namespace graph {
                 if (lmrm.get()) {
 //  c*(d*b) - a*b -> (c*d - a)*b
                     if (rm->get_right()->is_match(lmrm->get_right())) {
-                        return (lm->get_left()*lmrm->get_left() - lm->get_left())*rm->get_right();
+                        return (lm->get_left()*lmrm->get_left() - rm->get_left())*rm->get_right();
                     }
 //  c*(b*d) - a*b -> (c*d - a)*b
                     if (rm->get_right()->is_match(lmrm->get_left())) {
-                        return (lm->get_left()*lmrm->get_right() - lm->get_left())*rm->get_right();
+                        return (lm->get_left()*lmrm->get_right() - rm->get_left())*rm->get_right();
                     }
 //  c*(d*b) - b*a -> (c*d - a)*b
                     if (rm->get_left()->is_match(lmrm->get_right())) {
-                        return (lm->get_left()*lmrm->get_left() - lm->get_right())*rm->get_left();
+                        return (lm->get_left()*lmrm->get_left() - rm->get_right())*rm->get_left();
                     }
 //  c*(b*d) - b*a -> (c*d - a)*b
                     if (rm->get_left()->is_match(lmrm->get_left())) {
-                        return (lm->get_left()*lmrm->get_right() - lm->get_right())*rm->get_left();
+                        return (lm->get_left()*lmrm->get_right() - rm->get_right())*rm->get_left();
                     }
+                }
+
+//  a/b*c - d/b*e -> (a*b - d*e)/b
+//  a/b*c - d*e/b -> (a*b - d*e)/b
+//  a*c/b - d/b*e -> (a*b - d*e)/b
+//  a*c/b - d*e/b -> (a*b - d*e)/b
+                auto lmld = divide_cast(lm->get_left());
+                auto rmld = divide_cast(rm->get_left());
+                auto lmrd = divide_cast(lm->get_right());
+                auto rmrd = divide_cast(rm->get_right());
+                if (lmld.get() && rmld.get() &&
+                    lmld->get_right()->is_match(rmld->get_right())) {
+                    return (lmld->get_left()*lm->get_right() - rmld->get_left()*rm->get_right())/lmld->get_right();
+                } else if (lmld.get() && rmrd.get() &&
+                           lmld->get_right()->is_match(rmrd->get_right())) {
+                   return (lmld->get_left()*lm->get_right() - rmrd->get_left()*rm->get_left())/lmld->get_right();
+                } else if (lmrd.get() && rmld.get() &&
+                           lmrd->get_right()->is_match(rmld->get_right())) {
+                    return (lmrd->get_left()*lm->get_left() - rmld->get_left()*rm->get_right())/lmrd->get_right();
+                } else if (lmrd.get() && rmrd.get() &&
+                           lmrd->get_right()->is_match(rmrd->get_right())) {
+                    return (lmrd->get_left()*lm->get_left() - rmrd->get_left()*rm->get_left())/lmrd->get_right();
                 }
             }
 
@@ -753,9 +787,13 @@ namespace graph {
         df(shared_leaf<T, SAFE_MATH> x) {
             if (this->is_match(x)) {
                 return one<T, SAFE_MATH> ();
-            } else {
-                return this->left->df(x) - this->right->df(x);
             }
+
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = this->left->df(x) - this->right->df(x);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -835,8 +873,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return this->left->remove_pseudo() -
-                   this->right->remove_pseudo();
+            if (this->has_pseudo()) {
+                return this->left->remove_pseudo() -
+                       this->right->remove_pseudo();
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -1038,12 +1079,8 @@ namespace graph {
             }
 
 //  Move piecewise constants to the left.
-            auto lpw1d = piecewise_1D_cast(this->left);
-            auto rpw1d = piecewise_1D_cast(this->right);
-            auto lpw2d = piecewise_2D_cast(this->left);
-            auto rpw2d = piecewise_2D_cast(this->right);
-            if ((rpw1d.get() || rpw2d.get()) &&
-                (!lpw1d.get() && !lpw2d.get() && !l.get())) {
+            if ((pr1.get() || pr2.get()) &&
+                (!pl1.get() && !pl2.get() && !l.get())) {
                 return this->right*this->left;
             }
 
@@ -1065,6 +1102,18 @@ namespace graph {
             if (this->left->is_all_variables()   &&
                 !this->right->is_all_variables() &&
                 !this->right->is_power_like()) {
+                return this->right*this->left;
+            }
+
+//  Move trig to the right.
+            auto cl = graph::cos_cast(this->left);
+            auto sl = graph::sin_cast(this->left);
+            if ((cl.get() && !this->right->is_power_like() &&
+                 !this->right->is_all_variables() &&
+                 !sin_cast(this->right).get()) ||
+                (sl.get() && !this->right->is_power_like() &&
+                 !this->right->is_all_variables()) ||
+                (sl.get() && cos_cast(this->right).get())) {
                 return this->right*this->left;
             }
 
@@ -1125,6 +1174,24 @@ namespace graph {
 //  v1*(c*v2) -> c*(v1*v2)
             if (rm.get() && constant_cast(rm->get_left()).get()) {
                 return rm->get_left()*(this->left*rm->get_right());
+            }
+
+// Assume trig on the right.
+//  a*(b*sin) -> (a*b)*sin
+//  a*(b*cos) -> (a*b)*cos
+//  (a*sin)*b -> (a*b)*sin
+//  (a*cos)*b -> (a*b)*cos
+            if (lm.get() && 
+                (sin_cast(lm->get_right()).get() ||
+                 cos_cast(lm->get_right()).get()) &&
+                !sin_cast(this->right).get() &&
+                !this->right->is_power_like()) {
+                return (lm->get_left()*this->right)*lm->get_right();
+            } else if (rm.get() && 
+                       (sin_cast(rm->get_right()).get() ||
+                        cos_cast(rm->get_right()).get()) &&
+                       !this->left->is_constant_like()) {
+                return (this->left*rm->get_left())*rm->get_right();
             }
 
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
@@ -1294,7 +1361,7 @@ namespace graph {
                 if (lmle.get()) {
                     return (this->right*lm->get_left())*lm->get_right();
                 }
-                auto lmre = exp_cast(rm->get_right());
+                auto lmre = exp_cast(lm->get_right());
                 if (lmre.get()) {
                     return (this->right*lm->get_right())*lm->get_left();
                 }
@@ -1316,8 +1383,12 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            return this->left->df(x)*this->right +
-                   this->left*this->right->df(x);
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = this->left->df(x)*this->right 
+                                     + this->left*this->right->df(x);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -1426,8 +1497,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return this->left->remove_pseudo() *
-                   this->right->remove_pseudo();
+            if (this->has_pseudo()) {
+                return this->left->remove_pseudo() *
+                       this->right->remove_pseudo();
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -1771,8 +1845,12 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            return this->left->df(x)/this->right -
-                   this->left*this->right->df(x)/(this->right*this->right);
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = this->left->df(x)/this->right 
+                                     - this->left*this->right->df(x)/(this->right*this->right);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -1854,8 +1932,11 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return this->left->remove_pseudo() /
-                   this->right->remove_pseudo();
+            if (this->has_pseudo()) {
+                return this->left->remove_pseudo() /
+                       this->right->remove_pseudo();
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -2267,6 +2348,120 @@ namespace graph {
                 }
             }
 
+//  fma(a/b,c,(d/b)*e) -> fma(a,c,d*e)/b
+//  fma(a/b,c,e*(d/b)) -> fma(a,c,d*e)/b
+            if (rm.get() && ld.get()) {
+                auto rmld = divide_cast(rm->get_left());
+                if (rmld.get() && ld->get_right()->is_match(rmld->get_right())) {
+                    return fma(ld->get_left(), this->middle, rmld->get_left()*rm->get_right())/ld->get_right();
+                }
+                auto rmrd = divide_cast(rm->get_right());
+                if (rmrd.get() && ld->get_right()->is_match(rmrd->get_right())) {
+                    return fma(ld->get_left(), this->middle, rmrd->get_left()*rm->get_left())/ld->get_right();
+                }
+            }
+//  fma(a,c/b,(d/b)*e) -> fma(a,c,d*e)/b
+//  fma(a,c/b,e*(d/b)) -> fma(a,c,d*e)/b
+            if (rm.get() && md.get()) {
+                auto rmld = divide_cast(rm->get_left());
+                if (rmld.get() && md->get_right()->is_match(rmld->get_right())) {
+                    return fma(this->left, md->get_left(), rmld->get_left()*rm->get_right())/md->get_right();
+                }
+                auto rmrd = divide_cast(rm->get_right());
+                if (rmrd.get() && md->get_right()->is_match(rmrd->get_right())) {
+                    return fma(this->left, md->get_left(), rmrd->get_left()*rm->get_left())/md->get_right();
+                }
+            }
+
+//  fma(a/b*c,d,e/b) -> fma(a*c,d,e)/b
+//  fma(a*c/b,d,e/b) -> fma(a*c,d,e)/b
+            if (rd.get() && lm.get()) {
+                auto lmld = divide_cast(lm->get_left());
+                if (lmld.get() && rd->get_right()->is_match(lmld->get_right())) {
+                    return fma(lmld->get_left()*lm->get_right(), this->middle, rd->get_left())/rd->get_right();
+                }
+                auto lmrd = divide_cast(lm->get_right());
+                if (lmrd.get() && rd->get_right()->is_match(lmrd->get_right())) {
+                    return fma(lmld->get_left()*lm->get_left(), this->middle, rd->get_left())/rd->get_right();
+                }
+            }
+//  fma(a,c/b*d,e/b) -> fma(a,c*d,e)/b
+//  fma(a,c*d/b,e/b) -> fma(a,c*d,e)/b
+            if (rd.get() && mm.get()) {
+                auto mmld = divide_cast(mm->get_left());
+                if (mmld.get() && rd->get_right()->is_match(mmld->get_right())) {
+                    return fma(this->left, mmld->get_left()*mm->get_right(), rd->get_left())/rd->get_right();
+                }
+                auto mmrd = divide_cast(mm->get_right());
+                if (mmrd.get() && rd->get_right()->is_match(mmrd->get_right())) {
+                    return fma(this->left, mmrd->get_left()*mm->get_left(), rd->get_left())/rd->get_right();
+                }
+            }
+
+//  fma(a, b/c, ((f/c)*e)*d) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, ((f/c)*e)*d) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, (e*(f/c))*d) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, (e*(f/c))*d) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, d*((f/c)*e)) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, d*((f/c)*e)) -> fma(a, b, f*e*d)/c
+//  fma(a, b/c, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
+//  fma(a/c, b, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
+            if (md.get() && rm.get()) {
+                auto rmlm = multiply_cast(rm->get_left());
+                if (rmlm.get()) {
+                    auto rmlmld = divide_cast(rmlm->get_left());
+                    if (rmlmld.get() && rmlmld->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rmlmld->get_left()*rmlm->get_right()*rm->get_right())/md->get_right();
+                    }
+                    auto rmlmrd = divide_cast(rmlm->get_right());
+                    if (rmlmrd.get() && rmlmrd->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rmlmrd->get_left()*rmlm->get_left()*rm->get_right())/md->get_right();
+                    }
+                }
+                auto rmrm = multiply_cast(rm->get_right());
+                if (rmrm.get()) {
+                    auto rmrmld = divide_cast(rmrm->get_left());
+                    if (rmrmld.get() && rmrmld->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rmrmld->get_left()*rmrm->get_right()*rm->get_left())/md->get_right();
+                    }
+                    auto rmrmrd = divide_cast(rmrm->get_right());
+                    if (rmrmrd.get() && rmrmrd->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rmrmrd->get_left()*rmrm->get_left()*rm->get_left())/md->get_right();
+                    }
+                }
+            } else if (ld.get() && rm.get()) {
+                auto rmlm = multiply_cast(rm->get_left());
+                if (rmlm.get()) {
+                    auto rmlmld = divide_cast(rmlm->get_left());
+                    if (rmlmld.get() && rmlmld->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rmlmld->get_left()*rmlm->get_right()*rm->get_right())/ld->get_right();
+                    }
+                    auto rmlmrd = divide_cast(rmlm->get_right());
+                    if (rmlmrd.get() && rmlmrd->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rmlmrd->get_left()*rmlm->get_right()*rm->get_right())/ld->get_right();
+                    }
+                }
+                auto rmrm = multiply_cast(rm->get_right());
+                if (rmrm.get()) {
+                    auto rmrmld = divide_cast(rmrm->get_left());
+                    if (rmrmld.get() && rmrmld->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rmrmld->get_left()*rmrm->get_right()*rm->get_left())/ld->get_right();
+                    }
+                    auto rmrmrd = divide_cast(rmrm->get_right());
+                    if (rmrmrd.get() && rmrmrd->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rmrmrd->get_left()*rmrm->get_left()*rm->get_left())/ld->get_right();
+                    }
+                }
+            }
+
             return this->shared_from_this();
         }
 
@@ -2284,13 +2479,17 @@ namespace graph {
                 return one<T, SAFE_MATH> ();
             }
 
-            auto temp_right = fma(this->left,
-                                  this->middle->df(x),
-                                  this->right->df(x));
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                auto temp_right = fma(this->left,
+                                      this->middle->df(x),
+                                      this->right->df(x));
 
-            return fma(this->left->df(x),
-                       this->middle,
-                       temp_right);
+                this->df_cache[hash] = fma(this->left->df(x),
+                                           this->middle,
+                                           temp_right);
+            }
+            return this->df_cache[hash];
         }
 
 //------------------------------------------------------------------------------
@@ -2400,9 +2599,12 @@ namespace graph {
 ///  @returns A tree without variable nodes.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
-            return fma(this->left->remove_pseudo(),
-                       this->middle->remove_pseudo(),
-                       this->right->remove_pseudo());
+            if (this->has_pseudo()) {
+                return fma(this->left->remove_pseudo(),
+                           this->middle->remove_pseudo(),
+                           this->right->remove_pseudo());
+            }
+            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------

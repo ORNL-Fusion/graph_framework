@@ -113,8 +113,7 @@ namespace graph {
 ///  @returns v_hat
 //------------------------------------------------------------------------------
         std::shared_ptr<vector_quantity<T, SAFE_MATH>> unit() {
-            auto l = length();
-            return std::make_shared<vector_quantity<T, SAFE_MATH>> (x/l, y/l, z/l);
+            return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, y, z)/length();
         }
     };
 
@@ -131,12 +130,135 @@ namespace graph {
 ///  @params[in] x X vector component.
 ///  @params[in] y Y vector component.
 ///  @params[in] z Z Vector component.
+///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_vector<T, SAFE_MATH> vector(shared_leaf<T, SAFE_MATH> x,
                                        shared_leaf<T, SAFE_MATH> y,
                                        shared_leaf<T, SAFE_MATH> z) {
         return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, y, z);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Addition operator.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left vector.
+///  @params[in] r Right vector.
+///  @returns The vector vector addition.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> operator+(shared_vector<T, SAFE_MATH> l,
+                                          shared_vector<T, SAFE_MATH> r) {
+        return vector(l->get_x() + r->get_x(),
+                      l->get_y() + r->get_y(),
+                      l->get_z() + r->get_z());
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Multiplication operator.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] s Scalar term.
+///  @params[in] v Vector term.
+///  @returns The scalar vector multiply.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> operator*(shared_leaf<T, SAFE_MATH> s,
+                                          shared_vector<T, SAFE_MATH> v) {
+        return vector(s*v->get_x(),
+                      s*v->get_y(),
+                      s*v->get_z());
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Division operator.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] v Vector numerator.
+///  @params[in] s Scalar denominator.
+///  @returns The vector scalar division.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> operator/(shared_vector<T, SAFE_MATH> v,
+                                          shared_leaf<T, SAFE_MATH> s) {
+        return vector(v->get_x()/s,
+                      v->get_y()/s,
+                      v->get_z()/s);
+    }
+
+//******************************************************************************
+//  Matrix interface.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class to represent matrix quantities.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class matrix_quantity : public std::enable_shared_from_this<matrix_quantity<T, SAFE_MATH>> {
+    protected:
+///  First row of the matrix.
+        shared_vector<T, SAFE_MATH> r1;
+///  Second row of the matrix.
+        shared_vector<T, SAFE_MATH> r2;
+///  Third row of the matrix.
+        shared_vector<T, SAFE_MATH> r3;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a new matrix_quantity.
+///
+///  @params[in] r1 Row 1 matrix component.
+///  @params[in] r2 Row 2 matrix component.
+///  @params[in] r3 Row 3 matrix component.
+//------------------------------------------------------------------------------
+        matrix_quantity(shared_vector<T, SAFE_MATH> r1,
+                        shared_vector<T, SAFE_MATH> r2,
+                        shared_vector<T, SAFE_MATH> r3) :
+        r1(r1), r2(r2), r3(r3) {}
+
+//------------------------------------------------------------------------------
+///  @brief Multiply matrix by vector.
+///
+///  @params[in] v Vector vector.
+///  @returns v1.v2
+//------------------------------------------------------------------------------
+        shared_vector<T, SAFE_MATH>
+        dot(shared_vector<T, SAFE_MATH> v) {
+            return vector<T, SAFE_MATH> (r1->dot(v),
+                                         r2->dot(v),
+                                         r3->dot(v));
+        }
+    };
+
+///  Convenience type for shared vector quantities.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using shared_matrix = std::shared_ptr<matrix_quantity<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] r1 Row 1 matrix component.
+///  @params[in] r2 Row 2 matrix component.
+///  @params[in] r3 Row 3 matrix component.
+///  @returns A matrix.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_matrix<T, SAFE_MATH> matrix(shared_vector<T, SAFE_MATH> r1,
+                                       shared_vector<T, SAFE_MATH> r2,
+                                       shared_vector<T, SAFE_MATH> r3) {
+        return std::make_shared<matrix_quantity<T, SAFE_MATH>> (r1, r2, r3);
     }
 }
 

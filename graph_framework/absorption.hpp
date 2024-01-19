@@ -114,20 +114,24 @@ namespace absorption {
                     const size_t index=0) :
         kamp(kamp), w(w), kx(kx), ky(ky), kz(kz), x(x), y(y), z(z), t(t),
         file(filename), dataset(file), index(index), work(index), sync([]{}) {
-            auto kvec = graph::vector(kx, ky, kz);
-            auto kunit = kvec->unit();
+            auto kvec = kx*eq->get_esup1(x, y, z)
+                      + ky*eq->get_esup2(x, y, z)
+                      + kz*eq->get_esup3(x, y, z);
             auto klen = kvec->length();
 
-            auto kx_amp = kamp*kunit->get_x();
-            auto ky_amp = kamp*kunit->get_y();
-            auto kz_amp = kamp*kunit->get_z();
+            auto kx_amp = kamp*kx/klen;
+            auto ky_amp = kamp*ky/klen;
+            auto kz_amp = kamp*kz/klen;
 
             graph::input_nodes<typename DISPERSION_FUNCTION::base,
                                DISPERSION_FUNCTION::safe_math> inputs = {
                 graph::variable_cast(this->kamp),
                 graph::variable_cast(this->kx),
                 graph::variable_cast(this->ky),
-                graph::variable_cast(this->kz)
+                graph::variable_cast(this->kz),
+                graph::variable_cast(this->x),
+                graph::variable_cast(this->y),
+                graph::variable_cast(this->z)
             };
 
             graph::map_nodes<typename DISPERSION_FUNCTION::base,
@@ -137,13 +141,11 @@ namespace absorption {
 
             work.add_item(inputs, {}, setters, "root_find_init_kernel");
 
-            inputs.push_back(graph::variable_cast(this->x));
-            inputs.push_back(graph::variable_cast(this->y));
-            inputs.push_back(graph::variable_cast(this->z));
             inputs.push_back(graph::variable_cast(this->t));
             inputs.push_back(graph::variable_cast(this->w));
 
-            dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx_amp, ky_amp, kz_amp, x, y, z, t, eq);
+            dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx_amp, ky_amp, kz_amp,
+                                                                    x, y, z, t, eq);
             solver::newton(work, {kamp}, inputs, {D.get_d()});
         }
 
@@ -190,11 +192,11 @@ namespace absorption {
             work.copy_to_device(t,  graph::variable_cast(this->t)->data());
 
             work.run();
-            work.wait();
             
             sync.join();
-            sync = std::thread([this] (const size_t index) -> void {
-                dataset.write(file, index);
+            work.wait();
+            sync = std::thread([this] (const size_t i) -> void {
+                dataset.write(file, i);
             }, time_index);
         }
     };

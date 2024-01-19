@@ -600,7 +600,7 @@ template<jit::float_scalar T> void test_efit() {
     z->set(static_cast<T> (0.0));
     t->set(static_cast<T> (0.0));
     
-    auto eq = equilibrium::make_efit<T> (NC_FILE);
+    auto eq = equilibrium::make_efit<T> (EFIT_FILE);
     solver::rk4<dispersion::ordinary_wave<T>>
         solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
     solve.init(kx);

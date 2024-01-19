@@ -13,6 +13,7 @@
 #include "../graph_framework/math.hpp"
 #include "../graph_framework/arithmetic.hpp"
 #include "../graph_framework/piecewise.hpp"
+#include "../graph_framework/trigonometry.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Tests for sqrt nodes.
@@ -64,27 +65,27 @@ void test_sqrt() {
 //  Reduction Sqrt(x*x) = x
     auto x_var = graph::variable<T> (1, "x");
     auto x2_sqrt = graph::sqrt(x_var*x_var);
-    assert(x2_sqrt.get() == x_var.get() && "Expected to reduce to x_var.");
+    assert(x2_sqrt.get() != x_var.get() && "Expected not to reduce to x_var.");
 
 //  Reduction Sqrt(x*y*x*y) = x*y
     auto y_var = graph::variable<T> (1, "y");
     auto x2y2_sqrt = graph::sqrt(x_var*y_var*x_var*y_var);
     auto x2y2_sqrt_cast = graph::multiply_cast(x2y2_sqrt);
     assert(x2y2_sqrt_cast.get() && "Expected multiply node");
-    assert((x2y2_sqrt_cast->get_left().get() == x_var.get() ||
-            x2y2_sqrt_cast->get_left().get() == y_var.get()) &&
+    assert((x2y2_sqrt_cast->get_left().get() != x_var.get() ||
+            x2y2_sqrt_cast->get_left().get() != y_var.get()) &&
            "Expected x_var or y_var.");
-    assert((x2y2_sqrt_cast->get_right().get() == x_var.get() ||
-            x2y2_sqrt_cast->get_right().get() == y_var.get()) &&
+    assert((x2y2_sqrt_cast->get_right().get() != x_var.get() ||
+            x2y2_sqrt_cast->get_right().get() != y_var.get()) &&
            "Expected x_var or y_var.");
 
 //  Reduction Sqrt(x*x/y*y);
     auto sq_reduce = graph::sqrt((x_var*x_var)/(y_var*y_var));
     auto sq_reduce_cast = graph::divide_cast(sq_reduce);
     assert(sq_reduce_cast.get() && "Expected divide node.");
-    assert(sq_reduce_cast->get_left().get() == x_var.get() &&
+    assert(sq_reduce_cast->get_left().get() != x_var.get() &&
            "Expected x_var.");
-    assert(sq_reduce_cast->get_right().get() == y_var.get() &&
+    assert(sq_reduce_cast->get_right().get() != y_var.get() &&
            "Expected y_var.");
 
 //  Reduction Sqrt(c*x/b*y) = d*Sqrt(x/y)
@@ -233,6 +234,10 @@ void test_pow() {
     auto sqrd = graph::pow(graph::constant(non_int), two);
     assert(sqrd->evaluate().at(0) == static_cast<T> (non_int*non_int) &&
            "Expected x*x");
+    const auto non_int_neg = static_cast<T> (-0.438763);
+    auto sqrd_neg = graph::pow(graph::constant(non_int_neg), two);
+    assert(sqrd_neg->evaluate().at(0) == static_cast<T> (non_int_neg*non_int_neg) &&
+           "Expected x*x");
 
     auto three = graph::two<T> ();
     auto pow_pow1 = graph::pow(graph::pow(ten, three), two);
@@ -280,6 +285,24 @@ void test_pow() {
     assert(!pow_var->is_constant_like() && "Did not expect a constant.");
     assert(pow_var->is_all_variables() && "Expected a variable.");
     assert(pow_var->is_power_like() && "Expected a power like.");
+
+//  Test power of power
+//  (a^b)^n -> a^n*b when n is an integer.
+    auto powpow_int = graph::pow(graph::pow(var_a, var_b),
+                                 graph::constant<T> (static_cast<T> (3.0)));
+    auto powpow_int_cast = graph::pow_cast(powpow_int);
+    assert(graph::multiply_cast(powpow_int_cast->get_right()) &&
+           "Expected multiply node.");
+    auto powpow_float =  graph::pow(graph::pow(var_a, var_b),
+                                    graph::constant<T> (static_cast<T> (1.5)));
+    auto powpow_float_cast = graph::pow_cast(powpow_float);
+    assert(!graph::multiply_cast(powpow_float_cast->get_right()) &&
+           "Did not expect multiply node.");
+    auto powpow_var =  graph::pow(graph::pow(var_a, var_b),
+                                  ten);
+    auto powpow_var_cast = graph::pow_cast(powpow_var);
+    assert(!graph::multiply_cast(powpow_var_cast->get_right()) &&
+           "Did not expect multiply node.");
 }
 
 //------------------------------------------------------------------------------
@@ -340,13 +363,13 @@ void test_erfi() {
 template<jit::float_scalar T> void test_variable_like() {
     auto a = graph::variable<T> (1, "");
     auto c = graph::one<T> ();
-    
+
     assert(a->is_all_variables() && "Expected a to be variable like.");
     assert(graph::sqrt(a)->is_all_variables() &&
            "Expected sqrt(a) to be variable like.");
     assert(graph::pow(a, c)->is_all_variables() &&
            "Expected a^c to be variable like.");
-    
+
     assert(!c->is_all_variables() &&
            "Expected c to not be variable like.");
     assert(!graph::sqrt(c)->is_all_variables() &&

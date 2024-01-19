@@ -17,6 +17,7 @@ template<typename T>
 using complex_type = complex<T>;
 
 #else
+#include <iostream>
 #include <complex>
 #include <cfloat>
 #include <cmath>

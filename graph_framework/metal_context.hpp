@@ -376,15 +376,23 @@ namespace gpu {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('v',  in.get())
-                              << "[index] = " << registers[a.get()] << ";"
-                              << std::endl;
+                              << "[index] = ";
+                if constexpr (SAFE_MATH) {
+                    source_buffer << "isnan(" << registers[a.get()]
+                                  << ") ? 0.0 : ";
+                }
+                source_buffer << registers[a.get()] << ";" << std::endl;
             }
             
             for (auto &out : outputs) {
                 graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('o',  out.get())
-                              << "[index] = " << registers[a.get()] << ";"
-                              << std::endl;
+                              << "[index] = "; 
+                if constexpr (SAFE_MATH) {
+                    source_buffer << "isnan(" << registers[a.get()]
+                                  << ") ? 0.0 : ";
+                }
+                source_buffer << registers[a.get()] << ";" << std::endl;
             }
     
             source_buffer << "    }" << std::endl << "}" << std::endl;

@@ -199,6 +199,8 @@ namespace output {
             size_t ray_dim_size;
 ///  Stride length.
             std::ptrdiff_t stride;
+///  Complex index.
+            size_t index;
         };
 ///  References list.
         std::vector<reference> references;
@@ -301,6 +303,44 @@ namespace output {
 
             ref.stride = ref.ray_dim_size < ray_dim_size ? 2 : 1;
             ref.buffer = node->data();
+            ref.index = 0;
+            references.push_back(ref);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Load imaginary reference.
+///
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] result  A result file reference.
+///  @params[in] name    Name of the variable.
+///  @params[in] node    Node to create variable for.
+//------------------------------------------------------------------------------
+        template<bool SAFE_MATH=false>
+        void reference_imag_variable(const result_file &result,
+                                     const std::string &name,
+                                     graph::shared_variable<T, SAFE_MATH> &&node) {
+            reference ref;
+            nc_type type;
+            std::array<int, 3> ref_dims;
+
+            sync.lock();
+            check_error(nc_inq_varid(result.get_ncid(),
+                                     name.c_str(),
+                                     &ref.id));
+            check_error(nc_inq_var(result.get_ncid(), ref.id, NULL, &type,
+                                   NULL, ref_dims.data(), NULL));
+            check_error(nc_inq_dimlen(result.get_ncid(), ref_dims[2],
+                                      &ref.ray_dim_size));
+            sync.unlock();
+
+            assert(ref.ray_dim_size == 2 &&
+                   "Not a complex variable.");
+
+            ref.ray_dim_size = 1;
+            ref.stride = ref.ray_dim_size < ray_dim_size ? 2 : 1;
+            ref.buffer = node->data();
+            ref.index = 1;
             references.push_back(ref);
         }
 
@@ -319,48 +359,48 @@ namespace output {
 ///  @params[in] result A result file reference.
 ///  @params[in] index  Time index.
 //------------------------------------------------------------------------------
-                void write(const result_file &result,
-                           const size_t index) {
-                    const std::array<size_t, 3> start = {
-                        index, 0, 0
-                    };
+        void write(const result_file &result,
+                   const size_t index) {
+            const std::array<size_t, 3> start = {
+                index, 0, 0
+            };
 
-                    for (variable &var : variables) {
-                        sync.lock();
-                        if constexpr (jit::is_float<T> ()) {
-                            if constexpr (jit::is_complex<T> ()) {
-                                check_error(nc_put_vara_float(result.get_ncid(),
-                                                              var.id,
-                                                              start.data(),
-                                                              count.data(),
-                                                              reinterpret_cast<float *> (var.buffer)));
-                            } else {
-                                check_error(nc_put_vara_float(result.get_ncid(),
-                                                              var.id,
-                                                              start.data(),
-                                                              count.data(),
-                                                              var.buffer));
-                            }
-                        } else {
-                            if constexpr (jit::is_complex<T> ()) {
-                                check_error(nc_put_vara_double(result.get_ncid(),
-                                                               var.id,
-                                                               start.data(),
-                                                               count.data(),
-                                                               reinterpret_cast<double *> (var.buffer)));
-                            } else {
-                                    check_error(nc_put_vara_double(result.get_ncid(),
-                                                                   var.id,
-                                                                   start.data(),
-                                                                   count.data(),
-                                                                   var.buffer));
-                            }
-                        }
-                        sync.unlock();
+            for (variable &var : variables) {
+                sync.lock();
+                if constexpr (jit::is_float<T> ()) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        check_error(nc_put_vara_float(result.get_ncid(),
+                                                      var.id,
+                                                      start.data(),
+                                                      count.data(),
+                                                      reinterpret_cast<float *> (var.buffer)));
+                    } else {
+                        check_error(nc_put_vara_float(result.get_ncid(),
+                                                      var.id,
+                                                      start.data(),
+                                                      count.data(),
+                                                      var.buffer));
                     }
-
-                    result.sync_file();
+                } else {
+                    if constexpr (jit::is_complex<T> ()) {\
+                        check_error(nc_put_vara_double(result.get_ncid(),
+                                                       var.id,
+                                                       start.data(),
+                                                       count.data(),
+                                                       reinterpret_cast<double *> (var.buffer)));
+                    } else {
+                        check_error(nc_put_vara_double(result.get_ncid(),
+                                                       var.id,
+                                                       start.data(),
+                                                       count.data(),
+                                                       var.buffer));
+                    }
                 }
+                sync.unlock();
+            }
+
+            result.sync_file();
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Read step.
@@ -370,14 +410,14 @@ namespace output {
 //------------------------------------------------------------------------------
         void read(const result_file &result,
                   const size_t index) {
-            const std::array<size_t, 3> ref_start = {
-                index, 0, 0
-            };
             const std::array<std::ptrdiff_t, 3> stride = {
                 1, 1, 1
             };
 
             for (reference &ref : references) {
+                const std::array<size_t, 3> ref_start = {
+                    index, 0, ref.index
+                };
                 const std::array<size_t, 3> ref_count = {
                     1,
                     result.get_num_rays(),
