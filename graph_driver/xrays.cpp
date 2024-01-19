@@ -158,7 +158,7 @@ void trace_ray(const size_t num_times,
 
 //  Inital conditions.
             if constexpr (jit::is_float<T> ()) {
-#if 0
+#if 1
                 init_efit<T, float, SAFE_MATH> (omega, x, y, z,
                                                 ky, kz, engine,
                                                 local_num_rays);
@@ -168,7 +168,7 @@ void trace_ray(const size_t num_times,
                                                 local_num_rays);
 #endif
             } else {
-#if 0
+#if 1
                 init_efit<T, double, SAFE_MATH> (omega, x, y, z,
                                                  ky, kz, engine,
                                                  local_num_rays);
@@ -178,18 +178,18 @@ void trace_ray(const size_t num_times,
                                                  local_num_rays);
 #endif
             }
-#if 0
+#if 1
             kx->set(static_cast<T> (-700.0));
 #else
             kx->set(static_cast<T> (-30.0));
 #endif
-            auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
-            //auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
             //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
 
-#if 0
+#if 1
             const T endtime = static_cast<T> (2.0);
 #else
             const T endtime = static_cast<T> (0.2);
@@ -325,8 +325,8 @@ void calculate_power(const size_t num_times,
             auto t     = graph::variable<T, SAFE_MATH> (local_num_rays, "t");
             auto kamp  = graph::variable<T, SAFE_MATH> (local_num_rays, "kamp");
 
-            auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
-            //auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
             //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
@@ -393,7 +393,9 @@ void bin_power(const size_t num_times,
             auto power      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (1.0), "power");
             auto k_sum      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (0.0), "k_sum");
 
-            auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+
             auto x_real = eq->get_x(x, y, z);
             auto y_real = eq->get_y(x, y, z);
             auto z_real = eq->get_z(x, y, z);

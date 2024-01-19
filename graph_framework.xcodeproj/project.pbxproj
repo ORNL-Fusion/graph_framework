@@ -1338,6 +1338,7 @@
 					USE_METAL,
 					"CXX_FLAGS=\\\"-g\\\"",
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					STATIC,
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -1447,6 +1448,7 @@
 					USE_METAL,
 					"CXX_FLAGS=\\\"-gl\\\"",
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					STATIC,
 					"DEBUG=1",
 					"$(inherited)",
 				);
