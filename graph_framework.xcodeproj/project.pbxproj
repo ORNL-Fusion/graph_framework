@@ -884,7 +884,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1510;
+				LastUpgradeCheck = 1520;
 				ORGANIZATIONNAME = "Cianciosa, Mark R.";
 				TargetAttributes = {
 					C73690302A38C498001733B0 = {
@@ -1511,10 +1511,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
-				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"CXX_FLAGS=\\\"-g\\\"",
+					"$(inherited)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "";
-				OTHER_LDFLAGS = "-lnetcdf";
+				OTHER_LDFLAGS = (
+					"-lnetcdf",
+					"-ld_classic",
+					"-rpath",
+					/usr/local/lib,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
