@@ -227,7 +227,7 @@ namespace gpu {
                 exit(1);
             }
 
-            std::map<std::string, T *> buffers;
+            std::map<size_t, T *> buffers;
 
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
@@ -236,14 +236,14 @@ namespace gpu {
                     memcpy(arg.data(), buffer.data(), buffer.size()*sizeof(T));
                     kernel_arguments[input.get()] = arg;
                 }
-                buffers[jit::to_string('v', input.get())] = kernel_arguments[input.get()].data();
+                buffers[reinterpret_cast<size_t> (input.get())] = kernel_arguments[input.get()].data();
             }
             for (auto &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
                     std::vector<T> arg(num_rays);
                     kernel_arguments[output.get()] = arg;
                 }
-                buffers[jit::to_string('o', output.get())] = kernel_arguments[output.get()].data();
+                buffers[reinterpret_cast<size_t> (output.get())] = kernel_arguments[output.get()].data();
             }
 
             if (jit::verbose) {
@@ -251,7 +251,7 @@ namespace gpu {
             }
 
             return [kernel, buffers] () mutable {
-                ((void (*)(std::map<std::string, T *> &))kernel)(buffers);
+                ((void (*)(std::map<size_t, T *> &))kernel)(buffers);
             };
         }
 
@@ -383,10 +383,25 @@ namespace gpu {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
             
-            source_buffer << "    std::map<std::string, ";
+            source_buffer << "    std::map<size_t, ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args) {" << std::endl;
-            
+
+            for (auto &input : inputs) {
+                source_buffer << "    ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " *" << jit::to_string('v', input.get())
+                              << " = args[" << reinterpret_cast<size_t> (input.get()) 
+                              << "];" << std::endl;
+            }
+            for (auto &output : outputs) {
+                source_buffer << "    ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " *" << jit::to_string('o', output.get())
+                              << " = args[" << reinterpret_cast<size_t> (output.get()) 
+                              << "];" << std::endl;
+            }
+
             source_buffer << "    for (size_t i = 0; i < " << size << "; i++) {" << std::endl;
 
             for (auto &input : inputs) {
@@ -394,8 +409,8 @@ namespace gpu {
                 source_buffer << "        const ";
                 jit::add_type<T> (source_buffer);
                 source_buffer << " " << registers[input.get()]
-                              << " = args[std::string(\"" << jit::to_string('v', input.get())
-                              << "\")][i]; //" << input->get_symbol() << std::endl;
+                              << " = " << jit::to_string('v', input.get())
+                              << "[i]; //" << input->get_symbol() << std::endl;
             }
         }
 
@@ -413,8 +428,8 @@ namespace gpu {
                                    jit::register_map &registers) {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
-                source_buffer << "        args[std::string(\"" << jit::to_string('v', in.get());
-                source_buffer << "\")][i] = ";
+                source_buffer << "        " << jit::to_string('v', in.get());
+                source_buffer << "[i] = ";
                 if constexpr (SAFE_MATH) {
                     if constexpr (jit::is_complex<T> ()) {
                         jit::add_type<T> (source_buffer);
@@ -436,8 +451,8 @@ namespace gpu {
             }
             for (auto &out : outputs) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
-                source_buffer << "        args[std::string(\"" << jit::to_string('o', out.get());
-                source_buffer << "\")][i] = ";
+                source_buffer << "        " << jit::to_string('o', out.get());
+                source_buffer << "[i] = ";
                 if constexpr (SAFE_MATH) {
                     if constexpr (jit::is_complex<T> ()) {
                         jit::add_type<T> (source_buffer);
