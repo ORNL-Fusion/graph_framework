@@ -5,7 +5,10 @@ target_compile_features (rays
                          INTERFACE
                          cxx_std_20
 )
-
+target_compile_options (rays
+                        INTERFACE
+                        $<$<CONFIG:Profile>:-g -O3>
+)
 target_compile_definitions (rays
                             INTERFACE
                             $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a">

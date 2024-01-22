@@ -19,6 +19,7 @@ set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
               Debug
               Release
               Sanitized
+              Profile
 )
 
 #-------------------------------------------------------------------------------
