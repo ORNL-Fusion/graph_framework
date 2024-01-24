@@ -331,13 +331,13 @@ void calculate_power(const size_t num_times,
             //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
 
-            //absorption::root_finder<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, SAFE_MATH>>
-            absorption::weak_damping<T, SAFE_MATH>
+            absorption::root_finder<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, SAFE_MATH>>
+            //absorption::weak_damping<T, SAFE_MATH>
                 power(kamp, omega, kx, ky, kz, x, y, z, t, eq,
                       stream.str(), local_num_rays, thread_number);
             power.compile();
 
-            for (size_t j = 0, je = num_steps + 1; j < je; j++) {
+            for (size_t j = 120, je = num_steps + 1; j < je; j++) {
                 power.run(j);
             }
         }, i, threads.size());

@@ -938,6 +938,12 @@ namespace graph {
                            this->right/two<T, SAFE_MATH> ());
             }
 
+//  Reduce exp(x)^n -> exp(n*x) when x is an integer.
+            auto temp = exp_cast(this->left);
+            if (temp.get() && rc.get() && rc->is_integer()) {
+                return exp(this->right*temp->get_arg());
+            }
+
             return this->shared_from_this();
         }
 

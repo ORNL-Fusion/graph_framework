@@ -291,18 +291,35 @@ void test_pow() {
     auto powpow_int = graph::pow(graph::pow(var_a, var_b),
                                  graph::constant<T> (static_cast<T> (3.0)));
     auto powpow_int_cast = graph::pow_cast(powpow_int);
-    assert(graph::multiply_cast(powpow_int_cast->get_right()) &&
+    assert((powpow_int_cast.get() &&
+            graph::multiply_cast(powpow_int_cast->get_right())) &&
            "Expected multiply node.");
     auto powpow_float =  graph::pow(graph::pow(var_a, var_b),
                                     graph::constant<T> (static_cast<T> (1.5)));
     auto powpow_float_cast = graph::pow_cast(powpow_float);
-    assert(!graph::multiply_cast(powpow_float_cast->get_right()) &&
+    assert((powpow_int_cast.get() &&
+            !graph::multiply_cast(powpow_float_cast->get_right())) &&
            "Did not expect multiply node.");
     auto powpow_var =  graph::pow(graph::pow(var_a, var_b),
                                   ten);
     auto powpow_var_cast = graph::pow_cast(powpow_var);
-    assert(!graph::multiply_cast(powpow_var_cast->get_right()) &&
+    assert((powpow_int_cast.get() &&
+            !graph::multiply_cast(powpow_var_cast->get_right())) &&
            "Did not expect multiply node.");
+
+//  Test pow of exp
+//  Exp[x]^n -> Exp[n*x] when n is an integer.
+    auto powexp_int = graph::pow(graph::exp(var_a), 
+                                 graph::constant<T> (static_cast<T> (3.0)));
+    auto powexp_int_cast = graph::exp_cast(powexp_int);
+    assert((powexp_int_cast.get() &&
+            graph::multiply_cast(powexp_int_cast->get_arg())) &&
+           "Expected multiply node in exp argument.");
+    auto powexp_float = graph::pow(graph::exp(var_a),
+                                   graph::constant<T> (static_cast<T> (1.5)));
+    auto powexp_float_cast = graph::pow_cast(powexp_float);
+    assert(powexp_float_cast.get() &&
+           "Expected power cast.");
 }
 
 //------------------------------------------------------------------------------
