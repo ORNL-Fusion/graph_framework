@@ -113,10 +113,17 @@ namespace gpu {
             dlclose(lib_handle);
 
             if (!library_name.empty()) {
-                if (fork() == 0) {
+//  A new instance of the class can be created before the library is deleted.
+//  Wait for the fork to finish before the destructor exits. This could cause a
+//  problem where the new library gets deleted before the context tries to load
+//  it.
+                auto pid = fork();
+                if (pid == 0) {
                     execlp("rm", "rm", library_name.c_str(), NULL);
                     exit(0);
                 }
+                int error = 0;
+                waitpid(pid, &error, 0);
             }
         }
 

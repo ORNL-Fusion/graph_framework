@@ -88,8 +88,9 @@ namespace dispersion {
         virtual graph::shared_leaf<T, SAFE_MATH>
         Z(graph::shared_leaf<T, SAFE_MATH> zeta) {
             auto i = graph::i<T, SAFE_MATH> ();
-            return graph::none<T, SAFE_MATH> ()*graph::sqrt(graph::pi<T, SAFE_MATH> ())/graph::exp(zeta*zeta) *
-                   (graph::erfi(zeta) - i);
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto nsqpi = none*graph::sqrt(graph::pi<T, SAFE_MATH> ());
+            return nsqpi*graph::exp(none*zeta*zeta)*(graph::erfi(zeta) - i);
         }
     };
 
