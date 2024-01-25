@@ -2811,6 +2811,80 @@ namespace graph {
                 }
             }
 
+//  fma(exp(a)/c, exp(b)*d, e) -> fma(exp(a)*exp(b), d/c, e)
+//  fma(exp(a)/c, d*exp(b), e) -> fma(exp(a)*exp(b), d/c, e)
+//  fma(c/exp(a), exp(b)*d, e) -> fma(exp(b)/exp(a), c*d, e)
+//  fma(c/exp(a), d*exp(b), e) -> fma(exp(b)/exp(a), c*d, e)
+            if (ld.get() && mm.get()) {
+                auto ldle = exp_cast(ld->get_left());
+                if (ldle.get()) {
+                    auto mmle = exp_cast(mm->get_left());
+                    if (mmle.get()) {
+                        return fma(ld->get_left()*mm->get_left(),
+                                   mm->get_right()/ld->get_right(),
+                                   this->right);
+                    }
+                    auto mmre = exp_cast(mm->get_right());
+                    if (mmre.get()) {
+                        return fma(ld->get_left()*mm->get_right(),
+                                   mm->get_left()/ld->get_right(),
+                                   this->right);
+                    }
+                }
+                auto ldre = exp_cast(ld->get_right());
+                if (ldre.get()) {
+                    auto mmle = exp_cast(mm->get_left());
+                    if (mmle.get()) {
+                        return fma(mm->get_left()/ld->get_right(),
+                                   ld->get_left()*mm->get_right(),
+                                   this->right);
+                    }
+                    auto mmre = exp_cast(mm->get_right());
+                    if (mmre.get()) {
+                        return fma(mm->get_right()/ld->get_right(),
+                                   ld->get_left()*mm->get_left(),
+                                   this->right);
+                    }
+                }
+            }
+
+//  fma(exp(a)/c, exp(b)/d, e) -> (exp(a)*exp(b))/(c*d) + e
+//  fma(exp(a)/c, d/exp(b), e) -> fma(exp(a)/exp(b), d/c, e)
+//  fma(c/exp(a), exp(b)/d, e) -> fma(exp(b)/exp(a), c/d, e)
+//  fma(c/exp(a), d/exp(b), e) -> (c*d)/(exp(a)*exp(b)) + e
+            if (ld.get() && md.get()) {
+                auto ldle = exp_cast(ld->get_left());
+                if (ldle.get()) {
+                    auto mdle = exp_cast(md->get_left());
+                    if (mdle.get()) {
+                        return ((ld->get_left()*md->get_left()) /
+                                (ld->get_right()*md->get_right())) +
+                               this->right;
+                    }
+                    auto mdre = exp_cast(md->get_right());
+                    if (mdre.get()) {
+                        return fma(ld->get_left()/md->get_right(),
+                                   md->get_left()/ld->get_right(),
+                                   this->right);
+                    }
+                }
+                auto ldre = exp_cast(ld->get_right());
+                if (ldre.get()) {
+                    auto mdle = exp_cast(md->get_left());
+                    if (mdle.get()) {
+                        return fma(md->get_left()/ld->get_right(),
+                                   ld->get_left()/md->get_right(),
+                                   this->right);
+                    }
+                    auto mdre = exp_cast(md->get_right());
+                    if (mdre.get()) {
+                        return ((ld->get_left()*md->get_left()) /
+                                (ld->get_right()*md->get_right())) +
+                               this->right;
+                    }
+                }
+            }
+
             return this->shared_from_this();
         }
 
