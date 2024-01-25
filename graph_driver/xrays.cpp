@@ -337,7 +337,7 @@ void calculate_power(const size_t num_times,
                       stream.str(), local_num_rays, thread_number);
             power.compile();
 
-            for (size_t j = 120, je = num_steps + 1; j < je; j++) {
+            for (size_t j = 0, je = num_steps + 1; j < je; j++) {
                 power.run(j);
             }
         }, i, threads.size());
