@@ -266,7 +266,7 @@ namespace gpu {
             const unsigned int dimBlock = blockSize;
 
             if (jit::verbose) {
-                std::cout << "  Kernel name                     : " << kernel_name << std::endl; 
+                std::cout << "  Kernel name                     : " << kernel_name << std::endl;
                 std::cout << "    Block Size       : " << blockSize << std::endl;
                 std::cout << "    Min Grid Size    : " << gridSize << std::endl;
                 std::cout << "    Number of Blocks : " << numBlocks << std::endl;
@@ -416,7 +416,7 @@ namespace gpu {
         void create_header(std::ostringstream &source_buffer) {
             if constexpr (jit::is_complex<T> ()) {
                 source_buffer << "#define HIP_DEVICE_CODE" << std::endl;
-		source_buffer << "#define M_PI " << M_PI << std::endl;
+                source_buffer << "#define M_PI " << M_PI << std::endl;
                 source_buffer << "#include <hip/hip_complex.h>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
             }
