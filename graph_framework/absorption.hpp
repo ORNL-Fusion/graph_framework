@@ -136,7 +136,8 @@ namespace absorption {
 
             graph::map_nodes<typename DISPERSION_FUNCTION::base,
                              DISPERSION_FUNCTION::safe_math> setters = {
-                {klen, graph::variable_cast(this->kamp)}
+                {graph::zero<typename DISPERSION_FUNCTION::base,
+                             DISPERSION_FUNCTION::safe_math> (), graph::variable_cast(this->kamp)}
             };
 
             work.add_item(inputs, {}, setters, "root_find_init_kernel");
@@ -144,9 +145,26 @@ namespace absorption {
             inputs.push_back(graph::variable_cast(this->t));
             inputs.push_back(graph::variable_cast(this->w));
 
-            dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx_amp, ky_amp, kz_amp,
+            dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, 
+                                                                    kx + kx_amp,
+                                                                    ky + ky_amp,
+                                                                    kz + kz_amp,
                                                                     x, y, z, t, eq);
             solver::newton(work, {kamp}, inputs, {D.get_d()});
+
+            inputs = {
+                graph::variable_cast(this->kamp),
+                graph::variable_cast(this->kx),
+                graph::variable_cast(this->ky),
+                graph::variable_cast(this->kz),
+                graph::variable_cast(this->x),
+                graph::variable_cast(this->y),
+                graph::variable_cast(this->z)
+            };
+            setters = {
+                {klen + kamp, graph::variable_cast(this->kamp)}
+            };
+            work.add_item(inputs, {}, setters, "final_kamp");
         }
 
 //------------------------------------------------------------------------------
@@ -280,51 +298,37 @@ namespace absorption {
                      const size_t index=0) : 
         kamp(kamp), w(w), kx(kx), ky(ky), kz(kz), x(x), y(y), z(z), t(t),
         file(filename), dataset(file), index(index), work(index), sync([]{}) {
-            auto kvec = kx*eq->get_esup1(x, y, z)
-                      + ky*eq->get_esup2(x, y, z)
-                      + kz*eq->get_esup3(x, y, z);
-            auto klen = kvec->length();
+            auto k_vec = kx*eq->get_esup1(x, y, z)
+                       + ky*eq->get_esup2(x, y, z)
+                       + kz*eq->get_esup3(x, y, z);
+            auto k_unit = k_vec->unit();
 
-            auto kx_amp = kamp*kx/klen;
-            auto ky_amp = kamp*ky/klen;
-            auto kz_amp = kamp*kz/klen;
-
-            auto Dc = dispersion::cold_plasma<T, SAFE_MATH> ().D(w, 
-                                                                 kx_amp, ky_amp, kz_amp,
-                                                                 x, y, z, t, eq);
+//            auto Dc = dispersion::cold_plasma<T, SAFE_MATH> ().D(w, kx, ky, kz,
+//                                                                 x, y, z, t, eq);
             auto Dw = dispersion::hot_plasma<T,
                                              dispersion::z_erfi<T, SAFE_MATH>,
-                                             SAFE_MATH> ().D(w,
-                                                             kx_amp, ky_amp, kz_amp,
+                                             SAFE_MATH> ().D(w, kx, ky, kz,
                                                              x, y, z, t, eq);
-//            auto Dw = dispersion::hot_plasma_expandion<T,
-//                                                       dispersion::z_erfi<T, SAFE_MATH>,
-//                                                       SAFE_MATH> ().D(w,
-//                                                                       kx_amp, ky_amp, kz_amp,
-//                                                                       x, y, z, t, eq);
 
-            auto kamp1 = this->kamp - Dw/Dc->df(kamp);
+            auto none = graph::none<T, SAFE_MATH> ();
+            auto kamp1 = k_vec->length() 
+                       - Dw/k_unit->dot(Dw->df(kx)*eq->get_esup1(x, y, z) +
+                                        Dw->df(ky)*eq->get_esup2(x, y, z) +
+                                        Dw->df(kz)*eq->get_esup3(x, y, z));
 
             graph::input_nodes<T, SAFE_MATH> inputs = {
                 graph::variable_cast(this->kamp),
                 graph::variable_cast(this->kx),
                 graph::variable_cast(this->ky),
-                graph::variable_cast(this->kz)
+                graph::variable_cast(this->kz),
+                graph::variable_cast(this->x),
+                graph::variable_cast(this->y),
+                graph::variable_cast(this->z),
+                graph::variable_cast(this->t),
+                graph::variable_cast(this->w)
             };
 
             graph::map_nodes<T, SAFE_MATH> setters = {
-                {klen, graph::variable_cast(this->kamp)}
-            };
-
-            work.add_item(inputs, {}, setters, "weak_damping_init_kernel");
-
-            inputs.push_back(graph::variable_cast(this->x));
-            inputs.push_back(graph::variable_cast(this->y));
-            inputs.push_back(graph::variable_cast(this->z));
-            inputs.push_back(graph::variable_cast(this->t));
-            inputs.push_back(graph::variable_cast(this->w));
-
-            setters = {
                 {kamp1, graph::variable_cast(this->kamp)}
             };
             
