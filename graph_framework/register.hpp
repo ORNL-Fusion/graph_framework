@@ -73,6 +73,17 @@ namespace jit {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Test to use Hip
+//------------------------------------------------------------------------------
+    constexpr bool use_hip() {
+#ifdef USE_HIP
+        return true;
+#else
+        return false;
+#endif
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Test to use metal.
 ///
 ///  @tparam T Base type of the calculation.
@@ -93,7 +104,7 @@ namespace jit {
 //------------------------------------------------------------------------------
     template<float_scalar T>
     constexpr bool use_gpu() {
-        return use_cuda() || use_metal<T> ();
+        return use_cuda() || use_hip() || use_metal<T> ();
     }
 
 //------------------------------------------------------------------------------
