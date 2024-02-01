@@ -444,6 +444,7 @@ int main(int argc, const char * argv[]) {
     START_GPU
     (void)argc;
     (void)argv;
+    jit::verbose = true;
     run_tests<float> ();
     run_tests<double> ();
     run_tests<std::complex<float>> ();

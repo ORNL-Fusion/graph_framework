@@ -94,9 +94,13 @@ else ()
 
         find_package (hip REQUIRED)
 
+        target_compile_definitions (hip_lib
+                                    INTERFACE
+                                    USE_HIP
+        )
         target_link_libraries (hip_lib
                                INTERFACE
-                               $<$<BOOL:${HIP_FOUND}>:hip::host>
+                               $<$<BOOL:${hip_FOUND}>:hip::host>
         )
     endif ()
 endif ()

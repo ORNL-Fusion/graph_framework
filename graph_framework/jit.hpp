@@ -16,6 +16,8 @@
 #include "metal_context.hpp"
 #elif defined(USE_CUDA)
 #include "cuda_context.hpp"
+#elif defined(USE_HIP)
+#include "hip_context.hpp"
 #endif
 #include "cpu_context.hpp"
 
@@ -63,6 +65,8 @@ namespace jit {
         using gpu_context_type = typename std::conditional<use_gpu<T> (),
 #ifdef USE_CUDA
                                                            gpu::cuda_context<T, SAFE_MATH>,
+#elif defined(USE_HIP)
+                                                           gpu::hip_context<T, SAFE_MATH>,
 #elif defined(USE_METAL)
                                                            gpu::metal_context<SAFE_MATH>,
 #else
