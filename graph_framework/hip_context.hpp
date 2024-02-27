@@ -112,8 +112,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         hip_context(const size_t index) :
         device(index), result_buffer(0), module(0) {
-            check_error(hipSetDevice(device), "hipSetDevice");
-            
+            check_error(hipSetDevice(device), "hipSetDevice");            
             check_error(hipStreamCreate(&stream), "hipStreamCreate");
         }
 
@@ -170,16 +169,19 @@ namespace gpu {
 
             if (jit::verbose) {
                 std::cout << "HIP GPU info." << std::endl;
-                std::cout << "  Major compute capability : " << device_properties.major << std::endl;
-                std::cout << "  Minor compute capability : " << device_properties.minor << std::endl;
-                std::cout << "  Device name              : " << device_properties.name << std::endl;
-                std::cout << "  Total Global Memory      : " << device_properties.totalGlobalMem << std::endl;
-                std::cout << "  Managed Memory           : " << device_properties.managedMemory << std::endl;
+                std::cout << "  Major compute capability        : " << device_properties.major << std::endl;
+                std::cout << "  Minor compute capability        : " << device_properties.minor << std::endl;
+                std::cout << "  Device name                     : " << device_properties.name << std::endl;
+                std::cout << "  Total Global Memory             : " << device_properties.totalGlobalMem << std::endl;
+                std::cout << "  Managed Memory                  : " << device_properties.managedMemory << std::endl;
+                std::cout << "  Max Threads Per Block           : " << device_properties.maxThreadsPerBlock << std::endl;
+                std::cout << "  Max Threads Per Multi Processor : " << device_properties.maxThreadsPerMultiProcessor << std::endl;
+                std::cout << "  Warp size                       : " << device_properties.warpSize << std::endl;
             }
 
             std::array<const char *, 2> options({
                 "-std=c++20",
-                "-I " HEADER_DIR
+                "-I" HEADER_DIR
             });
 
             if (hiprtcCompileProgram(kernel_program, options.size(), options.data())) {
@@ -264,7 +266,7 @@ namespace gpu {
             const unsigned int dimBlock = blockSize;
 
             if (jit::verbose) {
-                std::cout << "  Kernel name              : " << kernel_name << std::endl; 
+                std::cout << "  Kernel name                     : " << kernel_name << std::endl; 
                 std::cout << "    Block Size       : " << blockSize << std::endl;
                 std::cout << "    Min Grid Size    : " << gridSize << std::endl;
                 std::cout << "    Number of Blocks : " << numBlocks << std::endl;
@@ -312,7 +314,7 @@ namespace gpu {
             const unsigned int dimBlock = blockSize;
 
             if (jit::verbose) {
-                std::cout << "  Kernel name              : max_reduction" << std::endl;
+                std::cout << "  Kernel name                     : max_reduction" << std::endl;
                 std::cout << "    Block Size	   : " << blockSize << std::endl;
                 std::cout << "    Min Grid Size    : " << gridSize << std::endl;
                 std::cout << "    Number of Blocks : " << numBlocks << std::endl;
@@ -415,8 +417,7 @@ namespace gpu {
             if constexpr (jit::is_complex<T> ()) {
                 source_buffer << "#define HIP_DEVICE_CODE" << std::endl;
 		source_buffer << "#define M_PI " << M_PI << std::endl;
-//  FIXME: Figure out how hip does complex.
-//                source_buffer << "#include <cuda/std/complex>" << std::endl;
+                source_buffer << "#include <hip/hip_complex.h>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
             }
         }
@@ -437,7 +438,6 @@ namespace gpu {
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
                                   const size_t size,
                                   jit::register_map &registers) {
-//  FIXME: Convert to hip.
             source_buffer << std::endl;
             source_buffer << "extern \"C\" __global__ void " << name << "("
                           << std::endl;
@@ -462,6 +462,7 @@ namespace gpu {
 
             source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
                           << std::endl;
+            source_buffer << "    printf(%i %i %i %i, index, blockIdx.x, blockDim.x, threadIdx.x);" << std::endl;
             source_buffer << "    if (index < " << size << ") {" << std::endl;
 
             for (auto &input : inputs) {
@@ -486,7 +487,6 @@ namespace gpu {
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    jit::register_map &registers) {
-//  FIXME: Convert to hip
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
                 source_buffer << "        " << jit::to_string('v',  in.get())
@@ -555,8 +555,9 @@ namespace gpu {
             jit::add_type<T> (source_buffer);
             source_buffer << " *result) {" << std::endl;
             source_buffer << "    const unsigned int i = threadIdx.x;" << std::endl;
-            source_buffer << "    const unsigned int j = threadIdx.x/32;" << std::endl;
-            source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
+            source_buffer << "    const unsigned int j = threadIdx.x/64;" << std::endl;
+            source_buffer << "    const unsigned int k = threadIdx.x%64;" << std::endl;
+       	    source_buffer << "    printf(%i %i %i %i %i %i, i, j, k, blockIdx.x, blockDim.x, threadIdx.x);" << std::endl;
             source_buffer << "    if (i < " << size << ") {" << std::endl;
             source_buffer << "        " << jit::type_to_string<T> () << " sub_max = ";
             if constexpr (jit::is_complex<T> ()) {
@@ -571,15 +572,15 @@ namespace gpu {
                 source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
             }
             source_buffer << "        }" << std::endl;
-            source_buffer << "        __shared__ " << jit::type_to_string<T> () << " thread_max[32];" << std::endl;
-            source_buffer << "        for (int index = 16; index > 0; index /= 2) {" << std::endl;
-            source_buffer << "            sub_max = max(sub_max, __shfl_down_sync(__activemask(), sub_max, index));" << std::endl;
+            source_buffer << "        __shared__ " << jit::type_to_string<T> () << " thread_max[64];" << std::endl;
+            source_buffer << "        for (int index = 32; index > 0; index /= 2) {" << std::endl;
+            source_buffer << "            sub_max = max(sub_max, __shfl_down(sub_max, index));" << std::endl;
             source_buffer << "        }" << std::endl;
             source_buffer << "        thread_max[j] = sub_max;" << std::endl;
             source_buffer << "        __syncthreads();" << std::endl;
             source_buffer << "        if (j == 0) {"  << std::endl;
-            source_buffer << "            for (int index = 16; index > 0; index /= 2) {" << std::endl;
-            source_buffer << "                thread_max[k] = max(thread_max[k], __shfl_down_sync(__activemask(), thread_max[k], index));" << std::endl;
+            source_buffer << "            for (int index = 32; index > 0; index /= 2) {" << std::endl;
+            source_buffer << "                thread_max[k] = max(thread_max[k], __shfl_down(thread_max[k], index));" << std::endl;
             source_buffer << "            }" << std::endl;
             source_buffer << "            *result = thread_max[0];" << std::endl;
             source_buffer << "        }"  << std::endl;
