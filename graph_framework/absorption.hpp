@@ -86,7 +86,6 @@ namespace absorption {
 ///  @params[in] t        Inital t.
 ///  @params[in] eq       The plasma equilibrium.
 ///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] num_rays Number of rays to write.
 ///  @params[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         root_finder(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
@@ -110,10 +109,9 @@ namespace absorption {
                     equilibrium::shared<typename DISPERSION_FUNCTION::base,
                                         DISPERSION_FUNCTION::safe_math> &eq,
                     const std::string &filename="",
-                    const size_t num_rays=0,
                     const size_t index=0) :
         kamp(kamp), w(w), kx(kx), ky(ky), kz(kz), x(x), y(y), z(z), t(t),
-        file(filename), dataset(file), index(index), work(index), sync([]{}) {
+        work(index), index(index), file(filename), dataset(file), sync([]{}) {
             auto kvec = kx*eq->get_esup1(x, y, z)
                       + ky*eq->get_esup2(x, y, z)
                       + kz*eq->get_esup3(x, y, z);
@@ -280,7 +278,6 @@ namespace absorption {
 ///  @params[in] t        Inital t.
 ///  @params[in] eq       The plasma equilibrium.
 ///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] num_rays Number of rays to write.
 ///  @params[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         weak_damping(graph::shared_leaf<T, SAFE_MATH> kamp,
@@ -294,27 +291,26 @@ namespace absorption {
                      graph::shared_leaf<T, SAFE_MATH> t,
                      equilibrium::shared<T, SAFE_MATH> &eq,
                      const std::string &filename="",
-                     const size_t num_rays=0,
-                     const size_t index=0) : 
+                     const size_t index=0) :
         kamp(kamp), w(w), kx(kx), ky(ky), kz(kz), x(x), y(y), z(z), t(t),
-        file(filename), dataset(file), index(index), work(index), sync([]{}) {
+        work(index), index(index), file(filename), dataset(file), sync([]{}) {
             auto k_vec = kx*eq->get_esup1(x, y, z)
                        + ky*eq->get_esup2(x, y, z)
                        + kz*eq->get_esup3(x, y, z);
             auto k_unit = k_vec->unit();
 
-//            auto Dc = dispersion::cold_plasma<T, SAFE_MATH> ().D(w, kx, ky, kz,
-//                                                                 x, y, z, t, eq);
-            auto Dw = dispersion::hot_plasma<T,
-                                             dispersion::z_erfi<T, SAFE_MATH>,
-                                             SAFE_MATH> ().D(w, kx, ky, kz,
-                                                             x, y, z, t, eq);
+            auto Dc = dispersion::cold_plasma<T, SAFE_MATH> ().D(w, kx, ky, kz,
+                                                                 x, y, z, t, eq);
+            auto Dw = dispersion::hot_plasma_expansion<T,
+                                                       dispersion::z_erfi<T, SAFE_MATH>,
+                                                       SAFE_MATH> ().D(w, kx, ky, kz,
+                                                                       x, y, z, t, eq);
 
             auto none = graph::none<T, SAFE_MATH> ();
             auto kamp1 = k_vec->length() 
-                       - Dw/k_unit->dot(Dw->df(kx)*eq->get_esup1(x, y, z) +
-                                        Dw->df(ky)*eq->get_esup2(x, y, z) +
-                                        Dw->df(kz)*eq->get_esup3(x, y, z));
+                       - Dw/k_unit->dot(Dc->df(kx)*eq->get_esup1(x, y, z) +
+                                        Dc->df(ky)*eq->get_esup2(x, y, z) +
+                                        Dc->df(kz)*eq->get_esup3(x, y, z));
 
             graph::input_nodes<T, SAFE_MATH> inputs = {
                 graph::variable_cast(this->kamp),

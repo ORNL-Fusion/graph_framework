@@ -318,6 +318,8 @@ template<jit::float_scalar T> void run_tests() {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
+    (void)argc;
+    (void)argv;
     run_tests<float> ();
     run_tests<double> ();
     run_tests<std::complex<float>> ();

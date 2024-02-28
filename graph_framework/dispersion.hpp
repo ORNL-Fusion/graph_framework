@@ -975,21 +975,21 @@ namespace dispersion {
             auto zeta = (one - ec/w)/(npara*ve);
             auto Z_func = this->z.Z(zeta);
             auto zeta_func = one + zeta*Z_func;
-            auto F = (ve*zeta)/(two*npara)*w*w/(ec*ec);
-            auto isigma = wpe2/(two*w*w)*Z_func/(npara*ve);
+            auto F = ve*zeta*w/(two*npara*ec);
+            auto isigma = P*Z_func/(two*npara*ve);
 
             auto q_func = one - two*q;
             auto n_func = n2 + npara2;
             auto p_func = one - P;
 
             auto gamma5 = n2*npara2 - (one - q)*n_func + q_func;
-            auto gamma2 = w/ec*(n2 - q_func)
-                        + P*w*w/(four*ec*ec)*(n_func - two*q_func)/npara2;
+            auto gamma2 = (n2 - q_func)
+                        + P*w/(four*ec*npara2)*(n_func - two*q_func);
             auto gamma1 = nperp2*((one - q)*n2 - q_func)
                         + p_func*(n2*npara2 - (one - q)*n_func + q_func);
             auto gamma0 = nperp2*(n2 - two*q_func) + p_func*(two*q_func - n_func);
 
-            return isigma*gamma0 + gamma1 + nperp2*P*zeta_func*(gamma2 + gamma5*F);
+            return isigma*gamma0 + gamma1 + nperp2*P*w/ec*zeta_func*(gamma2 + gamma5*F);
         }
     };
 
@@ -1105,8 +1105,8 @@ namespace dispersion {
                         + p_func*(n2*npara2 - (one - q)*n_func)
                         - q_func*(nperp2 - p_func);
 
-            return none*(one - ec/w)*npara*vtnorm*(gamma1 + gamma2 +
-                                                   nperp2/(two*npara)*(w*w/(ec*ec))*vtnorm*zeta*gamma5)*(one/Z_func + zeta);
+            return none*(one + ec/w)*npara*vtnorm *
+                   (gamma1 + gamma2 + nperp2/(two*npara)*(w*w/(ec*ec))*vtnorm*zeta*gamma5)*(one/Z_func + zeta);
         }
     };
 

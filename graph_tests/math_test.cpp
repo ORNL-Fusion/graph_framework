@@ -418,6 +418,8 @@ template<jit::float_scalar T> void run_tests() {
 ///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    (void)argc;
+    (void)argv;
     run_tests<float> ();
     run_tests<double> ();
     run_tests<std::complex<float>> ();

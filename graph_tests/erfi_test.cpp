@@ -90,6 +90,8 @@ template<std::floating_point T> void test_erfi(const T tolarance) {
 ///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    (void)argc;
+    (void)argv;
     //test_erfi<float> (2.0E-5);
     test_erfi<double> (2.0E-14);
 }

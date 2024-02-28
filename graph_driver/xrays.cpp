@@ -131,8 +131,7 @@ void trace_ray(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, num_rays, batch, extra] (const size_t thread_number,
-                                                                                 const size_t num_threads) -> void {
+        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
 
             const size_t num_steps = num_times/sub_steps;
             const size_t local_num_rays = batch
@@ -272,7 +271,7 @@ void trace_ray(const size_t num_times,
                 solve.sync_host();
             }
 
-        }, i, threads.size());
+        }, i);
     }
 
     for (std::thread &t : threads) {
@@ -306,8 +305,7 @@ void calculate_power(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, num_rays, batch, extra] (const size_t thread_number,
-                                                                                 const size_t num_threads) -> void {
+        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
@@ -334,13 +332,13 @@ void calculate_power(const size_t num_times,
             //absorption::root_finder<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, SAFE_MATH>>
             absorption::weak_damping<T, SAFE_MATH>
                 power(kamp, omega, kx, ky, kz, x, y, z, t, eq,
-                      stream.str(), local_num_rays, thread_number);
+                      stream.str(), thread_number);
             power.compile();
 
             for (size_t j = 0, je = num_steps + 1; j < je; j++) {
                 power.run(j);
             }
-        }, i, threads.size());
+        }, i);
     }
 
     for (std::thread &t : threads) {
@@ -374,8 +372,7 @@ void bin_power(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, num_rays, batch, extra] (const size_t thread_number,
-                                                                                 const size_t num_threads) -> void {
+        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
@@ -472,7 +469,7 @@ void bin_power(const size_t num_times,
             }
 
             sync.join();
-        }, i, threads.size());
+        }, i);
     }
 
     for (std::thread &t : threads) {
@@ -490,6 +487,8 @@ void bin_power(const size_t num_times,
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
+    (void)argc;
+    (void)argv;
     const timeing::measure_diagnostic total("Total Time");
 
     jit::verbose = verbose;

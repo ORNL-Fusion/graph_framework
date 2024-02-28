@@ -408,11 +408,9 @@ void test_o_mode_wave() {
 ///  hybird resonance.
 ///
 ///  @tparam T Base type of the calculation.
-///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
-void test_cold_plasma_cutoffs(const T tolarance) {
+void test_cold_plasma_cutoffs() {
     const T omega0 = 1100.0;
 
     auto w = graph::variable<T> (2, omega0, "\\omega");
@@ -630,7 +628,7 @@ template<jit::float_scalar T> void run_tests(const T tolarance) {
     test_acoustic_wave<T> (tolarance);
     test_o_mode_wave<T> ();
     test_reflection<T> (tolarance, 0.7, 0.1, 22.0);
-    test_cold_plasma_cutoffs<T> (tolarance);
+    test_cold_plasma_cutoffs<T> ();
     test_efit<T> ();
 }
 
@@ -642,6 +640,8 @@ template<jit::float_scalar T> void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
+    (void)argc;
+    (void)argv;
 //  There is not enough precision in float to pass the test.
     if constexpr (jit::use_cuda()) {
         run_tests<double> (1.6E-21);

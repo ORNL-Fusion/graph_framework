@@ -41,8 +41,7 @@ void bench_runner() {
     timeing::measure_diagnostic_threaded timing;
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([&timing, batch, extra] (const size_t thread_number,
-                                                   const size_t num_threads) -> void {
+        threads[i] = std::thread([&timing, batch, extra] (const size_t thread_number) -> void {
 
             const size_t local_num_rays = batch
                                         + (extra > thread_number ? 1 : 0);
@@ -91,7 +90,7 @@ void bench_runner() {
             }
             solve.sync_host();
             timing.end_time(thread_number);
-        }, i, threads.size());
+        }, i);
     }
 
     for (std::thread &t : threads) {
@@ -111,6 +110,8 @@ void bench_runner() {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
+    (void)argc;
+    (void)argv;
 
     bench_runner<float,                1000, 10, 100000> ();
     bench_runner<double,               1000, 10, 100000> ();

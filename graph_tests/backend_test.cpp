@@ -542,6 +542,8 @@ template<jit::float_scalar T> void test_backend() {
 ///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    (void)argc;
+    (void)argv;
     test_backend<float> ();
     test_backend<double> ();
     test_backend<std::complex<float>> ();
