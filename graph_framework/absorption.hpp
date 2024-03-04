@@ -299,8 +299,8 @@ namespace absorption {
                        + kz*eq->get_esup3(x, y, z);
             auto k_unit = k_vec->unit();
 
-            auto Dc = dispersion::cold_plasma<T, SAFE_MATH> ().D(w, kx, ky, kz,
-                                                                 x, y, z, t, eq);
+            auto Dc = dispersion::cold_plasma_expansion<T, SAFE_MATH> ().D(w, kx, ky, kz,
+                                                                           x, y, z, t, eq);
             auto Dw = dispersion::hot_plasma_expansion<T,
                                                        dispersion::z_erfi<T, SAFE_MATH>,
                                                        SAFE_MATH> ().D(w, kx, ky, kz,

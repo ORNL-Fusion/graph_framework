@@ -872,6 +872,102 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
+///  @brief Cold Plasma expansion disperison function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class cold_plasma_expansion : public physics<T, SAFE_MATH> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Cold Plasma expansion Disperison function.
+///
+///  Dc = -P/2(1 + Ωe/⍵)Γ0 + (1 - Ωe^2/⍵^2)Γ1                                (1)
+///
+///  Γ0 = n⟂^2(n^2 - 2(1 - 2q)) + (1 - P)(2(1 - 2q) - (n^2 + n||^2))         (2)
+///
+///  Γ1 = n⟂^2((1 - q)n^2 - (1 - 2q))
+///     + (1 - P)(n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q))                (3)
+///
+///  P = ⍵pe^2/⍵^2                                                           (4)
+///
+///  q = P/(2(1 + Ωe/⍵))                                                     (5)
+///
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
+//  Constants
+            auto one = graph::one<T, SAFE_MATH> ();
+            auto two = graph::two<T, SAFE_MATH> ();
+            auto none = graph::none<T, SAFE_MATH> ();
+
+//  Setup plasma parameters.
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto b_len = b_vec->length();
+            auto b_hat = b_vec/b_len;
+            auto ne = eq->get_electron_density(x, y, z);
+            auto te = eq->get_electron_temperature(x, y, z);
+
+            auto ve = graph::sqrt(two*physics<T, SAFE_MATH>::q*te /
+                                  physics<T, SAFE_MATH>::me)
+                    / physics<T, SAFE_MATH>::c;
+
+//  Setup characteristic frequencies.
+            auto ec = build_cyclotron_fequency(physics<T, SAFE_MATH>::q,
+                                               b_len,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c);
+            auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
+                                              physics<T, SAFE_MATH>::me,
+                                              physics<T, SAFE_MATH>::c,
+                                              physics<T, SAFE_MATH>::epsion0);
+
+//  Disperison quantities.
+            auto P = wpe2/(w*w);
+            auto q = P/(two*(one + ec/w));
+
+            auto n = (kx*eq->get_esup1(x, y, z) +
+                      ky*eq->get_esup2(x, y, z) +
+                      kz*eq->get_esup3(x, y, z))/w;
+            auto n2 = n->dot(n);
+            auto npara = n->dot(b_hat);
+            auto npara2 = npara*npara;
+            auto nperp = b_hat->cross(n)->length();
+            auto nperp2 = nperp*nperp;
+            auto n2nperp2 = n2*nperp2;
+
+            auto q_func = one - two*q;
+            auto n_func = n2 + npara2;
+            auto p_func = one - P;
+
+            auto gamma1 = (one - q)*n2nperp2
+                        + p_func*(n2*npara2 - (one - q)*n_func)
+                        + q_func*(p_func - nperp2);
+            auto gamma0 = nperp2*(n2 - two*q_func) + p_func*(two*q_func - n_func);
+
+            return none*P/two*(one + ec/w)*gamma0 + (one - ec*ec/(w*w))*gamma1;
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Hot Plasma Disperison function.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, z_func Z, bool SAFE_MATH=false>
@@ -884,33 +980,28 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Hot Plasma Disperison function.
 ///
-///  D = iσΓ0 + Γ1 + Γ2(1 + ζZ(ζ)) + Γ3ζZ(ζ)(1 + ζZ(ζ)) + Γ4iσF + Γ5F        (1)
+///  D = iσΓ0 + Γ1 + n⟂^2P⍵/Ωe(1 + ζZ(ζ))(Γ2 + Γ5F)                          (1)
 ///
-///  Γ0 = n^2n⟂^2 - (1 - P)(n^2 + n||^2) - 2(1 - 2q)n⟂^2 + 2(1 - P)(1 - 2q)  (2)
+///  Γ0 = n⟂^2(n^2 - 2(1 - 2q)) + (1 - P)(2(1 - 2q) - (n^2 + n||^2))         (2)
 ///
-///  Γ1 = (1 - q)n^2n⟂^2 + (1 - P)n^2n||^2 - (1 - q)(1 - P)(n^2 + n||^2)
-///     - (1 - 2q)n⟂^2 + (1 - 2q)(1 - P)                                     (3)
+///  Γ1 = n⟂^2((1 - q)n^2 - (1 - 2q))
+///     + (1 - P)(n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q))                (3)
 ///
-///  Γ2 = P⍵/Ωe(n^2n⟂^2 - (1 - 2q)n⟂^2)
-///     + P^2⍵^2/(4Ωe^2)(n⟂^2/n||^2(n^2 + n||^2) - 2(1 - 2q)n⟂^2/n||^2)      (4)
+///  Γ2 = (n^2 - (1 - 2q)) + P⍵/(4Ωen||^2)((n^2 + n||^2) - 2(1 - 2q))        (4)
 ///
-///  Γ3 = P⍵^2/(4Ωe^2)n⟂^2/n||^2((n^2 + n||^2) - 2(1 - 2q))                  (5)
+///  Γ5 = n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q)                         (5)
 ///
-///  Γ4 = P(-(n^2 + n||^2) + 2(1 - 2q))                                      (6)
+///  iσ = PZ(ζ)/(2n||ve)                                                     (6)
 ///
-///  Γ5 = P(n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q))                      (7)
+///  ζ = (1 - Ωe/⍵)/(n||ve/c)                                                (7)
 ///
-///  iσ = ⍵pe^2/(2⍵)1/(k||ve)Z(ζ)                                            (8)
+///  F = ve(1 + ζZ(ζ))⍵/(2n||Ωe)                                             (8)
 ///
-///  ζ = (⍵ - Ωe)/(k||ve)                                                    (9)
+///  P = ⍵pe^2/⍵^2                                                           (9)
 ///
-///  F = n⟂^2/(2n||^2)⍵^2/Ωe^2ve/cζ(1 + ζZ(ζ))                              (10)
+///  q = P/(2(1 + Ωe/⍵))                                                    (10)
 ///
-///  P = ⍵pe^2/⍵^2                                                          (11)
-///
-///  q = ⍵pe^2/(2⍵(⍵ + Ωe))                                                 (12)
-///
-///  ve = Sqrt(2*ne*te/me)                                                  (13)
+///  ve = Sqrt(2*ne*te/me)                                                  (11)
 ///
 ///  @params[in] w  Omega variable.
 ///  @params[in] kx Kx variable.
@@ -1001,7 +1092,7 @@ namespace dispersion {
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, class Z, bool SAFE_MATH=false>
-    class hot_plasma_expansion final : public cold_plasma<T, SAFE_MATH> {
+    class hot_plasma_expansion final : public physics<T, SAFE_MATH> {
     private:
 ///  Z function.
         Z z;
@@ -1010,20 +1101,20 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Hot plasma expansion dispersion function.
 ///
-///  Dw = -(⍵ + Ω\_c)/⍵n||ve/c(Γ1 + Γ2 +
-///                            n⟂^2/(2n||)⍵^2/Ω^2\_cve/cζΓ5)(1/Z(ζ) + ζ)     (1)
+///  Dw = -(1 + Ωe/⍵)n||ve/c(Γ1 + Γ2 +
+///                          n⟂^2/(2n||)⍵^2/Ωe^2ve/cζΓ5)(1/Z(ζ) + ζ)         (1)
 ///
 ///  Where:
 ///
-///  Γ1 = (1 - q)n^2n⟂^2 + (1 - P)n^2n||^2 - (1 - q)(1 - P)(n^2 + n||^2)
-///     - (1 - 2q)n⟂^2 + (1 - 2q)(1 - P)                                     (2)
+///  Γ1 = (1 - q)n^2n⟂^2 + (1 - P)(n^2n||^2 - (1 - q)(n^2 + n||^2))
+///     + (1 - 2q)((1 - P) - n⟂^2)                                           (2)
 ///
-///  Γ2 = P⍵/Ωe(n^2n⟂^2 - (1 - 2q)n⟂^2)
-///     + P^2⍵^2/(4Ωe^2)(n⟂^2/n||^2(n^2 + n||^2) - 2(1 - 2q)n⟂^2/n||^2)      (3)
+///  Γ2 = P⍵/Ωen⟂^2(n^2 - (1 - 2q))
+///     + P^2⍵^2/(4Ωe^2)((n^2 + n||^2) - 2(1 - 2q))n⟂^2/n||^2                (3)
 ///
 ///  Γ5 = P(n^2n||^2 - (1 - q)(n^2 + n||^2) + (1 - 2q))                      (4)
 ///
-///  ζ = (⍵ - Ωe)/(k||ve)                                                    (5)
+///  ζ = (1 - Ωe/⍵)/(n||ve/c)                                                (5)
 ///
 ///  P = ⍵pe^2/⍵^2                                                           (6)
 ///
@@ -1103,7 +1194,7 @@ namespace dispersion {
                         + P*P*w*w/(four*ec*ec)*(n_func - two*q_func)*nperp2/npara2;
             auto gamma1 = (one - q)*n2nperp2 
                         + p_func*(n2*npara2 - (one - q)*n_func)
-                        - q_func*(nperp2 - p_func);
+                        + q_func*(p_func - nperp2);
 
             return none*(one + ec/w)*npara*vtnorm *
                    (gamma1 + gamma2 + nperp2/(two*npara)*(w*w/(ec*ec))*vtnorm*zeta*gamma5)*(one/Z_func + zeta);
