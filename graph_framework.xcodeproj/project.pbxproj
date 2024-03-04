@@ -1336,8 +1336,9 @@
 					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
 					USE_METAL,
-					"CXX_FLAGS=\\\"-g\\ -fsanitize=undefined\\ -fsanitize=float-divide-by-zero\\ -fsanitize-trap=all\\\"",
+					"CXX_FLAGS=\\\"-g\\\"",
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					STATIC,
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -1349,16 +1350,12 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CPLUSPLUSFLAGS = (
-					"$(OTHER_CFLAGS)",
-					"-fsanitize=float-divide-by-zero",
-				);
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
-					"-fsanitize=float-divide-by-zero",
 					"-lnetcdf",
 					"-ld_classic",
 					"-rpath",
@@ -1425,16 +1422,12 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CPLUSPLUSFLAGS = (
-					"$(OTHER_CFLAGS)",
-					"-fsanitize=float-divide-by-zero",
-				);
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
-					"-fsanitize=float-divide-by-zero",
 					"-lnetcdf",
 					"-ld_classic",
 					"-rpath",
@@ -1453,8 +1446,9 @@
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					USE_METAL,
-					"CXX_FLAGS=\\\"-g\\ -fsanitize=undefined\\ -fsanitize=float-divide-by-zero\\ -fsanitize-trap=all\\\"",
+					"CXX_FLAGS=\\\"-gl\\\"",
 					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					STATIC,
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -1497,7 +1491,7 @@
 				DEVELOPMENT_TEAM = "";
 				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				OTHER_CPLUSPLUSFLAGS = "-fsanitize=float-divide-by-zero";
+				OTHER_CPLUSPLUSFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};

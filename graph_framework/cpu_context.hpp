@@ -113,10 +113,17 @@ namespace gpu {
             dlclose(lib_handle);
 
             if (!library_name.empty()) {
-                if (fork() == 0) {
+//  A new instance of the class can be created before the library is deleted.
+//  Wait for the fork to finish before the destructor exits. This could cause a
+//  problem where the new library gets deleted before the context tries to load
+//  it.
+                auto pid = fork();
+                if (pid == 0) {
                     execlp("rm", "rm", library_name.c_str(), NULL);
                     exit(0);
                 }
+                int error = 0;
+                waitpid(pid, &error, 0);
             }
         }
 
@@ -281,6 +288,9 @@ namespace gpu {
 
 //------------------------------------------------------------------------------
 ///  @brief Hold the current thread until the command buffer has completed.
+///
+///  This syncs the host buffers with the kernel arguments so a kernel can run
+///  while another thread reads the results.
 //------------------------------------------------------------------------------
         void wait() {
             for (auto &item : host_buffers) {
@@ -354,7 +364,6 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
             source_buffer << "#include <map>" << std::endl;
-            source_buffer << "#include <string>" << std::endl;
             if (jit::is_complex<T> ()) {
                 source_buffer << "#include <complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;

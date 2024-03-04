@@ -6,6 +6,7 @@ project (rays CXX)
 #  Build Options
 #-------------------------------------------------------------------------------
 option (USE_PCH "Enable the use of precompiled headers" ON)
+option (USE_STATIC "Limits the dyamics for testing." OFF)
 
 #-------------------------------------------------------------------------------
 #  Set the cmake module path.

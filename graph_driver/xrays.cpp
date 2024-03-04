@@ -131,16 +131,17 @@ void trace_ray(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, num_rays, batch, extra] (const size_t thread_number,
-                                                                                 const size_t num_threads) -> void {
+        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
 
             const size_t num_steps = num_times/sub_steps;
             const size_t local_num_rays = batch
                                         + (extra > thread_number ? 1 : 0);
 
-            const uint64_t seed = static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-            //const uint64_t seed = 0;
-            std::mt19937_64 engine((thread_number + 1)*seed);
+#ifndef STATIC
+            std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+#else
+            std::mt19937_64 engine(thread_number + 1);
+#endif
             std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
 
             auto omega = graph::variable<T, SAFE_MATH> (local_num_rays, "\\omega");
@@ -156,7 +157,7 @@ void trace_ray(const size_t num_times,
 
 //  Inital conditions.
             if constexpr (jit::is_float<T> ()) {
-#if 0
+#if 1
                 init_efit<T, float, SAFE_MATH> (omega, x, y, z,
                                                 ky, kz, engine,
                                                 local_num_rays);
@@ -166,7 +167,7 @@ void trace_ray(const size_t num_times,
                                                 local_num_rays);
 #endif
             } else {
-#if 0
+#if 1
                 init_efit<T, double, SAFE_MATH> (omega, x, y, z,
                                                  ky, kz, engine,
                                                  local_num_rays);
@@ -176,18 +177,18 @@ void trace_ray(const size_t num_times,
                                                  local_num_rays);
 #endif
             }
-#if 0
+#if 1
             kx->set(static_cast<T> (-700.0));
 #else
             kx->set(static_cast<T> (-30.0));
 #endif
-            auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
-            //auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
             //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
 
-#if 0
+#if 1
             const T endtime = static_cast<T> (2.0);
 #else
             const T endtime = static_cast<T> (0.2);
@@ -270,7 +271,7 @@ void trace_ray(const size_t num_times,
                 solve.sync_host();
             }
 
-        }, i, threads.size());
+        }, i);
     }
 
     for (std::thread &t : threads) {
@@ -304,8 +305,7 @@ void calculate_power(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, num_rays, batch, extra] (const size_t thread_number,
-                                                                                 const size_t num_threads) -> void {
+        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
@@ -323,21 +323,22 @@ void calculate_power(const size_t num_times,
             auto t     = graph::variable<T, SAFE_MATH> (local_num_rays, "t");
             auto kamp  = graph::variable<T, SAFE_MATH> (local_num_rays, "kamp");
 
-            auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
-            //auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
             //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
             //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
 
-            absorption::root_finder<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, SAFE_MATH>>
-                root(kamp, omega, kx, ky, kz, x, y, z, t, eq,
-                     stream.str(), local_num_rays, thread_number);
-            root.compile();
+            //absorption::root_finder<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, SAFE_MATH>>
+            absorption::weak_damping<T, SAFE_MATH>
+                power(kamp, omega, kx, ky, kz, x, y, z, t, eq,
+                      stream.str(), thread_number);
+            power.compile();
 
             for (size_t j = 0, je = num_steps + 1; j < je; j++) {
-                root.run(j);
+                power.run(j);
             }
-        }, i, threads.size());
+        }, i);
     }
 
     for (std::thread &t : threads) {
@@ -371,8 +372,7 @@ void bin_power(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, num_rays, batch, extra] (const size_t thread_number,
-                                                                                 const size_t num_threads) -> void {
+        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
@@ -390,7 +390,9 @@ void bin_power(const size_t num_times,
             auto power      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (1.0), "power");
             auto k_sum      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (0.0), "k_sum");
 
-            auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
+            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+
             auto x_real = eq->get_x(x, y, z);
             auto y_real = eq->get_y(x, y, z);
             auto z_real = eq->get_z(x, y, z);
@@ -467,7 +469,7 @@ void bin_power(const size_t num_times,
             }
 
             sync.join();
-        }, i, threads.size());
+        }, i);
     }
 
     for (std::thread &t : threads) {
@@ -485,13 +487,19 @@ void bin_power(const size_t num_times,
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
+    (void)argc;
+    (void)argv;
     const timeing::measure_diagnostic total("Total Time");
 
     jit::verbose = verbose;
 
     const size_t num_times = 100000;
     const size_t sub_steps = 100;
+#ifndef STATIC
     const size_t num_rays = 100000;
+#else
+    const size_t num_rays = 1;
+#endif
 
     const bool use_safe_math = true;
 

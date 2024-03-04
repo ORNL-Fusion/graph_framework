@@ -18,6 +18,7 @@ target_compile_definitions (rays
                             EFIT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"
                             VMEC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/vmec.nc"
                             $<$<BOOL:${USE_CUDA}>:HEADER_DIR="$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>">
+                            $<$<BOOL:${USE_STATIC}>:STATIC>
 )
 target_include_directories (rays
                             INTERFACE

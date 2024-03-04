@@ -427,9 +427,34 @@ namespace graph {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = exp("
-                       << registers[a.get()] << ");"
-                       << std::endl;
+                stream << " " << registers[this] << " = ";
+                if constexpr (SAFE_MATH) {
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << "real(";
+                    }
+                    stream << registers[a.get()];
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                    stream << " < 709.8 ? ";
+                }
+                stream << "exp("  << registers[a.get()] << ")";
+                if constexpr (SAFE_MATH) {
+                    stream << " : ";
+                    if constexpr (jit::is_complex<T> ()) {
+                        jit::add_type<T> (stream);
+                        stream << "(";
+                    }
+                    if constexpr (jit::is_float<T> ()) {
+                        stream << std::numeric_limits<float>::max();
+                    } else {
+                        stream << std::numeric_limits<double>::max();
+                    }
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                }
+                stream << ";" << std::endl;
             }
 
             return this->shared_from_this();
@@ -911,6 +936,12 @@ namespace graph {
             if (lsq.get()) {
                 return pow(lsq->get_arg(),
                            this->right/two<T, SAFE_MATH> ());
+            }
+
+//  Reduce exp(x)^n -> exp(n*x) when x is an integer.
+            auto temp = exp_cast(this->left);
+            if (temp.get() && rc.get() && rc->is_integer()) {
+                return exp(this->right*temp->get_arg());
             }
 
             return this->shared_from_this();

@@ -88,6 +88,8 @@ void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU
+    (void)argc;
+    (void)argv;
     if constexpr (jit::use_cuda()) {
         run_tests<float> (3.2E-14);
     } else {

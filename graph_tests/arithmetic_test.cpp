@@ -583,6 +583,23 @@ template<jit::float_scalar T> void test_subtract() {
 //  a*c/b - d*e/b -> (a*b - d*e)/b
     assert(graph::divide_cast(var_a*(var_c/var_b) - var_d*(var_e/var_b)).get() &&
            "Expected a divide node.");
+
+//  (a*v) - v -> (a - 1)*v
+    auto factor1 = (var_a*var_b) - var_b;
+    assert(graph::multiply_cast(factor1).get() &&
+           "Expected a multiply node.");
+//  (v*a) - v -> (a - 1)*v
+    auto factor2 = (var_b*var_a) - var_b;
+    assert(graph::multiply_cast(factor2).get() &&
+           "Expected a multiply node.");
+//  v - (a*v) -> (1 - a)*v
+    auto factor3 = var_b - (var_a*var_b);
+    assert(graph::multiply_cast(factor3).get() &&
+           "Expected a multiply node.");
+//  v - (v*a) -> (1 - a)*v
+    auto factor4 = var_b - (var_b*var_a);
+    assert(graph::multiply_cast(factor4).get() &&
+           "Expected a multiply node.");
 }
 
 //------------------------------------------------------------------------------
@@ -1029,82 +1046,242 @@ template<jit::float_scalar T> void test_multiply() {
     assert(var_var_mul->is_all_variables() && "Expected a variable.");
     assert(!var_var_mul->is_power_like() && "Did not expect a power like.");
 
-//  Exp(-v)*Exp(v) -> 1
+//  exp(-v)*exp(v) -> 1
     auto expnexp = graph::exp(graph::none<T> ()*variable)*graph::exp(variable);
     auto expnexp_cast = constant_cast(expnexp);
     assert(expnexp_cast.get() && "Expected a constant.");
     assert(expnexp_cast->is(1) && "Expected one.");
-//  Exp(v)*Exp(-v) -> 1
+//  exp(v)*exp(-v) -> 1
     auto expnexp2 = graph::exp(variable)*graph::exp(graph::none<T> ()*variable);
     auto expnexp2_cast = constant_cast(expnexp2);
     assert(expnexp2_cast.get() && "Expected a constant.");
     assert(expnexp2_cast->is(1) && "Expected one.");
-//  Exp(-cv)*Exp(cv) -> 1
+//  exp(-cv)*exp(cv) -> 1
     auto nthree = graph::none<T> ()*three;
     auto expnexp3 = graph::exp(nthree*variable)*graph::exp(three*variable);
     auto expnexp3_cast = constant_cast(expnexp);
     assert(expnexp3_cast.get() && "Expected a constant.");
     assert(expnexp3_cast->is(1) && "Expected one.");
-//  Exp(cv)*Exp(-cv) -> 1
+//  exp(cv)*exp(-cv) -> 1
     auto expnexp4 = graph::exp(three*variable)*graph::exp(nthree*variable);
     auto expnexp4_cast = constant_cast(expnexp2);
     assert(expnexp4_cast.get() && "Expected a constant.");
     assert(expnexp4_cast->is(1) && "Expected one.");
 
-//  c*Exp(-v)*Exp(v) -> c
+//  c*exp(-v)*exp(v) -> c
     auto cexpnexp = (three*graph::exp(graph::none<T> ()*variable))*graph::exp(variable);
     auto cexpnexp_cast = constant_cast(cexpnexp);
     assert(cexpnexp_cast.get() && "Expected a constant.");
     assert(cexpnexp_cast->is(3) && "Expected one.");
-//  Exp(-v)*c*Exp(v) -> c
+//  exp(-v)*c*exp(v) -> c
     auto cexpnexp2 = graph::exp(graph::none<T> ()*variable)*(three*graph::exp(variable));
     auto cexpnexp2_cast = constant_cast(cexpnexp2);
     assert(cexpnexp2_cast.get() && "Expected a constant.");
     assert(cexpnexp2_cast->is(3) && "Expected one.");
-//  c*Exp(v)*Exp(-v) -> c
+//  c*exp(v)*exp(-v) -> c
     auto cexpnexp3 = (three*graph::exp(variable))*graph::exp(graph::none<T> ()*variable);
     auto cexpnexp3_cast = constant_cast(cexpnexp3);
     assert(cexpnexp3_cast.get() && "Expected a constant.");
     assert(cexpnexp3_cast->is(3) && "Expected one.");
-//  Exp(v)*c*Exp(-v) -> c
+//  exp(v)*c*exp(-v) -> c
     auto cexpnexp4 = graph::exp(variable)*(three*graph::exp(graph::none<T> ()*variable));
     auto cexpnexp4_cast = constant_cast(cexpnexp4);
     assert(cexpnexp4_cast.get() && "Expected a constant.");
     assert(cexpnexp4_cast->is(3) && "Expected one.");
-//  c*Exp(-c*v)*Exp(c*v) -> c
+//  c*exp(-c*v)*exp(c*v) -> c
     auto cexpnexp5 = (three*graph::exp(nthree*variable))*graph::exp(three*variable);
     auto cexpnexp5_cast = constant_cast(cexpnexp5);
     assert(cexpnexp5_cast.get() && "Expected a constant.");
     assert(cexpnexp5_cast->is(3) && "Expected one.");
-//  Exp(-v)*c*Exp(v) -> c
+//  exp(-v)*c*exp(v) -> c
     auto cexpnexp6 = graph::exp(nthree*variable)*(three*graph::exp(three*variable));
     auto cexpnexp6_cast = constant_cast(cexpnexp6);
     assert(cexpnexp6_cast.get() && "Expected a constant.");
     assert(cexpnexp6_cast->is(3) && "Expected one.");
-//  c*Exp(v)*Exp(-v) -> c
+//  c*exp(v)*exp(-v) -> c
     auto cexpnexp7 = (three*graph::exp(three*variable))*graph::exp(nthree*variable);
     auto cexpnexp7_cast = constant_cast(cexpnexp7);
     assert(cexpnexp7_cast.get() && "Expected a constant.");
     assert(cexpnexp7_cast->is(3) && "Expected one.");
-//  Exp(v)*c*Exp(-v) -> c
+//  exp(v)*c*exp(-v) -> c
     auto cexpnexp8 = graph::exp(three*variable)*(three*graph::exp(nthree*variable));
     auto cexpnexp8_cast = constant_cast(cexpnexp8);
     assert(cexpnexp8_cast.get() && "Expected a constant.");
     assert(cexpnexp8_cast->is(3) && "Expected one.");
 
-//  Exp(-v)*(Exp(v)*a)
+//  exp(-v)*(exp(v)*a) -> a
     auto regroup_exp = graph::exp(graph::none<T> ()*variable)*(graph::exp(variable)*v1);
     assert(regroup_exp->is_match(v1) && "Expected the v1 variable node.");
-//  Exp(-v)*(a*Exp(v))
+//  exp(-v)*(a*exp(v)) -> a
     auto regroup_exp2 = graph::exp(graph::none<T> ()*variable)*(v1*graph::exp(variable));
     assert(regroup_exp2->is_match(v1) && "Expected the v1 variable node.");
-//  (Exp(-v)*a)*Exp(v)
+//  (exp(-v)*a)*exp(v) -> a
     auto regroup_exp3 = (graph::exp(graph::none<T> ()*variable)*v1)*graph::exp(variable);
     assert(regroup_exp3->is_match(v1) && "Expected the v1 variable node.");
-//  (a*Exp(-v))*Exp(v)
+//  (a*exp(-v))*exp(v) -> a
     auto regroup_exp4 = (graph::exp(graph::none<T> ()*variable)*v1)*graph::exp(variable);
     assert(regroup_exp4->is_match(v1) && "Expected the v1 variable node.");
 
+//  exp(a)*exp(b) -> exp(a + b)
+    auto exp_a = graph::exp(two*v1);
+    auto exp_b = graph::exp(two*v2);
+    auto exp_mul = exp_a*exp_b;
+    assert(graph::exp_cast(exp_mul) &&
+           "Expected a exp node.");
+
+//  exp(a)*(exp(b)*c) -> c*exp(a + b)
+    auto expression_c = two + variable;
+    auto exp_mul2 = exp_a*(exp_b*expression_c);
+    auto exp_mul2_cast = graph::multiply_cast(exp_mul2);
+    assert(exp_mul2_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_mul2_cast->get_right()) &&
+           "Expected a exp node on the right.");
+//  exp(a)*(c*exp(b)) -> c*exp(a + b)
+    auto exp_mul3 = exp_a*(expression_c*exp_b);
+    auto exp_mul3_cast = graph::multiply_cast(exp_mul3);
+    assert(exp_mul3_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_mul3_cast->get_right()) &&
+           "Expected a exp node on the right.");
+
+//  (exp(a)*c)*exp(b) -> c*exp(a + b)
+    auto exp_mul4 = (exp_a*expression_c)*exp_b;
+    auto exp_mul4_cast = graph::multiply_cast(exp_mul4);
+    assert(exp_mul4_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_mul4_cast->get_right()) &&
+           "Expected a exp node on the right.");
+//  (c*exp(a))*exp(b) -> c*exp(a + b)
+    auto exp_mul5 = (expression_c*exp_a)*exp_b;
+    auto exp_mul5_cast = graph::multiply_cast(exp_mul5);
+    assert(exp_mul5_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_mul5_cast->get_right()) &&
+           "Expected a exp node on the right.");
+
+//  (exp(a)*c)*(exp(b)*d) -> (c*d)*exp(a + b)
+    auto expression_d = three + variable;
+    auto exp_mul6 = (exp_a*expression_c)*(exp_b*expression_d);
+    auto exp_mul6_cast = graph::multiply_cast(exp_mul6);
+    assert(exp_mul6_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_mul6_cast->get_right()) &&
+           "Expected a exp node on the right.");
+//  (exp(a)*c)*(d*exp(b)) -> (c*d)*exp(a + b)
+    auto exp_mul7 = (exp_a*expression_c)*(expression_d*exp_b);
+    auto exp_mul7_cast = graph::multiply_cast(exp_mul7);
+    assert(exp_mul7_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_mul7_cast->get_right()) &&
+           "Expected a exp node on the right.");
+//  (c*exp(a))*(exp(b)*d) -> (c*d)*exp(a + b)
+    auto exp_mul8 = (expression_c*exp_a)*(exp_b*expression_d);
+    auto exp_mul8_cast = graph::multiply_cast(exp_mul8);
+    assert(exp_mul8_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_mul8_cast->get_right()) &&
+           "Expected a exp node on the right.");
+//  (c*exp(a))*(d*exp(b)) -> (c*d)*exp(a + b)
+    auto exp_mul9 = (expression_c*exp_a)*(expression_d*exp_b);
+    auto exp_mul9_cast = graph::multiply_cast(exp_mul9);
+    assert(exp_mul9_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_mul9_cast->get_right()) &&
+           "Expected a exp node on the right.");
+
+//  (c/exp(a))*exp(b) -> c*exp(b - a)
+    auto regroup_exp5 = (expression_c/exp_a)*exp_b;
+    auto regroup_exp5_cast = graph::multiply_cast(regroup_exp5);
+    assert(regroup_exp5_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp5_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)/c)*exp(b) -> exp(a + b)/c
+    auto regroup_exp6 = (exp_a/expression_c)*exp_b;
+    auto regroup_exp6_cast = graph::divide_cast(regroup_exp6);
+    assert(regroup_exp6_cast.get() && "Expected divide node.");
+    assert(graph::exp_cast(regroup_exp6_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  exp(a)*(c/exp(a)) -> c*exp(a - b)
+    auto regroup_exp7 = exp_a*(expression_c/exp_b);
+    auto regroup_exp7_cast = graph::multiply_cast(regroup_exp7);
+    assert(regroup_exp7_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp7_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  exp(a)*(exp(b)/c) -> exp(a + b)/c
+    auto regroup_exp8 = exp_a*(exp_b/expression_c);
+    auto regroup_exp8_cast = graph::divide_cast(regroup_exp8);
+    assert(regroup_exp8_cast.get() && "Expected divide node.");
+    assert(graph::exp_cast(regroup_exp8_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+
+//  (c/exp(a))*(exp(b)*d) -> (c*d)*exp(b - a)
+    auto regroup_exp9 = (expression_c/exp_a)*(exp_b*expression_d);
+    auto regroup_exp9_cast = graph::multiply_cast(regroup_exp9);
+    assert(regroup_exp9_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp9_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)/c)*(exp(b)*d) -> (d/c)*exp(a + b)
+    auto regroup_exp10 = (exp_a/expression_c)*(exp_b*expression_d);
+    auto regroup_exp10_cast = graph::multiply_cast(regroup_exp10);
+    assert(regroup_exp10_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp10_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (c/exp(a))*(d*exp(b)) -> (c*d)*exp(b - a)
+    auto regroup_exp11 = (expression_c/exp_a)*(expression_d*exp_b);
+    auto regroup_exp11_cast = graph::multiply_cast(regroup_exp11);
+    assert(regroup_exp11_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp11_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)/c)*(d*exp(b)) -> (c*d)*exp(a + b)
+    auto regroup_exp12 = (exp_a/expression_c)*(expression_d*exp_b);
+    auto regroup_exp12_cast = graph::multiply_cast(regroup_exp10);
+    assert(regroup_exp12_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp12_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+
+//  (c*exp(a))*(exp(b)/d) -> (c/d)*exp(a + b)
+    auto regroup_exp13 = (expression_c*exp_a)*(exp_b/expression_d);
+    auto regroup_exp13_cast = graph::multiply_cast(regroup_exp13);
+    assert(regroup_exp13_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp13_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (c*exp(a))*(d/exp(b)) -> (c*e)*exp(a - b)
+    auto regroup_exp14 = (expression_c*exp_a)*(expression_d/exp_b);
+    auto regroup_exp14_cast = graph::multiply_cast(regroup_exp14);
+    assert(regroup_exp14_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp14_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)*c)*(d/exp(b)) -> (c*d)*exp(a - b)
+    auto regroup_exp15 = (exp_a*expression_c)*(expression_d/exp_b);
+    auto regroup_exp15_cast = graph::multiply_cast(regroup_exp15);
+    assert(regroup_exp15_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp15_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)*c)*(exp(b)/d) -> (c/d)*exp(a + b)
+    auto regroup_exp16 = (exp_a*expression_c)*(exp_b/expression_d);
+    auto regroup_exp16_cast = graph::multiply_cast(regroup_exp16);
+    assert(regroup_exp16_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(regroup_exp16_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+
+//  (c/exp(a))*(exp(b)/d) -> (c/d)*exp(b - a)
+    auto exp_mul10 = (expression_c/exp_a)*(exp_b/expression_d);
+    auto exp_mul10_cast = graph::multiply_cast(exp_mul10);
+    assert(exp_mul10_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(exp_mul10_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (c/exp(a))*(d/exp(b)) -> (c*e)/exp(a + b)
+    auto exp_mul11 = (expression_c/exp_a)*(expression_d/exp_b);
+    auto exp_mul11_cast = graph::divide_cast(exp_mul11);
+    assert(exp_mul11_cast.get() && "Expected divide node.");
+    assert(graph::exp_cast(exp_mul11_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)/c)*(d/exp(b)) -> (d/c)*exp(a - b)
+    auto exp_mul12 = (exp_a/expression_c)*(expression_d/exp_b);
+    auto exp_mul12_cast = graph::multiply_cast(exp_mul12);
+    assert(exp_mul12_cast.get() && "Expected multiply node.");
+    assert(graph::exp_cast(exp_mul12_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)/c)*(exp(b)/d) -> exp(a + b)/(c*d)
+    auto exp_mul13 = (exp_a/expression_c)*(exp_b/expression_d);
+    auto exp_mul13_cast = graph::divide_cast(exp_mul13);
+    assert(exp_mul13_cast.get() && "Expected divide node.");
+    assert(graph::exp_cast(exp_mul13_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+    
 //  cos(v)*a -> a*cos(v)
     auto cosine = graph::cos(variable);
     auto sine = graph::sin(variable);
@@ -1641,6 +1818,100 @@ template<jit::float_scalar T> void test_divide() {
     assert(!var_var_div->is_constant_like() && "Did not expect a constant.");
     assert(var_var_div->is_all_variables() && "Expected a variable.");
     assert(!var_var_div->is_power_like() && "Did not expect a power like.");
+
+//  exp(a)/exp(b) -> exp(a - b)
+    auto exp_a = graph::exp(two*graph::variable<T> (1, ""));
+    auto exp_b = graph::exp(three*graph::variable<T> (1, ""));
+    auto exp_over_exp = exp_a/exp_b;
+    auto exp_over_exp_cast = graph::exp_cast(exp_over_exp);
+    assert(exp_over_exp_cast.get() &&
+           "Expected an exp node.");
+
+//  (c*exp(a))/exp(b) -> c*exp(a - b)
+    auto expression_c = (two - variable);
+    auto exp_over_exp2 = (expression_c*exp_a)/exp_b;
+    auto exp_over_exp2_cast = graph::multiply_cast(exp_over_exp2);
+    assert(exp_over_exp2_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::exp_cast(exp_over_exp2_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)*c)/exp(b) -> c*exp(a - b)
+    auto exp_over_exp3 = (exp_a*expression_c)/exp_b;
+    auto exp_over_exp3_cast = graph::multiply_cast(exp_over_exp3);
+    assert(exp_over_exp3_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::exp_cast(exp_over_exp3_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  exp(a)/(c*exp(b)) -> exp(a - b)/c
+    auto exp_over_exp4 = exp_a/(expression_c*exp_b);
+    auto exp_over_exp4_cast = graph::divide_cast(exp_over_exp4);
+    assert(exp_over_exp4_cast.get() &&
+           "Expected a divide node.");
+    assert(graph::exp_cast(exp_over_exp4_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  exp(a)/(exp(b)*c) -> exp(a - b)/c
+    auto exp_over_exp5 = exp_a/(exp_b*expression_c);
+    auto exp_over_exp5_cast = graph::divide_cast(exp_over_exp5);
+    assert(exp_over_exp5_cast.get() &&
+           "Expected a divide node.");
+    assert(graph::exp_cast(exp_over_exp5_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+
+//  (c*exp(a))/(d*exp(b)) -> (c/d)*exp(a - b)
+    auto expression_d = (three - variable);
+    auto exp_over_exp6 = (expression_c*exp_a)/(expression_d*exp_b);
+    auto exp_over_exp6_cast = graph::multiply_cast(exp_over_exp6);
+    assert(exp_over_exp6_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::exp_cast(exp_over_exp6_cast->get_right()).get() &&
+           "Expect a exp node on the right.");
+//  (c*exp(a))/(exp(b)*d) -> (c/d)*exp(a - b)
+    auto exp_over_exp7 = (expression_c*exp_a)/(exp_b*expression_d);
+    auto exp_over_exp7_cast = graph::multiply_cast(exp_over_exp7);
+    assert(exp_over_exp7_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::exp_cast(exp_over_exp7_cast->get_right()).get() &&
+           "Expect a exp node on the right.");
+//  (exp(a)*c)/(d*exp(b)) -> (c/d)*exp(a - b)
+    auto exp_over_exp8 = (exp_a*expression_c)/(expression_d*exp_b);
+    auto exp_over_exp8_cast = graph::multiply_cast(exp_over_exp8);
+    assert(exp_over_exp8_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::exp_cast(exp_over_exp8_cast->get_right()).get() &&
+           "Expect a exp node on the right.");
+//  (exp(a)*c)/(exp(b)*d) -> (c/d)*exp(a - b)
+    auto exp_over_exp9 = (exp_a*expression_c)/(exp_b*expression_d);
+    auto exp_over_exp9_cast = graph::multiply_cast(exp_over_exp9);
+    assert(exp_over_exp9_cast.get() &&
+           "Expected a multiply node.");
+    assert(graph::exp_cast(exp_over_exp9_cast->get_right()).get() &&
+           "Expect a exp node on the right.");
+
+//  exp(a)/(c/exp(b)) -> exp(a + b)/c
+    auto exp_over_exp10 = exp_a/(expression_c/exp_b);
+    auto exp_over_exp10_cast = graph::divide_cast(exp_over_exp10);
+    assert(exp_over_exp10_cast.get() && "Expected a divide node.");
+    assert(graph::exp_cast(exp_over_exp10_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  exp(a)/(exp(b)/c) -> c*exp(a - b)
+    auto exp_over_exp11 = exp_a/(exp_b/expression_c);
+    auto exp_over_exp11_cast = graph::multiply_cast(exp_over_exp11);
+    assert(exp_over_exp11_cast.get() && "Expected a multiply node.");
+    assert(graph::exp_cast(exp_over_exp11_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+
+//  (c/exp(a))/exp(b) -> c/exp(a - b)
+    auto exp_over_exp12 = (expression_c/exp_a)/exp_b;
+    auto exp_over_exp12_cast = graph::divide_cast(exp_over_exp12);
+    assert(exp_over_exp12_cast.get() && "Expected a divide node.");
+    assert(graph::exp_cast(exp_over_exp12_cast->get_right()).get() &&
+           "Expected a exp node on the right.");
+//  (exp(a)/c)/exp(b) -> exp(a - b)/c
+    auto exp_over_exp13 = (exp_a/expression_c)/exp_b;
+    auto exp_over_exp13_cast = graph::divide_cast(exp_over_exp13);
+    assert(exp_over_exp13_cast.get() && "Expected a divide node.");
+    assert(graph::exp_cast(exp_over_exp13_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
 }
 
 //------------------------------------------------------------------------------
@@ -2040,6 +2311,137 @@ template<jit::float_scalar T> void test_fma() {
     assert(graph::fma_cast(fma(exp_a/exp_j, exp_b,
                                exp_d*(exp_e*(exp_f/exp_c)))).get() &&
            "Expected a divide node.");
+
+//  fma(exp(a), exp(b), c) -> exp(a + b) + c
+    auto expa = graph::exp(exp_a);
+    auto expb = graph::exp(exp_b);
+    auto fmaexp = graph::fma(expa, expb, var_c);
+    assert(graph::add_cast(fmaexp).get() && "Expected an Add node.");
+
+//  fma(exp(a), exp(b)*c, d) = fma(exp(a + b), c, d)
+    auto fmaexp2 = graph::fma(expa, expb*exp_c, exp_b);
+    auto fmaexp2_cast = graph::fma_cast(fmaexp2);
+    assert(fmaexp2_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp2_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(exp(a), c*exp(b), d) = fma(exp(a + b), c, d)
+    auto fmaexp3 = graph::fma(expa, exp_c*expb, exp_d);
+    auto fmaexp3_cast = graph::fma_cast(fmaexp3);
+    assert(fmaexp3_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp3_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(exp(a)*c, exp(b), d) = fma(exp(var_a + var_b), c, d)
+    auto fmaexp4 = graph::fma(expa*exp_c, expb, exp_d);
+    auto fmaexp4_cast = graph::fma_cast(fmaexp4);
+    assert(fmaexp4_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp4_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c*exp(a), exp(b), d) = fma(exp(var_a + var_b), c, d)
+    auto fmaexp5 = graph::fma(exp_c*expa, expb, exp_d);
+    auto fmaexp5_cast = graph::fma_cast(fmaexp5);
+    assert(fmaexp5_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp5_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+
+//  fma(exp(a)*c, exp(b)*d, e) -> fma(exp(a + b), c*d, e)
+    auto fmaexp6 = graph::fma(expa*exp_c, expb*exp_d, exp_e);
+    auto fmaexp6_cast = graph::fma_cast(fmaexp6);
+    assert(fmaexp6_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp6_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(exp(a)*c, d*exp(b), e) -> fma(exp(a + b), c*d, e)
+    auto fmaexp7 = graph::fma(expa*exp_c, exp_d*expb, exp_e);
+    auto fmaexp7_cast = graph::fma_cast(fmaexp7);
+    assert(fmaexp7_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp7_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c*exp(a), exp(b)*d, e) -> fma(exp(a + b), c*d, e)
+    auto fmaexp8 = graph::fma(exp_c*expa, expb*exp_d, exp_e);
+    auto fmaexp8_cast = graph::fma_cast(fmaexp8);
+    assert(fmaexp8_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp8_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c*exp(a), d*exp(b), e) -> fma(exp(a + b), c*d, e)
+    auto fmaexp9 = graph::fma(exp_c*expa, exp_d*expb, exp_e);
+    auto fmaexp9_cast = graph::fma_cast(fmaexp9);
+    assert(fmaexp9_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp9_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+
+//  fma(exp(a)*c, exp(b)/d, e) -> fma(exp(a + b), c/d, e)
+    auto fmaexp10 = graph::fma(expa*exp_c, expb/exp_d, exp_e);
+    auto fmaexp10_cast = graph::fma_cast(fmaexp10);
+    assert(fmaexp10_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp10_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(exp(a)*c, d/exp(b), e) -> fma(exp(a - b), c*d, e)
+    auto fmaexp11 = graph::fma(expa*exp_c, exp_d/expb, exp_e);
+    auto fmaexp11_cast = graph::fma_cast(fmaexp11);
+    assert(fmaexp11_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp11_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c*exp(a), exp(b)/d, e) -> fma(exp(a + b), c/d, e)
+    auto fmaexp12 = graph::fma(exp_c*expa, expb/exp_d, exp_e);
+    auto fmaexp12_cast = graph::fma_cast(fmaexp12);
+    assert(fmaexp12_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp12_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c*exp(a), d/exp(b), e) -> fma(exp(a - b), c*d, e)
+    auto fmaexp13 = graph::fma(exp_c*expa, exp_d/expb, exp_e);
+    auto fmaexp13_cast = graph::fma_cast(fmaexp13);
+    assert(fmaexp13_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp13_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+
+//  fma(exp(a)/c, exp(b)*d, e) -> fma(exp(a + b), d/c, e)
+    auto fmaexp14 = graph::fma(expa/exp_c, expb*exp_d, exp_e);
+    auto fmaexp14_cast = graph::fma_cast(fmaexp14);
+    assert(fmaexp14_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp14_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(exp(a)/c, d*exp(b), e) -> fma(exp(a + b), d/c, e)
+    auto fmaexp15 = graph::fma(expa/exp_c, exp_d*expb, exp_e);
+    auto fmaexp15_cast = graph::fma_cast(fmaexp15);
+    assert(fmaexp15_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp15_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c/exp(a), exp(b)*d, e) -> fma(exp(b - a), c*d, e)
+    auto fmaexp16 = graph::fma(exp_c/expa, expb*exp_d, exp_e);
+    auto fmaexp16_cast = graph::fma_cast(fmaexp16);
+    assert(fmaexp16_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp16_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c/exp(a), d*exp(b), e) -> fma(exp(b - a), c*d, e)
+    auto fmaexp17 = graph::fma(exp_c/expa, exp_d*expb, exp_e);
+    auto fmaexp17_cast = graph::fma_cast(fmaexp17);
+    assert(fmaexp17_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp17_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+
+//  fma(exp(a)/c, exp(b)/d, e) -> exp(a + b)/(c*d) + e
+    auto fmaexp18 = graph::fma(expa/exp_c, expb/exp_d, exp_e);
+    auto fmaexp18_cast = graph::add_cast(fmaexp18);
+    assert(fmaexp18_cast.get() && "Expected an add node.");
+    assert(graph::divide_cast(fmaexp18_cast->get_left()).get() &&
+           "Expected a divide node on the left.");
+//  fma(exp(a)/c, d/exp(b), e) -> fma(exp(a - b), d/c, e)
+    auto fmaexp19 = graph::fma(expa/exp_c, exp_d/expb, exp_e);
+    auto fmaexp19_cast = graph::fma_cast(fmaexp19);
+    assert(fmaexp19_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp19_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c/exp(a), exp(b)/d, e) -> fma(exp(b - a), c/d, e)
+    auto fmaexp20 = graph::fma(exp_c/expa, expb/exp_d, exp_e);
+    auto fmaexp20_cast = graph::fma_cast(fmaexp20);
+    assert(fmaexp20_cast.get() && "Expected a fma node.");
+    assert(graph::exp_cast(fmaexp20_cast->get_left()).get() &&
+           "Expected a exp node on the left.");
+//  fma(c/exp(a), d/exp(b), e) -> (c*d)/exp(a + b) + e
+    auto fmaexp21 = graph::fma(exp_c/expa, exp_d/expb, exp_e);
+    auto fmaexp21_cast = graph::add_cast(fmaexp21);
+    assert(fmaexp21_cast.get() && "Expected an add node.");
+    assert(graph::divide_cast(fmaexp21_cast->get_left()).get() &&
+           "Expected a dive node on the left.");
 }
 
 //------------------------------------------------------------------------------
@@ -2062,6 +2464,8 @@ template<jit::float_scalar T> void run_tests() {
 ///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
+    (void)argc;
+    (void)argv;
     run_tests<float> ();
     run_tests<double> ();
     run_tests<std::complex<float>> ();
