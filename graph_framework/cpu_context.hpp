@@ -192,7 +192,8 @@ namespace gpu {
             }
 
 #ifdef NDEBUG
-            if (fork() == 0) {
+            pid = fork();
+            if (pid == 0) {
                 execlp("rm", "rm", filename.c_str(), NULL);
                 exit(0);
             }
@@ -212,6 +213,14 @@ namespace gpu {
             if (jit::verbose) {
                 std::cout << "  Object name    : " << object_name << std::endl;
             }
+
+#ifdef NDEBUG
+            waitpid(pid, &error, 0);
+            if (error) {
+                std::cerr << "Failed to remove " << filename << std::endl;
+                exit(error);
+            }
+#endif
         }
 
 //------------------------------------------------------------------------------
