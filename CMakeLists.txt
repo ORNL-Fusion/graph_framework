@@ -187,6 +187,26 @@ register_project (llvm
 )
 
 #-------------------------------------------------------------------------------
+#  Define an llvm dependency target
+#-------------------------------------------------------------------------------
+FetchContent_GetProperties (
+    llvm
+    BINARY_DIR llvm_binary_dir
+    SOURCE_DIR llvm_source_dir
+)
+
+add_library (llvm_dep INTERFACE)
+target_include_directories (llvm_dep
+                            INTERFACE
+                            $<BUILD_INTERFACE:${llvm_source_dir}/llvm/include>
+                            $<BUILD_INTERFACE:${llvm_binary_dir}/include>
+)
+target_link_libraries (llvm_dep
+                       INTERFACE
+                       LLVM
+)
+
+#-------------------------------------------------------------------------------
 #  Setup targets
 #-------------------------------------------------------------------------------
 
