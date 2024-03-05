@@ -13,11 +13,13 @@
 #include <cstring>
 #include <thread>
 
-#include <dlfcn.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
 #include "node.hpp"
+
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/ExecutionEngine/Orc/LLJIT.h"
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -71,10 +73,10 @@ namespace gpu {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class cpu_context {
     private:
-///  Library name.
-        std::string library_name;
+///  Code object name.
+        std::string object_name;
 ///  Handle for the dynamic library.
-        void *lib_handle;
+        std::unique_ptr<llvm::orc::LLJIT> jit;
 ///  Argument map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> kernel_arguments;
 ///  Host buffer map.
@@ -104,22 +106,22 @@ namespace gpu {
 ///
 ///  @params[in] index Concurrent index. Not used.
 //------------------------------------------------------------------------------
-        cpu_context(const size_t index) {}
+        cpu_context(const size_t index) {
+            llvm::InitializeNativeTarget();
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Destruct a cpu context.
 //------------------------------------------------------------------------------
         ~cpu_context() {
-            dlclose(lib_handle);
-
-            if (!library_name.empty()) {
-//  A new instance of the class can be created before the library is deleted.
+            if (!object_name.empty()) {
+//  A new instance of the class can be created before the object is deleted.
 //  Wait for the fork to finish before the destructor exits. This could cause a
-//  problem where the new library gets deleted before the context tries to load
+//  problem where the new object gets deleted before the context tries to load
 //  it.
                 auto pid = fork();
                 if (pid == 0) {
-                    execlp("rm", "rm", library_name.c_str(), NULL);
+                    execlp("rm", "rm", object_name.c_str(), NULL);
                     exit(0);
                 }
                 int error = 0;
@@ -155,22 +157,18 @@ namespace gpu {
             temp_stream.str(std::string());
             temp_stream.clear();
 
-            temp_stream << "./" << filename << ".so";
-            library_name = temp_stream.str();
+            temp_stream << "temp_" << thread_id << ".o";
+            object_name = temp_stream.str();
 
             temp_stream.str(std::string());
             temp_stream.clear();
-#ifdef __APPLE__
-            temp_stream << CXX << " -dynamiclib -flat_namespace ";
-#else
-            temp_stream << CXX << " -fPIC -shared ";
-#endif
+            temp_stream << CXX << " ";
 #ifndef NDEBUG
             temp_stream << CXX_FLAGS << " ";
 #else
             temp_stream << "-O3 ";
 #endif
-            temp_stream << filename << " -o " << library_name;
+            temp_stream << " -c " << filename;
 
             if (jit::verbose) {
                 std::cout << "CPU info." << std::endl;
@@ -200,17 +198,19 @@ namespace gpu {
             }
 #endif
 
-            lib_handle = dlopen(library_name.c_str(), RTLD_LAZY);
-            if (!lib_handle) {
-                std::cout << "Failed to load library. " << library_name
-                          << std::endl;
-                std::cout << dlerror() << std::endl;
+            auto object = llvm::MemoryBuffer::getFileAsStream(object_name);
+
+            auto jit_try = llvm::orc::LLJITBuilder().create();
+            if (auto jiterror = jit_try.takeError()) {
+                std::cerr << "Failed to build JIT : " << toString(std::move(jiterror)) << std::endl;
                 exit(1);
             }
+            jit = std::move(jit_try.get());
+
+            jit->addObjectFile(std::move(object.get()));
 
             if (jit::verbose) {
-                std::cout << "  Library name    : " << library_name << std::endl;
-                std::cout << "  Library handle  : " << reinterpret_cast<size_t> (lib_handle) << std::endl;
+                std::cout << "  Object name    : " << object_name << std::endl;
             }
         }
 
@@ -227,7 +227,9 @@ namespace gpu {
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
                                                      const size_t num_rays) {
-            void *kernel = dlsym(lib_handle, kernel_name.c_str());
+            auto entry = std::move(jit->lookup(kernel_name)).get();
+            auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
+
             if (!kernel) {
                 std::cerr << "Failed to load function. " << kernel_name
                           << std::endl;
@@ -258,7 +260,7 @@ namespace gpu {
             }
 
             return [kernel, buffers] () mutable {
-                ((void (*)(std::map<size_t, T *> &))kernel)(buffers);
+                kernel(buffers);
             };
         }
 

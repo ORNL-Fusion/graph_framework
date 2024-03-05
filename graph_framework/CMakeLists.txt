@@ -20,9 +20,17 @@ target_compile_definitions (rays
                             $<$<BOOL:${USE_CUDA}>:HEADER_DIR="$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>">
                             $<$<BOOL:${USE_STATIC}>:STATIC>
 )
+
+FetchContent_GetProperties (
+    llvm
+    BINARY_DIR llvm_binary_dir
+    SOURCE_DIR llvm_source_dir
+)
 target_include_directories (rays
                             INTERFACE
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                            $<BUILD_INTERFACE:${llvm_source_dir}/llvm/include>
+                            $<BUILD_INTERFACE:${llvm_binary_dir}/include>
 )
 target_link_libraries (rays
                        INTERFACE
@@ -31,6 +39,7 @@ target_link_libraries (rays
                        NetCDF::NetCDF
                        $<$<PLATFORM_ID:Linux>:${CMAKE_DL_LIBS}>
                        $<$<PLATFORM_ID:Linux>:pthread>
+                       LLVM
 )
 target_precompile_headers (rays
                            INTERFACE

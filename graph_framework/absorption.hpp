@@ -143,11 +143,12 @@ namespace absorption {
             inputs.push_back(graph::variable_cast(this->t));
             inputs.push_back(graph::variable_cast(this->w));
 
-            dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, 
-                                                                    kx + kx_amp,
-                                                                    ky + ky_amp,
-                                                                    kz + kz_amp,
-                                                                    x, y, z, t, eq);
+            auto D = DISPERSION_FUNCTION().D(w,
+                                             kx + kx_amp,
+                                             ky + ky_amp,
+                                             kz + kz_amp,
+                                             x, y, z, t, eq);
+
             solver::newton(work, {kamp}, inputs, {D.get_d()});
 
             inputs = {
