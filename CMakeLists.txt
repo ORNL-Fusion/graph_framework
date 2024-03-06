@@ -195,6 +195,23 @@ FetchContent_GetProperties (
     SOURCE_DIR llvm_source_dir
 )
 
+#  Do not build llvm until pull command is finished.
+add_dependencies (LLVMHello pull_llvm)
+add_dependencies (LLVMHello_exports pull_llvm)
+add_dependencies (LLVMDemangle pull_llvm)
+add_dependencies (Remarks_exports pull_llvm)
+add_dependencies (LLVMSupportBlake3 pull_llvm)
+add_dependencies (BugpointPasses_exports pull_llvm)
+add_dependencies (LTO_exports pull_llvm)
+add_dependencies (llvm-PerfectShuffle pull_llvm)
+add_dependencies (SecondLib pull_llvm)
+add_dependencies (DynamicLibraryLib pull_llvm)
+add_dependencies (PipSqueak pull_llvm)
+add_dependencies (obj.LLVMTableGenCommon pull_llvm)
+add_dependencies (llvm_vcsrevision_h pull_llvm)
+add_dependencies (benchmark pull_llvm)
+add_dependencies (benchmark_main pull_llvm)
+
 add_library (llvm_dep INTERFACE)
 target_include_directories (llvm_dep
                             INTERFACE
