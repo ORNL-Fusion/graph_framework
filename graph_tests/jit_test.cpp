@@ -55,7 +55,7 @@ void compile(graph::input_nodes<T> inputs,
     source.add_kernel("test_kernel", inputs, outputs, setters);
 
     source.compile();
-    
+
     auto run = source.create_kernel_call("test_kernel", inputs, outputs, 1);
     run();
 
@@ -273,7 +273,7 @@ template<jit::float_scalar T> void run_math_tests() {
     } else {
         result = 0.0;
     }
-    
+
     auto pow_node = graph::pow(v1, v2);
     compile<T> ({graph::variable_cast(v1),
                  graph::variable_cast(v2)},

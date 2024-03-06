@@ -168,7 +168,7 @@ namespace gpu {
 #else
             temp_stream << "-O3 ";
 #endif
-            temp_stream << " -c " << filename;
+            temp_stream << "-c " << filename;
 
             if (jit::verbose) {
                 std::cout << "CPU info." << std::endl;
@@ -188,7 +188,7 @@ namespace gpu {
             if (error) {
                 std::cerr << "Failed to compile cpu kernel. Check source code in "
                           << filename << std::endl;
-                exit(error);
+                exit(-1);
             }
 
 #ifdef NDEBUG
@@ -204,7 +204,7 @@ namespace gpu {
             auto jit_try = llvm::orc::LLJITBuilder().create();
             if (auto jiterror = jit_try.takeError()) {
                 std::cerr << "Failed to build JIT : " << toString(std::move(jiterror)) << std::endl;
-                exit(1);
+                exit(-1);
             }
             jit = std::move(jit_try.get());
 
@@ -218,7 +218,7 @@ namespace gpu {
             waitpid(pid, &error, 0);
             if (error) {
                 std::cerr << "Failed to remove " << filename << std::endl;
-                exit(error);
+                exit(-1);
             }
 #endif
         }
@@ -403,7 +403,7 @@ namespace gpu {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
             
-            source_buffer << "    std::map<size_t, ";
+            source_buffer << "    map<size_t, ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args) {" << std::endl;
 
