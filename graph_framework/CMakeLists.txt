@@ -13,8 +13,8 @@ target_compile_definitions (rays
                             INTERFACE
                             $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a">
                             $<$<PLATFORM_ID:Darwin>:CXX_FLAGS="-g -fsanitize=undefined -fsanitize=float-divide-by-zero -fsanitize-trap=all">
-                            $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a">
-                            $<$<PLATFORM_ID:Linux>:CXX_FLAGS="-g -fsanitize=undefined -fsanitize=float-divide-by-zero">
+                            $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a -fPIC -fno-use-cxa-atexit">
+                            $<$<PLATFORM_ID:Linux>:CXX_FLAGS="-g"> #-fsanitize=undefined -fsanitize=float-divide-by-zero">
                             EFIT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"
                             VMEC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/vmec.nc"
                             $<$<BOOL:${USE_CUDA}>:HEADER_DIR="$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>">

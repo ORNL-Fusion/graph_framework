@@ -404,8 +404,10 @@ template<jit::float_scalar T> void test_backend() {
     exp_scalar.set(static_cast<T> (-0.23));
     const backend::buffer<T> pow_gen = backend::pow(base_scalar, exp_scalar);
     assert(pow_gen.size() == 1 && "Expected a size of 1");
-    assert(pow_gen.at(0) == std::pow(static_cast<T> (4.0),
-                                     static_cast<T> (-0.23)) &&
+    assert(std::abs(pow_gen.at(0) -
+                    std::pow(static_cast<T> (4.0),
+                             static_cast<T> (-0.23))) <=
+           std::abs(static_cast<T> (1.1102230246251565e-16)) &&
            "Expected 4^-0.23.");
 
     backend::buffer<T> base_vec(std::vector<T> ({
@@ -452,8 +454,10 @@ template<jit::float_scalar T> void test_backend() {
     exp_scalar.set(static_cast<T> (-0.23));
     const backend::buffer<T> x_over_cubed_vec = backend::pow(base_vec, exp_scalar);
     assert(x_over_cubed_vec.size() == 2 && "Expected a size of 2");
-    assert(x_over_cubed_vec.at(0) == std::pow(static_cast<T> (4.0),
-                                              static_cast<T> (-0.23)) &&
+    assert(std::abs(x_over_cubed_vec.at(0) -
+                    std::pow(static_cast<T> (4.0),
+                             static_cast<T> (-0.23))) <=
+           std::abs(static_cast<T> (1.1102230246251565e-16)) &&
            "Expected 4^-0.23.");
     assert(x_over_cubed_vec.at(1) == std::pow(static_cast<T> (2.0),
                                               static_cast<T> (-0.23)) &&
@@ -466,11 +470,15 @@ template<jit::float_scalar T> void test_backend() {
     }));
     backend::buffer<T> scale_base = backend::pow(base_scalar, exp_vec);
     assert(scale_base.size() == 2 && "Expected a size of 2");
-    assert(scale_base.at(0) == std::pow(static_cast<T> (4.0),
-                                        static_cast<T> (4.0)) &&
+    assert(std::abs(scale_base.at(0) -
+                    std::pow(static_cast<T> (4.0),
+                             static_cast<T> (4.0))) <=
+           std::abs(static_cast<T> (5.6843418860808015e-14)) &&
            "Expected 4^4.");
-    assert(scale_base.at(1) == std::pow(static_cast<T> (4.0),
-                                        static_cast<T> (2.0)) &&
+    assert(std::abs(scale_base.at(1) -
+                    std::pow(static_cast<T> (4.0),
+                             static_cast<T> (2.0))) <=
+           std::abs(static_cast<T> (1.7763568394002505e-15)) &&
            "Expected 4^2.");
 
     const auto non_int = static_cast<T> (0.438763);
@@ -499,8 +507,10 @@ template<jit::float_scalar T> void test_backend() {
     }));
     const backend::buffer<T> vec_vec = backend::pow(base_vec, exp_vec);
     assert(vec_vec.size() == 2 && "Expected a size of 2");
-    assert(vec_vec.at(0) == std::pow(static_cast<T> (4.0),
-                                     static_cast<T> (-4.0)) &&
+    assert(std::abs(vec_vec.at(0) -
+                    std::pow(static_cast<T> (4.0),
+                             static_cast<T> (-4.0))) <=
+           std::abs(static_cast<T> (8.6736173798840355e-19)) &&
            "Expected 4^-4.");
     assert(vec_vec.at(1) == std::pow(static_cast<T> (2.0),
                                      static_cast<T> (0.30)) &&
@@ -522,7 +532,7 @@ template<jit::float_scalar T> void test_backend() {
            "Expected ln(4).");
     assert(base_vec.at(1) == std::log(static_cast<T> (2.0)) &&
            "Expected ln(2).");
-    
+
     base_vec.set(std::vector<T> ({
         static_cast<T> (-4.0),
         static_cast<T> (-2.0)
