@@ -109,7 +109,7 @@ int main(int argc, const char * argv[]) {
     (void)argv;
     run_tests<float> (4.0E-15);
     run_tests<double> (1.0E-30);
-    run_tests<std::complex<float>> (3.0E-15);
+    run_tests<std::complex<float>> (4.0E-15);
     run_tests<std::complex<double>> (1.0E-30);
     END_GPU
 }

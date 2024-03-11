@@ -16,6 +16,9 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 #-------------------------------------------------------------------------------
 #  Setup build types
 #-------------------------------------------------------------------------------
+if (NOT CMAKE_BUILD_TYPE)
+    set (CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+endif ()
 set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
               Debug
               Release
@@ -115,6 +118,111 @@ target_compile_options (sanitizer
 target_link_options (sanitizer
                      INTERFACE
                      $<$<AND:$<CONFIG:Sanitized>,$<PLATFORM_ID:Darwin>>:-fsanitize-trap=all>
+)
+
+#-------------------------------------------------------------------------------
+#  Setup access method.
+#-------------------------------------------------------------------------------
+option (USE_SSH "Use ssh to access git repos" OFF)
+if (${USE_SSH})
+    set (URL_PROTO "git@")
+    set (URL_SEP ":")
+else ()
+    set (URL_PROTO "https://")
+    set (URL_SEP "/")
+endif ()
+
+#-------------------------------------------------------------------------------
+#  Define a macro to register new projects.
+#-------------------------------------------------------------------------------
+include (FetchContent)
+find_package (Git)
+
+function (register_project reg_name dir url default_tag sub_dir)
+    set (BUILD_TAG_${dir} ${default_tag} CACHE STRING "Name of the tag to checkout.")
+
+# Anything after the tag is assumed to be a project setting.
+    foreach (i RANGE 6 ${ARGC} 3)
+        math (EXPR key "${i} - 1" OUTPUT_FORMAT DECIMAL)
+        math (EXPR type "${i} + 1" OUTPUT_FORMAT DECIMAL)
+        set (${ARGV${key}} ${ARGV${i}} CACHE ${ARGV${type}} "" FORCE)
+    endforeach ()
+
+    FetchContent_Declare (
+        ${reg_name}
+        GIT_REPOSITORY ${url}
+        GIT_TAG origin/${BUILD_TAG_${dir}}
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir}
+        SOURCE_SUBDIR ${sub_dir}
+    )
+
+    FetchContent_MakeAvailable (${reg_name})
+
+    if (${GIT_FOUND})
+#  By default cmake clones projects in a headless state. After the repo is
+#  cloned checkout the requested tag so repo is in a working state.
+        execute_process (
+            COMMAND ${GIT_EXECUTABLE} checkout ${BUILD_TAG_${dir}}
+            WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
+        )
+
+#  Add a taraget to pull the latest version before building. Note dependency is
+#  registered in the sub project CMakeList.txt. Not sure how this should handle
+#  multiple targets in a project yet. Name must match the subproject pull_
+#  dependency.
+        add_custom_target (
+            pull_${reg_name}
+            ALL
+            COMMAND ${GIT_EXECUTABLE} pull
+            WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
+        )
+    endif ()
+endfunction ()
+
+register_project (llvm
+                  LLVM
+                  ${URL_PROTO}github.com${URL_SEP}llvm/llvm-project.git
+                  main
+                  llvm
+                  LLVM_BUILD_LLVM_DYLIB ON BOOL
+                  LLVM_TARGETS_TO_BUILD Native STRING
+)
+
+#-------------------------------------------------------------------------------
+#  Define an llvm dependency target
+#-------------------------------------------------------------------------------
+FetchContent_GetProperties (
+    llvm
+    BINARY_DIR llvm_binary_dir
+    SOURCE_DIR llvm_source_dir
+)
+
+#  Do not build llvm until pull command is finished.
+add_dependencies (LLVMHello pull_llvm)
+add_dependencies (LLVMHello_exports pull_llvm)
+add_dependencies (LLVMDemangle pull_llvm)
+add_dependencies (Remarks_exports pull_llvm)
+add_dependencies (LLVMSupportBlake3 pull_llvm)
+add_dependencies (BugpointPasses_exports pull_llvm)
+add_dependencies (LTO_exports pull_llvm)
+add_dependencies (llvm-PerfectShuffle pull_llvm)
+add_dependencies (SecondLib pull_llvm)
+add_dependencies (DynamicLibraryLib pull_llvm)
+add_dependencies (PipSqueak pull_llvm)
+add_dependencies (obj.LLVMTableGenCommon pull_llvm)
+add_dependencies (llvm_vcsrevision_h pull_llvm)
+add_dependencies (benchmark pull_llvm)
+add_dependencies (benchmark_main pull_llvm)
+
+add_library (llvm_dep INTERFACE)
+target_include_directories (llvm_dep
+                            INTERFACE
+                            $<BUILD_INTERFACE:${llvm_source_dir}/llvm/include>
+                            $<BUILD_INTERFACE:${llvm_binary_dir}/include>
+)
+target_link_libraries (llvm_dep
+                       INTERFACE
+                       LLVM
 )
 
 #-------------------------------------------------------------------------------
