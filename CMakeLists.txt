@@ -22,8 +22,8 @@ endif ()
 set_property (CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
               Debug
               Release
-              Sanitized
-              Profile
+              MinSizeRel
+              RelWithDebInfo
 )
 
 #-------------------------------------------------------------------------------
@@ -89,36 +89,27 @@ target_compile_options (sanitizer
                         $<$<CONFIG:Sanitized>:-g>
 )
 
-macro (register_sanitizer_option name default)
+macro (register_sanitizer_option name)
     string (TOUPPER ${name} upper_name)
 
-    option (SANITIZE_${upper_name} "Enable the ${name} sanitizer" ${default})
+    option (SANITIZE_${upper_name} "Enable the ${name} sanitizer" OFF)
 
     target_compile_options (sanitizer
                             INTERFACE
-                            $<$<CONFIG:Sanitized>:$<$<BOOL:${SANITIZE_${upper_name}}>:-fsanitize=${name}>>
+                            $<$<BOOL:${SANITIZE_${upper_name}}>:-fsanitize=${name}>
     )
     target_link_options (sanitizer
                          INTERFACE
-                         $<$<CONFIG:Sanitized>:$<$<BOOL:${SANITIZE_${upper_name}}>:-fsanitize=${name}>>
+                         $<$<BOOL:${SANITIZE_${upper_name}}>:-fsanitize=${name}>
     )
 endmacro ()
 
-register_sanitizer_option (address ON)
-register_sanitizer_option (leak OFF)
-register_sanitizer_option (memory OFF)
-register_sanitizer_option (thread OFF)
-register_sanitizer_option (undefined ON)
-register_sanitizer_option (float-divide-by-zero ON)
-
-target_compile_options (sanitizer
-                        INTERFACE
-                        $<$<AND:$<CONFIG:Sanitized>,$<PLATFORM_ID:Darwin>>:-fsanitize-trap=all>
-)
-target_link_options (sanitizer
-                     INTERFACE
-                     $<$<AND:$<CONFIG:Sanitized>,$<PLATFORM_ID:Darwin>>:-fsanitize-trap=all>
-)
+register_sanitizer_option (address)
+register_sanitizer_option (leak)
+register_sanitizer_option (memory)
+register_sanitizer_option (thread)
+register_sanitizer_option (undefined)
+register_sanitizer_option (float-divide-by-zero)
 
 #-------------------------------------------------------------------------------
 #  Setup access method.

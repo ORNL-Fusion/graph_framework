@@ -242,7 +242,7 @@ namespace gpu {
             if (!kernel) {
                 std::cerr << "Failed to load function. " << kernel_name
                           << std::endl;
-                exit(1);
+                exit(-1);
             }
 
             std::map<size_t, T *> buffers;
