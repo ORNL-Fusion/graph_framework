@@ -39,7 +39,11 @@ void compile_index(std::ostringstream &stream,
     }
     stream << "(";
     if constexpr (jit::complex_scalar<T>) {
-        stream << "real(";
+        stream << "real";
+        if constexpr (jit::use_hip()) {
+            stream << "<" << jit::type_to_string<T> () << "> ";
+        }
+        stream << "(";
     }
     stream << "(" << register_name << " - ";
     if constexpr (jit::complex_scalar<T>) {
@@ -284,20 +288,38 @@ void compile_index(std::ostringstream &stream,
                                 avail_const_mem -= buffer_size;
                                 stream << "__constant__ ";
                             }
+                        } else if (jit::use_hip()) {
+                            stream << "__device__ ";
                         }
                         stream << "const ";
                         jit::add_type<T> (stream);
                         stream << " " << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] << "[] = {";
-                        if constexpr (jit::complex_scalar<T>) {
-                            jit::add_type<T> (stream);
-                        }
-                        stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0];
-                        for (size_t i = 1; i < length; i++) {
-                            stream << ", ";
+                        if constexpr (!jit::use_hip()) {
                             if constexpr (jit::complex_scalar<T>) {
                                 jit::add_type<T> (stream);
                             }
-                            stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i];
+                            stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0];
+                        } else {
+                            stream << "{"
+                                   << std::real(leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0])
+                                   << ","
+                                   << std::imag(leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0])
+                                   << "}";
+                        }
+                        for (size_t i = 1; i < length; i++) {
+                            stream << ", ";
+                            if constexpr (!jit::use_hip()) {
+                                if constexpr (jit::complex_scalar<T>) {
+                                    jit::add_type<T> (stream);
+                                }
+                                stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i];
+                            } else {
+                                stream << "{"
+                                       << std::real(leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i])
+                                       << ","
+                                       << std::imag(leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i])
+                                       << "}";
+                            }
                         }
                         stream << "};" << std::endl;
                     }
@@ -994,20 +1016,38 @@ void compile_index(std::ostringstream &stream,
                                 avail_const_mem -= buffer_size;
                                 stream << "__constant__ ";
                             }
+                        } else if (jit::use_hip()) {
+                            stream << "__device__ ";
                         }
                         stream << "const ";
                         jit::add_type<T> (stream);
                         stream << " " << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] << "[] = {";
-                        if constexpr (jit::complex_scalar<T>) {
-                            jit::add_type<T> (stream);
-                        }
-                        stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0];
-                        for (size_t i = 1; i < length; i++) {
-                            stream << ", ";
+                        if (!jit::use_hip()) {
                             if constexpr (jit::complex_scalar<T>) {
                                 jit::add_type<T> (stream);
                             }
-                            stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i];
+                            stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0];
+                        } else {
+                            stream << "{"
+                                   << std::real(leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0])
+                                   << ","
+                                   << std::imag(leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0])
+                                   << "}";
+                        }
+                        for (size_t i = 1; i < length; i++) {
+                            stream << ", ";
+                            if constexpr (!jit::use_hip()) {
+                                if constexpr (jit::complex_scalar<T>) {
+                                    jit::add_type<T> (stream);
+                                }
+                                stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i];
+                            } else {
+                                stream << "{"
+                                       << std::real(leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i])
+                                       << ","
+                                       << std::imag(leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i])
+                                       << "}";
+                            }
                         }
                         stream << "};" << std::endl;
                     }

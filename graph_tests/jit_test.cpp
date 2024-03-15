@@ -271,7 +271,7 @@ template<jit::float_scalar T> void run_math_tests() {
                 {exp_node_dfdv2}, {},
                 exp_node_dfdv2->evaluate().at(0), 2.0E-6);
 
-    if constexpr (jit::use_cuda() || !jit::use_gpu<T> ()) {
+    if constexpr (jit::use_cuda() || jit::use_hip() || !jit::use_gpu<T> ()) {
         result = 1.8E-15;
     } else {
         result = 0.0;
@@ -296,7 +296,7 @@ template<jit::float_scalar T> void run_math_tests() {
                 {pow_node_dfdv1}, {},
                 pow_node_dfdv1->evaluate().at(0), 0.0);
 
-    if constexpr (jit::use_cuda() || !jit::use_gpu<T> ()) {
+    if constexpr (jit::use_cuda() || jit::use_hip() || !jit::use_gpu<T> ()) {
         result = 8.9E-16;
     } else {
         result = 0.0;

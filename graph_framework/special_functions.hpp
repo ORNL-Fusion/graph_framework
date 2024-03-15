@@ -17,6 +17,422 @@ using namespace cuda::std;
 template<typename T>
 using complex_type = complex<T>;
 
+#elif defined(HIP_DEVICE_CODE)
+#include <hip/hip_complex.h>
+#include <hip/hip_common.h>
+
+#define DEVICE_FUNCTION __device__
+
+using namespace std;
+
+//------------------------------------------------------------------------------
+///  @brief Generic float test template.
+///
+///  @paramt T type to test.
+//------------------------------------------------------------------------------
+template<typename T>
+struct is_float {
+///  Type alias for false.
+    static constexpr bool value = false;
+};
+
+//------------------------------------------------------------------------------
+///  @brief Specialized float test template.
+//------------------------------------------------------------------------------
+template<>
+struct is_float<float> {
+///  Type alias for true.
+    static constexpr bool value = true;
+};
+
+//------------------------------------------------------------------------------
+///  @brief Generic conditional template
+///
+///  @tparam Boolian type.
+///  @tparam True type.
+///  @tparam False type.
+//------------------------------------------------------------------------------
+template<bool B, class T, class F>
+struct conditional {
+///  Type alias for the True type.
+    using type = T;
+};
+
+//------------------------------------------------------------------------------
+///  @brief Specialed conditional template for false.
+///
+///  @tparam True type.
+///  @tparam False type.
+//------------------------------------------------------------------------------
+template<class T, class F>
+struct conditional<false, T, F> {
+///  Type alias for the False type.
+    using type = F;
+};
+
+///  HIP type alias for complex types.
+template<typename T> 
+using complex_type = conditional<is_float<T>::value, 
+                                 hipFloatComplex, 
+                                 hipDoubleComplex>::type;
+
+//------------------------------------------------------------------------------
+///  @brief Generic template for real.
+///
+///  @tparam T Base type.
+///
+///  @params[in] x Complex argument.
+///  @returns A null value.
+//------------------------------------------------------------------------------
+template<typename T>
+DEVICE_FUNCTION
+T real(const complex_type<T> x) {
+    return static_cast<T> (0);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Wrapper template for hip float real.
+///
+///  @params[in] x Complex argument.
+///  @returns The real part.
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+float real<float> (const complex_type<float> x) {
+    return hipCrealf(x);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Wrapper template for hip double real.
+///
+///  @params[in] x Complex argument.
+///  @returns The real part.
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+double real<double> (const complex_type<double> x) {
+    return hipCreal(x);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Generic template for imag.
+///
+///  @tparam T Base type.
+///
+///  @params[in] x Complex argument.
+///  @returns A null value.
+//------------------------------------------------------------------------------
+template<typename T>
+DEVICE_FUNCTION
+T imag(const complex_type<T> x) {
+    return static_cast<T> (0);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Wrapper template for hip float imag.
+///
+///  @params[in] x Complex argument.
+///  @returns The imag part.
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+float imag<float> (const complex_type<float> x) {
+    return hipCimagf(x);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Wrapper template for hip double imag.
+///
+///  @params[in] x Complex argument.
+///  @returns The imag part.
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+double imag<double> (const complex_type<double> x) {
+    return hipCimag(x);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Generic exp template.
+///
+///  @note This should never get called.
+///
+///  @tparam T Base type.
+///
+///  @params[in] x Exp argument.
+///  @returns A null.
+//------------------------------------------------------------------------------
+template<typename T>
+DEVICE_FUNCTION
+T exp(const T x) {
+    static_assert(false, "Invalid base type.");
+    return static_cast<complex_type<T>> (0);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex exponetial for float.
+///
+///  @params[in] x Complex argument.
+///  @returns exp(x)
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+complex_type<float> exp<complex_type<float>> (const complex_type<float> x) {
+    return expf(real<float> (x))*
+           make_hipFloatComplex(cosf(imag<float> (x)),
+                                sinf(imag<float> (x)));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex exponetial for double.
+///
+///  @params[in] x Complex argument.
+///  @returns exp(x)
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+complex_type<double> exp<complex_type<double>> (const complex_type<double> x) {
+    return exp(real<double> (x))*
+           make_hipDoubleComplex(cos(imag<double> (x)),
+                                 sin(imag<double> (x)));
+}
+
+typedef __hip_internal::uint8_t uint8_t;
+
+//------------------------------------------------------------------------------
+///  @brief Generic numeric limits class for HIP
+///
+///  @tparam T Base type.
+//------------------------------------------------------------------------------
+template<typename T>
+struct numeric_limits {
+    static_assert(false, "Invailid base type.");
+};
+
+//------------------------------------------------------------------------------
+///  @brief Float numeric limits class for HIP
+//------------------------------------------------------------------------------
+template<>
+struct numeric_limits<float> {
+//------------------------------------------------------------------------------
+///  @brief Maximum value.
+///
+///  @returns The maximum float value.
+//------------------------------------------------------------------------------
+    DEVICE_FUNCTION
+    static float max() {
+        return static_cast<float> (3.402823466e+38);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Epsilon value.
+///
+///  @returns The epsilon float value.
+//------------------------------------------------------------------------------
+    DEVICE_FUNCTION
+    static float epsilon() {
+        return static_cast<float> (1.192092896e-07);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Maximum value.
+///
+///  @returns The maximum float value.
+//------------------------------------------------------------------------------
+    DEVICE_FUNCTION
+    static float signaling_NaN() {
+        return nanf((const char *)'a');
+    }
+};
+
+//------------------------------------------------------------------------------
+///  @brief Double numeric limits class for HIP
+//------------------------------------------------------------------------------
+template<>
+struct numeric_limits<double> {
+//------------------------------------------------------------------------------
+///  @brief Maximum value.
+///
+///  @returns The maximum double value.
+//------------------------------------------------------------------------------
+    DEVICE_FUNCTION
+    static double max() {
+        return static_cast<double> (1.7976931348623158e+308);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Epsilon value.
+///
+///  @returns The epsilon float value.
+//------------------------------------------------------------------------------
+    DEVICE_FUNCTION
+    static double epsilon() {
+        return static_cast<double> (2.2204460492503131e-016);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Maximum value.
+///
+///  @returns The maximum float value.
+//------------------------------------------------------------------------------
+    DEVICE_FUNCTION
+    static double signaling_NaN() {
+        return nan((const char *)'a');
+    }
+};
+
+//------------------------------------------------------------------------------
+///  @brief Generic make a complex type for HIP.
+///
+///  @note This should never get called.
+///
+///  @tparam T Base type.
+///
+///  @params[in] r Real part.
+///  @params[in] i Imaginary part.
+//------------------------------------------------------------------------------
+template<typename T>
+DEVICE_FUNCTION
+complex_type<T> make_complex(const T r, const T i) {
+    static_assert(false, "Invalid base type.");
+    return complex_type<T> (r, i);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Make a complex type.
+///
+///  @params[in] r Real part.
+///  @params[in] i Imaginary part.
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+complex_type<float> make_complex(const float r, const float i) {
+    return make_hipFloatComplex(r, i);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Make a complex type.
+///
+///  @params[in] r Real part.
+///  @params[in] i Imaginary part.
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+complex_type<double> make_complex(const double r, const double i) {
+    return make_hipDoubleComplex(r, i);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Generic complex sqrt for HIP.
+///
+///  @note This should never run.
+///
+///  @tparam T Base type.
+///
+///  @params[in] x Complex argument.
+///  @returns A null value.
+//------------------------------------------------------------------------------
+template<typename T>
+DEVICE_FUNCTION
+T sqrt(const T x) {
+    static_assert(false, "Invalid base type.");
+    return static_cast<T> (0);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex sqrt for float type.
+///
+///  @params[in] x Complex argument.
+///  @returns sqrt(x)
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+complex_type<float> sqrt<complex_type<float>> (const complex_type<float> x) {
+    const float r = real<float> (x);
+    const float i = imag<float> (x);
+    const float length = sqrtf(r*r + i*i);
+    return make_complex<float> (sqrtf(static_cast<float> (0.5)*(length + r)),
+                                copysignf(static_cast<float> (1.0), i)*sqrtf(static_cast<float> (0.5)*(length - r)));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex sqrt for float type.
+///  
+///  @params[in] x Complex argument.
+///  @returns sqrt(x)
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+complex_type<double> sqrt<complex_type<double>> (const complex_type<double> x) {
+    const double r = real<double> (x);
+    const double i = imag<double> (x);
+    const double length = sqrt(r*r + i*i);
+    return make_complex<double> (sqrt(static_cast<double> (0.5)*(length + r)),  
+       	                         copysign(static_cast<double> (1.0), i)*sqrt(static_cast<double> (0.5)*(length - r)));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Generic complex log for HIP.
+///
+///  @note This should never run.
+///
+///  @tparam T Base type.
+///
+///  @params[in] x Complex argument.
+///  @returns A null value.
+//------------------------------------------------------------------------------
+template<typename T>
+DEVICE_FUNCTION
+T log(const T x) {
+    static_assert(false, "Invalid base type.");
+    return static_cast<T> (0);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex log for float type.
+///
+///  @params[in] x Complex argument.
+///  @returns log(x)
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+complex_type<float> log<complex_type<float>> (const complex_type<float> x) {
+    const float r = real<float> (x);
+    const float i = imag<float> (x);
+    const float length = sqrtf(r*r + i*i);
+    return make_complex<float> (log(length), atan2f(i, r));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex log for float type.
+///
+///  @params[in] x Complex argument.
+///  @returns log(x)
+//------------------------------------------------------------------------------
+template<>
+DEVICE_FUNCTION
+complex_type<double> log<complex_type<double>> (const complex_type<double> x) {
+    const double r = real<double> (x);
+    const double i = imag<double> (x);
+    const double length = sqrt(r*r + i*i);
+    return make_complex<double> (log(length), atan2(i, r));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Generic complex pow for HIP.
+///
+///  @tparam T Base type.
+///
+///  @params[in] x Complex base.
+///  @params[in] y Complex exponent.
+///  @returns pow(x, y)
+//------------------------------------------------------------------------------
+template<typename T>
+DEVICE_FUNCTION
+T pow(const T x, const T y) {
+    return exp(y*log(x));
+}
+
 #else
 #include <complex>
 #include <cfloat>
@@ -36,6 +452,27 @@ using complex_type = std::complex<T>;
 
 #endif
 
+#ifndef HIP_DEVICE_CODE
+#define DEVICE_FUNCTION
+
+//------------------------------------------------------------------------------
+///  @brief Generic make a complex type for HIP.
+///  
+///  @tparam T Base type.
+///
+///  @params[in] r Real part.
+///  @params[in] i Imaginary part.
+//------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+template<std::floating_point T>
+#else
+template<typename T>
+#endif
+complex_type<T> make_complex(const T r, const T i) {
+    return complex_type<T> (r, i);
+}
+#endif
+
 ///  Name space for special functions.
 namespace special {
 
@@ -45,8 +482,8 @@ namespace special {
 #else
     template<typename T>
 #endif
-    constexpr complex_type<T> i(static_cast<T> (0),
-                                static_cast<T> (1));
+    constexpr complex_type<T> i = make_complex(static_cast<T> (0),
+                                               static_cast<T> (1));
 
 //------------------------------------------------------------------------------
 ///  @brief Compute erfcx(z) = exp(z^2)\*erfz(z)
@@ -102,6 +539,7 @@ namespace special {
 #else
     template<typename T>
 #endif
+    DEVICE_FUNCTION
     T w_im_y100(T x) {
         const T y100 = static_cast<T> (100)/(static_cast<T> (1) + x);
         switch (static_cast<uint8_t> (y100)) {
@@ -542,6 +980,7 @@ namespace special {
 #else
     template<typename T>
 #endif
+    DEVICE_FUNCTION
     T w_im(T x) {
 // Continued-fraction expansion is faster.
         if (abs(x) > static_cast<T> (45)) {
@@ -1033,6 +1472,7 @@ namespace special {
 #else
     template<typename T>
 #endif
+    DEVICE_FUNCTION
     T erfcx(T x) {
         if (x >= static_cast<T> (0)) {
             if (x > static_cast<T> (50)) {
@@ -1172,13 +1612,14 @@ namespace special {
 #else
     template<typename T>
 #endif
+    DEVICE_FUNCTION
     complex_type<T> w(complex_type<T> z) {
         if (real(z) == static_cast<T> (0)) {
 //  Give correct sign of 0 in cimag(w)
-            return complex_type<T> (erfcx(imag(z)), real(z));
+            return make_complex(erfcx(imag(z)), real(z));
         } else if (imag(z) == static_cast<T> (0)) {
-            return complex_type<T> (abs(real(z)) > static_cast<T> (27) ? static_cast<T> (0) : exp(-sq<T> (real(z))),
-                                    w_im(real(z)));
+            return make_complex(abs(real(z)) > static_cast<T> (27) ? static_cast<T> (0) : exp(-sq<T> (real(z))),
+                                w_im(real(z)));
         }
 
         const T a = static_cast<T> (M_PI)/sqrt(-log(numeric_limits<T>::epsilon()*static_cast<T> (0.5))); // pi / sqrt(-log(eps*0.5))
@@ -1190,13 +1631,13 @@ namespace special {
         const T ya = abs(y);
 
 //  Return value.
-        complex_type<T> ret(0.0, 0.0);
+        complex_type<T> ret = make_complex(static_cast<T> (0.0), static_cast<T> (0.0));
 
-        T sum1 = static_cast<T> (0);
-        T sum2 = static_cast<T> (0);
-        T sum3 = static_cast<T> (0);
-        T sum4 = static_cast<T> (0);
-        T sum5 = static_cast<T> (0);
+        T sum1 = static_cast<T> (0.0);
+        T sum2 = static_cast<T> (0.0);
+        T sum3 = static_cast<T> (0.0);
+        T sum4 = static_cast<T> (0.0);
+        T sum5 = static_cast<T> (0.0);
 
 //  Continued fraction is faster
 //  As pointed out by M. Zaghloul, the continued fraction seems to give a large
@@ -1229,22 +1670,22 @@ namespace special {
                     if (x > ya) {
                         T yax = ya / xs;
                         T denom = isqpi<T> ()/(xs + yax*ya);
-                        ret = complex_type<T> (denom*yax, denom);
+                        ret = make_complex(denom*yax, denom);
                     } else if (isinf(ya)) {
-                        return (isnan(x) || y < static_cast<T> (0)) ? complex_type<T> (numeric_limits<T>::signaling_NaN(),
+                        return (isnan(x) || y < static_cast<T> (0)) ? make_complex(numeric_limits<T>::signaling_NaN(),
                                                                                        numeric_limits<T>::signaling_NaN()) :
-                                                                      complex_type<T> (0.0, 0.0);
+                                                                      make_complex(static_cast<T> (0.0), static_cast<T> (0.0));
                     } else {
                         const T xya = xs/ya;
                         const T denom = isqpi<T> ()/(xya*xs + ya);
-                        ret = complex_type<T> (denom, denom*xya);
+                        ret = make_complex(denom, denom*xya);
                     }
                 } else {
 //  nu == 2, w(z) = i/sqrt(pi) * z / (z*z - 0.5)
                     const T dr = xs*xs - ya*ya - static_cast<T> (0.5);
                     const T di = static_cast<T> (2)*xs*ya;
                     const T denom = isqpi<T> ()/(dr*dr + di*di);
-                    ret = complex_type<T> (denom*(xs*di - ya*dr), denom*(xs*dr + ya*di));
+                    ret = make_complex(denom*(xs*di - ya*dr), denom*(xs*dr + ya*di));
                 }
             } else {
 //  compute nu(z) estimate and do general continued fraction
@@ -1264,14 +1705,14 @@ namespace special {
                 }
 //  w(z) = i/sqrt(pi) / w:
                 const T denom2 = isqpi<T> ()/(wr*wr + wi*wi);
-                ret = complex_type<T> (denom2*wi, denom2*wr);
+                ret = make_complex(denom2*wi, denom2*wr);
             }
-            if (y < static_cast<T> (0)) {
+            if (y < static_cast<T> (0.0)) {
 //  use w(z) = 2.0*exp(-z*z) - w(-z),
 //  but be careful of overflow in exp(-z*z)
 //                                = exp(-(xs*xs-ya*ya) -2*i*xs*ya)
-                return static_cast<T> (2)*exp(complex_type<T> ((ya - xs)*(xs + ya),
-                                                               static_cast<T> (2)*xs*y)) - ret;
+                return static_cast<T> (2.0)*exp(make_complex((ya - xs)*(xs + ya),
+                                                             static_cast<T> (2)*xs*y)) - ret;
             } else {
                 return ret;
             }
@@ -1286,13 +1727,13 @@ namespace special {
 //  compute all of the sums for x > 20, I find that we sometimes run into
 //  numerical problems because underflow/overflow problems start to appear in
 //  the various coefficients of the sums, below.  Therefore, we use x < 10 here.
-        } else if (x < static_cast<T> (10)) {
-            T prod2ax = static_cast<T> (1);
-            T prodm2ax = static_cast<T> (1);
+        } else if (x < static_cast<T> (10.0)) {
+            T prod2ax = static_cast<T> (1.0);
+            T prodm2ax = static_cast<T> (1.0);
             T expx2;
 
             if (isnan(y)) {
-                return complex_type<T> (y, y);
+                return make_complex(y, y);
             }
 
 //  Somewhat ugly copy-and-paste duplication here, but I see significant
@@ -1303,11 +1744,11 @@ namespace special {
             if (x < static_cast<T> (5.0E-4)) { // compute sum4 and sum5 together as sum5-sum4
                 const T x2 = sq(x);
 //  Exp(-x*x) via Taylor
-                expx2 = static_cast<T> (1) - x2*(static_cast<T> (1) - static_cast<T> (0.5)*x2);
+                expx2 = static_cast<T> (1.0) - x2*(static_cast<T> (1.0) - static_cast<T> (0.5)*x2);
 //  Compute exp(2*a*x) and exp(-2*a*x) via Taylor, to double precision
                 const T ax2 = static_cast<T> (1.036642960860171859744)*x; // 2*a*x
-                const T exp2ax = static_cast<T> (1) + ax2*(static_cast<T> (1) + ax2*(static_cast<T> (0.5) + static_cast<T> (0.166666666666666666667)*ax2));
-                const T expm2ax = static_cast<T> (1) - ax2*(static_cast<T> (1) - ax2*(static_cast<T> (0.5) - static_cast<T> (0.166666666666666666667)*ax2));
+                const T exp2ax = static_cast<T> (1.0) + ax2*(static_cast<T> (1.0) + ax2*(static_cast<T> (0.5) + static_cast<T> (0.166666666666666666667)*ax2));
+                const T expm2ax = static_cast<T> (1.0) - ax2*(static_cast<T> (1.0) - ax2*(static_cast<T> (0.5) - static_cast<T> (0.166666666666666666667)*ax2));
                 for (int n = 1; n < 53; ++n) {
                     const T coef = expa2n2<T> [n - 1]*expx2/(a2*static_cast<T> (n*n) + sq(y));
                     prod2ax *= exp2ax;
@@ -1317,7 +1758,7 @@ namespace special {
                     sum3 += coef*prod2ax;
 
 // really = sum5 - sum4
-                    sum5 += coef*static_cast<T> (2)*a*n*sinh_taylor(static_cast<T> (2)*a*n*x);
+                    sum5 += coef*static_cast<T> (2)*a*n*sinh_taylor(static_cast<T> (2.0)*a*n*x);
 
 // test convergence via sum3
                     if (coef*prod2ax < numeric_limits<T>::epsilon()*sum3) {
@@ -1327,8 +1768,8 @@ namespace special {
             } else {
 // x > 5E-4, compute sum4 and sum5 separately
                 expx2 = exp(-sq(x));
-                const T exp2ax = exp(static_cast<T> (2)*a*x);
-                const T expm2ax = static_cast<T> (1)/exp2ax;
+                const T exp2ax = exp(static_cast<T> (2.0)*a*x);
+                const T expm2ax = static_cast<T> (1.0)/exp2ax;
                 for (int n = 1; n < 53; ++n) {
                     const T coef = expa2n2<T> [n - 1]*expx2/(a2*static_cast<T> (n*n) + sq(y));
                     prod2ax *= exp2ax;
@@ -1349,28 +1790,28 @@ namespace special {
 // avoid spurious overflow for large negative y
 // for y < -6, erfcx(y) = 2*exp(y*y) to double precision
             const T expx2erfcxy = y > static_cast<T> (-6) ? expx2*erfcx(y) :
-                                                            static_cast<T> (2)*exp(sq(y) - sq(x));
-            if (y > static_cast<T> (5)) { // imaginary terms cancel
+                                                            static_cast<T> (2.0)*exp(sq(y) - sq(x));
+            if (y > static_cast<T> (5.0)) { // imaginary terms cancel
                 const T sinxy = sin(x*y);
-                ret = (expx2erfcxy - c*y*sum1)*cos(static_cast<T> (2)*x*y)
+                ret = (expx2erfcxy - c*y*sum1)*cos(static_cast<T> (2.0)*x*y)
                     + c*x*expx2*sinxy*sinc(x*y, sinxy);
             } else {
                 const T xs = real(z);
                 const T sinxy = sin(xs*y);
-                const T sin2xy = sin(static_cast<T> (2)*xs*y);
-                const T cos2xy = cos(static_cast<T> (2)*xs*y);
+                const T sin2xy = sin(static_cast<T> (2.0)*xs*y);
+                const T cos2xy = cos(static_cast<T> (2.0)*xs*y);
                 const T coef1 = expx2erfcxy - c*y*sum1;
                 const T coef2 = c*xs*expx2;
-                ret = complex_type<T> (coef1*cos2xy + coef2*sinxy*sinc(xs*y, sinxy),
-                                       coef2*sinc(static_cast<T> (2)*xs*y, sin2xy) - coef1*sin2xy);
+                ret = make_complex(coef1*cos2xy + coef2*sinxy*sinc(xs*y, sinxy),
+                                   coef2*sinc(static_cast<T> (2.0)*xs*y, sin2xy) - coef1*sin2xy);
             }
         } else {
 //  x large: only sum3 & sum5 contribute (see above note)
             if (isnan(x)) {
-                return complex_type<T> (x, x);
+                return make_complex(x, x);
             }
             if (isnan(y)) {
-                return complex_type<T> (y, y);
+                return make_complex(y, y);
             }
 
 // |y| < 1E-10, so we only need exp(-x*x) term
@@ -1381,10 +1822,10 @@ namespace special {
             const T dx = a*n0 - x;
             sum3 = exp(-dx*dx) / (a2*(n0*n0) + sq(y));
             sum5 = a*n0 * sum3;
-            const T exp1 = exp(static_cast<T> (4)*a*dx);
-            T exp1dn = static_cast<T> (1);
+            const T exp1 = exp(static_cast<T> (4.0)*a*dx);
+            T exp1dn = static_cast<T> (1.0);
             int dn;
-            for (dn = 1; n0 - static_cast<T> (dn) > static_cast<T> (0); ++dn) {
+            for (dn = 1; n0 - static_cast<T> (dn) > static_cast<T> (0.0); ++dn) {
 // loop over n0-dn and n0+dn terms
                 const T np = n0 + static_cast<T> (dn);
                 const T nm = n0 - static_cast<T> (dn);
@@ -1395,9 +1836,9 @@ namespace special {
                 sum3 += tp + tm;
                 sum5 += a*(np*tp + nm*tm);
                 if (a*(np*tp + nm*tm) < numeric_limits<T>::epsilon()*sum5) {
-                    return ret + complex_type<T> (static_cast<T> (0.5)*c*y*(sum2 + sum3),
-                                                  static_cast<T> (0.5)*c*copysign(sum5 - sum4,
-                                                                                       real(z)));
+                    return ret + make_complex(static_cast<T> (0.5)*c*y*(sum2 + sum3),
+                                              static_cast<T> (0.5)*c*copysign(sum5 - sum4,
+                                                                              real(z)));
                 }
             }
             while (true) {
@@ -1407,16 +1848,16 @@ namespace special {
                 sum3 += tp;
                 sum5 += a*np*tp;
                 if (a*np*tp < numeric_limits<T>::epsilon()*sum5) {
-                    return ret + complex_type<T> (static_cast<T> (0.5)*c*y*(sum2 + sum3),
-                                                  static_cast<T> (0.5)*c*copysign(sum5 - sum4,
-                                                                                       real(z)));
+                    return ret + make_complex(static_cast<T> (0.5)*c*y*(sum2 + sum3),
+                                              static_cast<T> (0.5)*c*copysign(sum5 - sum4,
+                                                                              real(z)));
                 }
             }
         }
 
-        return ret + complex_type<T> (static_cast<T> (0.5)*c*y*(sum2 + sum3),
-                                      static_cast<T> (0.5)*c*copysign(sum5 - sum4,
-                                                                           real(z)));
+        return ret + make_complex(static_cast<T> (0.5)*c*y*(sum2 + sum3),
+                                  static_cast<T> (0.5)*c*copysign(sum5 - sum4,
+                                                                  real(z)));
     }
 
 //------------------------------------------------------------------------------
@@ -1438,7 +1879,7 @@ namespace special {
     template<typename T>
 #endif
     complex_type<T> taylor(const complex_type<T> z, const T mRe_z2, const T mIm_z2) {
-        const complex_type<T> mz2(mRe_z2, mIm_z2); // -z^2
+        const complex_type<T> mz2 = make_complex(mRe_z2, mIm_z2); // -z^2
         return z*(static_cast<T> (1.1283791670955125739) +
                   mz2*(static_cast<T> (0.37612638903183752464) +
                        mz2*(static_cast<T> (0.11283791670955125739) +
@@ -1473,15 +1914,15 @@ namespace special {
         const T x2 = sq(x);
         const T y2 = sq(y);
         const T expy2 = exp(y2);
-        return expy2*complex_type<T> (x*(static_cast<T> (1.1283791670955125739) -
-                                         x2*(static_cast<T> (0.37612638903183752464) +
-                                             static_cast<T> (0.75225277806367504925)*y2) +
-                                         x2*x2*(static_cast<T> (0.11283791670955125739) +
-                                                y2*(static_cast<T> (0.45135166683820502956) +
-                                                    static_cast<T> (0.15045055561273500986)*y2))),
-                                      (w_im(y) - x2*y*(static_cast<T> (1.1283791670955125739) -
-                                                       x2*(static_cast<T> (0.56418958354775628695) +
-                                                           static_cast<T> (0.37612638903183752464)*y2))));
+        return expy2*make_complex(x*(static_cast<T> (1.1283791670955125739) -
+                                     x2*(static_cast<T> (0.37612638903183752464) +
+                                         static_cast<T> (0.75225277806367504925)*y2) +
+                                     x2*x2*(static_cast<T> (0.11283791670955125739) +
+                                            y2*(static_cast<T> (0.45135166683820502956) +
+                                                static_cast<T> (0.15045055561273500986)*y2))),
+                                  (w_im(y) - x2*y*(static_cast<T> (1.1283791670955125739) -
+                                                   x2*(static_cast<T> (0.56418958354775628695) +
+                                                       static_cast<T> (0.37612638903183752464)*y2))));
     }
 
 //------------------------------------------------------------------------------
@@ -1499,39 +1940,40 @@ namespace special {
 #else
     template<typename T>
 #endif
+    DEVICE_FUNCTION
     complex_type<T> erf_complex(const complex_type<T> z) {
         T x = real(z);
         T y = imag(z);
 
-        if (y == static_cast<T> (0)) {
+        if (y == static_cast<T> (0.0)) {
             return complex_type<T> (erf(x), y);
-        } else if (x == static_cast<T> (0)) {
+        } else if (x == static_cast<T> (0.0)) {
             const T y2 = sq(y);
-            return complex_type<T> (x, y2 > static_cast<T> (720) ? (y > static_cast<T> (0) ?  numeric_limits<T>::max() :
-                                                                                             -numeric_limits<T>::max()) :
-                                                                   exp(y2)*w_im(y));
+            return make_complex(x, y2 > static_cast<T> (720) ? (y > static_cast<T> (0) ?  numeric_limits<T>::max() :
+                                                                                         -numeric_limits<T>::max()) :
+                                                               exp(y2)*w_im(y));
         }
 
 //  In this case, the denominator of the zeta function is zero so Exp(-zeta^2)
 //  is zero.
         if (isinf(x) && isinf(y)) {
-            return complex_type<T> (static_cast<T> (0.0),
-                                    static_cast<T> (0.0));
+            return make_complex(static_cast<T> (0.0),
+                                static_cast<T> (0.0));
         }
 
         T mRe_z2 = (y - x)*(x + y);
-        T mIm_z2 = -static_cast<T> (2)*x*y;
+        T mIm_z2 = -static_cast<T> (2.0)*x*y;
 
 //  Underflow
-        if (mRe_z2 < -static_cast<T> (750)) {
-            return (x >= static_cast<T> (0) ? static_cast<T> (1) :
-                                              static_cast<T> (-1));
+        if (mRe_z2 < -static_cast<T> (750.0)) {
+            return (x >= static_cast<T> (0.0) ? static_cast<T> (1) :
+                                                static_cast<T> (-1));
         }
 
 //  Handle positive and negative x via different formulas, using the mirror
 //  symmetries of w, to avoid overflow/underflow problems from multiplying
 //  exponentially large and small quantities.
-        if (x >= static_cast<T> (0)) {
+        if (x >= static_cast<T> (0.0)) {
             if (x < static_cast<T> (8.0E-2)) {
                 if (abs(y) < static_cast<T> (1.0E-2)) {
                     return taylor(z, mRe_z2, mIm_z2);
@@ -1542,9 +1984,9 @@ namespace special {
             }
 //  Don't use complex exp function, since that will produce spurious NaN
 //  values when multiplying w in an overflow situation.
-            return static_cast<T> (1) -
-                   exp(mRe_z2)*(complex_type<T> (cos(mIm_z2),
-                                                      sin(mIm_z2))*w(complex_type<T> (-y, x)));
+            return static_cast<T> (1.0) -
+                   exp(mRe_z2)*(make_complex(cos(mIm_z2),
+                                             sin(mIm_z2))*w(make_complex(-y, x)));
         } else {
 // x < 0
             if (x > static_cast<T> (-8.0E-2)) {
@@ -1555,15 +1997,15 @@ namespace special {
                     return taylor_erfi(x, y);
                 }
             } else if (isnan(x)) {
-                return complex_type<T> (numeric_limits<T>::signaling_NaN(),
-                                        y == static_cast<T> (0) ? static_cast<T> (0) :
-                                                                  numeric_limits<T>::signaling_NaN());
+                return make_complex(numeric_limits<T>::signaling_NaN(),
+                                    y == static_cast<T> (0.0) ? static_cast<T> (0.0) :
+                                                                numeric_limits<T>::signaling_NaN());
             }
 //  Don't use complex exp function, since that will produce spurious NaN
 //  values when multiplying w in an overflow situation.
-            return exp(mRe_z2)*complex_type<T> (cos(mIm_z2),
-                                                     sin(mIm_z2))*w(complex_type<T> (y, -x)) -
-                   static_cast<T> (1);
+            return exp(mRe_z2)*make_complex(cos(mIm_z2),
+                                            sin(mIm_z2))*w(complex_type<T> (y, -x)) -
+                   static_cast<T> (1.0);
         }
     }
 
@@ -1582,8 +2024,8 @@ namespace special {
 #endif
     complex_type<T> erfi(const complex_type<T> z) {
 //  Avoids NaN instead of doing i<T>*z and -i*temp;
-        const complex_type<T> temp = erf_complex<T> (complex_type<T> (-imag(z), real(z)));
-        return complex_type<T> (imag(temp), -real(temp));
+        const complex_type<T> temp = erf_complex(make_complex(-imag(z), real(z)));
+        return make_complex(imag(temp), -real(temp));
     }
 }
 
