@@ -433,6 +433,22 @@ T pow(const T x, const T y) {
     return exp(y*log(x));
 }
 
+//------------------------------------------------------------------------------
+///  @brief Generic complex abs for HIP
+///
+///  @tparam T Base type.
+///
+///  @params[in] x Complex argument.
+///  @returns abs(x)
+//------------------------------------------------------------------------------
+template<typename T>
+DEVICE_FUNCTION
+T abs(const complex_type<T> &x) {
+    const T r = real<T> (x);
+    const T i = real<T> (x);
+    return sqrt(r*r + i*i);
+}
+
 #else
 #include <complex>
 #include <cfloat>
