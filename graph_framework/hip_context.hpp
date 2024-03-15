@@ -559,13 +559,13 @@ namespace gpu {
             source_buffer << "    if (i < " << size << ") {" << std::endl;
             source_buffer << "        " << jit::type_to_string<T> () << " sub_max = ";
             if constexpr (jit::is_complex<T> ()) {
-                source_buffer << "abs(input[i]);" << std::endl;
+                source_buffer << "abs<" << jit::type_to_string<T> () << "> (input[i]);" << std::endl;
             } else {
                 source_buffer << "input[i];" << std::endl;
             }
             source_buffer << "        for (size_t index = i + 1024; index < " << size <<"; index += 1024) {" << std::endl;
             if constexpr (jit::is_complex<T> ()) {
-                source_buffer << "            sub_max = max(sub_max, abs(input[index]));" << std::endl;
+                source_buffer << "            sub_max = max(sub_max, abs<" << jit::type_to_string<T> () << "> (input[index]));" << std::endl;
             } else {
                 source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
             }
@@ -580,7 +580,12 @@ namespace gpu {
             source_buffer << "            for (int index = 32; index > 0; index /= 2) {" << std::endl;
             source_buffer << "                thread_max[k] = max(thread_max[k], __shfl_down(thread_max[k], index));" << std::endl;
             source_buffer << "            }" << std::endl;
-            source_buffer << "            *result = thread_max[0];" << std::endl;
+            source_buffer << "            *result = ";
+            if constexpr (jit::is_complex<T> ()) {
+                source_buffer << "make_complex<" << jit::type_to_string<T> () << "> (thread_max[0], thread_max[0]);" << std::endl;
+            } else {
+                source_buffer << "thread_max[0];" << std::endl;
+            }
             source_buffer << "        }"  << std::endl;
             source_buffer << "    }"  << std::endl;
             source_buffer << "}" << std::endl << std::endl;
@@ -592,7 +597,6 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_preamble(std::ostringstream &source_buffer) {
-//  FIXME: Convert to hip
             source_buffer << "extern \"C\" __global__ ";
         }
 
@@ -625,7 +629,6 @@ namespace gpu {
 ///  @params[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_index(std::ostringstream &source_buffer) {
-//  FIXME : Convert to hip.
             source_buffer << "blockIdx.x*blockDim.x + threadIdx.x;";
         }
 
