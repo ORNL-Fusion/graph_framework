@@ -157,7 +157,7 @@ namespace jit {
             if constexpr (use_cuda()) {
                 return "cuda::std::complex<" + type_to_string<T> () + ">";
             } else {
-                return "std::complex<" + type_to_string<T> () + ">";
+                return "complex<" + type_to_string<T> () + ">";
             }
         } else {
             return type_to_string<T> ();
