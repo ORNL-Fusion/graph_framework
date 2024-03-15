@@ -180,7 +180,7 @@ namespace gpu {
             }
 
             std::array<const char *, 2> options({
-                "-std=c++20",
+                "-std=c++17",
                 "-I" HEADER_DIR
             });
 
@@ -462,7 +462,6 @@ namespace gpu {
 
             source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
                           << std::endl;
-            source_buffer << "    printf(%i %i %i %i, index, blockIdx.x, blockDim.x, threadIdx.x);" << std::endl;
             source_buffer << "    if (index < " << size << ") {" << std::endl;
 
             for (auto &input : inputs) {
@@ -557,7 +556,6 @@ namespace gpu {
             source_buffer << "    const unsigned int i = threadIdx.x;" << std::endl;
             source_buffer << "    const unsigned int j = threadIdx.x/64;" << std::endl;
             source_buffer << "    const unsigned int k = threadIdx.x%64;" << std::endl;
-       	    source_buffer << "    printf(%i %i %i %i %i %i, i, j, k, blockIdx.x, blockDim.x, threadIdx.x);" << std::endl;
             source_buffer << "    if (i < " << size << ") {" << std::endl;
             source_buffer << "        " << jit::type_to_string<T> () << " sub_max = ";
             if constexpr (jit::is_complex<T> ()) {
