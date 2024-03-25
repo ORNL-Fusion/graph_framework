@@ -204,6 +204,7 @@ add_dependencies (obj.LLVMTableGenCommon pull_llvm)
 add_dependencies (llvm_vcsrevision_h pull_llvm)
 add_dependencies (benchmark pull_llvm)
 add_dependencies (benchmark_main pull_llvm)
+add_dependencies (obj.LLVMTableGenBasic pull_llvm) 
 
 add_library (llvm_dep INTERFACE)
 target_include_directories (llvm_dep
