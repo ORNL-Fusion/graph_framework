@@ -13,13 +13,20 @@
 #include <cstring>
 #include <thread>
 
-#include <unistd.h>
-#include <sys/wait.h>
-
-#include "node.hpp"
-
+#include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/CodeGen/CodeGenAction.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/TargetParser/Host.h"
+#include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
+
+#include "node.hpp"
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -32,36 +39,20 @@ namespace gpu {
 ///  @param[in] string Input string.
 ///  @returns The string split into an array of arguments.
 //------------------------------------------------------------------------------
-    std::vector<std::string> split_string(const std::string &string) {
-        std::vector<std::string> args;
+    std::vector<const std::string> split_string(const std::string &string) {
+        std::vector<const std::string> args;
 
         size_t end_position = string.find(" ");
-        std::string token = string.substr(0, end_position);
-        args.push_back(token);
+        args.push_back(string.substr(0, end_position));
 
         while (end_position < string.size()) {
             const size_t start_position = end_position + 1;
             end_position = string.find(" ", start_position);
-            token = string.substr(start_position, end_position - start_position);
-            args.push_back(token);
+            args.push_back(string.substr(start_position, 
+                                         end_position - start_position));
         }
 
         return args;
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Convert args to c string.
-///
-///  @param[in] args Input string.
-///  @returns Args as an array of C strings.
-//------------------------------------------------------------------------------
-    std::vector<char *> to_c_str(const std::vector<std::string> &args) {
-        std::vector<char *> c_args;
-        for (auto &string : args) {
-            c_args.push_back(const_cast<char *> (string.c_str()));
-        }
-        c_args.push_back(static_cast<char *> (NULL));
-        return c_args;
     }
 
 //------------------------------------------------------------------------------
@@ -73,8 +64,6 @@ namespace gpu {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class cpu_context {
     private:
-///  Code object name.
-        std::string object_name;
 ///  Handle for the dynamic library.
         std::unique_ptr<llvm::orc::LLJIT> jit;
 ///  Argument map.
@@ -108,25 +97,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         cpu_context(const size_t index) {
             llvm::InitializeNativeTarget();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Destruct a cpu context.
-//------------------------------------------------------------------------------
-        ~cpu_context() {
-            if (!object_name.empty()) {
-//  A new instance of the class can be created before the object is deleted.
-//  Wait for the fork to finish before the destructor exits. This could cause a
-//  problem where the new object gets deleted before the context tries to load
-//  it.
-                auto pid = fork();
-                if (pid == 0) {
-                    execlp("rm", "rm", object_name.c_str(), NULL);
-                    exit(0);
-                }
-                int error = 0;
-                waitpid(pid, &error, 0);
-            }
+            llvm::InitializeNativeTargetAsmPrinter();
         }
 
 //------------------------------------------------------------------------------
@@ -149,57 +120,67 @@ namespace gpu {
             temp_stream << "temp_" << thread_id << ".cpp";
 
             const std::string filename = temp_stream.str();
-            std::ofstream out(filename);
-
-            out << kernel_source;
-            out.close();
 
             temp_stream.str(std::string());
             temp_stream.clear();
 
-            temp_stream << "temp_" << thread_id << ".o";
-            object_name = temp_stream.str();
-
             temp_stream.str(std::string());
             temp_stream.clear();
-            temp_stream << CXX << " ";
+
+            temp_stream  << filename << " " << CXX_ARGS;
 #ifndef NDEBUG
-            temp_stream << CXX_FLAGS << " ";
+            temp_stream << " " << CXX_FLAGS;
 #else
-            temp_stream << "-O3 ";
+            temp_stream << " -O3";
 #endif
-            temp_stream << "-c " << filename;
 
             if (jit::verbose) {
                 std::cout << "CPU info." << std::endl;
-                std::cout << "  Command Line    : " << temp_stream.str() << std::endl;
+                std::cout << "  Command Line    : " << std::endl;
             }
 
-            auto pid = fork();
-            int error = 0;
-            if (pid == 0) {
-                auto args = split_string(temp_stream.str());
-                auto c_args = to_c_str(args);
-                error = execvp(c_args[0], c_args.data());
-                std::cerr << "Child process launch failed." << std::endl;
-                exit(error);
-            }
-            waitpid(pid, &error, 0);
-            if (error) {
-                std::cerr << "Failed to compile cpu kernel. Check source code in "
-                          << filename << std::endl;
-                exit(-1);
+            std::vector<const std::string> args = split_string(temp_stream.str());
+            std::vector<const char *> args_c;
+            for (auto &arg : args) {
+                if (jit::verbose) {
+                    std::cout << "    " << arg << std::endl;
+                }
+                args_c.push_back(arg.c_str());
             }
 
-#ifdef NDEBUG
-            pid = fork();
-            if (pid == 0) {
-                execlp("rm", "rm", filename.c_str(), NULL);
-                exit(0);
-            }
-#endif
+            llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options;
+            auto diagnostic_printer = std::make_unique<clang::TextDiagnosticPrinter> (llvm::errs(),
+                                                                                      diagnostic_options.get());
 
-            auto object = llvm::MemoryBuffer::getFileAsStream(object_name);
+            llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids;
+            clang::DiagnosticsEngine diagnostic_engine(diagnostic_ids,
+                                                       diagnostic_options,
+                                                       diagnostic_printer.release());
+
+            auto invocation = std::make_shared<clang::CompilerInvocation> ();
+            clang::CompilerInvocation::CreateFromArgs(*(invocation.get()), args_c,
+                                                      diagnostic_engine);
+
+            llvm::StringRef source_code_data(kernel_source);
+            auto buffer = llvm::MemoryBuffer::getMemBuffer(source_code_data);
+            invocation->getPreprocessorOpts().addRemappedFile(filename.c_str(),
+                                                              buffer.release());
+
+            clang::CompilerInstance clang;
+            clang.setInvocation(invocation);
+            clang.createDiagnostics();
+
+            const auto target_options = std::make_shared<clang::TargetOptions> ();
+            target_options->Triple = llvm::sys::getProcessTriple();
+            auto *target_info = clang::TargetInfo::CreateTargetInfo(diagnostic_engine,
+                                                                    target_options);
+            clang.setTarget(target_info);
+
+            clang::EmitCodeGenOnlyAction action;
+            clang.ExecuteAction(action);
+
+            auto ir_module = action.takeModule();
+            auto context = std::unique_ptr<llvm::LLVMContext> (action.takeLLVMContext());
 
             auto jit_try = llvm::orc::LLJITBuilder().create();
             if (auto jiterror = jit_try.takeError()) {
@@ -208,19 +189,8 @@ namespace gpu {
             }
             jit = std::move(jit_try.get());
 
-            jit->addObjectFile(std::move(object.get()));
-
-            if (jit::verbose) {
-                std::cout << "  Object name    : " << object_name << std::endl;
-            }
-
-#ifdef NDEBUG
-            waitpid(pid, &error, 0);
-            if (error) {
-                std::cerr << "Failed to remove " << filename << std::endl;
-                exit(-1);
-            }
-#endif
+            jit->addIRModule(llvm::orc::ThreadSafeModule(std::move(ir_module),
+                                                         llvm::orc::ThreadSafeContext(std::move(context))));
         }
 
 //------------------------------------------------------------------------------

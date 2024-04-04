@@ -884,7 +884,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1520;
+				LastUpgradeCheck = 1530;
 				ORGANIZATIONNAME = "Cianciosa, Mark R.";
 				TargetAttributes = {
 					C73690302A38C498001733B0 = {
@@ -1337,7 +1337,7 @@
 					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
 					USE_METAL,
 					"CXX_FLAGS=\\\"-g\\\"",
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					"\"CXX_ARGS=\\\"-I/Users/m4c/Projects/graph_framework/graph_framework -std=gnu++2a\\\"\"",
 					STATIC,
 					"DEBUG=1",
 					"$(inherited)",
@@ -1348,7 +1348,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					LLVM/clang/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib,
 					"build/_deps/llvm-build/lib",
@@ -1367,7 +1370,9 @@
 				);
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = (
+					LLVM/clang/include,
 					LLVM/llvm/include,
+					"build/_deps/llvm-build/tools/clang/include",
 					"build/_deps/llvm-build/include",
 				);
 			};
@@ -1419,7 +1424,7 @@
 					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
 					USE_METAL,
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					"\"CXX_ARGS=\\\"-I/Users/m4c/Projects/graph_framework/graph_framework -std=gnu++2a\\\"\"",
 					"$(inherited)",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1428,7 +1433,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					LLVM/clang/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib,
 					"build/_deps/llvm-build/lib",
@@ -1447,7 +1455,9 @@
 				);
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = (
+					LLVM/clang/include,
 					LLVM/llvm/include,
+					"build/_deps/llvm-build/tools/clang/include",
 					"build/_deps/llvm-build/include",
 				);
 			};
@@ -1460,14 +1470,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2M4J3Y9U5K;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					USE_METAL,
-					"CXX_FLAGS=\\\"-gl\\\"",
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
-					STATIC,
-					"DEBUG=1",
-					"$(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
@@ -1484,10 +1487,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2M4J3Y9U5K;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					USE_METAL,
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\ -g\" $(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
@@ -1521,10 +1521,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"CXX_FLAGS=\\\"-g\\\"",
-					"$(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = (
