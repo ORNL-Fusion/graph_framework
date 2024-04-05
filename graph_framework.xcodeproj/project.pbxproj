@@ -1350,11 +1350,11 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include,
-					LLVM/clang/include,
+					LLVM/llvm/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
-					/usr/local/lib,
 					"build/_deps/llvm-build/lib",
+					/usr/local/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -1367,13 +1367,28 @@
 					"-rpath",
 					/usr/local/lib,
 					"-lLLVM",
+					"-lclangFrontend",
+					"-lclangBasic",
+					"-lclangEdit",
+					"-lclangLex",
+					"-lclangDriver",
+					"-lclangSerialization",
+					"-lclangAST",
+					"-lclangSema",
+					"-lclangAnalysis",
+					"-lclangASTMatchers",
+					"-lclangSupport",
+					"-lclangParse",
+					"-lclangAPINotes",
+					"-lclangCodeGen",
 				);
 				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = "";
 				USER_HEADER_SEARCH_PATHS = (
-					LLVM/clang/include,
 					LLVM/llvm/include,
-					"build/_deps/llvm-build/tools/clang/include",
 					"build/_deps/llvm-build/include",
+					LLVM/clang/include,
+					"build/_deps/llvm-build/tools/clang/include",
 				);
 			};
 			name = Debug;
@@ -1435,11 +1450,11 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include,
-					LLVM/clang/include,
+					LLVM/llvm/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
-					/usr/local/lib,
 					"build/_deps/llvm-build/lib",
+					/usr/local/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -1452,13 +1467,28 @@
 					"-rpath",
 					/usr/local/lib,
 					"-lLLVM",
+					"-lclangFrontend",
+					"-lclangBasic",
+					"-lclangEdit",
+					"-lclangLex",
+					"-lclangDriver",
+					"-lclangSerialization",
+					"-lclangAST",
+					"-lclangSema",
+					"-lclangAnalysis",
+					"-lclangASTMatchers",
+					"-lclangSupport",
+					"-lclangParse",
+					"-lclangAPINotes",
+					"-lclangCodeGen",
 				);
 				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = "";
 				USER_HEADER_SEARCH_PATHS = (
-					LLVM/clang/include,
 					LLVM/llvm/include,
-					"build/_deps/llvm-build/tools/clang/include",
 					"build/_deps/llvm-build/include",
+					LLVM/clang/include,
+					"build/_deps/llvm-build/tools/clang/include",
 				);
 			};
 			name = Release;

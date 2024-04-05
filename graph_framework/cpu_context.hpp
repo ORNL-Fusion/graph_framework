@@ -13,6 +13,9 @@
 #include <cstring>
 #include <thread>
 
+//  Clang headers will define IBAction and IBOutlet these so undefine them here.
+#undef IBAction
+#undef IBOutlet
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -39,17 +42,14 @@ namespace gpu {
 ///  @param[in] string Input string.
 ///  @returns The string split into an array of arguments.
 //------------------------------------------------------------------------------
-    std::vector<const std::string> split_string(const std::string &string) {
-        std::vector<const std::string> args;
+    std::vector<const char *> split_string(std::string &string) {
+        std::vector<const char *> args = {string.data()};
 
         size_t end_position = string.find(" ");
-        args.push_back(string.substr(0, end_position));
-
         while (end_position < string.size()) {
-            const size_t start_position = end_position + 1;
-            end_position = string.find(" ", start_position);
-            args.push_back(string.substr(start_position, 
-                                         end_position - start_position));
+            string[end_position] = '\0';
+            args.push_back(string.data() + end_position + 1);
+            end_position = string.find(" ");
         }
 
         return args;
@@ -121,32 +121,24 @@ namespace gpu {
 
             const std::string filename = temp_stream.str();
 
-            temp_stream.str(std::string());
-            temp_stream.clear();
-
-            temp_stream.str(std::string());
-            temp_stream.clear();
-
-            temp_stream  << filename << " " << CXX_ARGS;
-#ifndef NDEBUG
-            temp_stream << " " << CXX_FLAGS;
-#else
-            temp_stream << " -O3";
-#endif
-
             if (jit::verbose) {
                 std::cout << "CPU info." << std::endl;
                 std::cout << "  Command Line    : " << std::endl;
             }
 
-            std::vector<const std::string> args = split_string(temp_stream.str());
-            std::vector<const char *> args_c;
-            for (auto &arg : args) {
-                if (jit::verbose) {
+            std::string temp_string = CXX_ARGS;
+            std::vector<const char *> args = split_string(temp_string);
+            args.push_back(filename.c_str());
+#ifndef NDEBUG
+            args.push_back("-g");
+#else
+            args.push_back("-O3");
+#endif
+            //if (jit::verbose) {
+                for (auto &arg : args) {
                     std::cout << "    " << arg << std::endl;
                 }
-                args_c.push_back(arg.c_str());
-            }
+            //}
 
             llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options;
             auto diagnostic_printer = std::make_unique<clang::TextDiagnosticPrinter> (llvm::errs(),
@@ -158,7 +150,7 @@ namespace gpu {
                                                        diagnostic_printer.release());
 
             auto invocation = std::make_shared<clang::CompilerInvocation> ();
-            clang::CompilerInvocation::CreateFromArgs(*(invocation.get()), args_c,
+            clang::CompilerInvocation::CreateFromArgs(*(invocation.get()), args,
                                                       diagnostic_engine);
 
             llvm::StringRef source_code_data(kernel_source);
