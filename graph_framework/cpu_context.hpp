@@ -134,11 +134,11 @@ namespace gpu {
 #else
             args.push_back("-O3");
 #endif
-            //if (jit::verbose) {
+            if (jit::verbose) {
                 for (auto &arg : args) {
                     std::cout << "    " << arg << std::endl;
                 }
-            //}
+            }
 
             llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options;
             auto diagnostic_printer = std::make_unique<clang::TextDiagnosticPrinter> (llvm::errs(),
@@ -181,8 +181,8 @@ namespace gpu {
             }
             jit = std::move(jit_try.get());
 
-            jit->addIRModule(llvm::orc::ThreadSafeModule(std::move(ir_module),
-                                                         llvm::orc::ThreadSafeContext(std::move(context))));
+            auto error = jit->addIRModule(llvm::orc::ThreadSafeModule(std::move(ir_module),
+                                                                      llvm::orc::ThreadSafeContext(std::move(context))));
         }
 
 //------------------------------------------------------------------------------
