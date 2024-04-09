@@ -168,7 +168,7 @@ namespace gpu {
                                                                     target_options);
             clang.setTarget(target_info);
 
-            clang::EmitCodeGenOnlyAction action;
+            clang::EmitLLVMOnlyAction action;
             clang.ExecuteAction(action);
 
             auto ir_module = action.takeModule();
