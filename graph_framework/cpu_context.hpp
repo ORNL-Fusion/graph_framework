@@ -129,9 +129,7 @@ namespace gpu {
             char arg_string[] = CXX_ARGS;
             std::vector<const char *> args = split_string(arg_string);
             args.push_back(filename.c_str());
-#ifndef NDEBUG
-            args.push_back("-g");
-#else
+#ifdef NDEBUG
             args.push_back("-O3");
 #endif
             if (jit::verbose) {
