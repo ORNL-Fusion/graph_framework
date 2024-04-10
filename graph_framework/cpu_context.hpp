@@ -42,14 +42,14 @@ namespace gpu {
 ///  @param[in] string Input string.
 ///  @returns The string split into an array of arguments.
 //------------------------------------------------------------------------------
-    std::vector<const char *> split_string(std::string &string) {
-        std::vector<const char *> args = {string.data()};
+    std::vector<const char *> split_string(char *string) {
+        std::vector<const char *> args = {string};
 
-        size_t end_position = string.find(" ");
-        while (end_position < string.size()) {
-            string[end_position] = '\0';
-            args.push_back(string.data() + end_position + 1);
-            end_position = string.find(" ");
+        while (*(++string) != '\0') {
+            if (*string == ' ') {
+                *string = '\0';
+                args.push_back(++string);
+            }
         }
 
         return args;
@@ -126,8 +126,8 @@ namespace gpu {
                 std::cout << "  Command Line    : " << std::endl;
             }
 
-            std::string temp_string = CXX_ARGS;
-            std::vector<const char *> args = split_string(temp_string);
+            char arg_string[] = CXX_ARGS;
+            std::vector<const char *> args = split_string(arg_string);
             args.push_back(filename.c_str());
 #ifndef NDEBUG
             args.push_back("-g");
@@ -140,11 +140,11 @@ namespace gpu {
                 }
             }
 
-            llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options;
+            auto diagnostic_options = llvm::makeIntrusiveRefCnt<clang::DiagnosticOptions> ();
             auto diagnostic_printer = std::make_unique<clang::TextDiagnosticPrinter> (llvm::errs(),
                                                                                       diagnostic_options.get());
 
-            llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids;
+            auto diagnostic_ids = llvm::makeIntrusiveRefCnt<clang::DiagnosticIDs> ();
             clang::DiagnosticsEngine diagnostic_engine(diagnostic_ids,
                                                        diagnostic_options,
                                                        diagnostic_printer.release());
@@ -364,7 +364,7 @@ namespace gpu {
                                   jit::register_map &registers) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
-            
+
             source_buffer << "    map<size_t, ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args) {" << std::endl;
@@ -454,7 +454,7 @@ namespace gpu {
                     source_buffer << registers[a.get()] << ";" << std::endl;
                 }
             }
-                    
+
             source_buffer << "    }" << std::endl;
             source_buffer << "}" << std::endl;
         }

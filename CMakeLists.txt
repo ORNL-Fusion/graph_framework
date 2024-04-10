@@ -175,7 +175,6 @@ register_project (llvm
                   ${URL_PROTO}github.com${URL_SEP}llvm/llvm-project.git
                   main
                   llvm
-                  LLVM_BUILD_LLVM_DYLIB ON BOOL
                   LLVM_TARGETS_TO_BUILD Native STRING
                   LLVM_ENABLE_PROJECTS clang STRING
 )

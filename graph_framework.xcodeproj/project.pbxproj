@@ -296,6 +296,7 @@
 		C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = piecewise_test.cpp; sourceTree = "<group>"; };
 		C73BBE9629F8669F0027BB7F /* newton.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = newton.hpp; sourceTree = "<group>"; };
 		C74DF4572AA8BC7300319113 /* graph_benchmark */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_benchmark; sourceTree = BUILT_PRODUCTS_DIR; };
+		C760B1AB2BC6D760001737A3 /* get_includes.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = get_includes.py; sourceTree = "<group>"; };
 		C7678FBD2B45C2850025F37E /* bin.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = bin.py; sourceTree = "<group>"; };
 		C77E6DF522DD64E700469621 /* trigonometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trigonometry.hpp; sourceTree = "<group>"; };
 		C79141A622DA9BF200E0BA0D /* libgraph_framework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgraph_framework.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -461,6 +462,7 @@
 			children = (
 				C7167B222AC5CE8500E03131 /* fix_NaN.py */,
 				C7678FBD2B45C2850025F37E /* bin.py */,
+				C760B1AB2BC6D760001737A3 /* get_includes.py */,
 			);
 			path = utilities;
 			sourceTree = "<group>";
