@@ -41,7 +41,7 @@ namespace gpu {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Initalize cuda.
+///  @brief Initalize hip.
 //------------------------------------------------------------------------------
      static hipError_t hip_init() {
          const hipError_t result = hipInit(0);
