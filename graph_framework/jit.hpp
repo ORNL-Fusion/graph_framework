@@ -64,7 +64,7 @@ namespace jit {
 #ifdef USE_CUDA
                                                            gpu::cuda_context<T, SAFE_MATH>,
 #elif defined(USE_METAL)
-                                                           gpu::metal_context<SAFE_MATH>,
+                                                           gpu::metal_context<T, SAFE_MATH>,
 #else
                                                            gpu::cpu_context<T, SAFE_MATH>,
 #endif

@@ -17,6 +17,190 @@ using namespace cuda::std;
 template<typename T>
 using complex_type = complex<T>;
 
+#elif defined(METAL_DEVICE_CODE)
+#include <metal_stdlib>
+#include <metal_simdgroup>
+using namespace metal;
+
+#define M_PI M_PI_F
+
+//------------------------------------------------------------------------------
+///  @brief Complex type for metal kernels.
+///
+///  @tparam T Base type of the complex.
+//------------------------------------------------------------------------------
+struct metal_complex {
+    ///  Real part.
+    float real;
+    ///  Imaginary.
+    float imag;
+    
+    //------------------------------------------------------------------------------
+    ///  @brief Construct a complex type.
+    ///
+    ///  @params[in] r Real argument.
+    ///  @params[in] i Imaginary argument.
+    //------------------------------------------------------------------------------
+    metal_complex(const float r, const float i) : real(r), imag(i) {}
+};
+
+//------------------------------------------------------------------------------
+///  @brief Add operator for complex type.
+///
+///  @param[in] l Left operand.
+///  @param[in] r Right operand.
+///  @returns n+d
+//------------------------------------------------------------------------------
+metal_complex operator+(const metal_complex l,
+                        const metal_complex r) {
+    return metal_complex(l.real + r.real,
+                         l.imag + r.imag);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Subtract operator for complex type.
+///
+///  @param[in] l Left operand.
+///  @param[in] r Right operand.
+///  @returns n-d
+//------------------------------------------------------------------------------
+metal_complex operator-(const metal_complex l,
+                        const metal_complex r) {
+    return metal_complex(l.real - r.real,
+                         l.imag - r.imag);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Multiply operator for complex type.
+///
+///  @tparam T Base type.
+///
+///  @param[in] l Left operand.
+///  @param[in] r Right operand.
+///  @returns n*d
+//------------------------------------------------------------------------------
+metal_complex operator*(const metal_complex l,
+                        const metal_complex r) {
+    return metal_complex(l.real*r.real - l.imag*r.imag,
+                         l.real*r.imag + l.imag*r.real);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Divide operator for complex type.
+///
+///  @param[in] n Numerator operand.
+///  @param[in] d Denominator operand.
+///  @returns n/d
+//------------------------------------------------------------------------------
+metal_complex operator/(const metal_complex n,
+                        const metal_complex d) {
+    const float denom = d.real*d.real + d.imag*d.imag;
+    return metal_complex((n.real*d.real + n.imag*d.imag)/denom,
+                         (n.imag*d.real - n.real*d.imag)/denom);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Get the real value.
+///
+///  @params[in] x Complex argument.
+///  @returns The real part.
+//------------------------------------------------------------------------------
+float real(const metal_complex x) {
+    return x.real;
+}
+
+//------------------------------------------------------------------------------
+///  @brief Get the real value.
+///
+///  @params[in] x Complex argument.
+///  @returns The imag part.
+//------------------------------------------------------------------------------
+float imag(const metal_complex x) {
+    return x.imag;
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex exponetial.
+///
+///  @params[in] x Complex argument.
+///  @returns exp(x)
+//------------------------------------------------------------------------------
+metal_complex exp(const metal_complex x) {
+    return metal_complex(exp(x.real)*cos(x.imag),
+                         exp(x.real)*sin(x.imag));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex sqrt function for metal.
+///
+///  @params[in] x Complex argument.
+///  @returns sqrt(x)
+//------------------------------------------------------------------------------
+metal_complex sqrt(const metal_complex x) {
+    const float length = sqrt(x.real*x.real + x.imag*x.imag);
+    return metal_complex(sqrt(static_cast<float> (0.5)*(length + x.real)),
+                         sign(x.imag)*sqrt(static_cast<float> (0.5)*(length - x.real)));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex log function for metal.
+///
+///  @params[in] x Complex argument.
+///  @returns log(x)
+//------------------------------------------------------------------------------
+metal_complex log(const metal_complex x) {
+    const float length = sqrt(x.real*x.real + x.imag*x.imag);
+    return metal_complex(log(length), atan2(x.imag, x.real));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex pow function for metal.
+///
+///  @params[in] x Complex base.
+///  @params[in] y Complex exponent.
+///  @returns pow(x, y)
+//------------------------------------------------------------------------------
+metal_complex pow(const metal_complex x,
+                  const metal_complex y) {
+    return exp(y*log(x));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex sin function for metal.
+///
+///  @params[in] x Complex argument.
+///  @returns sin(x)
+//------------------------------------------------------------------------------
+metal_complex sin(const metal_complex x) {
+    return metal_complex(sin(x.real)*cosh(x.imag),
+                         cos(x.real)*sinh(x.imag));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Complex cos function for metal.
+///
+///  @params[in] x Complex argument.
+///  @returns cos(x)
+//------------------------------------------------------------------------------
+metal_complex cos(const metal_complex x) {
+    return metal_complex(cos(x.real)*cosh(x.imag),
+                         sin(x.real)*sinh(x.imag));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Generic abs function for metal.
+///
+///  @params[in] x Complex argument.
+///  @returns abs(x)
+//------------------------------------------------------------------------------
+float abs(const metal_complex x) {
+    return sqrt(x.real*x.real + x.imag*x.imag);
+}
+
+///  Complex type alias
+template<typename T>
+using complex_type = metal_complex;
+
 #else
 #include <complex>
 #include <cfloat>
@@ -45,8 +229,13 @@ namespace special {
 #else
     template<typename T>
 #endif
-    constexpr complex_type<T> i(static_cast<T> (0),
-                                static_cast<T> (1));
+#if METAL_DEVICE_CODE
+    constant
+#else
+    constexpr
+#endif
+    complex_type<T> i(static_cast<T> (0),
+                      static_cast<T> (1));
 
 //------------------------------------------------------------------------------
 ///  @brief Compute erfcx(z) = exp(z^2)\*erfz(z)
@@ -1060,59 +1249,64 @@ namespace special {
 #else
     template<typename T>
 #endif
-    constexpr T expa2n2[] = {
-        7.64405281671221563E-01,
-        3.41424527166548425E-01,
-        8.91072646929412548E-02,
-        1.35887299055460086E-02,
-        1.21085455253437481E-03,
-        6.30452613933449404E-05,
-        1.91805156577114683E-06,
-        3.40969447714832381E-08,
-        3.54175089099469393E-10,
-        2.14965079583260682E-12,
-        7.62368911833724354E-15,
-        1.57982797110681093E-17,
-        1.91294189103582677E-20,
-        1.35344656764205340E-23,
-        5.59535712428588720E-27,
-        1.35164257972401769E-30,
-        1.90784582843501167E-34,
-        1.57351920291442930E-38,
-        7.58312432328032845E-43,
-        2.13536275438697082E-47,
-        3.51352063787195769E-52,
-        3.37800830266396920E-57,
-        1.89769439468301000E-62,
-        6.22929926072668851E-68,
-        1.19481172006938722E-73,
-        1.33908181133005953E-79,
-        8.76924303483223939E-86,
-        3.35555576166254986E-92,
-        7.50264110688173024E-99,
-        9.80192200745410268E-106,
-        7.48265412822268959E-113,
-        3.33770122566809425E-120,
-        8.69934598159861140E-128,
-        1.32486951484088852E-135,
-        1.17898144201315253E-143,
-        6.13039120236180012E-152,
-        1.86258785950822098E-160,
-        3.30668408201432783E-169,
-        3.43017280887946235E-178,
-        2.07915397775808219E-187,
-        7.36384545323984966E-197,
-        1.52394760394085741E-206,
-        1.84281935046532100E-216,
-        1.30209553802992923E-226,
-        5.37588903521080531E-237,
-        1.29689584599763145E-247,
-        1.82813078022866562E-258,
-        1.50576355348684241E-269,
-        7.24692320799294194E-281,
-        2.03797051314726829E-292,
-        3.34880215927873807E-304,
-        0.0
+#if METAL_DEVICE_CODE
+    constant
+#else
+    constexpr
+#endif
+    T expa2n2[] = {
+        static_cast<T> (7.64405281671221563E-01),
+        static_cast<T> (3.41424527166548425E-01),
+        static_cast<T> (8.91072646929412548E-02),
+        static_cast<T> (1.35887299055460086E-02),
+        static_cast<T> (1.21085455253437481E-03),
+        static_cast<T> (6.30452613933449404E-05),
+        static_cast<T> (1.91805156577114683E-06),
+        static_cast<T> (3.40969447714832381E-08),
+        static_cast<T> (3.54175089099469393E-10),
+        static_cast<T> (2.14965079583260682E-12),
+        static_cast<T> (7.62368911833724354E-15),
+        static_cast<T> (1.57982797110681093E-17),
+        static_cast<T> (1.91294189103582677E-20),
+        static_cast<T> (1.35344656764205340E-23),
+        static_cast<T> (5.59535712428588720E-27),
+        static_cast<T> (1.35164257972401769E-30),
+        static_cast<T> (1.90784582843501167E-34),
+        static_cast<T> (1.57351920291442930E-38),
+        static_cast<T> (7.58312432328032845E-43),
+        static_cast<T> (2.13536275438697082E-47),
+        static_cast<T> (3.51352063787195769E-52),
+        static_cast<T> (3.37800830266396920E-57),
+        static_cast<T> (1.89769439468301000E-62),
+        static_cast<T> (6.22929926072668851E-68),
+        static_cast<T> (1.19481172006938722E-73),
+        static_cast<T> (1.33908181133005953E-79),
+        static_cast<T> (8.76924303483223939E-86),
+        static_cast<T> (3.35555576166254986E-92),
+        static_cast<T> (7.50264110688173024E-99),
+        static_cast<T> (9.80192200745410268E-106),
+        static_cast<T> (7.48265412822268959E-113),
+        static_cast<T> (3.33770122566809425E-120),
+        static_cast<T> (8.69934598159861140E-128),
+        static_cast<T> (1.32486951484088852E-135),
+        static_cast<T> (1.17898144201315253E-143),
+        static_cast<T> (6.13039120236180012E-152),
+        static_cast<T> (1.86258785950822098E-160),
+        static_cast<T> (3.30668408201432783E-169),
+        static_cast<T> (3.43017280887946235E-178),
+        static_cast<T> (2.07915397775808219E-187),
+        static_cast<T> (7.36384545323984966E-197),
+        static_cast<T> (1.52394760394085741E-206),
+        static_cast<T> (1.84281935046532100E-216),
+        static_cast<T> (1.30209553802992923E-226),
+        static_cast<T> (5.37588903521080531E-237),
+        static_cast<T> (1.29689584599763145E-247),
+        static_cast<T> (1.82813078022866562E-258),
+        static_cast<T> (1.50576355348684241E-269),
+        static_cast<T> (7.24692320799294194E-281),
+        static_cast<T> (2.03797051314726829E-292),
+        static_cast<T> (3.34880215927873807E-304),
+        static_cast<T> (0.0)
 //  Underflow (also prevents reads past array end, below)
     };
 
@@ -1544,7 +1738,7 @@ namespace special {
 //  values when multiplying w in an overflow situation.
             return static_cast<T> (1) -
                    exp(mRe_z2)*(complex_type<T> (cos(mIm_z2),
-                                                      sin(mIm_z2))*w(complex_type<T> (-y, x)));
+                                                 sin(mIm_z2))*w<T> (complex_type<T> (-y, x)));
         } else {
 // x < 0
             if (x > static_cast<T> (-8.0E-2)) {
@@ -1562,7 +1756,7 @@ namespace special {
 //  Don't use complex exp function, since that will produce spurious NaN
 //  values when multiplying w in an overflow situation.
             return exp(mRe_z2)*complex_type<T> (cos(mIm_z2),
-                                                     sin(mIm_z2))*w(complex_type<T> (y, -x)) -
+                                                sin(mIm_z2))*w<T> (complex_type<T> (y, -x)) -
                    static_cast<T> (1);
         }
     }
