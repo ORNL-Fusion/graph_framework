@@ -322,6 +322,16 @@ template<jit::float_scalar T> void run_math_tests() {
                  graph::variable_cast(v4)},
                 {pow_non_int}, {},
                 pow_non_int->evaluate().at(0), 3.0E-8);
+
+    auto sin_node = graph::sin(v1);
+    compile<T> ({graph::variable_cast(v1)},
+                {sin_node}, {},
+                sin_node->evaluate().at(0), 0.0);
+
+    auto cos_node = graph::cos(v1);
+    compile<T> ({graph::variable_cast(v1)},
+                {cos_node}, {},
+                cos_node->evaluate().at(0), 3.0E-8);
 }
 
 //------------------------------------------------------------------------------

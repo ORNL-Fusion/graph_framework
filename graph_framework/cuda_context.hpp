@@ -962,11 +962,13 @@ namespace gpu {
                 source_buffer << "input[i];" << std::endl;
             }
             source_buffer << "        for (size_t index = i + 1024; index < " << size <<"; index += 1024) {" << std::endl;
+            source_buffer << "            sub_max = max(sub_max, ";
             if constexpr (jit::complex_scalar<T>) {
-                source_buffer << "            sub_max = max(sub_max, abs(input[index]));" << std::endl;
+                source_buffer << "abs(input[index]";
             } else {
-                source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;
+                source_buffer << "input[index]";
             }
+            source_buffer << ");" << std::endl;
             source_buffer << "        }" << std::endl;
             source_buffer << "        __shared__ " << jit::type_to_string<T> () << " thread_max[32];" << std::endl;
             source_buffer << "        for (int index = 16; index > 0; index /= 2) {" << std::endl;
