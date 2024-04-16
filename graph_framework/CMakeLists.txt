@@ -26,6 +26,7 @@ target_compile_definitions (graph_framework
                             $<$<BOOL:${SHOW_USE_COUNT}>:SHOW_USE_COUNT>
                             $<$<BOOL:${USE_INDEX_CACHE}>:USE_INDEX_CACHE>
                             $<IF:$<BOOL:${USE_VERBOSE}>,USE_VERBOSE=true,USE_VERBOSE=false>
+                            $<$<BOOL:${USE_METAL}>:HEADER_DIR="$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>">
 )
 
 target_include_directories (graph_framework
