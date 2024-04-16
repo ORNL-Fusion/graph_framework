@@ -26,6 +26,7 @@
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/TargetParser/Host.h"
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 
@@ -42,8 +43,8 @@ namespace gpu {
 ///  @param[in] string Input string.
 ///  @returns The string split into an array of arguments.
 //------------------------------------------------------------------------------
-    std::vector<const char *> split_string(char *string) {
-        std::vector<const char *> args = {string};
+    llvm::SmallVector<const char *, 8> split_string(char *string) {
+        llvm::SmallVector<const char *, 8> args = {string};
 
         while (*(++string) != '\0') {
             if (*string == ' ') {
@@ -127,7 +128,7 @@ namespace gpu {
             }
 
             char arg_string[] = CXX_ARGS;
-            std::vector<const char *> args = split_string(arg_string);
+            llvm::SmallVector<const char *, 8> args = split_string(arg_string);
             args.push_back(filename.c_str());
 #ifdef NDEBUG
             args.push_back("-O3");
