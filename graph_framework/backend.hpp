@@ -16,6 +16,37 @@
 
 namespace backend {
 //******************************************************************************
+//  Multi buffer.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Struct containing multiple piecewise buffers.
+///
+///  1D and 2D splines come in multiples of 4. To reduce the impack of memory
+///  reads we can index these buffers once for four buffers at the same time.
+///
+///  @tparam T Base type of the buffer.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    struct multi {
+///  A coefficient.
+        const T a;
+///  B coefficient.
+        const T b;
+///  C coefficient.
+        const T c;
+///  D coefficient.
+        const T d;
+    };
+
+///  Multi scalar concept.
+    template<typename T>
+    concept multi_scalar = jit::float_scalar<T>                         ||
+                           std::same_as<T, multi<float>>                ||
+                           std::same_as<T, multi<double>>               ||
+                           std::same_as<T, multi<std::complex<float>>>  ||
+                           std::same_as<T, multi<std::complex<double>>>;
+
+//******************************************************************************
 //  Data buffer.
 //******************************************************************************
 //------------------------------------------------------------------------------
@@ -23,7 +54,7 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-    template<jit::float_scalar T>
+    template<multi_scalar T>
     class buffer {
     private:
 ///  The data buffer to hold the data.
@@ -646,6 +677,10 @@ namespace backend {
         }
         return x;
     }
+
+///  Convenience type alias for multi buffers.
+    template<jit::float_scalar T>
+    using multi_buffer = buffer<multi<T>>;
 }
 
 #endif /* backend_h */

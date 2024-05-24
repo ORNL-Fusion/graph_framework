@@ -257,8 +257,8 @@ namespace graph {
                                             std::shared_ptr<leaf_node<T, SAFE_MATH>>> cache;
 ///  Cache for the backend buffers.
         inline thread_local static std::map<size_t,
-                                            backend::buffer<T>> backend_cache;
-        
+                                            backend::multi_buffer<T>> backend_cache;
+
 ///  Type def to retrieve the backend type.
         typedef T base;
     };
