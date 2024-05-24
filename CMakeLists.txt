@@ -175,8 +175,8 @@ register_project (llvm
                   ${URL_PROTO}github.com${URL_SEP}llvm/llvm-project.git
                   main
                   llvm
-                  LLVM_BUILD_LLVM_DYLIB ON BOOL
                   LLVM_TARGETS_TO_BUILD Native STRING
+                  LLVM_ENABLE_PROJECTS clang STRING
 )
 
 #-------------------------------------------------------------------------------
@@ -204,17 +204,63 @@ add_dependencies (obj.LLVMTableGenCommon pull_llvm)
 add_dependencies (llvm_vcsrevision_h pull_llvm)
 add_dependencies (benchmark pull_llvm)
 add_dependencies (benchmark_main pull_llvm)
-add_dependencies (obj.LLVMTableGenBasic pull_llvm) 
+add_dependencies (obj.LLVMTableGenBasic pull_llvm)
+add_dependencies (core-resource-headers pull_llvm)
+add_dependencies (mips-resource-headers pull_llvm)
+add_dependencies (utility-resource-headers pull_llvm)
+add_dependencies (ppc-htm-resource-headers pull_llvm)
+add_dependencies (loongarch-resource-headers pull_llvm)
+add_dependencies (systemz-resource-headers pull_llvm)
+add_dependencies (hexagon-resource-headers pull_llvm)
+add_dependencies (webassembly-resource-headers pull_llvm)
+add_dependencies (riscv-resource-headers pull_llvm)
+add_dependencies (hlsl-resource-headers pull_llvm)
+add_dependencies (ve-resource-headers pull_llvm)
+add_dependencies (opencl-resource-headers pull_llvm)
+add_dependencies (llvm-libc-resource-headers pull_llvm)
+add_dependencies (openmp-resource-headers pull_llvm)
+add_dependencies (windows-resource-headers pull_llvm)
+add_dependencies (SampleAnalyzerPlugin_exports pull_llvm)
+add_dependencies (CheckerDependencyHandlingAnalyzerPlugin_exports pull_llvm)
+add_dependencies (CheckerOptionHandlingAnalyzerPlugin_exports pull_llvm)
+add_dependencies (clangAnalysisFlowSensitiveResources pull_llvm)
+add_dependencies (ppc-resource-headers pull_llvm)
+add_dependencies (hmaptool pull_llvm)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    add_dependencies (libclang_exports pull_llvm)
+endif ()
+add_dependencies (hip-resource-headers pull_llvm)
+add_dependencies (scan-view pull_llvm)
+add_dependencies (scan-build pull_llvm)
+add_dependencies (cuda-resource-headers pull_llvm)
+add_dependencies (scan-build-py pull_llvm)
+add_dependencies (x86-resource-headers pull_llvm)
+add_dependencies (obj.clangSupport pull_llvm)
 
 add_library (llvm_dep INTERFACE)
 target_include_directories (llvm_dep
                             INTERFACE
                             $<BUILD_INTERFACE:${llvm_source_dir}/llvm/include>
+                            $<BUILD_INTERFACE:${llvm_source_dir}/clang/include>
                             $<BUILD_INTERFACE:${llvm_binary_dir}/include>
+                            $<BUILD_INTERFACE:${llvm_binary_dir}/tools/clang/include>
 )
+
+#  Need to manually figure out the native arch.
+string(REGEX MATCH "^[^-]*" LLVM_NATIVE_ARCH ${LLVM_HOST_TRIPLE})
+if (LLVM_NATIVE_ARCH MATCHES "arm64")
+    set (LLVM_NATIVE_ARCH AArch64)
+elseif (LLVM_NATIVE_ARCH MATCHES "x86_64")
+    set (LLVM_NATIVE_ARCH X86)
+else ()
+   message (FATAL_ERROR "Unknown native arch ${LLVM_NATIVE_ARCH}")
+endif ()
+
 target_link_libraries (llvm_dep
                        INTERFACE
-                       LLVM
+                       clangCodeGen
+                       LLVM${LLVM_NATIVE_ARCH}CodeGen
+                       LLVMOrcJIT
 )
 
 #-------------------------------------------------------------------------------

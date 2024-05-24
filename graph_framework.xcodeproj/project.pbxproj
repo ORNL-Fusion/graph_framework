@@ -296,6 +296,7 @@
 		C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = piecewise_test.cpp; sourceTree = "<group>"; };
 		C73BBE9629F8669F0027BB7F /* newton.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = newton.hpp; sourceTree = "<group>"; };
 		C74DF4572AA8BC7300319113 /* graph_benchmark */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_benchmark; sourceTree = BUILT_PRODUCTS_DIR; };
+		C760B1AB2BC6D760001737A3 /* get_includes.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = get_includes.py; sourceTree = "<group>"; };
 		C7678FBD2B45C2850025F37E /* bin.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = bin.py; sourceTree = "<group>"; };
 		C77E6DF522DD64E700469621 /* trigonometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trigonometry.hpp; sourceTree = "<group>"; };
 		C79141A622DA9BF200E0BA0D /* libgraph_framework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgraph_framework.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -461,6 +462,7 @@
 			children = (
 				C7167B222AC5CE8500E03131 /* fix_NaN.py */,
 				C7678FBD2B45C2850025F37E /* bin.py */,
+				C760B1AB2BC6D760001737A3 /* get_includes.py */,
 			);
 			path = utilities;
 			sourceTree = "<group>";
@@ -884,7 +886,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1520;
+				LastUpgradeCheck = 1530;
 				ORGANIZATIONNAME = "Cianciosa, Mark R.";
 				TargetAttributes = {
 					C73690302A38C498001733B0 = {
@@ -1337,7 +1339,7 @@
 					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
 					USE_METAL,
 					"CXX_FLAGS=\\\"-g\\\"",
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					"\"CXX_ARGS=\\\"-I/Users/m4c/Projects/graph_framework/graph_framework -std=gnu++2a\\\"\"",
 					STATIC,
 					"DEBUG=1",
 					"$(inherited)",
@@ -1348,10 +1350,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					LLVM/llvm/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
-					/usr/local/lib,
 					"build/_deps/llvm-build/lib",
+					/usr/local/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -1364,11 +1369,28 @@
 					"-rpath",
 					/usr/local/lib,
 					"-lLLVM",
+					"-lclangFrontend",
+					"-lclangBasic",
+					"-lclangEdit",
+					"-lclangLex",
+					"-lclangDriver",
+					"-lclangSerialization",
+					"-lclangAST",
+					"-lclangSema",
+					"-lclangAnalysis",
+					"-lclangASTMatchers",
+					"-lclangSupport",
+					"-lclangParse",
+					"-lclangAPINotes",
+					"-lclangCodeGen",
 				);
 				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = "";
 				USER_HEADER_SEARCH_PATHS = (
 					LLVM/llvm/include,
 					"build/_deps/llvm-build/include",
+					LLVM/clang/include,
+					"build/_deps/llvm-build/tools/clang/include",
 				);
 			};
 			name = Debug;
@@ -1419,7 +1441,7 @@
 					"EFIT_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/efit.nc\\\"",
 					"VMEC_FILE=\\\"/Users/m4c/Projects/graph_framework/graph_tests/vmec.nc\\\"",
 					USE_METAL,
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
+					"\"CXX_ARGS=\\\"-I/Users/m4c/Projects/graph_framework/graph_framework -std=gnu++2a\\\"\"",
 					"$(inherited)",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1428,10 +1450,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					LLVM/llvm/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
-					/usr/local/lib,
 					"build/_deps/llvm-build/lib",
+					/usr/local/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -1444,11 +1469,28 @@
 					"-rpath",
 					/usr/local/lib,
 					"-lLLVM",
+					"-lclangFrontend",
+					"-lclangBasic",
+					"-lclangEdit",
+					"-lclangLex",
+					"-lclangDriver",
+					"-lclangSerialization",
+					"-lclangAST",
+					"-lclangSema",
+					"-lclangAnalysis",
+					"-lclangASTMatchers",
+					"-lclangSupport",
+					"-lclangParse",
+					"-lclangAPINotes",
+					"-lclangCodeGen",
 				);
 				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = "";
 				USER_HEADER_SEARCH_PATHS = (
 					LLVM/llvm/include,
 					"build/_deps/llvm-build/include",
+					LLVM/clang/include,
+					"build/_deps/llvm-build/tools/clang/include",
 				);
 			};
 			name = Release;
@@ -1460,14 +1502,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2M4J3Y9U5K;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					USE_METAL,
-					"CXX_FLAGS=\\\"-gl\\\"",
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\\"",
-					STATIC,
-					"DEBUG=1",
-					"$(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
@@ -1484,10 +1519,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2M4J3Y9U5K;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					USE_METAL,
-					"CXX=\\\"c++\\ -I/Users/m4c/Projects/graph_framework/graph_framework\\ -std=gnu++2a\\ -g\" $(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
@@ -1521,10 +1553,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"CXX_FLAGS=\\\"-g\\\"",
-					"$(inherited)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = (

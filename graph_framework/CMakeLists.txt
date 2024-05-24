@@ -5,12 +5,19 @@ target_compile_features (rays
                          INTERFACE
                          cxx_std_20
 )
+
+#  Capture the system include search paths from the compiler used.
+find_package (Python REQUIRED COMPONENTS Interpreter)
+execute_process (COMMAND ${Python_EXECUTABLE} get_includes.py --compiler=${CMAKE_CXX_COMPILER}
+                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+                 OUTPUT_VARIABLE jit_include_paths
+                 OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 target_compile_definitions (rays
                             INTERFACE
-                            $<$<PLATFORM_ID:Darwin>:CXX="${CMAKE_CXX_COMPILER} -isysroot ${CMAKE_OSX_SYSROOT} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a">
-                            $<$<PLATFORM_ID:Darwin>:CXX_FLAGS="-g">
-                            $<$<PLATFORM_ID:Linux>:CXX="${CMAKE_CXX_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR} -std=gnu++2a -fPIC -fno-use-cxa-atexit">
-                            $<$<PLATFORM_ID:Linux>:CXX_FLAGS="-g">
+                            $<$<PLATFORM_ID:Darwin>:CXX_ARGS="-I${CMAKE_CURRENT_SOURCE_DIR}${jit_include_paths} -fgnuc-version=4.2.1 -std=gnu++2a">
+                            $<$<PLATFORM_ID:Linux>:CXX_ARGS="-I${CMAKE_CURRENT_SOURCE_DIR}${jit_include_paths} -std=gnu++2a -fno-use-cxa-atexit">
                             EFIT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"
                             VMEC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/vmec.nc"
                             $<$<BOOL:${USE_CUDA}>:HEADER_DIR="$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>">

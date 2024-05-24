@@ -113,6 +113,15 @@ def main(**args):
 ##  Defines command line arguments for.
 ##  * --directory Directory to search for the result files.
 ##  * --num_files Number of result files to read.
+##  * --num_x     Number of bin points in x.
+##  * --min_x     Miniumum x bin.
+##  * --max_x     Maximum x bin.
+##  * --num_y     Number of bin points in y.
+##  * --min_y     Miniumum y bin.
+##  * --max_y     Maximum y bin.
+##  * --num_z     Number of bin points in z.
+##  * --min_z     Miniumum z bin.
+##  * --max_z     Maximum z bin.
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     command_line_parser = argparse.ArgumentParser()

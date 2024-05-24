@@ -60,6 +60,12 @@ def main(**args):
 ##  Defines command line arguments for.
 ##  * --directory Directory to search for the result files.
 ##  * --num_files Number of result files to read.
+##  * --num_r     Number of radial bin points.
+##  * --min_r     Miniumum radial bin.
+##  * --max_r     Maximum radial bin.
+##  * --num_z     Number of vertical bin points.
+##  * --min_z     Miniumum vertical bin.
+##  * --max_z     Maximum vertical bin.
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
     command_line_parser = argparse.ArgumentParser()
