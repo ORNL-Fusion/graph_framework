@@ -57,7 +57,7 @@ namespace graph {
 ///  @params[in] d Backend buffer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(const backend::multi_buffer<T> &d) {
+        static std::string to_string(const backend::buffer<T> &d) {
             std::string temp;
             for (size_t i = 0, ie = d.size(); i < ie; i++) {
                 temp += jit::format_to_string(d[i]);
@@ -73,7 +73,7 @@ namespace graph {
 ///  @params[in] x Argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(const backend::multi_buffer<T> &d,
+        static std::string to_string(const backend::buffer<T> &d,
                                      shared_leaf<T, SAFE_MATH> x) {
             return piecewise_1D_node::to_string(d) +
                    jit::format_to_string(x->get_hash());
@@ -85,7 +85,7 @@ namespace graph {
 ///  @params[in] d Backend buffer.
 ///  @returns The hash the node is stored in.
 //------------------------------------------------------------------------------
-        static size_t hash_data(const backend::multi_buffer<T> &d) {
+        static size_t hash_data(const backend::buffer<T> &d) {
             const size_t h = std::hash<std::string>{} (piecewise_1D_node::to_string(d));
             for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
                 if (leaf_node<T, SAFE_MATH>::backend_cache.find(i) ==
@@ -109,7 +109,7 @@ namespace graph {
 ///  @params[in] d Data to initalize the piecewise constant.
 ///  @params[in] x Argument.
 //------------------------------------------------------------------------------
-        piecewise_1D_node(const backend::multi_buffer<T> &d,
+        piecewise_1D_node(const backend::buffer<T> &d,
                           shared_leaf<T, SAFE_MATH> x) :
         straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x)),
         data_hash(piecewise_1D_node::hash_data(d)) {}
@@ -193,8 +193,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  This node first evaluates the value of the argument then chooses the 
-///  correct piecewise index. This assumes that the argument is
+///  This node first evaluates the value of the argument then chooses the correct
+///  piecewise index. This assumes that the argument is
 ///
 ///    x' = (x - xmin)/dx                                                    (1)
 ///
@@ -440,7 +440,7 @@ namespace graph {
 ///  @params[in] d Backend buffer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(const backend::multi_buffer<T> &d) {
+        static std::string to_string(const backend::buffer<T> &d) {
             std::string temp;
             for (size_t i = 0, ie = d.size(); i < ie; i++) {
                 temp += jit::format_to_string(d[i]);
@@ -457,7 +457,7 @@ namespace graph {
 ///  @params[in] y Y argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
-        static std::string to_string(const backend::multi_buffer<T> &d,
+        static std::string to_string(const backend::buffer<T> &d,
                                      shared_leaf<T, SAFE_MATH> x,
                                      shared_leaf<T, SAFE_MATH> y) {
             return piecewise_2D_node::to_string(d) +
@@ -471,7 +471,7 @@ namespace graph {
 ///  @params[in] d Backend buffer.
 ///  @returns The hash the node is stored in.
 //------------------------------------------------------------------------------
-        static size_t hash_data(const backend::multi_buffer<T> &d) {
+        static size_t hash_data(const backend::buffer<T> &d) {
             const size_t h = std::hash<std::string>{} (piecewise_2D_node::to_string(d));
             for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
                 if (leaf_node<T, SAFE_MATH>::backend_cache.find(i) ==
@@ -499,7 +499,7 @@ namespace graph {
 ///  @params[in] x X Argument.
 ///  @params[in] y Y Argument.
 //------------------------------------------------------------------------------
-        piecewise_2D_node(const backend::multi_buffer<T> &d,
+        piecewise_2D_node(const backend::buffer<T> &d,
                           const size_t n,
                           shared_leaf<T, SAFE_MATH> x,
                           shared_leaf<T, SAFE_MATH> y) :
