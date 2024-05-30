@@ -106,6 +106,7 @@ namespace gpu {
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
             compute.computeFunction = function;
+            compute.maxTotalThreadsPerThreadgroup = 1024;
 
             id<MTLComputePipelineState> state = [device newComputePipelineStateWithDescriptor:compute
                                                                                       options:MTLPipelineOptionNone
@@ -140,13 +141,15 @@ namespace gpu {
             NSRange range = NSMakeRange(0, buffers.size());
 
             NSUInteger threads_per_group = state.maxTotalThreadsPerThreadgroup;
+            NSUInteger thread_width = state.threadExecutionWidth;
             NSUInteger thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
 
             if (jit::verbose) {
                 std::cout << "  Kernel name : " << kernel_name << std::endl;
-                std::cout << "    Threads per group  : " << threads_per_group << std::endl;
-                std::cout << "    Number of groups   : " << thread_groups << std::endl;
-                std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Thread execution width : " << thread_width << std::endl;
+                std::cout << "    Threads per group      : " << threads_per_group << std::endl;
+                std::cout << "    Number of groups       : " << thread_groups << std::endl;
+                std::cout << "    Total problem size     : " << threads_per_group*thread_groups << std::endl;
             }
 
             return [this, state, buffers, offsets, range, thread_groups, threads_per_group] () mutable {
@@ -178,6 +181,7 @@ namespace gpu {
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
             compute.computeFunction = [library newFunctionWithName:@"max_reduction"];
+            compute.maxTotalThreadsPerThreadgroup = 1024;
 
             NSError *error;
             id<MTLComputePipelineState> max_state = [device newComputePipelineStateWithDescriptor:compute
@@ -194,6 +198,16 @@ namespace gpu {
             
             id<MTLBuffer> buffer = kernel_arguments[argument.get()];
             
+            NSUInteger threads_per_group = max_state.maxTotalThreadsPerThreadgroup;
+            NSUInteger thread_width = max_state.threadExecutionWidth;
+            if (jit::verbose) {
+                std::cout << "  Kernel name : max_reduction" << std::endl;
+                std::cout << "    Thread execution width : " << thread_width << std::endl;
+                std::cout << "    Threads per group      : " << threads_per_group << std::endl;
+                std::cout << "    Number of groups       : " << 1 << std::endl;
+                std::cout << "    Total problem size     : " << threads_per_group*1 << std::endl;
+            }
+
             return [this, run, buffer, result, max_state] () mutable {
                 run();
                 command_buffer = [queue commandBuffer];

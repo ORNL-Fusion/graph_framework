@@ -448,8 +448,8 @@ namespace gpu {
                                   const size_t size,
                                   jit::register_map &registers) {
             source_buffer << std::endl;
-            source_buffer << "extern \"C\" __global__ void " << name << "("
-                          << std::endl;
+            source_buffer << "extern \"C\" __global__ __launch_bounds__(1024) void "
+                          << name << "(" << std::endl;
 
             source_buffer << "    ";
             jit::add_type<T> (source_buffer);
@@ -556,7 +556,7 @@ namespace gpu {
         void create_reduction(std::ostringstream &source_buffer,
                               const size_t size) {
             source_buffer << std::endl;
-            source_buffer << "extern \"C\" __global__ void max_reduction(" << std::endl;
+            source_buffer << "extern \"C\" __global__ __launch_bounds__(1024) void max_reduction(" << std::endl;
             source_buffer << "    ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *input," << std::endl;
