@@ -338,19 +338,22 @@ namespace gpu {
 ///  @params[in]     inputs        Input variables of the kernel.
 ///  @params[in]     outputs       Output nodes of the graph to compute.
 ///  @params[in]     size          Size of the input buffer.
+///  @params[in]     is_constant   Flags if the input is read only.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<float, SAFE_MATH> &inputs,
                                   graph::output_nodes<float, SAFE_MATH> &outputs,
-                                  const size_t size,
+                                  const size_t size, 
+                                  const std::vector<bool> &is_constant,
                                   jit::register_map &registers) {
             source_buffer << std::endl;
             source_buffer << "kernel void " << name << "(" << std::endl;
             
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                source_buffer << "    device float *"
+                source_buffer << "    " << (is_constant[i] ? "constant" : "device")
+                              << " float *"
                               << jit::to_string('v', inputs[i].get())
                               << " [[buffer(" << i << ")]]," << std::endl;
             }

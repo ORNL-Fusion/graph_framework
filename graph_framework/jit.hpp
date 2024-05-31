@@ -8,6 +8,9 @@
 #ifndef jit_h
 #define jit_h
 
+#include <algorithm>
+#include <iterator>
+
 #ifdef USE_METAL
 #include "metal_context.hpp"
 #elif defined(USE_CUDA)
@@ -97,8 +100,15 @@ namespace jit {
             
             const size_t size = inputs[0]->size();
 
+            std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;
             for (auto &[out, in] : setters) {
+                auto found = std::distance(inputs.begin(),
+                                           std::find(inputs.begin(),
+                                                     inputs.end(), in));
+                if (found < is_constant.size()) {
+                    is_constant[found] = false;
+                }
                 out->compile_preamble(source_buffer, registers, visited);
             }
             for (auto &out : outputs) {
@@ -106,7 +116,8 @@ namespace jit {
             }
 
             gpu_context.create_kernel_prefix(source_buffer,
-                                             name, inputs, outputs, size,
+                                             name, inputs, outputs, 
+                                             size, is_constant,
                                              registers);
 
             for (auto &[out, in] : setters) {

@@ -353,13 +353,15 @@ namespace gpu {
 ///  @params[in]     inputs        Input variables of the kernel.
 ///  @params[in]     outputs       Output nodes of the graph to compute.
 ///  @params[in]     size          Size of the input buffer.
+///  @params[in]     is_constant   Flags if the input is read only.
 ///  @params[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
-                                  const size_t size,
+                                  const size_t size, 
+                                  const std::vector<bool> &is_constant,
                                   jit::register_map &registers) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
@@ -368,11 +370,14 @@ namespace gpu {
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args) {" << std::endl;
 
-            for (auto &input : inputs) {
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 source_buffer << "    ";
+                if (is_constant[i]) {
+                    source_buffer << "const ";
+                }
                 jit::add_type<T> (source_buffer);
-                source_buffer << " *" << jit::to_string('v', input.get())
-                              << " = args[" << reinterpret_cast<size_t> (input.get()) 
+                source_buffer << " *" << jit::to_string('v', inputs[i].get())
+                              << " = args[" << reinterpret_cast<size_t> (inputs[i].get())
                               << "];" << std::endl;
             }
             for (auto &output : outputs) {
