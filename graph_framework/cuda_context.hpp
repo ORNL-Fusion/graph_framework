@@ -425,7 +425,7 @@ namespace gpu {
         void create_header(std::ostringstream &source_buffer) {
             if constexpr (jit::is_complex<T> ()) {
                 source_buffer << "#define CUDA_DEVICE_CODE" << std::endl;
-		source_buffer << "#define M_PI " << M_PI << std::endl;
+                source_buffer << "#define M_PI " << M_PI << std::endl;
                 source_buffer << "#include <cuda/std/complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
             }
@@ -462,7 +462,7 @@ namespace gpu {
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
                 source_buffer << "," << std::endl;
                 source_buffer << "    ";
-                if (is_constant[0]) {
+                if (is_constant[i]) {
                     source_buffer << "const ";
                 }
                 jit::add_type<T> (source_buffer);
@@ -565,7 +565,7 @@ namespace gpu {
                               const size_t size) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" __global__ __launch_bounds__(1024) void max_reduction(" << std::endl;
-            source_buffer << "    ";
+            source_buffer << "    const ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *input," << std::endl;
             source_buffer << "    ";
