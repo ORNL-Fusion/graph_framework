@@ -455,7 +455,7 @@ namespace gpu {
 
             source_buffer << "    ";
             if (is_constant[0]) {
-                source_buffer << "const "
+                source_buffer << "const ";
             }
             jit::add_type<T> (source_buffer);
             source_buffer << " *" << jit::to_string('v', inputs[0].get());
@@ -463,7 +463,7 @@ namespace gpu {
                 source_buffer << "," << std::endl;
                 source_buffer << "    ";
                 if (is_constant[0]) {
-                    source_buffer << "const "
+                    source_buffer << "const ";
                 }
                 jit::add_type<T> (source_buffer);
                 source_buffer << " *" << jit::to_string('v', inputs[i].get());
