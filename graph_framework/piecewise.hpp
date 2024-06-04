@@ -158,34 +158,40 @@ namespace graph {
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
 ///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] textures1d List of 1D textures.
+///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
                 if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
+                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        stream << "constant ";
-                    }
-                    stream << "const ";
-                    jit::add_type<T> (stream);
-                    stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
-                    if constexpr (jit::is_complex<T> ()) {
+                        textures1d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                                length);
+                    } else {
+                        stream << "const ";
                         jit::add_type<T> (stream);
-                    }
-                    stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
-                         i < ie; i++) {
-                        stream << ", ";
+                        stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
+                        for (size_t i = 1; i < length; i++) {
+                            stream << ", ";
+                            if constexpr (jit::is_complex<T> ()) {
+                                jit::add_type<T> (stream);
+                            }
+                            stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                        }
+                        stream << "};" << std::endl;
                     }
-                    stream << "};" << std::endl;
-                    visited[this] = 0;
+                    visited.insert(this);
                 }
             }
         }
@@ -219,17 +225,22 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
-                stream << "[max(min((int)";
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << "real(";
+                const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                if constexpr (jit::use_metal<T> ()) {
+                    stream << ".read(min(max((uint)" << registers[a.get()]
+                           << ",0u)," << length - 1 << "u)).r;";
+                } else {
+                    stream << "[min(max((int)";
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << "real(";
+                    }
+                    stream << registers[a.get()];
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                    stream << ",0)," << length - 1 << ")];";
                 }
-                stream << registers[a.get()];
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << ")";
-                }
-                stream << ", "
-                       << leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() - 1 << "), 0)];"
-                       << std::endl;
+                stream << std::endl;
             }
 
             return this->shared_from_this();
@@ -561,35 +572,43 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream     String buffer stream.
+///  @params[in,out] registers  List of defined registers.
+///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] textures1d List of 1D textures.
+///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
                 if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
+                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        stream << "constant ";
-                    }
-                    stream << "const ";
-                    jit::add_type<T> (stream);
-                    stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
-                    if constexpr (jit::is_complex<T> ()) {
+                        textures2d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                                std::array<size_t, 2> ({length/num_columns, num_columns}));
+                    } else {
+                        stream << "const ";
                         jit::add_type<T> (stream);
-                    }
-                    stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size(); i < ie; i++) {
-                        stream << ", ";
+                        stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
+                        for (size_t i = 1; i < length; i++) {
+                            stream << ", ";
+                            if constexpr (jit::is_complex<T> ()) {
+                                jit::add_type<T> (stream);
+                            }
+                            stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                        }
+                        stream << "};" << std::endl;
                     }
-                    stream << "};" << std::endl;
+                    visited.insert(this);
                 }
             }
         }
@@ -637,25 +656,33 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
-                stream << "[max(min((int)";
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << "real(";
+                const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                if constexpr (jit::use_metal<T> ()) {
+                    const size_t num_rows = length/num_columns;
+                    stream << ".read(uint2(min(max((uint)"
+                           << registers[x.get()] << ", 0u)," << num_rows
+                           << "u),min(max((uint)" << registers[y.get()]
+                           << ",0u)," << num_columns << "u)).yx).r;";
+                }  else {
+                    stream << "[min(max((int)";
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << "real(";
+                    }
+                    stream << registers[x.get()];
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                    stream << "*" << num_columns << " + (int)";
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << "real(";
+                    }
+                    stream << registers[y.get()];
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                    stream << ",0), " << length - 1 << ")];";
                 }
-                stream << registers[x.get()];
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << ")";
-                }
-                stream << "*" << num_columns << " + (int)";
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << "real(";
-                }
-                stream << registers[y.get()];
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << ")";
-                }
-                stream << ", "
-                       << leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() - 1 << "), 0)];"
-                       << std::endl;
+                stream << std::endl;
             }
 
             return this->shared_from_this();

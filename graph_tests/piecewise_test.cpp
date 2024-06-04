@@ -27,7 +27,7 @@
 ///  @params[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void check(const T test,
-                                const T tolarance) {
+                                         const T tolarance) {
     if constexpr (jit::is_complex<T> ()) {
         assert(std::real(test) <= std::real(tolarance) &&
                "Real GPU and CPU values differ.");

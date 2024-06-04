@@ -12,12 +12,14 @@
 #include <concepts>
 #include <cassert>
 #include <map>
+#include <set>
 #include <sstream>
 #include <complex>
 #include <type_traits>
 #include <limits>
 #include <charconv>
 #include <array>
+#include <utility>
 
 namespace jit {
 ///  Complex scalar concept.
@@ -243,7 +245,11 @@ namespace jit {
 ///  Type alias for mapping node pointers to register names.
     typedef std::map<void *, std::string> register_map;
 ///  Type alias for listing visited nodes.
-    typedef std::map<void *, bool> visiter_map;
+    typedef std::set<void *> visiter_map;
+///  Type alias for indexing 1D textures.
+    typedef std::vector<std::pair<void *, size_t>> texture1d_list;
+///  Type alias for indexing 2D textures.
+    typedef std::vector<std::pair<void *, std::array<size_t,2>>> texture2d_list;
 
 //------------------------------------------------------------------------------
 ///  @brief  Define a custom comparitor class.
