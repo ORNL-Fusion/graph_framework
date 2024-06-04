@@ -42,6 +42,10 @@ namespace jit {
         register_map registers;
 ///  Kernel names.
         std::vector<std::string> kernel_names;
+///  Kernel textures.
+        std::map<std::string, texture1d_list> kernel_1dtextures;
+///  Kernel textures.
+        std::map<std::string, texture2d_list> kernel_2dtextures;
 
 ///  Type for the GPU context.
         using gpu_context_type = typename std::conditional<use_gpu<T> (),
@@ -102,6 +106,8 @@ namespace jit {
 
             std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;
+            kernel_1dtextures[name] = texture1d_list();
+            kernel_2dtextures[name] = texture2d_list();
             for (auto &[out, in] : setters) {
                 auto found = std::distance(inputs.begin(),
                                            std::find(inputs.begin(),
@@ -109,16 +115,22 @@ namespace jit {
                 if (found < is_constant.size()) {
                     is_constant[found] = false;
                 }
-                out->compile_preamble(source_buffer, registers, visited);
+                out->compile_preamble(source_buffer, registers, visited,
+                                      kernel_1dtextures[name],
+                                      kernel_2dtextures[name]);
             }
             for (auto &out : outputs) {
-                out->compile_preamble(source_buffer, registers, visited);
+                out->compile_preamble(source_buffer, registers, visited,
+                                      kernel_1dtextures[name],
+                                      kernel_2dtextures[name]);
             }
 
             gpu_context.create_kernel_prefix(source_buffer,
                                              name, inputs, outputs, 
                                              size, is_constant,
-                                             registers);
+                                             registers,
+                                             kernel_1dtextures[name],
+                                             kernel_2dtextures[name]);
 
             for (auto &[out, in] : setters) {
                 out->compile(source_buffer, registers);
@@ -130,7 +142,7 @@ namespace jit {
             gpu_context.create_kernel_postfix(source_buffer, outputs,
                                               setters, registers);
 
-//  Delete the registers so that can be used again in other kernels.
+//  Delete the registers so that they can be used again in other kernels.
             std::vector<void *> removed_elements;
             for (auto &[key, value] : registers) {
                 if (value[0] == 'r') {
@@ -184,8 +196,9 @@ namespace jit {
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
                                                      const size_t num_rays) {
-            return gpu_context.create_kernel_call(kernel_name, inputs, outputs,
-                                                  num_rays);
+            return gpu_context.create_kernel_call(kernel_name, inputs, outputs, num_rays,
+                                                  kernel_1dtextures[kernel_name],
+                                                  kernel_2dtextures[kernel_name]);
         }
 
 //------------------------------------------------------------------------------

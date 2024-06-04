@@ -88,13 +88,17 @@ namespace graph {
 ///  Some nodes require additions to the preamble however most don't so define a
 ///  generic method that does nothing.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream     String buffer stream.
+///  @params[in,out] registers  List of defined registers.
+///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] textures1d List of 1D textures.
+///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {}
+                                      jit::visiter_map &visited,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
@@ -700,15 +704,22 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @params[in,out] stream     String buffer stream.
+///  @params[in,out] registers  List of defined registers.
+///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] textures1d List of 1D textures.
+///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
-                this->arg->compile_preamble(stream, registers, visited);
-                visited[this] = 0;
+                this->arg->compile_preamble(stream, registers,
+                                            visited, textures1d,
+                                            textures2d);
+                visited.insert(this);
             }
         }
 
@@ -816,17 +827,25 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream     String buffer stream.
+///  @params[in,out] registers  List of defined registers.
+///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] textures1d List of 1D textures.
+///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, visited);
-                this->right->compile_preamble(stream, registers, visited);
-                visited[this] = 0;
+                this->left->compile_preamble(stream, registers, 
+                                             visited, textures1d,
+                                             textures2d);
+                this->right->compile_preamble(stream, registers,
+                                              visited, textures1d,
+                                              textures2d);
+                visited.insert(this);
             }
         }
 
@@ -919,18 +938,28 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream     String buffer stream.
+///  @params[in,out] registers  List of defined registers.
+///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] textures1d List of 1D textures.
+///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, visited);
-                this->middle->compile_preamble(stream, registers, visited);
-                this->right->compile_preamble(stream, registers, visited);
-                visited[this] = 0;
+                this->left->compile_preamble(stream, registers, 
+                                             visited, textures1d,
+                                             textures2d);
+                this->middle->compile_preamble(stream, registers,
+                                               visited, textures1d,
+                                               textures2d);
+                this->right->compile_preamble(stream, registers,
+                                              visited, textures1d,
+                                              textures2d);
+                visited.insert(this);
             }
         }
 

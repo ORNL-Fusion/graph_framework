@@ -253,13 +253,17 @@ namespace gpu {
 ///  @params[in] kernel_name   Name of the kernel for later reference.
 ///  @params[in] inputs        Input nodes of the kernel.
 ///  @params[in] outputs       Output nodes of the kernel.
-///  @params[in] num_rays      Number of rays to trace.
+///  @params[in] num_rays      Number of rays to trace.'
+///  @params[in] tex1d_list  List of 1D textures.
+///  @params[in] tex2d_list  List of 1D textures.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
-                                                     const size_t num_rays) {
+                                                     const size_t num_rays,
+                                                     const jit::texture1d_list &tex1d_list,
+                                                     const jit::texture2d_list &tex2d_list) {
             CUfunction function;
             check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
 
@@ -297,11 +301,18 @@ namespace gpu {
                                            function), "cuFuncGetAttribute");
             unsigned int threads_per_group = value;
             unsigned int thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+
+            int min_grid;
+            check_error(cuOccupancyMaxPotentialBlockSize(&min_grid, &value, function, 0, 0, 0),
+                        "cuOccupancyMaxPotentialBlockSize");
+
             if (jit::verbose) {
                 std::cout << "  Kernel name              : " << kernel_name << std::endl;
-                std::cout << "    Threads per group  : " << threads_per_group << std::endl;
-                std::cout << "    Number of groups   : " << thread_groups << std::endl;
-                std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Threads per group    : " << threads_per_group << std::endl;
+                std::cout << "    Number of groups     : " << thread_groups << std::endl;
+                std::cout << "    Total problem size   : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Min grid size        : " << min_grid << std::endl;
+                std::cout << "    Suggested Block size : " << value << std::endl;
             }
 
             return [this, function, thread_groups, threads_per_group, buffers] () mutable {
@@ -334,8 +345,15 @@ namespace gpu {
             check_error(cuModuleGetFunction(&function, module, "max_reduction"),
                         "cuModuleGetFunction");
 
+            int value;
+            int min_grid;
+            check_error(cuOccupancyMaxPotentialBlockSize(&min_grid, &value, function, 0, 0, 0),
+                        "cuOccupancyMaxPotentialBlockSize");
+
             if (jit::verbose) {
                 std::cout << "  Kernel name              : max_reduction" << std::endl;
+                std::cout << "    Min grid size        : " << min_grid << std::endl;
+                std::cout << "    Suggested Block size : " << value << std::endl;
             }
 
             return [this, function, run, buffers] () mutable {
@@ -441,6 +459,8 @@ namespace gpu {
 ///  @params[in]     size          Size of the input buffer.
 ///  @params[in]     is_constant   Flags if the input is read only.
 ///  @params[in,out] registers     Map of used registers.
+///  @params[in]     textures1d    List of 1D kernel textures.
+///  @params[in]     textures2d    List of 2D kernel textures.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
@@ -448,7 +468,9 @@ namespace gpu {
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
                                   const size_t size, 
                                   const std::vector<bool> &is_constant,
-                                  jit::register_map &registers) {
+                                  jit::register_map &registers,
+                                  jit::texture1d_list &textures1d,
+                                  jit::texture2d_list &textures2d) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" __global__ __launch_bounds__(1024) void "
                           << name << "(" << std::endl;
