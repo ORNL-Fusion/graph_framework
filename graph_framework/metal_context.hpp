@@ -35,6 +35,8 @@ namespace gpu {
         id<MTLCommandBuffer> command_buffer;
 ///  Metal library.
         id<MTLLibrary> library;
+///  Buffer mutability discriptor.
+        std::map<std::string, std::vector<MTLMutability>> bufferMutability;
 
     public:
 //------------------------------------------------------------------------------
@@ -113,6 +115,9 @@ namespace gpu {
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
             compute.computeFunction = function;
             compute.maxTotalThreadsPerThreadgroup = 1024;
+            for (size_t i = 0, ie = bufferMutability[kernel_name].size(); i < ie; i++) {
+                compute.buffers[i].mutability = bufferMutability[kernel_name][i];
+            }
 
             id<MTLComputePipelineState> state = [device newComputePipelineStateWithDescriptor:compute
                                                                                       options:MTLPipelineOptionNone
@@ -144,19 +149,25 @@ namespace gpu {
             }
 
             std::vector<id<MTLTexture>> textures;
+            command_buffer = [queue commandBuffer];
+            id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
             for (auto &[data, size] : tex1d_list) {
                 if (!texture_arguments.contains(data)) {
                     MTLTextureDescriptor *discriptor = [MTLTextureDescriptor new];
                     discriptor.textureType = MTLTextureType1D;
                     discriptor.pixelFormat = MTLPixelFormatR32Float;
                     discriptor.width = size;
-                    discriptor.resourceOptions = MTLResourceCPUCacheModeWriteCombined | MTLResourceStorageModeManaged;
+                    discriptor.storageMode = MTLStorageModeManaged;
+                    discriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
+                    discriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
                     discriptor.usage = MTLTextureUsageShaderRead;
                     texture_arguments[data] = [device newTextureWithDescriptor:discriptor];
                     [texture_arguments[data] replaceRegion:MTLRegionMake1D(0, size)
                                                mipmapLevel:0
                                                  withBytes:reinterpret_cast<float *> (data)
                                                bytesPerRow:4*size];
+
+                    [encoder optimizeContentsForGPUAccess:texture_arguments[data]];
                 }
                 textures.push_back(texture_arguments[data]);
             }
@@ -167,16 +178,22 @@ namespace gpu {
                     discriptor.pixelFormat = MTLPixelFormatR32Float;
                     discriptor.width = size[0];
                     discriptor.height = size[1];
-                    discriptor.resourceOptions = MTLResourceCPUCacheModeWriteCombined | MTLResourceStorageModeManaged;
+                    discriptor.storageMode = MTLStorageModeManaged;
+                    discriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
+                    discriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
                     discriptor.usage = MTLTextureUsageShaderRead;
                     texture_arguments[data] = [device newTextureWithDescriptor:discriptor];
                     [texture_arguments[data] replaceRegion:MTLRegionMake2D(0, 0, size[0], size[1])
                                                mipmapLevel:0
                                                  withBytes:reinterpret_cast<float *> (data)
                                                bytesPerRow:4*size[0]];
+
+                    [encoder optimizeContentsForGPUAccess:texture_arguments[data]];
                 }
                 textures.push_back(texture_arguments[data]);
             }
+            [encoder endEncoding];
+            [command_buffer commit];
 
             std::vector<NSUInteger> offsets(buffers.size(), 0);
             NSRange range = NSMakeRange(0, buffers.size());
@@ -226,13 +243,13 @@ namespace gpu {
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
             compute.computeFunction = [library newFunctionWithName:@"max_reduction"];
             compute.maxTotalThreadsPerThreadgroup = 1024;
+            compute.buffers[0].mutability = MTLMutabilityImmutable;
 
             NSError *error;
             id<MTLComputePipelineState> max_state = [device newComputePipelineStateWithDescriptor:compute
                                                                                           options:MTLPipelineOptionNone
                                                                                        reflection:NULL
                                                                                             error:&error];
-
             if (error) {
                 NSLog(@"%@", error);
             }
@@ -399,13 +416,17 @@ namespace gpu {
             source_buffer << std::endl;
             source_buffer << "kernel void " << name << "(" << std::endl;
 
+            bufferMutability[name] = std::vector<MTLMutability> ();
+
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                bufferMutability[name].push_back(is_constant[i] ? MTLMutabilityMutable : MTLMutabilityImmutable);
                 source_buffer << "    " << (is_constant[i] ? "constant" : "device")
                               << " float *"
                               << jit::to_string('v', inputs[i].get())
                               << " [[buffer(" << i << ")]]," << std::endl;
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
+                bufferMutability[name].push_back(MTLMutabilityMutable);
                 source_buffer << "    device float *"
                               << jit::to_string('o', outputs[i].get())
                               << " [[buffer(" << i + inputs.size() << ")]],"
