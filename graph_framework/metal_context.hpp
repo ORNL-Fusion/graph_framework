@@ -27,8 +27,6 @@ namespace gpu {
         id<MTLCommandQueue> queue;
 ///  Argument map.
         std::map<graph::leaf_node<float, SAFE_MATH> *, id<MTLBuffer>> kernel_arguments;
-///  Textures.
-        std::map<void *, id<MTLTexture>> texture_arguments;
 ///  Max Buffer.
         id<MTLBuffer> result;
 ///  Metal command buffer.
@@ -96,16 +94,12 @@ namespace gpu {
 ///  @params[in] inputs      Input nodes of the kernel.
 ///  @params[in] outputs     Output nodes of the kernel.
 ///  @params[in] num_rays    Number of rays to trace.
-///  @params[in] tex1d_list  List of 1D textures.
-///  @params[in] tex2d_list  List of 1D textures.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<float, SAFE_MATH> inputs,
                                                      graph::output_nodes<float, SAFE_MATH> outputs,
-                                                     const size_t num_rays,
-                                                     const jit::texture1d_list &tex1d_list,
-                                                     const jit::texture2d_list &tex2d_list) {
+                                                     const size_t num_rays) {
             NSError *error;
 
             id<MTLFunction> function = [library newFunctionWithName:[NSString stringWithCString:kernel_name.c_str()
@@ -148,56 +142,8 @@ namespace gpu {
                 buffers.push_back(kernel_arguments[output.get()]);
             }
 
-            std::vector<id<MTLTexture>> textures;
-            command_buffer = [queue commandBuffer];
-            id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
-            for (auto &[data, size] : tex1d_list) {
-                if (!texture_arguments.contains(data)) {
-                    MTLTextureDescriptor *discriptor = [MTLTextureDescriptor new];
-                    discriptor.textureType = MTLTextureType1D;
-                    discriptor.pixelFormat = MTLPixelFormatR32Float;
-                    discriptor.width = size;
-                    discriptor.storageMode = MTLStorageModeManaged;
-                    discriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
-                    discriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
-                    discriptor.usage = MTLTextureUsageShaderRead;
-                    texture_arguments[data] = [device newTextureWithDescriptor:discriptor];
-                    [texture_arguments[data] replaceRegion:MTLRegionMake1D(0, size)
-                                               mipmapLevel:0
-                                                 withBytes:reinterpret_cast<float *> (data)
-                                               bytesPerRow:4*size];
-
-                    [encoder optimizeContentsForGPUAccess:texture_arguments[data]];
-                }
-                textures.push_back(texture_arguments[data]);
-            }
-            for (auto &[data, size] : tex2d_list) {
-                if (!texture_arguments.contains(data)) {
-                    MTLTextureDescriptor *discriptor = [MTLTextureDescriptor new];
-                    discriptor.textureType = MTLTextureType2D;
-                    discriptor.pixelFormat = MTLPixelFormatR32Float;
-                    discriptor.width = size[0];
-                    discriptor.height = size[1];
-                    discriptor.storageMode = MTLStorageModeManaged;
-                    discriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
-                    discriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
-                    discriptor.usage = MTLTextureUsageShaderRead;
-                    texture_arguments[data] = [device newTextureWithDescriptor:discriptor];
-                    [texture_arguments[data] replaceRegion:MTLRegionMake2D(0, 0, size[0], size[1])
-                                               mipmapLevel:0
-                                                 withBytes:reinterpret_cast<float *> (data)
-                                               bytesPerRow:4*size[0]];
-
-                    [encoder optimizeContentsForGPUAccess:texture_arguments[data]];
-                }
-                textures.push_back(texture_arguments[data]);
-            }
-            [encoder endEncoding];
-            [command_buffer commit];
-
             std::vector<NSUInteger> offsets(buffers.size(), 0);
             NSRange range = NSMakeRange(0, buffers.size());
-            NSRange tex_range = NSMakeRange(0, textures.size());
 
             NSUInteger threads_per_group = state.maxTotalThreadsPerThreadgroup;
             NSUInteger thread_width = state.threadExecutionWidth;
@@ -211,7 +157,7 @@ namespace gpu {
                 std::cout << "    Total problem size     : " << threads_per_group*thread_groups << std::endl;
             }
 
-            return [this, state, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
+            return [this, state, buffers, offsets, range, thread_groups, threads_per_group] () mutable {
                 command_buffer = [queue commandBuffer];
                 id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
@@ -219,8 +165,6 @@ namespace gpu {
                 [encoder setBuffers:buffers.data()
                             offsets:offsets.data()
                           withRange:range];
-                [encoder setTextures:textures.data()
-                           withRange:tex_range];
 
                 [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                         threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
@@ -401,8 +345,7 @@ namespace gpu {
 ///  @params[in]     size          Size of the input buffer.
 ///  @params[in]     is_constant   Flags if the input is read only.
 ///  @params[in,out] registers     Map of used registers.
-///  @params[in]     textures1d    List of 1D kernel textures.
-///  @params[in]     textures2d    List of 2D kernel textures.
+///  @params[in]     steps         Number of sub steps to run in a time step.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
@@ -411,8 +354,7 @@ namespace gpu {
                                   const size_t size, 
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
-                                  jit::texture1d_list &textures1d,
-                                  jit::texture2d_list &textures2d) {
+                                  const size_t steps=1) {
             source_buffer << std::endl;
             source_buffer << "kernel void " << name << "(" << std::endl;
 
@@ -432,22 +374,10 @@ namespace gpu {
                               << " [[buffer(" << i + inputs.size() << ")]],"
                               << std::endl;
             }
-            for (size_t i = 0, ie = textures1d.size(); i < ie; i++) {
-                source_buffer << "    const texture1d<float, access::read> "
-                              << jit::to_string('a', textures1d[i].first)
-                              << " [[texture(" << i << ")]],"
-                              << std::endl;
-            }
-            for (size_t i = 0, ie = textures2d.size(); i < ie; i++) {
-                source_buffer << "    const texture2d<float, access::read> "
-                              << jit::to_string('a', textures2d[i].first)
-                              << " [[texture(" << i + textures1d.size() << ")]],"
-                              << std::endl;
-            }
 
             source_buffer << "    uint index [[thread_position_in_grid]]) {" << std::endl;
             source_buffer << "    if (index < " << size << ") {" << std::endl;
-            
+            source_buffer << "        for (size_t i = 0; i < " << steps << "; i++) {";
             for (auto &input : inputs) {
                 registers[input.get()] = jit::to_string('r', input.get());
                 source_buffer << "        const ";
@@ -491,7 +421,7 @@ namespace gpu {
                 }
                 source_buffer << registers[a.get()] << ";" << std::endl;
             }
-    
+            source_buffer << "        }" << std::endl;
             source_buffer << "    }" << std::endl << "}" << std::endl;
         }
 

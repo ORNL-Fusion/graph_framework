@@ -191,16 +191,12 @@ namespace gpu {
 ///  @params[in] inputs      Input nodes of the kernel.
 ///  @params[in] outputs     Output nodes of the kernel.
 ///  @params[in] num_rays    Number of rays to trace.
-///  @params[in] tex1d_list  List of 1D textures.
-///  @params[in] tex2d_list  List of 1D textures.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
-                                                     const size_t num_rays,
-                                                     const jit::texture1d_list &tex1d_list,
-                                                     const jit::texture2d_list &tex2d_list) {
+                                                     const size_t num_rays) {
             auto entry = std::move(jit->lookup(kernel_name)).get();
             auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
 
@@ -359,8 +355,7 @@ namespace gpu {
 ///  @params[in]     size          Size of the input buffer.
 ///  @params[in]     is_constant   Flags if the input is read only.
 ///  @params[in,out] registers     Map of used registers.
-///  @params[in]     textures1d    List of 1D kernel textures.
-///  @params[in]     textures2d    List of 2D kernel textures.
+///  @params[in]     steps         Number of sub steps to run in a time step.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
@@ -369,8 +364,7 @@ namespace gpu {
                                   const size_t size, 
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
-                                  jit::texture1d_list &textures1d,
-                                  jit::texture2d_list &textures2d) {
+                                  const size_t steps=1) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
 
@@ -396,6 +390,7 @@ namespace gpu {
                               << "];" << std::endl;
             }
 
+            source_buffer << "    for (size_t j = 0; j < " << steps << "; j++) {";
             source_buffer << "    for (size_t i = 0; i < " << size << "; i++) {" << std::endl;
 
             for (auto &input : inputs) {
@@ -467,6 +462,7 @@ namespace gpu {
                 }
             }
 
+            source_buffer << "    }" << std::endl;
             source_buffer << "    }" << std::endl;
             source_buffer << "}" << std::endl;
         }

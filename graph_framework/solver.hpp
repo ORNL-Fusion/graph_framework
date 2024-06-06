@@ -178,8 +178,10 @@ namespace solver {
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the solver function.
+///
+///  @params[in] steps Number of sub steps to run in a time step.
 //------------------------------------------------------------------------------
-        virtual void compile() {
+        virtual void compile(const size_t steps=1) {
             graph::input_nodes<typename DISPERSION_FUNCTION::base,
                                DISPERSION_FUNCTION::safe_math> inputs = {
                 graph::variable_cast(this->t),
@@ -208,7 +210,7 @@ namespace solver {
                 {this->t_next,  graph::variable_cast(this->t)}
             };
 
-            work.add_item(inputs, outputs, setters, "solver_kernel");
+            work.add_item(inputs, outputs, setters, "solver_kernel", steps);
             work.compile();
 
             dataset.create_variable(file, "time",     this->t, work.get_context());

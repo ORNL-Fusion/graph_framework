@@ -80,13 +80,11 @@ void bench_runner() {
                                                           thread_number);
 
             solve.init(kx);
-            solve.compile();
+            solve.compile(SUB_STEPS);
 
             timing.start_time(thread_number);
             for (size_t j = 0; j < num_steps; j++) {
-                for (size_t k = 0; k < SUB_STEPS; k++) {
-                    solve.step();
-                }
+                solve.step();
             }
             solve.sync_host();
             timing.end_time(thread_number);
@@ -113,10 +111,10 @@ int main(int argc, const char * argv[]) {
     (void)argc;
     (void)argv;
 
-    bench_runner<float,                1000, 10, 100000> ();
-    bench_runner<double,               1000, 10, 100000> ();
-    bench_runner<std::complex<float>,  1000, 10, 100000> ();
-    bench_runner<std::complex<double>, 1000, 10, 100000> ();
+    bench_runner<float,                1000, 1000, 100000> ();
+//    bench_runner<double,               1000, 1000, 100000> ();
+//    bench_runner<std::complex<float>,  1000, 1000, 100000> ();
+//    bench_runner<std::complex<double>, 1000, 1000, 100000> ();
 
     END_GPU
 }

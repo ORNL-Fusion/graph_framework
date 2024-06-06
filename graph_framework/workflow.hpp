@@ -38,14 +38,16 @@ namespace workflow {
 ///  @params[in]     maps    Setter maps.
 ///  @params[in]     name    Name of the workitem.
 ///  @params[in,out] context Jit context.
+///  @params[in]     steps   Number of sub steps to run in a time step.
 //------------------------------------------------------------------------------
         work_item(graph::input_nodes<T, SAFE_MATH> in,
                   graph::output_nodes<T, SAFE_MATH> out,
                   graph::map_nodes<T, SAFE_MATH> maps,
                   const std::string name,
-                  jit::context<T, SAFE_MATH> &context) :
+                  jit::context<T, SAFE_MATH> &context,
+                  const size_t steps=1) :
         inputs(in), outputs(out), kernel_name(name) {
-            context.add_kernel(name, in, out, maps);
+            context.add_kernel(name, in, out, maps, steps);
         }
 
 //------------------------------------------------------------------------------
@@ -176,18 +178,21 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Add a workflow item.
 ///
-///  @params[in] in   Input variables.
-///  @params[in] out  Output nodes.
-///  @params[in] maps Setter maps.
-///  @params[in] name Name of the workitem.
+///  @params[in] in    Input variables.
+///  @params[in] out   Output nodes.
+///  @params[in] maps  Setter maps.
+///  @params[in] name  Name of the workitem.
+///  @params[in] steps Number of sub steps to run in a time step.
 //------------------------------------------------------------------------------
         void add_item(graph::input_nodes<T, SAFE_MATH> in,
                       graph::output_nodes<T, SAFE_MATH> out,
                       graph::map_nodes<T, SAFE_MATH> maps,
-                      const std::string name) {
+                      const std::string name,
+                      const size_t steps=1) {
             items.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
                                                                        maps, name,
-                                                                       context));
+                                                                       context,
+                                                                       steps));
         }
 
 //------------------------------------------------------------------------------

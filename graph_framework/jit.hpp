@@ -42,10 +42,6 @@ namespace jit {
         register_map registers;
 ///  Kernel names.
         std::vector<std::string> kernel_names;
-///  Kernel textures.
-        std::map<std::string, texture1d_list> kernel_1dtextures;
-///  Kernel textures.
-        std::map<std::string, texture2d_list> kernel_2dtextures;
 
 ///  Type for the GPU context.
         using gpu_context_type = typename std::conditional<use_gpu<T> (),
@@ -95,19 +91,19 @@ namespace jit {
 ///  @params[in] inputs  Input variables of the kernel.
 ///  @params[in] outputs Output nodes of the graph to compute.
 ///  @params[in] setters Map outputs back to input values.
+///  @params[in] steps   Number of sub steps to run in a time step.
 //------------------------------------------------------------------------------
         void add_kernel(const std::string name,
                         graph::input_nodes<T, SAFE_MATH> inputs,
                         graph::output_nodes<T, SAFE_MATH> outputs,
-                        graph::map_nodes<T, SAFE_MATH> setters) {
+                        graph::map_nodes<T, SAFE_MATH> setters,
+                        const size_t steps=1) {
             kernel_names.push_back(name);
             
             const size_t size = inputs[0]->size();
 
             std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;
-            kernel_1dtextures[name] = texture1d_list();
-            kernel_2dtextures[name] = texture2d_list();
             for (auto &[out, in] : setters) {
                 auto found = std::distance(inputs.begin(),
                                            std::find(inputs.begin(),
@@ -115,22 +111,16 @@ namespace jit {
                 if (found < is_constant.size()) {
                     is_constant[found] = false;
                 }
-                out->compile_preamble(source_buffer, registers, visited,
-                                      kernel_1dtextures[name],
-                                      kernel_2dtextures[name]);
+                out->compile_preamble(source_buffer, registers, visited);
             }
             for (auto &out : outputs) {
-                out->compile_preamble(source_buffer, registers, visited,
-                                      kernel_1dtextures[name],
-                                      kernel_2dtextures[name]);
+                out->compile_preamble(source_buffer, registers, visited);
             }
 
             gpu_context.create_kernel_prefix(source_buffer,
                                              name, inputs, outputs, 
                                              size, is_constant,
-                                             registers,
-                                             kernel_1dtextures[name],
-                                             kernel_2dtextures[name]);
+                                             registers, steps);
 
             for (auto &[out, in] : setters) {
                 out->compile(source_buffer, registers);
@@ -196,9 +186,8 @@ namespace jit {
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
                                                      const size_t num_rays) {
-            return gpu_context.create_kernel_call(kernel_name, inputs, outputs, num_rays,
-                                                  kernel_1dtextures[kernel_name],
-                                                  kernel_2dtextures[kernel_name]);
+            return gpu_context.create_kernel_call(kernel_name, inputs,
+                                                  outputs, num_rays);
         }
 
 //------------------------------------------------------------------------------
