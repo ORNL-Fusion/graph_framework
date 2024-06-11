@@ -234,6 +234,9 @@ add_dependencies (cuda-resource-headers pull_llvm)
 add_dependencies (scan-build-py pull_llvm)
 add_dependencies (x86-resource-headers pull_llvm)
 add_dependencies (obj.clangSupport pull_llvm)
+add_dependencies (arm-common-resource-headers pull_llvm)
+add_dependencies (arm-resource-headers pull_llvm)
+add_dependencies (aarch64-resource-headers pull_llvm)
 
 add_library (llvm_dep INTERFACE)
 target_include_directories (llvm_dep
