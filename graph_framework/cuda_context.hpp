@@ -120,6 +120,7 @@ namespace gpu {
             check_error(cuDeviceGet(&device, index), "cuDeviceGet");
             check_error(cuDevicePrimaryCtxRetain(&context, device), "cuDevicePrimaryCtxRetain");
             check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
+            check_error(cuCtxSetCacheConfig(CU_FUNC_CACHE_PREFER_L1), "cuCtxSetCacheConfig");
             check_error(cuStreamCreate(&stream, CU_STREAM_DEFAULT), "cuStreamCreate");
         }
 
@@ -203,13 +204,16 @@ namespace gpu {
             }
 
             const std::string temp = arch.str();
-            std::array<const char *, 6> options({
+            std::array<const char *, 9> options({
                 temp.c_str(),
                 "--std=c++17",
+                "--relocatable-device-code=false",
                 "--include-path=" CUDA_INCLUDE,
                 "--include-path=" HEADER_DIR,
                 "--extra-device-vectorization",
-		        "--device-as-default-execution-space"
+                "--device-as-default-execution-space",
+                "--ptxas-options",
+                "-dlcm=cg"
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
@@ -466,13 +470,13 @@ namespace gpu {
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
-                                  const size_t size, 
+                                  const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
                                   jit::texture1d_list &textures1d,
                                   jit::texture2d_list &textures2d) {
             source_buffer << std::endl;
-            source_buffer << "extern \"C\" __global__ __launch_bounds__(1024) void "
+            source_buffer << "extern \"C\" __global__ void "
                           << name << "(" << std::endl;
 
             source_buffer << "    ";
@@ -586,7 +590,7 @@ namespace gpu {
         void create_reduction(std::ostringstream &source_buffer,
                               const size_t size) {
             source_buffer << std::endl;
-            source_buffer << "extern \"C\" __global__ __launch_bounds__(1024) void max_reduction(" << std::endl;
+            source_buffer << "extern \"C\" __global__ void max_reduction(" << std::endl;
             source_buffer << "    const ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *input," << std::endl;
