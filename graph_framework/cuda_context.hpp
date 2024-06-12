@@ -366,31 +366,31 @@ namespace gpu {
                     view_desc.height = size[1];
                     const size_t total = size[0]*size[1];
                     if constexpr (jit::is_float<T> ()) {
-                        resource_desc.format = CU_AD_FORMAT_FLOAT;
+                        resource_desc.res.format = CU_AD_FORMAT_FLOAT;
                         if constexpr (jit::is_complex<T> ()) {
-                            resource_desc.numChannel = 2;
-                            resource_desc.sizeInBytes = 2*total*sizeof(float);
+                            resource_desc.res.numChannel = 2;
+                            resource_desc.res.sizeInBytes = 2*total*sizeof(float);
                         } else {
-                            resourec_desc.numChannel = 1;
-                            resource_desc.sizeInBytes = total*sizeof(float);
+                            resourec_desc.res.numChannel = 1;
+                            resource_desc.res.sizeInBytes = total*sizeof(float);
                         }
                     } else {
-                        resource_desc.format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        resource_desc.res.format = CU_AD_FORMAT_UNSIGNED_INT32;
                         if constexpr (jit::is_complex<T> ()) {
-                            resource_desc.numChannel = 4;
-                            resource_desc.sizeInBytes = 2*total*sizeof(double);
+                            resource_desc.res.numChannel = 4;
+                            resource_desc.res.sizeInBytes = 2*total*sizeof(double);
                         } else {
-                            resource_desc.numChannel = 2;
-                            resource_desc.sizeInBytes = total*sizeof(double);
+                            resource_desc.res.numChannel = 2;
+                            resource_desc.res.sizeInBytes = total*sizeof(double);
                         }
                     }
-                    check_error(cuMemAllocManaged(&resource_desc.devPtr,
-                                                  resource_desc.sizeInBytes,
+                    check_error(cuMemAllocManaged(&resource_desc.res.devPtr,
+                                                  resource_desc.res.sizeInBytes,
                                                   CU_MEM_ATTACH_GLOBAL),
                                 "cuMemAllocManaged");
-                    check_error(cuMemcpyHtoD(resource_desc.devPtr,
+                    check_error(cuMemcpyHtoD(resource_desc.res.devPtr,
                                              data,
-                                             resource_desc.sizeInBytes),
+                                             resource_desc.res.sizeInBytes),
                                 "cuMemcpyHtoD");
                     
                     check_error(cuTexObjectCreate(&texture_arguments[data],
