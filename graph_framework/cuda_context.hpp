@@ -623,15 +623,13 @@ namespace gpu {
             }
             for (size_t i = 0, ie = textures1d.size(); i < ie; i++) {
                 source_buffer << "," << std::endl;
-                source_buffer << "    ";
-                jit::add_type<T> (source_buffer);
-                source_buffer << " *" << jit::to_string('a', textures1d[i].first);
+                source_buffer << "    cudaTextureObject_t "
+                              << jit::to_string('a', textures1d[i].first);
             }
             for (size_t i = 0, ie = textures2d.size(); i < ie; i++) {
                 source_buffer << "," << std::endl;
-                source_buffer << "    ";
-                jit::add_type<T> (source_buffer);
-                source_buffer << " *" << jit::to_string('a', textures2d[i].first);
+                source_buffer << "    cudaTextureObject_t "
+                              << jit::to_string('a', textures2d[i].first);
             }
             source_buffer << ") {" << std::endl;
 
