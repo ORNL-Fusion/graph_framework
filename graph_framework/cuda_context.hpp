@@ -324,14 +324,19 @@ namespace gpu {
             for (auto &[data, size] : tex1d_list) {
                 if (!texture_arguments.contains(data)) {
                     CUDA_RESOURCE_DESC resource_desc;
+                    CUDA_TEXTURE_DESC texture_desc;
                     CUDA_ARRAY_DESCRIPTOR array_desc;
                     
                     array_desc.Width = size;
                     array_desc.Height = 1;
 
                     memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
+                    memset(&texture_desc, 0, sizeof(CUDA_TEXTURE_DESC));
 
                     resource_desc.resType = CU_RESOURCE_TYPE_ARRAY;
+                    texture_desc.addressMode[0] = CU_TR_ADDRESS_MODE_BORDER;
+                    texture_desc.addressMode[1] = CU_TR_ADDRESS_MODE_BORDER;
+                    texture_desc.addressMode[2] = CU_TR_ADDRESS_MODE_BORDER;
                     if constexpr (jit::is_float<T> ()) {
                         array_desc.Format = CU_AD_FORMAT_FLOAT;
                         if constexpr (jit::is_complex<T> ()) {
@@ -354,7 +359,8 @@ namespace gpu {
                                 "cuMemcpyHtoA");
 
                     check_error(cuTexObjectCreate(&texture_arguments[data],
-                                                  &resource_desc, NULL, NULL),
+                                                  &resource_desc, &texture_desc,
+                                                  NULL),
                                 "cuTexObjectCreate");
                 }
                 buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
@@ -362,14 +368,19 @@ namespace gpu {
             for (auto &[data, size] : tex2d_list) {
                 if (!texture_arguments.contains(data)) {
                     CUDA_RESOURCE_DESC resource_desc;
+                    CUDA_TEXTURE_DESC texture_desc;
                     CUDA_ARRAY_DESCRIPTOR array_desc;
 
                     array_desc.Width = size[0];
                     array_desc.Height = size[1];
 
                     memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
+                    memset(&texture_desc, 0, sizeof(CUDA_TEXTURE_DESC));
 
                     resource_desc.resType = CU_RESOURCE_TYPE_ARRAY;
+                    texture_desc.addressMode[0] = CU_TR_ADDRESS_MODE_BORDER;
+                    texture_desc.addressMode[1] = CU_TR_ADDRESS_MODE_BORDER;
+                    texture_desc.addressMode[2] = CU_TR_ADDRESS_MODE_BORDER;
                     const size_t total = size[0]*size[1];
                     if constexpr (jit::is_float<T> ()) {
                         array_desc.Format = CU_AD_FORMAT_FLOAT;
@@ -393,7 +404,8 @@ namespace gpu {
                                 "cuMemcpyHtoA");
 
                     check_error(cuTexObjectCreate(&texture_arguments[data],
-                                                  &resource_desc, NULL, NULL),
+                                                  &resource_desc, &texture_desc,
+                                                  NULL),
                                 "cuTexObjectCreate");
                 }
                 buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
