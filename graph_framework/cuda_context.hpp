@@ -347,7 +347,7 @@ namespace gpu {
                             array_desc.NumChannels = 2;
                         }
                     }
-                    check_error(cuArrayCreate(&resource_desc.res.array, &array_desc),
+                    check_error(cuArrayCreate(resource_desc.res.array, &array_desc),
                                 "cuArrayCreate");
                     check_error(cuMemcpyHtoA(resource_desc.res.array, 0, data,
                                              size*sizeof(float)*array_desc.NumChannels),
@@ -386,7 +386,7 @@ namespace gpu {
                             array_desc.NumChannels = 2;
                         }
                     }
-                    check_error(cuArrayCreate(&resource_desc.array, &array_desc),
+                    check_error(cuArrayCreate(resource_desc.res.array, &array_desc),
                                 "cuArrayCreate");
                     check_error(cuMemcpyHtoA(resource_desc.res.array, 0, data,
                                              size[0]*size[1]*sizeof(float)*array_desc.NumChannels),
