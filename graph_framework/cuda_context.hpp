@@ -246,7 +246,16 @@ namespace gpu {
             check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
                               "nvrtcDestroyProgram");
 
-            check_error(cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL), "cuModuleLoadDataEx");
+            std::array<CUjit_option, 1> module_options = {
+                CU_JIT_MAX_REGISTERS
+            };
+            std::array<void *, 1> module_values = {
+                reinterpret_cast<void *> (168)
+            };
+
+            check_error(cuModuleLoadDataEx(&module, ptx, 1,
+                                           module_options.data(),
+                                           module_values.data()), "cuModuleLoadDataEx");
 
             free(ptx);
         }
