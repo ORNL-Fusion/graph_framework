@@ -331,7 +331,46 @@ namespace gpu {
 
                     memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
 
-                    array_desc.resType = CU_RESOURCE_TYPE_ARRAY;
+                    resource_desc.resType = CU_RESOURCE_TYPE_ARRAY;
+                    if constexpr (jit::is_float<T> ()) {
+                        array_desc.Format = CU_AD_FORMAT_FLOAT;
+                        if constexpr (jit::is_complex<T> ()) {
+                            array_desc.NumChannels = 2;
+                        } else {
+                            array_desc.NumChannels = 1;
+                        }
+                    } else {
+                        array_desc.Format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        if constexpr (jit::is_complex<T> ()) {
+                            array_desc.NumChannels = 4;
+                        } else {
+                            array_desc.NumChannels = 2;
+                        }
+                    }
+                    check_error(cuArrayCreate(&resource_desc.res.array, &array_desc),
+                                "cuArrayCreate");
+                    check_error(cuMemcpyHtoA(resource_desc.res.array, 0, data,
+                                             size*sizeof(float)*array_desc.NumChannels),
+                                "cuMemcpyHtoA");
+
+                    check_error(cuTexObjectCreate(&texture_arguments[data],
+                                                  &resource_desc, NULL, NULL),
+                                "cuTexObjectCreate");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
+            }
+            for (auto &[data, size] : tex2d_list) {
+                if (!texture_arguments.contains(data)) {
+                    CUDA_RESOURCE_DESC resource_desc;
+                    CUDA_ARRAY_DESCRIPTOR array_desc;
+
+                    array_desc.Width = size;
+                    array_desc.Height = 1;
+
+                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
+
+                    resource_desc.resType = CU_RESOURCE_TYPE_ARRAY;
+                    const size_t total = size[0]*size[1];
                     if constexpr (jit::is_float<T> ()) {
                         array_desc.Format = CU_AD_FORMAT_FLOAT;
                         if constexpr (jit::is_complex<T> ()) {
@@ -349,47 +388,8 @@ namespace gpu {
                     }
                     check_error(cuArrayCreate(&resource_desc.array, &array_desc),
                                 "cuArrayCreate");
-                    check_error(cuMemcpyHtoA(resource_desc.array, 0, data,
-                                             size*sizeof(float)*array_desc.numChannels),
-                                "cuMemcpyHtoA");
-
-                    check_error(cuTexObjectCreate(&texture_arguments[data],
-                                                  &resource_desc, NULL, NULL),
-                                "cuTexObjectCreate");
-                }
-                buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
-            }
-            for (auto &[data, size] : tex2d_list) {
-                if (!texture_arguments.contains(data)) {
-                    CUDA_RESOURCE_DESC resource_desc;
-                    CUDA_ARRAY_DESCRIPTOR array_desc;
-
-                    array_desc.width = size;
-                    array_desc.height = 1;
-
-                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
-
-                    resource_desc.resType = CU_RESOURCE_TYPE_ARRAY;
-                    const size_t total = size[0]*size[1];
-                    if constexpr (jit::is_float<T> ()) {
-                        array_desc.format = CU_AD_FORMAT_FLOAT;
-                        if constexpr (jit::is_complex<T> ()) {
-                            array_desc.numChannels = 2;
-                        } else {
-                            array_desc.numChannels = 1;
-                        }
-                    } else {
-                        array_desc.format = CU_AD_FORMAT_UNSIGNED_INT32;
-                        if constexpr (jit::is_complex<T> ()) {
-                            array_desc.numChannels = 4;
-                        } else {
-                            array_desc.numChannels = 2;
-                        }
-                    }
-                    check_error(cuArrayCreate(&resource_desc.array, &array_desc),
-                                "cuArrayCreate");
-                    check_error(cuMemcpyHtoA(resource_desc.array, 0, data,
-                                             size[0]*size[1]*sizeof(float)*array_desc.numChannels),
+                    check_error(cuMemcpyHtoA(resource_desc.res.array, 0, data,
+                                             size[0]*size[1]*sizeof(float)*array_desc.NumChannels),
                                 "cuMemcpyHtoA");
 
                     check_error(cuTexObjectCreate(&texture_arguments[data],
