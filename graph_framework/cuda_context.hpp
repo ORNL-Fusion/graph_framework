@@ -72,6 +72,8 @@ namespace gpu {
         CUmodule module;
 ///  Argument map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, CUdeviceptr> kernel_arguments;
+///  Textures.
+        std::map<void *, CUtexObject> texture_arguments;
 ///  Result buffer.
         CUdeviceptr result_buffer;
 ///  Cuda stream.
@@ -309,6 +311,95 @@ namespace gpu {
                 buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
             }
 
+            for (auto &[data, size] : tex1d_list) {
+                if (!texture_arguments.contains(data)) {
+                    struct CUDA_RESOURCE_DESC resource_desc;
+                    struct CUDA_TEXTURE_DESC texture_desc;
+                    struct CUDA_RESOURCE_VIEW_DESC view_desc;
+                    resource_desc.resType = CU_RESOURCE_TYPE_LINEAR;
+                    texture_desc.flags = CU_TRSF_READ_AS_INTEGER;
+                    view_desc.format = CU_RES_VIEW_FORMAT_NONE;
+                    view_desc.width = size;
+                    if constexpr (jit::is_float<T> ()) {
+                        resource_desc.format = CU_AD_FORMAT_FLOAT;
+                        if constexpr (jit::is_complex<T> ()) {
+                            resource_desc.numChannel = 2;
+                            resource_desc.sizeInBytes = 2*size*sizeof(float);
+                        } else {
+                            resourec_desc.numChannel = 1;
+                            resource_desc.sizeInBytes = size*sizeof(float);
+                        }
+                    } else {
+                        resource_desc.format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        if constexpr (jit::is_complex<T> ()) {
+                            resource_desc.numChannel = 4;
+                            resource_desc.sizeInBytes = 2*size*sizeof(double);
+                        } else {
+                            resource_desc.numChannel = 2;
+                            resource_desc.sizeInBytes = size*sizeof(double);
+                        }
+                    }
+                    check_error(cuMemAllocManaged(&resource_desc.devPtr,
+                                                  resource_desc.sizeInBytes,
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(resource_desc.devPtr,
+                                             data,
+                                             resource_desc.sizeInBytes),
+                                "cuMemcpyHtoD");
+                    
+                    check_error(cuTexObjectCreate(&texture_arguments[data],
+                                                  resource_desc,),
+                                "cuTexObjectCreate");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
+            }
+            for (auto &[data, size] : tex2d_list) {
+                if (!texture_arguments.contains(data)) {
+                    struct CUDA_RESOURCE_DESC resource_desc;
+                    struct CUDA_TEXTURE_DESC texture_desc;
+                    struct CUDA_RESOURCE_VIEW_DESC view_desc;
+                    resource_desc.resType = CU_RESOURCE_TYPE_LINEAR;
+                    texture_desc.flags = CU_TRSF_READ_AS_INTEGER;
+                    view_desc.format = CU_RES_VIEW_FORMAT_NONE;
+                    view_desc.width = size[0];
+                    view_desc.height = size[1];
+                    const size_t total = size[0]*size[1];
+                    if constexpr (jit::is_float<T> ()) {
+                        resource_desc.format = CU_AD_FORMAT_FLOAT;
+                        if constexpr (jit::is_complex<T> ()) {
+                            resource_desc.numChannel = 2;
+                            resource_desc.sizeInBytes = 2*total*sizeof(float);
+                        } else {
+                            resourec_desc.numChannel = 1;
+                            resource_desc.sizeInBytes = total*sizeof(float);
+                        }
+                    } else {
+                        resource_desc.format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        if constexpr (jit::is_complex<T> ()) {
+                            resource_desc.numChannel = 4;
+                            resource_desc.sizeInBytes = 2*total*sizeof(double);
+                        } else {
+                            resource_desc.numChannel = 2;
+                            resource_desc.sizeInBytes = total*sizeof(double);
+                        }
+                    }
+                    check_error(cuMemAllocManaged(&resource_desc.devPtr,
+                                                  resource_desc.sizeInBytes,
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(resource_desc.devPtr,
+                                             data,
+                                             resource_desc.sizeInBytes),
+                                "cuMemcpyHtoD");
+                    
+                    check_error(cuTexObjectCreate(&texture_arguments[data],
+                                                  resource_desc,),
+                                "cuTexObjectCreate");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
+            }
+
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
@@ -328,7 +419,7 @@ namespace gpu {
                 std::cout << "    Suggested Block size : " << value << std::endl;
             }
 
-            return [this, function, thread_groups, threads_per_group, buffers] () mutable {
+            return [this, function, thread_groups, threads_per_group, buffers, textures] () mutable {
                 check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
                                                  threads_per_group, 1, 1, 0, stream,
                                                  buffers.data(), NULL),
@@ -459,6 +550,23 @@ namespace gpu {
                 source_buffer << "#define M_PI " << M_PI << std::endl;
                 source_buffer << "#include <cuda/std/complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
+                if constexpr (jit::is_float<T> ()) {
+                    source_buffer << "static __inline__ __device__ complex<float> to_cmp_float(float2 p) {"
+                                  << "    return ";
+                    jit::add_type<T> (stream);
+                    source_buffer << " (p.x, p.y);"
+                                  << "}";
+                } else {
+                    source_buffer << "static __inline__ __device__ complex<double> to_cmp_double(uint4 p) {"
+                                  << "    return ";
+                    jit::add_type<T> (stream);
+                    source_buffer << " (__hiloint2double(p.y, p.x), __hiloint2double(p.w, p.z));"
+                                  << "}";
+                }
+            } else if constexpr (jit::is_double<T> ()) {
+                source_buffer << "static __inline__ __device__ double to_double(uint2 p) {"
+                              << "    return __hiloint2double(p.y, p.x);"
+                              << "}";
             }
         }
 
@@ -503,12 +611,23 @@ namespace gpu {
                 jit::add_type<T> (source_buffer);
                 source_buffer << " *" << jit::to_string('v', inputs[i].get());
             }
-
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
                 source_buffer << "," << std::endl;
                 source_buffer << "    ";
                 jit::add_type<T> (source_buffer);
                 source_buffer << " *" << jit::to_string('o', outputs[i].get());
+            }
+            for (size_t i = 0, ie = textures1d.size(); i < ie; i++) {
+                source_buffer << "," << std::endl;
+                source_buffer << "    ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " *" << jit::to_string('a', textures1d[i].get());
+            }
+            for (size_t i = 0, ie = textures2d.size(); i < ie; i++) {
+                source_buffer << "," << std::endl;
+                source_buffer << "    ";
+                jit::add_type<T> (source_buffer);
+                source_buffer << " *" << jit::to_string('a', textures2d[i].get());
             }
             source_buffer << ") {" << std::endl;
 

@@ -11,6 +11,30 @@
 #include "node.hpp"
 
 namespace graph {
+//------------------------------------------------------------------------------
+///  @brief Compile an index.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @params[in,out] stream        String buffer stream.
+///  @params[in]     register_name Reister for the argument.
+///  @params[in]     length        Dimension length of argument.
+//------------------------------------------------------------------------------
+template<jit::float_scalar T>
+void compile_index(std::ostringstream &stream,
+                   const std::string &register_name,
+                   const size_t length) {
+    stream << "min(max((uint)";
+    if constexpr (jit::is_complex<T> ()) {
+        stream << "real(";
+    }
+    stream << register_name;
+    if constexpr (jit::is_complex<T> ()) {
+        stream << ")";
+    }
+    stream << ",0u)," << length - 1 << "u)";
+}
+
 //******************************************************************************
 //  1D Piecewise node.
 //******************************************************************************
@@ -171,7 +195,7 @@ namespace graph {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
                     const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
-                    if constexpr (jit::use_metal<T> ()) {
+                    if constexpr (jit::use_metal<T> () || jit::use_cuda()) {
                         textures1d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
                                                 length);
                     } else {
@@ -223,22 +247,32 @@ namespace graph {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = "
-                       << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
+                stream << " " << registers[this] << " = ";
+                if constexpr (jit::use_cuda()) {
+                    if constexpr (jit::is_float<T> ()) {
+                        stream << "tex1D<float> (";
+                    } else if constexpr (jit::is_double<T> ()) {
+                        stream << "to_double(tex1D<uint2> (";
+                    } else if constexpr (jit::is_complex<T> () && jit::is_float<T> ()) {
+                        stream << "to_cmp_float(tex1D<float2> (";
+                    } else {
+                        stream << "to_cmp_double(tex1D<uint4> (";
+                    }
+                }
+                stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
                 const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                 if constexpr (jit::use_metal<T> ()) {
-                    stream << ".read(min(max((uint)" << registers[a.get()]
-                           << ",0u)," << length - 1 << "u)).r;";
+                    stream << ".read(";
+                    compile_index<T> (stream, registers[a.get()], length);
+                    stream << ").r;";
+                } else if constexpr (jit::use_cuda()) {
+                    stream << ", ";
+                    compile_index<T> (stream, registers[a.get()], length);
+                    stream << ");";
                 } else {
-                    stream << "[min(max((int)";
-                    if constexpr (jit::is_complex<T> ()) {
-                        stream << "real(";
-                    }
-                    stream << registers[a.get()];
-                    if constexpr (jit::is_complex<T> ()) {
-                        stream << ")";
-                    }
-                    stream << ",0)," << length - 1 << ")];";
+                    stream << "[";
+                    compile_index<T> (stream, registers[a.get()], length);
+                    stream << "];";
                 }
                 stream << std::endl;
             }
@@ -588,7 +622,7 @@ namespace graph {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
                     const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
-                    if constexpr (jit::use_metal<T> ()) {
+                    if constexpr (jit::use_metal<T> () || jit::use_cuda()) {
                         textures2d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
                                                 std::array<size_t, 2> ({length/num_columns, num_columns}));
                     } else {
@@ -654,15 +688,33 @@ namespace graph {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = "
-                       << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
+                stream << " " << registers[this] << " = ";
+                if constexpr (jit::use_cuda()) {
+                    if constexpr (jit::is_float<T> ()) {
+                        stream << "tex1D<float> (";
+                    } else if constexpr (jit::is_double<T> ()) {
+                        stream << "to_double(tex1D<uint2> (";
+                    } else if constexpr (jit::is_complex<T> () && jit::is_float<T> ()) {
+                        stream << "to_cmp_float(tex1D<float2> (";
+                    } else {
+                        stream << "to_cmp_double(tex1D<uint4> (";
+                    }
+                }
+                stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
                 const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                const size_t num_rows = length/num_columns;
                 if constexpr (jit::use_metal<T> ()) {
-                    const size_t num_rows = length/num_columns;
-                    stream << ".read(uint2(min(max((uint)"
-                           << registers[x.get()] << ", 0u)," << num_rows
-                           << "u),min(max((uint)" << registers[y.get()]
-                           << ",0u)," << num_columns << "u)).yx).r;";
+                    stream << ".read(uint2(";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    stream << ",";
+                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << ").yx).r;";
+                } else if constexpr (jit::use_cuda()) {
+                    stream << ", ";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    stream << ", ";
+                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << ");";
                 }  else {
                     stream << "[min(max((int)";
                     if constexpr (jit::is_complex<T> ()) {
