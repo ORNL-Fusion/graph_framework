@@ -145,7 +145,7 @@ namespace gpu {
                 check_error(cuTexObjectGetResourceDesc(&resource, value),
                             "cuTexObjectGetResourceDesc");
 
-                check_error(cuMemFree(resource.res.linear.devPtr), "cuMemFree");
+                check_error(cuArrayDestroy(resource.res.array.harray), "cuArrayDestroy");
                 check_error(cuTexObjectDestroy(value), "cuTexObjectDestroy");
             }
 
@@ -364,8 +364,8 @@ namespace gpu {
                     CUDA_RESOURCE_DESC resource_desc;
                     CUDA_ARRAY_DESCRIPTOR array_desc;
 
-                    array_desc.Width = size;
-                    array_desc.Height = 1;
+                    array_desc.Width = size[0];
+                    array_desc.Height = size[1];
 
                     memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
 
