@@ -145,7 +145,7 @@ namespace gpu {
                 check_error(cuTexObjectGetResourceDesc(&resource, value),
                             "cuTexObjectGetResourceDesc");
 
-                check_error(cuArrayDestroy(resource.res.array.harray), "cuArrayDestroy");
+                check_error(cuArrayDestroy(resource.res.array.hArray), "cuArrayDestroy");
                 check_error(cuTexObjectDestroy(value), "cuTexObjectDestroy");
             }
 
