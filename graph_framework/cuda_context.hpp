@@ -9,6 +9,7 @@
 #define cuda_context_h
 
 #include <array>
+#include <cstring>
 
 #include <cuda.h>
 #include <nvrtc.h>
@@ -316,6 +317,11 @@ namespace gpu {
                     CUDA_RESOURCE_DESC resource_desc;
                     CUDA_TEXTURE_DESC texture_desc;
                     CUDA_RESOURCE_VIEW_DESC view_desc;
+
+                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
+                    memset(&resource_desc, 0, sizeof(CUDA_TEXTURE_DESC));
+                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_VIEW_DESC));
+
                     resource_desc.resType = CU_RESOURCE_TYPE_LINEAR;
                     texture_desc.flags = CU_TRSF_READ_AS_INTEGER;
                     view_desc.format = CU_RES_VIEW_FORMAT_NONE;
@@ -361,6 +367,11 @@ namespace gpu {
                     CUDA_RESOURCE_DESC resource_desc;
                     CUDA_TEXTURE_DESC texture_desc;
                     CUDA_RESOURCE_VIEW_DESC view_desc;
+
+                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
+                    memset(&resource_desc, 0, sizeof(CUDA_TEXTURE_DESC));
+                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_VIEW_DESC));
+
                     resource_desc.resType = CU_RESOURCE_TYPE_LINEAR;
                     texture_desc.flags = CU_TRSF_READ_AS_INTEGER;
                     view_desc.format = CU_RES_VIEW_FORMAT_NONE;
