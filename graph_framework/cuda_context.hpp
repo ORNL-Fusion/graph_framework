@@ -140,6 +140,15 @@ namespace gpu {
                 check_error(cuMemFree(value), "cuMemFree");
             }
 
+            for (auto &[key, value] : texture_arguments) {
+                CUDA_RESOURCE_DESC resource;
+                check_error(cuTexObjectGetResourceDesc(&resource, value),
+                            "cuTexObjectGetResourceDesc");
+
+                check_error(cuMemFree(resource.res.linear.devPtr), "cuMemFree");
+                check_error(cuTexObjectDestroy(value), "cuTexObjectDestroy");
+            }
+
             if (result_buffer) {
                 check_error(cuMemFree(result_buffer), "cuMemFree");
                 result_buffer = 0;
@@ -315,101 +324,76 @@ namespace gpu {
             for (auto &[data, size] : tex1d_list) {
                 if (!texture_arguments.contains(data)) {
                     CUDA_RESOURCE_DESC resource_desc;
-                    CUDA_TEXTURE_DESC texture_desc;
-                    CUDA_RESOURCE_VIEW_DESC view_desc;
+                    CUDA_ARRAY_DESCRIPTOR array_desc;
+                    
+                    array_desc.width = size;
+                    array_desc.height = 1;
 
                     memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
-                    memset(&resource_desc, 0, sizeof(CUDA_TEXTURE_DESC));
-                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_VIEW_DESC));
 
-                    resource_desc.resType = CU_RESOURCE_TYPE_LINEAR;
-                    texture_desc.flags = CU_TRSF_READ_AS_INTEGER;
-                    view_desc.format = CU_RES_VIEW_FORMAT_NONE;
-                    view_desc.width = size;
+                    array_desc.resType = CU_RESOURCE_TYPE_ARRAY;
                     if constexpr (jit::is_float<T> ()) {
-                        resource_desc.res.linear.format = CU_AD_FORMAT_FLOAT;
+                        array_desc.format = CU_AD_FORMAT_FLOAT;
                         if constexpr (jit::is_complex<T> ()) {
-                            resource_desc.res.linear.numChannels = 2;
-                            resource_desc.res.linear.sizeInBytes = 2*size*sizeof(float);
+                            array_desc.numChannels = 2;
                         } else {
-                            resource_desc.res.linear.numChannels = 1;
-                            resource_desc.res.linear.sizeInBytes = size*sizeof(float);
+                            array_desc.numChannels = 1;
                         }
                     } else {
-                        resource_desc.res.linear.format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        array_desc.format = CU_AD_FORMAT_UNSIGNED_INT32;
                         if constexpr (jit::is_complex<T> ()) {
-                            resource_desc.res.linear.numChannels = 4;
-                            resource_desc.res.linear.sizeInBytes = 2*size*sizeof(double);
+                            array_desc.numChannels = 4;
                         } else {
-                            resource_desc.res.linear.numChannels = 2;
-                            resource_desc.res.linear.sizeInBytes = size*sizeof(double);
+                            array_desc.numChannels = 2;
                         }
                     }
-                    check_error(cuMemAllocManaged(&resource_desc.res.linear.devPtr,
-                                                  resource_desc.res.linear.sizeInBytes,
-                                                  CU_MEM_ATTACH_GLOBAL),
-                                "cuMemAllocManaged");
-                    check_error(cuMemcpyHtoD(resource_desc.res.linear.devPtr,
-                                             data,
-                                             resource_desc.res.linear.sizeInBytes),
-                                "cuMemcpyHtoD");
+                    check_error(cuArrayCreate(&resource_desc.array, &array_desc),
+                                "cuArrayCreate");
+                    check_error(cuMemcpyHtoA(resource_desc.array, 0, data,
+                                             size*sizeof(float)*array_desc.numChannels),
+                                "cuMemcpyHtoA");
 
                     check_error(cuTexObjectCreate(&texture_arguments[data],
-                                                  &resource_desc,
-                                                  &texture_desc,
-                                                  &view_desc),
+                                                  &resource_desc, NULL, NULL),
                                 "cuTexObjectCreate");
                 }
                 buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
             }
             for (auto &[data, size] : tex2d_list) {
                 if (!texture_arguments.contains(data)) {
-                    CUDA_RESOURCE_DESC resource_desc;
-                    CUDA_TEXTURE_DESC texture_desc;
-                    CUDA_RESOURCE_VIEW_DESC view_desc;
+                    CUDA_RESOURCE_DESC *resource_desc;
+                    CUDA_ARRAY_DESCRIPTOR array_desc;
+
+                    array_desc.width = size;
+                    array_desc.height = 1;
 
                     memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
-                    memset(&resource_desc, 0, sizeof(CUDA_TEXTURE_DESC));
-                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_VIEW_DESC));
 
-                    resource_desc.resType = CU_RESOURCE_TYPE_LINEAR;
-                    texture_desc.flags = CU_TRSF_READ_AS_INTEGER;
-                    view_desc.format = CU_RES_VIEW_FORMAT_NONE;
-                    view_desc.width = size[0];
-                    view_desc.height = size[1];
+                    resource_desc.resType = CU_RESOURCE_TYPE_ARRAY;
                     const size_t total = size[0]*size[1];
                     if constexpr (jit::is_float<T> ()) {
-                        resource_desc.res.linear.format = CU_AD_FORMAT_FLOAT;
+                        array_desc.format = CU_AD_FORMAT_FLOAT;
                         if constexpr (jit::is_complex<T> ()) {
-                            resource_desc.res.linear.numChannels = 2;
-                            resource_desc.res.linear.sizeInBytes = 2*total*sizeof(float);
+                            array_desc.numChannels = 2;
                         } else {
-                            resource_desc.res.linear.numChannels = 1;
-                            resource_desc.res.linear.sizeInBytes = total*sizeof(float);
+                            array_desc.numChannels = 1;
                         }
                     } else {
-                        resource_desc.res.linear.format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        array_desc.format = CU_AD_FORMAT_UNSIGNED_INT32;
                         if constexpr (jit::is_complex<T> ()) {
-                            resource_desc.res.linear.numChannels = 4;
-                            resource_desc.res.linear.sizeInBytes = 2*total*sizeof(double);
+                            array_desc.numChannels = 4;
                         } else {
-                            resource_desc.res.linear.numChannels = 2;
-                            resource_desc.res.linear.sizeInBytes = total*sizeof(double);
+                            array_desc.numChannels = 2;
                         }
                     }
-                    check_error(cuMemAllocManaged(&resource_desc.res.linear.devPtr,
-                                                  resource_desc.res.linear.sizeInBytes,
-                                                  CU_MEM_ATTACH_GLOBAL),
-                                "cuMemAllocManaged");
-                    check_error(cuMemcpyHtoD(resource_desc.res.linear.devPtr,
-                                             data,
-                                             resource_desc.res.linear.sizeInBytes),
-                                "cuMemcpyHtoD");
+                    check_error(cuArrayCreate(&resource_desc.array, &array_desc),
+                                "cuArrayCreate");
+                    check_error(cuMemcpyHtoA(resource_desc.array, 0, data,
+                                             size[0]*size[1]*sizeof(float)*array_desc.numChannels),
+                                "cuMemcpyHtoA");
 
                     check_error(cuTexObjectCreate(&texture_arguments[data],
-                                                  &resource_desc,
-                                                  &texture_desc,
-                                                  &view_desc),
+                                                  &resource_desc, NULL, NULL),
                                 "cuTexObjectCreate");
                 }
                 buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
