@@ -326,25 +326,25 @@ namespace gpu {
                     CUDA_RESOURCE_DESC resource_desc;
                     CUDA_ARRAY_DESCRIPTOR array_desc;
                     
-                    array_desc.width = size;
-                    array_desc.height = 1;
+                    array_desc.Width = size;
+                    array_desc.Height = 1;
 
                     memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
 
                     array_desc.resType = CU_RESOURCE_TYPE_ARRAY;
                     if constexpr (jit::is_float<T> ()) {
-                        array_desc.format = CU_AD_FORMAT_FLOAT;
+                        array_desc.Format = CU_AD_FORMAT_FLOAT;
                         if constexpr (jit::is_complex<T> ()) {
-                            array_desc.numChannels = 2;
+                            array_desc.NumChannels = 2;
                         } else {
-                            array_desc.numChannels = 1;
+                            array_desc.NumChannels = 1;
                         }
                     } else {
-                        array_desc.format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        array_desc.Format = CU_AD_FORMAT_UNSIGNED_INT32;
                         if constexpr (jit::is_complex<T> ()) {
-                            array_desc.numChannels = 4;
+                            array_desc.NumChannels = 4;
                         } else {
-                            array_desc.numChannels = 2;
+                            array_desc.NumChannels = 2;
                         }
                     }
                     check_error(cuArrayCreate(&resource_desc.array, &array_desc),
@@ -361,7 +361,7 @@ namespace gpu {
             }
             for (auto &[data, size] : tex2d_list) {
                 if (!texture_arguments.contains(data)) {
-                    CUDA_RESOURCE_DESC *resource_desc;
+                    CUDA_RESOURCE_DESC resource_desc;
                     CUDA_ARRAY_DESCRIPTOR array_desc;
 
                     array_desc.width = size;
