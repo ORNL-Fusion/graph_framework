@@ -313,9 +313,9 @@ namespace gpu {
 
             for (auto &[data, size] : tex1d_list) {
                 if (!texture_arguments.contains(data)) {
-                    struct CUDA_RESOURCE_DESC resource_desc;
-                    struct CUDA_TEXTURE_DESC texture_desc;
-                    struct CUDA_RESOURCE_VIEW_DESC view_desc;
+                    CUDA_RESOURCE_DESC resource_desc;
+                    CUDA_TEXTURE_DESC texture_desc;
+                    CUDA_RESOURCE_VIEW_DESC view_desc;
                     resource_desc.resType = CU_RESOURCE_TYPE_LINEAR;
                     texture_desc.flags = CU_TRSF_READ_AS_INTEGER;
                     view_desc.format = CU_RES_VIEW_FORMAT_NONE;
@@ -356,9 +356,9 @@ namespace gpu {
             }
             for (auto &[data, size] : tex2d_list) {
                 if (!texture_arguments.contains(data)) {
-                    struct CUDA_RESOURCE_DESC resource_desc;
-                    struct CUDA_TEXTURE_DESC texture_desc;
-                    struct CUDA_RESOURCE_VIEW_DESC view_desc;
+                    CUDA_RESOURCE_DESC resource_desc;
+                    CUDA_TEXTURE_DESC texture_desc;
+                    CUDA_RESOURCE_VIEW_DESC view_desc;
                     resource_desc.resType = CU_RESOURCE_TYPE_LINEAR;
                     texture_desc.flags = CU_TRSF_READ_AS_INTEGER;
                     view_desc.format = CU_RES_VIEW_FORMAT_NONE;
