@@ -24,7 +24,7 @@ template<jit::float_scalar T>
 void compile_index(std::ostringstream &stream,
                    const std::string &register_name,
                    const size_t length) {
-    stream << "min(max((uint)";
+    stream << "min(max((unsigned int)";
     if constexpr (jit::is_complex<T> ()) {
         stream << "real(";
     }
