@@ -268,6 +268,9 @@ void compile_index(std::ostringstream &stream,
                 } else if constexpr (jit::use_cuda()) {
                     stream << ", ";
                     compile_index<T> (stream, registers[a.get()], length);
+                    if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
+                        stream << ")";
+                    }
                     stream << ");";
                 } else {
                     stream << "[";
