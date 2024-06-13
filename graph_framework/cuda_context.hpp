@@ -591,12 +591,14 @@ namespace gpu {
                                   << "    return ";
                     jit::add_type<T> (source_buffer);
                     source_buffer << " (__hiloint2double(p.y, p.x), __hiloint2double(p.w, p.z));"
+                                  << std::endl
                                   << "}" << std::endl;
                 }
             } else if constexpr (jit::is_double<T> ()) {
                 source_buffer << "static __inline__ __device__ double to_double(uint2 p) {" 
                               << std::endl
                               << "    return __hiloint2double(p.y, p.x);"
+                              << std::endl;
                               << "}" << std::endl;
             }
         }
