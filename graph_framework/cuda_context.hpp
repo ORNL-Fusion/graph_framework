@@ -404,9 +404,19 @@ namespace gpu {
                     }
                     check_error(cuArrayCreate(&resource_desc.res.array.hArray, &array_desc),
                                 "cuArrayCreate");
-                    check_error(cuMemcpyHtoA(resource_desc.res.array.hArray, 0, data,
-                                             size[0]*size[1]*sizeof(float)*array_desc.NumChannels),
-                                "cuMemcpyHtoA");
+                    
+                    CUDA_MEMCPY2D copy_desc;
+                    copy_desc.srcPitch = size[0]*sizeof(float)*array_desc.NumChannels
+                    copy_desc.srcMemoryType = CU_MEMORYTYPE_HOST;
+                    copy_desc.srcHost = data;
+
+                    copy_desc.dstMemoryType = CU_MEMORYTYPE_HOST;
+                    copy_desc.dstArray = resource_desc.res.array.hArray;
+
+                    copy_desc.WidthInBytes = copyParam.srcPitch;
+                    copy_desc.Height = size[0]
+
+                    check_error(cuMemcpy2D(&copy_desc), "cuMemcpy2D");
 
                     check_error(cuTexObjectCreate(&texture_arguments[data],
                                                   &resource_desc, &texture_desc,
