@@ -41,6 +41,9 @@ namespace gpu {
 #ifndef NDEBUG
         const char *error;
         cuGetErrorString(result, &error);
+        if (error !== CUDA_SUCCESS) {
+            std::cerr << name << " " << std::string(error) << std::endl;
+        }
         assert(result == CUDA_SUCCESS && error);
 #endif
     }
@@ -323,6 +326,7 @@ namespace gpu {
 
             for (auto &[data, size] : tex1d_list) {
                 if (!texture_arguments.contains(data)) {
+                    texture_arguments.try_emplace(data);
                     CUDA_RESOURCE_DESC resource_desc;
                     CUDA_TEXTURE_DESC texture_desc;
                     CUDA_ARRAY_DESCRIPTOR array_desc;
@@ -367,6 +371,7 @@ namespace gpu {
             }
             for (auto &[data, size] : tex2d_list) {
                 if (!texture_arguments.contains(data)) {
+                    texture_arguments.try_emplace(data);
                     CUDA_RESOURCE_DESC resource_desc;
                     CUDA_TEXTURE_DESC texture_desc;
                     CUDA_ARRAY_DESCRIPTOR array_desc;
