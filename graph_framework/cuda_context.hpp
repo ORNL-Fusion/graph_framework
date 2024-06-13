@@ -598,7 +598,7 @@ namespace gpu {
                 source_buffer << "static __inline__ __device__ double to_double(uint2 p) {" 
                               << std::endl
                               << "    return __hiloint2double(p.y, p.x);"
-                              << std::endl;
+                              << std::endl
                               << "}" << std::endl;
             }
         }
