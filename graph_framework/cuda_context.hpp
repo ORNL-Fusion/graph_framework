@@ -406,7 +406,7 @@ namespace gpu {
                                 "cuArrayCreate");
                     
                     CUDA_MEMCPY2D copy_desc;
-                    copy_desc.srcPitch = size[0]*sizeof(float)*array_desc.NumChannels
+                    copy_desc.srcPitch = size[0]*sizeof(float)*array_desc.NumChannels;
                     copy_desc.srcMemoryType = CU_MEMORYTYPE_HOST;
                     copy_desc.srcHost = data;
 
@@ -414,7 +414,7 @@ namespace gpu {
                     copy_desc.dstArray = resource_desc.res.array.hArray;
 
                     copy_desc.WidthInBytes = copyParam.srcPitch;
-                    copy_desc.Height = size[0]
+                    copy_desc.Height = size[0];
 
                     check_error(cuMemcpy2D(&copy_desc), "cuMemcpy2D");
 
