@@ -705,15 +705,15 @@ void compile_index(std::ostringstream &stream,
                 const size_t num_rows = length/num_columns;
                 if constexpr (jit::use_metal<T> ()) {
                     stream << ".read(uint2(";
-                    compile_index<T> (stream, registers[x.get()], num_rows);
-                    stream << ",";
                     compile_index<T> (stream, registers[y.get()], num_columns);
-                    stream << ").yx).r;";
+                    stream << ",";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    stream << ")).r;";
                 } else if constexpr (jit::use_cuda()) {
                     stream << ", ";
-                    compile_index<T> (stream, registers[x.get()], num_rows);
-                    stream << ", ";
                     compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << ", ";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
                     stream << ");";
                 }  else {
                     stream << "[min(max((int)";
