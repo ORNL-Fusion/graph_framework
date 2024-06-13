@@ -580,21 +580,24 @@ namespace gpu {
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
                 if constexpr (jit::is_float<T> ()) {
                     source_buffer << "static __inline__ __device__ complex<float> to_cmp_float(float2 p) {"
+                                  << std::endl 
                                   << "    return ";
                     jit::add_type<T> (source_buffer);
-                    source_buffer << " (p.x, p.y);"
-                                  << "}";
+                    source_buffer << " (p.x, p.y);" << std::endl
+                                  << "}" << std::endl;
                 } else {
                     source_buffer << "static __inline__ __device__ complex<double> to_cmp_double(uint4 p) {"
+                                  << std::endl 
                                   << "    return ";
                     jit::add_type<T> (source_buffer);
                     source_buffer << " (__hiloint2double(p.y, p.x), __hiloint2double(p.w, p.z));"
-                                  << "}";
+                                  << "}" << std::endl;
                 }
             } else if constexpr (jit::is_double<T> ()) {
-                source_buffer << "static __inline__ __device__ double to_double(uint2 p) {"
+                source_buffer << "static __inline__ __device__ double to_double(uint2 p) {" 
+                              << std::endl
                               << "    return __hiloint2double(p.y, p.x);"
-                              << "}";
+                              << "}" << std::endl;
             }
         }
 

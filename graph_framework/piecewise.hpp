@@ -249,11 +249,11 @@ void compile_index(std::ostringstream &stream,
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = ";
                 if constexpr (jit::use_cuda()) {
-                    if constexpr (jit::is_float<T> ()) {
+                    if constexpr (jit::is_float<T> () && !jit::is_complex<T> ()) {
                         stream << "tex1D<float> (";
-                    } else if constexpr (jit::is_double<T> ()) {
+                    } else if constexpr (jit::is_double<T> () && !jit::is_complex<T> ()) {
                         stream << "to_double(tex1D<uint2> (";
-                    } else if constexpr (jit::is_complex<T> () && jit::is_float<T> ()) {
+                    } else if constexpr (jit::is_float<T> ()) {
                         stream << "to_cmp_float(tex1D<float2> (";
                     } else {
                         stream << "to_cmp_double(tex1D<uint4> (";
@@ -693,11 +693,11 @@ void compile_index(std::ostringstream &stream,
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = ";
                 if constexpr (jit::use_cuda()) {
-                    if constexpr (jit::is_float<T> ()) {
+                    if constexpr (jit::is_float<T> () && !jit::is_complex<T> ()) {
                         stream << "tex2D<float> (";
-                    } else if constexpr (jit::is_double<T> ()) {
+                    } else if constexpr (jit::is_double<T> () && !jit::is_complex<T> ()) {
                         stream << "to_double(tex2D<uint2> (";
-                    } else if constexpr (jit::is_complex<T> () && jit::is_float<T> ()) {
+                    } else if constexpr (jit::is_float<T> ()) {
                         stream << "to_cmp_float(tex2D<float2> (";
                     } else {
                         stream << "to_cmp_double(tex2D<uint4> (";
