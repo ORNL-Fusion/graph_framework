@@ -413,7 +413,7 @@ namespace gpu {
                     copy_desc.dstMemoryType = CU_MEMORYTYPE_HOST;
                     copy_desc.dstArray = resource_desc.res.array.hArray;
 
-                    copy_desc.WidthInBytes = copyParam.srcPitch;
+                    copy_desc.WidthInBytes = copy_desc.srcPitch;
                     copy_desc.Height = size[0];
 
                     check_error(cuMemcpy2D(&copy_desc), "cuMemcpy2D");
