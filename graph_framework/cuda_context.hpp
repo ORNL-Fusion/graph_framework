@@ -406,6 +406,8 @@ namespace gpu {
                                 "cuArrayCreate");
                     
                     CUDA_MEMCPY2D copy_desc;
+                    memset(&copy_desc, 0, sizeof(copy_desc));
+
                     copy_desc.srcPitch = size[0]*sizeof(float)*array_desc.NumChannels;
                     copy_desc.srcMemoryType = CU_MEMORYTYPE_HOST;
                     copy_desc.srcHost = data;
