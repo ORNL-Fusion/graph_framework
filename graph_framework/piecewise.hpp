@@ -714,6 +714,9 @@ void compile_index(std::ostringstream &stream,
                     compile_index<T> (stream, registers[y.get()], num_columns);
                     stream << ", ";
                     compile_index<T> (stream, registers[x.get()], num_rows);
+                    if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
+                        stream << ")";
+                    }
                     stream << ");";
                 }  else {
                     stream << "[min(max((int)";
