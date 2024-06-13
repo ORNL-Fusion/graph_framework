@@ -41,7 +41,7 @@ namespace gpu {
 #ifndef NDEBUG
         const char *error;
         cuGetErrorString(result, &error);
-        if (error !== CUDA_SUCCESS) {
+        if (error != CUDA_SUCCESS) {
             std::cerr << name << " " << std::string(error) << std::endl;
         }
         assert(result == CUDA_SUCCESS && error);
