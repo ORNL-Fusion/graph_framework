@@ -410,7 +410,7 @@ namespace gpu {
                     copy_desc.srcMemoryType = CU_MEMORYTYPE_HOST;
                     copy_desc.srcHost = data;
 
-                    copy_desc.dstMemoryType = CU_MEMORYTYPE_HOST;
+                    copy_desc.dstMemoryType = CU_MEMORYTYPE_ARRAY;
                     copy_desc.dstArray = resource_desc.res.array.hArray;
 
                     copy_desc.WidthInBytes = copy_desc.srcPitch;
