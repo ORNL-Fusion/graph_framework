@@ -691,13 +691,13 @@ void compile_index(std::ostringstream &stream,
                 stream << " " << registers[this] << " = ";
                 if constexpr (jit::use_cuda()) {
                     if constexpr (jit::is_float<T> ()) {
-                        stream << "tex1D<float> (";
+                        stream << "tex2D<float> (";
                     } else if constexpr (jit::is_double<T> ()) {
-                        stream << "to_double(tex1D<uint2> (";
+                        stream << "to_double(tex2D<uint2> (";
                     } else if constexpr (jit::is_complex<T> () && jit::is_float<T> ()) {
-                        stream << "to_cmp_float(tex1D<float2> (";
+                        stream << "to_cmp_float(tex2D<float2> (";
                     } else {
-                        stream << "to_cmp_double(tex1D<uint4> (";
+                        stream << "to_cmp_double(tex2D<uint4> (";
                     }
                 }
                 stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
