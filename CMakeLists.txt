@@ -65,7 +65,7 @@ else ()
         target_compile_definitions (cuda_lib
                                     INTERFACE
                                     USE_CUDA
-                                    $<$<BOOL:${USE_CUDA}>:USE_CUDA_TEXTURES>
+                                    $<$<BOOL:${USE_CUDA_TEXTURES}>:USE_CUDA_TEXTURES>
                                     CUDA_INCLUDE="${CUDAToolkit_INCLUDE_DIRS}"
         )
         target_link_libraries (cuda_lib
