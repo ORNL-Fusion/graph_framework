@@ -76,8 +76,10 @@ namespace gpu {
         CUmodule module;
 ///  Argument map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, CUdeviceptr> kernel_arguments;
+#ifdef USE_CUDA_TEXTURES
 ///  Textures.
         std::map<void *, CUtexObject> texture_arguments;
+#endif
 ///  Result buffer.
         CUdeviceptr result_buffer;
 ///  Cuda stream.
@@ -324,6 +326,7 @@ namespace gpu {
                 buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
             }
 
+#ifdef USE_CUDA_TEXTURES
             for (auto &[data, size] : tex1d_list) {
                 if (!texture_arguments.contains(data)) {
                     texture_arguments.try_emplace(data);
@@ -427,6 +430,7 @@ namespace gpu {
                 }
                 buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
             }
+#endif
 
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
@@ -578,16 +582,17 @@ namespace gpu {
                 source_buffer << "#define M_PI " << M_PI << std::endl;
                 source_buffer << "#include <cuda/std/complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
+#ifdef USE_CUDA_TEXTURES
                 if constexpr (jit::is_float<T> ()) {
                     source_buffer << "static __inline__ __device__ complex<float> to_cmp_float(float2 p) {"
-                                  << std::endl 
+                                  << std::endl
                                   << "    return ";
                     jit::add_type<T> (source_buffer);
                     source_buffer << " (p.x, p.y);" << std::endl
                                   << "}" << std::endl;
                 } else {
                     source_buffer << "static __inline__ __device__ complex<double> to_cmp_double(uint4 p) {"
-                                  << std::endl 
+                                  << std::endl
                                   << "    return ";
                     jit::add_type<T> (source_buffer);
                     source_buffer << " (__hiloint2double(p.y, p.x), __hiloint2double(p.w, p.z));"
@@ -595,12 +600,15 @@ namespace gpu {
                                   << "}" << std::endl;
                 }
             } else if constexpr (jit::is_double<T> ()) {
-                source_buffer << "static __inline__ __device__ double to_double(uint2 p) {" 
-                              << std::endl
-                              << "    return __hiloint2double(p.y, p.x);"
-                              << std::endl
-                              << "}" << std::endl;
+                source_buffer << "static __inline__ __device__ double to_double(uint2 p) {"
+                << std::endl
+                << "    return __hiloint2double(p.y, p.x);"
+                << std::endl
+                << "}" << std::endl;
             }
+#else
+            }
+#endif
         }
 
 //------------------------------------------------------------------------------
@@ -650,6 +658,7 @@ namespace gpu {
                 jit::add_type<T> (source_buffer);
                 source_buffer << " *" << jit::to_string('o', outputs[i].get());
             }
+#ifdef USE_CUDA_TEXTURES
             for (size_t i = 0, ie = textures1d.size(); i < ie; i++) {
                 source_buffer << "," << std::endl;
                 source_buffer << "    cudaTextureObject_t "
@@ -660,6 +669,7 @@ namespace gpu {
                 source_buffer << "    cudaTextureObject_t "
                               << jit::to_string('a', textures2d[i].first);
             }
+#endif
             source_buffer << ") {" << std::endl;
 
             source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"

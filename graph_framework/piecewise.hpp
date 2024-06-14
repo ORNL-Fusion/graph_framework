@@ -195,9 +195,14 @@ void compile_index(std::ostringstream &stream,
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
                     const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
-                    if constexpr (jit::use_metal<T> () || jit::use_cuda()) {
+                    if constexpr (jit::use_metal<T> ()) {
                         textures1d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
                                                 length);
+#ifdef USE_CUDA_TEXTURES
+                    } else if constexpr (jit::use_cuda()) {
+                        textures1d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                                length);
+#endif
                     } else {
                         stream << "const ";
                         jit::add_type<T> (stream);
@@ -248,6 +253,7 @@ void compile_index(std::ostringstream &stream,
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = ";
+#ifdef USE_CUDA_TEXTURES
                 if constexpr (jit::use_cuda()) {
                     if constexpr (jit::is_float<T> () && !jit::is_complex<T> ()) {
                         stream << "tex1D<float> (";
@@ -259,12 +265,14 @@ void compile_index(std::ostringstream &stream,
                         stream << "to_cmp_double(tex1D<uint4> (";
                     }
                 }
+#endif
                 stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
                 const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                 if constexpr (jit::use_metal<T> ()) {
                     stream << ".read(";
                     compile_index<T> (stream, registers[a.get()], length);
                     stream << ").r;";
+#ifdef USE_CUDA_TEXTURES
                 } else if constexpr (jit::use_cuda()) {
                     stream << ", ";
                     compile_index<T> (stream, registers[a.get()], length);
@@ -272,6 +280,7 @@ void compile_index(std::ostringstream &stream,
                         stream << ")";
                     }
                     stream << ");";
+#endif
                 } else {
                     stream << "[";
                     compile_index<T> (stream, registers[a.get()], length);
@@ -625,9 +634,14 @@ void compile_index(std::ostringstream &stream,
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
                     const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
-                    if constexpr (jit::use_metal<T> () || jit::use_cuda()) {
+                    if constexpr (jit::use_metal<T> ()) {
                         textures2d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
                                                 std::array<size_t, 2> ({length/num_columns, num_columns}));
+#ifdef USE_CUDA_TEXTURES
+                    } else if constexpr (jit::use_cuda()) {
+                        textures2d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                                std::array<size_t, 2> ({length/num_columns, num_columns}));
+#endif
                     } else {
                         stream << "const ";
                         jit::add_type<T> (stream);
@@ -692,6 +706,7 @@ void compile_index(std::ostringstream &stream,
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = ";
+#ifdef USE_CUDA_TEXTURES
                 if constexpr (jit::use_cuda()) {
                     if constexpr (jit::is_float<T> () && !jit::is_complex<T> ()) {
                         stream << "tex2D<float> (";
@@ -703,6 +718,7 @@ void compile_index(std::ostringstream &stream,
                         stream << "to_cmp_double(tex2D<uint4> (";
                     }
                 }
+#endif
                 stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
                 const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                 const size_t num_rows = length/num_columns;
@@ -712,6 +728,7 @@ void compile_index(std::ostringstream &stream,
                     stream << ",";
                     compile_index<T> (stream, registers[x.get()], num_rows);
                     stream << ")).r;";
+#ifdef USE_CUDA_TEXTURES
                 } else if constexpr (jit::use_cuda()) {
                     stream << ", ";
                     compile_index<T> (stream, registers[y.get()], num_columns);
@@ -721,6 +738,7 @@ void compile_index(std::ostringstream &stream,
                         stream << ")";
                     }
                     stream << ");";
+#endif
                 }  else {
                     stream << "[min(max((int)";
                     if constexpr (jit::is_complex<T> ()) {
