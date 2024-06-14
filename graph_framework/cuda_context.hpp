@@ -145,6 +145,7 @@ namespace gpu {
                 check_error(cuMemFree(value), "cuMemFree");
             }
 
+#ifdef USE_CUDA_TEXTURES
             for (auto &[key, value] : texture_arguments) {
                 CUDA_RESOURCE_DESC resource;
                 check_error(cuTexObjectGetResourceDesc(&resource, value),
@@ -153,6 +154,7 @@ namespace gpu {
                 check_error(cuArrayDestroy(resource.res.array.hArray), "cuArrayDestroy");
                 check_error(cuTexObjectDestroy(value), "cuTexObjectDestroy");
             }
+#endif
 
             if (result_buffer) {
                 check_error(cuMemFree(result_buffer), "cuMemFree");
