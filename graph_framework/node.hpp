@@ -91,25 +91,35 @@ namespace graph {
 ///  @params[in,out] stream     String buffer stream.
 ///  @params[in,out] registers  List of defined registers.
 ///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] usage      List of register usage count.
 ///  @params[in,out] textures1d List of 1D textures.
 ///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
+                                      jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
-                                      jit::texture2d_list &textures2d) {}
+                                      jit::texture2d_list &textures2d) {
+            if (usage.find(this) == usage.end()) {
+                usage[this] = 0;
+            } else {
+                ++usage[this];
+            }
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) = 0;
+                jit::register_map &registers,
+                const jit::register_usage &usage) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
@@ -371,11 +381,13 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -386,7 +398,8 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     jit::add_type<T> (stream);
                 }
-                stream << temp << ";" << std::endl;
+                stream << temp << "; // used "
+                       << usage.at(this) << std::endl;
             }
 
             return this->shared_from_this();
@@ -707,19 +720,24 @@ namespace graph {
 ///  @params[in,out] stream     String buffer stream.
 ///  @params[in,out] registers  List of defined registers.
 ///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] usage      List of register usage count.
 ///  @params[in,out] textures1d List of 1D textures.
 ///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
+                                      jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
                 this->arg->compile_preamble(stream, registers,
-                                            visited, textures1d,
-                                            textures2d);
+                                            visited, usage,
+                                            textures1d, textures2d);
                 visited.insert(this);
+                usage[this] = 0;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -728,12 +746,14 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
-            return this->arg->compile(stream, registers);
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
+            return this->arg->compile(stream, registers, usage);
         }
 
 //------------------------------------------------------------------------------
@@ -830,22 +850,27 @@ namespace graph {
 ///  @params[in,out] stream     String buffer stream.
 ///  @params[in,out] registers  List of defined registers.
 ///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] usage      List of register usage count.
 ///  @params[in,out] textures1d List of 1D textures.
 ///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
+                                      jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
                 this->left->compile_preamble(stream, registers, 
-                                             visited, textures1d,
-                                             textures2d);
+                                             visited, usage,
+                                             textures1d, textures2d);
                 this->right->compile_preamble(stream, registers,
-                                              visited, textures1d,
-                                              textures2d);
+                                              visited, usage,
+                                              textures1d, textures2d);
                 visited.insert(this);
+                usage[this] = 0;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -941,25 +966,30 @@ namespace graph {
 ///  @params[in,out] stream     String buffer stream.
 ///  @params[in,out] registers  List of defined registers.
 ///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] usage      List of register usage count.
 ///  @params[in,out] textures1d List of 1D textures.
 ///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
+                                      jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
                 this->left->compile_preamble(stream, registers, 
-                                             visited, textures1d,
-                                             textures2d);
+                                             visited, usage,
+                                             textures1d, textures2d);
                 this->middle->compile_preamble(stream, registers,
-                                               visited, textures1d,
-                                               textures2d);
+                                               visited, usage,
+                                               textures1d, textures2d);
                 this->right->compile_preamble(stream, registers,
-                                              visited, textures1d,
-                                              textures2d);
+                                              visited, usage,
+                                              textures1d, textures2d);
                 visited.insert(this);
+                usage[this] = 0;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -1101,11 +1131,13 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
            return this->shared_from_this();
         }
 

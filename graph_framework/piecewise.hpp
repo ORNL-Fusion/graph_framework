@@ -179,18 +179,23 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream     String buffer stream.
+///  @params[in,out] registers  List of defined registers.
+///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] usage      List of register usage count.
 ///  @params[in,out] textures1d List of 1D textures.
 ///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
+                                      jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
+                this->arg->compile_preamble(stream, registers,
+                                            visited, usage,
+                                            textures1d, textures2d);
                 if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
@@ -220,8 +225,11 @@ void compile_index(std::ostringstream &stream,
                         }
                         stream << "};" << std::endl;
                     }
-                    visited.insert(this);
                 }
+                visited.insert(this);
+                usage[this] = 0;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -242,13 +250,17 @@ void compile_index(std::ostringstream &stream,
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, 
+                                                                 registers,
+                                                                 usage);
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
@@ -286,7 +298,7 @@ void compile_index(std::ostringstream &stream,
                     compile_index<T> (stream, registers[a.get()], length);
                     stream << "];";
                 }
-                stream << std::endl;
+                stream << " // used " << usage.at(this) <<std::endl;
             }
 
             return this->shared_from_this();
@@ -621,15 +633,23 @@ void compile_index(std::ostringstream &stream,
 ///  @params[in,out] stream     String buffer stream.
 ///  @params[in,out] registers  List of defined registers.
 ///  @params[in,out] visited    List of visited nodes.
+///  @params[in,out] usage      List of register usage count.
 ///  @params[in,out] textures1d List of 1D textures.
 ///  @params[in,out] textures2d List of 2D textures.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
+                                      jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d) {
             if (visited.find(this) == visited.end()) {
+                this->left->compile_preamble(stream, registers,
+                                             visited, usage,
+                                             textures1d, textures2d);
+                this->right->compile_preamble(stream, registers,
+                                              visited, usage,
+                                              textures1d, textures2d);
                 if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
@@ -659,8 +679,11 @@ void compile_index(std::ostringstream &stream,
                         }
                         stream << "};" << std::endl;
                     }
-                    visited.insert(this);
                 }
+                visited.insert(this);
+                usage[this] = 0;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -694,14 +717,20 @@ void compile_index(std::ostringstream &stream,
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> x = this->left->compile(stream, registers);
-                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> x = this->left->compile(stream,
+                                                                  registers,
+                                                                  usage);
+                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream,
+                                                                   registers,
+                                                                   usage);
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
@@ -758,7 +787,7 @@ void compile_index(std::ostringstream &stream,
                     }
                     stream << ",0), " << length - 1 << ")];";
                 }
-                stream << std::endl;
+                stream << " // used " << usage.at(this) << std::endl;
             }
 
             return this->shared_from_this();

@@ -244,6 +244,8 @@ namespace jit {
 
 ///  Type alias for mapping node pointers to register names.
     typedef std::map<void *, std::string> register_map;
+///  Type alias for counting register usage.
+    typedef std::map<void *, size_t> register_usage;
 ///  Type alias for listing visited nodes.
     typedef std::set<void *> visiter_map;
 ///  Type alias for indexing 1D textures.

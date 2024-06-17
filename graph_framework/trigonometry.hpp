@@ -126,19 +126,23 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> compile(std::ostringstream &stream,
-                                                  jit::register_map &registers) {
+                                                  jit::register_map &registers,
+                                                  const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
+                                                                 registers,
+                                                                 usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = sin("
-                       << registers[a.get()] << ");"
-                       << std::endl;
+                       << registers[a.get()] << "); // usage "
+                       << usage.at(this) << std::endl;
             }
 
             return this->shared_from_this();
@@ -364,20 +368,24 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
+                                                                 registers,
+                                                                 usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = cos("
-                       << registers[a.get()] << ");"
-                       << std::endl;
+                       << registers[a.get()] << "); // usage "
+                       << usage.at(this) << std::endl;
             }
 
             return this->shared_from_this();
@@ -600,14 +608,20 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, registers);
-                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
+                                                                  registers,
+                                                                  usage);
+                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
+                                                                   registers,
+                                                                   usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -621,7 +635,7 @@ namespace graph {
                            << registers[r.get()] << ","
                            << registers[l.get()];
                 }
-                stream << ");" << std::endl;
+                stream << "); // used " << usage.at(this) << std::endl;
             }
 
             return this->shared_from_this();

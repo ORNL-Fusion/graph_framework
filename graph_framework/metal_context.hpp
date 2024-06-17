@@ -401,6 +401,7 @@ namespace gpu {
 ///  @params[in]     size          Size of the input buffer.
 ///  @params[in]     is_constant   Flags if the input is read only.
 ///  @params[in,out] registers     Map of used registers.
+///  @params[in]     usage         List of register usage count.
 ///  @params[in]     textures1d    List of 1D kernel textures.
 ///  @params[in]     textures2d    List of 2D kernel textures.
 //------------------------------------------------------------------------------
@@ -411,6 +412,7 @@ namespace gpu {
                                   const size_t size, 
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
+                                  const jit::register_usage &usage,
                                   jit::texture1d_list &textures1d,
                                   jit::texture2d_list &textures2d) {
             source_buffer << std::endl;
@@ -453,8 +455,9 @@ namespace gpu {
                 source_buffer << "        const ";
                 jit::add_type<float> (source_buffer);
                 source_buffer << " " << registers[input.get()] << " = "
-                              << jit::to_string('v', input.get()) << "[index];"
-                              << std::endl;
+                              << jit::to_string('v', input.get())
+                              << "[index]; // " << input->get_symbol()
+                              << " used " << usage.at(input.get()) << std::endl;
             }
         }
 
@@ -465,13 +468,17 @@ namespace gpu {
 ///  @params[in]     outputs       Output nodes of the graph to compute.
 ///  @params[in]     setters       Map outputs back to input values.
 ///  @params[in,out] registers     Map of used registers.
+///  @params[in]     usage         List of register usage count.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<float, SAFE_MATH> &outputs,
                                    graph::map_nodes<float, SAFE_MATH> &setters,
-                                   jit::register_map &registers) {
+                                   jit::register_map &registers,
+                                   const jit::register_usage &usage) {
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer, 
+                                                                      registers,
+                                                                      usage);
                 source_buffer << "        " << jit::to_string('v',  in.get())
                               << "[index] = ";
                 if constexpr (SAFE_MATH) {
@@ -482,7 +489,9 @@ namespace gpu {
             }
             
             for (auto &out : outputs) {
-                graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
+                                                                      registers,
+                                                                      usage);
                 source_buffer << "        " << jit::to_string('o',  out.get())
                               << "[index] = "; 
                 if constexpr (SAFE_MATH) {
