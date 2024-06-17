@@ -2148,7 +2148,7 @@ namespace graph {
                     stream << " : ";
                 }
                 stream << registers[l.get()] << "/"
-                       << registers[r.get()] << "; // usage "
+                       << registers[r.get()] << "; // used "
                        << usage.at(this) << std::endl;
             }
             return this->shared_from_this();

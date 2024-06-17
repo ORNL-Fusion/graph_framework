@@ -141,7 +141,7 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = sin("
-                       << registers[a.get()] << "); // usage "
+                       << registers[a.get()] << "); // used "
                        << usage.at(this) << std::endl;
             }
 
@@ -384,7 +384,7 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = cos("
-                       << registers[a.get()] << "); // usage "
+                       << registers[a.get()] << "); // used "
                        << usage.at(this) << std::endl;
             }
 

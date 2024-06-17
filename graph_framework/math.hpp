@@ -1297,7 +1297,7 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = special::erfi("
-                       << registers[a.get()] << "); // usage "
+                       << registers[a.get()] << "); // used "
                        << usage.at(this) << std::endl;
             }
 
