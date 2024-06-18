@@ -2030,6 +2030,18 @@ template<jit::float_scalar T> void test_fma() {
     auto var_b = graph::variable<T> (1, "");
     auto var_c = graph::variable<T> (1, "");
 
+//  fma(1,a,b) = a + b
+    auto one_times_vara_plus_varb = graph::fma(one, var_a, var_b);
+    auto one_times_vara_plus_varb_cast =
+        graph::add_cast(one_times_vara_plus_varb);
+    assert(one_times_vara_plus_varb_cast.get() && "Expected an add node.");
+    
+//  fma(a,1,b) = a + b
+    auto vara_times_one_plus_varb = graph::fma(var_a, one, var_b);
+    auto vara_times_one_plus_varb_cast =
+        graph::add_cast(vara_times_one_plus_varb);
+    assert(vara_times_one_plus_varb_cast.get() && "Expected an add node.");
+    
     auto reduce1 = graph::fma(var_a, var_b, var_a*var_c);
     auto reduce1_cast = graph::multiply_cast(reduce1);
     assert(reduce1_cast.get() && "Expected multiply node.");

@@ -2368,10 +2368,14 @@ namespace graph {
                 return constant<T, SAFE_MATH> (this->evaluate());
             } else if (l.get() && m.get()) {
                 return this->left*this->middle + this->right;
-            } else if (l.get() && l->evaluate().is_none()) {
+            } else if (l.get() && l->is(-1)) {
                 return this->right - this->middle;
-            } else if (m.get() && m->evaluate().is_none()) {
+            } else if (m.get() && m->is(-1)) {
                 return this->right - this->left;
+            } else if (l.get() && l->is(1)) {
+                return this->middle + this->right;
+            } else if (m.get() && m->is(1)) {
+                return this->left + this->right;
             }
 
             auto pl1 = piecewise_1D_cast(this->left);
