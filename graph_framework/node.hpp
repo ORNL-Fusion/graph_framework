@@ -102,7 +102,7 @@ namespace graph {
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d) {
             if (usage.find(this) == usage.end()) {
-                usage[this] = 0;
+                usage[this] = 1;
             } else {
                 ++usage[this];
             }
@@ -735,7 +735,7 @@ namespace graph {
                                             visited, usage,
                                             textures1d, textures2d);
                 visited.insert(this);
-                usage[this] = 0;
+                usage[this] = 1;
             } else {
                 ++usage[this];
             }
@@ -868,7 +868,7 @@ namespace graph {
                                               visited, usage,
                                               textures1d, textures2d);
                 visited.insert(this);
-                usage[this] = 0;
+                usage[this] = 1;
             } else {
                 ++usage[this];
             }
@@ -987,7 +987,7 @@ namespace graph {
                                               visited, usage,
                                               textures1d, textures2d);
                 visited.insert(this);
-                usage[this] = 0;
+                usage[this] = 1;
             } else {
                 ++usage[this];
             }

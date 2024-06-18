@@ -600,6 +600,11 @@ template<jit::float_scalar T> void test_subtract() {
     auto factor4 = var_b - (var_b*var_a);
     assert(graph::multiply_cast(factor4).get() &&
            "Expected a multiply node.");
+
+//  -1*a - b -> -1*(a + b)
+    auto neg_vara_minus_varb = (graph::none<T> ()*var_a) - var_b;
+    assert(graph::multiply_cast(neg_vara_minus_varb).get() &&
+           "Expected a multiply node.");
 }
 
 //------------------------------------------------------------------------------

@@ -574,16 +574,23 @@ namespace graph {
 //  v1 - -c*v2 -> v1 + c*v2
             if (rm.get()) {
                 auto rmc = constant_cast(rm->get_left());
-                if (rmc.get() && rmc->evaluate().is_none()) {
+                if (rmc.get() && rmc->is(-1)) {
                     return this->left + rm->get_right();
                 } else if (rmc.get() && rmc->evaluate().is_negative()) {
                     return this->left + (none<T, SAFE_MATH> ()*rm->get_left())*rm->get_right();
                 }
             }
 
+            if (lm.get()) {
+//  Assume constants are on the left.
+//  -a - b -> -(a + b)
+                auto lmc = constant_cast(lm->get_left());
+                if (lmc.get() && lmc->is(-1)) {
+                    return lm->get_left()*(lm->get_right() + this->right);
+                }
+
 //  a*v - v = (a - 1)*v
 //  v*a - v = (a - 1)*v
-            if (lm.get()) {
                 if (this->right->is_match(lm->get_right())) {
                     return (lm->get_left() - one<T, SAFE_MATH> ())*this->right;
                 } else if (this->right->is_match(lm->get_left())) {

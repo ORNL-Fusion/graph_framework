@@ -227,7 +227,7 @@ void compile_index(std::ostringstream &stream,
                     }
                 }
                 visited.insert(this);
-                usage[this] = 0;
+                usage[this] = 1;
             } else {
                 ++usage[this];
             }
@@ -681,7 +681,7 @@ void compile_index(std::ostringstream &stream,
                     }
                 }
                 visited.insert(this);
-                usage[this] = 0;
+                usage[this] = 1;
             } else {
                 ++usage[this];
             }
