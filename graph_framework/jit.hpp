@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <thread>
 
 #ifdef USE_METAL
 #include "metal_context.hpp"
@@ -181,12 +182,35 @@ namespace jit {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Save the kernel source code.
+//------------------------------------------------------------------------------
+        void save_source() {
+            std::string source = source_buffer.str();
+            std::ostringstream filename;
+            filename << std::hash<std::string> {} (source)
+                     << std::hash<std::thread::id>{}(std::this_thread::get_id());
+            if constexpr (use_cuda()) {
+                filename << ".cu";
+            } else if constexpr (use_metal<T> ()) {
+                filename << ".metal";
+            } else {
+                filename << ".cpp";
+            }
+
+            std::ofstream outFile(filename.str());
+            outFile << source;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Compile the kernel.
 ///
 ///  @params[in] add_reduction Optional argument to generate the reduction
 ///                            kernel.
 //------------------------------------------------------------------------------
         void compile(const bool add_reduction=false) {
+#ifdef SAVE_KERNEL_SOURCE
+            save_source();
+#endif
             gpu_context.compile(source_buffer.str(),
                                 kernel_names,
                                 add_reduction);
