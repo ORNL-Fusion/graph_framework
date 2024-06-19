@@ -425,7 +425,12 @@ namespace gpu {
                 source_buffer << "    " << (is_constant[i] ? "constant" : "device")
                               << " float *"
                               << jit::to_string('v', inputs[i].get())
-                              << " [[buffer(" << i << ")]]," << std::endl;
+                              << " [[buffer(" << i << ")]], // "
+                              << inputs[i]->get_symbol()
+#ifndef USE_INPUT_CACHE
+                              << " used " << usage.at(inputs[i].get())
+#endif
+                              << std::endl;
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
                 bufferMutability[name].push_back(MTLMutabilityMutable);
@@ -451,13 +456,19 @@ namespace gpu {
             source_buffer << "    if (index < " << size << ") {" << std::endl;
             
             for (auto &input : inputs) {
-                registers[input.get()] = jit::to_string('r', input.get());
-                source_buffer << "        const ";
-                jit::add_type<float> (source_buffer);
-                source_buffer << " " << registers[input.get()] << " = "
-                              << jit::to_string('v', input.get())
-                              << "[index]; // " << input->get_symbol()
-                              << " used " << usage.at(input.get()) << std::endl;
+#ifdef USE_INPUT_CACHE
+                if (usage.at(input.get())) {
+                    registers[input.get()] = jit::to_string('r', input.get());
+                    source_buffer << "        const ";
+                    jit::add_type<float> (source_buffer);
+                    source_buffer << " " << registers[input.get()] << " = "
+                                  << jit::to_string('v', input.get())
+                                  << "[index]; // " << input->get_symbol()
+                                  << " used " << usage.at(input.get()) << std::endl;
+                }
+#else
+                registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+#endif
             }
         }
 

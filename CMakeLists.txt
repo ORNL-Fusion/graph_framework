@@ -77,11 +77,17 @@ else ()
     endif ()
 endif ()
 
+option (USE_INPUT_CACHE "Cache the values kernel input values." OFF)
+
 add_library (gpu_lib INTERFACE)
 target_link_libraries (gpu_lib
                        INTERFACE
                        $<$<BOOL:${USE_METAL}>:metal_lib>
                        $<$<BOOL:${USE_CUDA}>:cuda_lib>
+)
+target_compile_definitions (gpu_lib
+                            INTERFACE
+                            $<$<BOOL:${USE_INPUT_CACHE}>:USE_INPUT_CACHE>
 )
 
 #-------------------------------------------------------------------------------

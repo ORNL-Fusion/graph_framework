@@ -16,6 +16,8 @@
 
 #include "node.hpp"
 
+#define MAX_REG 256
+
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief  Check results of realtime compile.
@@ -269,7 +271,7 @@ namespace gpu {
                 CU_JIT_POSITION_INDEPENDENT_CODE
             };
             std::array<void *, 3> module_values = {
-                reinterpret_cast<void *> (168),
+                reinterpret_cast<void *> (MAX_REG),
                 reinterpret_cast<void *> (1),
                 reinterpret_cast<void *> (0)
             };
@@ -337,7 +339,7 @@ namespace gpu {
                     CUDA_RESOURCE_DESC resource_desc;
                     CUDA_TEXTURE_DESC texture_desc;
                     CUDA_ARRAY_DESCRIPTOR array_desc;
-                    
+
                     array_desc.Width = size;
                     array_desc.Height = 1;
 
@@ -411,7 +413,7 @@ namespace gpu {
                     }
                     check_error(cuArrayCreate(&resource_desc.res.array.hArray, &array_desc),
                                 "cuArrayCreate");
-                    
+
                     CUDA_MEMCPY2D copy_desc;
                     memset(&copy_desc, 0, sizeof(copy_desc));
 
@@ -650,7 +652,11 @@ namespace gpu {
             jit::add_type<T> (source_buffer);
             source_buffer << " *" << jit::to_string('v', inputs[0].get());
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
-                source_buffer << "," << std::endl;
+                source_buffer << ", // " << inputs[i - 1]->get_symbol()
+#ifndef USE_INPUT_CACHE
+                              << " used " << usage.at(inputs[i - 1].get())
+#endif
+                              << std::endl;
                 source_buffer << "    ";
                 if (is_constant[i]) {
                     source_buffer << "const ";
@@ -659,7 +665,17 @@ namespace gpu {
                 source_buffer << " *" << jit::to_string('v', inputs[i].get());
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                source_buffer << "," << std::endl;
+                source_buffer << ",";
+                if (i == 0) {
+                    source_buffer << " // "
+                                  << inputs[inputs.size() - 1]->get_symbol();
+#ifndef USE_INPUT_CACHE
+                    source_buffer << " used "
+                                  << usage.at(inputs[inputs.size() - 1].get());
+#endif
+                }
+
+                source_buffer << std::endl;
                 source_buffer << "    ";
                 jit::add_type<T> (source_buffer);
                 source_buffer << " *" << jit::to_string('o', outputs[i].get());
@@ -683,13 +699,19 @@ namespace gpu {
             source_buffer << "    if (index < " << size << ") {" << std::endl;
 
             for (auto &input : inputs) {
-                registers[input.get()] = jit::to_string('r', input.get());
-                source_buffer << "        const ";
-                jit::add_type<T> (source_buffer);
-                source_buffer << " " << registers[input.get()] << " = "
-                              << jit::to_string('v', input.get())
-                              << "[index]; // " << input->get_symbol()
-                              << " used " << usage.at(input.get()) << std::endl;
+#ifdef USE_INPUT_CACHE
+                if (usage.at(input.get())) {
+                    registers[input.get()] = jit::to_string('r', input.get());
+                    source_buffer << "        const ";
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " " << registers[input.get()] << " = "
+                                  << jit::to_string('v', input.get())
+                                  << "[index]; // " << input->get_symbol()
+                                  << " used " << usage.at(input.get()) << std::endl;
+                }
+#else
+                registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+#endif
             }
         }
 
