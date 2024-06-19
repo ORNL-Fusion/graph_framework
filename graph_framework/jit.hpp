@@ -120,13 +120,15 @@ namespace jit {
                 out->compile_preamble(source_buffer, registers,
                                       visited, usage,
                                       kernel_1dtextures[name],
-                                      kernel_2dtextures[name]);
+                                      kernel_2dtextures[name],
+                                      gpu_context.remaining_const_memory);
             }
             for (auto &out : outputs) {
                 out->compile_preamble(source_buffer, registers,
                                       visited, usage,
                                       kernel_1dtextures[name],
-                                      kernel_2dtextures[name]);
+                                      kernel_2dtextures[name],
+                                      gpu_context.remaining_const_memory);
             }
 
             for (auto &in : inputs) {

@@ -17,6 +17,7 @@
 #include "node.hpp"
 
 #define MAX_REG 256
+#define MAX_CONSTANT_MEMORY
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -103,6 +104,9 @@ namespace gpu {
         }
 
     public:
+///  Remaining constant memory in bytes.
+        int remaining_const_memory;
+
 //------------------------------------------------------------------------------
 ///  @brief Get the maximum number of concurrent instances.
 ///
@@ -132,6 +136,9 @@ namespace gpu {
             check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
             check_error(cuCtxSetCacheConfig(CU_FUNC_CACHE_PREFER_L1), "cuCtxSetCacheConfig");
             check_error(cuStreamCreate(&stream, CU_STREAM_DEFAULT), "cuStreamCreate");
+            check_error(cuDeviceGetAttribute(&remaining_const_memory,
+                                             CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY,
+                                             device), "cuDeviceGetAttribute");
         }
 
 //------------------------------------------------------------------------------

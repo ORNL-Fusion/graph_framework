@@ -88,19 +88,21 @@ namespace graph {
 ///  Some nodes require additions to the preamble however most don't so define a
 ///  generic method that does nothing.
 ///
-///  @params[in,out] stream     String buffer stream.
-///  @params[in,out] registers  List of defined registers.
-///  @params[in,out] visited    List of visited nodes.
-///  @params[in,out] usage      List of register usage count.
-///  @params[in,out] textures1d List of 1D textures.
-///  @params[in,out] textures2d List of 2D textures.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
-                                      jit::texture2d_list &textures2d) {
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (usage.find(this) == usage.end()) {
                 usage[this] = 1;
             } else {
@@ -717,23 +719,26 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream     String buffer stream.
-///  @params[in,out] registers  List of defined registers.
-///  @params[in,out] visited    List of visited nodes.
-///  @params[in,out] usage      List of register usage count.
-///  @params[in,out] textures1d List of 1D textures.
-///  @params[in,out] textures2d List of 2D textures.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
-                                      jit::texture2d_list &textures2d) {
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
                 this->arg->compile_preamble(stream, registers,
                                             visited, usage,
-                                            textures1d, textures2d);
+                                            textures1d, textures2d,
+                                            avail_const_mem);
                 visited.insert(this);
                 usage[this] = 1;
             } else {
@@ -847,26 +852,30 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream     String buffer stream.
-///  @params[in,out] registers  List of defined registers.
-///  @params[in,out] visited    List of visited nodes.
-///  @params[in,out] usage      List of register usage count.
-///  @params[in,out] textures1d List of 1D textures.
-///  @params[in,out] textures2d List of 2D textures.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
-                                      jit::texture2d_list &textures2d) {
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
                 this->left->compile_preamble(stream, registers, 
                                              visited, usage,
-                                             textures1d, textures2d);
+                                             textures1d, textures2d,
+                                             avail_const_mem);
                 this->right->compile_preamble(stream, registers,
                                               visited, usage,
-                                              textures1d, textures2d);
+                                              textures1d, textures2d,
+                                              avail_const_mem);
                 visited.insert(this);
                 usage[this] = 1;
             } else {
@@ -963,29 +972,34 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream     String buffer stream.
-///  @params[in,out] registers  List of defined registers.
-///  @params[in,out] visited    List of visited nodes.
-///  @params[in,out] usage      List of register usage count.
-///  @params[in,out] textures1d List of 1D textures.
-///  @params[in,out] textures2d List of 2D textures.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
-                                      jit::texture2d_list &textures2d) {
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
                 this->left->compile_preamble(stream, registers, 
                                              visited, usage,
-                                             textures1d, textures2d);
+                                             textures1d, textures2d,
+                                             avail_const_mem);
                 this->middle->compile_preamble(stream, registers,
                                                visited, usage,
-                                               textures1d, textures2d);
+                                               textures1d, textures2d,
+                                               avail_const_mem);
                 this->right->compile_preamble(stream, registers,
                                               visited, usage,
-                                              textures1d, textures2d);
+                                              textures1d, textures2d,
+                                              avail_const_mem);
                 visited.insert(this);
                 usage[this] = 1;
             } else {

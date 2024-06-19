@@ -75,6 +75,9 @@ namespace gpu {
         std::map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
 
     public:
+///  Remaining constant memory in bytes. NOT USED.
+        int remaining_const_memory;
+
 //------------------------------------------------------------------------------
 ///  @brief Get the maximum number of concurrent instances.
 ///

@@ -39,6 +39,9 @@ namespace gpu {
         std::map<std::string, std::vector<MTLMutability>> bufferMutability;
 
     public:
+///  Remaining constant memory in bytes. NOT USED.
+        int remaining_const_memory;
+
 //------------------------------------------------------------------------------
 ///  @brief Get the maximum number of concurrent instances.
 ///

@@ -179,23 +179,26 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream     String buffer stream.
-///  @params[in,out] registers  List of defined registers.
-///  @params[in,out] visited    List of visited nodes.
-///  @params[in,out] usage      List of register usage count.
-///  @params[in,out] textures1d List of 1D textures.
-///  @params[in,out] textures2d List of 2D textures.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
-                                      jit::texture2d_list &textures2d) {
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
                 this->arg->compile_preamble(stream, registers,
                                             visited, usage,
-                                            textures1d, textures2d);
+                                            textures1d, textures2d,
+                                            avail_const_mem);
                 if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
@@ -209,6 +212,13 @@ void compile_index(std::ostringstream &stream,
                                                 length);
 #endif
                     } else {
+                        if constexpr (jit::use_cuda()) {
+                            const int buffer_size = length*sizeof(T);
+                            if (avail_const_mem - buffer_size > 0) {
+                                avail_const_mem -= buffer_size;
+                                stream << "__constant__ ";
+                            }
+                        }
                         stream << "const ";
                         jit::add_type<T> (stream);
                         stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
@@ -630,26 +640,30 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream     String buffer stream.
-///  @params[in,out] registers  List of defined registers.
-///  @params[in,out] visited    List of visited nodes.
-///  @params[in,out] usage      List of register usage count.
-///  @params[in,out] textures1d List of 1D textures.
-///  @params[in,out] textures2d List of 2D textures.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
                                       jit::visiter_map &visited,
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
-                                      jit::texture2d_list &textures2d) {
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
                 this->left->compile_preamble(stream, registers,
                                              visited, usage,
-                                             textures1d, textures2d);
+                                             textures1d, textures2d,
+                                             avail_const_mem);
                 this->right->compile_preamble(stream, registers,
                                               visited, usage,
-                                              textures1d, textures2d);
+                                              textures1d, textures2d,
+                                              avail_const_mem);
                 if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
@@ -663,6 +677,13 @@ void compile_index(std::ostringstream &stream,
                                                 std::array<size_t, 2> ({length/num_columns, num_columns}));
 #endif
                     } else {
+                        if constexpr (jit::use_cuda()) {
+                            const int buffer_size = length*sizeof(T);
+                            if (avail_const_mem - buffer_size > 0) {
+                                avail_const_mem -= buffer_size;
+                                stream << "__constant__ ";
+                            }
+                        }
                         stream << "const ";
                         jit::add_type<T> (stream);
                         stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
