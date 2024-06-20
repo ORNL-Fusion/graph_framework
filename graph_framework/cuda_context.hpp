@@ -16,7 +16,7 @@
 
 #include "node.hpp"
 
-#define MAX_REG 256
+#define MAX_REG 128
 #define MAX_CONSTANT_MEMORY
 
 namespace gpu {
@@ -657,7 +657,8 @@ namespace gpu {
                 source_buffer << "const ";
             }
             jit::add_type<T> (source_buffer);
-            source_buffer << " *" << jit::to_string('v', inputs[0].get());
+            source_buffer << " * __restrict__ "
+                          << jit::to_string('v', inputs[0].get());
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
                 source_buffer << ", // " << inputs[i - 1]->get_symbol()
 #ifndef USE_INPUT_CACHE
@@ -669,7 +670,8 @@ namespace gpu {
                     source_buffer << "const ";
                 }
                 jit::add_type<T> (source_buffer);
-                source_buffer << " *" << jit::to_string('v', inputs[i].get());
+                source_buffer << " * __restrict__ "
+                              << jit::to_string('v', inputs[i].get());
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
                 source_buffer << ",";
@@ -685,7 +687,8 @@ namespace gpu {
                 source_buffer << std::endl;
                 source_buffer << "    ";
                 jit::add_type<T> (source_buffer);
-                source_buffer << " *" << jit::to_string('o', outputs[i].get());
+                source_buffer << " *  __restrict__ "
+                              << jit::to_string('o', outputs[i].get());
             }
 #ifdef USE_CUDA_TEXTURES
             for (size_t i = 0, ie = textures1d.size(); i < ie; i++) {
@@ -803,10 +806,10 @@ namespace gpu {
             source_buffer << "extern \"C\" __global__ void max_reduction(" << std::endl;
             source_buffer << "    const ";
             jit::add_type<T> (source_buffer);
-            source_buffer << " *input," << std::endl;
+            source_buffer << " * __restruct__ input," << std::endl;
             source_buffer << "    ";
             jit::add_type<T> (source_buffer);
-            source_buffer << " *result) {" << std::endl;
+            source_buffer << " * __result__ result) {" << std::endl;
             source_buffer << "    const unsigned int i = threadIdx.x;" << std::endl;
             source_buffer << "    const unsigned int j = threadIdx.x/32;" << std::endl;
             source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
@@ -838,47 +841,6 @@ namespace gpu {
             source_buffer << "        }"  << std::endl;
             source_buffer << "    }"  << std::endl;
             source_buffer << "}" << std::endl << std::endl;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Create a preamble.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-//------------------------------------------------------------------------------
-        void create_preamble(std::ostringstream &source_buffer) {
-            source_buffer << "extern \"C\" __global__ ";
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Create arg prefix.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-//------------------------------------------------------------------------------
-        void create_argument_prefix(std::ostringstream &source_buffer) {}
-
-//------------------------------------------------------------------------------
-///  @brief Create arg postfix.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     index         Argument index.
-//------------------------------------------------------------------------------
-        void create_argument_postfix(std::ostringstream &source_buffer,
-                                     const size_t index) {}
-
-//------------------------------------------------------------------------------
-///  @brief Create index argument.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-//------------------------------------------------------------------------------
-        void create_index_argument(std::ostringstream &source_buffer) {}
-
-//------------------------------------------------------------------------------
-///  @brief Create index.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-//------------------------------------------------------------------------------
-        void create_index(std::ostringstream &source_buffer) {
-            source_buffer << "blockIdx.x*blockDim.x + threadIdx.x;";
         }
 
 //------------------------------------------------------------------------------
