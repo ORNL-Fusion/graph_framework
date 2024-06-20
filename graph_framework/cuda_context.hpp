@@ -806,10 +806,10 @@ namespace gpu {
             source_buffer << "extern \"C\" __global__ void max_reduction(" << std::endl;
             source_buffer << "    const ";
             jit::add_type<T> (source_buffer);
-            source_buffer << " * __restruct__ input," << std::endl;
+            source_buffer << " * __restrict__ input," << std::endl;
             source_buffer << "    ";
             jit::add_type<T> (source_buffer);
-            source_buffer << " * __restruct__ result) {" << std::endl;
+            source_buffer << " * __restrict__ result) {" << std::endl;
             source_buffer << "    const unsigned int i = threadIdx.x;" << std::endl;
             source_buffer << "    const unsigned int j = threadIdx.x/32;" << std::endl;
             source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
