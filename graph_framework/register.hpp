@@ -249,9 +249,9 @@ namespace jit {
 ///  Type alias for listing visited nodes.
     typedef std::set<void *> visiter_map;
 ///  Type alias for indexing 1D textures.
-    typedef std::vector<std::pair<void *, size_t>> texture1d_list;
+    typedef std::map<void *, size_t> texture1d_list;
 ///  Type alias for indexing 2D textures.
-    typedef std::vector<std::pair<void *, std::array<size_t,2>>> texture2d_list;
+    typedef std::map<void *, std::array<size_t,2>> texture2d_list;
 
 //------------------------------------------------------------------------------
 ///  @brief  Define a custom comparitor class.

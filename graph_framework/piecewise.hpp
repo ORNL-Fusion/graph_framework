@@ -204,12 +204,12 @@ void compile_index(std::ostringstream &stream,
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
                     const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        textures1d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
-                                                length);
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               length);
 #ifdef USE_CUDA_TEXTURES
                     } else if constexpr (jit::use_cuda()) {
-                        textures1d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
-                                                length);
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               length);
 #endif
                     } else {
                         if constexpr (jit::use_cuda()) {
@@ -234,6 +234,19 @@ void compile_index(std::ostringstream &stream,
                             stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
                         }
                         stream << "};" << std::endl;
+                    }
+                } else {
+//  When using textures, the register can be defined in a previous kernel. We
+//  need to add the textures again.
+                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                    if constexpr (jit::use_metal<T> ()) {
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               length);
+#ifdef USE_CUDA_TEXTURES
+                    } else if constexpr (jit::use_cuda()) {
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               length);
+#endif
                     }
                 }
                 visited.insert(this);
@@ -669,12 +682,12 @@ void compile_index(std::ostringstream &stream,
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
                     const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        textures2d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
-                                                std::array<size_t, 2> ({length/num_columns, num_columns}));
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
 #ifdef USE_CUDA_TEXTURES
                     } else if constexpr (jit::use_cuda()) {
-                        textures2d.emplace_back(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
-                                                std::array<size_t, 2> ({length/num_columns, num_columns}));
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
 #endif
                     } else {
                         if constexpr (jit::use_cuda()) {
@@ -699,6 +712,19 @@ void compile_index(std::ostringstream &stream,
                             stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
                         }
                         stream << "};" << std::endl;
+                    }
+                } else {
+//  When using textures, the register can be defined in a previous kernel. We
+//  need to add the textures again.
+                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                    if constexpr (jit::use_metal<T> ()) {
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+#ifdef USE_CUDA_TEXTURES
+                    } else if constexpr (jit::use_cuda()) {
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+#endif
                     }
                 }
                 visited.insert(this);

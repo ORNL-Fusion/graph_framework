@@ -691,15 +691,15 @@ namespace gpu {
                               << jit::to_string('o', outputs[i].get());
             }
 #ifdef USE_CUDA_TEXTURES
-            for (size_t i = 0, ie = textures1d.size(); i < ie; i++) {
+            for (auto &[key, value] : textures1d) {
                 source_buffer << "," << std::endl;
                 source_buffer << "    cudaTextureObject_t "
-                              << jit::to_string('a', textures1d[i].first);
+                              << jit::to_string('a', key);
             }
-            for (size_t i = 0, ie = textures2d.size(); i < ie; i++) {
+            for (auto &[key, value] : textures2d) {
                 source_buffer << "," << std::endl;
                 source_buffer << "    cudaTextureObject_t "
-                              << jit::to_string('a', textures2d[i].first);
+                              << jit::to_string('a', key);
             }
 #endif
             source_buffer << ") {" << std::endl;

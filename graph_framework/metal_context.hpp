@@ -442,16 +442,17 @@ namespace gpu {
                               << " [[buffer(" << i + inputs.size() << ")]],"
                               << std::endl;
             }
-            for (size_t i = 0, ie = textures1d.size(); i < ie; i++) {
+            size_t index = 0;
+            for (auto &[key, value] : textures1d) {
                 source_buffer << "    const texture1d<float, access::read> "
-                              << jit::to_string('a', textures1d[i].first)
-                              << " [[texture(" << i << ")]],"
+                              << jit::to_string('a', key)
+                              << " [[texture(" << index++ << ")]],"
                               << std::endl;
             }
-            for (size_t i = 0, ie = textures2d.size(); i < ie; i++) {
+            for (auto &[key, value] : textures2d) {
                 source_buffer << "    const texture2d<float, access::read> "
-                              << jit::to_string('a', textures2d[i].first)
-                              << " [[texture(" << i + textures1d.size() << ")]],"
+                              << jit::to_string('a', key)
+                              << " [[texture(" << index++ << ")]],"
                               << std::endl;
             }
 
