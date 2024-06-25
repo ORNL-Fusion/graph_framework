@@ -114,9 +114,9 @@ int main(int argc, const char * argv[]) {
     (void)argv;
 
     bench_runner<float,                1000, 10, 100000> ();
-//    bench_runner<double,               1000, 10, 100000> ();
-//    bench_runner<std::complex<float>,  1000, 10, 100000> ();
-//    bench_runner<std::complex<double>, 1000, 10, 100000> ();
+    bench_runner<double,               1000, 10, 100000> ();
+    bench_runner<std::complex<float>,  1000, 10, 100000> ();
+    bench_runner<std::complex<double>, 1000, 10, 100000> ();
 
     END_GPU
 }
