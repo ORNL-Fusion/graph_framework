@@ -60,7 +60,7 @@ void test_constant() {
     assert(c1->is_match(c2) && "Expected match.");
 
 //  Test node properties.
-    assert(c1->is_constant_like() && "Expected a constant.");
+    assert(c1->is_constant() && "Expected a constant.");
     assert(!c1->is_all_variables() && "Did not expect a variable.");
     assert(c1->is_power_like() && "Expected a power like.");
 }
@@ -124,7 +124,7 @@ void test_variable() {
     assert(!v1->is_match(v2) && "Expected no match.");
 
 //  Test node properties.
-    assert(!v1->is_constant_like() && "Did not expect a constant.");
+    assert(!v1->is_constant() && "Did not expect a constant.");
     assert(v1->is_all_variables() && "Expected a variable.");
     assert(v1->is_power_like() && "Expected a power like.");
 }
@@ -157,7 +157,7 @@ void test_pseudo_variable() {
            "Expected constant node.");
 
 //  Test node properties.
-    assert(!c->is_constant_like() && "Did not expect a constant.");
+    assert(!c->is_constant() && "Did not expect a constant.");
     assert(c->is_all_variables() && "Expected a variable.");
     assert(c->is_power_like() && "Expected a power like.");
 }

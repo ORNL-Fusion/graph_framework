@@ -543,6 +543,30 @@ template<jit::float_scalar T> void test_backend() {
         static_cast<T> (2.0)
     }));
     assert(!base_vec.is_negative() && "Expected false.");
+
+    backend::buffer<T> has_zero_vec(std::vector<T> ({
+        static_cast<T> (3.0),
+        static_cast<T> (0.0)
+    }));
+    assert(has_zero_vec.has_zero() && "Expected zero.");
+    backend::buffer<T> has_zero_vec2(std::vector<T> ({
+        static_cast<T> (3.0),
+        static_cast<T> (1.0)
+    }));
+    assert(!has_zero_vec2.has_zero() && "Expected zero.");
+    assert(has_zero_vec2.is_normal() && "Expected normal.");
+
+    backend::buffer<T> inf_vec(std::vector<T> ({
+        static_cast<T> (3.0),
+        static_cast<T> (INFINITY)
+    }));
+    assert(!inf_vec.is_normal() && "Expected a inf.");
+
+    backend::buffer<T> nan_vec(std::vector<T> ({
+        static_cast<T> (3.0),
+        static_cast<T> (NAN)
+    }));
+    assert(!nan_vec.is_normal() && "Expected a NaN.");
 }
 
 //------------------------------------------------------------------------------

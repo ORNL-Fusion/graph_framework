@@ -24,6 +24,10 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
+#ifndef NDEBUG
+#include "llvm/ExecutionEngine/Orc/Debugging/DebuggerSupport.h"
+#include "llvm/ExecutionEngine/Orc/TargetProcess/JITLoaderGDB.h"
+#endif
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -31,6 +35,16 @@
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 
 #include "node.hpp"
+
+#ifndef NDEBUG
+//------------------------------------------------------------------------------
+///  @brief This just exposes the functions so the debugger links.
+//------------------------------------------------------------------------------
+LLVM_ATTRIBUTE_USED void linkComponents() {
+    llvm::errs() << (void *)&llvm_orc_registerJITLoaderGDBWrapper
+                 << (void *)&llvm_orc_registerJITLoaderGDBAllocAction;
+}
+#endif
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -135,6 +149,8 @@ namespace gpu {
             args.push_back(filename.c_str());
 #ifdef NDEBUG
             args.push_back("-O3");
+#else
+            args.push_back("-debug-info-kind=standalone");
 #endif
             if (jit::verbose) {
                 for (auto &arg : args) {
@@ -176,7 +192,13 @@ namespace gpu {
             auto ir_module = action.takeModule();
             auto context = std::unique_ptr<llvm::LLVMContext> (action.takeLLVMContext());
 
-            auto jit_try = llvm::orc::LLJITBuilder().create();
+            auto jit_try = llvm::orc::LLJITBuilder()
+#ifndef NDEBUG
+                               .setPrePlatformSetup([](llvm::orc::LLJIT &J) {
+                                   return llvm::orc::enableDebuggerSupport(J);
+                               })
+#endif
+                               .create();
             if (auto jiterror = jit_try.takeError()) {
                 std::cerr << "Failed to build JIT : " << toString(std::move(jiterror)) << std::endl;
                 exit(-1);

@@ -272,6 +272,8 @@ target_link_libraries (llvm_dep
                        clangCodeGen
                        LLVM${LLVM_NATIVE_ARCH}CodeGen
                        LLVMOrcJIT
+                       LLVMOrcDebugging
+                       LLVMOrcTargetProcess
 )
 
 #-------------------------------------------------------------------------------

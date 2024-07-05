@@ -577,6 +577,61 @@ namespace graph {
                 return constant<T, SAFE_MATH> (this->evaluate());
             }
 
+            auto pl1 = piecewise_1D_cast(this->left);
+            auto pr1 = piecewise_1D_cast(this->right);
+
+            if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
+            } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
+            }
+
+            auto pl2 = piecewise_2D_cast(this->left);
+            auto pr2 = piecewise_2D_cast(this->right);
+
+            if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
+                return piecewise_2D(this->evaluate(),
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
+                return piecewise_2D(this->evaluate(),
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            }
+
+//  Combine 2D and 1D piecewise constants if a row or column matches.
+            if (pr2.get() && pr2->is_row_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.atan_row(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pr2.get() && pr2->is_col_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.atan_col(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pl2.get() && pl2->is_row_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.atan_row(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pl2.get() && pl2->is_col_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.atan_col(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            }
+
             return this->shared_from_this();
         }
 

@@ -11,6 +11,93 @@
 #include "trigonometry.hpp"
 
 namespace graph {
+//------------------------------------------------------------------------------
+///  @brief Check if nodes are constant combineable.
+///
+///  @tparam T         Base type of the nodes.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] a Opperand A
+///  @params[in] b Opperand B
+///  @returns True if a and b are combinable.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    bool is_constant_combineable(shared_leaf<T, SAFE_MATH> a,
+                                 shared_leaf<T, SAFE_MATH> b) {
+        if (a->is_constant() && b->is_constant()) {
+            auto a1 = piecewise_1D_cast(a);
+            auto a2 = piecewise_2D_cast(a);
+            auto b2 = piecewise_2D_cast(b);
+
+            return constant_cast(a).get()                                     ||
+                   constant_cast(b).get()                                     ||
+                   (a1.get() && a1->is_arg_match(b))                          ||
+                   (a2.get() && a2->is_arg_match(b))                          ||
+                   (a2.get() && (a2->is_row_match(b) || a2->is_col_match(b))) ||
+                   (b2.get() && (b2->is_row_match(a) || b2->is_col_match(a)));
+        }
+        return false;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the constants are promotable.
+///
+///  @tparam T         Base type of the nodes.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] a Opperand A
+///  @params[in] b Opperand B
+///  @returns True if a is promoteable over b.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    bool is_constant_promotable(shared_leaf<T, SAFE_MATH> a,
+                                shared_leaf<T, SAFE_MATH> b) {
+        
+        auto b1 = piecewise_1D_cast(b);
+        auto b2 = piecewise_2D_cast(b);
+
+        return a->is_constant() &&
+               (!b->is_constant()                                  ||
+                (constant_cast(a).get() && (b1.get() || b2.get())) ||
+                (piecewise_1D_cast(a).get() && b2.get()));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the variable is combinable.
+///
+///  @tparam T         Base type of the nodes.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] a Opperand A
+///  @params[in] b Opperand B
+///  @returns True if a and b are combinable.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    bool is_variable_combinable(shared_leaf<T, SAFE_MATH> a,
+                                shared_leaf<T, SAFE_MATH> b) {
+        return a->get_power_base()->is_match(b->get_power_base());
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the exponent is greater than the other.
+///
+///  @tparam T         Base type of the nodes.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] a Opperand A
+///  @params[in] b Opperand B
+///  @returns True if a and b are combinable.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    bool is_greater_exponent(shared_leaf<T, SAFE_MATH> a,
+                             shared_leaf<T, SAFE_MATH> b) {
+        auto ae = constant_cast(a->get_power_exponent());
+        auto be = constant_cast(b->get_power_exponent());
+        
+        return ae.get() && be.get() &&
+               std::abs(ae->evaluate().at(0)) > std::abs(be->evaluate().at(0));
+    }
+
 //******************************************************************************
 //  Add node.
 //******************************************************************************
@@ -107,6 +194,37 @@ namespace graph {
                                     pr2->get_right());
             }
 
+//  Combine 2D and 1D piecewise constants if a row or column matches.
+            if (pr2.get() && pr2->is_row_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.add_row(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pr2.get() && pr2->is_col_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.add_col(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pl2.get() && pl2->is_row_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.add_row(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pl2.get() && pl2->is_col_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.add_col(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            }
+
 //  Idenity reductions.
             if (this->left->is_match(this->right)) {
                 return two<T, SAFE_MATH> ()*this->left;
@@ -199,12 +317,38 @@ namespace graph {
             auto rfma = fma_cast(this->right);
             if (lfma.get()) {
 //  fma(c,d,e) + a -> fma(c,d,e + a)
-                return fma(lfma->get_left(), lfma->get_middle(),
+                return fma(lfma->get_left(),
+                           lfma->get_middle(),
                            lfma->get_right() + this->right);
             } else if (rfma.get()) {
 //  a + fma(c,d,e) -> fma(c,d,a + e)
-                return fma(rfma->get_left(), rfma->get_middle(),
+                return fma(rfma->get_left(),
+                           rfma->get_middle(),
                            this->left + rfma->get_right());
+            }
+
+//  fma(b,a,d) + fma(c,a,e) -> fma(a,b + c, d + e)
+//  fma(a,b,d) + fma(c,a,e) -> fma(a,b + c, d + e)
+//  fma(b,a,d) + fma(a,c,e) -> fma(a,b + c, d + e)
+//  fma(a,b,d) + fma(a,c,e) -> fma(a,b + c, d + e)
+            if (lfma.get() && rfma.get()) {
+                if (lfma->get_middle()->is_match(rfma->get_middle())) {
+                    return fma(lfma->get_middle(),
+                               lfma->get_left() + rfma->get_left(),
+                               lfma->get_right() + rfma->get_right());
+                } else if (lfma->get_left()->is_match(rfma->get_middle())) {
+                    return fma(lfma->get_left(),
+                               lfma->get_middle() + rfma->get_left(),
+                               lfma->get_right() + rfma->get_right());
+                } else if (lfma->get_middle()->is_match(rfma->get_left())) {
+                    return fma(lfma->get_middle(),
+                               lfma->get_left() + rfma->get_middle(),
+                               lfma->get_right() + rfma->get_right());
+                } else if (lfma->get_left()->is_match(rfma->get_left())) {
+                    return fma(lfma->get_left(),
+                               lfma->get_middle() + rfma->get_middle(),
+                               lfma->get_right() + rfma->get_right());
+                }
             }
 
 //  Handle cases like:
@@ -564,6 +708,37 @@ namespace graph {
                                     pr2->get_right());
             }
 
+//  Combine 2D and 1D piecewise constants if a row or column matches.
+            if (pr2.get() && pr2->is_row_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.subtract_row(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pr2.get() && pr2->is_col_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.subtract_col(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pl2.get() && pl2->is_row_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.subtract_row(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pl2.get() && pl2->is_col_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.subtract_col(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            }
+
 //  Common factor reduction. If the left and right are both muliply nodes check
 //  for a common factor. So you can change a*b - a*c -> a*(b - c).
             auto lm = multiply_cast(this->left);
@@ -622,10 +797,11 @@ namespace graph {
                     return lm->get_right()*(lm->get_left() - rm->get_left());
                 }
 
-//  Change cases like c1*a - c2*b -> c1*(a - c2*b)
-                auto lmc = constant_cast(lm->get_left());
-                auto rmc = constant_cast(rm->get_left());
-                if (lmc.get() && rmc.get()) {
+//  Change cases like c1*a - c2*b -> c1*(a - c2/c1*b)
+//  Note need to make sure c1 doesn't contain any zeros.
+                if (lm->get_left()->is_constant() &&
+                    rm->get_left()->is_constant() &&
+                    !lm->has_constant_zero()) {
                     return lm->get_left()*(lm->get_right() -
                                            (rm->get_left()/lm->get_left())*rm->get_right());
                 }
@@ -680,16 +856,20 @@ namespace graph {
                 auto rmrd = divide_cast(rm->get_right());
                 if (lmld.get() && rmld.get() &&
                     lmld->get_right()->is_match(rmld->get_right())) {
-                    return (lmld->get_left()*lm->get_right() - rmld->get_left()*rm->get_right())/lmld->get_right();
+                    return (lmld->get_left()*lm->get_right() -
+                            rmld->get_left()*rm->get_right())/lmld->get_right();
                 } else if (lmld.get() && rmrd.get() &&
                            lmld->get_right()->is_match(rmrd->get_right())) {
-                   return (lmld->get_left()*lm->get_right() - rmrd->get_left()*rm->get_left())/lmld->get_right();
+                    return (lmld->get_left()*lm->get_right() -
+                            rmrd->get_left()*rm->get_left())/lmld->get_right();
                 } else if (lmrd.get() && rmld.get() &&
                            lmrd->get_right()->is_match(rmld->get_right())) {
-                    return (lmrd->get_left()*lm->get_left() - rmld->get_left()*rm->get_right())/lmrd->get_right();
+                    return (lmrd->get_left()*lm->get_left() -
+                            rmld->get_left()*rm->get_right())/lmrd->get_right();
                 } else if (lmrd.get() && rmrd.get() &&
                            lmrd->get_right()->is_match(rmrd->get_right())) {
-                    return (lmrd->get_left()*lm->get_left() - rmrd->get_left()*rm->get_left())/lmrd->get_right();
+                    return (lmrd->get_left()*lm->get_left() -
+                            rmrd->get_left()*rm->get_left())/lmrd->get_right();
                 }
             }
 
@@ -701,19 +881,23 @@ namespace graph {
                     if (lrm->get_left()->is_match(rm->get_left())) {
 //  (a - c*b) - c*d -> a - (b + d)*c
                         return ls->get_left() -
-                               (lrm->get_right() + rm->get_right())*rm->get_left();
+                               (lrm->get_right() +
+                                rm->get_right())*rm->get_left();
                     } else if (lrm->get_left()->is_match(rm->get_right())) {
 //  (a - c*b) - d*c -> a - (b + d)*c
                         return ls->get_left() -
-                               (lrm->get_right() + rm->get_left())*rm->get_right();
+                               (lrm->get_right() +
+                                rm->get_left())*rm->get_right();
                     } else if (lrm->get_right()->is_match(rm->get_left())) {
 //  (a - c*b) - c*d -> a - (b + d)*c
                         return ls->get_left() -
-                               (lrm->get_left() + rm->get_right())*rm->get_left();
+                               (lrm->get_left() +
+                                rm->get_right())*rm->get_left();
                     } else if (lrm->get_right()->is_match(rm->get_right())) {
 //  (a - c*b) - d*c -> a - (b + d)*c
                         return ls->get_left() -
-                               (lrm->get_left() + rm->get_left())*rm->get_right();
+                               (lrm->get_left() +
+                                rm->get_left())*rm->get_right();
                     }
                 }
             }
@@ -791,6 +975,13 @@ namespace graph {
                                lfma->get_middle(),
                                lfma->get_right() - rfma->get_right());
                 }
+            }
+
+//  fma(c,d,e) - a -> fma(c,d,e - a)
+            if (lfma.get() && !this->right->is_all_variables()) {
+                return fma(lfma->get_left(),
+                           lfma->get_middle(),
+                           lfma->get_right() - this->right);
             }
 
 //  Reduce cases chained subtract multiply divide.
@@ -1111,20 +1302,44 @@ namespace graph {
                                     pr2->get_right());
             }
 
-//  Move constants to the left.
-            if (r.get() && !l.get()) {
-                return this->right*this->left;
+//  Combine 2D and 1D piecewise constants if a row or column matches.
+            if (pr2.get() && pr2->is_row_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.multiply_row(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pr2.get() && pr2->is_col_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.multiply_col(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pl2.get() && pl2->is_row_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.multiply_row(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pl2.get() && pl2->is_col_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.multiply_col(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 
-//  Move piecewise constants to the left.
-            if ((pr1.get() || pr2.get()) &&
-                (!pl1.get() && !pl2.get() && !l.get())) {
+//  Move constants to the left.
+            if (is_constant_promotable(this->right, this->left)) {
                 return this->right*this->left;
             }
 
 //  Move constant like to the left.
-            if (this->right->is_constant_like() &&
-                !this->left->is_constant_like()) {
+            if (is_constant_promotable(this->right, this->left)) {
                 return this->right*this->left;
             }
 
@@ -1132,7 +1347,7 @@ namespace graph {
 //  Disable if the left is a constant like to avoid an infinite loop.
             if (this->left->is_power_like()   &&
                 !this->right->is_power_like() &&
-                !this->left->is_constant_like()) {
+                !this->left->is_constant()) {
                 return this->right*this->left;
             }
 
@@ -1175,7 +1390,8 @@ namespace graph {
 
 //  Promote constants before variables.
 //  (c*v1)*v2 -> c*(v1*v2)
-                if (lm->get_left()->is_constant_like()) {
+                if (is_constant_promotable(lm->get_left(),
+                                           lm->get_right())) {
                     return lm->get_left()*(lm->get_right()*this->right);
                 }
 
@@ -1198,7 +1414,8 @@ namespace graph {
             if (rm.get()) {
 //  Assume constants are on the left.
 //  c1*(c2*v) -> c3*v
-                if (constant_cast(rm->get_left()).get() && l.get()) {
+                if (is_constant_combineable(this->left,
+                                            rm->get_left())) {
                     return (this->left*rm->get_left())*rm->get_right();
                 }
 
@@ -1210,7 +1427,8 @@ namespace graph {
             }
 
 //  v1*(c*v2) -> c*(v1*v2)
-            if (rm.get() && constant_cast(rm->get_left()).get()) {
+            if (rm.get() &&
+                is_constant_promotable(rm->get_left(), this->left)) {
                 return rm->get_left()*(this->left*rm->get_right());
             }
 
@@ -1228,27 +1446,27 @@ namespace graph {
             } else if (rm.get() && 
                        (sin_cast(rm->get_right()).get() ||
                         cos_cast(rm->get_right()).get()) &&
-                       !this->left->is_constant_like()) {
+                       !this->left->is_constant()) {
                 return (this->left*rm->get_left())*rm->get_right();
             }
 
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
 //  the second pass.
             if (lm.get() && rm.get()) {
-                if (constant_cast(lm->get_left()).get() &&
-                    constant_cast(rm->get_left()).get()) {
+                if (is_constant_combineable(lm->get_left(),
+                                            rm->get_left())) {
                     return (lm->get_left()*rm->get_left()) *
                            (lm->get_right()*rm->get_right());
-                } else if (constant_cast(lm->get_left()).get() &&
-                           constant_cast(rm->get_right()).get()) {
+                } else if (is_constant_combineable(lm->get_left(),
+                                                   rm->get_right())) {
                     return (lm->get_left()*rm->get_right()) *
                            (lm->get_right()*rm->get_left());
-                } else if (constant_cast(lm->get_right()).get() &&
-                           constant_cast(rm->get_left()).get()) {
+                } else if (is_constant_combineable(lm->get_right(),
+                                                   rm->get_left())) {
                     return (lm->get_right()*rm->get_left()) *
                            (lm->get_left()*rm->get_right());
-                } else if (constant_cast(lm->get_right()).get() &&
-                           constant_cast(rm->get_right()).get()) {
+                } else if (is_constant_combineable(lm->get_right(),
+                                                   rm->get_right())) {
                     return (lm->get_right()*rm->get_right()) *
                            (lm->get_left()*rm->get_left());
                 }
@@ -1275,26 +1493,22 @@ namespace graph {
 
             if (ld.get()) {
 //  (c/v1)*v2 -> c*(v2/v1)
-                if (constant_cast(ld->get_left()).get()     ||
-                    piecewise_1D_cast(ld->get_left()).get() ||
-                    piecewise_2D_cast(ld->get_left()).get()) {
+                if (ld->get_left()->is_constant()) {
                     return ld->get_left()*(this->right/ld->get_right());
                 }
             }
 
 //  c1*(c2/v) -> c3/v
-//  c1*(v/c2) -> v/c3
-            if (rd.get() && l.get()) {
-                if (constant_cast(rd->get_left()).get()) {
-                    return (this->left*rd->get_left())/rd->get_right();
-                } else if (constant_cast(rd->get_right()).get()) {
-                    return rd->get_left()/(this->left*rd->get_right());
-                }
+            if (rd.get() && this->left->is_constant() &&
+                rd->get_left()->is_constant()) {
+                return (this->left*rd->get_left())/rd->get_right();
             }
 
+//  (a/b)*(c/a) -> c/b
+//  (b/a)*(a/c) -> c/b
             if (ld.get() && rd.get()) {
                 if (ld->get_left()->is_match(rd->get_right())) {
-                    return ld->get_right()/rd->get_left();
+                    return rd->get_left()/ld->get_right();
                 } else if (ld->get_right()->is_match(rd->get_left())) {
                     return ld->get_left()/rd->get_right();
                 }
@@ -1860,18 +2074,44 @@ namespace graph {
                                     pr2->get_right());
             }
 
-            if (this->left->is_match(this->right)) {
-                if (l.get() && l->is(1)) {
-                    return this->left;
-                }
+//  Combine 2D and 1D piecewise constants if a row or column matches.
+            if (pr2.get() && pr2->is_row_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.divide_row(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pr2.get() && pr2->is_col_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.divide_col(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pl2.get() && pl2->is_row_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.divide_row(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pl2.get() && pl2->is_col_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.divide_col(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            }
 
+            if (this->left->is_match(this->right)) {
                 return one<T, SAFE_MATH> ();
             }
 
 //  Reduce cases of a/c1 -> c2*a
-            if (r.get()) {
-                return (one<T, SAFE_MATH> ()/this->right) *
-                       this->left;
+            if (this->right->is_constant()) {
+                return (one<T, SAFE_MATH> ()/this->right)*this->left;
             }
 
 //  fma(a,d,c*d)/d -> a + c
@@ -1902,35 +2142,46 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
-//  Assume constants are always on the left.
 //  c1/(c2*v) -> c3/v
-//  (c1*v)/c2 -> c3*v
-            if (rm.get() && l.get()) {
-                if (constant_cast(rm->get_left()).get()) {
+//  c1/(c2*c3) -> c4/c3
+            if (rm.get()) {
+                if (is_constant_combineable(rm->get_left(), 
+                                            this->left)) {
                     return (this->left/rm->get_left())/rm->get_right();
-                }
-            } else if (lm.get() && r.get()) {
-                if (constant_cast(lm->get_left()).get()) {
-                    return (lm->get_left()/this->right)*lm->get_right();
+                } else if (is_constant_combineable(rm->get_left(), 
+                                                   this->left)) {
+                    return (this->left/rm->get_right())/rm->get_left();
                 }
             }
 
             if (lm.get() && rm.get()) {
 //  Test for constants that can be reduced out.
-                if (constant_cast(lm->get_left()).get() &&
-                    constant_cast(rm->get_left()).get()) {
-                    return (lm->get_left()/rm->get_left())*(lm->get_right()/rm->get_right());
-                } else if (constant_cast(lm->get_left()).get() &&
-                           constant_cast(rm->get_right()).get()) {
-                    return (lm->get_left()/rm->get_right())*(lm->get_right()/rm->get_left());
-                } else if (constant_cast(lm->get_right()).get() &&
-                           constant_cast(rm->get_left()).get()) {
-                    return (lm->get_right()/rm->get_left())*(lm->get_left()/rm->get_right());
-                } else if (constant_cast(lm->get_right()).get() &&
-                           constant_cast(rm->get_right()).get()) {
-                    return (lm->get_right()/rm->get_right())*(lm->get_left()/rm->get_left());
+//  (c1*a)/(c2*b) -> c3*a/b
+//  (a*c1)/(c2*b) -> c3*a/b
+//  (c1*a)/(b*c2) -> c3*a/b
+//  (a*c1)/(b*c2) -> c3*a/b
+                if (is_constant_combineable(lm->get_left(),
+                                            rm->get_left())) {
+                    return (lm->get_left()/rm->get_left()) *
+                           (lm->get_right()/rm->get_right());
+                } else if (is_constant_combineable(lm->get_left(),
+                                                   rm->get_right())) {
+                    return (lm->get_left()/rm->get_right()) *
+                           (lm->get_right()/rm->get_left());
+                } else if (is_constant_combineable(lm->get_right(),
+                                                   rm->get_left())) {
+                    return (lm->get_right()/rm->get_left()) *
+                           (lm->get_left()/rm->get_right());
+                } else if (is_constant_combineable(lm->get_right(),
+                                                   rm->get_right())) {
+                    return (lm->get_right()/rm->get_right()) *
+                           (lm->get_left()/rm->get_left());
                 }
 
+//  (a*b)/(a*c) -> b/c
+//  (b*a)/(a*c) -> b/c
+//  (a*b)/(c*a) -> b/c
+//  (b*a)/(c*a) -> b/c
                 if (lm->get_left()->is_match(rm->get_left())) {
                     return lm->get_right()/rm->get_right();
                 } else if (lm->get_left()->is_match(rm->get_right())) {
@@ -1975,11 +2226,8 @@ namespace graph {
             }
 
 //  (c*v1)/v2 -> c*(v1/v2)
-            if (lm.get() && constant_cast(lm->get_left()).get()) {
-                return lm->get_left()*(lm->get_right()/this->right);
-            }
-
-            if (lm.get() && lm->get_left()->is_constant_like()) {
+            if (lm.get() && lm->get_left()->is_constant() &&
+                !lm->get_right()->is_constant()) {
                 return lm->get_left()*(lm->get_right()/this->right);
             }
 
@@ -2385,16 +2633,25 @@ namespace graph {
                 return this->left + this->right;
             }
 
-            auto pl1 = piecewise_1D_cast(this->left);
-            auto pm1 = piecewise_1D_cast(this->middle);
-            auto pl2 = piecewise_2D_cast(this->left);
-            auto pm2 = piecewise_2D_cast(this->middle);
+//  Check if the left and middle are combinable. This will be constant merged in
+//  multiply reduction.
+            if (is_constant_combineable(this->left, this->middle) ||
+                is_variable_combinable(this->left, this->middle)) {
+                return (this->left*this->middle)  + this->right;
+            }
 
-            if ((pl1.get() && (m.get() || pl1->is_arg_match(this->middle))) ||
-                (pm1.get() && (l.get() || pm1->is_arg_match(this->left)))   ||
-                (pl2.get() && (m.get() || pl2->is_arg_match(this->middle))) ||
-                (pm2.get() && (l.get() || pm2->is_arg_match(this->left)))) {
-                return (this->left*this->middle) + this->right;
+//  fma(c2,c1,a) -> fma(c1,c2,a)
+            if (is_constant_promotable(this->middle, 
+                                       this->left)) {
+                return fma(this->middle, this->left, this->right);
+            }
+
+//  fma(a,b,a) -> a*(1 + b)
+//  fma(b,a,a) -> a*(1 + b)
+            if (this->left->is_match(this->right)) {
+                return this->left*(one<T, SAFE_MATH> () + this->middle);
+            } else if (this->middle->is_match(this->right)) {
+                return this->middle*(one<T, SAFE_MATH> () + this->left);
             }
 
 //  Common factor reduction. If the left and right are both multiply nodes check
@@ -2413,12 +2670,35 @@ namespace graph {
                     return this->middle*(this->left + rm->get_left());
                 }
 
-//  Change cases like c1*a + c2*b -> c1*(c3*b + a)
-                auto rmc = constant_cast(rm->get_left());
-                if (rmc.get() && l.get()) {
+//  Change cases like 
+//  fma(c1,a,c2*b) -> c1*fma(c3,b,a)
+//  fma(a,c1,c2*b) -> c1*fma(c3,b,a)
+//  fma(c1,a,b*c2) -> c1*fma(c3,b,a)
+//  fma(a,c1,b*c2) -> c1*fma(c3,b,a)
+                if (is_constant_combineable(this->left,
+                                            rm->get_left()) &&
+                    !this->left->has_constant_zero()) {
                     return this->left*fma(rm->get_left()/this->left,
                                           rm->get_right(),
                                           this->middle);
+                } else if (is_constant_combineable(this->middle,
+                                                   rm->get_left()) &&
+                           !this->middle->has_constant_zero()) {
+                    return this->middle*fma(rm->get_left()/this->middle,
+                                            rm->get_right(),
+                                            this->left);
+                } else if (is_constant_combineable(this->left,
+                                                   rm->get_right()) &&
+                           !this->left->has_constant_zero()) {
+                    return this->left*fma(rm->get_right()/this->left,
+                                          rm->get_left(),
+                                          this->middle);
+                } else if (is_constant_combineable(this->middle,
+                                                   rm->get_right()) &&
+                           !this->middle->has_constant_zero()) {
+                    return this->middle*fma(rm->get_right()/this->middle,
+                                            rm->get_left(),
+                                            this->left);
                 }
 
 //  Convert fma(a*b,c,d*e) -> fma(d,e,a*b*c)
@@ -2433,48 +2713,82 @@ namespace graph {
 
 //  Handle cases like.
 //  fma(c1*a,b,c2*d) -> c1*(a*b + c2/c1*d)
+//  fma(a*c1,b,c2*d) -> c1*(a*b + c2/c1*d)
+//  fma(c1*a,b,d*c2*d) -> c1*(a*b + c2/c1*d)
+//  fma(a*c1,b,d*c2*d) -> c1*(a*b + c2/c1*d)
             if (lm.get() && rm.get()) {
-                auto rmc = constant_cast(rm->get_left());
-                if (rmc.get()) {
+                if (is_constant_combineable(rm->get_left(),
+                                            lm->get_left()) &&
+                    !lm->get_left()->has_constant_zero()) {
                     return lm->get_left()*fma(lm->get_right(),
                                               this->middle,
                                               (rm->get_left()/lm->get_left())*rm->get_right());
+                } else if (is_constant_combineable(rm->get_left(),
+                                                   lm->get_right()) &&
+                           !lm->get_right()->has_constant_zero()) {
+                    return lm->get_right()*fma(lm->get_left(),
+                                               this->middle,
+                                               (rm->get_left()/lm->get_right())*rm->get_right());
+                } else if (is_constant_combineable(rm->get_right(),
+                                                   lm->get_left()) &&
+                           !lm->get_left()->has_constant_zero()) {
+                    return lm->get_left()*fma(lm->get_right(),
+                                              this->middle,
+                                              (rm->get_right()/lm->get_left())*rm->get_left());
+                } else if (is_constant_combineable(rm->get_right(),
+                                                   lm->get_right()) &&
+                           !lm->get_right()->has_constant_zero()) {
+                    return lm->get_right()*fma(lm->get_left(),
+                                               this->middle,
+                                               (rm->get_right()/lm->get_right())*rm->get_left());
                 }
             }
 
 //  Move constant multiplies to the left.
             if (lm.get()) {
-                auto lmc = constant_cast(lm->get_left());
-                if (lmc.get()) {
+// fma(c1*a,b,c) -> fma(c1,a*b,c)
+                if (is_constant_promotable(lm->get_left(),
+                                           lm->get_right())) {
                     return fma(lm->get_left(),
                                lm->get_right()*this->middle,
                                this->right);
                 }
             } else if (mm.get()) {
-                auto mmc = constant_cast(mm->get_left());
-                auto mmpw1c = piecewise_1D_cast(mm->get_left());
-                auto mmpw2c = piecewise_2D_cast(mm->get_left());
-                if (mmc.get() || mmpw1c.get() || mmpw2c.get()) {
-                    if (l.get() || pl1.get() || pl2.get()) {
-                        return fma(this->left*mm->get_left(),
-                                   mm->get_right(),
-                                   this->right);
-                    } else {
-                        return fma(mm->get_left(),
-                                   this->left*mm->get_right(),
-                                   this->right);
-                    }
+// fma(c1,c2*a,b) -> fma(c3,a,b)
+// fma(c1,a*c2,b) -> fma(c3,a,b)
+// fma(a,c1*b,c) -> fma(c1,a*b,c)
+                if (is_constant_combineable(this->left,
+                                            mm->get_left())) {
+                    return fma(this->left*mm->get_left(),
+                               mm->get_right(),
+                               this->right);
+                } else if (is_constant_combineable(this->left,
+                                                   mm->get_right())) {
+                    return fma(this->left*mm->get_right(),
+                               mm->get_left(),
+                               this->right);
+                } else if (is_constant_promotable(mm->get_left(),
+                                                  this->left)) {
+                    return fma(mm->get_left(),
+                               this->left*mm->get_right(),
+                               this->right);
                 }
             }
 
-//  fma(c1,a,c2/b) -> c1*(a + c1/(c2*b))
-//  fma(c1,a,b/c2) -> c1*(a + b/(c1*c2))
+//  fma(c1,a,c2/b) -> c1*(a + c3/b)
+//  fma(a,c1,c2/b) -> c1*(a + c3/b)
             auto rd = divide_cast(this->right);
-            if (l.get() && rd.get()) {
-                if (constant_cast(rd->get_left()).get() ||
-                    constant_cast(rd->get_right()).get()) {
+            if (rd.get()) {
+                if (is_constant_combineable(this->left,
+                                            rd->get_left()) &&
+                    !this->left->has_constant_zero()) {
                     return this->left*(this->middle +
                                        rd->get_left()/(this->left*rd->get_right()));
+                } else if (is_constant_combineable(this->middle,
+                                                   rd->get_left()) &&
+                           !this->middle->has_constant_zero()) {
+                    return this->middle*(this->left +
+                                         rd->get_left()/(this->middle*rd->get_right()));
                 }
             }
 
@@ -2511,6 +2825,342 @@ namespace graph {
 //  Chained fma reductions.
             auto rfma = fma_cast(this->right);
             if (rfma.get()) {
+//  fma(a, b, fma(c, b, d)) -> fma(b, a + c, d)
+//  fma(b, a, fma(c, b, d)) -> fma(b, a + c, d)
+//  fma(a, b, fma(b, c, d)) -> fma(b, a + c, d)
+//  fma(b, a, fma(b, c, d)) -> fma(b, a + c, d)
+                if (this->middle->is_match(rfma->get_middle())) {
+                    return fma(this->middle,
+                               this->left + rfma->get_left(),
+                               rfma->get_right());
+                } else if (this->left->is_match(rfma->get_middle())) {
+                    return fma(this->left,
+                               this->middle + rfma->get_left(),
+                               rfma->get_right());
+                } else if (this->middle->is_match(rfma->get_left())) {
+                    return fma(this->middle,
+                               this->left + rfma->get_middle(),
+                               rfma->get_right());
+                } else if (this->left->is_match(rfma->get_left())) {
+                    return fma(this->left,
+                               this->middle + rfma->get_middle(),
+                               rfma->get_right());
+                }
+     
+                if (mm.get()) {
+//  fma(a, e*b, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+//  fma(a, b*e, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+//  fma(a, e*b, fma(b, c, d)) -> fma(b, fma(a, e, c), d)
+//  fma(a, b*e, fma(b, c, d)) -> fma(b, fma(a, e, c), d)
+                    if (mm->get_right()->is_match(rfma->get_middle())) {
+                        return fma(mm->get_right(),
+                                   fma(this->left,
+                                       mm->get_left(),
+                                       rfma->get_left()),
+                                   rfma->get_right());
+                    } else if (mm->get_left()->is_match(rfma->get_middle())) {
+                        return fma(mm->get_left(),
+                                   fma(this->left,
+                                       mm->get_right(),
+                                       rfma->get_left()),
+                                   rfma->get_right());
+                    } else if (mm->get_right()->is_match(rfma->get_left())) {
+                        return fma(mm->get_right(),
+                                   fma(this->left,
+                                       mm->get_left(),
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    } else if (mm->get_left()->is_match(rfma->get_left())) {
+                        return fma(mm->get_left(),
+                                   fma(this->left,
+                                       mm->get_right(),
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    }
+                } else if (lm.get()) {
+//  fma(e*b, a, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+//  fma(b*e, a, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+//  fma(e*b, a, fma(b, c, d)) -> fma(b, fma(a, e, c), d)
+//  fma(e*d, a, fma(b, c, d)) -> fma(b, fma(a, e, c), d)
+                    if (lm->get_right()->is_match(rfma->get_middle())) {
+                        return fma(lm->get_right(),
+                                   fma(this->middle,
+                                       lm->get_left(),
+                                       rfma->get_left()),
+                                   rfma->get_right());
+                    } else if (lm->get_left()->is_match(rfma->get_middle())) {
+                        return fma(lm->get_left(),
+                                   fma(this->middle,
+                                       lm->get_right(),
+                                       rfma->get_left()),
+                                   rfma->get_right());
+                    } else if (lm->get_right()->is_match(rfma->get_left())) {
+                        return fma(lm->get_right(),
+                                   fma(this->middle,
+                                       lm->get_left(),
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    } else if (lm->get_left()->is_match(rfma->get_left())) {
+                        return fma(lm->get_left(),
+                                   fma(this->middle,
+                                       lm->get_right(),
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    }
+                }
+
+                auto rfmamm = multiply_cast(rfma->get_middle());
+                auto rfmalm = multiply_cast(rfma->get_left());
+                if (rfmamm.get()) {
+//  fma(a, b, fma(c, e*b, d)) -> fma(b, fma(c, e, a), d)
+//  fma(b, a, fma(c, e*b, d)) -> fma(b, fma(c, e, a), d)
+//  fma(a, b, fma(c, b*e, d)) -> fma(b, fma(c, e, a), d)
+//  fma(b, a, fma(c, b*e, d)) -> fma(b, fma(c, e, a), d)
+                    if (rfmamm->get_right()->is_match(this->middle)) {
+                        return fma(this->middle,
+                                   fma(rfma->get_left(),
+                                       rfmamm->get_left(),
+                                       this->left),
+                                   rfma->get_right());
+                    } else if (rfmamm->get_right()->is_match(this->left)) {
+                        return fma(this->left,
+                                   fma(rfma->get_left(),
+                                       rfmamm->get_left(),
+                                       this->middle),
+                                   rfma->get_right());
+                    } else if (rfmamm->get_left()->is_match(this->middle)) {
+                        return fma(this->middle,
+                                   fma(rfma->get_left(),
+                                       rfmamm->get_right(),
+                                       this->left),
+                                   rfma->get_right());
+                    } else if (rfmamm->get_left()->is_match(this->left)) {
+                        return fma(this->left,
+                                   fma(rfma->get_left(),
+                                       rfmamm->get_right(),
+                                       this->middle),
+                                   rfma->get_right());
+                    }
+                } else if (rfmalm.get()) {
+//  fma(a, b, fma(e*b, c, d)) -> fma(b, fma(c, e, a), d)
+//  fma(b, a, fma(e*b, c, d)) -> fma(b, fma(c, e, a), d)
+//  fma(a, b, fma(b*e, c, d)) -> fma(b, fma(c, e, a), d)
+//  fma(b, a, fma(b*e, c, d)) -> fma(b, fma(c, e, a), d)
+                    if (rfmalm->get_right()->is_match(this->middle)) {
+                        return fma(this->middle,
+                                   fma(rfma->get_middle(),
+                                       rfmalm->get_left(),
+                                       this->left),
+                                   rfma->get_right());
+                    } else if (rfmalm->get_right()->is_match(this->left)) {
+                        return fma(this->left,
+                                   fma(rfma->get_middle(),
+                                       rfmalm->get_left(),
+                                       this->middle),
+                                   rfma->get_right());
+                    } else if (rfmalm->get_left()->is_match(this->middle)) {
+                        return fma(this->middle,
+                                   fma(rfma->get_middle(),
+                                       rfmalm->get_right(),
+                                       this->left),
+                                   rfma->get_right());
+                    } else if (rfmalm->get_left()->is_match(this->left)) {
+                        return fma(this->left,
+                                   fma(rfma->get_middle(),
+                                       rfmalm->get_right(),
+                                       this->middle),
+                                   rfma->get_right());
+                    }
+                }
+
+                if (mm.get() && rfmamm.get()) {
+//  fma(a, f*b, fma(c, e*b, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(a, b*f, fma(c, e*b, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(a, f*b, fma(c, b*e, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(a, b*f, fma(c, b*e, d)) -> fma(b, fma(a, f, c*e), d)
+                    if (mm->get_right()->is_match(rfmamm->get_right())) {
+                        return fma(mm->get_right(),
+                                   fma(this->left,
+                                       mm->get_left(),
+                                       rfma->get_left()*rfmamm->get_left()),
+                                   rfma->get_right());
+                    } else if (mm->get_left()->is_match(rfmamm->get_right())) {
+                        return fma(mm->get_left(),
+                                   fma(this->left,
+                                       mm->get_right(),
+                                       rfma->get_left()*rfmamm->get_left()),
+                                   rfma->get_right());
+                    } else if (mm->get_right()->is_match(rfmamm->get_left())) {
+                        return fma(mm->get_right(),
+                                   fma(this->left,
+                                       mm->get_left(),
+                                       rfma->get_left()*rfmamm->get_right()),
+                                   rfma->get_right());
+                    } else if (mm->get_left()->is_match(rfmamm->get_left())) {
+                        return fma(mm->get_left(),
+                                   fma(this->left,
+                                       mm->get_right(),
+                                       rfma->get_left()*rfmamm->get_right()),
+                                   rfma->get_right());
+                    }
+                } else if (lm.get() && rfmamm.get()) {
+//  fma(f*b, a, fma(c, e*b, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(b*f, a, fma(c, e*b, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(f*b, a, fma(c, b*e, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(b*f, a, fma(c, b*e, d)) -> fma(b, fma(a, f, c*e), d)
+                    if (lm->get_right()->is_match(rfmamm->get_right())) {
+                        return fma(lm->get_right(),
+                                   fma(this->middle,
+                                       lm->get_left(),
+                                       rfma->get_left()*rfmamm->get_left()),
+                                   rfma->get_right());
+                    } else if (lm->get_left()->is_match(rfmamm->get_right())) {
+                        return fma(lm->get_left(),
+                                   fma(this->middle,
+                                       lm->get_right(),
+                                       rfma->get_left()*rfmamm->get_left()),
+                                   rfma->get_right());
+                    } else if (lm->get_right()->is_match(rfmamm->get_left())) {
+                        return fma(lm->get_right(),
+                                   fma(this->middle,
+                                       lm->get_left(),
+                                       rfma->get_left()*rfmamm->get_right()),
+                                   rfma->get_right());
+                    } else if (lm->get_left()->is_match(rfmamm->get_left())) {
+                        return fma(lm->get_left(),
+                                   fma(this->middle,
+                                       lm->get_right(),
+                                       rfma->get_left()*rfmamm->get_right()),
+                                   rfma->get_right());
+                    }
+                } else if (mm.get() && rfmalm.get()) {
+//  fma(a, f*b, fma(e*b, c, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(a, b*f, fma(e*b, c, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(a, f*b, fma(b*e, c, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(a, b*f, fma(b*e, c, d)) -> fma(b, fma(a, f, c*e), d)
+                    if (mm->get_right()->is_match(rfmalm->get_right())) {
+                        return fma(mm->get_right(),
+                                   fma(this->left,
+                                       mm->get_left(),
+                                       rfma->get_middle()*rfmalm->get_left()),
+                                   rfma->get_right());
+                    } else if (mm->get_left()->is_match(rfmalm->get_right())) {
+                        return fma(mm->get_left(),
+                                   fma(this->left,
+                                       mm->get_right(),
+                                       rfma->get_middle()*rfmalm->get_left()),
+                                   rfma->get_right());
+                    } else if (mm->get_right()->is_match(rfmalm->get_left())) {
+                        return fma(mm->get_right(),
+                                   fma(this->left,
+                                       mm->get_left(),
+                                       rfma->get_middle()*rfmalm->get_right()),
+                                   rfma->get_right());
+                    } else if (mm->get_left()->is_match(rfmalm->get_left())) {
+                        return fma(mm->get_left(),
+                                   fma(this->left,
+                                       mm->get_right(),
+                                       rfma->get_middle()*rfmalm->get_right()),
+                                   rfma->get_right());
+                    }
+                } else if (lm.get() && rfmalm.get()) {
+//  fma(f*b, a, fma(e*b, c, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(b*f, a, fma(e*b, c, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(f*b, a, fma(b*e, c, d)) -> fma(b, fma(a, f, c*e), d)
+//  fma(b*f, a, fma(b*e, c, d)) -> fma(b, fma(a, f, c*e), d)
+                    if (lm->get_right()->is_match(rfmalm->get_right())) {
+                        return fma(lm->get_right(),
+                                   fma(this->middle,
+                                       lm->get_left(),
+                                       rfma->get_middle()*rfmalm->get_left()),
+                                   rfma->get_right());
+                    } else if (lm->get_left()->is_match(rfmalm->get_right())) {
+                        return fma(lm->get_left(),
+                                   fma(this->middle,
+                                       lm->get_right(),
+                                       rfma->get_middle()*rfmalm->get_left()),
+                                   rfma->get_right());
+                    } else if (lm->get_right()->is_match(rfmalm->get_left())) {
+                        return fma(lm->get_right(),
+                                   fma(this->middle,
+                                       lm->get_left(),
+                                       rfma->get_middle()*rfmalm->get_right()),
+                                   rfma->get_right());
+                    } else if (lm->get_left()->is_match(rfmalm->get_left())) {
+                        return fma(lm->get_left(),
+                                   fma(this->middle,
+                                       lm->get_right(),
+                                       rfma->get_middle()*rfmalm->get_right()),
+                                   rfma->get_right());
+                    }
+                }
+
+                if (is_variable_combinable(this->middle, rfma->get_middle())) {
+                    if (is_greater_exponent(this->middle, rfma->get_middle())) {
+//  fma(a,x^b,fma(c,x^d,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
+                        return fma(rfma->get_middle(),
+                                   fma(this->middle/rfma->get_middle(),
+                                       this->left,
+                                       rfma->get_left()),
+                                   rfma->get_right());
+                    } else {
+//  fma(a,x^b,fma(c,x^d,e)) -> fma(x^b,fma(x^(d-b),c,a),e) if d > b
+                        return fma(this->middle,
+                                   fma(rfma->get_middle()/this->middle,
+                                       rfma->get_left(),
+                                       this->left),
+                                   rfma->get_right());
+                    }
+                } else if (is_variable_combinable(this->left, rfma->get_middle())) {
+                    if (is_greater_exponent(this->left, rfma->get_middle())) {
+//  fma(x^b,a,fma(c,x^d,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
+                        return fma(rfma->get_middle(),
+                                   fma(this->left/rfma->get_middle(),
+                                       this->middle,
+                                       rfma->get_left()),
+                                   rfma->get_right());
+                    } else {
+//  fma(x^b,a,fma(c,x^d,e)) -> fma(x^b,fma(x^(d-b),c,a),e) if d > b
+                        return fma(this->left,
+                                   fma(rfma->get_middle()/this->left,
+                                       rfma->get_left(),
+                                       this->middle),
+                                   rfma->get_right());
+                    }
+                } else if (is_variable_combinable(this->middle, rfma->get_left())) {
+                    if (is_greater_exponent(this->middle, rfma->get_left())) {
+//  fma(a,x^b,fma(x^d,c,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
+                        return fma(rfma->get_left(),
+                                   fma(this->middle/rfma->get_left(),
+                                       this->left,
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    } else {
+//  fma(a,x^b,fma(x^d,c,e)) -> fma(x^b,fma(x^(d-b),c,a),e) if d > b
+                        return fma(this->middle,
+                                   fma(rfma->get_left()/this->middle,
+                                       rfma->get_middle(),
+                                       this->left),
+                                   rfma->get_right());
+                    }
+                } else if (is_variable_combinable(this->left, rfma->get_left())) {
+                    if (is_greater_exponent(this->left, rfma->get_left())) {
+//  fma(x^b,a,fma(x^d,c,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
+                        return fma(rfma->get_left(),
+                                   fma(this->left/rfma->get_left(),
+                                       this->middle,
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    } else {
+//  fma(x^b,a,fma(x^d,c,e)) -> fma(x^b,fma(x^(d-b),c,a),e) if d > b
+                        return fma(this->left,
+                                   fma(rfma->get_left()/this->left,
+                                       rfma->get_middle(),
+                                       this->middle),
+                                   rfma->get_right());
+                    }
+                }
+
 //  fma(a,b,fma(a,b,c)) -> fma(2*a,b,c)
 //  fma(a,b,fma(b,a,c)) -> fma(2*a,b,c)
                 if (this->left->is_match(rfma->get_left()) &&
@@ -2553,7 +3203,7 @@ namespace graph {
             }
 
 //  Check to see if it is worth moving nodes out of a fma nodes. These should be
-//  restricted to variable like nodes. Only do this reduction is the complexity
+//  restricted to variable like nodes. Only do this reduction if the complexity
 //  reduces.
             if (this->left->is_all_variables()) {
                 auto rdl = this->right/this->left;
@@ -2570,12 +3220,12 @@ namespace graph {
             }
 
 //  Promote constants out to the left.
-            if (l.get() && r.get()) {
+            if (is_constant_combineable(this->left, this->right) &&
+                !this->left->has_constant_zero()) {
                 return this->left*(this->middle + this->right/this->left);
             }
 
-
-//  Change negative eponents to divide so that can be factored out.
+//  Change negative exponents to divide so that can be factored out.
 //  fma(a,b^-c,d) = a/b^c + d
 //  fma(b^-c,a,d) = a/b^c + d
             auto lp = pow_cast(this->left);

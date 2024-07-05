@@ -99,14 +99,10 @@ namespace graph {
 //  sqrt((x^a)*y).
             auto am = multiply_cast(this->arg);
             if (am.get()) {
-                if (pow_cast(am->get_left()).get()           ||
-                    constant_cast(am->get_left()).get()      ||
-                    piecewise_1D_cast(am->get_left()).get()  ||
-                    piecewise_2D_cast(am->get_left()).get()  ||
-                    pow_cast(am->get_right()).get()          ||
-                    constant_cast(am->get_right()).get()     ||
-                    piecewise_1D_cast(am->get_right()).get() ||
-                    piecewise_2D_cast(am->get_right()).get()) {
+                if (pow_cast(am->get_left()).get()  ||
+                    am->get_left()->is_constant()   ||
+                    pow_cast(am->get_right()).get() ||
+                    am->get_right()->is_constant()) {
                     return sqrt(am->get_left()) *
                            sqrt(am->get_right());
                 }
@@ -116,14 +112,10 @@ namespace graph {
 //  where c is a constant.
             auto ad = divide_cast(this->arg);
             if (ad.get()) {
-                if (pow_cast(ad->get_left()).get()           ||
-                    constant_cast(ad->get_left()).get()      ||
-                    piecewise_1D_cast(ad->get_left()).get()  ||
-                    piecewise_2D_cast(ad->get_left()).get()  ||
-                    pow_cast(ad->get_right()).get()          ||
-                    constant_cast(ad->get_right()).get()     ||
-                    piecewise_1D_cast(ad->get_right()).get() ||
-                    piecewise_2D_cast(ad->get_right()).get()) {
+                if (pow_cast(ad->get_left()).get()  ||
+                    ad->get_left()->is_constant()   ||
+                    pow_cast(ad->get_right()).get() ||
+                    ad->get_right()->is_constant()) {
                     return sqrt(ad->get_left()) /
                            sqrt(ad->get_right());
                 }
@@ -865,39 +857,77 @@ namespace graph {
 ///  @returns A reduced power node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
+            auto lc = constant_cast(this->left);
             auto rc = constant_cast(this->right);
 
-            if (rc.get()) {
-                if (rc->is(0)) {
-                    return one<T, SAFE_MATH> ();
-                } else if (rc->is(1)) {
-                    return this->left;
-                } else if (rc->is(0.5)) {
-                    return sqrt(this->left);
-                } else if (rc->is(2)){
-                    auto sq = sqrt_cast(this->left);
-                    if (sq.get()) {
-                        return sq->get_arg();
-                    }
+            if (rc.get() && rc->is(0)) {
+                return one<T, SAFE_MATH> ();
+            } else if (rc.get() && rc->is(1)) {
+                return this->left;
+            } else if (rc.get() && rc->is(0.5)) {
+                return sqrt(this->left);
+            } else if (rc.get() && rc->is(2)){
+                auto sq = sqrt_cast(this->left);
+                if (sq.get()) {
+                    return sq->get_arg();
                 }
+            }
 
-                if (constant_cast(this->left).get()) {
-                    return constant<T, SAFE_MATH> (this->evaluate());
-                }
+            if (lc.get() && rc.get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
 
-                auto pl1 = piecewise_1D_cast(this->left);
-                if (pl1.get()) {
-                    return piecewise_1D(this->evaluate(),
-                                        pl1->get_arg());
-                }
+            auto pl1 = piecewise_1D_cast(this->left);
+            auto pr1 = piecewise_1D_cast(this->right);
+            if (pl1.get() && (rc.get() || pl1->is_arg_match(this->right))) {
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
+            } else if (pr1.get() && (lc.get() || pr1->is_arg_match(this->left))) {
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
+            }
+            
+            auto pl2 = piecewise_2D_cast(this->left);
+            auto pr2 = piecewise_2D_cast(this->right);
+            if (pl2.get() && (rc.get() || pl2->is_arg_match(this->right))) {
+                return piecewise_2D(this->evaluate(),
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pr2.get() && (lc.get() || pr2->is_arg_match(this->left))) {
+                return piecewise_2D(this->evaluate(),
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            }
 
-                auto pl2 = piecewise_2D_cast(this->left);
-                if (pl2.get()) {
-                    return piecewise_2D(this->evaluate(),
-                                        pl2->get_num_columns(),
-                                        pl2->get_left(),
-                                        pl2->get_right());
-                }
+//  Combine 2D and 1D piecewise constants if a row or column matches.
+            if (pr2.get() && pr2->is_row_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.pow_row(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pr2.get() && pr2->is_col_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.pow_col(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pl2.get() && pl2->is_row_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.pow_row(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pl2.get() && pl2->is_col_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.pow_col(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 
             auto lp = pow_cast(this->left);
@@ -909,15 +939,11 @@ namespace graph {
 //  Handle cases where (c*x)^a, (x*c)^a, (a*sqrt(b))^c and (a*b^c)^2.
             auto lm = multiply_cast(this->left);
             if (lm.get()) {
-                if (constant_cast(lm->get_left()).get()      ||
-                    constant_cast(lm->get_right()).get()     ||
-                    piecewise_1D_cast(lm->get_left()).get()  ||
-                    piecewise_1D_cast(lm->get_right()).get() ||
-                    piecewise_2D_cast(lm->get_left()).get()  ||
-                    piecewise_2D_cast(lm->get_right()).get() ||
-                    sqrt_cast(lm->get_left()).get()          ||
-                    sqrt_cast(lm->get_right()).get()         ||
-                    pow_cast(lm->get_left()).get()           ||
+                if (lm->get_left()->is_constant()    ||
+                    lm->get_right()->is_constant()   ||
+                    sqrt_cast(lm->get_left()).get()  ||
+                    sqrt_cast(lm->get_right()).get() ||
+                    pow_cast(lm->get_left()).get()   ||
                     pow_cast(lm->get_right()).get()) {
                     return pow(lm->get_left(), this->right) *
                            pow(lm->get_right(), this->right);
@@ -927,15 +953,11 @@ namespace graph {
 //  Handle cases where (c/x)^a, (x/c)^a, (a/sqrt(b))^c and (a/b^c)^2.
             auto ld = divide_cast(this->left);
             if (ld.get()) {
-                if (constant_cast(ld->get_left()).get()      ||
-                    constant_cast(ld->get_right()).get()     ||
-                    piecewise_1D_cast(ld->get_left()).get()  ||
-                    piecewise_1D_cast(ld->get_right()).get() ||
-                    piecewise_2D_cast(ld->get_left()).get()  ||
-                    piecewise_2D_cast(ld->get_right()).get() ||
-                    sqrt_cast(ld->get_left()).get()          ||
-                    sqrt_cast(ld->get_right()).get()         ||
-                    pow_cast(ld->get_left()).get()           ||
+                if (ld->get_left()->is_constant()    ||
+                    ld->get_right()->is_constant()   ||
+                    sqrt_cast(ld->get_left()).get()  ||
+                    sqrt_cast(ld->get_right()).get() ||
+                    pow_cast(ld->get_left()).get()   ||
                     pow_cast(ld->get_right()).get()) {
                     return pow(ld->get_left(), this->right) /
                            pow(ld->get_right(), this->right);

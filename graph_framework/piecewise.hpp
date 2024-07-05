@@ -136,7 +136,9 @@ void compile_index(std::ostringstream &stream,
         piecewise_1D_node(const backend::buffer<T> &d,
                           shared_leaf<T, SAFE_MATH> x) :
         straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x)),
-        data_hash(piecewise_1D_node::hash_data(d)) {}
+        data_hash(piecewise_1D_node::hash_data(d)) {
+            assert(d.is_normal() && "NaN or Inf value.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of the piecewise constant.
@@ -378,12 +380,21 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
+///  @brief Test if node is a constant.
 ///
-///  @returns True if the node acts like a constant.
+///  @returns True if the node is a constant.
 //------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
+        virtual bool is_constant() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test the constant node has a zero.
+///
+///  @returns True the node has a zero constant value.
+//------------------------------------------------------------------------------
+        virtual bool has_constant_zero() const {
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].has_zero();
         }
 
 //------------------------------------------------------------------------------
@@ -600,6 +611,7 @@ void compile_index(std::ostringstream &stream,
         num_columns(n) {
             assert(d.size()/n &&
                    "Expected the data buffer to be a multiple of the number of columns.");
+            assert(d.is_normal() && "NaN or Inf value.");
         }
 
 //------------------------------------------------------------------------------
@@ -895,12 +907,21 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
+///  @brief Test if node is a constant.
 ///
-///  @returns True if the node acts like a constant.
+///  @returns True if the node is a constant.
 //------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
+        virtual bool is_constant() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test the constant node has a zero.
+///
+///  @returns True the node has a zero constant value.
+//------------------------------------------------------------------------------
+        virtual bool has_constant_zero() const {
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].has_zero();
         }
 
 //------------------------------------------------------------------------------
@@ -942,7 +963,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Check if the args match.
 ///
-///  @param[in] x Node to match.
+///  @params[in] x Node to match.
 ///  @returns True if the arguments match.
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
@@ -951,6 +972,28 @@ void compile_index(std::ostringstream &stream,
                    this->left->is_match(temp->get_left())   &&
                    this->right->is_match(temp->get_right()) &&
                    (num_columns == this->get_num_columns());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Do the rows match.
+///
+///  @params[in] x Node to match.
+///  @returns True if the row arguments match.
+//------------------------------------------------------------------------------
+        bool is_row_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = piecewise_1D_cast(x);
+            return temp.get() && this->left->is_match(temp->get_arg());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Do the columns match.
+///
+///  @params[in] x Node to match.
+///  @returns True if the column arguments match.
+//------------------------------------------------------------------------------
+        bool is_col_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = piecewise_1D_cast(x);
+            return temp.get() && this->right->is_match(temp->get_arg());
         }
     };
 

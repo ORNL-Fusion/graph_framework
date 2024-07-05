@@ -187,11 +187,22 @@ namespace graph {
                                                                      jit::register_map &registers) = 0;
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
+///  @brief Test if node is a constant.
 ///
-///  @returns True if the node acts like a constant.
+///  @returns True if the node is like a constant.
 //------------------------------------------------------------------------------
-        virtual bool is_constant_like() const = 0;
+        virtual bool is_constant() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test the constant node has a zero.
+///
+///  @returns True the node has a zero constant value.
+//------------------------------------------------------------------------------
+        virtual bool has_constant_zero() const {
+            return false;
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Test if all the subnodes terminate in variables.
@@ -203,7 +214,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
 ///
-///  Most notes are not so default to false.
+///  Most nodes are not so default to false.
 ///
 ///  @returns True the node is power like and false otherwise.
 //------------------------------------------------------------------------------
@@ -346,6 +357,7 @@ namespace graph {
         constant_node(const backend::buffer<T> &d) :
         leaf_node<T, SAFE_MATH> (constant_node::to_string(d.at(0)), 1, false), data(d) {
             assert(d.size() == 1 && "Constants need to be scalar functions.");
+            assert(d.is_normal() && "NaN or Inf value.");
         }
 
 //------------------------------------------------------------------------------
@@ -470,12 +482,21 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
+///  @brief Test if node is a constant.
 ///
-///  @returns True if the node acts like a constant.
+///  @returns True if the is a constant.
 //------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
+        virtual bool is_constant() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test the constant node has a zero.
+///
+///  @returns True the node has a zero constant value.
+//------------------------------------------------------------------------------
+        virtual bool has_constant_zero() const {
+            return data.has_zero();
         }
 
 //------------------------------------------------------------------------------
@@ -769,15 +790,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->arg->is_constant_like();
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Test if node acts like a variable.
 ///
 ///  @returns True if the node acts like a variable.
@@ -898,16 +910,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->left->is_constant_like() &&
-                   this->right->is_constant_like();
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Test if node acts like a variable.
 ///
 ///  @returns True if the node acts like a variable.
@@ -1015,17 +1017,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->left->is_constant_like()   &&
-                   this->middle->is_constant_like() &&
-                   this->right->is_constant_like();
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Test if node acts like a variable.
 ///
 ///  @returns True if the node acts like a variable.
@@ -1086,7 +1077,9 @@ namespace graph {
         variable_node(const size_t s, const T d,
                       const std::string &symbol) :
         leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
-        buffer(s, d), symbol(symbol) {}
+        buffer(s, d), symbol(symbol) {
+            assert(buffer.is_normal() && "NaN or Inf value.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
@@ -1097,7 +1090,9 @@ namespace graph {
         variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
         leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
-        buffer(d), symbol(symbol) {}
+        buffer(d), symbol(symbol) {
+            assert(buffer.is_normal() && "NaN or Inf value.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from backend buffer.
@@ -1108,7 +1103,9 @@ namespace graph {
         variable_node(const backend::buffer<T> &d,
                       const std::string &symbol) :
         leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
-        buffer(d), symbol(symbol) {}
+        buffer(d), symbol(symbol) {
+            assert(buffer.is_normal() && "NaN or Inf value.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -1250,15 +1247,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         T *data() {
             return buffer.data();
-        }
-    
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -1457,15 +1445,6 @@ namespace graph {
             std::cout << "\\left(";
             this->arg->to_latex();
             std::cout << "\\right)";
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
