@@ -1,10 +1,7 @@
-//
-//  register.hpp
-//  graph_framework
-//
-//  Created by Cianciosa, Mark on 12/8/22.
-//  Copyright © 2022 Cianciosa, Mark R. All rights reserved.
-//
+//------------------------------------------------------------------------------
+///  @file register.hpp
+///  @brief Utilities for writting jit source code.
+//------------------------------------------------------------------------------
 
 #ifndef register_h
 #define register_h

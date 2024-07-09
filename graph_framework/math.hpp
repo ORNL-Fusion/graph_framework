@@ -3,7 +3,6 @@
 ///  @brief Defined basic math functions.
 //------------------------------------------------------------------------------
 
-
 #ifndef math_h
 #define math_h
 

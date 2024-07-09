@@ -1,9 +1,6 @@
 //------------------------------------------------------------------------------
-///  vector.hpp
-///  graph_framework
-///
-///  Created by Cianciosa, Mark R. on 3/31/22.
-///  Copyright © 2022 Cianciosa, Mark R. All rights reserved.
+///  @file vector.hpp
+///  @brief Defines vectors of graphs.
 //------------------------------------------------------------------------------
 
 #ifndef vector_h
