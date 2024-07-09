@@ -136,9 +136,7 @@ void compile_index(std::ostringstream &stream,
         piecewise_1D_node(const backend::buffer<T> &d,
                           shared_leaf<T, SAFE_MATH> x) :
         straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x)),
-        data_hash(piecewise_1D_node::hash_data(d)) {
-            assert(d.is_normal() && "NaN or Inf value.");
-        }
+        data_hash(piecewise_1D_node::hash_data(d)) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of the piecewise constant.
@@ -609,9 +607,8 @@ void compile_index(std::ostringstream &stream,
         branch_node<T, SAFE_MATH> (x, y, piecewise_2D_node::to_string(d, x, y)),
         data_hash(piecewise_2D_node::hash_data(d)),
         num_columns(n) {
-            assert(d.size()/n &&
+            assert(d.size()%n == 0 &&
                    "Expected the data buffer to be a multiple of the number of columns.");
-            assert(d.is_normal() && "NaN or Inf value.");
         }
 
 //------------------------------------------------------------------------------

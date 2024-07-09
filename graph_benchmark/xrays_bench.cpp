@@ -38,10 +38,14 @@ void bench_runner() {
     const size_t batch = NUM_RAYS/threads.size();
     const size_t extra = NUM_RAYS%threads.size();
 
-    timeing::measure_diagnostic_threaded timing;
+    timeing::measure_diagnostic_threaded time_setup("Setup Time");
+    timeing::measure_diagnostic_threaded time_init("Init Time");
+    timeing::measure_diagnostic_threaded time_compile("Compile Time");
+    timeing::measure_diagnostic_threaded time_steps("Time Steps");
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([&timing, batch, extra] (const size_t thread_number) -> void {
+        threads[i] = std::thread([&time_setup, &time_init, &time_compile, &time_steps, batch, extra] (const size_t thread_number) -> void {
+            time_setup.start_time(thread_number);
 
             const size_t local_num_rays = batch
                                         + (extra > thread_number ? 1 : 0);
@@ -78,25 +82,33 @@ void bench_runner() {
                                                           eq, "",
                                                           local_num_rays,
                                                           thread_number);
+            time_setup.end_time(thread_number);
 
+            time_init.start_time(thread_number);
             solve.init(kx);
+            time_init.end_time(thread_number);
+            time_compile.start_time(thread_number);
             solve.compile();
+            time_compile.end_time(thread_number);
 
-            timing.start_time(thread_number);
+            time_steps.start_time(thread_number);
             for (size_t j = 0; j < num_steps; j++) {
                 for (size_t k = 0; k < SUB_STEPS; k++) {
                     solve.step();
                 }
             }
             solve.sync_host();
-            timing.end_time(thread_number);
+            time_steps.end_time(thread_number);
         }, i);
     }
 
     for (std::thread &t : threads) {
         t.join();
     }
-    timing.print();
+    time_setup.print();
+    time_init.print();
+    time_compile.print();
+    time_steps.print();
 
     std::cout << "--------------------------------------------------------------------------------"
               << std::endl << std::endl;

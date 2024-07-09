@@ -801,7 +801,7 @@ namespace graph {
 //  Note need to make sure c1 doesn't contain any zeros.
                 if (lm->get_left()->is_constant() &&
                     rm->get_left()->is_constant() &&
-                    !lm->has_constant_zero()) {
+                    !lm->get_left()->has_constant_zero()) {
                     return lm->get_left()*(lm->get_right() -
                                            (rm->get_left()/lm->get_left())*rm->get_right());
                 }
@@ -1416,7 +1416,10 @@ namespace graph {
 //  c1*(c2*v) -> c3*v
                 if (is_constant_combineable(this->left,
                                             rm->get_left())) {
-                    return (this->left*rm->get_left())*rm->get_right();
+                    auto temp = this->left*rm->get_left();
+                    if (temp->is_normal()) {
+                        return temp*rm->get_right();
+                    }
                 }
 
                 if (this->left->is_match(rm->get_left())) {
@@ -1455,20 +1458,28 @@ namespace graph {
             if (lm.get() && rm.get()) {
                 if (is_constant_combineable(lm->get_left(),
                                             rm->get_left())) {
-                    return (lm->get_left()*rm->get_left()) *
-                           (lm->get_right()*rm->get_right());
+                    auto temp = lm->get_left()*rm->get_left();
+                    if (temp->is_normal()) {
+                        return temp*(lm->get_right()*rm->get_right());
+                    }
                 } else if (is_constant_combineable(lm->get_left(),
                                                    rm->get_right())) {
-                    return (lm->get_left()*rm->get_right()) *
-                           (lm->get_right()*rm->get_left());
+                    auto temp = lm->get_left()*rm->get_right();
+                    if (temp->is_normal()) {
+                        return temp*(lm->get_right()*rm->get_left());
+                    }
                 } else if (is_constant_combineable(lm->get_right(),
                                                    rm->get_left())) {
-                    return (lm->get_right()*rm->get_left()) *
-                           (lm->get_left()*rm->get_right());
+                    auto temp = lm->get_right()*rm->get_left();
+                    if (temp->is_normal()) {
+                        return temp*(lm->get_left()*rm->get_right());
+                    }
                 } else if (is_constant_combineable(lm->get_right(),
                                                    rm->get_right())) {
-                    return (lm->get_right()*rm->get_right()) *
-                           (lm->get_left()*rm->get_left());
+                    auto temp = lm->get_right()*rm->get_right();
+                    if (temp->is_normal()) {
+                        return temp*(lm->get_left()*rm->get_left());
+                    }
                 }
 
 //  Gather common terms. This will help reduce sqrt(a)*sqrt(a).
@@ -2147,10 +2158,17 @@ namespace graph {
             if (rm.get()) {
                 if (is_constant_combineable(rm->get_left(), 
                                             this->left)) {
-                    return (this->left/rm->get_left())/rm->get_right();
-                } else if (is_constant_combineable(rm->get_left(), 
-                                                   this->left)) {
-                    return (this->left/rm->get_right())/rm->get_left();
+                    auto temp = this->left/rm->get_left();
+                    if (temp->is_normal()) {
+                        return temp/rm->get_right();
+                    }
+                }
+                if (is_constant_combineable(rm->get_right(),
+                                            this->left)) {
+                    auto temp = this->left/rm->get_right();
+                    if (temp->is_normal()) {
+                        return temp/rm->get_left();
+                    }
                 }
             }
 
@@ -2162,20 +2180,31 @@ namespace graph {
 //  (a*c1)/(b*c2) -> c3*a/b
                 if (is_constant_combineable(lm->get_left(),
                                             rm->get_left())) {
-                    return (lm->get_left()/rm->get_left()) *
-                           (lm->get_right()/rm->get_right());
-                } else if (is_constant_combineable(lm->get_left(),
-                                                   rm->get_right())) {
-                    return (lm->get_left()/rm->get_right()) *
-                           (lm->get_right()/rm->get_left());
-                } else if (is_constant_combineable(lm->get_right(),
-                                                   rm->get_left())) {
-                    return (lm->get_right()/rm->get_left()) *
-                           (lm->get_left()/rm->get_right());
-                } else if (is_constant_combineable(lm->get_right(),
-                                                   rm->get_right())) {
-                    return (lm->get_right()/rm->get_right()) *
-                           (lm->get_left()/rm->get_left());
+                    auto temp = lm->get_left()/rm->get_left();
+                    if (temp->is_normal()) {
+                        return temp*lm->get_right()/rm->get_right();
+                    }
+                }
+                if (is_constant_combineable(lm->get_left(),
+                                            rm->get_right())) {
+                    auto temp = lm->get_left()/rm->get_right();
+                    if (temp->is_normal()) {
+                        return temp*lm->get_right()/rm->get_left();
+                    }
+                } 
+                if (is_constant_combineable(lm->get_right(),
+                                            rm->get_left())) {
+                    auto temp = lm->get_right()/rm->get_left();
+                    if (temp->is_normal()) {
+                        return temp*lm->get_left()/rm->get_right();
+                    }
+                }
+                if (is_constant_combineable(lm->get_right(),
+                                            rm->get_right())) {
+                    auto temp = lm->get_right()/rm->get_right();
+                    if (temp->is_normal()) {
+                        return temp*lm->get_left()/rm->get_left();
+                    }
                 }
 
 //  (a*b)/(a*c) -> b/c
@@ -2678,27 +2707,42 @@ namespace graph {
                 if (is_constant_combineable(this->left,
                                             rm->get_left()) &&
                     !this->left->has_constant_zero()) {
-                    return this->left*fma(rm->get_left()/this->left,
-                                          rm->get_right(),
-                                          this->middle);
-                } else if (is_constant_combineable(this->middle,
-                                                   rm->get_left()) &&
-                           !this->middle->has_constant_zero()) {
-                    return this->middle*fma(rm->get_left()/this->middle,
-                                            rm->get_right(),
-                                            this->left);
-                } else if (is_constant_combineable(this->left,
-                                                   rm->get_right()) &&
-                           !this->left->has_constant_zero()) {
-                    return this->left*fma(rm->get_right()/this->left,
-                                          rm->get_left(),
-                                          this->middle);
-                } else if (is_constant_combineable(this->middle,
-                                                   rm->get_right()) &&
-                           !this->middle->has_constant_zero()) {
-                    return this->middle*fma(rm->get_right()/this->middle,
-                                            rm->get_left(),
-                                            this->left);
+                    auto temp = rm->get_left()/this->left;
+                    if (temp->is_normal()) {
+                        return this->left*fma(temp,
+                                              rm->get_right(),
+                                              this->middle);
+                    }
+                }
+                if (is_constant_combineable(this->middle,
+                                            rm->get_left()) &&
+                    !this->middle->has_constant_zero()) {
+                    auto temp = rm->get_left()/this->middle;
+                    if (temp->is_normal()) {
+                        return this->middle*fma(temp,
+                                                rm->get_right(),
+                                                this->left);
+                    }
+                }
+                if (is_constant_combineable(this->left,
+                                            rm->get_right()) &&
+                    !this->left->has_constant_zero()) {
+                    auto temp = rm->get_right()/this->left;
+                    if (temp->is_normal()) {
+                        return this->left*fma(temp,
+                                              rm->get_left(),
+                                              this->middle);
+                    }
+                }
+                if (is_constant_combineable(this->middle,
+                                            rm->get_right()) &&
+                    !this->middle->has_constant_zero()) {
+                    auto temp = rm->get_right()/this->middle;
+                    if (temp->is_normal()) {
+                        return this->middle*fma(temp,
+                                                rm->get_left(),
+                                                this->left);
+                    }
                 }
 
 //  Convert fma(a*b,c,d*e) -> fma(d,e,a*b*c)
@@ -2720,27 +2764,42 @@ namespace graph {
                 if (is_constant_combineable(rm->get_left(),
                                             lm->get_left()) &&
                     !lm->get_left()->has_constant_zero()) {
-                    return lm->get_left()*fma(lm->get_right(),
-                                              this->middle,
-                                              (rm->get_left()/lm->get_left())*rm->get_right());
-                } else if (is_constant_combineable(rm->get_left(),
-                                                   lm->get_right()) &&
-                           !lm->get_right()->has_constant_zero()) {
-                    return lm->get_right()*fma(lm->get_left(),
-                                               this->middle,
-                                               (rm->get_left()/lm->get_right())*rm->get_right());
-                } else if (is_constant_combineable(rm->get_right(),
-                                                   lm->get_left()) &&
-                           !lm->get_left()->has_constant_zero()) {
-                    return lm->get_left()*fma(lm->get_right(),
-                                              this->middle,
-                                              (rm->get_right()/lm->get_left())*rm->get_left());
-                } else if (is_constant_combineable(rm->get_right(),
-                                                   lm->get_right()) &&
-                           !lm->get_right()->has_constant_zero()) {
-                    return lm->get_right()*fma(lm->get_left(),
-                                               this->middle,
-                                               (rm->get_right()/lm->get_right())*rm->get_left());
+                    auto temp = rm->get_left()/lm->get_left();
+                    if (temp->is_normal()){
+                        return lm->get_left()*fma(lm->get_right(),
+                                                  this->middle,
+                                                  temp*rm->get_right());
+                    }
+                }
+                if (is_constant_combineable(rm->get_left(),
+                                            lm->get_right()) &&
+                    !lm->get_right()->has_constant_zero()) {
+                    auto temp = rm->get_left()/lm->get_right();
+                    if (temp->is_normal()){
+                        return lm->get_right()*fma(lm->get_left(),
+                                                   this->middle,
+                                                   temp*rm->get_right());
+                    }
+                }
+                if (is_constant_combineable(rm->get_right(),
+                                            lm->get_left()) &&
+                    !lm->get_left()->has_constant_zero()) {
+                    auto temp = rm->get_right()/lm->get_left();
+                    if (temp->is_normal()) {
+                        return lm->get_left()*fma(lm->get_right(),
+                                                  this->middle,
+                                                  temp*rm->get_left());
+                    }
+                }
+                if (is_constant_combineable(rm->get_right(),
+                                            lm->get_right()) &&
+                    !lm->get_right()->has_constant_zero()) {
+                    auto temp = rm->get_right()/lm->get_right();
+                    if (temp->is_normal()) {
+                        return lm->get_right()*fma(lm->get_left(),
+                                                   this->middle,
+                                                   temp*rm->get_left());
+                    }
                 }
             }
 
@@ -2759,16 +2818,24 @@ namespace graph {
 // fma(a,c1*b,c) -> fma(c1,a*b,c)
                 if (is_constant_combineable(this->left,
                                             mm->get_left())) {
-                    return fma(this->left*mm->get_left(),
-                               mm->get_right(),
-                               this->right);
-                } else if (is_constant_combineable(this->left,
-                                                   mm->get_right())) {
-                    return fma(this->left*mm->get_right(),
-                               mm->get_left(),
-                               this->right);
-                } else if (is_constant_promotable(mm->get_left(),
-                                                  this->left)) {
+                    auto temp = this->left*mm->get_left();
+                    if (temp->is_normal()) {
+                        return fma(temp,
+                                   mm->get_right(),
+                                   this->right);
+                    }
+                }
+                if (is_constant_combineable(this->left,
+                                            mm->get_right())) {
+                    auto temp = this->left*mm->get_right();
+                    if (temp->is_normal()) {
+                        return fma(temp,
+                                   mm->get_left(),
+                                   this->right);
+                    }
+                }
+                if (is_constant_promotable(mm->get_left(),
+                                           this->left)) {
                     return fma(mm->get_left(),
                                this->left*mm->get_right(),
                                this->right);
@@ -2782,13 +2849,20 @@ namespace graph {
                 if (is_constant_combineable(this->left,
                                             rd->get_left()) &&
                     !this->left->has_constant_zero()) {
-                    return this->left*(this->middle +
-                                       rd->get_left()/(this->left*rd->get_right()));
-                } else if (is_constant_combineable(this->middle,
+                    auto temp = rd->get_left()/this->left;
+                    if (temp->is_normal()) {
+                        return this->left*(this->middle +
+                                           temp/rd->get_right());
+                    }
+                }
+                if (is_constant_combineable(this->middle,
                                                    rd->get_left()) &&
                            !this->middle->has_constant_zero()) {
-                    return this->middle*(this->left +
-                                         rd->get_left()/(this->middle*rd->get_right()));
+                    auto temp = rd->get_left()/this->middle;
+                    if (temp->is_normal()) {
+                        return this->middle*(this->left +
+                                             temp/rd->get_right());
+                    }
                 }
             }
 
@@ -3222,7 +3296,10 @@ namespace graph {
 //  Promote constants out to the left.
             if (is_constant_combineable(this->left, this->right) &&
                 !this->left->has_constant_zero()) {
-                return this->left*(this->middle + this->right/this->left);
+                auto temp = this->right/this->left;
+                if (temp->is_normal()) {
+                    return this->left*(this->middle + temp);
+                }
             }
 
 //  Change negative exponents to divide so that can be factored out.

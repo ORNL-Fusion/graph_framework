@@ -205,6 +205,15 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Test if the result is normal.
+///
+///  @returns True if the node is normal.
+//------------------------------------------------------------------------------
+        bool is_normal() {
+            return this->evaluate().is_normal();
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Test if all the subnodes terminate in variables.
 ///
 ///  @returns True if all the subnodes terminate in variables.
@@ -357,7 +366,6 @@ namespace graph {
         constant_node(const backend::buffer<T> &d) :
         leaf_node<T, SAFE_MATH> (constant_node::to_string(d.at(0)), 1, false), data(d) {
             assert(d.size() == 1 && "Constants need to be scalar functions.");
-            assert(d.is_normal() && "NaN or Inf value.");
         }
 
 //------------------------------------------------------------------------------

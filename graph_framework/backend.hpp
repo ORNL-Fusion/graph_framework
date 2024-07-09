@@ -154,7 +154,7 @@ namespace backend {
 ///  @returns Returns true if every element is zero.
 //------------------------------------------------------------------------------
         bool is_zero() const {
-            for (T d : memory) {
+            for (const T &d : memory) {
                 if (d != static_cast<T> (0.0)) {
                     return false;
                 }
@@ -169,7 +169,7 @@ namespace backend {
 ///  @returns Returns true if every element is zero.
 //------------------------------------------------------------------------------
         bool has_zero() const {
-            for (T d : memory) {
+            for (const T &d : memory) {
                 if (d == static_cast<T> (0.0)) {
                     return true;
                 }
@@ -184,7 +184,7 @@ namespace backend {
 ///  @returns Returns true if every element is negative.
 //------------------------------------------------------------------------------
         bool is_negative() const {
-            for (T d : memory) {
+            for (const T &d : memory) {
                 if (std::real(d) > std::real(static_cast<T> (0.0))) {
                     return false;
                 }
@@ -199,7 +199,7 @@ namespace backend {
 ///  @returns Returns true if every element is negative one.
 //------------------------------------------------------------------------------
         bool is_none() const {
-            for (T d : memory) {
+            for (const T &d : memory) {
                 if (d != static_cast<T> (-1.0)) {
                     return false;
                 }
@@ -278,7 +278,7 @@ namespace backend {
 ///  @returns False if any NaN or Inf is found.
 //------------------------------------------------------------------------------
         bool is_normal() const {
-            for (T x : memory) {
+            for (const T &x : memory) {
                 if constexpr (jit::is_complex<T> ()) {
                     if (std::isnan(std::real(x)) || std::isinf(std::real(x)) ||
                         std::isnan(std::imag(x)) || std::isinf(std::imag(x))) {
