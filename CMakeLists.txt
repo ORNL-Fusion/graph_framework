@@ -189,8 +189,6 @@ FetchContent_GetProperties (
 )
 
 #  Do not build llvm until pull command is finished.
-add_dependencies (LLVMHello pull_llvm)
-add_dependencies (LLVMHello_exports pull_llvm)
 add_dependencies (LLVMDemangle pull_llvm)
 add_dependencies (Remarks_exports pull_llvm)
 add_dependencies (LLVMSupportBlake3 pull_llvm)
