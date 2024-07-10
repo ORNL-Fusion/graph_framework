@@ -179,17 +179,17 @@ namespace gpu {
                     MTLTextureDescriptor *discriptor = [MTLTextureDescriptor new];
                     discriptor.textureType = MTLTextureType2D;
                     discriptor.pixelFormat = MTLPixelFormatR32Float;
-                    discriptor.width = size[0];
-                    discriptor.height = size[1];
+                    discriptor.width = size[1];
+                    discriptor.height = size[0];
                     discriptor.storageMode = MTLStorageModeManaged;
                     discriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
                     discriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
                     discriptor.usage = MTLTextureUsageShaderRead;
                     texture_arguments[data] = [device newTextureWithDescriptor:discriptor];
-                    [texture_arguments[data] replaceRegion:MTLRegionMake2D(0, 0, size[0], size[1])
+                    [texture_arguments[data] replaceRegion:MTLRegionMake2D(0, 0, size[1], size[0])
                                                mipmapLevel:0
                                                  withBytes:reinterpret_cast<float *> (data)
-                                               bytesPerRow:4*size[0]];
+                                               bytesPerRow:4*size[1]];
 
                     [encoder optimizeContentsForGPUAccess:texture_arguments[data]];
                 }

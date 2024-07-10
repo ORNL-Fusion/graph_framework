@@ -601,6 +601,7 @@ namespace graph {
                                     pr2->get_right());
             }
 
+#if 1
 //  Combine 2D and 1D piecewise constants if a row or column matches.
             if (pr2.get() && pr2->is_row_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
@@ -631,6 +632,7 @@ namespace graph {
                                     pl2->get_left(),
                                     pl2->get_right());
             }
+#endif
 
             return this->shared_from_this();
         }

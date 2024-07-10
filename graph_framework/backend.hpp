@@ -308,9 +308,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] += x[j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_rows + j] += x[i];
                     }
                 }
             } else {
@@ -320,9 +320,9 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = memory[j] + x[i*num_rows + j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[i] + x[i*num_colmns + j];
                     }
                 }
                 memory = m;
@@ -344,9 +344,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] += x[i];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] += x[j];
                     }
                 }
             } else {
@@ -356,9 +356,9 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = memory[i] + x[i*num_rows + j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[j] + x[i*num_colmns + j];
                     }
                 }
                 memory = m;
@@ -380,9 +380,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] -= x[j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] -= x[i];
                     }
                 }
             } else {
@@ -394,7 +394,7 @@ namespace backend {
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_colmns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = memory[j] - x[i*num_rows + j];
+                        m[i*num_colmns + j] = memory[i] - x[i*num_colmns + j];
                     }
                 }
                 memory = m;
@@ -416,9 +416,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] -= x[i];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] -= x[j];
                     }
                 }
             } else {
@@ -428,9 +428,9 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = memory[i] - x[i*num_rows + j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[j] - x[i*num_colmns + j];
                     }
                 }
                 memory = m;
@@ -452,9 +452,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] *= x[j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] *= x[i];
                     }
                 }
             } else {
@@ -464,9 +464,9 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = memory[j]*x[i*num_rows + j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[i]*x[i*num_colmns + j];
                     }
                 }
                 memory = m;
@@ -488,9 +488,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] *= x[i];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] *= x[j];
                     }
                 }
             } else {
@@ -500,9 +500,9 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = memory[i]*x[i*num_rows + j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[j]*x[i*num_colmns + j];
                     }
                 }
                 memory = m;
@@ -524,9 +524,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] /= x[j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] /= x[i];
                     }
                 }
             } else {
@@ -536,9 +536,9 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = memory[j]/x[i*num_rows + j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[i]/x[i*num_colmns + j];
                     }
                 }
                 memory = m;
@@ -560,9 +560,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] /= x[i];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] /= x[j];
                     }
                 }
             } else {
@@ -572,9 +572,9 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = memory[i]/x[i*num_rows + j];
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[j]/x[i*num_colmns + j];
                     }
                 }
                 memory = m;
@@ -596,12 +596,12 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
                         if constexpr (jit::is_complex<T> ()) {
-                            memory[i*num_rows + j] = std::atan(x[j]/memory[i*num_rows + j]);
+                            memory[i*num_colmns + j] = std::atan(x[i]/memory[i*num_colmns + j]);
                         } else {
-                            memory[i*num_rows + j] = std::atan2(x[j], memory[i*num_rows + j]);
+                            memory[i*num_colmns + j] = std::atan2(x[i], memory[i*num_colmns + j]);
                         }
                     }
                 }
@@ -612,12 +612,12 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
                         if constexpr (jit::is_complex<T> ()) {
-                            m[i*num_rows + j] = std::atan(x[i*num_rows + j]/memory[j]);
+                            m[i*num_colmns + j] = std::atan(x[i*num_colmns + j]/memory[i]);
                         } else {
-                            m[i*num_rows + j] = std::atan2(x[i*num_rows + j], memory[j]);
+                            m[i*num_colmns + j] = std::atan2(x[i*num_colmns + j], memory[i]);
                         }
                     }
                 }
@@ -643,9 +643,9 @@ namespace backend {
                 for (size_t i = 0; i < num_colmns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
                         if constexpr (jit::is_complex<T> ()) {
-                            memory[i*num_rows + j] = std::atan(x[i]/memory[i*num_rows + j]);
+                            memory[i*num_colmns + j] = std::atan(x[j]/memory[i*num_colmns + j]);
                         } else {
-                            memory[i*num_rows + j] = std::atan2(x[i], memory[i*num_rows + j]);
+                            memory[i*num_colmns + j] = std::atan2(x[j], memory[i*num_colmns + j]);
                         }
                     }
                 }
@@ -656,12 +656,12 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
                         if constexpr (jit::is_complex<T> ()) {
-                            m[i*num_rows + j] = std::atan(x[i*num_rows + j]/memory[i]);
+                            m[i*num_colmns + j] = std::atan(x[i*num_colmns + j]/memory[j]);
                         } else {
-                            m[i*num_rows + j] = std::atan2(x[i*num_rows + j], memory[i]);
+                            m[i*num_colmns + j] = std::atan2(x[i*num_colmns + j], memory[j]);
                         }
                     }
                 }
@@ -684,9 +684,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] = std::pow(memory[i*num_rows + j], x[j]);
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] = std::pow(memory[i*num_colmns + j], x[i]);
                     }
                 }
             } else {
@@ -698,7 +698,7 @@ namespace backend {
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_colmns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = std::pow(memory[j], x[i*num_rows + j]);
+                        m[i*num_colmns + j] = std::pow(memory[i], x[i*num_colmns + j]);
                     }
                 }
                 memory = m;
@@ -720,9 +720,9 @@ namespace backend {
 
                 const size_t num_colmns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        memory[i*num_rows + j] = std::pow(memory[i*num_rows + j], x[i]);
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] = std::pow(memory[i*num_colmns + j], x[j]);
                     }
                 }
             } else {
@@ -732,9 +732,9 @@ namespace backend {
                 std::vector<T> m(x.size());
                 const size_t num_colmns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_rows + j] = std::pow(memory[i], x[i*num_rows + j]);
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = std::pow(memory[j], x[i*num_colmns + j]);
                     }
                 }
                 memory = m;

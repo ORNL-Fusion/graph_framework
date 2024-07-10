@@ -439,7 +439,18 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get() && this->arg->is_match(temp->get_arg());
+            return temp.get()                           &&
+                   this->arg->is_match(temp->get_arg()) &&
+                   (temp->get_size() == this->get_size());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the size of the buffer.
+///
+///  @returns The size of the buffer.
+//------------------------------------------------------------------------------
+        size_t get_size() const {
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
         }
     };
 
@@ -618,6 +629,16 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         size_t get_num_columns() const {
             return num_columns;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of columns.
+///
+///  @returns The number of columns in the constant.
+//------------------------------------------------------------------------------
+        size_t get_num_rows() const {
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() /
+                   num_columns;
         }
 
 //------------------------------------------------------------------------------
@@ -965,10 +986,11 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_2D_cast(x);
-            return temp.get()                               &&
-                   this->left->is_match(temp->get_left())   &&
-                   this->right->is_match(temp->get_right()) &&
-                   (num_columns == this->get_num_columns());
+            return temp.get()                                     &&
+                   this->left->is_match(temp->get_left())         &&
+                   this->right->is_match(temp->get_right())       &&
+                   (temp->get_num_rows() == this->get_num_rows()) &&
+                   (temp->get_num_columns() == this->get_num_columns());
         }
 
 //------------------------------------------------------------------------------
@@ -979,18 +1001,24 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_row_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get() && this->left->is_match(temp->get_arg());
+            return temp.get()                            &&
+                   this->left->is_match(temp->get_arg()) &&
+                   (temp->get_size() == this->get_num_rows());
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Do the columns match.
+///
+///  The number of rows is the column dimension.
 ///
 ///  @params[in] x Node to match.
 ///  @returns True if the column arguments match.
 //------------------------------------------------------------------------------
         bool is_col_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get() && this->right->is_match(temp->get_arg());
+            return temp.get()                             &&
+                   this->right->is_match(temp->get_arg()) &&
+                   (temp->get_size() == this->get_num_columns());
         }
     };
 

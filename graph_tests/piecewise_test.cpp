@@ -243,27 +243,24 @@ template<jit::float_scalar T> void piecewise_2D() {
     auto ay = graph::variable<T> (1, "");
     auto bx = graph::variable<T> (1, "");
     auto by = graph::variable<T> (1, "");
-    auto p1 = graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                       static_cast<T> (2.0),
-                                                       static_cast<T> (3.0),
-                                                       static_cast<T> (4.0)}),
-                                      2, ax, ay);
-    auto p2 = graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (2.0),
-                                                       static_cast<T> (4.0),
-                                                       static_cast<T> (6.0),
-                                                       static_cast<T> (10.0)}),
-                                      2, bx, by);
-    auto p3 = graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (2.0),
-                                                       static_cast<T> (4.0),
-                                                       static_cast<T> (6.0),
-                                                       static_cast<T> (10.0)}),
-                                      2, ax, ay);
-    auto p4 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (2.0),
-                                                       static_cast<T> (4.0)}),
-                                      ax);
-    auto p5 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (2.0),
-                                                       static_cast<T> (4.0)}),
-                                      ay);
+    auto p1 = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (1.0), static_cast<T> (2.0),
+        static_cast<T> (3.0), static_cast<T> (4.0)
+    }), 2, ax, ay);
+    auto p2 = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0),
+        static_cast<T> (6.0), static_cast<T> (10.0)
+    }), 2, bx, by);
+    auto p3 = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0),
+        static_cast<T> (6.0), static_cast<T> (10.0)
+    }), 2, ax, ay);
+    auto p4 = graph::piecewise_1D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0)
+    }),  ax);
+    auto p5 = graph::piecewise_1D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0)
+    }), ay);
 
     auto zero = graph::zero<T> ();
 
@@ -425,12 +422,14 @@ template<jit::float_scalar T> void piecewise_2D() {
                  graph::variable_cast(ay)},
                 {p1/p3}, {},
                 static_cast<T> (0.5), 0.0);
+    bx->set(static_cast<T> (1.5));
+    by->set(static_cast<T> (0.5));
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay),
                  graph::variable_cast(bx),
                  graph::variable_cast(by)},
                 {graph::fma(p1, p3, p2)}, {},
-                static_cast<T> (10.0), 0.0);
+                static_cast<T> (14.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {graph::pow(p1, p3)}, {},
@@ -455,20 +454,27 @@ template<jit::float_scalar T> void piecewise_2D() {
 //  Test row combines.
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
+                {p1}, {},
+                static_cast<T> (2.0), 0.0);
+    compile<T> ({graph::variable_cast(ax)},
+                {p4}, {},
+                static_cast<T> (2.0), 0.0);
+    compile<T> ({graph::variable_cast(ax),
+                 graph::variable_cast(ay)},
                 {p1 + p4}, {},
-                static_cast<T> (6.0), 0.0);
+                static_cast<T> (4.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {p1 - p4}, {},
-                static_cast<T> (-2.0), 0.0);
+                static_cast<T> (0.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {p1*p4}, {},
-                static_cast<T> (8.0), 0.0);
+                static_cast<T> (4.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {p1/p4}, {},
-                static_cast<T> (0.5), 0.0);
+                static_cast<T> (1.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay),
                  graph::variable_cast(bx),
@@ -479,19 +485,19 @@ template<jit::float_scalar T> void piecewise_2D() {
                  graph::variable_cast(ay)},
                 {graph::pow(p1, p4)}, {},
                 static_cast<T> (std::pow(static_cast<T> (2.0),
-                                         static_cast<T> (4.0))), 0.0);
+                                         static_cast<T> (2.0))), 0.0);
     if constexpr (jit::is_complex<T> ()) {
         compile<T> ({graph::variable_cast(ax),
                      graph::variable_cast(ay)},
                     {graph::atan(p1, p4)}, {},
-                    static_cast<T> (std::atan(static_cast<T> (4.0) /
+                    static_cast<T> (std::atan(static_cast<T> (2.0) /
                                               static_cast<T> (2.0))),
                     0.0);
     } else {
         compile<T> ({graph::variable_cast(ax),
                      graph::variable_cast(ay)},
                     {graph::atan(p1, p4)}, {},
-                    static_cast<T> (std::atan2(static_cast<T> (4.0),
+                    static_cast<T> (std::atan2(static_cast<T> (2.0),
                                                static_cast<T> (2.0))),
                     0.0);
     }
@@ -500,42 +506,42 @@ template<jit::float_scalar T> void piecewise_2D() {
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {p1 + p5}, {},
-                static_cast<T> (4.0), 0.0);
+                static_cast<T> (6.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {p1 - p5}, {},
-                static_cast<T> (0.0), 0.0);
+                static_cast<T> (-2.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {p1*p5}, {},
-                static_cast<T> (4.0), 0.0);
+                static_cast<T> (8.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {p1/p5}, {},
-                static_cast<T> (1.0), 0.0);
+                static_cast<T> (0.5), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay),
                  graph::variable_cast(bx),
                  graph::variable_cast(by)},
                 {graph::fma(p1, p5, p2)}, {},
-                static_cast<T> (6.0), 0.0);
+                static_cast<T> (14.0), 0.0);
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {graph::pow(p1, p5)}, {},
                 static_cast<T> (std::pow(static_cast<T> (2.0),
-                                         static_cast<T> (2.0))), 0.0);
+                                         static_cast<T> (4.0))), 0.0);
     if constexpr (jit::is_complex<T> ()) {
         compile<T> ({graph::variable_cast(ax),
                      graph::variable_cast(ay)},
                     {graph::atan(p1, p5)}, {},
-                    static_cast<T> (std::atan(static_cast<T> (2.0) /
+                    static_cast<T> (std::atan(static_cast<T> (4.0) /
                                               static_cast<T> (2.0))),
                     0.0);
     } else {
         compile<T> ({graph::variable_cast(ax),
                      graph::variable_cast(ay)},
                     {graph::atan(p1, p5)}, {},
-                    static_cast<T> (std::atan2(static_cast<T> (2.0),
+                    static_cast<T> (std::atan2(static_cast<T> (4.0),
                                                static_cast<T> (2.0))),
                     0.0);
     }
@@ -547,6 +553,51 @@ template<jit::float_scalar T> void piecewise_2D() {
                                       2, ax, bx);
     assert(graph::constant_cast(pc).get() &&
            "Expected a constant.");
+
+    auto prc = graph::piecewise_1D<T> (std::vector<T> ({
+        static_cast<T> (1.0),
+        static_cast<T> (2.0),
+        static_cast<T> (3.0)
+    }), ax);
+    auto pcc = graph::piecewise_1D<T> (std::vector<T> ({
+        static_cast<T> (1.0),
+        static_cast<T> (2.0),
+        static_cast<T> (3.0)
+    }), ay);
+    auto p2Dc = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (1.0), static_cast<T> (2.0), 
+        static_cast<T> (3.0), static_cast<T> (4.0),
+        static_cast<T> (5.0), static_cast<T> (6.0)
+    }), 2, ax, ay);
+
+    auto row_test = prc + p2Dc;
+    auto row_test_cast = graph::piecewise_2D_cast(row_test);
+    assert(row_test_cast.get() && "Expected a 2D piecewise node..");
+
+    auto col_test = pcc + p2Dc;
+    auto col_test_cast = graph::add_cast(col_test);
+    assert(col_test_cast.get() && "Expected an add node.");
+
+    ax->set(static_cast<T> (2.5));
+    ay->set(static_cast<T> (1.5));
+    compile<T> ({graph::variable_cast(ax)},
+                {prc}, {},
+                static_cast<T> (3.0), 0.0);
+    compile<T> ({graph::variable_cast(ay)},
+                {pcc}, {},
+                static_cast<T> (2.0), 0.0);
+    compile<T> ({graph::variable_cast(ax),
+                 graph::variable_cast(ay)},
+                {p2Dc}, {},
+                static_cast<T> (6.0), 0.0);
+    compile<T> ({graph::variable_cast(ax),
+                 graph::variable_cast(ay)},
+                {row_test}, {},
+                static_cast<T> (9.0), 0.0);
+    compile<T> ({graph::variable_cast(ax),
+                 graph::variable_cast(ay)},
+                {col_test}, {},
+                static_cast<T> (8.0), 0.0);
 }
 
 //------------------------------------------------------------------------------
