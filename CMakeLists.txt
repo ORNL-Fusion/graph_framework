@@ -7,6 +7,7 @@ project (rays CXX)
 #-------------------------------------------------------------------------------
 option (USE_PCH "Enable the use of precompiled headers" ON)
 option (USE_STATIC "Limits the dyamics for testing." OFF)
+option (SAVE_KERNEL_SOURCE "Writes the kernel source code to a file." OFF)
 
 #-------------------------------------------------------------------------------
 #  Set the cmake module path.
@@ -60,9 +61,12 @@ else ()
 
         find_package (CUDAToolkit REQUIRED)
 
+        option (USE_CUDA_TEXTURES "Enable the use of cuda textures" OFF)
+
         target_compile_definitions (cuda_lib
                                     INTERFACE
                                     USE_CUDA
+                                    $<$<BOOL:${USE_CUDA_TEXTURES}>:USE_CUDA_TEXTURES>
                                     CUDA_INCLUDE="${CUDAToolkit_INCLUDE_DIRS}"
         )
         target_link_libraries (cuda_lib
@@ -73,11 +77,17 @@ else ()
     endif ()
 endif ()
 
+option (USE_INPUT_CACHE "Cache the values kernel input values." OFF)
+
 add_library (gpu_lib INTERFACE)
 target_link_libraries (gpu_lib
                        INTERFACE
                        $<$<BOOL:${USE_METAL}>:metal_lib>
                        $<$<BOOL:${USE_CUDA}>:cuda_lib>
+)
+target_compile_definitions (gpu_lib
+                            INTERFACE
+                            $<$<BOOL:${USE_INPUT_CACHE}>:USE_INPUT_CACHE>
 )
 
 #-------------------------------------------------------------------------------
@@ -234,6 +244,9 @@ add_dependencies (cuda-resource-headers pull_llvm)
 add_dependencies (scan-build-py pull_llvm)
 add_dependencies (x86-resource-headers pull_llvm)
 add_dependencies (obj.clangSupport pull_llvm)
+add_dependencies (arm-common-resource-headers pull_llvm)
+add_dependencies (arm-resource-headers pull_llvm)
+add_dependencies (aarch64-resource-headers pull_llvm)
 
 add_library (llvm_dep INTERFACE)
 target_include_directories (llvm_dep
@@ -259,6 +272,8 @@ target_link_libraries (llvm_dep
                        clangCodeGen
                        LLVM${LLVM_NATIVE_ARCH}CodeGen
                        LLVMOrcJIT
+                       LLVMOrcDebugging
+                       LLVMOrcTargetProcess
 )
 
 #-------------------------------------------------------------------------------

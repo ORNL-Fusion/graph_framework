@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <cmath>
 
 #include "special_functions.hpp"
 #include "register.hpp"
@@ -153,7 +154,7 @@ namespace backend {
 ///  @returns Returns true if every element is zero.
 //------------------------------------------------------------------------------
         bool is_zero() const {
-            for (T d : memory) {
+            for (const T &d : memory) {
                 if (d != static_cast<T> (0.0)) {
                     return false;
                 }
@@ -161,14 +162,29 @@ namespace backend {
 
             return true;
         }
+        
+//------------------------------------------------------------------------------
+///  @brief Is every element zero.
+///
+///  @returns Returns true if every element is zero.
+//------------------------------------------------------------------------------
+        bool has_zero() const {
+            for (const T &d : memory) {
+                if (d == static_cast<T> (0.0)) {
+                    return true;
+                }
+            }
 
+            return false;
+        }
+        
 //------------------------------------------------------------------------------
 ///  @brief Is every element negative.
 ///
 ///  @returns Returns true if every element is negative.
 //------------------------------------------------------------------------------
         bool is_negative() const {
-            for (T d : memory) {
+            for (const T &d : memory) {
                 if (std::real(d) > std::real(static_cast<T> (0.0))) {
                     return false;
                 }
@@ -183,7 +199,7 @@ namespace backend {
 ///  @returns Returns true if every element is negative one.
 //------------------------------------------------------------------------------
         bool is_none() const {
-            for (T d : memory) {
+            for (const T &d : memory) {
                 if (d != static_cast<T> (-1.0)) {
                     return false;
                 }
@@ -254,6 +270,475 @@ namespace backend {
 //------------------------------------------------------------------------------
         T *data() {
             return memory.data();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Check for normal values.
+///
+///  @returns False if any NaN or Inf is found.
+//------------------------------------------------------------------------------
+        bool is_normal() const {
+            for (const T &x : memory) {
+                if constexpr (jit::is_complex<T> ()) {
+                    if (std::isnan(std::real(x)) || std::isinf(std::real(x)) ||
+                        std::isnan(std::imag(x)) || std::isinf(std::imag(x))) {
+                        return false;
+                    }
+                } else {
+                    if (std::isnan(x) || std::isinf(x)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add row operation.
+///
+///  Adds m_ij + v_i or v_i + m_ij. This will resize the buffer if it needs to 
+///  be.
+///
+///  @params[in] x The right operand.
+//------------------------------------------------------------------------------
+        void add_row(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_rows + j] += x[i];
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[i] + x[i*num_colmns + j];
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add col operation.
+///
+///  Adds m_ij + v_j or v_j + m_ij. This will resize the buffer if it needs to
+///  be.
+///
+///  @params[in] x The other operand.
+//------------------------------------------------------------------------------
+        void add_col(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] += x[j];
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[j] + x[i*num_colmns + j];
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Subtract row operation.
+///
+///  Sunbtracts m_ij - v_i or v_i - m_ij. This will resize the buffer if it
+///  needs to be.
+///
+///  @params[in] x The right operand.
+//------------------------------------------------------------------------------
+        void subtract_row(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] -= x[i];
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_colmns; i++) {
+                    for (size_t j = 0; j < num_rows; j++) {
+                        m[i*num_colmns + j] = memory[i] - x[i*num_colmns + j];
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Subtract col operation.
+///
+///  Sunbtracts m_ij - v_j or v_j - m_ij. This will resize the buffer if it
+///  needs to be.
+///
+///  @params[in] x The other operand.
+//------------------------------------------------------------------------------
+        void subtract_col(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] -= x[j];
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[j] - x[i*num_colmns + j];
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Multiply row operation.
+///
+///  Multiplies m_ij * v_i or v_i * m_ij. This will resize the buffer if it
+///  needs to be.
+///
+///  @params[in] x The right operand.
+//------------------------------------------------------------------------------
+        void multiply_row(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] *= x[i];
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[i]*x[i*num_colmns + j];
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Multiply col operation.
+///
+///  Multiplies m_ij * v_j or v_j * m_ij. This will resize the buffer if it
+///  needs to be.
+///
+///  @params[in] x The other operand.
+//------------------------------------------------------------------------------
+        void multiply_col(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] *= x[j];
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[j]*x[i*num_colmns + j];
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Divide row operation.
+///
+///  Divides m_ij / v_i or v_i / m_ij. This will resize the buffer if it needs 
+///  to be.
+///
+///  @params[in] x The right operand.
+//------------------------------------------------------------------------------
+        void divide_row(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] /= x[i];
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[i]/x[i*num_colmns + j];
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Divide col operation.
+///
+///  Divides m_ij / v_j or v_j / m_ij. This will resize the buffer if it needs
+///  to be.
+///
+///  @params[in] x The other operand.
+//------------------------------------------------------------------------------
+        void divide_col(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] /= x[j];
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = memory[j]/x[i*num_colmns + j];
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Atan row operation.
+///
+///  Computes atan(m_ij, v_i) or atan(v_i, m_ij). This will resize the buffer if
+///  it needs to be.
+///
+///  @params[in] x The right operand.
+//------------------------------------------------------------------------------
+        void atan_row(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        if constexpr (jit::is_complex<T> ()) {
+                            memory[i*num_colmns + j] = std::atan(x[i]/memory[i*num_colmns + j]);
+                        } else {
+                            memory[i*num_colmns + j] = std::atan2(x[i], memory[i*num_colmns + j]);
+                        }
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        if constexpr (jit::is_complex<T> ()) {
+                            m[i*num_colmns + j] = std::atan(x[i*num_colmns + j]/memory[i]);
+                        } else {
+                            m[i*num_colmns + j] = std::atan2(x[i*num_colmns + j], memory[i]);
+                        }
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Atan col operation.
+///
+///  Computes atan(m_ij, v_j) or atan(v_j, m_ij). This will resize the buffer if
+///  it needs to be.
+///
+///  @params[in] x The other operand.
+//------------------------------------------------------------------------------
+        void atan_col(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_colmns; i++) {
+                    for (size_t j = 0; j < num_rows; j++) {
+                        if constexpr (jit::is_complex<T> ()) {
+                            memory[i*num_colmns + j] = std::atan(x[j]/memory[i*num_colmns + j]);
+                        } else {
+                            memory[i*num_colmns + j] = std::atan2(x[j], memory[i*num_colmns + j]);
+                        }
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        if constexpr (jit::is_complex<T> ()) {
+                            m[i*num_colmns + j] = std::atan(x[i*num_colmns + j]/memory[j]);
+                        } else {
+                            m[i*num_colmns + j] = std::atan2(x[i*num_colmns + j], memory[j]);
+                        }
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Pow row operation.
+///
+///  Computes pow(m_ij, v_i) or pow(v_i, m_ij). This will resize the buffer if
+///  it needs to be.
+///
+///  @params[in] x The right operand.
+//------------------------------------------------------------------------------
+        void pow_row(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] = std::pow(memory[i*num_colmns + j], x[i]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_colmns; i++) {
+                    for (size_t j = 0; j < num_rows; j++) {
+                        m[i*num_colmns + j] = std::pow(memory[i], x[i*num_colmns + j]);
+                    }
+                }
+                memory = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Pow col operation.
+///
+///  Computes pow(m_ij, v_j) or pow(v_j, m_ij). This will resize the buffer if
+///  it needs to be.
+///
+///  @params[in] x The other operand.
+//------------------------------------------------------------------------------
+        void pow_col(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_colmns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        memory[i*num_colmns + j] = std::pow(memory[i*num_colmns + j], x[j]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_colmns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_colmns; j++) {
+                        m[i*num_colmns + j] = std::pow(memory[j], x[i*num_colmns + j]);
+                    }
+                }
+                memory = m;
+            }
         }
 
 ///  Type def to retrieve the backend T type.

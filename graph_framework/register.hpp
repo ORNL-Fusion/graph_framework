@@ -1,10 +1,7 @@
-//
-//  register.hpp
-//  graph_framework
-//
-//  Created by Cianciosa, Mark on 12/8/22.
-//  Copyright © 2022 Cianciosa, Mark R. All rights reserved.
-//
+//------------------------------------------------------------------------------
+///  @file register.hpp
+///  @brief Utilities for writting jit source code.
+//------------------------------------------------------------------------------
 
 #ifndef register_h
 #define register_h
@@ -12,12 +9,14 @@
 #include <concepts>
 #include <cassert>
 #include <map>
+#include <set>
 #include <sstream>
 #include <complex>
 #include <type_traits>
 #include <limits>
 #include <charconv>
 #include <array>
+#include <utility>
 
 namespace jit {
 ///  Complex scalar concept.
@@ -242,8 +241,14 @@ namespace jit {
 
 ///  Type alias for mapping node pointers to register names.
     typedef std::map<void *, std::string> register_map;
+///  Type alias for counting register usage.
+    typedef std::map<void *, size_t> register_usage;
 ///  Type alias for listing visited nodes.
-    typedef std::map<void *, bool> visiter_map;
+    typedef std::set<void *> visiter_map;
+///  Type alias for indexing 1D textures.
+    typedef std::map<void *, size_t> texture1d_list;
+///  Type alias for indexing 2D textures.
+    typedef std::map<void *, std::array<size_t,2>> texture2d_list;
 
 //------------------------------------------------------------------------------
 ///  @brief  Define a custom comparitor class.

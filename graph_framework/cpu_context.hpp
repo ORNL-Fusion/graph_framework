@@ -24,6 +24,10 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
+#ifndef NDEBUG
+#include "llvm/ExecutionEngine/Orc/Debugging/DebuggerSupport.h"
+#include "llvm/ExecutionEngine/Orc/TargetProcess/JITLoaderGDB.h"
+#endif
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -31,6 +35,16 @@
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 
 #include "node.hpp"
+
+#ifndef NDEBUG
+//------------------------------------------------------------------------------
+///  @brief This just exposes the functions so the debugger links.
+//------------------------------------------------------------------------------
+LLVM_ATTRIBUTE_USED void linkComponents() {
+    llvm::errs() << (void *)&llvm_orc_registerJITLoaderGDBWrapper
+                 << (void *)&llvm_orc_registerJITLoaderGDBAllocAction;
+}
+#endif
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -75,6 +89,9 @@ namespace gpu {
         std::map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
 
     public:
+///  Remaining constant memory in bytes. NOT USED.
+        int remaining_const_memory;
+
 //------------------------------------------------------------------------------
 ///  @brief Get the maximum number of concurrent instances.
 ///
@@ -132,6 +149,8 @@ namespace gpu {
             args.push_back(filename.c_str());
 #ifdef NDEBUG
             args.push_back("-O3");
+#else
+            args.push_back("-debug-info-kind=standalone");
 #endif
             if (jit::verbose) {
                 for (auto &arg : args) {
@@ -173,7 +192,13 @@ namespace gpu {
             auto ir_module = action.takeModule();
             auto context = std::unique_ptr<llvm::LLVMContext> (action.takeLLVMContext());
 
-            auto jit_try = llvm::orc::LLJITBuilder().create();
+            auto jit_try = llvm::orc::LLJITBuilder()
+#ifndef NDEBUG
+                               .setPrePlatformSetup([](llvm::orc::LLJIT &J) {
+                                   return llvm::orc::enableDebuggerSupport(J);
+                               })
+#endif
+                               .create();
             if (auto jiterror = jit_try.takeError()) {
                 std::cerr << "Failed to build JIT : " << toString(std::move(jiterror)) << std::endl;
                 exit(-1);
@@ -187,16 +212,20 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a kernel calling function.
 ///
-///  @params[in] kernel_name   Name of the kernel for later reference.
-///  @params[in] inputs        Input nodes of the kernel.
-///  @params[in] outputs       Output nodes of the kernel.
-///  @params[in] num_rays      Number of rays to trace.
+///  @params[in] kernel_name Name of the kernel for later reference.
+///  @params[in] inputs      Input nodes of the kernel.
+///  @params[in] outputs     Output nodes of the kernel.
+///  @params[in] num_rays    Number of rays to trace.
+///  @params[in] tex1d_list  List of 1D textures.
+///  @params[in] tex2d_list  List of 1D textures.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
-                                                     const size_t num_rays) {
+                                                     const size_t num_rays,
+                                                     const jit::texture1d_list &tex1d_list,
+                                                     const jit::texture2d_list &tex2d_list) {
             auto entry = std::move(jit->lookup(kernel_name)).get();
             auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
 
@@ -353,14 +382,22 @@ namespace gpu {
 ///  @params[in]     inputs        Input variables of the kernel.
 ///  @params[in]     outputs       Output nodes of the graph to compute.
 ///  @params[in]     size          Size of the input buffer.
+///  @params[in]     is_constant   Flags if the input is read only.
 ///  @params[in,out] registers     Map of used registers.
+///  @params[in]     usage         List of register usage count.
+///  @params[in]     textures1d    List of 1D kernel textures.
+///  @params[in]     textures2d    List of 2D kernel textures.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
-                                  const size_t size,
-                                  jit::register_map &registers) {
+                                  const size_t size, 
+                                  const std::vector<bool> &is_constant,
+                                  jit::register_map &registers,
+                                  const jit::register_usage &usage,
+                                  jit::texture1d_list &textures1d,
+                                  jit::texture2d_list &textures2d) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
 
@@ -368,11 +405,14 @@ namespace gpu {
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args) {" << std::endl;
 
-            for (auto &input : inputs) {
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 source_buffer << "    ";
+                if (is_constant[i]) {
+                    source_buffer << "const ";
+                }
                 jit::add_type<T> (source_buffer);
-                source_buffer << " *" << jit::to_string('v', input.get())
-                              << " = args[" << reinterpret_cast<size_t> (input.get()) 
+                source_buffer << " *" << jit::to_string('v', inputs[i].get())
+                              << " = args[" << reinterpret_cast<size_t> (inputs[i].get())
                               << "];" << std::endl;
             }
             for (auto &output : outputs) {
@@ -391,7 +431,8 @@ namespace gpu {
                 jit::add_type<T> (source_buffer);
                 source_buffer << " " << registers[input.get()]
                               << " = " << jit::to_string('v', input.get())
-                              << "[i]; //" << input->get_symbol() << std::endl;
+                              << "[i]; // " << input->get_symbol()
+                              << " used " << usage.at(input.get()) << std::endl;
             }
         }
 
@@ -402,13 +443,17 @@ namespace gpu {
 ///  @params[in]     outputs       Output nodes of the graph to compute.
 ///  @params[in]     setters       Map outputs back to input values.
 ///  @params[in,out] registers     Map of used registers.
+///  @params[in]     usage         List of register usage count.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
-                                   jit::register_map &registers) {
+                                   jit::register_map &registers,
+                                   const jit::register_usage &usage) {
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
+                                                                  registers,
+                                                                  usage);
                 source_buffer << "        " << jit::to_string('v', in.get());
                 source_buffer << "[i] = ";
                 if constexpr (SAFE_MATH) {
@@ -431,7 +476,9 @@ namespace gpu {
                 }
             }
             for (auto &out : outputs) {
-                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
+                                                                  registers,
+                                                                  usage);
                 source_buffer << "        " << jit::to_string('o', out.get());
                 source_buffer << "[i] = ";
                 if constexpr (SAFE_MATH) {

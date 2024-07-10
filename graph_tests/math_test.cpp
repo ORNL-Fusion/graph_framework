@@ -110,10 +110,10 @@ void test_sqrt() {
 //  Test node properties.
     auto sqrt_const = graph::sqrt(graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                            static_cast<T> (2.0)}), var));
-    assert(sqrt_const->is_constant_like() && "Expected a constant.");
+    assert(sqrt_const->is_constant() && "Expected a constant.");
     assert(!sqrt_const->is_all_variables() && "Did not expect a variable.");
     assert(sqrt_const->is_power_like() && "Expected a power like.");
-    assert(!sqrt_var->is_constant_like() && "Did not expect a constant.");
+    assert(!sqrt_var->is_constant() && "Did not expect a constant.");
     assert(sqrt_var->is_all_variables() && "Expected a variable.");
     assert(sqrt_var->is_power_like() && "Expected a power like.");
 }
@@ -152,7 +152,7 @@ void test_exp() {
     assert(dexp_var->evaluate().at(0) == std::exp(static_cast<T> (3.0)));
 
 //  Test node properties.
-    assert(!exp_var->is_constant_like() && "Did not expect a constant.");
+    assert(!exp_var->is_constant() && "Did not expect a constant.");
     assert(exp_var->is_all_variables() && "Expected a variable.");
     assert(!exp_var->is_power_like() && "Did not expect a power like.");
 }
@@ -239,7 +239,7 @@ void test_pow() {
     assert(sqrd_neg->evaluate().at(0) == static_cast<T> (non_int_neg*non_int_neg) &&
            "Expected x*x");
 
-    auto three = graph::two<T> ();
+    auto three = graph::constant<T> (static_cast<T> (3));
     auto pow_pow1 = graph::pow(graph::pow(ten, three), two);
     auto pow_pow2 = graph::pow(ten, three*two);
     assert(pow_pow1->is_match(pow_pow2) &&
@@ -273,16 +273,16 @@ void test_pow() {
     auto var_a = graph::variable<T> (1, "");
     auto pow_const = graph::pow(three, graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                                 static_cast<T> (2.0)}), var_a));
-    assert(pow_const->is_constant_like() && "Expected a constant.");
+    assert(pow_const->is_constant() && "Expected a constant.");
     assert(!pow_const->is_all_variables() && "Did not expect a variable.");
     assert(pow_const->is_power_like() && "Expected a power like.");
     auto pow_var = graph::pow(var_a, three);
-    assert(!pow_var->is_constant_like() && "Did not expect a constant.");
+    assert(!pow_var->is_constant() && "Did not expect a constant.");
     assert(pow_var->is_all_variables() && "Expected a variable.");
     assert(pow_var->is_power_like() && "Expected a power like.");
     auto var_b = graph::variable<T> (1, "");
     auto pow_var_var = graph::pow(var_a, var_b);
-    assert(!pow_var->is_constant_like() && "Did not expect a constant.");
+    assert(!pow_var->is_constant() && "Did not expect a constant.");
     assert(pow_var->is_all_variables() && "Expected a variable.");
     assert(pow_var->is_power_like() && "Expected a power like.");
 
@@ -320,6 +320,10 @@ void test_pow() {
     auto powexp_float_cast = graph::pow_cast(powexp_float);
     assert(powexp_float_cast.get() &&
            "Expected power cast.");
+
+//  c1^c2
+    assert(graph::constant_cast(graph::pow(two, three)).get() &&
+           "Expected a constant node.");
 }
 
 //------------------------------------------------------------------------------
@@ -340,7 +344,7 @@ void test_log() {
     auto dlogy = logy->df(y);
     assert(graph::divide_cast(dlogy) && "Expected divide node.");
 
-    assert(!logy->is_constant_like() && "Did not expect a constant.");
+    assert(!logy->is_constant() && "Did not expect a constant.");
     assert(logy->is_all_variables() && "Expected a variable.");
     assert(!logy->is_power_like() && "Did not expect a power like.");
 }
@@ -367,7 +371,7 @@ void test_erfi() {
            "Expected a constant node.");
 
 //  Test node properties.
-    assert(!erfi->is_constant_like() && "Did not expect a constant.");
+    assert(!erfi->is_constant() && "Did not expect a constant.");
     assert(erfi->is_all_variables() && "Expected a variable.");
     assert(!erfi->is_power_like() && "Did not expect a power like.");
 }

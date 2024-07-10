@@ -9,11 +9,15 @@
 #define cuda_context_h
 
 #include <array>
+#include <cstring>
 
 #include <cuda.h>
 #include <nvrtc.h>
 
 #include "node.hpp"
+
+#define MAX_REG 128
+#define MAX_CONSTANT_MEMORY
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -40,6 +44,9 @@ namespace gpu {
 #ifndef NDEBUG
         const char *error;
         cuGetErrorString(result, &error);
+        if (result != CUDA_SUCCESS) {
+            std::cerr << name << " " << std::string(error) << std::endl;
+        }
         assert(result == CUDA_SUCCESS && error);
 #endif
     }
@@ -72,6 +79,10 @@ namespace gpu {
         CUmodule module;
 ///  Argument map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, CUdeviceptr> kernel_arguments;
+#ifdef USE_CUDA_TEXTURES
+///  Textures.
+        std::map<void *, CUtexObject> texture_arguments;
+#endif
 ///  Result buffer.
         CUdeviceptr result_buffer;
 ///  Cuda stream.
@@ -93,6 +104,9 @@ namespace gpu {
         }
 
     public:
+///  Remaining constant memory in bytes.
+        int remaining_const_memory;
+
 //------------------------------------------------------------------------------
 ///  @brief Get the maximum number of concurrent instances.
 ///
@@ -120,7 +134,11 @@ namespace gpu {
             check_error(cuDeviceGet(&device, index), "cuDeviceGet");
             check_error(cuDevicePrimaryCtxRetain(&context, device), "cuDevicePrimaryCtxRetain");
             check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
+            check_error(cuCtxSetCacheConfig(CU_FUNC_CACHE_PREFER_L1), "cuCtxSetCacheConfig");
             check_error(cuStreamCreate(&stream, CU_STREAM_DEFAULT), "cuStreamCreate");
+            check_error(cuDeviceGetAttribute(&remaining_const_memory,
+                                             CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY,
+                                             device), "cuDeviceGetAttribute");
         }
 
 //------------------------------------------------------------------------------
@@ -135,6 +153,17 @@ namespace gpu {
             for (auto &[key, value] : kernel_arguments) {
                 check_error(cuMemFree(value), "cuMemFree");
             }
+
+#ifdef USE_CUDA_TEXTURES
+            for (auto &[key, value] : texture_arguments) {
+                CUDA_RESOURCE_DESC resource;
+                check_error(cuTexObjectGetResourceDesc(&resource, value),
+                            "cuTexObjectGetResourceDesc");
+
+                check_error(cuArrayDestroy(resource.res.array.hArray), "cuArrayDestroy");
+                check_error(cuTexObjectDestroy(value), "cuTexObjectDestroy");
+            }
+#endif
 
             if (result_buffer) {
                 check_error(cuMemFree(result_buffer), "cuMemFree");
@@ -203,13 +232,14 @@ namespace gpu {
             }
 
             const std::string temp = arch.str();
-            std::array<const char *, 6> options({
+            std::array<const char *, 7> options({
                 temp.c_str(),
                 "--std=c++17",
+                "--relocatable-device-code=false",
                 "--include-path=" CUDA_INCLUDE,
                 "--include-path=" HEADER_DIR,
                 "--extra-device-vectorization",
-		        "--device-as-default-execution-space"
+                "--device-as-default-execution-space"
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
@@ -242,7 +272,20 @@ namespace gpu {
             check_nvrtc_error(nvrtcDestroyProgram(&kernel_program),
                               "nvrtcDestroyProgram");
 
-            check_error(cuModuleLoadDataEx(&module, ptx, 0, NULL, NULL), "cuModuleLoadDataEx");
+            std::array<CUjit_option, 3> module_options = {
+                CU_JIT_MAX_REGISTERS,
+                CU_JIT_LTO,
+                CU_JIT_POSITION_INDEPENDENT_CODE
+            };
+            std::array<void *, 3> module_values = {
+                reinterpret_cast<void *> (MAX_REG),
+                reinterpret_cast<void *> (1),
+                reinterpret_cast<void *> (0)
+            };
+
+            check_error(cuModuleLoadDataEx(&module, ptx, 1,
+                                           module_options.data(),
+                                           module_values.data()), "cuModuleLoadDataEx");
 
             free(ptx);
         }
@@ -253,13 +296,17 @@ namespace gpu {
 ///  @params[in] kernel_name   Name of the kernel for later reference.
 ///  @params[in] inputs        Input nodes of the kernel.
 ///  @params[in] outputs       Output nodes of the kernel.
-///  @params[in] num_rays      Number of rays to trace.
+///  @params[in] num_rays      Number of rays to trace.'
+///  @params[in] tex1d_list  List of 1D textures.
+///  @params[in] tex2d_list  List of 1D textures.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
-                                                     const size_t num_rays) {
+                                                     const size_t num_rays,
+                                                     const jit::texture1d_list &tex1d_list,
+                                                     const jit::texture2d_list &tex2d_list) {
             CUfunction function;
             check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
 
@@ -292,16 +339,129 @@ namespace gpu {
                 buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
             }
 
+#ifdef USE_CUDA_TEXTURES
+            for (auto &[data, size] : tex1d_list) {
+                if (!texture_arguments.contains(data)) {
+                    texture_arguments.try_emplace(data);
+                    CUDA_RESOURCE_DESC resource_desc;
+                    CUDA_TEXTURE_DESC texture_desc;
+                    CUDA_ARRAY_DESCRIPTOR array_desc;
+
+                    array_desc.Width = size;
+                    array_desc.Height = 1;
+
+                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
+                    memset(&texture_desc, 0, sizeof(CUDA_TEXTURE_DESC));
+
+                    resource_desc.resType = CU_RESOURCE_TYPE_ARRAY;
+                    texture_desc.addressMode[0] = CU_TR_ADDRESS_MODE_BORDER;
+                    texture_desc.addressMode[1] = CU_TR_ADDRESS_MODE_BORDER;
+                    texture_desc.addressMode[2] = CU_TR_ADDRESS_MODE_BORDER;
+                    if constexpr (jit::is_float<T> ()) {
+                        array_desc.Format = CU_AD_FORMAT_FLOAT;
+                        if constexpr (jit::is_complex<T> ()) {
+                            array_desc.NumChannels = 2;
+                        } else {
+                            array_desc.NumChannels = 1;
+                        }
+                    } else {
+                        array_desc.Format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        if constexpr (jit::is_complex<T> ()) {
+                            array_desc.NumChannels = 4;
+                        } else {
+                            array_desc.NumChannels = 2;
+                        }
+                    }
+                    check_error(cuArrayCreate(&resource_desc.res.array.hArray, &array_desc),
+                                "cuArrayCreate");
+                    check_error(cuMemcpyHtoA(resource_desc.res.array.hArray, 0, data,
+                                             size*sizeof(float)*array_desc.NumChannels),
+                                "cuMemcpyHtoA");
+
+                    check_error(cuTexObjectCreate(&texture_arguments[data],
+                                                  &resource_desc, &texture_desc,
+                                                  NULL),
+                                "cuTexObjectCreate");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
+            }
+            for (auto &[data, size] : tex2d_list) {
+                if (!texture_arguments.contains(data)) {
+                    texture_arguments.try_emplace(data);
+                    CUDA_RESOURCE_DESC resource_desc;
+                    CUDA_TEXTURE_DESC texture_desc;
+                    CUDA_ARRAY_DESCRIPTOR array_desc;
+
+                    array_desc.Width = size[0];
+                    array_desc.Height = size[1];
+
+                    memset(&resource_desc, 0, sizeof(CUDA_RESOURCE_DESC));
+                    memset(&texture_desc, 0, sizeof(CUDA_TEXTURE_DESC));
+
+                    resource_desc.resType = CU_RESOURCE_TYPE_ARRAY;
+                    texture_desc.addressMode[0] = CU_TR_ADDRESS_MODE_BORDER;
+                    texture_desc.addressMode[1] = CU_TR_ADDRESS_MODE_BORDER;
+                    texture_desc.addressMode[2] = CU_TR_ADDRESS_MODE_BORDER;
+                    const size_t total = size[0]*size[1];
+                    if constexpr (jit::is_float<T> ()) {
+                        array_desc.Format = CU_AD_FORMAT_FLOAT;
+                        if constexpr (jit::is_complex<T> ()) {
+                            array_desc.NumChannels = 2;
+                        } else {
+                            array_desc.NumChannels = 1;
+                        }
+                    } else {
+                        array_desc.Format = CU_AD_FORMAT_UNSIGNED_INT32;
+                        if constexpr (jit::is_complex<T> ()) {
+                            array_desc.NumChannels = 4;
+                        } else {
+                            array_desc.NumChannels = 2;
+                        }
+                    }
+                    check_error(cuArrayCreate(&resource_desc.res.array.hArray, &array_desc),
+                                "cuArrayCreate");
+
+                    CUDA_MEMCPY2D copy_desc;
+                    memset(&copy_desc, 0, sizeof(copy_desc));
+
+                    copy_desc.srcPitch = size[0]*sizeof(float)*array_desc.NumChannels;
+                    copy_desc.srcMemoryType = CU_MEMORYTYPE_HOST;
+                    copy_desc.srcHost = data;
+
+                    copy_desc.dstMemoryType = CU_MEMORYTYPE_ARRAY;
+                    copy_desc.dstArray = resource_desc.res.array.hArray;
+
+                    copy_desc.WidthInBytes = copy_desc.srcPitch;
+                    copy_desc.Height = size[0];
+
+                    check_error(cuMemcpy2D(&copy_desc), "cuMemcpy2D");
+
+                    check_error(cuTexObjectCreate(&texture_arguments[data],
+                                                  &resource_desc, &texture_desc,
+                                                  NULL),
+                                "cuTexObjectCreate");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&texture_arguments[data]));
+            }
+#endif
+
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
             unsigned int threads_per_group = value;
             unsigned int thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+
+            int min_grid;
+            check_error(cuOccupancyMaxPotentialBlockSize(&min_grid, &value, function, 0, 0, 0),
+                        "cuOccupancyMaxPotentialBlockSize");
+
             if (jit::verbose) {
                 std::cout << "  Kernel name              : " << kernel_name << std::endl;
-                std::cout << "    Threads per group  : " << threads_per_group << std::endl;
-                std::cout << "    Number of groups   : " << thread_groups << std::endl;
-                std::cout << "    Total problem size : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Threads per group    : " << threads_per_group << std::endl;
+                std::cout << "    Number of groups     : " << thread_groups << std::endl;
+                std::cout << "    Total problem size   : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Min grid size        : " << min_grid << std::endl;
+                std::cout << "    Suggested Block size : " << value << std::endl;
             }
 
             return [this, function, thread_groups, threads_per_group, buffers] () mutable {
@@ -334,8 +494,15 @@ namespace gpu {
             check_error(cuModuleGetFunction(&function, module, "max_reduction"),
                         "cuModuleGetFunction");
 
+            int value;
+            int min_grid;
+            check_error(cuOccupancyMaxPotentialBlockSize(&min_grid, &value, function, 0, 0, 0),
+                        "cuOccupancyMaxPotentialBlockSize");
+
             if (jit::verbose) {
                 std::cout << "  Kernel name              : max_reduction" << std::endl;
+                std::cout << "    Min grid size        : " << min_grid << std::endl;
+                std::cout << "    Suggested Block size : " << value << std::endl;
             }
 
             return [this, function, run, buffers] () mutable {
@@ -425,10 +592,36 @@ namespace gpu {
         void create_header(std::ostringstream &source_buffer) {
             if constexpr (jit::is_complex<T> ()) {
                 source_buffer << "#define CUDA_DEVICE_CODE" << std::endl;
-		source_buffer << "#define M_PI " << M_PI << std::endl;
+                source_buffer << "#define M_PI " << M_PI << std::endl;
                 source_buffer << "#include <cuda/std/complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
+#ifdef USE_CUDA_TEXTURES
+                if constexpr (jit::is_float<T> ()) {
+                    source_buffer << "static __inline__ __device__ complex<float> to_cmp_float(float2 p) {"
+                                  << std::endl
+                                  << "    return ";
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " (p.x, p.y);" << std::endl
+                                  << "}" << std::endl;
+                } else {
+                    source_buffer << "static __inline__ __device__ complex<double> to_cmp_double(uint4 p) {"
+                                  << std::endl
+                                  << "    return ";
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " (__hiloint2double(p.y, p.x), __hiloint2double(p.w, p.z));"
+                                  << std::endl
+                                  << "}" << std::endl;
+                }
+            } else if constexpr (jit::is_double<T> ()) {
+                source_buffer << "static __inline__ __device__ double to_double(uint2 p) {"
+                << std::endl
+                << "    return __hiloint2double(p.y, p.x);"
+                << std::endl
+                << "}" << std::endl;
             }
+#else
+            }
+#endif
         }
 
 //------------------------------------------------------------------------------
@@ -439,34 +632,76 @@ namespace gpu {
 ///  @params[in]     inputs        Input variables of the kernel.
 ///  @params[in]     outputs       Output nodes of the graph to compute.
 ///  @params[in]     size          Size of the input buffer.
+///  @params[in]     is_constant   Flags if the input is read only.
 ///  @params[in,out] registers     Map of used registers.
+///  @params[in]     usage         List of register usage count.
+///  @params[in]     textures1d    List of 1D kernel textures.
+///  @params[in]     textures2d    List of 2D kernel textures.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
                                   const size_t size,
-                                  jit::register_map &registers) {
+                                  const std::vector<bool> &is_constant,
+                                  jit::register_map &registers,
+                                  const jit::register_usage &usage,
+                                  jit::texture1d_list &textures1d,
+                                  jit::texture2d_list &textures2d) {
             source_buffer << std::endl;
-            source_buffer << "extern \"C\" __global__ void " << name << "("
-                          << std::endl;
+            source_buffer << "extern \"C\" __global__ void "
+                          << name << "(" << std::endl;
 
             source_buffer << "    ";
+            if (is_constant[0]) {
+                source_buffer << "const ";
+            }
             jit::add_type<T> (source_buffer);
-            source_buffer << " *" << jit::to_string('v', inputs[0].get());
+            source_buffer << " * __restrict__ "
+                          << jit::to_string('v', inputs[0].get());
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
-                source_buffer << "," << std::endl;
+                source_buffer << ", // " << inputs[i - 1]->get_symbol()
+#ifndef USE_INPUT_CACHE
+                              << " used " << usage.at(inputs[i - 1].get())
+#endif
+                              << std::endl;
                 source_buffer << "    ";
+                if (is_constant[i]) {
+                    source_buffer << "const ";
+                }
                 jit::add_type<T> (source_buffer);
-                source_buffer << " *" << jit::to_string('v', inputs[i].get());
+                source_buffer << " * __restrict__ "
+                              << jit::to_string('v', inputs[i].get());
             }
-
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                source_buffer << "," << std::endl;
+                source_buffer << ",";
+                if (i == 0) {
+                    source_buffer << " // "
+                                  << inputs[inputs.size() - 1]->get_symbol();
+#ifndef USE_INPUT_CACHE
+                    source_buffer << " used "
+                                  << usage.at(inputs[inputs.size() - 1].get());
+#endif
+                }
+
+                source_buffer << std::endl;
                 source_buffer << "    ";
                 jit::add_type<T> (source_buffer);
-                source_buffer << " *" << jit::to_string('o', outputs[i].get());
+                source_buffer << " *  __restrict__ "
+                              << jit::to_string('o', outputs[i].get());
             }
+#ifdef USE_CUDA_TEXTURES
+            for (auto &[key, value] : textures1d) {
+                source_buffer << "," << std::endl;
+                source_buffer << "    cudaTextureObject_t "
+                              << jit::to_string('a', key);
+            }
+            for (auto &[key, value] : textures2d) {
+                source_buffer << "," << std::endl;
+                source_buffer << "    cudaTextureObject_t "
+                              << jit::to_string('a', key);
+            }
+#endif
             source_buffer << ") {" << std::endl;
 
             source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
@@ -474,12 +709,19 @@ namespace gpu {
             source_buffer << "    if (index < " << size << ") {" << std::endl;
 
             for (auto &input : inputs) {
-                registers[input.get()] = jit::to_string('r', input.get());
-                source_buffer << "        const ";
-                jit::add_type<T> (source_buffer);
-                source_buffer << " " << registers[input.get()] << " = "
-                              << jit::to_string('v', input.get()) << "[index];"
-                              << std::endl;
+#ifdef USE_INPUT_CACHE
+                if (usage.at(input.get())) {
+                    registers[input.get()] = jit::to_string('r', input.get());
+                    source_buffer << "        const ";
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " " << registers[input.get()] << " = "
+                                  << jit::to_string('v', input.get())
+                                  << "[index]; // " << input->get_symbol()
+                                  << " used " << usage.at(input.get()) << std::endl;
+                }
+#else
+                registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+#endif
             }
         }
 
@@ -490,14 +732,17 @@ namespace gpu {
 ///  @params[in]     outputs       Output nodes of the graph to compute.
 ///  @params[in]     setters       Map outputs back to input values.
 ///  @params[in,out] registers     Map of used registers.
-
+///  @params[in]     usage         List of register usage count.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
-                                   jit::register_map &registers) {
+                                   jit::register_map &registers,
+                                   const jit::register_usage &usage) {
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
+                                                                  registers,
+                                                                  usage);
                 source_buffer << "        " << jit::to_string('v',  in.get())
                               << "[index] = ";
                 if constexpr (SAFE_MATH) {
@@ -521,7 +766,9 @@ namespace gpu {
             }
 
             for (auto &out : outputs) {
-                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer, registers);
+                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
+                                                                  registers,
+                                                                  usage);
                 source_buffer << "        " << jit::to_string('o',  out.get())
                               << "[index] = ";
                 if constexpr (SAFE_MATH) {
@@ -557,12 +804,12 @@ namespace gpu {
                               const size_t size) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" __global__ void max_reduction(" << std::endl;
+            source_buffer << "    const ";
+            jit::add_type<T> (source_buffer);
+            source_buffer << " * __restrict__ input," << std::endl;
             source_buffer << "    ";
             jit::add_type<T> (source_buffer);
-            source_buffer << " *input," << std::endl;
-            source_buffer << "    ";
-            jit::add_type<T> (source_buffer);
-            source_buffer << " *result) {" << std::endl;
+            source_buffer << " * __restrict__ result) {" << std::endl;
             source_buffer << "    const unsigned int i = threadIdx.x;" << std::endl;
             source_buffer << "    const unsigned int j = threadIdx.x/32;" << std::endl;
             source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
@@ -594,47 +841,6 @@ namespace gpu {
             source_buffer << "        }"  << std::endl;
             source_buffer << "    }"  << std::endl;
             source_buffer << "}" << std::endl << std::endl;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Create a preamble.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-//------------------------------------------------------------------------------
-        void create_preamble(std::ostringstream &source_buffer) {
-            source_buffer << "extern \"C\" __global__ ";
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Create arg prefix.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-//------------------------------------------------------------------------------
-        void create_argument_prefix(std::ostringstream &source_buffer) {}
-
-//------------------------------------------------------------------------------
-///  @brief Create arg postfix.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     index         Argument index.
-//------------------------------------------------------------------------------
-        void create_argument_postfix(std::ostringstream &source_buffer,
-                                     const size_t index) {}
-
-//------------------------------------------------------------------------------
-///  @brief Create index argument.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-//------------------------------------------------------------------------------
-        void create_index_argument(std::ostringstream &source_buffer) {}
-
-//------------------------------------------------------------------------------
-///  @brief Create index.
-///
-///  @params[in,out] source_buffer Source buffer stream.
-//------------------------------------------------------------------------------
-        void create_index(std::ostringstream &source_buffer) {
-            source_buffer << "blockIdx.x*blockDim.x + threadIdx.x;";
         }
 
 //------------------------------------------------------------------------------

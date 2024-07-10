@@ -11,6 +11,30 @@
 #include "node.hpp"
 
 namespace graph {
+//------------------------------------------------------------------------------
+///  @brief Compile an index.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @params[in,out] stream        String buffer stream.
+///  @params[in]     register_name Reister for the argument.
+///  @params[in]     length        Dimension length of argument.
+//------------------------------------------------------------------------------
+template<jit::float_scalar T>
+void compile_index(std::ostringstream &stream,
+                   const std::string &register_name,
+                   const size_t length) {
+    stream << "min(max((unsigned int)";
+    if constexpr (jit::is_complex<T> ()) {
+        stream << "real(";
+    }
+    stream << register_name;
+    if constexpr (jit::is_complex<T> ()) {
+        stream << ")";
+    }
+    stream << ",0u)," << length - 1 << "u)";
+}
+
 //******************************************************************************
 //  1D Piecewise node.
 //******************************************************************************
@@ -155,38 +179,80 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
+                this->arg->compile_preamble(stream, registers,
+                                            visited, usage,
+                                            textures1d, textures2d,
+                                            avail_const_mem);
                 if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
+                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        stream << "constant ";
-                    }
-                    stream << "const ";
-                    jit::add_type<T> (stream);
-                    stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
-                    if constexpr (jit::is_complex<T> ()) {
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               length);
+#ifdef USE_CUDA_TEXTURES
+                    } else if constexpr (jit::use_cuda()) {
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               length);
+#endif
+                    } else {
+                        if constexpr (jit::use_cuda()) {
+                            const int buffer_size = length*sizeof(T);
+                            if (avail_const_mem - buffer_size > 0) {
+                                avail_const_mem -= buffer_size;
+                                stream << "__constant__ ";
+                            }
+                        }
+                        stream << "const ";
                         jit::add_type<T> (stream);
-                    }
-                    stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
-                         i < ie; i++) {
-                        stream << ", ";
+                        stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
+                        for (size_t i = 1; i < length; i++) {
+                            stream << ", ";
+                            if constexpr (jit::is_complex<T> ()) {
+                                jit::add_type<T> (stream);
+                            }
+                            stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                        }
+                        stream << "};" << std::endl;
                     }
-                    stream << "};" << std::endl;
-                    visited[this] = 0;
+                } else {
+//  When using textures, the register can be defined in a previous kernel. We
+//  need to add the textures again.
+                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                    if constexpr (jit::use_metal<T> ()) {
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               length);
+#ifdef USE_CUDA_TEXTURES
+                    } else if constexpr (jit::use_cuda()) {
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               length);
+#endif
+                    }
                 }
+                visited.insert(this);
+                usage[this] = 1;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -207,29 +273,55 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream, 
+                                                                 registers,
+                                                                 usage);
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = "
-                       << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
-                stream << "[max(min((int)";
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << "real(";
+                stream << " " << registers[this] << " = ";
+#ifdef USE_CUDA_TEXTURES
+                if constexpr (jit::use_cuda()) {
+                    if constexpr (jit::is_float<T> () && !jit::is_complex<T> ()) {
+                        stream << "tex1D<float> (";
+                    } else if constexpr (jit::is_double<T> () && !jit::is_complex<T> ()) {
+                        stream << "to_double(tex1D<uint2> (";
+                    } else if constexpr (jit::is_float<T> ()) {
+                        stream << "to_cmp_float(tex1D<float2> (";
+                    } else {
+                        stream << "to_cmp_double(tex1D<uint4> (";
+                    }
                 }
-                stream << registers[a.get()];
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << ")";
+#endif
+                stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
+                const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                if constexpr (jit::use_metal<T> ()) {
+                    stream << ".read(";
+                    compile_index<T> (stream, registers[a.get()], length);
+                    stream << ").r;";
+#ifdef USE_CUDA_TEXTURES
+                } else if constexpr (jit::use_cuda()) {
+                    stream << ", ";
+                    compile_index<T> (stream, registers[a.get()], length);
+                    if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
+                        stream << ")";
+                    }
+                    stream << ");";
+#endif
+                } else {
+                    stream << "[";
+                    compile_index<T> (stream, registers[a.get()], length);
+                    stream << "];";
                 }
-                stream << ", "
-                       << leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() - 1 << "), 0)];"
-                       << std::endl;
+                stream << " // used " << usage.at(this) <<std::endl;
             }
 
             return this->shared_from_this();
@@ -286,12 +378,21 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
+///  @brief Test if node is a constant.
 ///
-///  @returns True if the node acts like a constant.
+///  @returns True if the node is a constant.
 //------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
+        virtual bool is_constant() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test the constant node has a zero.
+///
+///  @returns True the node has a zero constant value.
+//------------------------------------------------------------------------------
+        virtual bool has_constant_zero() const {
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].has_zero();
         }
 
 //------------------------------------------------------------------------------
@@ -338,7 +439,18 @@ namespace graph {
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get() && this->arg->is_match(temp->get_arg());
+            return temp.get()                           &&
+                   this->arg->is_match(temp->get_arg()) &&
+                   (temp->get_size() == this->get_size());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the size of the buffer.
+///
+///  @returns The size of the buffer.
+//------------------------------------------------------------------------------
+        size_t get_size() const {
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
         }
     };
 
@@ -506,7 +618,7 @@ namespace graph {
         branch_node<T, SAFE_MATH> (x, y, piecewise_2D_node::to_string(d, x, y)),
         data_hash(piecewise_2D_node::hash_data(d)),
         num_columns(n) {
-            assert(d.size()/n &&
+            assert(d.size()%n == 0 &&
                    "Expected the data buffer to be a multiple of the number of columns.");
         }
 
@@ -517,6 +629,16 @@ namespace graph {
 //------------------------------------------------------------------------------
         size_t get_num_columns() const {
             return num_columns;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of columns.
+///
+///  @returns The number of columns in the constant.
+//------------------------------------------------------------------------------
+        size_t get_num_rows() const {
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() /
+                   num_columns;
         }
 
 //------------------------------------------------------------------------------
@@ -561,36 +683,84 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
+                this->left->compile_preamble(stream, registers,
+                                             visited, usage,
+                                             textures1d, textures2d,
+                                             avail_const_mem);
+                this->right->compile_preamble(stream, registers,
+                                              visited, usage,
+                                              textures1d, textures2d,
+                                              avail_const_mem);
                 if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
+                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        stream << "constant ";
-                    }
-                    stream << "const ";
-                    jit::add_type<T> (stream);
-                    stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
-                    if constexpr (jit::is_complex<T> ()) {
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+#ifdef USE_CUDA_TEXTURES
+                    } else if constexpr (jit::use_cuda()) {
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+#endif
+                    } else {
+                        if constexpr (jit::use_cuda()) {
+                            const int buffer_size = length*sizeof(T);
+                            if (avail_const_mem - buffer_size > 0) {
+                                avail_const_mem -= buffer_size;
+                                stream << "__constant__ ";
+                            }
+                        }
+                        stream << "const ";
                         jit::add_type<T> (stream);
-                    }
-                    stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
-                    for (size_t i = 1, ie = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size(); i < ie; i++) {
-                        stream << ", ";
+                        stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
+                        for (size_t i = 1; i < length; i++) {
+                            stream << ", ";
+                            if constexpr (jit::is_complex<T> ()) {
+                                jit::add_type<T> (stream);
+                            }
+                            stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                        }
+                        stream << "};" << std::endl;
                     }
-                    stream << "};" << std::endl;
+                } else {
+//  When using textures, the register can be defined in a previous kernel. We
+//  need to add the textures again.
+                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                    if constexpr (jit::use_metal<T> ()) {
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+#ifdef USE_CUDA_TEXTURES
+                    } else if constexpr (jit::use_cuda()) {
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+#endif
+                    }
                 }
+                visited.insert(this);
+                usage[this] = 1;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -624,38 +794,77 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> x = this->left->compile(stream, registers);
-                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream, registers);
+                shared_leaf<T, SAFE_MATH> x = this->left->compile(stream,
+                                                                  registers,
+                                                                  usage);
+                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream,
+                                                                   registers,
+                                                                   usage);
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = "
-                       << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
-                stream << "[max(min((int)";
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << "real(";
+                stream << " " << registers[this] << " = ";
+#ifdef USE_CUDA_TEXTURES
+                if constexpr (jit::use_cuda()) {
+                    if constexpr (jit::is_float<T> () && !jit::is_complex<T> ()) {
+                        stream << "tex2D<float> (";
+                    } else if constexpr (jit::is_double<T> () && !jit::is_complex<T> ()) {
+                        stream << "to_double(tex2D<uint2> (";
+                    } else if constexpr (jit::is_float<T> ()) {
+                        stream << "to_cmp_float(tex2D<float2> (";
+                    } else {
+                        stream << "to_cmp_double(tex2D<uint4> (";
+                    }
                 }
-                stream << registers[x.get()];
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << ")";
+#endif
+                stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
+                const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                const size_t num_rows = length/num_columns;
+                if constexpr (jit::use_metal<T> ()) {
+                    stream << ".read(uint2(";
+                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << ",";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    stream << ")).r;";
+#ifdef USE_CUDA_TEXTURES
+                } else if constexpr (jit::use_cuda()) {
+                    stream << ", ";
+                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << ", ";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
+                        stream << ")";
+                    }
+                    stream << ");";
+#endif
+                }  else {
+                    stream << "[min(max((int)";
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << "real(";
+                    }
+                    stream << registers[x.get()];
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                    stream << "*" << num_columns << " + (int)";
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << "real(";
+                    }
+                    stream << registers[y.get()];
+                    if constexpr (jit::is_complex<T> ()) {
+                        stream << ")";
+                    }
+                    stream << ",0), " << length - 1 << ")];";
                 }
-                stream << "*" << num_columns << " + (int)";
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << "real(";
-                }
-                stream << registers[y.get()];
-                if constexpr (jit::is_complex<T> ()) {
-                    stream << ")";
-                }
-                stream << ", "
-                       << leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() - 1 << "), 0)];"
-                       << std::endl;
+                stream << " // used " << usage.at(this) << std::endl;
             }
 
             return this->shared_from_this();
@@ -716,12 +925,21 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
+///  @brief Test if node is a constant.
 ///
-///  @returns True if the node acts like a constant.
+///  @returns True if the node is a constant.
 //------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
+        virtual bool is_constant() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test the constant node has a zero.
+///
+///  @returns True the node has a zero constant value.
+//------------------------------------------------------------------------------
+        virtual bool has_constant_zero() const {
+            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].has_zero();
         }
 
 //------------------------------------------------------------------------------
@@ -763,15 +981,44 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Check if the args match.
 ///
-///  @param[in] x Node to match.
+///  @params[in] x Node to match.
 ///  @returns True if the arguments match.
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_2D_cast(x);
-            return temp.get()                               &&
-                   this->left->is_match(temp->get_left())   &&
-                   this->right->is_match(temp->get_right()) &&
-                   (num_columns == this->get_num_columns());
+            return temp.get()                                     &&
+                   this->left->is_match(temp->get_left())         &&
+                   this->right->is_match(temp->get_right())       &&
+                   (temp->get_num_rows() == this->get_num_rows()) &&
+                   (temp->get_num_columns() == this->get_num_columns());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Do the rows match.
+///
+///  @params[in] x Node to match.
+///  @returns True if the row arguments match.
+//------------------------------------------------------------------------------
+        bool is_row_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = piecewise_1D_cast(x);
+            return temp.get()                            &&
+                   this->left->is_match(temp->get_arg()) &&
+                   (temp->get_size() == this->get_num_rows());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Do the columns match.
+///
+///  The number of rows is the column dimension.
+///
+///  @params[in] x Node to match.
+///  @returns True if the column arguments match.
+//------------------------------------------------------------------------------
+        bool is_col_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = piecewise_1D_cast(x);
+            return temp.get()                             &&
+                   this->right->is_match(temp->get_arg()) &&
+                   (temp->get_size() == this->get_num_columns());
         }
     };
 

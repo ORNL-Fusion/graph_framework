@@ -150,7 +150,7 @@ template<jit::float_scalar T> void test_add() {
 //  (c1*v1 + c2) + (c3*v1 + c4) -> c5*v1 + c6
     auto var_e = graph::variable<T> (1, "");
     auto addfma1 = graph::fma(var_b, var_a, var_d)
-                + graph::fma(var_c, var_a, var_e);
+                 + graph::fma(var_c, var_a, var_e);
     assert(graph::fma_cast(addfma1).get() &&
            "Expected fused multiply add node.");
 //  (v1*c1 + c2) + (v1*c3 + c4) -> c5*v1 + c6
@@ -250,20 +250,20 @@ template<jit::float_scalar T> void test_add() {
     assert(muliply_divide_factor_cast4.get() && "Expected divide node.");
 
 //  Test node properties.
-    assert(three->is_constant_like() && "Expected a constant.");
+    assert(three->is_constant() && "Expected a constant.");
     assert(!three->is_all_variables() && "Did not expect a variable.");
     assert(three->is_power_like() && "Expected a power like.");
     auto constant_add = three + graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                          static_cast<T> (2.0)}), var_a);
-    assert(constant_add->is_constant_like() && "Expected a constant.");
+    assert(constant_add->is_constant() && "Expected a constant.");
     assert(!constant_add->is_all_variables() && "Did not expect a variable.");
     assert(constant_add->is_power_like() && "Expected a power like.");
     auto constant_var_add = three + var_a;
-    assert(!constant_var_add->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_add->is_constant() && "Did not expect a constant.");
     assert(!constant_var_add->is_all_variables() && "Did not expect a variable.");
     assert(!constant_var_add->is_power_like() && "Did not expect a power like.");
     auto var_var_add = var_a + variable;
-    assert(!var_var_add->is_constant_like() && "Did not expect a constant.");
+    assert(!var_var_add->is_constant() && "Did not expect a constant.");
     assert(var_var_add->is_all_variables() && "Expected a variable.");
     assert(!var_var_add->is_power_like() && "Did not expect a power like.");
 }
@@ -553,20 +553,20 @@ template<jit::float_scalar T> void test_subtract() {
            "Expected a fused multiply add node on the left.");
 
 //  Test node properties.
-    assert(zero->is_constant_like() && "Expected a constant.");
+    assert(zero->is_constant() && "Expected a constant.");
     assert(!zero->is_all_variables() && "Did not expect a variable.");
     assert(zero->is_power_like() && "Expected a power like.");
     auto constant_sub = one - graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                        static_cast<T> (2.0)}), var_a);
-    assert(constant_sub->is_constant_like() && "Expected a constant.");
+    assert(constant_sub->is_constant() && "Expected a constant.");
     assert(!constant_sub->is_all_variables() && "Did not expect a variable.");
     assert(constant_sub->is_power_like() && "Expected a power like.");
     auto constant_var_sub = one - var_a;
-    assert(!constant_var_sub->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_sub->is_constant() && "Did not expect a constant.");
     assert(!constant_var_sub->is_all_variables() && "Did not expect a variable.");
     assert(!constant_var_sub->is_power_like() && "Did not expect a power like.");
     auto var_var_sub = var_a - var_b;
-    assert(!var_var_sub->is_constant_like() && "Did not expect a constant.");
+    assert(!var_var_sub->is_constant() && "Did not expect a constant.");
     assert(var_var_sub->is_all_variables() && "Expected a variable.");
     assert(!var_var_sub->is_power_like() && "Did not expect a power like.");
 
@@ -599,6 +599,11 @@ template<jit::float_scalar T> void test_subtract() {
 //  v - (v*a) -> (1 - a)*v
     auto factor4 = var_b - (var_b*var_a);
     assert(graph::multiply_cast(factor4).get() &&
+           "Expected a multiply node.");
+
+//  -1*a - b -> -1*(a + b)
+    auto neg_vara_minus_varb = (graph::none<T> ()*var_a) - var_b;
+    assert(graph::multiply_cast(neg_vara_minus_varb).get() &&
            "Expected a multiply node.");
 }
 
@@ -1029,20 +1034,20 @@ template<jit::float_scalar T> void test_multiply() {
            "Expected a divide node.");
 
 //  Test node properties.
-    assert(two_times_three->is_constant_like() && "Expected a constant.");
+    assert(two_times_three->is_constant() && "Expected a constant.");
     assert(!two_times_three->is_all_variables() && "Did not expect a variable.");
     assert(two_times_three->is_power_like() && "Expected a power like.");
     auto constant_mul = three*graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                        static_cast<T> (2.0)}), variable);
-    assert(constant_mul->is_constant_like() && "Expected a constant.");
+    assert(constant_mul->is_constant() && "Expected a constant.");
     assert(!constant_mul->is_all_variables() && "Did not expect a variable.");
     assert(constant_mul->is_power_like() && "Expected a power like.");
     auto constant_var_mul = three*variable;
-    assert(!constant_var_mul->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_mul->is_constant() && "Did not expect a constant.");
     assert(!constant_var_mul->is_all_variables() && "Did not expect a variable.");
     assert(!constant_var_mul->is_power_like() && "Did not expect a power like.");
     auto var_var_mul = variable*a;
-    assert(!var_var_mul->is_constant_like() && "Did not expect a constant.");
+    assert(!var_var_mul->is_constant() && "Did not expect a constant.");
     assert(var_var_mul->is_all_variables() && "Expected a variable.");
     assert(!var_var_mul->is_power_like() && "Did not expect a power like.");
 
@@ -1781,8 +1786,8 @@ template<jit::float_scalar T> void test_divide() {
     assert(fma_divide_cast2.get() && "Expected an fma node.");
 //  fma(d,a,c*d)/d -> a + c
     auto fma_divide3 = graph::fma(a,
-                                 graph::variable<T> (1, ""),
-                                 graph::variable<T> (1, "")*a)/a;
+                                  graph::variable<T> (1, ""),
+                                  graph::variable<T> (1, "")*a)/a;
     auto fma_divide_cast3 = graph::add_cast(fma_divide3);
     assert(fma_divide_cast3.get() && "Expected an add node.");
 //  fma(d,a,c*d)/d -> a + c
@@ -1792,6 +1797,15 @@ template<jit::float_scalar T> void test_divide() {
     auto fma_divide_cast4 = graph::add_cast(fma_divide4);
     assert(fma_divide_cast4.get() && "Expected an add node.");
 
+//  fma(a,b,a)/a -> 1 + b
+    auto fma_divide5 = graph::fma(a, graph::variable<T> (1, ""), a)/a;
+    auto fma_divide5_cast = graph::add_cast(fma_divide5);
+    assert(fma_divide5_cast.get() && "Expected an add node.");
+//  fma(b,a,a)/a -> 1 + b
+    auto fma_divide6 = graph::fma(graph::variable<T> (1, ""), a, a)/a;
+    auto fma_divide6_cast = graph::add_cast(fma_divide6);
+    assert(fma_divide6_cast.get() && "Expected an add node.");
+    
 //  (a*b^c)/b^d -> a*b^(c - d)
     auto common_power = (variable*graph::pow(a, three))/graph::pow(a, two);
     assert(graph::multiply_cast(common_power).get() &&
@@ -1802,20 +1816,20 @@ template<jit::float_scalar T> void test_divide() {
            "Expected a multiply node.");
 
 //  Test node properties.
-    assert(two_divided_three->is_constant_like() && "Expected a constant.");
+    assert(two_divided_three->is_constant() && "Expected a constant.");
     assert(!two_divided_three->is_all_variables() && "Did not expect a variable.");
     assert(two_divided_three->is_power_like() && "Expected a power like.");
     auto constant_div = two_divided_three/graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                                    static_cast<T> (2.0)}), variable);
-    assert(constant_div->is_constant_like() && "Expected a constant.");
+    assert(constant_div->is_constant() && "Expected a constant.");
     assert(!constant_div->is_all_variables() && "Did not expect a variable.");
     assert(constant_div->is_power_like() && "Expected a power like.");
     auto constant_var_div = two_divided_three/variable;
-    assert(!constant_var_div->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_div->is_constant() && "Did not expect a constant.");
     assert(!constant_var_div->is_all_variables() && "Did not expect a variable.");
     assert(!constant_var_div->is_power_like() && "Did not expect a power like.");
     auto var_var_div = variable/a;
-    assert(!var_var_div->is_constant_like() && "Did not expect a constant.");
+    assert(!var_var_div->is_constant() && "Did not expect a constant.");
     assert(var_var_div->is_all_variables() && "Expected a variable.");
     assert(!var_var_div->is_power_like() && "Did not expect a power like.");
 
@@ -2030,6 +2044,28 @@ template<jit::float_scalar T> void test_fma() {
     auto var_b = graph::variable<T> (1, "");
     auto var_c = graph::variable<T> (1, "");
 
+//  fma(1,a,b) = a + b
+    auto one_times_vara_plus_varb = graph::fma(one, var_a, var_b);
+    auto one_times_vara_plus_varb_cast =
+        graph::add_cast(one_times_vara_plus_varb);
+    assert(one_times_vara_plus_varb_cast.get() && "Expected an add node.");
+    
+//  fma(a,1,b) = a + b
+    auto vara_times_one_plus_varb = graph::fma(var_a, one, var_b);
+    auto vara_times_one_plus_varb_cast =
+        graph::add_cast(vara_times_one_plus_varb);
+    assert(vara_times_one_plus_varb_cast.get() && "Expected an add node.");
+
+//  fma(b,a,a) = a*(1 + b)
+    auto common1 = graph::fma(var_a, var_b, var_a);
+    auto common1_cast = graph::multiply_cast(common1);
+    assert(common1_cast.get() && "Expected multiply node.");
+//  fma(b,a,a) = a*(1 + b)
+    auto common2 = graph::fma(var_b, var_a, var_a);
+    auto common2_cast = graph::multiply_cast(common2);
+    assert(common2_cast.get() && "Expected multiply node.");
+    assert(common1->is_match(common2) && "Expected same graph");
+
     auto reduce1 = graph::fma(var_a, var_b, var_a*var_c);
     auto reduce1_cast = graph::multiply_cast(reduce1);
     assert(reduce1_cast.get() && "Expected multiply node.");
@@ -2056,6 +2092,264 @@ template<jit::float_scalar T> void test_fma() {
 
     assert(graph::multiply_cast(graph::fma(two, var_a, one)).get() &&
            "Expected multiply node.");
+
+//  fma(a, b, fma(c, b, d)) -> fma(b, a + c, d)
+    auto var_d = graph::variable<T> (1, "");
+    auto match1 = graph::fma(var_b, var_a + var_c, var_d);
+    auto nested_fma1 = graph::fma(var_a, var_b, 
+                                  graph::fma(var_c, var_b, var_d));
+    assert(nested_fma1->is_match(match1) && "Expected match.");
+//  fma(b, a, fma(c, b, d)) -> fma(b, a + c, d)
+    auto nested_fma2 = graph::fma(var_b, var_a, 
+                                  graph::fma(var_c, var_b, var_d));
+    assert(nested_fma2->is_match(match1) && "Expected match.");
+//  fma(a, b, fma(b, c, d)) -> fma(b, a + c, d)
+    auto nested_fma3 = graph::fma(var_a, var_b, 
+                                  graph::fma(var_b, var_c, var_d));
+    assert(nested_fma3->is_match(match1) && "Expected match.");
+//  fma(b, a, fma(b, c, d)) -> fma(b, a + c, d)
+    auto nested_fma4 = graph::fma(var_b, var_a, 
+                                  graph::fma(var_b, var_c, var_d));
+    assert(nested_fma4->is_match(match1) && "Expected match.");
+
+//  fma(a, e*b, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+    auto var_e = graph::variable<T> (1, "");
+    auto match2 = graph::fma(var_b, graph::fma(var_a, var_e, var_c), var_d);
+    auto nested_fma5 = graph::fma(var_a,
+                                  var_e*var_b,
+                                  graph::fma(var_c, var_b, var_d));
+    assert(nested_fma5->is_match(match2) && "Expected match.");
+//  fma(a, b*e, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+    auto nested_fma6 = graph::fma(var_a,
+                                  var_b*var_e,
+                                  graph::fma(var_c, var_b, var_d));
+    assert(nested_fma6->is_match(match2) && "Expected match.");
+    //  fma(a, e*b, fma(b, c, d)) -> fma(b, fma(a, e, c), d)
+    auto nested_fma7 = graph::fma(var_a,
+                                  var_e*var_b,
+                                  graph::fma(var_b, var_c, var_d));
+    assert(nested_fma7->is_match(match2) && "Expected match.");
+//  fma(a, b*e, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+    auto nested_fma8 = graph::fma(var_a,
+                                  var_b*var_e,
+                                  graph::fma(var_b, var_c, var_d));
+    assert(nested_fma8->is_match(match2) && "Expected match.");
+
+//  fma(e*b, a, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+    auto nested_fma9 = graph::fma(var_e*var_b,
+                                  var_a,
+                                  graph::fma(var_c, var_b, var_d));
+    assert(nested_fma9->is_match(match2) && "Expected match.");
+//  fma(b*e, a, fma(c, b, d)) -> fma(b, fma(a, e, c), d)
+    auto nested_fma10 = graph::fma(var_b*var_e,
+                                   var_a,
+                                   graph::fma(var_c, var_b, var_d));
+    assert(nested_fma10->is_match(match2) && "Expected match.");
+//  fma(e*b, a, fma(b, c, d)) -> fma(b, fma(a, e, c), d)
+    auto nested_fma11 = graph::fma(var_e*var_b,
+                                   var_a,
+                                   graph::fma(var_b, var_c, var_d));
+    assert(nested_fma11->is_match(match2) && "Expected match.");
+//  fma(e*d, a, fma(b, c, d)) -> fma(b, fma(a, e, c), d)
+    auto nested_fma12 = graph::fma(var_a,
+                                   var_b*var_e,
+                                   graph::fma(var_b, var_c, var_d));
+    assert(nested_fma12->is_match(match2) && "Expected match.");
+
+//  fma(a, b, fma(c, e*b, d)) -> fma(b, fma(c, e, a), d)
+    auto match3 = graph::fma(var_b, graph::fma(var_c, var_e, var_a), var_d);
+    auto nested_fma13 = graph::fma(var_a,
+                                   var_b,
+                                   graph::fma(var_c, var_e*var_b, var_d));
+    assert(nested_fma13->is_match(match3) && "Expected match.");
+//  fma(b, a, fma(c, e*b, d)) -> fma(b, fma(c, e, a), d)
+    auto nested_fma14 = graph::fma(var_b,
+                                   var_a,
+                                   graph::fma(var_c, var_e*var_b, var_d));
+    assert(nested_fma14->is_match(match3) && "Expected match.");
+//  fma(a, b, fma(c, b*e, d)) -> fma(b, fma(c, e, a), d)
+    auto nested_fma15 = graph::fma(var_a,
+                                   var_b,
+                                   graph::fma(var_c, var_b*var_e, var_d));
+    assert(nested_fma15->is_match(match3) && "Expected match.");
+//  fma(b, a, fma(c, b*e, d)) -> fma(b, fma(c, e, a), d)
+    auto nested_fma16 = graph::fma(var_b,
+                                   var_a,
+                                   graph::fma(var_c, var_b*var_e, var_d));
+    assert(nested_fma16->is_match(match3) && "Expected match.");
+//  fma(a, b, fma(e*b, c, d)) -> fma(b, fma(c, e, a), d)
+    auto nested_fma17 = graph::fma(var_a,
+                                   var_b,
+                                   graph::fma(var_e*var_b, var_c, var_d));
+    assert(nested_fma17->is_match(match3) && "Expected match.");
+//  fma(b, a, fma(e*b, c, d)) -> fma(b, fma(c, e, a), d)
+    auto nested_fma18 = graph::fma(var_b,
+                                   var_a,
+                                   graph::fma(var_e*var_b, var_c, var_d));
+    assert(nested_fma18->is_match(match3) && "Expected match.");
+//  fma(a, b, fma(b*e, c, d)) -> fma(b, fma(c, e, a), d)
+    auto nested_fma19 = graph::fma(var_a,
+                                   var_b,
+                                   graph::fma(var_b*var_e, var_c, var_d));
+    assert(nested_fma19->is_match(match3) && "Expected match.");
+//  fma(b, a, fma(b*e, c, d)) -> fma(b, fma(c, e, a), d)
+    auto nested_fma20 = graph::fma(var_b,
+                                   var_a,
+                                   graph::fma(var_b*var_e, var_c, var_d));
+    assert(nested_fma20->is_match(match3) && "Expected match.");
+
+//  fma(a, f*b, fma(c, e*b, d)) -> fma(b, fma(a, f, c*e), d)
+    auto var_f = graph::variable<T> (1, "");
+    auto match4 = graph::fma(var_b, graph::fma(var_a, var_f, var_c*var_e), var_d);
+    auto nested_fma21 = graph::fma(var_a,
+                                   var_f*var_b,
+                                   graph::fma(var_c, var_e*var_b, var_d));
+    assert(nested_fma21->is_match(match4) && "Expected match.");
+//  fma(a, b*f, fma(c, e*b, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma22 = graph::fma(var_a,
+                                   var_b*var_f,
+                                   graph::fma(var_c, var_e*var_b, var_d));
+    assert(nested_fma22->is_match(match4) && "Expected match.");
+//  fma(a, f*b, fma(c, b*e, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma23 = graph::fma(var_a,
+                                   var_f*var_b,
+                                   graph::fma(var_c, var_b*var_e, var_d));
+    assert(nested_fma23->is_match(match4) && "Expected match.");
+//  fma(a, b*f, fma(c, b*e, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma24 = graph::fma(var_a,
+                                   var_b*var_f,
+                                   graph::fma(var_c, var_b*var_e, var_d));
+    assert(nested_fma24->is_match(match4) && "Expected match.");
+//  fma(f*b, a, fma(c, e*b, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma25 = graph::fma(var_f*var_b,
+                                   var_a,
+                                   graph::fma(var_c, var_e*var_b, var_d));
+    assert(nested_fma25->is_match(match4) && "Expected match.");
+//  fma(b*f, a, fma(c, e*b, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma26 = graph::fma(var_b*var_f,
+                                   var_a,
+                                   graph::fma(var_c, var_e*var_b, var_d));
+    assert(nested_fma26->is_match(match4) && "Expected match.");
+//  fma(f*b, a, fma(c, b*e, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma27 = graph::fma(var_f*var_b,
+                                   var_a,
+                                   graph::fma(var_c, var_b*var_e, var_d));
+    assert(nested_fma27->is_match(match4) && "Expected match.");
+//  fma(b*f, a, fma(c, b*e, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma28 = graph::fma(var_b*var_f,
+                                   var_a,
+                                   graph::fma(var_c, var_b*var_e, var_d));
+    assert(nested_fma28->is_match(match4) && "Expected match.");
+//  fma(a, f*b, fma(e*b, c, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma29 = graph::fma(var_a,
+                                   var_f*var_b,
+                                   graph::fma(var_e*var_b, var_c, var_d));
+    assert(nested_fma29->is_match(match4) && "Expected match.");
+//  fma(a, b*f, fma(e*b, c, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma30 = graph::fma(var_a,
+                                   var_b*var_f,
+                                   graph::fma(var_e*var_b, var_c, var_d));
+    assert(nested_fma30->is_match(match4) && "Expected match.");
+//  fma(a, f*b, fma(b*e, c, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma31= graph::fma(var_a,
+                                   var_f*var_b,
+                                   graph::fma(var_b*var_e, var_c, var_d));
+    assert(nested_fma31->is_match(match4) && "Expected match.");
+//  fma(a, b*f, fma(b*e, c, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma32 = graph::fma(var_a,
+                                   var_b*var_f,
+                                   graph::fma(var_b*var_e, var_c, var_d));
+    assert(nested_fma32->is_match(match4) && "Expected match.");
+//  fma(f*b, a, fma(e*b, c, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma33 = graph::fma(var_f*var_b,
+                                   var_a,
+                                   graph::fma(var_e*var_b, var_c, var_d));
+    assert(nested_fma33->is_match(match4) && "Expected match.");
+//  fma(b*f, a, fma(e*b, c, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma34 = graph::fma(var_b*var_f,
+                                   var_a,
+                                   graph::fma(var_e*var_b, var_c, var_d));
+    assert(nested_fma34->is_match(match4) && "Expected match.");
+//  fma(f*b, a, fma(b*e, c, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma35 = graph::fma(var_f*var_b,
+                                   var_a,
+                                   graph::fma(var_b*var_e, var_c, var_d));
+    assert(nested_fma35->is_match(match4) && "Expected match.");
+//  fma(b*f, a, fma(b*e, c, d)) -> fma(b, fma(a, f, c*e), d)
+    auto nested_fma36 = graph::fma(var_b*var_f,
+                                   var_a,
+                                   graph::fma(var_b*var_e, var_c, var_d));
+    assert(nested_fma36->is_match(match4) && "Expected match.");
+
+//  fma(a^b,a^c,d) -> a^(b+c) +d
+    assert(graph::fma(graph::pow(var_a, var_b),
+                      graph::pow(var_a, var_c),
+                      var_d)->is_match(graph::pow(var_a, 
+                                                  var_b + var_c) + var_d) &&
+           "Expected match");
+
+//  fma(a,x^b,fma(c,x^d,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
+    auto matchv1 = graph::fma(graph::pow(var_b, two),
+                              fma(var_b, var_a, var_c),
+                              var_d);
+    auto matchv2 = graph::fma(graph::pow(var_b, two),
+                              fma(var_b, var_c, var_a),
+                              var_d);
+    auto nested_fmav1 = graph::fma(var_a,
+                                   graph::pow(var_b, three),
+                                   fma(var_c,
+                                       graph::pow(var_b, two),
+                                       var_d));
+    assert(nested_fmav1->is_match(matchv1) && "Expected match");
+//  fma(a,x^b,fma(c,x^d,e)) -> fma(x^b,fma(x^(d-b),c,a),e) if d > b
+    auto nested_fmav2 = graph::fma(var_a,
+                                   graph::pow(var_b, two),
+                                   fma(var_c,
+                                       graph::pow(var_b, three),
+                                       var_d));
+    assert(nested_fmav2->is_match(matchv2) && "Expected match");
+//  fma(x^b,a,fma(c,x^d,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
+    auto nested_fmav3 = graph::fma(graph::pow(var_b, three),
+                                   var_a,
+                                   fma(var_c,
+                                       graph::pow(var_b, two),
+                                       var_d));
+    assert(nested_fmav3->is_match(matchv1) && "Expected match");
+//  fma(x^b,a,fma(c,x^d,e)) -> fma(x^b,fma(x^(d-b),c,a),e) if d > b
+    auto nested_fmav4 = graph::fma(graph::pow(var_b, two),
+                                   var_a,
+                                   fma(var_c,
+                                       graph::pow(var_b, three),
+                                       var_d));
+    assert(nested_fmav4->is_match(matchv2) && "Expected match");
+//  fma(a,x^b,fma(x^d,c,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
+    auto nested_fmav5 = graph::fma(var_a,
+                                   graph::pow(var_b, three),
+                                   fma(graph::pow(var_b, two),
+                                       var_c,
+                                       var_d));
+    assert(nested_fmav5->is_match(matchv1) && "Expected match");
+//  fma(a,x^b,fma(x^d,c,e)) -> fma(x^b,fma(x^(d-b),c,a),e) if d > b
+    auto nested_fmav6 = graph::fma(var_a,
+                                   graph::pow(var_b, two),
+                                   fma(graph::pow(var_b, three),
+                                       var_c,
+                                       var_d));
+    assert(nested_fmav6->is_match(matchv2) && "Expected match");
+//  fma(x^b,a,fma(x^d,c,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
+    auto nested_fmav7 = graph::fma(graph::pow(var_b, three),
+                                   var_a,
+                                   fma(graph::pow(var_b, two),
+                                       var_c,
+                                       var_d));
+    assert(nested_fmav7->is_match(matchv1) && "Expected match");
+//  fma(x^b,a,fma(x^d,c,e)) -> fma(x^b,fma(x^(d-b),c,a),e) if d > b
+    auto nested_fmav8 = graph::fma(graph::pow(var_b, two),
+                                   var_a,
+                                   fma(graph::pow(var_b, three),
+                                       var_c,
+                                       var_d));
+    assert(nested_fmav8->is_match(matchv2) && "Expected match");
 
 //  fma(a, b, a*b) -> 2*a*b
 //  fma(b, a, a*b) -> 2*a*b
@@ -2109,8 +2403,6 @@ template<jit::float_scalar T> void test_fma() {
            "Expected constant node.");
     
 //  fma(a,b/c,fma(d,e/c,g)) -> (a*b + d*e)/c + g
-    auto var_d = graph::variable<T> (1, "");
-    auto var_e = graph::variable<T> (1, "");
     auto chained_fma3 = fma(var_a, var_b/var_c, fma(var_d, var_e/var_c, var));
     assert(add_cast(chained_fma3).get() && "expected add node.");
 //  fma(a,b/c,fma(e/c,f,g)) -> (a*b + e*f)/c + g
@@ -2153,7 +2445,7 @@ template<jit::float_scalar T> void test_fma() {
            "Expetced a divide node.");
 
 //  Test node properties.
-    assert(one_two_three->is_constant_like() && "Expected a constant.");
+    assert(one_two_three->is_constant() && "Expected a constant.");
     assert(!one_two_three->is_all_variables() && "Did not expect a variable.");
     assert(one_two_three->is_power_like() && "Expected a power like.");
     auto constant_fma = graph::fma(one_two_three,
@@ -2164,11 +2456,11 @@ template<jit::float_scalar T> void test_fma() {
     assert(!constant_fma->is_all_variables() && "Did not expect a variable.");
     assert(constant_fma->is_power_like() && "Expected a power like.");
     auto constant_var_fma = graph::fma(var_a, var_b, one);
-    assert(!constant_var_fma->is_constant_like() && "Did not expect a constant.");
+    assert(!constant_var_fma->is_constant() && "Did not expect a constant.");
     assert(!constant_var_fma->is_all_variables() && "Did not expect a variable.");
     assert(!constant_var_fma->is_power_like() && "Did not expect a power like.");
     auto var_var_fma = graph::fma(var_a, var_b, var_c);
-    assert(!var_var_fma->is_constant_like() && "Did not expect a constant.");
+    assert(!var_var_fma->is_constant() && "Did not expect a constant.");
     assert(var_var_fma->is_all_variables() && "Expected a variable.");
     assert(!var_var_fma->is_power_like() && "Did not expect a power like.");
 
@@ -2254,7 +2546,6 @@ template<jit::float_scalar T> void test_fma() {
 //  fma(a/c, b, d*((f/c)*e)) -> fma(a, b, f*e*d)/c
 //  fma(a, b/c, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
 //  fma(a/c, b, d*(e*(f/c))) -> fma(a, b, f*e*d)/c
-    auto var_f = graph::variable<T> (1, "");
     auto exp_a = (one + var_a);
     auto exp_b = (one + var_b);
     auto exp_c = (one + var_c);
@@ -2442,6 +2733,23 @@ template<jit::float_scalar T> void test_fma() {
     assert(fmaexp21_cast.get() && "Expected an add node.");
     assert(graph::divide_cast(fmaexp21_cast->get_left()).get() &&
            "Expected a dive node on the left.");
+
+//  fma(p2,p1,a) -> fma(p1,p2,a)
+    auto p1 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                       static_cast<T> (2.0)}),
+                                      var_a);
+    auto p2 = graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                       static_cast<T> (2.0),
+                                                       static_cast<T> (3.0),
+                                                       static_cast<T> (4.0)}),
+                                      2, var_b, var_c);
+    auto fma_promote = graph::fma(p2, p1, var_a);
+    auto fma_promote_cast = graph::fma_cast(fma_promote);
+    assert(fma_promote_cast.get() && "Expected a fma node.");
+    assert(graph::piecewise_1D_cast(fma_promote_cast->get_left()).get() &&
+           "Expected a piecewise 1d node on the left.");
+    assert(graph::piecewise_2D_cast(fma_promote_cast->get_middle()).get() &&
+           "Expected a piecewise 2d node in the middle.");
 }
 
 //------------------------------------------------------------------------------

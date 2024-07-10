@@ -8,6 +8,10 @@
 #ifndef jit_h
 #define jit_h
 
+#include <algorithm>
+#include <iterator>
+#include <thread>
+
 #ifdef USE_METAL
 #include "metal_context.hpp"
 #elif defined(USE_CUDA)
@@ -39,6 +43,10 @@ namespace jit {
         register_map registers;
 ///  Kernel names.
         std::vector<std::string> kernel_names;
+///  Kernel textures.
+        std::map<std::string, texture1d_list> kernel_1dtextures;
+///  Kernel textures.
+        std::map<std::string, texture2d_list> kernel_2dtextures;
 
 ///  Type for the GPU context.
         using gpu_context_type = typename std::conditional<use_gpu<T> (),
@@ -94,39 +102,66 @@ namespace jit {
                         graph::output_nodes<T, SAFE_MATH> outputs,
                         graph::map_nodes<T, SAFE_MATH> setters) {
             kernel_names.push_back(name);
-            
+
             const size_t size = inputs[0]->size();
 
+            std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;
+            register_usage usage;
+            kernel_1dtextures[name] = texture1d_list();
+            kernel_2dtextures[name] = texture2d_list();
             for (auto &[out, in] : setters) {
-                out->compile_preamble(source_buffer, registers, visited);
+                auto found = std::distance(inputs.begin(),
+                                           std::find(inputs.begin(),
+                                                     inputs.end(), in));
+                if (found < is_constant.size()) {
+                    is_constant[found] = false;
+                }
+                out->compile_preamble(source_buffer, registers,
+                                      visited, usage,
+                                      kernel_1dtextures[name],
+                                      kernel_2dtextures[name],
+                                      gpu_context.remaining_const_memory);
             }
             for (auto &out : outputs) {
-                out->compile_preamble(source_buffer, registers, visited);
+                out->compile_preamble(source_buffer, registers,
+                                      visited, usage,
+                                      kernel_1dtextures[name],
+                                      kernel_2dtextures[name],
+                                      gpu_context.remaining_const_memory);
+            }
+
+            for (auto &in : inputs) {
+                if (usage.find(in.get()) == usage.end()) {
+                    usage[in.get()] == 0;
+                }
             }
 
             gpu_context.create_kernel_prefix(source_buffer,
-                                             name, inputs, outputs, size,
-                                             registers);
+                                             name, inputs, outputs, 
+                                             size, is_constant,
+                                             registers, usage,
+                                             kernel_1dtextures[name],
+                                             kernel_2dtextures[name]);
 
             for (auto &[out, in] : setters) {
-                out->compile(source_buffer, registers);
+                out->compile(source_buffer, registers, usage);
             }
             for (auto &out : outputs) {
-                out->compile(source_buffer, registers);
+                out->compile(source_buffer, registers, usage);
             }
 
             gpu_context.create_kernel_postfix(source_buffer, outputs,
-                                              setters, registers);
+                                              setters, registers, usage);
 
-//  Delete the registers so that can be used again in other kernels.
+//  Delete the registers so that they can be used again in other kernels.
             std::vector<void *> removed_elements;
             for (auto &[key, value] : registers) {
                 if (value[0] == 'r') {
                     removed_elements.push_back(key);
                 }
             }
-            
+
             for (auto &key : removed_elements) {
                 registers.erase(key);
             }
@@ -149,12 +184,35 @@ namespace jit {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Save the kernel source code.
+//------------------------------------------------------------------------------
+        void save_source() {
+            std::string source = source_buffer.str();
+            std::ostringstream filename;
+            filename << std::hash<std::string> {} (source)
+                     << std::hash<std::thread::id>{}(std::this_thread::get_id());
+            if constexpr (use_cuda()) {
+                filename << ".cu";
+            } else if constexpr (use_metal<T> ()) {
+                filename << ".metal";
+            } else {
+                filename << ".cpp";
+            }
+
+            std::ofstream outFile(filename.str());
+            outFile << source;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Compile the kernel.
 ///
 ///  @params[in] add_reduction Optional argument to generate the reduction
 ///                            kernel.
 //------------------------------------------------------------------------------
         void compile(const bool add_reduction=false) {
+#ifdef SAVE_KERNEL_SOURCE
+            save_source();
+#endif
             gpu_context.compile(source_buffer.str(),
                                 kernel_names,
                                 add_reduction);
@@ -173,8 +231,9 @@ namespace jit {
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
                                                      const size_t num_rays) {
-            return gpu_context.create_kernel_call(kernel_name, inputs, outputs,
-                                                  num_rays);
+            return gpu_context.create_kernel_call(kernel_name, inputs, outputs, num_rays,
+                                                  kernel_1dtextures[kernel_name],
+                                                  kernel_2dtextures[kernel_name]);
         }
 
 //------------------------------------------------------------------------------

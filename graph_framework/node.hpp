@@ -88,24 +88,40 @@ namespace graph {
 ///  Some nodes require additions to the preamble however most don't so define a
 ///  generic method that does nothing.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {}
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
+            if (usage.find(this) == usage.end()) {
+                usage[this] = 1;
+            } else {
+                ++usage[this];
+            }
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) = 0;
+                jit::register_map &registers,
+                const jit::register_usage &usage) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
@@ -171,11 +187,31 @@ namespace graph {
                                                                      jit::register_map &registers) = 0;
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
+///  @brief Test if node is a constant.
 ///
-///  @returns True if the node acts like a constant.
+///  @returns True if the node is like a constant.
 //------------------------------------------------------------------------------
-        virtual bool is_constant_like() const = 0;
+        virtual bool is_constant() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test the constant node has a zero.
+///
+///  @returns True the node has a zero constant value.
+//------------------------------------------------------------------------------
+        virtual bool has_constant_zero() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the result is normal.
+///
+///  @returns True if the node is normal.
+//------------------------------------------------------------------------------
+        bool is_normal() {
+            return this->evaluate().is_normal();
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Test if all the subnodes terminate in variables.
@@ -187,7 +223,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
 ///
-///  Most notes are not so default to false.
+///  Most nodes are not so default to false.
 ///
 ///  @returns True the node is power like and false otherwise.
 //------------------------------------------------------------------------------
@@ -258,7 +294,7 @@ namespace graph {
 ///  Cache for the backend buffers.
         inline thread_local static std::map<size_t,
                                             backend::buffer<T>> backend_cache;
-        
+
 ///  Type def to retrieve the backend type.
         typedef T base;
     };
@@ -367,11 +403,13 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -382,7 +420,8 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     jit::add_type<T> (stream);
                 }
-                stream << temp << ";" << std::endl;
+                stream << temp << "; // used "
+                       << usage.at(this) << std::endl;
             }
 
             return this->shared_from_this();
@@ -451,12 +490,21 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
+///  @brief Test if node is a constant.
 ///
-///  @returns True if the node acts like a constant.
+///  @returns True if the is a constant.
 //------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
+        virtual bool is_constant() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test the constant node has a zero.
+///
+///  @returns True the node has a zero constant value.
+//------------------------------------------------------------------------------
+        virtual bool has_constant_zero() const {
+            return data.has_zero();
         }
 
 //------------------------------------------------------------------------------
@@ -700,15 +748,30 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
-                this->arg->compile_preamble(stream, registers, visited);
-                visited[this] = 0;
+                this->arg->compile_preamble(stream, registers,
+                                            visited, usage,
+                                            textures1d, textures2d,
+                                            avail_const_mem);
+                visited.insert(this);
+                usage[this] = 1;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -717,12 +780,14 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
-            return this->arg->compile(stream, registers);
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
+            return this->arg->compile(stream, registers, usage);
         }
 
 //------------------------------------------------------------------------------
@@ -730,15 +795,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         shared_leaf<T, SAFE_MATH> get_arg() {
             return this->arg;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->arg->is_constant_like();
         }
 
 //------------------------------------------------------------------------------
@@ -816,17 +872,34 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, visited);
-                this->right->compile_preamble(stream, registers, visited);
-                visited[this] = 0;
+                this->left->compile_preamble(stream, registers, 
+                                             visited, usage,
+                                             textures1d, textures2d,
+                                             avail_const_mem);
+                this->right->compile_preamble(stream, registers,
+                                              visited, usage,
+                                              textures1d, textures2d,
+                                              avail_const_mem);
+                visited.insert(this);
+                usage[this] = 1;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -842,16 +915,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         shared_leaf<T, SAFE_MATH> get_right() {
             return this->right;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->left->is_constant_like() &&
-                   this->right->is_constant_like();
         }
 
 //------------------------------------------------------------------------------
@@ -919,18 +982,38 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in,out] visited   List of visited nodes.
+///  @params[in,out] stream          String buffer stream.
+///  @params[in,out] registers       List of defined registers.
+///  @params[in,out] visited         List of visited nodes.
+///  @params[in,out] usage           List of register usage count.
+///  @params[in,out] textures1d      List of 1D textures.
+///  @params[in,out] textures2d      List of 2D textures.
+///  @params[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
-                                      jit::visiter_map &visited) {
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, visited);
-                this->middle->compile_preamble(stream, registers, visited);
-                this->right->compile_preamble(stream, registers, visited);
-                visited[this] = 0;
+                this->left->compile_preamble(stream, registers, 
+                                             visited, usage,
+                                             textures1d, textures2d,
+                                             avail_const_mem);
+                this->middle->compile_preamble(stream, registers,
+                                               visited, usage,
+                                               textures1d, textures2d,
+                                               avail_const_mem);
+                this->right->compile_preamble(stream, registers,
+                                              visited, usage,
+                                              textures1d, textures2d,
+                                              avail_const_mem);
+                visited.insert(this);
+                usage[this] = 1;
+            } else {
+                ++usage[this];
             }
         }
 
@@ -939,17 +1022,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         shared_leaf<T, SAFE_MATH> get_middle() {
             return this->middle;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return this->left->is_constant_like()   &&
-                   this->middle->is_constant_like() &&
-                   this->right->is_constant_like();
         }
 
 //------------------------------------------------------------------------------
@@ -1013,7 +1085,9 @@ namespace graph {
         variable_node(const size_t s, const T d,
                       const std::string &symbol) :
         leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
-        buffer(s, d), symbol(symbol) {}
+        buffer(s, d), symbol(symbol) {
+            assert(buffer.is_normal() && "NaN or Inf value.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
@@ -1024,7 +1098,9 @@ namespace graph {
         variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
         leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
-        buffer(d), symbol(symbol) {}
+        buffer(d), symbol(symbol) {
+            assert(buffer.is_normal() && "NaN or Inf value.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from backend buffer.
@@ -1035,7 +1111,9 @@ namespace graph {
         variable_node(const backend::buffer<T> &d,
                       const std::string &symbol) :
         leaf_node<T, SAFE_MATH> (variable_node::to_string(this), 1, false),
-        buffer(d), symbol(symbol) {}
+        buffer(d), symbol(symbol) {
+            assert(buffer.is_normal() && "NaN or Inf value.");
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate method.
@@ -1072,11 +1150,13 @@ namespace graph {
 ///
 ///  @params[in,out] stream    String buffer stream.
 ///  @params[in,out] registers List of defined registers.
+///  @params[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
-                jit::register_map &registers) {
+                jit::register_map &registers,
+                const jit::register_usage &usage) {
            return this->shared_from_this();
         }
 
@@ -1175,15 +1255,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         T *data() {
             return buffer.data();
-        }
-    
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -1382,15 +1453,6 @@ namespace graph {
             std::cout << "\\left(";
             this->arg->to_latex();
             std::cout << "\\right)";
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a constant.
-///
-///  @returns True if the node acts like a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant_like() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
