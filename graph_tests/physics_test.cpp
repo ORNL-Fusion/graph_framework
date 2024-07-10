@@ -606,7 +606,6 @@ template<jit::float_scalar T> void test_efit() {
     
     for (size_t i = 0; i < 10000; i++) {
         solve.step();
-        solve.sync_host();
     }
 
     solve.sync_host();
