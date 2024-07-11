@@ -287,6 +287,7 @@
 		C71C1FF827F621E7006997C2 /* vector.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vector.hpp; sourceTree = "<group>"; };
 		C721EA992833FF7800EAFB2D /* equilibrium.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = equilibrium.hpp; sourceTree = "<group>"; };
 		C723210222DC0D0A006BBF13 /* arithmetic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arithmetic.hpp; sourceTree = "<group>"; };
+		C72358F52C4027A10084A489 /* commandline_parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = commandline_parser.hpp; sourceTree = "<group>"; };
 		C725CD792840088000D0EDE2 /* physics_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = physics_test.cpp; sourceTree = "<group>"; };
 		C736902B2A38AC0E001733B0 /* erfi_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = erfi_test.cpp; sourceTree = "<group>"; };
 		C73690312A38C498001733B0 /* erfi_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = erfi_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -526,6 +527,7 @@
 			children = (
 				C7931E7028073BE70033B488 /* CMakeLists.txt */,
 				C79141AE22DA9C3000E0BA0D /* node.hpp */,
+				C72358F52C4027A10084A489 /* commandline_parser.hpp */,
 				C70B705629F4F86A00098AA0 /* piecewise.hpp */,
 				C7922EEB29E0ABDF000BB9C7 /* workflow.hpp */,
 				C71C1FF727F61DFA006997C2 /* math.hpp */,

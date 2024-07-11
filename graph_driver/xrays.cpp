@@ -11,11 +11,7 @@
 #include "../graph_framework/timing.hpp"
 #include "../graph_framework/output.hpp"
 #include "../graph_framework/absorption.hpp"
-
-const bool print = false;
-const bool write_step = true;
-const bool print_expressions = false;
-const bool verbose = true;
+#include "../graph_framework/commandline_parser.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Initalize random rays for efit.
@@ -113,16 +109,18 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
+///  @params[in] cl        Parsed commandline.
 ///  @params[in] num_times Total number of time steps.
 ///  @params[in] sub_steps Number of substeps to push the rays.
 ///  @params[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<std::floating_point T, bool SAFE_MATH=false>
-void trace_ray(const size_t num_times,
+void trace_ray(const commandline::parser &cl,
+               const size_t num_times,
                const size_t sub_steps,
                const size_t num_rays) {
     const timeing::measure_diagnostic total("Total Ray Time");
-    
+
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, SAFE_MATH>::max_concurrency()),
                                                        static_cast<unsigned int> (num_rays)),
                                               static_cast<unsigned int> (1)));
@@ -131,7 +129,7 @@ void trace_ray(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
+        threads[i] = std::thread([&cl, num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
 
             const size_t num_steps = num_times/sub_steps;
             const size_t local_num_rays = batch
@@ -214,7 +212,7 @@ void trace_ray(const size_t num_times,
                       stream.str(), local_num_rays, thread_number);
             solve.init(kx);
             solve.compile();
-            if (thread_number == 0 && print_expressions) {
+            if (thread_number == 0 && cl.is_option_set("print_expressions")) {
                 solve.print_dispersion();
                 std::cout << std::endl;
                 solve.print_dkxdt();
@@ -251,13 +249,12 @@ void trace_ray(const size_t num_times,
                 std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
             }
 
+            const bool print = cl.is_option_set("print");
             for (size_t j = 0; j < num_steps; j++) {
                 if (thread_number == 0 && print) {
                     solve.print(sample);
                 }
-                if (write_step) {
-                    solve.write_step();
-                }
+                solve.write_step();
                 for (size_t k = 0; k < sub_steps; k++) {
                     solve.step();
                 }
@@ -265,10 +262,8 @@ void trace_ray(const size_t num_times,
 
             if (thread_number == 0 && print) {
                 solve.print(sample);
-            } else if (write_step) {
-                solve.write_step();
             } else {
-                solve.sync_host();
+                solve.write_step();
             }
 
         }, i);
@@ -491,12 +486,21 @@ int main(int argc, const char * argv[]) {
     (void)argv;
     const timeing::measure_diagnostic total("Total Time");
 
-    jit::verbose = verbose;
+    commandline::parser cl(argv[0]);
+    cl.add_option("verbose",           false, "Show verbose output.");
+    cl.add_option("num_times",         true,  "Number of times.");
+    cl.add_option("sub_steps",         true,  "Number of substeps.");
+    cl.add_option("num_rays",          true,  "Number of rays.");
+    cl.add_option("print_expressions", false, "Print out rays expressions.");
+    cl.add_option("print",             false, "Print sample rays to screen.");
+    cl.parse(argc, argv);
 
-    const size_t num_times = 100000;
-    const size_t sub_steps = 100;
+    jit::verbose = cl.is_option_set("verbose");
+
+    const size_t num_times = cl.get_option_value<size_t> ("num_times");
+    const size_t sub_steps = cl.get_option_value<size_t> ("sub_steps");
 #ifndef STATIC
-    const size_t num_rays = 100000;
+    const size_t num_rays = cl.get_option_value<size_t> ("num_rays");
 #else
     const size_t num_rays = 1;
 #endif
@@ -505,7 +509,7 @@ int main(int argc, const char * argv[]) {
 
     typedef double base;
 
-    trace_ray<base> (num_times, sub_steps, num_rays);
+    trace_ray<base> (cl, num_times, sub_steps, num_rays);
     calculate_power<std::complex<base>, use_safe_math> (num_times,
                                                         sub_steps,
                                                         num_rays);
