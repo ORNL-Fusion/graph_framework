@@ -37,7 +37,6 @@ void test_constant() {
     auto y = graph::variable<T> (1, "y");
     auto z = graph::variable<T> (1, "z");
 
-    auto dt = 1.0;
     auto t = graph::variable<T> (1, "t");
 
     omega->set(static_cast<T> (real_dist(engine)));
@@ -51,7 +50,9 @@ void test_constant() {
 
 //  The equilibrum isn't used;
     auto eq = equilibrium::make_slab<T> ();
-    solver::rk2<dispersion::simple<T>> solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
+    auto dt_const = graph::constant(static_cast<T> (1.0));
+    solver::rk2<dispersion::simple<T>>
+        solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
     solve.init(kx);
     solve.compile();
 
@@ -144,10 +145,9 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
     z->set(static_cast<typename SOLVER::base> (0.0));
     t->set(static_cast<typename SOLVER::base> (0.0));
 
-    const typename SOLVER::base dt = 0.1;
-
     auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::base> ();
-    SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
+    auto dt_const = graph::constant(static_cast<typename SOLVER::base> (0.1));
+    SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
     if constexpr (jit::use_cuda()) {
         solve.init(kx, tolarance);
     } else {
@@ -240,10 +240,9 @@ void test_light_wave(const typename SOLVER::base tolarance) {
     z->set(static_cast<typename SOLVER::base> (0.0));
     t->set(static_cast<typename SOLVER::base> (0.0));
 
-    const typename SOLVER::base dt = 0.1;
-
     auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::base> ();
-    SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt, eq);
+    auto dt_const = graph::constant(static_cast<typename SOLVER::base> (0.1));
+    SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
     solve.init(kx, tolarance);
     solve.compile();
 
@@ -318,7 +317,9 @@ void test_acoustic_wave(const T tolarance) {
     t->set(static_cast<T> (0.0));
 
     auto eq = equilibrium::make_no_magnetic_field<T> ();
-    solver::rk4<dispersion::acoustic_wave<T>> solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
+    auto dt_const = graph::constant(static_cast<T> (0.0001));
+    solver::rk4<dispersion::acoustic_wave<T>>
+        solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
     solve.init(kx, tolarance);
     solve.compile();
 
@@ -388,8 +389,9 @@ void test_o_mode_wave() {
     t->set(static_cast<T> (0.0));
 
     auto eq = equilibrium::make_slab_density<T> ();
+    auto dt_const = graph::constant(static_cast<T> (0.0001));
     solver::rk4<dispersion::ordinary_wave<T>>
-        solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
+        solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
 
     solve.init(x);
 
@@ -422,10 +424,10 @@ void test_cold_plasma_cutoffs() {
     auto z = graph::variable<T> (2, 0.0, "z");
     auto t = graph::variable<T> (2, 0.0, "t");
 
-    const T dt = 0.1;
-
     auto eq = equilibrium::make_slab_density<T> ();
-    solver::rk4<dispersion::cold_plasma<T>> solve(w, kx, ky, kz, x, y, z, t, dt, eq);
+    auto dt_const = graph::constant(static_cast<T> (0.1));
+    solver::rk4<dispersion::cold_plasma<T>>
+        solve(w, kx, ky, kz, x, y, z, t, dt_const, eq);
 
 //  Solve for plasma frequency and right cutoff..
     x->set(0, static_cast<T> (25.0));
@@ -537,7 +539,9 @@ void test_reflection(const T tolarance,
     auto t = graph::variable<T> (1, 0.0, "t");
 
     auto eq = equilibrium::make_slab<T> ();
-    solver::rk4<dispersion::cold_plasma<T>> solve(w, kx, ky, kz, x, y, z, t, 0.0001, eq);
+    auto dt_const = graph::constant(static_cast<T> (0.0001));
+    solver::rk4<dispersion::cold_plasma<T>>
+        solve(w, kx, ky, kz, x, y, z, t, dt_const, eq);
 
 // Solve for a location where the wave is cut off.
     solve.init(x, tolarance);
@@ -599,8 +603,9 @@ template<jit::float_scalar T> void test_efit() {
     t->set(static_cast<T> (0.0));
     
     auto eq = equilibrium::make_efit<T> (EFIT_FILE);
+    auto dt_const = graph::constant(static_cast<T> (0.0001));
     solver::rk4<dispersion::ordinary_wave<T>>
-        solve(omega, kx, ky, kz, x, y, z, t, 0.0001, eq);
+        solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
     solve.init(kx);
     solve.compile();
     

@@ -261,7 +261,7 @@ namespace equilibrium {
 //  No Magnetic equilibrium.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Uniform density with varying magnetic field equilibrium.
+///  @brief Uniform density with no magnetic field equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.

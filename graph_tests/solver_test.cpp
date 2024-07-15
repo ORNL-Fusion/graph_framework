@@ -40,7 +40,8 @@ void test_solver(const typename SOLVER::base tolarance,
 
     auto eq = equilibrium::make_guassian_density<typename SOLVER::base> ();
 
-    SOLVER solve(w, kx, ky, kz, x, y, z, t, dt, eq);
+    auto dt_const = graph::constant(static_cast<typename SOLVER::base> (dt));
+    SOLVER solve(w, kx, ky, kz, x, y, z, t, dt_const, eq);
     const timeing::measure_diagnostic solver("init");
     auto residule = solve.init(kx, tolarance);
     solver.print();

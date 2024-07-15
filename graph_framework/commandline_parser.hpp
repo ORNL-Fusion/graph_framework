@@ -20,6 +20,8 @@ namespace commandline {
         std::map<std::string, std::pair<bool, std::string>> options;
 ///  Parsed commands.
         std::map<std::string, std::string> parsed_options;
+///  Value options.
+        std::map<std::string, std::set<std::string>> option_values;
 ///  Command name.
         const std::string command;
 
@@ -49,8 +51,6 @@ namespace commandline {
 //------------------------------------------------------------------------------
 ///  @brief Add commandline option.
 ///
-///  Defines an option. If the option has no default, assume no
-///
 ///  @params[in] option      The command option.
 ///  @params[in] takes_value Flag to indicate the option takes a value.
 ///  @params[in] help_text   The help text of the option.
@@ -59,6 +59,19 @@ namespace commandline {
                         const bool takes_value,
                         const std::string &help_text) {
             options.try_emplace(option, takes_value, help_text);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add commandline option value.
+///
+///  @params[in] option The command option.
+///  @params[in] values Option value.
+//------------------------------------------------------------------------------
+        void add_option_values(const std::string &option,
+                               const std::set<std::string> &values) {
+            assert(options.find(option) != options.cend() &&
+                   "Option not added.");
+            option_values.try_emplace(option, values);
         }
 
 //------------------------------------------------------------------------------
@@ -80,6 +93,15 @@ namespace commandline {
                     std::cout << " ";
                 }
                 std::cout << std::get<std::string> (value) << std::endl;
+                if (option_values.find(option) != option_values.cend()) {
+                    for (auto &option_value : option_values.at(option)) {
+                        std::cout << "    ";
+                        for (size_t i = 0; i < longest; i++) {
+                            std::cout << " ";
+                        }
+                        std::cout << "   * " << option_value << std::endl;
+                    }
+                }
             }
             std::cout << std::endl;
             exit(0);
@@ -106,6 +128,12 @@ namespace commandline {
                 }
                 if (option_end != view.size()) {
                     parsed_options[option] = std::string(view.substr(option_end + 1));
+                    if ((option_values.find(option) != option_values.cend()) &&
+                        !(option_values.at(option).find(parsed_options[option]) !=
+                          option_values.at(option).cend())) {
+                        std::cout << "UNKNOWN VALUE: " << parsed_options[option]
+                                  << std::endl << std::endl;
+                    }
                 } else {
                     parsed_options[option] = "";
                 }
