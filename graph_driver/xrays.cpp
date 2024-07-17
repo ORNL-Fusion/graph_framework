@@ -14,92 +14,117 @@
 #include "../graph_framework/commandline_parser.hpp"
 
 //------------------------------------------------------------------------------
-///  @brief Initalize random rays for efit.
+///  @brief Set the normal distribution.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @params[in] mean  Mean value.
+///  @params[in] sigma Sigma value.
+//------------------------------------------------------------------------------
+template<typename T>
+std::normal_distribution<T> set_distribution(const T mean,
+                                             const T sigma) {
+    return std::normal_distribution<T> (mean, sigma);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Set the normal distribution.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @params[in] mean  Mean value.
+///  @params[in] sigma Sigma value.
+//------------------------------------------------------------------------------
+template<typename T>
+std::normal_distribution<std::complex<T>> set_distribution(const std::complex<T> mean,
+                                                           const std::complex<T> sigma) {
+    return std::normal_distribution<T> (std::real(mean), std::real(sigma));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Initalize value.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam B         Base type of T.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in,out] omega    Frequency variable.
-///  @params[in,out] x        X variable.
-///  @params[in,out] y        Y variable.
-///  @params[in,out] z        Z variable.
-///  @params[in,out] ky       Ky variable.
-///  @params[in,out] kz       Kz variable.
+///  @params[in]     cl       Parsed commandline.
+///  @params[in,out] var      Variable to set.
+///  @params[in]     name     Variable name.
 ///  @params[in,out] engine   Random engine.
 ///  @params[in]     num_rays Numbers of rays.
 //------------------------------------------------------------------------------
-template<typename T, typename B, bool SAFE_MATH> 
-void init_efit(graph::shared_leaf<T, SAFE_MATH> omega,
-               graph::shared_leaf<T, SAFE_MATH> x,
-               graph::shared_leaf<T, SAFE_MATH> y,
-               graph::shared_leaf<T, SAFE_MATH> z,
-               graph::shared_leaf<T, SAFE_MATH> ky,
-               graph::shared_leaf<T, SAFE_MATH> kz,
-               std::mt19937_64 engine,
-               const size_t num_rays) {
-    std::normal_distribution<B> norm_dist1(static_cast<B> (700.0),
-                                           static_cast<B> (10.0));
-    std::normal_distribution<B> norm_dist2(static_cast<B> (0.0),
-                                           static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist3(static_cast<B> (-100.0),
-                                           static_cast<B> (10.0));
-    std::normal_distribution<B> norm_dist4(static_cast<B> (0.0),
-                                           static_cast<B> (10.0));
-
-    for (size_t j = 0; j < num_rays; j++) {
-        omega->set(j, static_cast<T> (norm_dist1(engine)));
-        x->set(j, static_cast<T> (2.5*cos(norm_dist2(engine)/2.5)));
-        y->set(j, static_cast<T> (2.5*sin(norm_dist2(engine)/2.5)));
-        z->set(j, static_cast<T> (norm_dist2(engine)));
-        ky->set(j, static_cast<T> (norm_dist3(engine)));
-        kz->set(j, static_cast<T> (norm_dist4(engine)));
+template<typename T, bool SAFE_MATH>
+void set_variable(const commandline::parser &cl,
+                  graph::shared_leaf<T, SAFE_MATH> var,
+                  const std::string &name,
+                  std::mt19937_64 &engine,
+                  const size_t num_rays) {
+    const T mean = cl.get_option_value<T> ("init_" + name + "_mean");
+    const std::string dist_option = "init_" + name + "_dist";
+    if (cl.get_option_value<std::string> (dist_option) == "normal") {
+        const T sigma = cl.get_option_value<T> ("init_" + name + "_sigma");
+        auto normal_dist = set_distribution(mean, sigma);
+        for (size_t j = 0; j < num_rays; j++) {
+            var->set(j, static_cast<T> (normal_dist(engine)));
+        }
+    } else {
+        var->set(mean);
     }
 }
 
 //------------------------------------------------------------------------------
-///  @brief Initalize random rays for vmec.
+///  @brief Initialize the x and y direction.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam B         Base type of T.
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @params[in,out] omega    Frequency variable.
-///  @params[in,out] x        X variable.
-///  @params[in,out] y        Y variable.
-///  @params[in,out] z        Z variable.
-///  @params[in,out] ky       Ky variable.
-///  @params[in,out] kz       Kz variable.
+///  @params[in]     cl       Parsed commandline.
+///  @params[in,out] x        X variable to set.
+///  @params[in,out] y        Y variable to set.
 ///  @params[in,out] engine   Random engine.
 ///  @params[in]     num_rays Numbers of rays.
 //------------------------------------------------------------------------------
-template<typename T, typename B, bool SAFE_MATH>
-void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
-               graph::shared_leaf<T, SAFE_MATH> x,
-               graph::shared_leaf<T, SAFE_MATH> y,
-               graph::shared_leaf<T, SAFE_MATH> z,
-               graph::shared_leaf<T, SAFE_MATH> ky,
-               graph::shared_leaf<T, SAFE_MATH> kz,
-               std::mt19937_64 engine,
-               const size_t num_rays) {
-    std::normal_distribution<B> norm_dist1(static_cast<B> (430.0),
-                                           static_cast<B> (1.0));
-    std::normal_distribution<B> norm_dist2(static_cast<B> (M_PI),
-                                           static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist3(static_cast<B> (0.0),
-                                           static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist4(static_cast<B> (0.0),
-                                           static_cast<B> (1.0));
-    std::normal_distribution<B> norm_dist5(static_cast<B> (-150.0),
-                                           static_cast<B> (1.0));
+template<typename T, bool SAFE_MATH>
+void set_xy_variables(const commandline::parser &cl,
+                      graph::shared_leaf<T, SAFE_MATH> x,
+                      graph::shared_leaf<T, SAFE_MATH> y,
+                      std::mt19937_64 &engine,
+                      const size_t num_rays) {
+    if (cl.is_option_set("use_cyl_xy")) {
+        const T radius_mean = cl.get_option_value<T> ("init_x_mean");
+        const T phi_mean = cl.get_option_value<T> ("init_y_mean");
 
-    x->set(static_cast<T> (1.0));
-    for (size_t j = 0; j < num_rays; j++) {
-        omega->set(j, static_cast<T> (norm_dist1(engine)));
-        y->set(j, static_cast<T> (norm_dist2(engine)));
-        z->set(j, static_cast<T> (norm_dist3(engine)));
-        ky->set(j, static_cast<T> (norm_dist4(engine)));
-        kz->set(j, static_cast<T> (norm_dist5(engine)));
+        if (cl.get_option_value<std::string> ("init_x_dist") == "normal") {
+            const T radius_sigma = cl.get_option_value<T> ("init_x_sigma");
+            auto radius_dist = set_distribution(radius_mean, radius_sigma);
+            if (cl.get_option_value<std::string> ("init_y_dist") == "normal") {
+                const T phi_sigma = cl.get_option_value<T> ("init_y_sigma");
+                auto phi_dist = set_distribution(phi_mean, phi_sigma);
+                for (size_t j = 0; j < num_rays; j++) {
+                    x->set(j, static_cast<T> (radius_dist(engine))*cos(static_cast<T> (phi_dist(engine))));
+                    y->set(j, static_cast<T> (radius_dist(engine))*sin(static_cast<T> (phi_dist(engine))));
+                }
+            } else {
+                for (size_t j = 0; j < num_rays; j++) {
+                    x->set(j, static_cast<T> (radius_dist(engine))*cos(phi_mean));
+                    y->set(j, static_cast<T> (radius_dist(engine))*sin(phi_mean));
+                }
+            }
+        } else {
+            if (cl.get_option_value<std::string> ("init_y_dist") == "normal") {
+                const T phi_sigma = cl.get_option_value<T> ("init_y_sigma");
+                auto phi_dist = set_distribution(phi_mean, phi_sigma);
+                for (size_t j = 0; j < num_rays; j++) {
+                    x->set(j, radius_mean*cos(static_cast<T> (phi_dist(engine))));
+                    y->set(j, radius_mean*sin(static_cast<T> (phi_dist(engine))));
+                }
+            } else {
+                for (size_t j = 0; j < num_rays; j++) {
+                    x->set(j, radius_mean*cos(phi_mean));
+                    y->set(j, radius_mean*sin(phi_mean));
+                }
+            }
+        }
+    } else {
+        set_variable(cl, x, "x", engine, num_rays);
+        set_variable(cl, y, "y", engine, num_rays);
     }
 }
 
@@ -108,7 +133,7 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
 ///
 ///  @tparam SOLVER_METHOD The solver method.
 ///
-///  @params[in] cl       Parsed commandline.
+///  @params[in] cl        Parsed commandline.
 ///  @params[in] omega     Wave frequency.
 ///  @params[in] kx        Wave number in x direction.
 ///  @params[in] ky        Wave number in y direction.
@@ -155,7 +180,13 @@ void run_solver(const commandline::parser &cl,
     SOLVER_METHOD solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
                         filename, num_rays, index);
 
-    solve.init(kx);
+    if (!cl.is_option_set("init_kx_dist")) {
+        solve.init(kx);
+    } else if (!cl.is_option_set("init_ky_dist")) {
+        solve.init(ky);
+    } else {
+        solve.init(kz);
+    }
     solve.compile();
 
     if (index == 0 && cl.is_option_set("print_expressions")) {
@@ -324,7 +355,7 @@ void run_dispersion(const commandline::parser &cl,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] cl        Parsed commandline.
+///  @params[in] cl Parsed commandline.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
 equilibrium::shared<T, SAFE_MATH> make_equilibrium(const commandline::parser &cl) {
@@ -364,7 +395,8 @@ void trace_ray(const commandline::parser &cl,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([&cl, num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
+        threads[i] = std::thread([&cl, num_times, sub_steps, 
+                                  batch, extra] (const size_t thread_number) -> void {
 
             const size_t num_steps = num_times/sub_steps;
             const size_t local_num_rays = batch
@@ -389,45 +421,23 @@ void trace_ray(const commandline::parser &cl,
             t->set(static_cast<T> (0.0));
 
 //  Inital conditions.
-            if constexpr (jit::is_float<T> ()) {
-#if 1
-                init_efit<T, float, SAFE_MATH> (omega, x, y, z,
-                                                ky, kz, engine,
-                                                local_num_rays);
-#else
-                init_vmec<T, float, SAFE_MATH> (omega, x, y, z,
-                                                ky, kz, engine,
-                                                local_num_rays);
-#endif
-            } else {
-#if 1
-                init_efit<T, double, SAFE_MATH> (omega, x, y, z,
-                                                 ky, kz, engine,
-                                                 local_num_rays);
-#else
-                init_vmec<T, double, SAFE_MATH> (omega, x, y, z,
-                                                 ky, kz, engine,
-                                                 local_num_rays);
-#endif
-            }
-#if 1
-            kx->set(static_cast<T> (-700.0));
-#else
-            kx->set(static_cast<T> (-30.0));
-#endif
+            set_variable(cl, omega, "w", engine, local_num_rays);
+            set_variable(cl, kx, "kx", engine, local_num_rays);
+            set_variable(cl, ky, "ky", engine, local_num_rays);
+            set_variable(cl, kz, "kz", engine, local_num_rays);
+            set_variable(cl, z, "z", engine, local_num_rays);
+            set_xy_variables(cl, x, y, engine, local_num_rays);
+
             auto eq = make_equilibrium<T, SAFE_MATH> (cl);
 
-#if 1
-            const T endtime = static_cast<T> (2.0);
-#else
-            const T endtime = static_cast<T> (0.2);
-#endif
+            const T endtime = cl.get_option_value<T> ("endtime");
             const T dt = endtime/static_cast<T> (num_times);
 
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
-            const std::string dispersion = cl.get_option_value<std::string> ("dispersion");
+            const std::string dispersion = 
+                cl.get_option_value<std::string> ("dispersion");
             if (dispersion == "simple") {
                 run_dispersion<dispersion::simple<T, SAFE_MATH>> (cl, omega,
                                                                   kx, ky, kx,
@@ -569,7 +579,8 @@ void calculate_power(const commandline::parser &cl,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([&cl, num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
+        threads[i] = std::thread([&cl, num_times, sub_steps, 
+                                  batch, extra] (const size_t thread_number) -> void {
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
@@ -623,12 +634,14 @@ void calculate_power(const commandline::parser &cl,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
+///  @params[in] cl        Parsed commandline.
 ///  @params[in] num_times Total number of time steps.
 ///  @params[in] sub_steps Number of substeps to push the rays.
 ///  @params[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
-void bin_power(const size_t num_times,
+void bin_power(const commandline::parser &cl,
+               const size_t num_times,
                const size_t sub_steps,
                const size_t num_rays) {
     const timeing::measure_diagnostic total("Power Time");
@@ -641,7 +654,8 @@ void bin_power(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
+        threads[i] = std::thread([&cl, num_times, sub_steps,
+                                  batch, extra] (const size_t thread_number) -> void {
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
@@ -659,8 +673,7 @@ void bin_power(const size_t num_times,
             auto power      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (1.0), "power");
             auto k_sum      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (0.0), "k_sum");
 
-            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
-            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+            auto eq = make_equilibrium<T, SAFE_MATH> (cl);
 
             auto x_real = eq->get_x(x, y, z);
             auto y_real = eq->get_y(x, y, z);
@@ -749,22 +762,18 @@ void bin_power(const size_t num_times,
 }
 
 //------------------------------------------------------------------------------
-///  @brief Main program of the driver.
+///  @brief Setup and parse commandline options.
 ///
 ///  @params[in] argc Number of commandline arguments.
 ///  @params[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
-int main(int argc, const char * argv[]) {
-    START_GPU
-    (void)argc;
-    (void)argv;
-    const timeing::measure_diagnostic total("Total Time");
-
+commandline::parser parse_commandline(int argc, const char * argv[]) {
     commandline::parser cl(argv[0]);
     cl.add_option("verbose",           false, "Show verbose output.");
     cl.add_option("num_times",         true,  "Number of times.");
     cl.add_option("sub_steps",         true,  "Number of substeps.");
     cl.add_option("num_rays",          true,  "Number of rays.");
+    cl.add_option("endtime",           true,  "End time.");
     cl.add_option("print_expressions", false, "Print out rays expressions.");
     cl.add_option("print",             false, "Print sample rays to screen.");
     cl.add_option("solver",            true,  "Solver method.");
@@ -788,12 +797,79 @@ int main(int argc, const char * argv[]) {
         "vmec"
     });
     cl.add_option("equilibrium_file",  true,  "File to read the equilibrum from.");
+    cl.add_option("init_w_dist",       true,  "Inital omega distribution.");
+    cl.add_option_values("init_w_dist", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_w_mean",       true,  "Inital omega mean");
+    cl.add_option("init_w_sigma",      true,  "Inital omega sigma");
+    cl.add_option("init_kx_dist",      true,  "Inital kx distribution.");
+    cl.add_option_values("init_kx_dist", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_kx_mean",      true,  "Inital kx mean");
+    cl.add_option("init_kx_sigma",     true,  "Inital kx sigma");
+    cl.add_option("init_ky_dist",      true,  "Inital ky distribution.");
+    cl.add_option_values("init_ky_dist", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_ky_mean",      true,  "Inital ky mean");
+    cl.add_option("init_ky_sigma",     true,  "Inital ky sigma");
+    cl.add_option("init_kz_dist",      true,  "Inital kz distribution.");
+    cl.add_option_values("init_kz_dist", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_kz_mean",      true,  "Inital kz mean");
+    cl.add_option("init_kz_sigma",     true,  "Inital kz sigma");
+    cl.add_option("init_x_dist",       true,  "Inital x distribution.");
+    cl.add_option_values("init_x_dist", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_x_mean",       true,  "Inital x mean");
+    cl.add_option("init_x_sigma",      true,  "Inital x sigma");
+    cl.add_option("init_y_dist",       true,  "Inital y distribution.");
+    cl.add_option_values("init_y_dist", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_y_mean",       true,  "Inital y mean");
+    cl.add_option("init_y_sigma",      true,  "Inital y sigma");
+    cl.add_option("init_z_dist",       true,  "Inital z distribution.");
+    cl.add_option_values("init_z_dist", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_z_mean",       true,  "Inital z mean");
+    cl.add_option("init_z_sigma",      true,  "Inital z sigma");
+    cl.add_option("use_cyl_xy",        false, "Use cylindical coordinates for x and y.");
     cl.add_option("absorption_model",  true,  "Power absoption model to use.");
     cl.add_option_values("absorption_model", {
         "root_find",
         "weak_damping"
     });
+
     cl.parse(argc, argv);
+
+    return cl;
+}
+
+//------------------------------------------------------------------------------
+///  @brief Main program of the driver.
+///
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
+//------------------------------------------------------------------------------
+int main(int argc, const char * argv[]) {
+    START_GPU
+    (void)argc;
+    (void)argv;
+    const timeing::measure_diagnostic total("Total Time");
+    const commandline::parser cl = parse_commandline(argc, argv);
 
     jit::verbose = cl.is_option_set("verbose");
 
@@ -814,7 +890,7 @@ int main(int argc, const char * argv[]) {
                                                         num_times,
                                                         sub_steps,
                                                         num_rays);
-    bin_power<base> (num_times, sub_steps, num_rays);
+    bin_power<base> (cl, num_times, sub_steps, num_rays);
 
     std::cout << std::endl << "Timing:" << std::endl;
     total.print();

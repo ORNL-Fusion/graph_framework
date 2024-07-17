@@ -138,6 +138,10 @@ namespace commandline {
                     parsed_options[option] = "";
                 }
             }
+
+            if (is_option_set("help")) {
+                show_help(std::string(argv[0]));
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -160,10 +164,12 @@ namespace commandline {
                 std::string value = parsed_options.at(option);
                 if constexpr (std::is_same<T, std::string> ()) {
                     return value;
-                } else if constexpr (std::is_same<T, float> ()) {
-                    return std::stof(value);
-                } else if constexpr (std::is_same<T, double> ()) {
-                    return std::stod(value);
+                } else if constexpr (std::is_same<T, float> () ||
+                                     std::is_same<T, std::complex<float>> ()) {
+                    return static_cast<T> (std::stof(value));
+                } else if constexpr (std::is_same<T, double> () ||
+                                     std::is_same<T, std::complex<double>> ()) {
+                    return static_cast<T> (std::stod(value));
                 } else if constexpr (std::is_same<T, int> ()) {
                     return std::stoi(value);
                 } else if constexpr (std::is_same<T, long> ()) {
