@@ -61,11 +61,12 @@ void set_variable(const commandline::parser &cl,
                   const size_t num_rays) {
     const T mean = cl.get_option_value<T> ("init_" + name + "_mean");
     const std::string dist_option = "init_" + name + "_dist";
-    if (cl.get_option_value<std::string> (dist_option) == "normal") {
+    if (cl.is_option_set(dist_option) &&
+        cl.get_option_value<std::string> (dist_option) == "normal") {
         const T sigma = cl.get_option_value<T> ("init_" + name + "_sigma");
         auto normal_dist = set_distribution(mean, sigma);
-        for (size_t j = 0; j < num_rays; j++) {
-            var->set(j, static_cast<T> (normal_dist(engine)));
+        for (size_t i = 0; i < num_rays; i++) {
+            var->set(i, static_cast<T> (normal_dist(engine)));
         }
     } else {
         var->set(mean);
@@ -91,34 +92,37 @@ void set_xy_variables(const commandline::parser &cl,
         const T radius_mean = cl.get_option_value<T> ("init_x_mean");
         const T phi_mean = cl.get_option_value<T> ("init_y_mean");
 
-        if (cl.get_option_value<std::string> ("init_x_dist") == "normal") {
+        if (cl.is_option_set("init_x_dist") &&
+            cl.get_option_value<std::string> ("init_x_dist") == "normal") {
             const T radius_sigma = cl.get_option_value<T> ("init_x_sigma");
             auto radius_dist = set_distribution(radius_mean, radius_sigma);
-            if (cl.get_option_value<std::string> ("init_y_dist") == "normal") {
+            if (cl.is_option_set("init_y_dist") &&
+                cl.get_option_value<std::string> ("init_y_dist") == "normal") {
                 const T phi_sigma = cl.get_option_value<T> ("init_y_sigma");
                 auto phi_dist = set_distribution(phi_mean, phi_sigma);
-                for (size_t j = 0; j < num_rays; j++) {
-                    x->set(j, static_cast<T> (radius_dist(engine))*cos(static_cast<T> (phi_dist(engine))));
-                    y->set(j, static_cast<T> (radius_dist(engine))*sin(static_cast<T> (phi_dist(engine))));
+                for (size_t i = 0; i < num_rays; i++) {
+                    x->set(i, static_cast<T> (radius_dist(engine))*cos(static_cast<T> (phi_dist(engine))));
+                    y->set(i, static_cast<T> (radius_dist(engine))*sin(static_cast<T> (phi_dist(engine))));
                 }
             } else {
-                for (size_t j = 0; j < num_rays; j++) {
-                    x->set(j, static_cast<T> (radius_dist(engine))*cos(phi_mean));
-                    y->set(j, static_cast<T> (radius_dist(engine))*sin(phi_mean));
+                for (size_t i = 0; i < num_rays; i++) {
+                    x->set(i, static_cast<T> (radius_dist(engine))*cos(phi_mean));
+                    y->set(i, static_cast<T> (radius_dist(engine))*sin(phi_mean));
                 }
             }
         } else {
-            if (cl.get_option_value<std::string> ("init_y_dist") == "normal") {
+            if (cl.is_option_set("init_y_dist") &&
+                cl.get_option_value<std::string> ("init_y_dist") == "normal") {
                 const T phi_sigma = cl.get_option_value<T> ("init_y_sigma");
                 auto phi_dist = set_distribution(phi_mean, phi_sigma);
-                for (size_t j = 0; j < num_rays; j++) {
-                    x->set(j, radius_mean*cos(static_cast<T> (phi_dist(engine))));
-                    y->set(j, radius_mean*sin(static_cast<T> (phi_dist(engine))));
+                for (size_t i = 0; i < num_rays; i++) {
+                    x->set(i, radius_mean*cos(static_cast<T> (phi_dist(engine))));
+                    y->set(i, radius_mean*sin(static_cast<T> (phi_dist(engine))));
                 }
             } else {
-                for (size_t j = 0; j < num_rays; j++) {
-                    x->set(j, radius_mean*cos(phi_mean));
-                    y->set(j, radius_mean*sin(phi_mean));
+                for (size_t i = 0; i < num_rays; i++) {
+                    x->set(i, radius_mean*cos(phi_mean));
+                    y->set(i, radius_mean*sin(phi_mean));
                 }
             }
         }
@@ -225,7 +229,7 @@ void run_solver(const commandline::parser &cl,
 #else
     std::mt19937_64 engine(index + 1);
 #endif
-    std::uniform_int_distribution<size_t> int_dist(0, index - 1);
+    std::uniform_int_distribution<size_t> int_dist(0, num_rays - 1);
     
     const size_t sample = int_dist(engine);
 
@@ -440,7 +444,7 @@ void trace_ray(const commandline::parser &cl,
                 cl.get_option_value<std::string> ("dispersion");
             if (dispersion == "simple") {
                 run_dispersion<dispersion::simple<T, SAFE_MATH>> (cl, omega,
-                                                                  kx, ky, kx,
+                                                                  kx, ky, kz,
                                                                   x, y, z,
                                                                   t, dt, eq,
                                                                   num_steps,
@@ -450,7 +454,7 @@ void trace_ray(const commandline::parser &cl,
                                                                   thread_number);
             } else if (dispersion == "bohm_gross") {
                 run_dispersion<dispersion::bohm_gross<T, SAFE_MATH>> (cl, omega,
-                                                                      kx, ky, kx,
+                                                                      kx, ky, kz,
                                                                       x, y, z,
                                                                       t, dt, eq,
                                                                       num_steps,
@@ -460,7 +464,7 @@ void trace_ray(const commandline::parser &cl,
                                                                       thread_number);
             } else if (dispersion == "ordinary_wave") {
                 run_dispersion<dispersion::ordinary_wave<T, SAFE_MATH>> (cl, omega,
-                                                                         kx, ky, kx,
+                                                                         kx, ky, kz,
                                                                          x, y, z,
                                                                          t, dt, eq,
                                                                          num_steps,
@@ -470,7 +474,7 @@ void trace_ray(const commandline::parser &cl,
                                                                          thread_number);
             } else if (dispersion == "extra_ordinary_wave") {
                 run_dispersion<dispersion::extra_ordinary_wave<T, SAFE_MATH>> (cl, omega,
-                                                                               kx, ky, kx,
+                                                                               kx, ky, kz,
                                                                                x, y, z,
                                                                                t, dt, eq,
                                                                                num_steps,
@@ -480,7 +484,7 @@ void trace_ray(const commandline::parser &cl,
                                                                                thread_number);
             } else {
                 run_dispersion<dispersion::cold_plasma<T, SAFE_MATH>> (cl, omega,
-                                                                       kx, ky, kx,
+                                                                       kx, ky, kz,
                                                                        x, y, z,
                                                                        t, dt, eq,
                                                                        num_steps,
@@ -783,8 +787,8 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
         "rk4",
         "adaptive_rk4"
     });
-    cl.add_option("disperion",         true,  "Disperison method.");
-    cl.add_option_values("disperion", {
+    cl.add_option("dispersion",        true,  "Disperison method.");
+    cl.add_option_values("dispersion", {
         "simple",
         "bohm_gross",
         "ordinary_wave",
