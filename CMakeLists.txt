@@ -6,7 +6,6 @@ project (rays CXX)
 #  Build Options
 #-------------------------------------------------------------------------------
 option (USE_PCH "Enable the use of precompiled headers" ON)
-option (USE_STATIC "Limits the dyamics for testing." OFF)
 option (SAVE_KERNEL_SOURCE "Writes the kernel source code to a file." OFF)
 
 #-------------------------------------------------------------------------------

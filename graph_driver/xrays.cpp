@@ -137,22 +137,23 @@ void set_xy_variables(const commandline::parser &cl,
 ///
 ///  @tparam SOLVER_METHOD The solver method.
 ///
-///  @params[in] cl        Parsed commandline.
-///  @params[in] omega     Wave frequency.
-///  @params[in] kx        Wave number in x direction.
-///  @params[in] ky        Wave number in y direction.
-///  @params[in] kz        Wave number in z direction.
-///  @params[in] x         Initial position in x direction.
-///  @params[in] y         Initial position in y direction.
-///  @params[in] z         Initial position in z direction.
-///  @params[in] t         Initial position in t direction.
-///  @params[in] dt        Inital dt.
-///  @params[in] eq        Equilibrium object.
-///  @params[in] num_steps Equilibrium object.
-///  @params[in] sub_steps Equilibrium object.
-///  @params[in] filename  Result filename, empty names will be blank.
-///  @params[in] num_rays  Number of rays to write.
-///  @params[in] index     Concurrent index.
+///  @params[in]     cl        Parsed commandline.
+///  @params[in]     omega     Wave frequency.
+///  @params[in]     kx        Wave number in x direction.
+///  @params[in]     ky        Wave number in y direction.
+///  @params[in]     kz        Wave number in z direction.
+///  @params[in]     x         Initial position in x direction.
+///  @params[in]     y         Initial position in y direction.
+///  @params[in]     z         Initial position in z direction.
+///  @params[in]     t         Initial position in t direction.
+///  @params[in]     dt        Inital dt.
+///  @params[in]     eq        Equilibrium object.
+///  @params[in]     num_steps Equilibrium object.
+///  @params[in]     sub_steps Equilibrium object.
+///  @params[in,out] engine    Random engine.
+///  @params[in]     filename  Result filename, empty names will be blank.
+///  @params[in]     num_rays  Number of rays to write.
+///  @params[in]     index     Concurrent index.
 //------------------------------------------------------------------------------
 template<solver::method SOLVER_METHOD>
 void run_solver(const commandline::parser &cl,
@@ -178,6 +179,7 @@ void run_solver(const commandline::parser &cl,
                                     SOLVER_METHOD::safe_math> &eq,
                 const size_t num_steps,
                 const size_t sub_steps,
+                std::mt19937_64 &engine,
                 const std::string &filename="",
                 const size_t num_rays=0,
                 const size_t index=0) {
@@ -224,11 +226,6 @@ void run_solver(const commandline::parser &cl,
         std::cout << std::endl;
     }
 
-#ifndef STATIC
-    std::mt19937_64 engine((index + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-#else
-    std::mt19937_64 engine(index + 1);
-#endif
     std::uniform_int_distribution<size_t> int_dist(0, num_rays - 1);
     
     const size_t sample = int_dist(engine);
@@ -260,22 +257,23 @@ void run_solver(const commandline::parser &cl,
 ///
 ///  @tparam DISPERSION_FUNCTION The dispersion method.
 ///
-///  @params[in] cl        Parsed commandline.
-///  @params[in] omega     Wave frequency.
-///  @params[in] kx        Wave number in x direction.
-///  @params[in] ky        Wave number in y direction.
-///  @params[in] kz        Wave number in z direction.
-///  @params[in] x         Initial position in x direction.
-///  @params[in] y         Initial position in y direction.
-///  @params[in] z         Initial position in z direction.
-///  @params[in] t         Initial position in t direction.
-///  @params[in] dt        Inital dt.
-///  @params[in] eq        Equilibrium object.
-///  @params[in] num_steps Equilibrium object.
-///  @params[in] sub_steps Equilibrium object.
-///  @params[in] filename  Result filename, empty names will be blank.
-///  @params[in] num_rays  Number of rays to write.
-///  @params[in] index     Concurrent index.
+///  @params[in]     cl        Parsed commandline.
+///  @params[in]     omega     Wave frequency.
+///  @params[in]     kx        Wave number in x direction.
+///  @params[in]     ky        Wave number in y direction.
+///  @params[in]     kz        Wave number in z direction.
+///  @params[in]     x         Initial position in x direction.
+///  @params[in]     y         Initial position in y direction.
+///  @params[in]     z         Initial position in z direction.
+///  @params[in]     t         Initial position in t direction.
+///  @params[in]     dt        Inital dt.
+///  @params[in]     eq        Equilibrium object.
+///  @params[in]     num_steps Equilibrium object.
+///  @params[in]     sub_steps Equilibrium object.
+///  @params[in,out] engine    Random engine.
+///  @params[in]     filename  Result filename, empty names will be blank.
+///  @params[in]     num_rays  Number of rays to write.
+///  @params[in]     index     Concurrent index.
 //------------------------------------------------------------------------------
 template<dispersion::function DISPERSION_FUNCTION>
 void run_dispersion(const commandline::parser &cl,
@@ -300,6 +298,7 @@ void run_dispersion(const commandline::parser &cl,
                                         DISPERSION_FUNCTION::safe_math> &eq,
                     const size_t num_steps,
                     const size_t sub_steps,
+                    std::mt19937_64 &engine,
                     const std::string &filename="",
                     const size_t num_rays=0,
                     const size_t index=0) {
@@ -312,6 +311,7 @@ void run_dispersion(const commandline::parser &cl,
                                                                    t, dt_const, eq,
                                                                    num_steps,
                                                                    sub_steps,
+                                                                   engine,
                                                                    filename,
                                                                    num_rays,
                                                                    index);
@@ -323,6 +323,7 @@ void run_dispersion(const commandline::parser &cl,
                                                       t, dt_const, eq,
                                                       num_steps,
                                                       sub_steps,
+                                                      engine,
                                                       filename,
                                                       num_rays,
                                                       index);
@@ -334,6 +335,7 @@ void run_dispersion(const commandline::parser &cl,
                                                       t, dt_const, eq,
                                                       num_steps,
                                                       sub_steps,
+                                                      engine,
                                                       filename,
                                                       num_rays,
                                                       index);
@@ -347,6 +349,7 @@ void run_dispersion(const commandline::parser &cl,
                                                                t, dt_var, eq,
                                                                num_steps,
                                                                sub_steps,
+                                                               engine,
                                                                filename,
                                                                num_rays,
                                                                index);
@@ -371,6 +374,21 @@ equilibrium::shared<T, SAFE_MATH> make_equilibrium(const commandline::parser &cl
     } else {
         return equilibrium::make_vmec<T, SAFE_MATH> (file_name);
     }
+}
+
+//------------------------------------------------------------------------------
+///  @brief Generate the engine.
+///
+///  @params[in] cl    Parsed commandline.
+///  @params[in] index Thread index.
+//------------------------------------------------------------------------------
+std::mt19937_64 make_engine(const commandline::parser &cl,
+                            const size_t index) {
+    if (cl.is_option_set("seed")) {
+        return std::mt19937_64(index);
+    }
+
+    return std::mt19937_64((index + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
 }
 
 //------------------------------------------------------------------------------
@@ -406,12 +424,7 @@ void trace_ray(const commandline::parser &cl,
             const size_t local_num_rays = batch
                                         + (extra > thread_number ? 1 : 0);
 
-#ifndef STATIC
-            std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-#else
-            std::mt19937_64 engine(thread_number + 1);
-#endif
-            std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
+            std::mt19937_64 engine = make_engine(cl, thread_number);
 
             auto omega = graph::variable<T, SAFE_MATH> (local_num_rays, "\\omega");
             auto kx    = graph::variable<T, SAFE_MATH> (local_num_rays, "k_{x}");
@@ -449,6 +462,7 @@ void trace_ray(const commandline::parser &cl,
                                                                   t, dt, eq,
                                                                   num_steps,
                                                                   sub_steps,
+                                                                  engine,
                                                                   stream.str(),
                                                                   local_num_rays,
                                                                   thread_number);
@@ -459,6 +473,7 @@ void trace_ray(const commandline::parser &cl,
                                                                       t, dt, eq,
                                                                       num_steps,
                                                                       sub_steps,
+                                                                      engine,
                                                                       stream.str(),
                                                                       local_num_rays,
                                                                       thread_number);
@@ -469,6 +484,7 @@ void trace_ray(const commandline::parser &cl,
                                                                          t, dt, eq,
                                                                          num_steps,
                                                                          sub_steps,
+                                                                         engine,
                                                                          stream.str(),
                                                                          local_num_rays,
                                                                          thread_number);
@@ -479,6 +495,7 @@ void trace_ray(const commandline::parser &cl,
                                                                                t, dt, eq,
                                                                                num_steps,
                                                                                sub_steps,
+                                                                               engine,
                                                                                stream.str(),
                                                                                local_num_rays,
                                                                                thread_number);
@@ -489,6 +506,7 @@ void trace_ray(const commandline::parser &cl,
                                                                        t, dt, eq,
                                                                        num_steps,
                                                                        sub_steps,
+                                                                       engine,
                                                                        stream.str(),
                                                                        local_num_rays,
                                                                        thread_number);
@@ -845,6 +863,7 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
         "root_find",
         "weak_damping"
     });
+    cl.add_option("seed",              false, "Fix the random seed.");
 
     cl.parse(argc, argv);
 
@@ -868,11 +887,7 @@ int main(int argc, const char * argv[]) {
 
     const size_t num_times = cl.get_option_value<size_t> ("num_times");
     const size_t sub_steps = cl.get_option_value<size_t> ("sub_steps");
-#ifndef STATIC
     const size_t num_rays = cl.get_option_value<size_t> ("num_rays");
-#else
-    const size_t num_rays = 1;
-#endif
 
     const bool use_safe_math = true;
 
