@@ -407,6 +407,8 @@ namespace solver {
         typedef DISPERSION_FUNCTION dispersion_function;
 ///  Type def to retrieve the backend base type.
         typedef typename DISPERSION_FUNCTION::base base;
+///  Retrieve template parameter of safe math.
+        static constexpr bool safe_math = DISPERSION_FUNCTION::safe_math;
     };
 
 ///  Solver method concept.
@@ -475,6 +477,7 @@ namespace solver {
 ///  @params[in] z        Inital z.
 ///  @params[in] t        Inital t.
 ///  @params[in] dt       Inital dt.
+///  @params[in] eq       Equilibrium object.
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 ///  @params[in] index    Concurrent index.
@@ -495,7 +498,8 @@ namespace solver {
                                DISPERSION_FUNCTION::safe_math> z,
             graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                DISPERSION_FUNCTION::safe_math> t,
-            const typename DISPERSION_FUNCTION::base dt,
+            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                               DISPERSION_FUNCTION::safe_math> dt,
             equilibrium::shared<typename DISPERSION_FUNCTION::base,
                                 DISPERSION_FUNCTION::safe_math> &eq,
             const std::string &filename="",
@@ -503,15 +507,12 @@ namespace solver {
             const size_t index=0) :
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq,
                                                filename, num_rays, index) {
-            auto dt_const = graph::constant<typename DISPERSION_FUNCTION::base,
-                                            DISPERSION_FUNCTION::safe_math> (static_cast<typename DISPERSION_FUNCTION::base> (dt));
-
-            this->kx1 = dt_const*this->D.get_dkxdt();
-            this->ky1 = dt_const*this->D.get_dkydt();
-            this->kz1 = dt_const*this->D.get_dkzdt();
-            this->x1  = dt_const*this->D.get_dxdt();
-            this->y1  = dt_const*this->D.get_dydt();
-            this->z1  = dt_const*this->D.get_dzdt();
+            this->kx1 = dt*this->D.get_dkxdt();
+            this->ky1 = dt*this->D.get_dkydt();
+            this->kz1 = dt*this->D.get_dkzdt();
+            this->x1  = dt*this->D.get_dxdt();
+            this->y1  = dt*this->D.get_dydt();
+            this->z1  = dt*this->D.get_dzdt();
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
                                                                      graph::pseudo_variable(this->kx + kx1),
@@ -520,15 +521,15 @@ namespace solver {
                                                                      graph::pseudo_variable(this->x  + x1),
                                                                      graph::pseudo_variable(this->y  + y1),
                                                                      graph::pseudo_variable(this->z  + z1),
-                                                                     graph::pseudo_variable(this->t  + dt_const),
+                                                                     graph::pseudo_variable(this->t  + dt),
                                                                      eq);
 
-            this->kx2 = dt_const*D2.get_dkxdt();
-            this->ky2 = dt_const*D2.get_dkydt();
-            this->kz2 = dt_const*D2.get_dkzdt();
-            this->x2  = dt_const*D2.get_dxdt();
-            this->y2  = dt_const*D2.get_dydt();
-            this->z2  = dt_const*D2.get_dzdt();
+            this->kx2 = dt*D2.get_dkxdt();
+            this->ky2 = dt*D2.get_dkydt();
+            this->kz2 = dt*D2.get_dkzdt();
+            this->x2  = dt*D2.get_dxdt();
+            this->y2  = dt*D2.get_dydt();
+            this->z2  = dt*D2.get_dzdt();
 
             auto two = graph::two<typename DISPERSION_FUNCTION::base,
                                   DISPERSION_FUNCTION::safe_math> ();
@@ -539,7 +540,7 @@ namespace solver {
             this->x_next  = this->x  + (this->x1  + this->x2 )/two;
             this->y_next  = this->y  + (this->y1  + this->y2 )/two;
             this->z_next  = this->z  + (this->z1  + this->z2 )/two;
-            this->t_next  = this->t  + dt_const;
+            this->t_next  = this->t  + dt;
         }
     };
 
@@ -647,49 +648,7 @@ namespace solver {
 ///  @params[in] z        Inital z.
 ///  @params[in] t        Inital t.
 ///  @params[in] dt       Inital dt.
-///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] num_rays Number of rays to write.
-///  @params[in] index    Concurrent index.
-//------------------------------------------------------------------------------
-        rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> w,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> kx,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> ky,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> kz,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> x,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> y,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> z,
-            graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> t,
-            const typename DISPERSION_FUNCTION::base dt,
-            equilibrium::shared<typename DISPERSION_FUNCTION::base,
-                                DISPERSION_FUNCTION::safe_math> &eq,
-            const std::string &filename="",
-            const size_t num_rays=0,
-            const size_t index=0) :
-        rk4(w, kx, ky, kz, x, y, z, t,
-            graph::constant<typename DISPERSION_FUNCTION::base,
-                            DISPERSION_FUNCTION::safe_math> (static_cast<typename DISPERSION_FUNCTION::base> (dt)), eq,
-            filename, num_rays, index) {}
-
-//------------------------------------------------------------------------------
-///  @brief Construct a new second order runge kutta solver.
-///
-///  @params[in] w  Inital omega.
-///  @params[in] kx Inital kx.
-///  @params[in] ky Inital ky.
-///  @params[in] kz Inital kz.
-///  @params[in] x  Inital x.
-///  @params[in] y  Inital y.
-///  @params[in] z  Inital z.
-///  @params[in] t  Inital t.
-///  @params[in] dt Inital dt.
+///  @params[in] eq       Equilibrium object.
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 ///  @params[in] index    Concurrent index.
@@ -826,6 +785,7 @@ namespace solver {
 ///  @params[in] z        Inital z.
 ///  @params[in] t        Inital t.
 ///  @params[in] dt       Inital dt.
+///  @params[in] eq       Equilibrium object.
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 ///  @params[in] index    Concurrent index.
@@ -959,6 +919,7 @@ namespace solver {
 ///  @params[in] z        Inital z.
 ///  @params[in] t        Inital t.
 ///  @params[in] dt       Inital dt.
+///  @params[in] eq       Equilibrium object.
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] num_rays Number of rays to write.
 ///  @params[in] index    Concurrent index.
@@ -979,7 +940,8 @@ namespace solver {
                                             DISPERSION_FUNCTION::safe_math> z,
                          graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                             DISPERSION_FUNCTION::safe_math> t,
-                         const typename DISPERSION_FUNCTION::base dt,
+                         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                            DISPERSION_FUNCTION::safe_math> dt,
                          equilibrium::shared<typename DISPERSION_FUNCTION::base,
                                              DISPERSION_FUNCTION::safe_math> &eq,
                          const std::string &filename="",
@@ -1011,15 +973,13 @@ namespace solver {
                    zero->is_match(this->D.get_dzdt()->df(z))   &&
                    "Hamiltonian is not separable.");
 
-            auto dt_const = graph::constant<typename DISPERSION_FUNCTION::base,
-                                            DISPERSION_FUNCTION::safe_math> (static_cast<typename DISPERSION_FUNCTION::base> (dt));
             auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
 
-            this->t_next = this->t + dt_const;
+            this->t_next = this->t + dt;
 
-            this->x1 = this->x + dt_const*this->D.get_dxdt()/two;
-            this->y1 = this->y + dt_const*this->D.get_dydt()/two;
-            this->z1 = this->z + dt_const*this->D.get_dzdt()/two;
+            this->x1 = this->x + dt*this->D.get_dxdt()/two;
+            this->y1 = this->y + dt*this->D.get_dydt()/two;
+            this->z1 = this->z + dt*this->D.get_dzdt()/two;
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
                                                                      graph::pseudo_variable(this->kx),
@@ -1031,9 +991,9 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t),
                                                                      eq);
 
-            this->kx_next = this->kx + dt_const*D2.get_dkxdt();
-            this->ky_next = this->ky + dt_const*D2.get_dkydt();
-            this->kz_next = this->kz + dt_const*D2.get_dkzdt();
+            this->kx_next = this->kx + dt*D2.get_dkxdt();
+            this->ky_next = this->ky + dt*D2.get_dkydt();
+            this->kz_next = this->kz + dt*D2.get_dkzdt();
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D3(this->w,
                                                                      graph::pseudo_variable(this->kx_next),
@@ -1045,9 +1005,9 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t),
                                                                      eq);
 
-            this->x_next  = this->x1 + dt_const*D3.get_dxdt()/two;
-            this->y_next  = this->y1 + dt_const*D3.get_dydt()/two;
-            this->z_next  = this->z1 + dt_const*D3.get_dzdt()/two;
+            this->x_next  = this->x1 + dt*D3.get_dxdt()/two;
+            this->y_next  = this->y1 + dt*D3.get_dydt()/two;
+            this->z_next  = this->z1 + dt*D3.get_dzdt()/two;
         }
     };
 }

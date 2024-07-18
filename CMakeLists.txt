@@ -6,7 +6,6 @@ project (rays CXX)
 #  Build Options
 #-------------------------------------------------------------------------------
 option (USE_PCH "Enable the use of precompiled headers" ON)
-option (USE_STATIC "Limits the dyamics for testing." OFF)
 option (SAVE_KERNEL_SOURCE "Writes the kernel source code to a file." OFF)
 
 #-------------------------------------------------------------------------------
@@ -283,6 +282,11 @@ target_link_libraries (llvm_dep
 add_subdirectory (graph_framework)
 
 #-------------------------------------------------------------------------------
+#  Setup testing
+#-------------------------------------------------------------------------------
+enable_testing ()
+
+#-------------------------------------------------------------------------------
 #  Tool setup
 #-------------------------------------------------------------------------------
 macro (add_tool_target target)
@@ -307,11 +311,6 @@ endmacro ()
 
 add_subdirectory (graph_driver)
 add_subdirectory (graph_benchmark)
-
-#-------------------------------------------------------------------------------
-#  Setup testing
-#-------------------------------------------------------------------------------
-enable_testing ()
 
 #-------------------------------------------------------------------------------
 #  Define macro function to register tests.

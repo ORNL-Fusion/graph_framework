@@ -74,11 +74,12 @@ void bench_runner() {
 
             const T endtime = static_cast<T> (1.0);
             const T dt = endtime/static_cast<T> (NUM_TIMES);
+            auto dt_const = graph::constant(dt);
 
             solver::rk4<dispersion::cold_plasma<T>> solve(omega,
                                                           kx, ky, kz,
                                                           x, y, z,
-                                                          t, dt,
+                                                          t, dt_const,
                                                           eq, "",
                                                           local_num_rays,
                                                           thread_number);

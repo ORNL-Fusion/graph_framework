@@ -11,100 +11,384 @@
 #include "../graph_framework/timing.hpp"
 #include "../graph_framework/output.hpp"
 #include "../graph_framework/absorption.hpp"
-
-const bool print = false;
-const bool write_step = true;
-const bool print_expressions = false;
-const bool verbose = true;
+#include "../graph_framework/commandline_parser.hpp"
 
 //------------------------------------------------------------------------------
-///  @brief Initalize random rays for efit.
+///  @brief Set the normal distribution.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @params[in] mean  Mean value.
+///  @params[in] sigma Sigma value.
+//------------------------------------------------------------------------------
+template<typename T>
+std::normal_distribution<T> set_distribution(const T mean,
+                                             const T sigma) {
+    return std::normal_distribution<T> (mean, sigma);
+}
+
+//------------------------------------------------------------------------------
+///  @brief Set the normal distribution.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @params[in] mean  Mean value.
+///  @params[in] sigma Sigma value.
+//------------------------------------------------------------------------------
+template<typename T>
+std::normal_distribution<std::complex<T>> set_distribution(const std::complex<T> mean,
+                                                           const std::complex<T> sigma) {
+    return std::normal_distribution<T> (std::real(mean), std::real(sigma));
+}
+
+//------------------------------------------------------------------------------
+///  @brief Initalize value.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam B         Base type of T.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in,out] omega    Frequency variable.
-///  @params[in,out] x        X variable.
-///  @params[in,out] y        Y variable.
-///  @params[in,out] z        Z variable.
-///  @params[in,out] ky       Ky variable.
-///  @params[in,out] kz       Kz variable.
+///  @params[in]     cl       Parsed commandline.
+///  @params[in,out] var      Variable to set.
+///  @params[in]     name     Variable name.
 ///  @params[in,out] engine   Random engine.
 ///  @params[in]     num_rays Numbers of rays.
 //------------------------------------------------------------------------------
-template<typename T, typename B, bool SAFE_MATH> 
-void init_efit(graph::shared_leaf<T, SAFE_MATH> omega,
-               graph::shared_leaf<T, SAFE_MATH> x,
-               graph::shared_leaf<T, SAFE_MATH> y,
-               graph::shared_leaf<T, SAFE_MATH> z,
-               graph::shared_leaf<T, SAFE_MATH> ky,
-               graph::shared_leaf<T, SAFE_MATH> kz,
-               std::mt19937_64 engine,
-               const size_t num_rays) {
-    std::normal_distribution<B> norm_dist1(static_cast<B> (700.0),
-                                           static_cast<B> (10.0));
-    std::normal_distribution<B> norm_dist2(static_cast<B> (0.0),
-                                           static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist3(static_cast<B> (-100.0),
-                                           static_cast<B> (10.0));
-    std::normal_distribution<B> norm_dist4(static_cast<B> (0.0),
-                                           static_cast<B> (10.0));
-
-    for (size_t j = 0; j < num_rays; j++) {
-        omega->set(j, static_cast<T> (norm_dist1(engine)));
-        x->set(j, static_cast<T> (2.5*cos(norm_dist2(engine)/2.5)));
-        y->set(j, static_cast<T> (2.5*sin(norm_dist2(engine)/2.5)));
-        z->set(j, static_cast<T> (norm_dist2(engine)));
-        ky->set(j, static_cast<T> (norm_dist3(engine)));
-        kz->set(j, static_cast<T> (norm_dist4(engine)));
+template<typename T, bool SAFE_MATH>
+void set_variable(const commandline::parser &cl,
+                  graph::shared_leaf<T, SAFE_MATH> var,
+                  const std::string &name,
+                  std::mt19937_64 &engine,
+                  const size_t num_rays) {
+    const T mean = cl.get_option_value<T> ("init_" + name + "_mean");
+    const std::string dist_option = "init_" + name + "_dist";
+    if (cl.is_option_set(dist_option) &&
+        cl.get_option_value<std::string> (dist_option) == "normal") {
+        const T sigma = cl.get_option_value<T> ("init_" + name + "_sigma");
+        auto normal_dist = set_distribution(mean, sigma);
+        for (size_t i = 0; i < num_rays; i++) {
+            var->set(i, static_cast<T> (normal_dist(engine)));
+        }
+    } else {
+        var->set(mean);
     }
 }
 
 //------------------------------------------------------------------------------
-///  @brief Initalize random rays for vmec.
+///  @brief Initialize the x and y direction.
 ///
-///  @tparam T         Base type of the calculation.
-///  @tparam B         Base type of T.
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @params[in,out] omega    Frequency variable.
-///  @params[in,out] x        X variable.
-///  @params[in,out] y        Y variable.
-///  @params[in,out] z        Z variable.
-///  @params[in,out] ky       Ky variable.
-///  @params[in,out] kz       Kz variable.
+///  @params[in]     cl       Parsed commandline.
+///  @params[in,out] x        X variable to set.
+///  @params[in,out] y        Y variable to set.
 ///  @params[in,out] engine   Random engine.
 ///  @params[in]     num_rays Numbers of rays.
 //------------------------------------------------------------------------------
-template<typename T, typename B, bool SAFE_MATH>
-void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
-               graph::shared_leaf<T, SAFE_MATH> x,
-               graph::shared_leaf<T, SAFE_MATH> y,
-               graph::shared_leaf<T, SAFE_MATH> z,
-               graph::shared_leaf<T, SAFE_MATH> ky,
-               graph::shared_leaf<T, SAFE_MATH> kz,
-               std::mt19937_64 engine,
-               const size_t num_rays) {
-    std::normal_distribution<B> norm_dist1(static_cast<B> (430.0),
-                                           static_cast<B> (1.0));
-    std::normal_distribution<B> norm_dist2(static_cast<B> (M_PI),
-                                           static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist3(static_cast<B> (0.0),
-                                           static_cast<B> (0.05));
-    std::normal_distribution<B> norm_dist4(static_cast<B> (0.0),
-                                           static_cast<B> (1.0));
-    std::normal_distribution<B> norm_dist5(static_cast<B> (-150.0),
-                                           static_cast<B> (1.0));
+template<typename T, bool SAFE_MATH>
+void set_xy_variables(const commandline::parser &cl,
+                      graph::shared_leaf<T, SAFE_MATH> x,
+                      graph::shared_leaf<T, SAFE_MATH> y,
+                      std::mt19937_64 &engine,
+                      const size_t num_rays) {
+    if (cl.is_option_set("use_cyl_xy")) {
+        const T radius_mean = cl.get_option_value<T> ("init_x_mean");
+        const T phi_mean = cl.get_option_value<T> ("init_y_mean");
 
-    x->set(static_cast<T> (1.0));
-    for (size_t j = 0; j < num_rays; j++) {
-        omega->set(j, static_cast<T> (norm_dist1(engine)));
-        y->set(j, static_cast<T> (norm_dist2(engine)));
-        z->set(j, static_cast<T> (norm_dist3(engine)));
-        ky->set(j, static_cast<T> (norm_dist4(engine)));
-        kz->set(j, static_cast<T> (norm_dist5(engine)));
+        if (cl.is_option_set("init_x_dist") &&
+            cl.get_option_value<std::string> ("init_x_dist") == "normal") {
+            const T radius_sigma = cl.get_option_value<T> ("init_x_sigma");
+            auto radius_dist = set_distribution(radius_mean, radius_sigma);
+            if (cl.is_option_set("init_y_dist") &&
+                cl.get_option_value<std::string> ("init_y_dist") == "normal") {
+                const T phi_sigma = cl.get_option_value<T> ("init_y_sigma");
+                auto phi_dist = set_distribution(phi_mean, phi_sigma);
+                for (size_t i = 0; i < num_rays; i++) {
+                    x->set(i, static_cast<T> (radius_dist(engine))*cos(static_cast<T> (phi_dist(engine))));
+                    y->set(i, static_cast<T> (radius_dist(engine))*sin(static_cast<T> (phi_dist(engine))));
+                }
+            } else {
+                for (size_t i = 0; i < num_rays; i++) {
+                    x->set(i, static_cast<T> (radius_dist(engine))*cos(phi_mean));
+                    y->set(i, static_cast<T> (radius_dist(engine))*sin(phi_mean));
+                }
+            }
+        } else {
+            if (cl.is_option_set("init_y_dist") &&
+                cl.get_option_value<std::string> ("init_y_dist") == "normal") {
+                const T phi_sigma = cl.get_option_value<T> ("init_y_sigma");
+                auto phi_dist = set_distribution(phi_mean, phi_sigma);
+                for (size_t i = 0; i < num_rays; i++) {
+                    x->set(i, radius_mean*cos(static_cast<T> (phi_dist(engine))));
+                    y->set(i, radius_mean*sin(static_cast<T> (phi_dist(engine))));
+                }
+            } else {
+                for (size_t i = 0; i < num_rays; i++) {
+                    x->set(i, radius_mean*cos(phi_mean));
+                    y->set(i, radius_mean*sin(phi_mean));
+                }
+            }
+        }
+    } else {
+        set_variable(cl, x, "x", engine, num_rays);
+        set_variable(cl, y, "y", engine, num_rays);
     }
+}
+
+//------------------------------------------------------------------------------
+///  @brief Run Solver
+///
+///  @tparam SOLVER_METHOD The solver method.
+///
+///  @params[in]     cl        Parsed commandline.
+///  @params[in]     omega     Wave frequency.
+///  @params[in]     kx        Wave number in x direction.
+///  @params[in]     ky        Wave number in y direction.
+///  @params[in]     kz        Wave number in z direction.
+///  @params[in]     x         Initial position in x direction.
+///  @params[in]     y         Initial position in y direction.
+///  @params[in]     z         Initial position in z direction.
+///  @params[in]     t         Initial position in t direction.
+///  @params[in]     dt        Inital dt.
+///  @params[in]     eq        Equilibrium object.
+///  @params[in]     num_steps Equilibrium object.
+///  @params[in]     sub_steps Equilibrium object.
+///  @params[in,out] engine    Random engine.
+///  @params[in]     filename  Result filename, empty names will be blank.
+///  @params[in]     num_rays  Number of rays to write.
+///  @params[in]     index     Concurrent index.
+//------------------------------------------------------------------------------
+template<solver::method SOLVER_METHOD>
+void run_solver(const commandline::parser &cl,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> omega,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> kx,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> ky,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> kz,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> x,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> y,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> z,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> t,
+                graph::shared_leaf<typename SOLVER_METHOD::base,
+                                   SOLVER_METHOD::safe_math> dt,
+                equilibrium::shared<typename SOLVER_METHOD::base,
+                                    SOLVER_METHOD::safe_math> &eq,
+                const size_t num_steps,
+                const size_t sub_steps,
+                std::mt19937_64 &engine,
+                const std::string &filename="",
+                const size_t num_rays=0,
+                const size_t index=0) {
+    SOLVER_METHOD solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
+                        filename, num_rays, index);
+
+    if (!cl.is_option_set("init_kx_dist")) {
+        solve.init(kx);
+    } else if (!cl.is_option_set("init_ky_dist")) {
+        solve.init(ky);
+    } else {
+        solve.init(kz);
+    }
+    solve.compile();
+
+    if (index == 0 && cl.is_option_set("print_expressions")) {
+        solve.print_dispersion();
+        std::cout << std::endl;
+        solve.print_dkxdt();
+        std::cout << std::endl;
+        solve.print_dkydt();
+        std::cout << std::endl;
+        solve.print_dkzdt();
+        std::cout << std::endl;
+        solve.print_dxdt();
+        std::cout << std::endl;
+        solve.print_dydt();
+        std::cout << std::endl;
+        solve.print_dzdt();
+        std::cout << std::endl;
+        solve.print_residule();
+        std::cout << std::endl;
+        solve.print_x_next();
+        std::cout << std::endl;
+        solve.print_y_next();
+        std::cout << std::endl;
+        solve.print_z_next();
+        std::cout << std::endl;
+        solve.print_kx_next();
+        std::cout << std::endl;
+        solve.print_ky_next();
+        std::cout << std::endl;
+        solve.print_kz_next();
+        std::cout << std::endl;
+    }
+
+    std::uniform_int_distribution<size_t> int_dist(0, num_rays - 1);
+    
+    const size_t sample = int_dist(engine);
+
+    if (index == 0) {
+        std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
+    }
+
+    const bool print = cl.is_option_set("print");
+    for (size_t j = 0; j < num_steps; j++) {
+        if (index == 0 && print) {
+            solve.print(sample);
+        }
+        solve.write_step();
+        for (size_t k = 0; k < sub_steps; k++) {
+            solve.step();
+        }
+    }
+
+    if (index == 0 && print) {
+        solve.print(sample);
+    } else {
+        solve.write_step();
+    }
+}
+
+//------------------------------------------------------------------------------
+///  @brief Run Disperison
+///
+///  @tparam DISPERSION_FUNCTION The dispersion method.
+///
+///  @params[in]     cl        Parsed commandline.
+///  @params[in]     omega     Wave frequency.
+///  @params[in]     kx        Wave number in x direction.
+///  @params[in]     ky        Wave number in y direction.
+///  @params[in]     kz        Wave number in z direction.
+///  @params[in]     x         Initial position in x direction.
+///  @params[in]     y         Initial position in y direction.
+///  @params[in]     z         Initial position in z direction.
+///  @params[in]     t         Initial position in t direction.
+///  @params[in]     dt        Inital dt.
+///  @params[in]     eq        Equilibrium object.
+///  @params[in]     num_steps Equilibrium object.
+///  @params[in]     sub_steps Equilibrium object.
+///  @params[in,out] engine    Random engine.
+///  @params[in]     filename  Result filename, empty names will be blank.
+///  @params[in]     num_rays  Number of rays to write.
+///  @params[in]     index     Concurrent index.
+//------------------------------------------------------------------------------
+template<dispersion::function DISPERSION_FUNCTION>
+void run_dispersion(const commandline::parser &cl,
+                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> omega,
+                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> kx,
+                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> ky,
+                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> kz,
+                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> x,
+                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> y,
+                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> z,
+                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                       DISPERSION_FUNCTION::safe_math> t,
+                    const typename DISPERSION_FUNCTION::base dt,
+                    equilibrium::shared<typename DISPERSION_FUNCTION::base,
+                                        DISPERSION_FUNCTION::safe_math> &eq,
+                    const size_t num_steps,
+                    const size_t sub_steps,
+                    std::mt19937_64 &engine,
+                    const std::string &filename="",
+                    const size_t num_rays=0,
+                    const size_t index=0) {
+    const std::string solver_method = cl.get_option_value<std::string> ("solver");
+    if (solver_method == "split_simplextic") {
+        auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
+        run_solver<solver::split_simplextic<DISPERSION_FUNCTION>> (cl, omega,
+                                                                   kx, ky, kz,
+                                                                   x, y, z,
+                                                                   t, dt_const, eq,
+                                                                   num_steps,
+                                                                   sub_steps,
+                                                                   engine,
+                                                                   filename,
+                                                                   num_rays,
+                                                                   index);
+    } else if (solver_method == "rk2") {
+        auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
+        run_solver<solver::rk2<DISPERSION_FUNCTION>> (cl, omega,
+                                                      kx, ky, kz,
+                                                      x, y, z,
+                                                      t, dt_const, eq,
+                                                      num_steps,
+                                                      sub_steps,
+                                                      engine,
+                                                      filename,
+                                                      num_rays,
+                                                      index);
+    } else if (solver_method == "rk4") {
+        auto dt_const = graph::constant(static_cast<typename DISPERSION_FUNCTION::base> (dt));
+        run_solver<solver::rk4<DISPERSION_FUNCTION>> (cl, omega,
+                                                      kx, ky, kz,
+                                                      x, y, z,
+                                                      t, dt_const, eq,
+                                                      num_steps,
+                                                      sub_steps,
+                                                      engine,
+                                                      filename,
+                                                      num_rays,
+                                                      index);
+    } else {
+        auto dt_var = graph::variable(num_rays,
+                                      static_cast<typename DISPERSION_FUNCTION::base> (dt),
+                                      "dt");
+        run_solver<solver::adaptive_rk4<DISPERSION_FUNCTION>> (cl, omega,
+                                                               kx, ky, kz,
+                                                               x, y, z,
+                                                               t, dt_var, eq,
+                                                               num_steps,
+                                                               sub_steps,
+                                                               engine,
+                                                               filename,
+                                                               num_rays,
+                                                               index);
+    }
+}
+
+//------------------------------------------------------------------------------
+///  @brief  Make an equilibrum.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] cl Parsed commandline.
+//------------------------------------------------------------------------------
+template<jit::float_scalar T, bool SAFE_MATH=false>
+equilibrium::shared<T, SAFE_MATH> make_equilibrium(const commandline::parser &cl) {
+    const std::string eq = cl.get_option_value<std::string> ("equilibrium");
+    const std::string file_name = cl.get_option_value<std::string> ("equilibrium_file");
+
+    if (eq == "efit") {
+        return equilibrium::make_efit<T, SAFE_MATH> (file_name);
+    } else {
+        return equilibrium::make_vmec<T, SAFE_MATH> (file_name);
+    }
+}
+
+//------------------------------------------------------------------------------
+///  @brief Generate the engine.
+///
+///  @params[in] cl    Parsed commandline.
+///  @params[in] index Thread index.
+//------------------------------------------------------------------------------
+std::mt19937_64 make_engine(const commandline::parser &cl,
+                            const size_t index) {
+    if (cl.is_option_set("seed")) {
+        return std::mt19937_64(index);
+    }
+
+    return std::mt19937_64((index + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
 }
 
 //------------------------------------------------------------------------------
@@ -113,16 +397,18 @@ void init_vmec(graph::shared_leaf<T, SAFE_MATH> omega,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
+///  @params[in] cl        Parsed commandline.
 ///  @params[in] num_times Total number of time steps.
 ///  @params[in] sub_steps Number of substeps to push the rays.
 ///  @params[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
-template<std::floating_point T, bool SAFE_MATH=false>
-void trace_ray(const size_t num_times,
+template<jit::float_scalar T, bool SAFE_MATH=false>
+void trace_ray(const commandline::parser &cl,
+               const size_t num_times,
                const size_t sub_steps,
                const size_t num_rays) {
     const timeing::measure_diagnostic total("Total Ray Time");
-    
+
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, SAFE_MATH>::max_concurrency()),
                                                        static_cast<unsigned int> (num_rays)),
                                               static_cast<unsigned int> (1)));
@@ -131,18 +417,14 @@ void trace_ray(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
+        threads[i] = std::thread([&cl, num_times, sub_steps, 
+                                  batch, extra] (const size_t thread_number) -> void {
 
             const size_t num_steps = num_times/sub_steps;
             const size_t local_num_rays = batch
                                         + (extra > thread_number ? 1 : 0);
 
-#ifndef STATIC
-            std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-#else
-            std::mt19937_64 engine(thread_number + 1);
-#endif
-            std::uniform_int_distribution<size_t> int_dist(0, local_num_rays - 1);
+            std::mt19937_64 engine = make_engine(cl, thread_number);
 
             auto omega = graph::variable<T, SAFE_MATH> (local_num_rays, "\\omega");
             auto kx    = graph::variable<T, SAFE_MATH> (local_num_rays, "k_{x}");
@@ -156,121 +438,79 @@ void trace_ray(const size_t num_times,
             t->set(static_cast<T> (0.0));
 
 //  Inital conditions.
-            if constexpr (jit::is_float<T> ()) {
-#if 1
-                init_efit<T, float, SAFE_MATH> (omega, x, y, z,
-                                                ky, kz, engine,
-                                                local_num_rays);
-#else
-                init_vmec<T, float, SAFE_MATH> (omega, x, y, z,
-                                                ky, kz, engine,
-                                                local_num_rays);
-#endif
-            } else {
-#if 1
-                init_efit<T, double, SAFE_MATH> (omega, x, y, z,
-                                                 ky, kz, engine,
-                                                 local_num_rays);
-#else
-                init_vmec<T, double, SAFE_MATH> (omega, x, y, z,
-                                                 ky, kz, engine,
-                                                 local_num_rays);
-#endif
-            }
-#if 1
-            kx->set(static_cast<T> (-700.0));
-#else
-            kx->set(static_cast<T> (-30.0));
-#endif
-            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
-            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
-            //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();
-            //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
-            //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
+            set_variable(cl, omega, "w", engine, local_num_rays);
+            set_variable(cl, kx, "kx", engine, local_num_rays);
+            set_variable(cl, ky, "ky", engine, local_num_rays);
+            set_variable(cl, kz, "kz", engine, local_num_rays);
+            set_variable(cl, z, "z", engine, local_num_rays);
+            set_xy_variables(cl, x, y, engine, local_num_rays);
 
-#if 1
-            const T endtime = static_cast<T> (2.0);
-#else
-            const T endtime = static_cast<T> (0.2);
-#endif
+            auto eq = make_equilibrium<T, SAFE_MATH> (cl);
+
+            const T endtime = cl.get_option_value<T> ("endtime");
             const T dt = endtime/static_cast<T> (num_times);
-
-            //auto dt_var = graph::variable(num_rays, static_cast<T> (dt), "dt");
 
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
-            //solver::split_simplextic<dispersion::bohm_gross<T, SAFE_MATH>>
-            //solver::rk4<dispersion::bohm_gross<T, SAFE_MATH>>
-            //solver::adaptive_rk4<dispersion::bohm_gross<T, SAFE_MATH>>
-            //solver::rk4<dispersion::simple<T, SAFE_MATH>>
-            solver::rk4<dispersion::ordinary_wave<T, SAFE_MATH>>
-            //solver::rk4<dispersion::extra_ordinary_wave<T, SAFE_MATH>>
-            //solver::rk4<dispersion::cold_plasma<T, SAFE_MATH>>
-            //solver::adaptive_rk4<dispersion::ordinary_wave<T, SAFE_MATH>>
-            //solver::rk4<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
-            //solver::rk4<dispersion::hot_plasma_expansion<T, dispersion::z_erfi<T, SAFE_MATH>, use_safe_math>>
-                solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
-                      stream.str(), local_num_rays, thread_number);
-            solve.init(kx);
-            solve.compile();
-            if (thread_number == 0 && print_expressions) {
-                solve.print_dispersion();
-                std::cout << std::endl;
-                solve.print_dkxdt();
-                std::cout << std::endl;
-                solve.print_dkydt();
-                std::cout << std::endl;
-                solve.print_dkzdt();
-                std::cout << std::endl;
-                solve.print_dxdt();
-                std::cout << std::endl;
-                solve.print_dydt();
-                std::cout << std::endl;
-                solve.print_dzdt();
-                std::cout << std::endl;
-                solve.print_residule();
-                std::cout << std::endl;
-                solve.print_x_next();
-                std::cout << std::endl;
-                solve.print_y_next();
-                std::cout << std::endl;
-                solve.print_z_next();
-                std::cout << std::endl;
-                solve.print_kx_next();
-                std::cout << std::endl;
-                solve.print_ky_next();
-                std::cout << std::endl;
-                solve.print_kz_next();
-                std::cout << std::endl;
-            }
-
-            const size_t sample = int_dist(engine);
-
-            if (thread_number == 0) {
-                std::cout << "Omega " << omega->evaluate().at(sample) << std::endl;
-            }
-
-            for (size_t j = 0; j < num_steps; j++) {
-                if (thread_number == 0 && print) {
-                    solve.print(sample);
-                }
-                if (write_step) {
-                    solve.write_step();
-                }
-                for (size_t k = 0; k < sub_steps; k++) {
-                    solve.step();
-                }
-            }
-
-            if (thread_number == 0 && print) {
-                solve.print(sample);
-            } else if (write_step) {
-                solve.write_step();
+            const std::string dispersion = 
+                cl.get_option_value<std::string> ("dispersion");
+            if (dispersion == "simple") {
+                run_dispersion<dispersion::simple<T, SAFE_MATH>> (cl, omega,
+                                                                  kx, ky, kz,
+                                                                  x, y, z,
+                                                                  t, dt, eq,
+                                                                  num_steps,
+                                                                  sub_steps,
+                                                                  engine,
+                                                                  stream.str(),
+                                                                  local_num_rays,
+                                                                  thread_number);
+            } else if (dispersion == "bohm_gross") {
+                run_dispersion<dispersion::bohm_gross<T, SAFE_MATH>> (cl, omega,
+                                                                      kx, ky, kz,
+                                                                      x, y, z,
+                                                                      t, dt, eq,
+                                                                      num_steps,
+                                                                      sub_steps,
+                                                                      engine,
+                                                                      stream.str(),
+                                                                      local_num_rays,
+                                                                      thread_number);
+            } else if (dispersion == "ordinary_wave") {
+                run_dispersion<dispersion::ordinary_wave<T, SAFE_MATH>> (cl, omega,
+                                                                         kx, ky, kz,
+                                                                         x, y, z,
+                                                                         t, dt, eq,
+                                                                         num_steps,
+                                                                         sub_steps,
+                                                                         engine,
+                                                                         stream.str(),
+                                                                         local_num_rays,
+                                                                         thread_number);
+            } else if (dispersion == "extra_ordinary_wave") {
+                run_dispersion<dispersion::extra_ordinary_wave<T, SAFE_MATH>> (cl, omega,
+                                                                               kx, ky, kz,
+                                                                               x, y, z,
+                                                                               t, dt, eq,
+                                                                               num_steps,
+                                                                               sub_steps,
+                                                                               engine,
+                                                                               stream.str(),
+                                                                               local_num_rays,
+                                                                               thread_number);
             } else {
-                solve.sync_host();
+                run_dispersion<dispersion::cold_plasma<T, SAFE_MATH>> (cl, omega,
+                                                                       kx, ky, kz,
+                                                                       x, y, z,
+                                                                       t, dt, eq,
+                                                                       num_steps,
+                                                                       sub_steps,
+                                                                       engine,
+                                                                       stream.str(),
+                                                                       local_num_rays,
+                                                                       thread_number);
             }
-
         }, i);
     }
 
@@ -282,17 +522,73 @@ void trace_ray(const size_t num_times,
 }
 
 //------------------------------------------------------------------------------
+///  @brief Run absorption model.
+///
+///  @tparam ABSORPTION_MODEL Absoption model to use.
+///
+///  @params[in] kamp      Wave number amplitude.
+///  @params[in] kx        Wave number in x direction.
+///  @params[in] ky        Wave number in y direction.
+///  @params[in] kz        Wave number in z direction.
+///  @params[in] x         Initial position in x direction.
+///  @params[in] y         Initial position in y direction.
+///  @params[in] z         Initial position in z direction.
+///  @params[in] t         Initial position in t direction.
+///  @params[in] eq        Equilibrium object.
+///  @params[in] num_steps Number of time steps.
+///  @params[in] filename  Result filename, empty names will be blank.
+///  @params[in] index     Concurrent index.
+//------------------------------------------------------------------------------
+template<absorption::model ABSORPTION_MODEL>
+void run_absorption(const commandline::parser &cl,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> kamp,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> omega,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> kx,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> ky,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> kz,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> x,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> y,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> z,
+                    graph::shared_leaf<typename ABSORPTION_MODEL::base,
+                                       ABSORPTION_MODEL::safe_math> t,
+                    equilibrium::shared<typename ABSORPTION_MODEL::base,
+                                        ABSORPTION_MODEL::safe_math> &eq,
+                    const size_t num_steps,
+                    const std::string &filename="",
+                    const size_t index=0) {
+    ABSORPTION_MODEL power(kamp, omega,
+                           kx, ky, kz,
+                           x, y, z, t,
+                           eq, filename, index);
+    power.compile();
+
+    for (size_t j = 0, je = num_steps + 1; j < je; j++) {
+        power.run(j);
+    }
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Calculate absorption.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
+///  @params[in] cl        Parsed commandline.
 ///  @params[in] num_times Total number of time steps.
 ///  @params[in] sub_steps Number of substeps to push the rays.
 ///  @params[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
-void calculate_power(const size_t num_times,
+void calculate_power(const commandline::parser &cl,
+                     const size_t num_times,
                      const size_t sub_steps,
                      const size_t num_rays) {
     const timeing::measure_diagnostic total("Power Time");
@@ -305,7 +601,8 @@ void calculate_power(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
+        threads[i] = std::thread([&cl, num_times, sub_steps, 
+                                  batch, extra] (const size_t thread_number) -> void {
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
@@ -323,20 +620,25 @@ void calculate_power(const size_t num_times,
             auto t     = graph::variable<T, SAFE_MATH> (local_num_rays, "t");
             auto kamp  = graph::variable<T, SAFE_MATH> (local_num_rays, "kamp");
 
-            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
-            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
-            //auto eq = equilibrium::make_slab_density<T, SAFE_MATH> ();
-            //auto eq = equilibrium::make_slab_field<T, SAFE_MATH> ();
-            //auto eq = equilibrium::make_no_magnetic_field<T, SAFE_MATH> ();
+            auto eq = make_equilibrium<T, SAFE_MATH> (cl);
 
-            //absorption::root_finder<dispersion::hot_plasma<T, dispersion::z_erfi<T, SAFE_MATH>, SAFE_MATH>>
-            absorption::weak_damping<T, SAFE_MATH>
-                power(kamp, omega, kx, ky, kz, x, y, z, t, eq,
-                      stream.str(), thread_number);
-            power.compile();
-
-            for (size_t j = 0, je = num_steps + 1; j < je; j++) {
-                power.run(j);
+            const std::string absorption_model = cl.get_option_value<std::string> ("absorption_model");
+            if (absorption_model == "root_find") {
+                run_absorption<absorption::root_finder<T, SAFE_MATH>> (cl, kamp,
+                                                                       omega,
+                                                                       kx, ky, kz,
+                                                                       x, y, z, t,
+                                                                       eq, num_steps,
+                                                                       stream.str(),
+                                                                       thread_number);
+            } else {
+                run_absorption<absorption::weak_damping<T, SAFE_MATH>> (cl, kamp,
+                                                                        omega,
+                                                                        kx, ky, kz,
+                                                                        x, y, z, t,
+                                                                        eq, num_steps,
+                                                                        stream.str(),
+                                                                        thread_number);
             }
         }, i);
     }
@@ -354,12 +656,14 @@ void calculate_power(const size_t num_times,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
+///  @params[in] cl        Parsed commandline.
 ///  @params[in] num_times Total number of time steps.
 ///  @params[in] sub_steps Number of substeps to push the rays.
 ///  @params[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
-void bin_power(const size_t num_times,
+void bin_power(const commandline::parser &cl,
+               const size_t num_times,
                const size_t sub_steps,
                const size_t num_rays) {
     const timeing::measure_diagnostic total("Power Time");
@@ -372,7 +676,8 @@ void bin_power(const size_t num_times,
     const size_t extra = num_rays%threads.size();
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_times, sub_steps, batch, extra] (const size_t thread_number) -> void {
+        threads[i] = std::thread([&cl, num_times, sub_steps,
+                                  batch, extra] (const size_t thread_number) -> void {
             std::ostringstream stream;
             stream << "result" << thread_number << ".nc";
 
@@ -390,8 +695,7 @@ void bin_power(const size_t num_times,
             auto power      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (1.0), "power");
             auto k_sum      = graph::variable<T, SAFE_MATH> (local_num_rays, static_cast<T> (0.0), "k_sum");
 
-            //auto eq = equilibrium::make_vmec<T, SAFE_MATH> (VMEC_FILE);
-            auto eq = equilibrium::make_efit<T, SAFE_MATH> (EFIT_FILE);
+            auto eq = make_equilibrium<T, SAFE_MATH> (cl);
 
             auto x_real = eq->get_x(x, y, z);
             auto y_real = eq->get_y(x, y, z);
@@ -480,6 +784,93 @@ void bin_power(const size_t num_times,
 }
 
 //------------------------------------------------------------------------------
+///  @brief Setup and parse commandline options.
+///
+///  @params[in] argc Number of commandline arguments.
+///  @params[in] argv Array of commandline arguments.
+//------------------------------------------------------------------------------
+commandline::parser parse_commandline(int argc, const char * argv[]) {
+    commandline::parser cl(argv[0]);
+    cl.add_option("verbose",           false, "Show verbose output.");
+    cl.add_option("num_times",         true,  "Number of times.");
+    cl.add_option("sub_steps",         true,  "Number of substeps.");
+    cl.add_option("num_rays",          true,  "Number of rays.");
+    cl.add_option("endtime",           true,  "End time.");
+    cl.add_option("print_expressions", false, "Print out rays expressions.");
+    cl.add_option("print",             false, "Print sample rays to screen.");
+    cl.add_option("solver",            true,  "Solver method.", {
+        "split_simplextic",
+        "rk2",
+        "rk4",
+        "adaptive_rk4"
+    });
+    cl.add_option("dispersion",        true,  "Disperison method.", {
+        "simple",
+        "bohm_gross",
+        "ordinary_wave",
+        "extra_ordinary_wave",
+        "cold_plasma"
+    });
+    cl.add_option("equilibrium",       true,  "Equilibrium to use.", {
+        "efit",
+        "vmec"
+    });
+    cl.add_option("equilibrium_file",  true,  "File to read the equilibrum from.");
+    cl.add_option("init_w_dist",       true,  "Inital omega distribution.", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_w_mean",       true,  "Inital omega mean");
+    cl.add_option("init_w_sigma",      true,  "Inital omega sigma");
+    cl.add_option("init_kx_dist",      true,  "Inital kx distribution.", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_kx_mean",      true,  "Inital kx mean");
+    cl.add_option("init_kx_sigma",     true,  "Inital kx sigma");
+    cl.add_option("init_ky_dist",      true,  "Inital ky distribution.", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_ky_mean",      true,  "Inital ky mean");
+    cl.add_option("init_ky_sigma",     true,  "Inital ky sigma");
+    cl.add_option("init_kz_dist",      true,  "Inital kz distribution.", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_kz_mean",      true,  "Inital kz mean");
+    cl.add_option("init_kz_sigma",     true,  "Inital kz sigma");
+    cl.add_option("init_x_dist",       true,  "Inital x distribution.", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_x_mean",       true,  "Inital x mean");
+    cl.add_option("init_x_sigma",      true,  "Inital x sigma");
+    cl.add_option("init_y_dist",       true,  "Inital y distribution.", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_y_mean",       true,  "Inital y mean");
+    cl.add_option("init_y_sigma",      true,  "Inital y sigma");
+    cl.add_option("init_z_dist",       true,  "Inital z distribution.", {
+        "uniform",
+        "normal"
+    });
+    cl.add_option("init_z_mean",       true,  "Inital z mean");
+    cl.add_option("init_z_sigma",      true,  "Inital z sigma");
+    cl.add_option("use_cyl_xy",        false, "Use cylindical coordinates for x and y.");
+    cl.add_option("absorption_model",  true,  "Power absoption model to use.", {
+        "root_find",
+        "weak_damping"
+    });
+    cl.add_option("seed",              false, "Fix the random seed.");
+
+    cl.parse(argc, argv);
+
+    return cl;
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
 ///
 ///  @params[in] argc Number of commandline arguments.
@@ -490,26 +881,24 @@ int main(int argc, const char * argv[]) {
     (void)argc;
     (void)argv;
     const timeing::measure_diagnostic total("Total Time");
+    const commandline::parser cl = parse_commandline(argc, argv);
 
-    jit::verbose = verbose;
+    jit::verbose = cl.is_option_set("verbose");
 
-    const size_t num_times = 100000;
-    const size_t sub_steps = 100;
-#ifndef STATIC
-    const size_t num_rays = 100000;
-#else
-    const size_t num_rays = 1;
-#endif
+    const size_t num_times = cl.get_option_value<size_t> ("num_times");
+    const size_t sub_steps = cl.get_option_value<size_t> ("sub_steps");
+    const size_t num_rays = cl.get_option_value<size_t> ("num_rays");
 
     const bool use_safe_math = true;
 
     typedef double base;
 
-    trace_ray<base> (num_times, sub_steps, num_rays);
-    calculate_power<std::complex<base>, use_safe_math> (num_times,
+    trace_ray<base> (cl, num_times, sub_steps, num_rays);
+    calculate_power<std::complex<base>, use_safe_math> (cl,
+                                                        num_times,
                                                         sub_steps,
                                                         num_rays);
-    bin_power<base> (num_times, sub_steps, num_rays);
+    bin_power<base> (cl, num_times, sub_steps, num_rays);
 
     std::cout << std::endl << "Timing:" << std::endl;
     total.print();

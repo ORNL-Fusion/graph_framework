@@ -14,59 +14,71 @@
 
 namespace absorption {
 //******************************************************************************
+//  Base class
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Base class for absoption models.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+    template<jit::complex_scalar T, bool SAFE_MATH=true>
+    class method {
+    public:
+///  Type def to retrieve the backend base type.
+        typedef T base;
+///  Retrieve template parameter of safe math.
+        static constexpr bool safe_math = SAFE_MATH;
+    };
+
+///  Solver method concept.
+    template<class A>
+    concept model = std::is_base_of<method<typename A::base, A::safe_math>, A>::value;
+
+//******************************************************************************
 //  Root finder.
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Class interface for the root finder.
 ///
-///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
-    template<dispersion::function DISPERSION_FUNCTION>
-    class root_finder {
+    template<jit::complex_scalar T, bool SAFE_MATH=true>
+    class root_finder : public method<T, SAFE_MATH> {
     private:
 ///  kamp variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> kamp;
+        graph::shared_leaf<T, SAFE_MATH> kamp;
 
 ///  w variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                   DISPERSION_FUNCTION::safe_math> w;
+        graph::shared_leaf<T, SAFE_MATH> w;
 ///  kx variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> kx;
+        graph::shared_leaf<T, SAFE_MATH> kx;
 ///  ky variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> ky;
+        graph::shared_leaf<T, SAFE_MATH> ky;
 ///  kz variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> kz;
+        graph::shared_leaf<T, SAFE_MATH> kz;
 ///  x variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> x;
+        graph::shared_leaf<T, SAFE_MATH> x;
 ///  y variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> y;
+        graph::shared_leaf<T, SAFE_MATH> y;
 ///  z variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> z;
+        graph::shared_leaf<T, SAFE_MATH> z;
 ///  t variable.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> t;
+        graph::shared_leaf<T, SAFE_MATH> t;
 
 ///  Residule.
-        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> residule;
+        graph::shared_leaf<T, SAFE_MATH> residule;
 
 ///  Workflow manager.
-        workflow::manager<typename DISPERSION_FUNCTION::base,
-                          DISPERSION_FUNCTION::safe_math> work;
+        workflow::manager<T, SAFE_MATH> work;
 ///  Concurrent index.
         const size_t index;
 
 ///  Output file.
         output::result_file file;
 ///  Output dataset.
-        output::data_set<typename DISPERSION_FUNCTION::base> dataset;
+        output::data_set<T> dataset;
 
 ///  Async thread to write data files.
         std::thread sync;
@@ -88,26 +100,16 @@ namespace absorption {
 ///  @params[in] filename Result filename, empty names will be blank.
 ///  @params[in] index    Concurrent index.
 //------------------------------------------------------------------------------
-        root_finder(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> kamp,
-                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> w,
-                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> kx,
-                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> ky,
-                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> kz,
-                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> x,
-                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> y,
-                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> z,
-                    graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math> t,
-                    equilibrium::shared<typename DISPERSION_FUNCTION::base,
-                                        DISPERSION_FUNCTION::safe_math> &eq,
+        root_finder(graph::shared_leaf<T, SAFE_MATH> kamp,
+                    graph::shared_leaf<T, SAFE_MATH> w,
+                    graph::shared_leaf<T, SAFE_MATH> kx,
+                    graph::shared_leaf<T, SAFE_MATH> ky,
+                    graph::shared_leaf<T, SAFE_MATH> kz,
+                    graph::shared_leaf<T, SAFE_MATH> x,
+                    graph::shared_leaf<T, SAFE_MATH> y,
+                    graph::shared_leaf<T, SAFE_MATH> z,
+                    graph::shared_leaf<T, SAFE_MATH> t,
+                    equilibrium::shared<T, SAFE_MATH> &eq,
                     const std::string &filename="",
                     const size_t index=0) :
         kamp(kamp), w(w), kx(kx), ky(ky), kz(kz), x(x), y(y), z(z), t(t),
@@ -121,8 +123,7 @@ namespace absorption {
             auto ky_amp = kamp*ky/klen;
             auto kz_amp = kamp*kz/klen;
 
-            graph::input_nodes<typename DISPERSION_FUNCTION::base,
-                               DISPERSION_FUNCTION::safe_math> inputs = {
+            graph::input_nodes<T, SAFE_MATH> inputs = {
                 graph::variable_cast(this->kamp),
                 graph::variable_cast(this->kx),
                 graph::variable_cast(this->ky),
@@ -132,10 +133,8 @@ namespace absorption {
                 graph::variable_cast(this->z)
             };
 
-            graph::map_nodes<typename DISPERSION_FUNCTION::base,
-                             DISPERSION_FUNCTION::safe_math> setters = {
-                {graph::zero<typename DISPERSION_FUNCTION::base,
-                             DISPERSION_FUNCTION::safe_math> (), graph::variable_cast(this->kamp)}
+            graph::map_nodes<T, SAFE_MATH> setters = {
+                {graph::zero<T, SAFE_MATH> (), graph::variable_cast(this->kamp)}
             };
 
             work.add_item(inputs, {}, setters, "root_find_init_kernel");
@@ -143,13 +142,15 @@ namespace absorption {
             inputs.push_back(graph::variable_cast(this->t));
             inputs.push_back(graph::variable_cast(this->w));
 
-            auto D = DISPERSION_FUNCTION().D(w,
-                                             kx + kx_amp,
-                                             ky + ky_amp,
-                                             kz + kz_amp,
-                                             x, y, z, t, eq);
+            auto D = dispersion::hot_plasma<T,
+                                            dispersion::z_erfi<T, SAFE_MATH>,
+                                            SAFE_MATH>().D(w,
+                                                           kx + kx_amp,
+                                                           ky + ky_amp,
+                                                           kz + kz_amp,
+                                                           x, y, z, t, eq);
 
-            solver::newton(work, {kamp}, inputs, {D.get_d()});
+            solver::newton(work, {kamp}, inputs, {D});
 
             inputs = {
                 graph::variable_cast(this->kamp),
@@ -228,7 +229,7 @@ namespace absorption {
 ///  @tparam SAFE_MATH Use safe math operations.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, bool SAFE_MATH=true>
-    class weak_damping {
+    class weak_damping : public method<T, SAFE_MATH> {
     private:
 ///  kamp variable.
         graph::shared_leaf<T, SAFE_MATH> kamp;

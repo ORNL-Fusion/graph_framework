@@ -21,7 +21,6 @@ target_compile_definitions (rays
                             EFIT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"
                             VMEC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/vmec.nc"
                             $<$<BOOL:${USE_CUDA}>:HEADER_DIR="$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>">
-                            $<$<BOOL:${USE_STATIC}>:STATIC>
                             $<$<BOOL:${SAVE_KERNEL_SOURCE}>:SAVE_KERNEL_SOURCE>
 )
 
@@ -58,6 +57,7 @@ target_precompile_headers (rays
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/newton.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/special_functions.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/output.hpp>>
+                           $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/commandline_parser.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<$<BOOL:${USE_METAL}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/metal_context.hpp>>>
                            $<$<BOOL:${USE_PCH}>:$<$<BOOL:${USE_CUDA}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cuda_context.hpp>>>
 )
