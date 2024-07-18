@@ -780,79 +780,68 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
     cl.add_option("endtime",           true,  "End time.");
     cl.add_option("print_expressions", false, "Print out rays expressions.");
     cl.add_option("print",             false, "Print sample rays to screen.");
-    cl.add_option("solver",            true,  "Solver method.");
-    cl.add_option_values("solver", {
+    cl.add_option("solver",            true,  "Solver method.", {
         "split_simplextic",
         "rk2",
         "rk4",
         "adaptive_rk4"
     });
-    cl.add_option("dispersion",        true,  "Disperison method.");
-    cl.add_option_values("dispersion", {
+    cl.add_option("dispersion",        true,  "Disperison method.", {
         "simple",
         "bohm_gross",
         "ordinary_wave",
         "extra_ordinary_wave",
         "cold_plasma"
     });
-    cl.add_option("equilibrium",       true,  "Equilibrium to use.");
-    cl.add_option_values("equilibrium", {
+    cl.add_option("equilibrium",       true,  "Equilibrium to use.", {
         "efit",
         "vmec"
     });
     cl.add_option("equilibrium_file",  true,  "File to read the equilibrum from.");
-    cl.add_option("init_w_dist",       true,  "Inital omega distribution.");
-    cl.add_option_values("init_w_dist", {
+    cl.add_option("init_w_dist",       true,  "Inital omega distribution.", {
         "uniform",
         "normal"
     });
     cl.add_option("init_w_mean",       true,  "Inital omega mean");
     cl.add_option("init_w_sigma",      true,  "Inital omega sigma");
-    cl.add_option("init_kx_dist",      true,  "Inital kx distribution.");
-    cl.add_option_values("init_kx_dist", {
+    cl.add_option("init_kx_dist",      true,  "Inital kx distribution.", {
         "uniform",
         "normal"
     });
     cl.add_option("init_kx_mean",      true,  "Inital kx mean");
     cl.add_option("init_kx_sigma",     true,  "Inital kx sigma");
-    cl.add_option("init_ky_dist",      true,  "Inital ky distribution.");
-    cl.add_option_values("init_ky_dist", {
+    cl.add_option("init_ky_dist",      true,  "Inital ky distribution.", {
         "uniform",
         "normal"
     });
     cl.add_option("init_ky_mean",      true,  "Inital ky mean");
     cl.add_option("init_ky_sigma",     true,  "Inital ky sigma");
-    cl.add_option("init_kz_dist",      true,  "Inital kz distribution.");
-    cl.add_option_values("init_kz_dist", {
+    cl.add_option("init_kz_dist",      true,  "Inital kz distribution.", {
         "uniform",
         "normal"
     });
     cl.add_option("init_kz_mean",      true,  "Inital kz mean");
     cl.add_option("init_kz_sigma",     true,  "Inital kz sigma");
-    cl.add_option("init_x_dist",       true,  "Inital x distribution.");
-    cl.add_option_values("init_x_dist", {
+    cl.add_option("init_x_dist",       true,  "Inital x distribution.", {
         "uniform",
         "normal"
     });
     cl.add_option("init_x_mean",       true,  "Inital x mean");
     cl.add_option("init_x_sigma",      true,  "Inital x sigma");
-    cl.add_option("init_y_dist",       true,  "Inital y distribution.");
-    cl.add_option_values("init_y_dist", {
+    cl.add_option("init_y_dist",       true,  "Inital y distribution.", {
         "uniform",
         "normal"
     });
     cl.add_option("init_y_mean",       true,  "Inital y mean");
     cl.add_option("init_y_sigma",      true,  "Inital y sigma");
-    cl.add_option("init_z_dist",       true,  "Inital z distribution.");
-    cl.add_option_values("init_z_dist", {
+    cl.add_option("init_z_dist",       true,  "Inital z distribution.", {
         "uniform",
         "normal"
     });
     cl.add_option("init_z_mean",       true,  "Inital z mean");
     cl.add_option("init_z_sigma",      true,  "Inital z sigma");
     cl.add_option("use_cyl_xy",        false, "Use cylindical coordinates for x and y.");
-    cl.add_option("absorption_model",  true,  "Power absoption model to use.");
-    cl.add_option_values("absorption_model", {
+    cl.add_option("absorption_model",  true,  "Power absoption model to use.", {
         "root_find",
         "weak_damping"
     });

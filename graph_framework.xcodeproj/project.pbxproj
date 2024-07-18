@@ -275,6 +275,7 @@
 		C70AA9792AB48FE2002DAF1C /* absorption.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = absorption.hpp; sourceTree = "<group>"; };
 		C70B705629F4F86A00098AA0 /* piecewise.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = piecewise.hpp; sourceTree = "<group>"; };
 		C70D93132A30FF4E006A4227 /* special_functions.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = special_functions.hpp; sourceTree = "<group>"; };
+		C7107DBE2C489FE500C6C10F /* efit_example.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = efit_example.sh; sourceTree = "<group>"; };
 		C713425B29413F0500672AD4 /* jit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jit.hpp; sourceTree = "<group>"; };
 		C713425C2942665300672AD4 /* register.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = register.hpp; sourceTree = "<group>"; };
 		C71342652947D57900672AD4 /* metal_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = metal_context.hpp; sourceTree = "<group>"; };
@@ -557,6 +558,7 @@
 			children = (
 				C7931E7128073BF30033B488 /* CMakeLists.txt */,
 				C79141B522DAAD0C00E0BA0D /* xrays.cpp */,
+				C7107DBE2C489FE500C6C10F /* efit_example.sh */,
 			);
 			path = graph_driver;
 			sourceTree = "<group>";

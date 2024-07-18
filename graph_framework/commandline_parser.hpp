@@ -9,8 +9,12 @@
 #include <map>
 #include <type_traits>
 #include <utility>
+#include <mutex>
 
 namespace commandline {
+///  Lock to syncronize netcdf accross threads.
+    static std::mutex sync;
+
 //------------------------------------------------------------------------------
 ///  @brief Parser class
 //------------------------------------------------------------------------------
@@ -54,24 +58,16 @@ namespace commandline {
 ///  @params[in] option      The command option.
 ///  @params[in] takes_value Flag to indicate the option takes a value.
 ///  @params[in] help_text   The help text of the option.
+///  @params[in] values      An optional set of values.
 //------------------------------------------------------------------------------
         void add_option(const std::string &option,
                         const bool takes_value,
-                        const std::string &help_text) {
+                        const std::string &help_text,
+                        const std::set<std::string> &values = {}) {
             options.try_emplace(option, takes_value, help_text);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Add commandline option value.
-///
-///  @params[in] option The command option.
-///  @params[in] values Option value.
-//------------------------------------------------------------------------------
-        void add_option_values(const std::string &option,
-                               const std::set<std::string> &values) {
-            assert(options.find(option) != options.cend() &&
-                   "Option not added.");
-            option_values.try_emplace(option, values);
+            if (!values.empty()) {
+                option_values.try_emplace(option, values);
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -80,6 +76,7 @@ namespace commandline {
 ///  @params[in] command Name of the program.
 //------------------------------------------------------------------------------
         void show_help(const std::string &command) const {
+            sync.lock();
             size_t longest = 0;
             for (auto &[option, value] : options) {
                 longest = std::max(longest, option.size());
@@ -104,6 +101,7 @@ namespace commandline {
                 }
             }
             std::cout << std::endl;
+            sync.unlock();
             exit(0);
         }
 
