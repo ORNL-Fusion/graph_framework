@@ -104,9 +104,9 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @params[in] index The species index.
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The ion density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -132,9 +132,9 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @params[in] index The species index.
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The ion temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -296,6 +296,9 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -327,6 +330,9 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -404,6 +410,9 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -433,6 +442,9 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -514,6 +526,9 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -545,6 +560,9 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -624,6 +642,9 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -655,6 +676,9 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -734,6 +758,9 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -764,6 +791,9 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @params[in] index The species index.
+///  @params[in] x     X position.
+///  @params[in] y     Y position.
+///  @params[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -915,6 +945,150 @@ namespace equilibrium {
 ///  Psi c33.
         const backend::buffer<T> c33;
 
+//  Cached values.
+///  X position cache.
+        graph::shared_leaf<T, SAFE_MATH> x_cache;
+///  Y position cache.
+        graph::shared_leaf<T, SAFE_MATH> y_cache;
+///  Z position cache.
+        graph::shared_leaf<T, SAFE_MATH> z_cache;
+
+///  Cached electron density value.
+        graph::shared_leaf<T, SAFE_MATH> ne_cache;
+///  Cached electron density value.
+        graph::shared_leaf<T, SAFE_MATH> ni_cache;
+///  Cached electron temperature value.
+        graph::shared_leaf<T, SAFE_MATH> te_cache;
+///  Cached ion temperature value.
+        graph::shared_leaf<T, SAFE_MATH> ti_cache;
+
+///  Cached magnetic field vector.
+        graph::shared_vector<T, SAFE_MATH> b_cache;
+
+//------------------------------------------------------------------------------
+///  @brief Set cache values.
+///
+///  Sets the cached values if x and y do not match.
+///
+///  @params[in] x X position.
+///  @params[in] y Y position.
+///  @params[in] z Z position.
+//------------------------------------------------------------------------------
+        void set_cache(graph::shared_leaf<T, SAFE_MATH> x,
+                       graph::shared_leaf<T, SAFE_MATH> y,
+                       graph::shared_leaf<T, SAFE_MATH> z) {
+            if (!x->is_match(x_cache) ||
+                !y->is_match(y_cache) ||
+                !z->is_match(z_cache)) {
+                x_cache = x;
+                y_cache = y;
+                z_cache = z;
+
+                auto r = graph::sqrt(x*x + y*y);
+                
+                auto r_norm = (r - rmin)/dr;
+                auto z_norm = (z - zmin)/dz;
+
+                auto c00_temp = graph::piecewise_2D(c00, num_cols, r_norm, z_norm);
+                auto c01_temp = graph::piecewise_2D(c01, num_cols, r_norm, z_norm);
+                auto c02_temp = graph::piecewise_2D(c02, num_cols, r_norm, z_norm);
+                auto c03_temp = graph::piecewise_2D(c03, num_cols, r_norm, z_norm);
+
+                auto c10_temp = graph::piecewise_2D(c10, num_cols, r_norm, z_norm);
+                auto c11_temp = graph::piecewise_2D(c11, num_cols, r_norm, z_norm);
+                auto c12_temp = graph::piecewise_2D(c12, num_cols, r_norm, z_norm);
+                auto c13_temp = graph::piecewise_2D(c13, num_cols, r_norm, z_norm);
+
+                auto c20_temp = graph::piecewise_2D(c20, num_cols, r_norm, z_norm);
+                auto c21_temp = graph::piecewise_2D(c21, num_cols, r_norm, z_norm);
+                auto c22_temp = graph::piecewise_2D(c22, num_cols, r_norm, z_norm);
+                auto c23_temp = graph::piecewise_2D(c23, num_cols, r_norm, z_norm);
+
+                auto c30_temp = graph::piecewise_2D(c30, num_cols, r_norm, z_norm);
+                auto c31_temp = graph::piecewise_2D(c31, num_cols, r_norm, z_norm);
+                auto c32_temp = graph::piecewise_2D(c32, num_cols, r_norm, z_norm);
+                auto c33_temp = graph::piecewise_2D(c33, num_cols, r_norm, z_norm);
+
+                auto psi = c00_temp
+                         + c01_temp*z_norm
+                         + c02_temp*(z_norm*z_norm)
+                         + c03_temp*(z_norm*z_norm*z_norm)
+                         + c10_temp*r_norm
+                         + c11_temp*r_norm*z_norm
+                         + c12_temp*r_norm*(z_norm*z_norm)
+                         + c13_temp*r_norm*(z_norm*z_norm*z_norm)
+                         + c20_temp*(r_norm*r_norm)
+                         + c21_temp*(r_norm*r_norm)*z_norm
+                         + c22_temp*(r_norm*r_norm)*(z_norm*z_norm)
+                         + c23_temp*(r_norm*r_norm)*(z_norm*z_norm*z_norm)
+                         + c30_temp*(r_norm*r_norm*r_norm)
+                         + c31_temp*(r_norm*r_norm*r_norm)*z_norm
+                         + c32_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm)
+                         + c33_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm*z_norm);
+
+                auto psi_norm = (psi - psimin)/dpsi;
+                
+                auto n0_temp = graph::piecewise_1D(ne_c0, psi_norm);
+                auto n1_temp = graph::piecewise_1D(ne_c1, psi_norm);
+                auto n2_temp = graph::piecewise_1D(ne_c2, psi_norm);
+                auto n3_temp = graph::piecewise_1D(ne_c3, psi_norm);
+
+                ne_cache = ne_scale*(n0_temp +
+                                     n1_temp*psi_norm +
+                                     n2_temp*psi_norm*psi_norm +
+                                     n2_temp*psi_norm*psi_norm*psi_norm);
+
+                auto t0_temp = graph::piecewise_1D(te_c0, psi_norm);
+                auto t1_temp = graph::piecewise_1D(te_c1, psi_norm);
+                auto t2_temp = graph::piecewise_1D(te_c2, psi_norm);
+                auto t3_temp = graph::piecewise_1D(te_c3, psi_norm);
+
+                te_cache = te_scale*(t0_temp +
+                                     t1_temp*psi_norm +
+                                     t2_temp*psi_norm*psi_norm +
+                                     t3_temp*psi_norm*psi_norm*psi_norm);
+
+                auto p0_temp = graph::piecewise_1D(pres_c0, psi_norm);
+                auto p1_temp = graph::piecewise_1D(pres_c1, psi_norm);
+                auto p2_temp = graph::piecewise_1D(pres_c2, psi_norm);
+                auto p3_temp = graph::piecewise_1D(pres_c3, psi_norm);
+
+                auto pressure = pres_scale*(p0_temp +
+                                            p1_temp*psi_norm +
+                                            p2_temp*psi_norm*psi_norm +
+                                            p3_temp*psi_norm*psi_norm*psi_norm);
+
+                auto q = graph::constant<T, SAFE_MATH> (static_cast<T> (1.60218E-19));
+
+                ni_cache = te_cache;
+                ti_cache = (pressure - ne_cache*te_cache*q)/(ni_cache*q);
+                
+                auto phi = graph::atan(x, y);
+                auto none = graph::none<T, SAFE_MATH> ();
+
+                auto br = psi->df(z)/r;
+                
+                auto b0_temp = graph::piecewise_1D(fpol_c0, r_norm);
+                auto b1_temp = graph::piecewise_1D(fpol_c1, r_norm);
+                auto b2_temp = graph::piecewise_1D(fpol_c2, r_norm);
+                auto b3_temp = graph::piecewise_1D(fpol_c3, r_norm);
+
+                auto bp = (b0_temp +
+                           b1_temp*r_norm +
+                           b2_temp*r_norm*r_norm +
+                           b3_temp*r_norm*r_norm*r_norm)/r;
+
+                auto bz = none*psi->df(r)/r;
+                
+                auto cos = graph::cos(phi);
+                auto sin = graph::sin(phi);
+                
+                b_cache = graph::vector(br*cos - bp*sin,
+                                        br*sin + bp*cos,
+                                        bz);
+            }
+        }
+
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a EFIT equilibrium.
@@ -1014,72 +1188,11 @@ namespace equilibrium {
         c00(c00), c01(c01), c02(c02), c03(c03),
         c10(c10), c11(c11), c12(c12), c13(c13),
         c20(c20), c21(c21), c22(c22), c23(c23),
-        c30(c30), c31(c31), c32(c32), c33(c33) {}
-
-//------------------------------------------------------------------------------
-///  @brief Get psi.
-///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
-///  @returns The psi expression.
-//------------------------------------------------------------------------------
-        graph::shared_leaf<T, SAFE_MATH>
-        get_psi(graph::shared_leaf<T, SAFE_MATH> x,
-                graph::shared_leaf<T, SAFE_MATH> y,
-                graph::shared_leaf<T, SAFE_MATH> z) {
-            return get_psi(graph::sqrt(x*x + y*y), z);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get psi.
-///
-///  @params[in] r R position.
-///  @params[in] z Z position.
-///  @returns The psi expression.
-//------------------------------------------------------------------------------
-        graph::shared_leaf<T, SAFE_MATH>
-        get_psi(graph::shared_leaf<T, SAFE_MATH> r,
-                graph::shared_leaf<T, SAFE_MATH> z) {
-            auto r_norm = (r - rmin)/dr;
-            auto z_norm = (z - zmin)/dz;
-
-            auto c00_temp = graph::piecewise_2D(c00, num_cols, r_norm, z_norm);
-            auto c01_temp = graph::piecewise_2D(c01, num_cols, r_norm, z_norm);
-            auto c02_temp = graph::piecewise_2D(c02, num_cols, r_norm, z_norm);
-            auto c03_temp = graph::piecewise_2D(c03, num_cols, r_norm, z_norm);
-
-            auto c10_temp = graph::piecewise_2D(c10, num_cols, r_norm, z_norm);
-            auto c11_temp = graph::piecewise_2D(c11, num_cols, r_norm, z_norm);
-            auto c12_temp = graph::piecewise_2D(c12, num_cols, r_norm, z_norm);
-            auto c13_temp = graph::piecewise_2D(c13, num_cols, r_norm, z_norm);
-
-            auto c20_temp = graph::piecewise_2D(c20, num_cols, r_norm, z_norm);
-            auto c21_temp = graph::piecewise_2D(c21, num_cols, r_norm, z_norm);
-            auto c22_temp = graph::piecewise_2D(c22, num_cols, r_norm, z_norm);
-            auto c23_temp = graph::piecewise_2D(c23, num_cols, r_norm, z_norm);
-
-            auto c30_temp = graph::piecewise_2D(c30, num_cols, r_norm, z_norm);
-            auto c31_temp = graph::piecewise_2D(c31, num_cols, r_norm, z_norm);
-            auto c32_temp = graph::piecewise_2D(c32, num_cols, r_norm, z_norm);
-            auto c33_temp = graph::piecewise_2D(c33, num_cols, r_norm, z_norm);
-
-            return c00_temp +
-                   c01_temp*z_norm +
-                   c02_temp*(z_norm*z_norm) +
-                   c03_temp*(z_norm*z_norm*z_norm) +
-                   c10_temp*r_norm +
-                   c11_temp*r_norm*z_norm +
-                   c12_temp*r_norm*(z_norm*z_norm) +
-                   c13_temp*r_norm*(z_norm*z_norm*z_norm) +
-                   c20_temp*(r_norm*r_norm) +
-                   c21_temp*(r_norm*r_norm)*z_norm +
-                   c22_temp*(r_norm*r_norm)*(z_norm*z_norm) +
-                   c23_temp*(r_norm*r_norm)*(z_norm*z_norm*z_norm) +
-                   c30_temp*(r_norm*r_norm*r_norm) +
-                   c31_temp*(r_norm*r_norm*r_norm)*z_norm +
-                   c32_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm) +
-                   c33_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm*z_norm);
+        c30(c30), c31(c31), c32(c32), c33(c33) {
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            x_cache = zero;
+            y_cache = zero;
+            z_cache = zero;
         }
 
 //------------------------------------------------------------------------------
@@ -1094,17 +1207,8 @@ namespace equilibrium {
         get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
                              graph::shared_leaf<T, SAFE_MATH> y,
                              graph::shared_leaf<T, SAFE_MATH> z) {
-            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
-
-            auto c0_temp = graph::piecewise_1D(ne_c0, psi_norm);
-            auto c1_temp = graph::piecewise_1D(ne_c1, psi_norm);
-            auto c2_temp = graph::piecewise_1D(ne_c2, psi_norm);
-            auto c3_temp = graph::piecewise_1D(ne_c3, psi_norm);
-
-            return ne_scale*(c0_temp +
-                             c1_temp*psi_norm +
-                             c2_temp*psi_norm*psi_norm +
-                             c3_temp*psi_norm*psi_norm*psi_norm);
+            set_cache(x, y, z);
+            return ne_cache;
         }
 
 //------------------------------------------------------------------------------
@@ -1121,32 +1225,8 @@ namespace equilibrium {
                         graph::shared_leaf<T, SAFE_MATH> x,
                         graph::shared_leaf<T, SAFE_MATH> y,
                         graph::shared_leaf<T, SAFE_MATH> z) {
-            return get_electron_density(x, y, z);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the pressure.
-///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
-///  @returns The pressure expression.
-//------------------------------------------------------------------------------
-        graph::shared_leaf<T, SAFE_MATH>
-        get_pressure(graph::shared_leaf<T, SAFE_MATH> x,
-                     graph::shared_leaf<T, SAFE_MATH> y,
-                     graph::shared_leaf<T, SAFE_MATH> z) {
-            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
-
-            auto c0_temp = graph::piecewise_1D(pres_c0, psi_norm);
-            auto c1_temp = graph::piecewise_1D(pres_c1, psi_norm);
-            auto c2_temp = graph::piecewise_1D(pres_c2, psi_norm);
-            auto c3_temp = graph::piecewise_1D(pres_c3, psi_norm);
-
-            return pres_scale*(c0_temp +
-                               c1_temp*psi_norm +
-                               c2_temp*psi_norm*psi_norm +
-                               c3_temp*psi_norm*psi_norm*psi_norm);
+            set_cache(x, y, z);
+            return ni_cache;
         }
 
 //------------------------------------------------------------------------------
@@ -1161,17 +1241,8 @@ namespace equilibrium {
         get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
                                  graph::shared_leaf<T, SAFE_MATH> y,
                                  graph::shared_leaf<T, SAFE_MATH> z) {
-            auto psi_norm = (get_psi(x, y, z) - psimin)/dpsi;
-
-            auto c0_temp = graph::piecewise_1D(te_c0, psi_norm);
-            auto c1_temp = graph::piecewise_1D(te_c1, psi_norm);
-            auto c2_temp = graph::piecewise_1D(te_c2, psi_norm);
-            auto c3_temp = graph::piecewise_1D(te_c3, psi_norm);
-
-            return te_scale*(c0_temp +
-                             c1_temp*psi_norm +
-                             c2_temp*psi_norm*psi_norm +
-                             c3_temp*psi_norm*psi_norm*psi_norm);
+            set_cache(x, y, z);
+            return te_cache;
         }
 
 //------------------------------------------------------------------------------
@@ -1188,31 +1259,8 @@ namespace equilibrium {
                             graph::shared_leaf<T, SAFE_MATH> x,
                             graph::shared_leaf<T, SAFE_MATH> y,
                             graph::shared_leaf<T, SAFE_MATH> z) {
-            auto pressure = get_pressure(x, y, z);
-            auto q = graph::constant<T, SAFE_MATH> (static_cast<T> (1.60218E-19));
-            return (pressure - get_electron_density(x, y, z)*get_electron_temperature(x, y, z)*q) /
-                   (get_ion_density(index, x, y, z)*q);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the toroidal magnetic field.
-///
-///  @params[in] r R position.
-///  @returns The toroidal magnetic field expression.
-//------------------------------------------------------------------------------
-        graph::shared_leaf<T, SAFE_MATH>
-        get_b_phi(graph::shared_leaf<T, SAFE_MATH> r) {
-            auto r_norm = (r - rmin)/dr;
-
-            auto c0_temp = graph::piecewise_1D(fpol_c0, r_norm);
-            auto c1_temp = graph::piecewise_1D(fpol_c1, r_norm);
-            auto c2_temp = graph::piecewise_1D(fpol_c2, r_norm);
-            auto c3_temp = graph::piecewise_1D(fpol_c3, r_norm);
-
-            return (c0_temp +
-                    c1_temp*r_norm +
-                    c2_temp*r_norm*r_norm +
-                    c3_temp*r_norm*r_norm*r_norm)/r;
+            set_cache(x, y, z);
+            return ti_cache;
         }
 
 //------------------------------------------------------------------------------
@@ -1227,21 +1275,8 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
                            graph::shared_leaf<T, SAFE_MATH> y,
                            graph::shared_leaf<T, SAFE_MATH> z) {
-            auto r = graph::sqrt(x*x + y*y);
-            auto phi = graph::atan(x, y);
-            auto none = graph::none<T, SAFE_MATH> ();
-            auto psi = get_psi(r, z);
-
-            auto br = psi->df(z)/r;
-            auto bp = get_b_phi(r);
-            auto bz = none*psi->df(r)/r;
-            
-            auto cos = graph::cos(phi);
-            auto sin = graph::sin(phi);
-            
-            return graph::vector(br*cos - bp*sin,
-                                 br*sin + bp*cos,
-                                 bz);
+            set_cache(x, y, z);
+            return b_cache;
         }
     };
 
@@ -1255,7 +1290,7 @@ namespace equilibrium {
 ///  @returns A constructed EFIT equilibrium.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    shared<T, SAFE_MATH> make_efit(const std::string spline_file) {
+    shared<T, SAFE_MATH> make_efit(const std::string &spline_file) {
         int ncid;
         sync.lock();
         nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);
@@ -2052,7 +2087,7 @@ namespace equilibrium {
 ///  @returns A constructed VMEC equilibrium.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    shared<T, SAFE_MATH> make_vmec(const std::string spline_file) {
+    shared<T, SAFE_MATH> make_vmec(const std::string &spline_file) {
         int ncid;
         sync.lock();
         nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);
