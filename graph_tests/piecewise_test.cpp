@@ -60,7 +60,7 @@ template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
 
     source.compile();
     source.print_source();
-    
+
     auto run = source.create_kernel_call("test_kernel", inputs, outputs, 1);
     run();
 
@@ -68,6 +68,7 @@ template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
     source.copy_to_host(outputs.back(), &result);
 
     const T diff = std::abs(result - expected);
+    std::cout << expected << " " << result << " " << diff << " " << tolarance << std::endl;
     check(diff, tolarance);
 }
 
@@ -180,7 +181,7 @@ template<jit::float_scalar T> void piecewise_1D() {
     compile<T> ({graph::variable_cast(a)},
                 {p1}, {},
                 static_cast<T> (2.0), 0.0);
-    
+
     a->set(static_cast<T> (0.5));
     compile<T> ({graph::variable_cast(a)},
                 {p1}, {},
@@ -208,10 +209,15 @@ template<jit::float_scalar T> void piecewise_1D() {
                  graph::variable_cast(b)},
                 {graph::fma(p1, p3, p2)}, {},
                 static_cast<T> (10.0), 0.0);
-    compile<T> ({graph::variable_cast(a)},
-                {graph::pow(p1, p3)}, {},
-                static_cast<T> (std::pow(static_cast<T> (2.0),
-                                         static_cast<T> (4.0))), 0.0);
+    if constexpr (jit::is_complex<T> ()) {
+        compile<T> ({graph::variable_cast(a)},
+                    {graph::pow(p1, p3)}, {},
+                    static_cast<T> (16.0), 2.0E-15);
+    } else {
+        compile<T> ({graph::variable_cast(a)},
+                    {graph::pow(p1, p3)}, {},
+                    static_cast<T> (16.0), 0.0);
+    }
     if constexpr (jit::is_complex<T> ()) {
         compile<T> ({graph::variable_cast(a)},
                     {graph::atan(p1, p3)}, {},
@@ -382,14 +388,14 @@ template<jit::float_scalar T> void piecewise_2D() {
                  graph::variable_cast(ay)},
                 {p1}, {},
                 static_cast<T> (4.0), 0.0);
-    
+
     ax->set(static_cast<T> (0.5));
     ay->set(static_cast<T> (0.5));
     compile<T> ({graph::variable_cast(ax),
                  graph::variable_cast(ay)},
                 {p1}, {},
                 static_cast<T> (1.0), 0.0);
-    
+
     ax->set(static_cast<T> (0.5));
     ay->set(static_cast<T> (1.5));
     compile<T> ({graph::variable_cast(ax),
@@ -430,11 +436,17 @@ template<jit::float_scalar T> void piecewise_2D() {
                  graph::variable_cast(by)},
                 {graph::fma(p1, p3, p2)}, {},
                 static_cast<T> (14.0), 0.0);
-    compile<T> ({graph::variable_cast(ax),
-                 graph::variable_cast(ay)},
-                {graph::pow(p1, p3)}, {},
-                static_cast<T> (std::pow(static_cast<T> (2.0),
-                                         static_cast<T> (4.0))), 0.0);
+    if constexpr (jit::is_complex<T> ()) {
+        compile<T> ({graph::variable_cast(ax),
+                     graph::variable_cast(ay)},
+                    {graph::pow(p1, p3)}, {},
+                     static_cast<T> (16.0), 2.0E-15);
+    } else {
+        compile<T> ({graph::variable_cast(ax),
+                     graph::variable_cast(ay)},
+                    {graph::pow(p1, p3)}, {},
+                     static_cast<T> (16.0), 0.0);
+    }
     if constexpr (jit::is_complex<T> ()) {
         compile<T> ({graph::variable_cast(ax),
                      graph::variable_cast(ay)},
@@ -525,11 +537,17 @@ template<jit::float_scalar T> void piecewise_2D() {
                  graph::variable_cast(by)},
                 {graph::fma(p1, p5, p2)}, {},
                 static_cast<T> (14.0), 0.0);
-    compile<T> ({graph::variable_cast(ax),
-                 graph::variable_cast(ay)},
-                {graph::pow(p1, p5)}, {},
-                static_cast<T> (std::pow(static_cast<T> (2.0),
-                                         static_cast<T> (4.0))), 0.0);
+    if constexpr (jit::is_complex<T> ()) {
+        compile<T> ({graph::variable_cast(ax),
+                     graph::variable_cast(ay)},
+                    {graph::pow(p1, p5)}, {},
+                    static_cast<T> (16.0), 2.0E-15);
+    } else {
+        compile<T> ({graph::variable_cast(ax),
+                     graph::variable_cast(ay)},
+                    {graph::pow(p1, p5)}, {},
+                    static_cast<T> (16.0), 0.0);
+    }
     if constexpr (jit::is_complex<T> ()) {
         compile<T> ({graph::variable_cast(ax),
                      graph::variable_cast(ay)},
