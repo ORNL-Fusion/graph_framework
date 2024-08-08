@@ -120,7 +120,11 @@ void compile_index(std::ostringstream &stream,
                     return i;
                 }
             }
+#if defined(__clang__) || defined(__GNUC__)
+            __builtin_unreachable();
+#else
             assert(false && "Should never reach.");
+#endif
         }
 
 ///  Data buffer hash.
@@ -478,7 +482,11 @@ void compile_index(std::ostringstream &stream,
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 ///  Convenience type alias for shared piecewise 1D nodes.
@@ -594,7 +602,11 @@ void compile_index(std::ostringstream &stream,
                     return i;
                 }
             }
+#if defined(__clang__) || defined(__GNUC__)
+            __builtin_unreachable();
+#else
             assert(false && "Should never reach.");
+#endif
         }
 
 ///  Data buffer hash.
@@ -1050,7 +1062,11 @@ void compile_index(std::ostringstream &stream,
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 ///  Convenience type alias for shared piecewise 2D nodes.

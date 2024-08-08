@@ -17,7 +17,7 @@ add_test (
                                                       --init_w_dist=normal
                                                       --init_w_mean=700
                                                       --init_w_sigma=10.0
-                                                      --init_x_mean=1.0
+                                                      --init_x_mean=2.5
                                                       --init_y_dist=normal
                                                       --init_y_mean=0.0
                                                       --init_y_sigma=0.05
@@ -29,4 +29,5 @@ add_test (
                                                       --solver=rk4
                                                       --sub_steps=100
                                                       --use_cyl_xy
+                                                      --seed
 )

@@ -65,6 +65,10 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--seed"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--num_times=100000"
             isEnabled = "YES">
          </CommandLineArgument>
@@ -133,7 +137,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--init_x_mean=1.0"
+            argument = "--init_x_mean=2.5"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

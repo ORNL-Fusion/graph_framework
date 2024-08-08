@@ -233,7 +233,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 ///  Convenience type alias for shared sine nodes.
@@ -476,7 +480,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 ///  Convenience type alias for shared cosine nodes.
@@ -788,7 +796,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 ///  Convenience type alias for shared add nodes.

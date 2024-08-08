@@ -52,7 +52,7 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     bool is_constant_promotable(shared_leaf<T, SAFE_MATH> a,
                                 shared_leaf<T, SAFE_MATH> b) {
-        
+
         auto b1 = piecewise_1D_cast(b);
         auto b2 = piecewise_2D_cast(b);
 
@@ -563,7 +563,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 //------------------------------------------------------------------------------
@@ -1158,7 +1162,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 //------------------------------------------------------------------------------
@@ -1950,7 +1958,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 //------------------------------------------------------------------------------
@@ -2531,7 +2543,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 //------------------------------------------------------------------------------
@@ -3852,7 +3868,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 ///  Convenience type alias for shared add nodes.

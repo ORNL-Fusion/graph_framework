@@ -566,7 +566,11 @@ namespace graph {
                 return leaf_node<T, SAFE_MATH>::cache[i];
             }
         }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
         assert(false && "Should never reach.");
+#endif
     }
 
 //------------------------------------------------------------------------------
@@ -1306,7 +1310,7 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const size_t s,
                                        const std::string &symbol) {
-        return (std::make_shared<variable_node<T, SAFE_MATH>> (s, symbol))->reduce();
+        return std::make_shared<variable_node<T, SAFE_MATH>> (s, symbol);
     }
 
 //------------------------------------------------------------------------------
@@ -1322,7 +1326,7 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const size_t s, const T d,
                                        const std::string &symbol) {
-        return (std::make_shared<variable_node<T, SAFE_MATH>> (s, d, symbol))->reduce();
+        return std::make_shared<variable_node<T, SAFE_MATH>> (s, d, symbol);
     }
 
 //------------------------------------------------------------------------------
@@ -1337,7 +1341,7 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const std::vector<T> &d,
                                        const std::string &symbol) {
-        return (std::make_shared<variable_node<T, SAFE_MATH>> (d, symbol))->reduce();
+        return std::make_shared<variable_node<T, SAFE_MATH>> (d, symbol);
     }
 
 //------------------------------------------------------------------------------
@@ -1352,7 +1356,7 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const backend::buffer<T> &d,
                                        const std::string &symbol) {
-        return std::make_shared<variable_node<T, SAFE_MATH>> (d, symbol)->reduce();
+        return std::make_shared<variable_node<T, SAFE_MATH>> (d, symbol);
     }
 
 ///  Convenience type alias for shared variable nodes.
@@ -1543,7 +1547,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> pseudo_variable(shared_leaf<T, SAFE_MATH> x) {
-        return std::make_shared<pseudo_variable_node<T, SAFE_MATH>> (x)->reduce();
+        return std::make_shared<pseudo_variable_node<T, SAFE_MATH>> (x);
     }
 
 ///  Convenience type alias for shared pseudo variable nodes.
