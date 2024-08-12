@@ -1036,7 +1036,7 @@ namespace equilibrium {
                 ne_cache = ne_scale*(n0_temp +
                                      n1_temp*psi_norm +
                                      n2_temp*psi_norm*psi_norm +
-                                     n2_temp*psi_norm*psi_norm*psi_norm);
+                                     n3_temp*psi_norm*psi_norm*psi_norm);
 
                 auto t0_temp = graph::piecewise_1D(te_c0, psi_norm);
                 auto t1_temp = graph::piecewise_1D(te_c1, psi_norm);
@@ -1067,7 +1067,7 @@ namespace equilibrium {
                 auto none = graph::none<T, SAFE_MATH> ();
 
                 auto br = psi->df(z)/r;
-                
+
                 auto b0_temp = graph::piecewise_1D(fpol_c0, r_norm);
                 auto b1_temp = graph::piecewise_1D(fpol_c1, r_norm);
                 auto b2_temp = graph::piecewise_1D(fpol_c2, r_norm);
@@ -1079,7 +1079,7 @@ namespace equilibrium {
                            b3_temp*r_norm*r_norm*r_norm)/r;
 
                 auto bz = none*psi->df(r)/r;
-                
+
                 auto cos = graph::cos(phi);
                 auto sin = graph::sin(phi);
                 

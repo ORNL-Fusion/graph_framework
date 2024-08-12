@@ -858,23 +858,11 @@ void compile_index(std::ostringstream &stream,
                     stream << ");";
 #endif
                 }  else {
-                    stream << "[min(max((int)";
-                    if constexpr (jit::is_complex<T> ()) {
-                        stream << "real(";
-                    }
-                    stream << registers[x.get()];
-                    if constexpr (jit::is_complex<T> ()) {
-                        stream << ")";
-                    }
-                    stream << "*" << num_columns << " + (int)";
-                    if constexpr (jit::is_complex<T> ()) {
-                        stream << "real(";
-                    }
-                    stream << registers[y.get()];
-                    if constexpr (jit::is_complex<T> ()) {
-                        stream << ")";
-                    }
-                    stream << ",0), " << length - 1 << ")];";
+                    stream << "[";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    stream << "*" << num_columns << " + ";
+                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << "];";
                 }
                 stream << " // used " << usage.at(this) << std::endl;
             }

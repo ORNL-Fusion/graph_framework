@@ -117,22 +117,6 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Get the maximum value from the buffer.
-///
-///  @returns The maximum value.
-//------------------------------------------------------------------------------
-        T max() const {
-            if constexpr (jit::is_complex<T> ()) {
-                return *std::max_element(memory.cbegin(), memory.cend(),
-                                         [] (const T a, const T b) {
-                    return std::abs(a) < std::abs(b);
-                });
-            } else {
-                return *std::max_element(memory.cbegin(), memory.cend());
-            }
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Is every element the same.
 ///
 ///  @returns Returns true if every element is the same.
@@ -164,9 +148,9 @@ namespace backend {
         }
         
 //------------------------------------------------------------------------------
-///  @brief Is every element zero.
+///  @brief Is any element zero.
 ///
-///  @returns Returns true if every element is zero.
+///  @returns Returns true if any element is zero.
 //------------------------------------------------------------------------------
         bool has_zero() const {
             for (const T &d : memory) {

@@ -73,8 +73,8 @@ namespace graph {
 ///  @returns True if a and b are combinable.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    bool is_variable_combinable(shared_leaf<T, SAFE_MATH> a,
-                                shared_leaf<T, SAFE_MATH> b) {
+    bool is_variable_combineable(shared_leaf<T, SAFE_MATH> a,
+                                 shared_leaf<T, SAFE_MATH> b) {
         return a->get_power_base()->is_match(b->get_power_base());
     }
 
@@ -1342,11 +1342,6 @@ namespace graph {
             }
 
 //  Move constants to the left.
-            if (is_constant_promotable(this->right, this->left)) {
-                return this->right*this->left;
-            }
-
-//  Move constant like to the left.
             if (is_constant_promotable(this->right, this->left)) {
                 return this->right*this->left;
             }
@@ -2681,7 +2676,7 @@ namespace graph {
 //  Check if the left and middle are combinable. This will be constant merged in
 //  multiply reduction.
             if (is_constant_combineable(this->left, this->middle) ||
-                is_variable_combinable(this->left, this->middle)) {
+                is_variable_combineable(this->left, this->middle)) {
                 return (this->left*this->middle)  + this->right;
             }
 
@@ -3185,7 +3180,7 @@ namespace graph {
                     }
                 }
 
-                if (is_variable_combinable(this->middle, rfma->get_middle())) {
+                if (is_variable_combineable(this->middle, rfma->get_middle())) {
                     if (is_greater_exponent(this->middle, rfma->get_middle())) {
 //  fma(a,x^b,fma(c,x^d,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
                         return fma(rfma->get_middle(),
@@ -3201,7 +3196,7 @@ namespace graph {
                                        this->left),
                                    rfma->get_right());
                     }
-                } else if (is_variable_combinable(this->left, rfma->get_middle())) {
+                } else if (is_variable_combineable(this->left, rfma->get_middle())) {
                     if (is_greater_exponent(this->left, rfma->get_middle())) {
 //  fma(x^b,a,fma(c,x^d,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
                         return fma(rfma->get_middle(),
@@ -3217,7 +3212,7 @@ namespace graph {
                                        this->middle),
                                    rfma->get_right());
                     }
-                } else if (is_variable_combinable(this->middle, rfma->get_left())) {
+                } else if (is_variable_combineable(this->middle, rfma->get_left())) {
                     if (is_greater_exponent(this->middle, rfma->get_left())) {
 //  fma(a,x^b,fma(x^d,c,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
                         return fma(rfma->get_left(),
@@ -3233,7 +3228,7 @@ namespace graph {
                                        this->left),
                                    rfma->get_right());
                     }
-                } else if (is_variable_combinable(this->left, rfma->get_left())) {
+                } else if (is_variable_combineable(this->left, rfma->get_left())) {
                     if (is_greater_exponent(this->left, rfma->get_left())) {
 //  fma(x^b,a,fma(x^d,c,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
                         return fma(rfma->get_left(),
