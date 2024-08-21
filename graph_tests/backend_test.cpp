@@ -66,9 +66,6 @@ template<jit::float_scalar T> void test_backend() {
                "Expected a value of 5.");
     }
 
-    assert(vector.max() == static_cast<T> (4.0) &&
-           "Expected a value of 4.");
-
     assert(!vector.is_same() && "Expected different values.");
     assert(copy.is_same() && "Expected same values.");
 

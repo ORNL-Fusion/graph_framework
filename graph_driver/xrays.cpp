@@ -101,8 +101,10 @@ void set_xy_variables(const commandline::parser &cl,
                 const T phi_sigma = cl.get_option_value<T> ("init_y_sigma");
                 auto phi_dist = set_distribution(phi_mean, phi_sigma);
                 for (size_t i = 0; i < num_rays; i++) {
-                    x->set(i, static_cast<T> (radius_dist(engine))*cos(static_cast<T> (phi_dist(engine))));
-                    y->set(i, static_cast<T> (radius_dist(engine))*sin(static_cast<T> (phi_dist(engine))));
+                    const T r = static_cast<T> (phi_dist(engine));
+                    const T phi = static_cast<T> (phi_dist(engine));
+                    x->set(i, r*cos(phi));
+                    y->set(i, r*sin(phi));
                 }
             } else {
                 for (size_t i = 0; i < num_rays; i++) {
@@ -116,8 +118,9 @@ void set_xy_variables(const commandline::parser &cl,
                 const T phi_sigma = cl.get_option_value<T> ("init_y_sigma");
                 auto phi_dist = set_distribution(phi_mean, phi_sigma);
                 for (size_t i = 0; i < num_rays; i++) {
-                    x->set(i, radius_mean*cos(static_cast<T> (phi_dist(engine))));
-                    y->set(i, radius_mean*sin(static_cast<T> (phi_dist(engine))));
+                    const T phi = static_cast<T> (phi_dist(engine));
+                    x->set(i, radius_mean*cos(phi));
+                    y->set(i, radius_mean*sin(phi));
                 }
             } else {
                 for (size_t i = 0; i < num_rays; i++) {
