@@ -151,7 +151,7 @@ void test_pseudo_variable() {
     assert(c.get() != v2.get() && "Expected different pointers");
     assert(!c->is_match(v2) && "Expected match.");
     
-    auto remove = graph::two<T> () + graph::pseudo_variable(graph::one<T> ());
+    auto remove = 2.0 + graph::pseudo_variable(graph::one<T> ());
     assert(add_cast(remove).get() && "Expected add node.");
     assert(constant_cast(remove->remove_pseudo()).get() &&
            "Expected constant node.");

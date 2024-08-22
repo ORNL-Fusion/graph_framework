@@ -308,7 +308,6 @@ namespace absorption {
                                                        SAFE_MATH> ().D(w, kx, ky, kz,
                                                                        x, y, z, t, eq);
 
-            auto none = graph::none<T, SAFE_MATH> ();
             auto kamp1 = k_vec->length() 
                        - Dw/k_unit->dot(Dc->df(kx)*eq->get_esup1(x, y, z) +
                                         Dc->df(ky)*eq->get_esup2(x, y, z) +

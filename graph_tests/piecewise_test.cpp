@@ -90,57 +90,53 @@ template<jit::float_scalar T> void piecewise_1D() {
                                                        static_cast<T> (4.0),
                                                        static_cast<T> (6.0)}), a);
 
-    auto zero = graph::zero<T> ();
-
-    assert(graph::constant_cast(p1*zero).get() &&
+    assert(graph::constant_cast(p1*0.0).get() &&
            "Expected a constant node.");
 
-    auto two = graph::two<T> ();
-
-    assert(graph::piecewise_1D_cast(p1*two).get() &&
+    assert(graph::piecewise_1D_cast(p1*2.0).get() &&
            "Expected a piecewise_1D node.");
     assert(graph::multiply_cast(p1*p2).get() &&
            "Expected a multiply node.");
     assert(graph::piecewise_1D_cast(p1*p3).get() &&
            "Expected a piecewise_1D node.");
 
-    assert(graph::piecewise_1D_cast(p1 + zero).get() &&
+    assert(graph::piecewise_1D_cast(p1 + 0.0).get() &&
            "Expected a piecewise_1D node.");
-    assert(graph::piecewise_1D_cast(p1 + two).get() &&
+    assert(graph::piecewise_1D_cast(p1 + 2.0).get() &&
            "Expected a piecewise_1D node.");
     assert(graph::add_cast(p1 + p2).get() &&
            "Expected an add node.");
     assert(graph::piecewise_1D_cast(p1 + p3).get() &&
            "Expected a piecewise_1D node.");
 
-    assert(graph::piecewise_1D_cast(p1 - zero).get() &&
+    assert(graph::piecewise_1D_cast(p1 - 0.0).get() &&
            "Expected a piecewise_1D node.");
-    assert(graph::piecewise_1D_cast(p1 - two).get() &&
+    assert(graph::piecewise_1D_cast(p1 - 2.0).get() &&
            "Expected a piecewise_1D node.");
     assert(graph::subtract_cast(p1 - p2).get() &&
            "Expected a subtract node.");
     assert(graph::piecewise_1D_cast(p1 - p3).get() &&
            "Expected a piecewise_1D node.");
 
-    assert(graph::constant_cast(zero/p1).get() &&
+    assert(graph::constant_cast(0.0/p1).get() &&
            "Expected a constant node.");
-    assert(graph::piecewise_1D_cast(p1/two).get() &&
+    assert(graph::piecewise_1D_cast(p1/2.0).get() &&
            "Expected a piecewise_1D node.");
     assert(graph::multiply_cast(p1/p2).get() &&
            "Expected a multiply node.");
     assert(graph::constant_cast(p1/p3).get() &&
            "Expected a constant node.");
 
-    assert(graph::piecewise_1D_cast(graph::fma(p1, two, zero)).get() &&
+    assert(graph::piecewise_1D_cast(graph::fma(p1, 2.0, 0.0)).get() &&
            "Expected a piecewise_1D node.");
-    assert(graph::add_cast(graph::fma(p1, two, p2)).get() &&
+    assert(graph::add_cast(graph::fma(p1, 2.0, p2)).get() &&
            "Expected an add node.");
-    auto temp = graph::fma(p1, p2, two);
-    assert(graph::multiply_cast(graph::fma(p1, p2, two)).get() &&
+    auto temp = graph::fma(p1, p2, 2.0);
+    assert(graph::multiply_cast(graph::fma(p1, p2, 2.0)).get() &&
            "Expected a multiply node.");
     assert(graph::add_cast(graph::fma(p1, p3, p2)).get() &&
            "Expected an add node.");
-    assert(graph::piecewise_1D_cast(graph::fma(p1, p3, two)).get() &&
+    assert(graph::piecewise_1D_cast(graph::fma(p1, p3, 2.0)).get() &&
            "Expected a piecewise_1D node.");
     assert(graph::piecewise_1D_cast(graph::fma(p1, p3, p1)).get() &&
            "Expected a piecewise_1D node.");
@@ -154,7 +150,7 @@ template<jit::float_scalar T> void piecewise_1D() {
     assert(graph::piecewise_1D_cast(graph::log(p1)).get() &&
            "Expected a piecewise_1D node.");
 
-    assert(graph::piecewise_1D_cast(graph::pow(p1, two)).get() &&
+    assert(graph::piecewise_1D_cast(graph::pow(p1, 2.0)).get() &&
            "Expected a piecewise_1D node.");
     assert(graph::pow_cast(graph::pow(p1, p2)).get() &&
            "Expected a pow constant.");
@@ -170,7 +166,7 @@ template<jit::float_scalar T> void piecewise_1D() {
     assert(graph::piecewise_1D_cast(graph::tan(p1)).get() &&
            "Expected a piecewise_1D node.");
 
-    assert(graph::piecewise_1D_cast(graph::atan(p1, two)).get() &&
+    assert(graph::piecewise_1D_cast(graph::atan(p1, 2.0)).get() &&
            "Expected a piecewise_1D node.");
     assert(graph::atan_cast(graph::atan(p1, p2)).get() &&
            "Expected an atan node.");
@@ -268,14 +264,10 @@ template<jit::float_scalar T> void piecewise_2D() {
         static_cast<T> (2.0), static_cast<T> (4.0)
     }), ay);
 
-    auto zero = graph::zero<T> ();
-
-    assert(graph::constant_cast(p1*zero).get() &&
+    assert(graph::constant_cast(p1*0.0).get() &&
            "Expected a constant node.");
 
-    auto two = graph::two<T> ();
-
-    assert(graph::piecewise_2D_cast(p1*two).get() &&
+    assert(graph::piecewise_2D_cast(p1*2.0).get() &&
            "Expected a piecewise_2D node.");
     assert(graph::multiply_cast(p1*p2).get() &&
            "Expected a multiply node.");
@@ -286,9 +278,9 @@ template<jit::float_scalar T> void piecewise_2D() {
     assert(graph::piecewise_2D_cast(p1*p5).get() &&
            "Expected a piecewise_2D node.");
 
-    assert(graph::piecewise_2D_cast(p1 + zero).get() &&
+    assert(graph::piecewise_2D_cast(p1 + 0.0).get() &&
            "Expected a piecewise_2D node.");
-    assert(graph::piecewise_2D_cast(p1 + two).get() &&
+    assert(graph::piecewise_2D_cast(p1 + 2.0).get() &&
            "Expected a piecewise_2D node.");
     assert(graph::add_cast(p1 + p2).get() &&
            "Expected an add node.");
@@ -299,9 +291,9 @@ template<jit::float_scalar T> void piecewise_2D() {
     assert(graph::piecewise_2D_cast(p1 + p5).get() &&
            "Expected a piecewise_2D node.");
 
-    assert(graph::piecewise_2D_cast(p1 - zero).get() &&
+    assert(graph::piecewise_2D_cast(p1 - 0.0).get() &&
            "Expected a piecewise_2D node.");
-    assert(graph::piecewise_2D_cast(p1 - two).get() &&
+    assert(graph::piecewise_2D_cast(p1 - 2.0).get() &&
            "Expected a piecewise_2D node.");
     assert(graph::subtract_cast(p1 - p2).get() &&
            "Expected a subtract node.");
@@ -312,9 +304,9 @@ template<jit::float_scalar T> void piecewise_2D() {
     assert(graph::piecewise_2D_cast(p1 - p5).get() &&
            "Expected a piecewise_2D node.");
 
-    assert(graph::constant_cast(zero/p1).get() &&
+    assert(graph::constant_cast(0.0/p1).get() &&
            "Expected a constant node.");
-    assert(graph::piecewise_2D_cast(p1/two).get() &&
+    assert(graph::piecewise_2D_cast(p1/2.0).get() &&
            "Expected a piecewise_2D node.");
     assert(graph::multiply_cast(p1/p2).get() &&
            "Expected a multiply node.");
@@ -325,15 +317,15 @@ template<jit::float_scalar T> void piecewise_2D() {
     assert(graph::piecewise_2D_cast(p1/p5).get() &&
            "Expected a piecewise_2D node.");
 
-    assert(graph::piecewise_2D_cast(graph::fma(p1, two, zero)).get() &&
+    assert(graph::piecewise_2D_cast(graph::fma(p1, 2.0, 0.0)).get() &&
            "Expected a piecewise_2D node.");
-    assert(graph::add_cast(graph::fma(p1, two, p2)).get() &&
+    assert(graph::add_cast(graph::fma(p1, 2.0, p2)).get() &&
            "Expected an add node.");
-    assert(graph::multiply_cast(graph::fma(p1, p2, two)).get() &&
+    assert(graph::multiply_cast(graph::fma(p1, p2, 2.0)).get() &&
            "Expected a multiply node.");
     assert(graph::add_cast(graph::fma(p1, p3, p2)).get() &&
            "Expected an add node.");
-    assert(graph::piecewise_2D_cast(graph::fma(p1, p3, two)).get() &&
+    assert(graph::piecewise_2D_cast(graph::fma(p1, p3, 2.0)).get() &&
            "Expected a piecewise_2D node.");
     assert(graph::piecewise_2D_cast(graph::fma(p1, p3, p1)).get() &&
            "Expected a piecewise_2D node.");
@@ -351,7 +343,7 @@ template<jit::float_scalar T> void piecewise_2D() {
     assert(graph::piecewise_2D_cast(graph::log(p1)).get() &&
            "Expected a piecewise_2D node.");
 
-    assert(graph::piecewise_2D_cast(graph::pow(p1, two)).get() &&
+    assert(graph::piecewise_2D_cast(graph::pow(p1, 2.0)).get() &&
            "Expected a piecewise_2D node.");
     assert(graph::pow_cast(graph::pow(p1, p2)).get() &&
            "Expected a pow node.");
@@ -371,7 +363,7 @@ template<jit::float_scalar T> void piecewise_2D() {
     assert(graph::piecewise_2D_cast(graph::tan(p1)).get() &&
            "Expected a piecewise_2D node.");
 
-    assert(graph::piecewise_2D_cast(graph::atan(p1, two)).get() &&
+    assert(graph::piecewise_2D_cast(graph::atan(p1, 2.0)).get() &&
            "Expected a piecewise_2d node.");
     assert(graph::atan_cast(graph::atan(p1, p2)).get() &&
            "Expected an atan node.");

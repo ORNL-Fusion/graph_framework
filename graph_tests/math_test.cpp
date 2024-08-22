@@ -52,8 +52,8 @@ void test_sqrt() {
            "Expected 0.5*sqrt(3)");
 
 //  Reduction sqrt(c*x*c*y) = c*Sqrt(x*y)
-    auto x1 = graph::two<T> ()*graph::variable<T> (1, "x");
-    auto x2 = graph::constant(static_cast<T> (3.0))*graph::variable<T> (1, "y");
+    auto x1 = 2.0*graph::variable<T> (1, "x");
+    auto x2 = 3.0*graph::variable<T> (1, "y");
     auto x = graph::sqrt(x1*x2);
     auto x_cast = graph::multiply_cast(x);
     assert(x_cast.get() && "Expected a multiply node.");
@@ -179,10 +179,9 @@ void test_pow() {
            "Expected ten.");
 
 //  Sqrt(a)^2 = a
-    auto two = graph::two<T> ();
-    assert(graph::pow(graph::sqrt(ten), two)->is_match(ten) &&
+    assert(graph::pow(graph::sqrt(ten), 2.0)->is_match(ten) &&
            "Expected ten.");
-    assert(graph::pow(graph::sqrt(ten), two)->evaluate().at(0) == static_cast<T> (10.0) &&
+    assert(graph::pow(graph::sqrt(ten), 2.0)->evaluate().at(0) == static_cast<T> (10.0) &&
            "Expected ten.");
 
 //  (Sqrt(a))^b -> a^(b/2)
@@ -196,63 +195,62 @@ void test_pow() {
     assert(constant_cast->is(0.5) && "Expected a value of 0.5");
 
 //  (c*Sqrt(b))^a -> c^a*b^a/2
-    assert(graph::multiply_cast(graph::pow(two*graph::sqrt(ten), ten)).get() &&
+    assert(graph::multiply_cast(graph::pow(2.0*graph::sqrt(ten), ten)).get() &&
            "Expected multiply node.");
 //  (Sqrt(b)*c)^a -> c^a*b^a/2
-    assert(graph::multiply_cast(graph::pow(graph::sqrt(ten)*two, ten)).get() &&
+    assert(graph::multiply_cast(graph::pow(graph::sqrt(ten)*2.0, ten)).get() &&
            "Expected multiply node.");
 
 //  (c*b^d)^a -> c^a*b^(a*d)
-    assert(graph::multiply_cast(graph::pow(two*graph::pow(ten, two), ten)).get() &&
+    assert(graph::multiply_cast(graph::pow(2.0*graph::pow(ten, 2.0), ten)).get() &&
            "Expected multiply node.");
 //  ((b^d)*c)^a -> b^(a*d)*c^a
-    assert(graph::multiply_cast(graph::pow(graph::pow(ten, two)*two, ten)).get() &&
+    assert(graph::multiply_cast(graph::pow(graph::pow(ten, 2.0)*2.0, ten)).get() &&
            "Expected multiply node.");
 
 //  (c/Sqrt(b))^a -> c^a/b^a/2
-    assert(graph::divide_cast(graph::pow(two/graph::sqrt(ten), ten)).get() &&
+    assert(graph::divide_cast(graph::pow(2.0/graph::sqrt(ten), ten)).get() &&
            "Expected divide node.");
 //  (Sqrt(b)/c)^a -> (b^a/2)/c^a -> c2*b^a
-    assert(graph::multiply_cast(graph::pow(graph::sqrt(ten)/two, ten)).get() &&
+    assert(graph::multiply_cast(graph::pow(graph::sqrt(ten)/2.0, ten)).get() &&
            "Expected multiply node.");
 
 //  (c/(b^d))^a -> c^a/(b^(a*d))
-    assert(graph::divide_cast(graph::pow(two/graph::pow(ten, two), ten)).get() &&
+    assert(graph::divide_cast(graph::pow(2.0/graph::pow(ten, 2.0), ten)).get() &&
            "Expected divide node.");
 //  ((b^d)/c))^a -> (b^(a*d))/c^a -> c2*b^a
-    assert(graph::multiply_cast(graph::pow(graph::pow(ten, two)/two, ten)).get() &&
+    assert(graph::multiply_cast(graph::pow(graph::pow(ten, 2.0)/2.0, ten)).get() &&
            "Expected multiply node.");
 
 //  a^1/2 -> sqrt(a);
-    assert(graph::sqrt_cast(graph::pow(ten, one/two)).get() &&
+    assert(graph::sqrt_cast(graph::pow(ten, one/2.0)).get() &&
            "Expected sqrt node.");
 
-    auto hundred = graph::pow(ten, two);
+    auto hundred = graph::pow(ten, 2.0);
     assert(hundred->evaluate().at(0) == static_cast<T> (100.0) &&
            "Expected 100");
     const auto non_int = static_cast<T> (0.438763);
-    auto sqrd = graph::pow(graph::constant(non_int), two);
+    auto sqrd = graph::pow(graph::constant(non_int), 2.0);
     assert(sqrd->evaluate().at(0) == static_cast<T> (non_int*non_int) &&
            "Expected x*x");
     const auto non_int_neg = static_cast<T> (-0.438763);
-    auto sqrd_neg = graph::pow(graph::constant(non_int_neg), two);
+    auto sqrd_neg = graph::pow(graph::constant(non_int_neg), 2.0);
     assert(sqrd_neg->evaluate().at(0) == static_cast<T> (non_int_neg*non_int_neg) &&
            "Expected x*x");
 
-    auto three = graph::constant<T> (static_cast<T> (3));
-    auto pow_pow1 = graph::pow(graph::pow(ten, three), two);
-    auto pow_pow2 = graph::pow(ten, three*two);
+    auto pow_pow1 = graph::pow(graph::pow(ten, 3.0), 2.0);
+    auto pow_pow2 = graph::pow(ten, 6.0);
     assert(pow_pow1->is_match(pow_pow2) &&
            "Expected ten to the 6.");
 
-    assert(graph::multiply_cast(graph::pow(two*ten, two)).get() &&
+    assert(graph::multiply_cast(graph::pow(2.0*ten, 2.0)).get() &&
            "Expected multiply node.");
-    assert(graph::multiply_cast(graph::pow(ten*two, two)).get() &&
+    assert(graph::multiply_cast(graph::pow(ten*2.0, 2.0)).get() &&
            "Expected multiply node.");
-    assert(graph::divide_cast(graph::pow(two/ten, two)).get() &&
+    assert(graph::divide_cast(graph::pow(2.0/ten, 2.0)).get() &&
            "Expected divide node.");
 // (v/c)^a -> v^a/c^a -> c2*v^a
-    assert(graph::multiply_cast(graph::pow(ten/two, two)).get() &&
+    assert(graph::multiply_cast(graph::pow(ten/2.0, 2.0)).get() &&
            "Expected multiply node.");
 
 //  sqrt(a)^a -> a^(b/c) -> a^(c2*b)
@@ -261,22 +259,22 @@ void test_pow() {
            "Expected mutliply node.");
 
 //  Test derivatives.
-    auto x2 = graph::pow(ten, two);
+    auto x2 = graph::pow(ten, 2.0);
     auto dx2dx = x2->df(ten);
     assert(graph::multiply_cast(dx2dx).get() && "Expected multiply node.");
 
-    auto x3 = graph::pow(two, ten);
+    auto x3 = graph::pow(2.0, ten);
     auto dx3dx = x3->df(ten);
     assert(graph::multiply_cast(dx3dx).get() && "Expected multiply node.");
 
 //  Test node properties.
     auto var_a = graph::variable<T> (1, "");
-    auto pow_const = graph::pow(three, graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                                static_cast<T> (2.0)}), var_a));
+    auto pow_const = graph::pow(3.0, graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                                              static_cast<T> (2.0)}), var_a));
     assert(pow_const->is_constant() && "Expected a constant.");
     assert(!pow_const->is_all_variables() && "Did not expect a variable.");
     assert(pow_const->is_power_like() && "Expected a power like.");
-    auto pow_var = graph::pow(var_a, three);
+    auto pow_var = graph::pow(var_a, 3.0);
     assert(!pow_var->is_constant() && "Did not expect a constant.");
     assert(pow_var->is_all_variables() && "Expected a variable.");
     assert(pow_var->is_power_like() && "Expected a power like.");
@@ -294,8 +292,7 @@ void test_pow() {
     assert((powpow_int_cast.get() &&
             graph::multiply_cast(powpow_int_cast->get_right())) &&
            "Expected multiply node.");
-    auto powpow_float =  graph::pow(graph::pow(var_a, var_b),
-                                    graph::constant<T> (static_cast<T> (1.5)));
+    auto powpow_float =  graph::pow(graph::pow(var_a, var_b), 1.5);
     auto powpow_float_cast = graph::pow_cast(powpow_float);
     assert((powpow_int_cast.get() &&
             !graph::multiply_cast(powpow_float_cast->get_right())) &&
@@ -309,20 +306,19 @@ void test_pow() {
 
 //  Test pow of exp
 //  Exp[x]^n -> Exp[n*x] when n is an integer.
-    auto powexp_int = graph::pow(graph::exp(var_a), 
-                                 graph::constant<T> (static_cast<T> (3.0)));
+    auto powexp_int = graph::pow(graph::exp(var_a), 3.0);
     auto powexp_int_cast = graph::exp_cast(powexp_int);
     assert((powexp_int_cast.get() &&
             graph::multiply_cast(powexp_int_cast->get_arg())) &&
            "Expected multiply node in exp argument.");
-    auto powexp_float = graph::pow(graph::exp(var_a),
-                                   graph::constant<T> (static_cast<T> (1.5)));
+    auto powexp_float = graph::pow(graph::exp(var_a), 1.5);
     auto powexp_float_cast = graph::pow_cast(powexp_float);
     assert(powexp_float_cast.get() &&
            "Expected power cast.");
 
 //  c1^c2
-    assert(graph::constant_cast(graph::pow(two, three)).get() &&
+    assert(graph::constant_cast(graph::pow(graph::constant<T> (static_cast<T> (2.0)),
+                                           graph::constant<T> (static_cast<T> (3.0)))).get() &&
            "Expected a constant node.");
 }
 

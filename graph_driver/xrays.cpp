@@ -713,7 +713,7 @@ void bin_power(const commandline::parser &cl,
             auto dl = dlvec->length();
             auto kdl = kamp*dl;
             auto k_next = kdl + k_sum;
-            auto p_next = graph::exp(graph::none<T, SAFE_MATH> ()*graph::two<T, SAFE_MATH> ()*k_sum);
+            auto p_next = graph::exp(-2.0*k_sum);
             auto d_power = p_next - power;
             d_power = graph::sqrt(d_power*d_power);
 

@@ -93,7 +93,7 @@ namespace graph {
             if (am.get()) {
                 auto lc = constant_cast(am->get_left());
                 if (lc.get() && lc->evaluate().is_negative()) {
-                    return none<T, SAFE_MATH> ()*sin(none<T, SAFE_MATH> ()*this->arg);
+                    return -sin(-this->arg);
                 }
             }
 
@@ -339,7 +339,7 @@ namespace graph {
             if (am.get()) {
                 auto lc = constant_cast(am->get_left());
                 if (lc.get() && lc->evaluate().is_negative()) {
-                    return cos(none<T, SAFE_MATH> ()*this->arg);
+                    return cos(-this->arg);
                 }
             }
 
@@ -362,7 +362,7 @@ namespace graph {
 
             const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
-                this->df_cache[hash] = none<T, SAFE_MATH> ()*sin(this->arg)*this->arg->df(x);
+                this->df_cache[hash] = -sin(this->arg)*this->arg->df(x);
             }
             return this->df_cache[hash];
         }
@@ -653,15 +653,14 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         df(shared_leaf<T, SAFE_MATH> x) {
-            auto one_constant = one<T, SAFE_MATH> ();
             if (this->is_match(x)) {
-                return one_constant;
+                return one<T, SAFE_MATH> ();
             }
 
             const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 auto z = this->right/this->left;
-                this->df_cache[hash] = (one_constant/(one_constant + z*z))*z->df(x);
+                this->df_cache[hash] = (1.0/(1.0 + z*z))*z->df(x);
             }
             return this->df_cache[hash];
         }
@@ -801,6 +800,38 @@ namespace graph {
 #else
         assert(false && "Should never reach.");
 #endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build power node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> atan(const L l,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        return atan(constant<T, SAFE_MATH> (static_cast<L> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build power node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> atan(shared_leaf<T, SAFE_MATH> l,
+                                  const R r) {
+        return atan(l, constant<T, SAFE_MATH> (static_cast<R> (r)));
     }
 
 ///  Convenience type alias for shared add nodes.

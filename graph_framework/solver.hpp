@@ -531,15 +531,12 @@ namespace solver {
             this->y2  = dt*D2.get_dydt();
             this->z2  = dt*D2.get_dzdt();
 
-            auto two = graph::two<typename DISPERSION_FUNCTION::base,
-                                  DISPERSION_FUNCTION::safe_math> ();
-
-            this->kx_next = this->kx + (this->kx1 + this->kx2)/two;
-            this->ky_next = this->ky + (this->ky1 + this->ky2)/two;
-            this->kz_next = this->kz + (this->kz1 + this->kz2)/two;
-            this->x_next  = this->x  + (this->x1  + this->x2 )/two;
-            this->y_next  = this->y  + (this->y1  + this->y2 )/two;
-            this->z_next  = this->z  + (this->z1  + this->z2 )/two;
+            this->kx_next = this->kx + (this->kx1 + this->kx2)/2.0;
+            this->ky_next = this->ky + (this->ky1 + this->ky2)/2.0;
+            this->kz_next = this->kz + (this->kz1 + this->kz2)/2.0;
+            this->x_next  = this->x  + (this->x1  + this->x2 )/2.0;
+            this->y_next  = this->y  + (this->y1  + this->y2 )/2.0;
+            this->z_next  = this->z  + (this->z1  + this->z2 )/2.0;
             this->t_next  = this->t  + dt;
         }
     };
@@ -685,18 +682,15 @@ namespace solver {
             this->y1  = dt*this->D.get_dydt();
             this->z1  = dt*this->D.get_dzdt();
 
-            auto two = graph::two<typename DISPERSION_FUNCTION::base,
-                                  DISPERSION_FUNCTION::safe_math> ();
-
-            this->t_sub = this->t + dt/two;
+            this->t_sub = this->t + dt/2.0;
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
-                                                                     graph::pseudo_variable(this->kx + kx1/two),
-                                                                     graph::pseudo_variable(this->ky + ky1/two),
-                                                                     graph::pseudo_variable(this->kz + kz1/two),
-                                                                     graph::pseudo_variable(this->x  +  x1/two),
-                                                                     graph::pseudo_variable(this->y  +  y1/two),
-                                                                     graph::pseudo_variable(this->z  +  z1/two),
+                                                                     graph::pseudo_variable(this->kx + kx1/2.0),
+                                                                     graph::pseudo_variable(this->ky + ky1/2.0),
+                                                                     graph::pseudo_variable(this->kz + kz1/2.0),
+                                                                     graph::pseudo_variable(this->x  +  x1/2.0),
+                                                                     graph::pseudo_variable(this->y  +  y1/2.0),
+                                                                     graph::pseudo_variable(this->z  +  z1/2.0),
                                                                      graph::pseudo_variable(this->t_sub),
                                                                      eq);
 
@@ -708,12 +702,12 @@ namespace solver {
             this->z2  = dt*D2.get_dzdt();
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D3(this->w,
-                                                                     graph::pseudo_variable(this->kx + kx2/two),
-                                                                     graph::pseudo_variable(this->ky + ky2/two),
-                                                                     graph::pseudo_variable(this->kz + kz2/two),
-                                                                     graph::pseudo_variable(this->x  +  x2/two),
-                                                                     graph::pseudo_variable(this->y  +  y2/two),
-                                                                     graph::pseudo_variable(this->z  +  z2/two),
+                                                                     graph::pseudo_variable(this->kx + kx2/2.0),
+                                                                     graph::pseudo_variable(this->ky + ky2/2.0),
+                                                                     graph::pseudo_variable(this->kz + kz2/2.0),
+                                                                     graph::pseudo_variable(this->x  +  x2/2.0),
+                                                                     graph::pseudo_variable(this->y  +  y2/2.0),
+                                                                     graph::pseudo_variable(this->z  +  z2/2.0),
                                                                      graph::pseudo_variable(this->t_sub),
                                                                      eq);
 
@@ -743,15 +737,12 @@ namespace solver {
             this->y4  = dt*D4.get_dydt();
             this->z4  = dt*D4.get_dzdt();
 
-            auto six = graph::constant<typename DISPERSION_FUNCTION::base,
-                                       DISPERSION_FUNCTION::safe_math>(static_cast<typename DISPERSION_FUNCTION::base> (6.0));
-
-            this->kx_next = this->kx + (this->kx1 + two*(this->kx2 + this->kx3) + this->kx4)/six;
-            this->ky_next = this->ky + (this->ky1 + two*(this->ky2 + this->ky3) + this->ky4)/six;
-            this->kz_next = this->kz + (this->kz1 + two*(this->kz2 + this->kz3) + this->kz4)/six;
-            this->x_next  = this->x  + (this->x1  + two*(this->x2  + this->x3 ) + this->x4 )/six;
-            this->y_next  = this->y  + (this->y1  + two*(this->y2  + this->y3 ) + this->y4 )/six;
-            this->z_next  = this->z  + (this->z1  + two*(this->z2  + this->z3 ) + this->z4 )/six;
+            this->kx_next = this->kx + (this->kx1 + 2.0*(this->kx2 + this->kx3) + this->kx4)/6.0;
+            this->ky_next = this->ky + (this->ky1 + 2.0*(this->ky2 + this->ky3) + this->ky4)/6.0;
+            this->kz_next = this->kz + (this->kz1 + 2.0*(this->kz2 + this->kz3) + this->kz4)/6.0;
+            this->x_next  = this->x  + (this->x1  + 2.0*(this->x2  + this->x3 ) + this->x4 )/6.0;
+            this->y_next  = this->y  + (this->y1  + 2.0*(this->y2  + this->y3 ) + this->y4 )/6.0;
+            this->z_next  = this->z  + (this->z1  + 2.0*(this->z2  + this->z3 ) + this->z4 )/6.0;
         }
     };
 
@@ -973,13 +964,11 @@ namespace solver {
                    zero->is_match(this->D.get_dzdt()->df(z))   &&
                    "Hamiltonian is not separable.");
 
-            auto two = graph::two<typename DISPERSION_FUNCTION::base> ();
-
             this->t_next = this->t + dt;
 
-            this->x1 = this->x + dt*this->D.get_dxdt()/two;
-            this->y1 = this->y + dt*this->D.get_dydt()/two;
-            this->z1 = this->z + dt*this->D.get_dzdt()/two;
+            this->x1 = this->x + dt*this->D.get_dxdt()/2.0;
+            this->y1 = this->y + dt*this->D.get_dydt()/2.0;
+            this->z1 = this->z + dt*this->D.get_dzdt()/2.0;
 
             dispersion::dispersion_interface<DISPERSION_FUNCTION> D2(this->w,
                                                                      graph::pseudo_variable(this->kx),
@@ -1005,9 +994,9 @@ namespace solver {
                                                                      graph::pseudo_variable(this->t),
                                                                      eq);
 
-            this->x_next  = this->x1 + dt*D3.get_dxdt()/two;
-            this->y_next  = this->y1 + dt*D3.get_dydt()/two;
-            this->z_next  = this->z1 + dt*D3.get_dzdt()/two;
+            this->x_next  = this->x1 + dt*D3.get_dxdt()/2.0;
+            this->y_next  = this->y1 + dt*D3.get_dydt()/2.0;
+            this->z_next  = this->z1 + dt*D3.get_dzdt()/2.0;
         }
     };
 }
