@@ -6,6 +6,8 @@
 #ifndef math_h
 #define math_h
 
+#include <cmath>
+
 #include "node.hpp"
 
 namespace graph {
@@ -90,7 +92,7 @@ namespace graph {
                 auto bc = constant_cast(ap->get_right());
                 if ((bc.get() && !bc->is(2)) || !bc.get()) {
                     return pow(ap->get_left(),
-                               ap->get_right()/two<T, SAFE_MATH> ());
+                               ap->get_right()/2.0);
                 }
             }
 
@@ -139,7 +141,7 @@ namespace graph {
             const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = this->arg->df(x)
-                                     / (two<T, SAFE_MATH> ()*this->shared_from_this());
+                                     / (2.0*this->shared_from_this());
             }
             return this->df_cache[hash];
         }
@@ -224,7 +226,7 @@ namespace graph {
 ///  @returns The exponent of a power like node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
-            return half<T, SAFE_MATH> ();
+            return constant<T, SAFE_MATH> (static_cast<T> (0.5));
         }
 
 //------------------------------------------------------------------------------
@@ -979,7 +981,7 @@ namespace graph {
             auto lsq = sqrt_cast(this->left);
             if (lsq.get()) {
                 return pow(lsq->get_arg(),
-                           this->right/two<T, SAFE_MATH> ());
+                           this->right/2.0);
             }
 
 //  Reduce exp(x)^n -> exp(n*x) when x is an integer.
@@ -1007,7 +1009,7 @@ namespace graph {
 
             const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
-                this->df_cache[hash] = pow(this->left, this->right - one<T, SAFE_MATH> ()) 
+                this->df_cache[hash] = pow(this->left, this->right - 1.0)
                                      * (this->right*this->left->df(x) +
                                         this->left*log(this->left)*this->right->df(x));
             }
@@ -1204,6 +1206,38 @@ namespace graph {
 #endif
     }
 
+//------------------------------------------------------------------------------
+///  @brief Build power node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> pow(const L l,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        return pow(constant<T, SAFE_MATH> (static_cast<T> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build power node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> pow(shared_leaf<T, SAFE_MATH> l,
+                                  const R r) {
+        return pow(l, constant<T, SAFE_MATH> (static_cast<T> (r)));
+    }
+
 ///  Convenience type alias for shared add nodes.
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_pow = std::shared_ptr<pow_node<T, SAFE_MATH>>;
@@ -1307,7 +1341,7 @@ namespace graph {
 
             const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
-                this->df_cache[hash] = two<T, SAFE_MATH> ()/sqrt(pi<T, SAFE_MATH> ())
+                this->df_cache[hash] = 2.0/std::sqrt(M_PI)
                                      * exp(this->arg*this->arg)*this->arg->df(x);
             }
             return this->df_cache[hash];

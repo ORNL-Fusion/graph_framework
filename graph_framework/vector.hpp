@@ -137,6 +137,146 @@ namespace graph {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
+///  @returns A vector.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> vector(const L x,
+                                       shared_leaf<T, SAFE_MATH> y,
+                                       shared_leaf<T, SAFE_MATH> z) {
+        return std::make_shared<vector_quantity<T, SAFE_MATH>> (constant<T, SAFE_MATH> (static_cast<T> (x)), y, z);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam M         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
+///  @returns A vector.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar M, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> vector(shared_leaf<T, SAFE_MATH> x,
+                                       const M y,
+                                       shared_leaf<T, SAFE_MATH> z) {
+        return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, constant<T, SAFE_MATH> (static_cast<T> (y)), z);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
+///  @returns A vector.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> vector(shared_leaf<T, SAFE_MATH> x,
+                                       shared_leaf<T, SAFE_MATH> y,
+                                       const R z) {
+        return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, y, constant<T, SAFE_MATH> (static_cast<T> (z)));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam M         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
+///  @returns A vector.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, jit::float_scalar M, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> vector(const L x,
+                                       const M y,
+                                       shared_leaf<T, SAFE_MATH> z) {
+        return std::make_shared<vector_quantity<T, SAFE_MATH>> (constant<T, SAFE_MATH> (static_cast<T> (x)),
+                                                                constant<T, SAFE_MATH> (static_cast<T> (y)), z);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam M         Float type for the constant.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
+///  @returns A vector.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar M, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> vector(shared_leaf<T, SAFE_MATH> x,
+                                       const M y,
+                                       const R z) {
+        return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, constant<T, SAFE_MATH> (static_cast<T> (y)),
+                                                                constant<T, SAFE_MATH> (static_cast<T> (z)));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
+///  @returns A vector.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> vector(const L x,
+                                       shared_leaf<T, SAFE_MATH> y,
+                                       const R z) {
+        return std::make_shared<vector_quantity<T, SAFE_MATH>> (constant<T, SAFE_MATH> (static_cast<T> (x)), y,
+                                                                constant<T, SAFE_MATH> (static_cast<T> (z)));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build a shared vector quantity.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] x X vector component.
+///  @params[in] y Y vector component.
+///  @params[in] z Z Vector component.
+///  @returns A vector.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> vector(const T x,
+                                       const T y,
+                                       const T z) {
+        return std::make_shared<vector_quantity<T, SAFE_MATH>> (constant<T, SAFE_MATH> (static_cast<T> (x)),
+                                                                constant<T, SAFE_MATH> (static_cast<T> (y)),
+                                                                constant<T, SAFE_MATH> (static_cast<T> (z)));
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Addition operator.
 ///
 ///  @tparam T         Base type of the calculation.

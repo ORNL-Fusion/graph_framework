@@ -227,7 +227,7 @@ namespace graph {
 
 //  Idenity reductions.
             if (this->left->is_match(this->right)) {
-                return two<T, SAFE_MATH> ()*this->left;
+                return 2.0*this->left;
             }
             
 //  Common factor reduction. If the left and right are both muliply nodes check
@@ -284,17 +284,17 @@ namespace graph {
             auto la = add_cast(this->left);
             if (la.get()) {
                 if (this->right->is_match(la->get_left())) {
-                    return fma(two<T, SAFE_MATH> (), this->right, la->get_right());
+                    return fma(2.0, this->right, la->get_right());
                 } else if (this->right->is_match(la->get_right())) {
-                    return fma(two<T, SAFE_MATH> (), this->right, la->get_left());
+                    return fma(2.0, this->right, la->get_left());
                 }
             }
             auto ra = add_cast(this->right);
             if (ra.get()) {
                 if (this->left->is_match(ra->get_left())) {
-                    return fma(two<T, SAFE_MATH> (), this->left, ra->get_right());
+                    return fma(2.0, this->left, ra->get_right());
                 } else if (this->left->is_match(ra->get_right())) {
-                    return fma(two<T, SAFE_MATH> (), this->left, ra->get_left());
+                    return fma(2.0, this->left, ra->get_left());
                 }
             }
 
@@ -588,6 +588,44 @@ namespace graph {
         return add<T, SAFE_MATH> (l, r);
     }
 
+//------------------------------------------------------------------------------
+///  @brief Build add node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator+(const L l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return add<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build add node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator+(shared_leaf<T, SAFE_MATH> l,
+                                        const R r) {
+        return add<T, SAFE_MATH> (l, constant<T, SAFE_MATH> (static_cast<T> (r)));
+    }
+
 ///  Convenience type alias for shared add nodes.
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_add = std::shared_ptr<add_node<T, SAFE_MATH>>;
@@ -679,13 +717,13 @@ namespace graph {
             auto r = constant_cast(this->right);
 
             if (l.get() && l->is(0)) {
-                return none<T, SAFE_MATH> ()*this->right;
+                return -this->right;
             } else if (r.get() && r->is(0)) {
                 return this->left;
             } else if (l.get() && r.get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
             } else if (r.get() && r->evaluate().is_negative()) {
-                return this->left + none<T, SAFE_MATH> ()*this->right;
+                return this->left + -this->right;
             }
 
             auto pl1 = piecewise_1D_cast(this->left);
@@ -756,7 +794,7 @@ namespace graph {
                 if (rmc.get() && rmc->is(-1)) {
                     return this->left + rm->get_right();
                 } else if (rmc.get() && rmc->evaluate().is_negative()) {
-                    return this->left + (none<T, SAFE_MATH> ()*rm->get_left())*rm->get_right();
+                    return this->left + -rm->get_left()*rm->get_right();
                 }
             }
 
@@ -771,18 +809,18 @@ namespace graph {
 //  a*v - v = (a - 1)*v
 //  v*a - v = (a - 1)*v
                 if (this->right->is_match(lm->get_right())) {
-                    return (lm->get_left() - one<T, SAFE_MATH> ())*this->right;
+                    return (lm->get_left() - 1.0)*this->right;
                 } else if (this->right->is_match(lm->get_left())) {
-                    return (lm->get_right() - one<T, SAFE_MATH> ())*this->right;
+                    return (lm->get_right() - 1.0)*this->right;
                 }
             }
 //  v - a*v = (1 - a)*v
 //  v - v*a = (1 - a)*v
             if (rm.get()) {
                 if (this->left->is_match(rm->get_right())) {
-                    return (one<T, SAFE_MATH> () - rm->get_left())*this->left;
+                    return (1.0 - rm->get_left())*this->left;
                 } else if (this->left->is_match(rm->get_left())) {
-                    return (one<T, SAFE_MATH> () - rm->get_right())*this->left;
+                    return (1.0 - rm->get_right())*this->left;
                 }
             }
 
@@ -1146,6 +1184,7 @@ namespace graph {
 ///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
+///  @returns l - r
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> subtract(shared_leaf<T, SAFE_MATH> l,
@@ -1170,18 +1209,79 @@ namespace graph {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Build subtract operator from two leaves.
+///  @brief Build subtract node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
 ///  @params[in] l Left branch.
 ///  @params[in] r Right branch.
+///  @returns l - r
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator-(shared_leaf<T, SAFE_MATH> l,
                                         shared_leaf<T, SAFE_MATH> r) {
         return subtract<T, SAFE_MATH> (l, r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build subtract node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+///  @returns l - r
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator-(const L l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return subtract<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build subtract node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+///  @returns l - r
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator-(shared_leaf<T, SAFE_MATH> l,
+                                        const R r) {
+        return subtract<T, SAFE_MATH> (l, constant<T, SAFE_MATH> (static_cast<T> (r)));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Negate a node.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] a Argument to negate.
+///  @returns -1.0*a
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator-(shared_leaf<T, SAFE_MATH> a) {
+        return -1.0*a;
     }
 
 ///  Convenience type alias for shared subtract nodes.
@@ -1375,7 +1475,7 @@ namespace graph {
 
 //  Reduce x*x to x^2
             if (this->left->is_match(this->right)) {
-                return pow(this->left, two<T, SAFE_MATH> ());
+                return pow(this->left, 2.0);
             }
 
 //  Gather common terms.
@@ -1552,8 +1652,7 @@ namespace graph {
             if (rp.get()) {
                 auto exponent = constant_cast(rp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
-                    return this->left/pow(rp->get_left(),
-                                          none<T, SAFE_MATH> ()*rp->get_right());
+                    return this->left/pow(rp->get_left(), -rp->get_right());
                 }
             }
 //  b^-c*a -> a/b^c
@@ -1561,8 +1660,7 @@ namespace graph {
             if (lp.get()) {
                 auto exponent = constant_cast(lp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
-                    return this->right/pow(lp->get_left(),
-                                           none<T, SAFE_MATH> ()*lp->get_right());
+                    return this->right/pow(lp->get_left(), -lp->get_right());
                 }
             }
 
@@ -1961,7 +2059,10 @@ namespace graph {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Build multiply operator from two leaves.
+///  @brief Build multiply node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
@@ -1973,6 +2074,44 @@ namespace graph {
     shared_leaf<T, SAFE_MATH> operator*(shared_leaf<T, SAFE_MATH> l,
                                         shared_leaf<T, SAFE_MATH> r) {
         return multiply<T, SAFE_MATH> (l, r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build multiply node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator*(const L l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return multiply<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build multiply node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator*(shared_leaf<T, SAFE_MATH> l,
+                                        const R r) {
+        return multiply<T, SAFE_MATH> (l, constant<T, SAFE_MATH> (static_cast<T> (r)));
     }
 
 ///  Convenience type alias for shared multiply nodes.
@@ -2129,7 +2268,7 @@ namespace graph {
 
 //  Reduce cases of a/c1 -> c2*a
             if (this->right->is_constant()) {
-                return (one<T, SAFE_MATH> ()/this->right)*this->left;
+                return (1.0/this->right)*this->left;
             }
 
 //  fma(a,d,c*d)/d -> a + c
@@ -2279,8 +2418,7 @@ namespace graph {
             if (rp.get()) {
                 auto exponent = constant_cast(rp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
-                    return this->left*pow(rp->get_left(),
-                                          none<T, SAFE_MATH> ()*rp->get_right());
+                    return this->left*pow(rp->get_left(), -rp->get_right());
                 }
             }
 
@@ -2546,7 +2684,10 @@ namespace graph {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Build divide operator from two leaves.
+///  @brief Build divide node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
@@ -2558,6 +2699,44 @@ namespace graph {
     shared_leaf<T, SAFE_MATH> operator/(shared_leaf<T, SAFE_MATH> l,
                                         shared_leaf<T, SAFE_MATH> r) {
         return divide<T, SAFE_MATH> (l, r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build divide node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator/(const L l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return divide<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build multiply node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator/(shared_leaf<T, SAFE_MATH> l,
+                                        const R r) {
+        return divide<T, SAFE_MATH> (l, constant<T, SAFE_MATH> (static_cast<T> (r)));
     }
 
 ///  Convenience type alias for shared divide nodes.
@@ -2689,9 +2868,9 @@ namespace graph {
 //  fma(a,b,a) -> a*(1 + b)
 //  fma(b,a,a) -> a*(1 + b)
             if (this->left->is_match(this->right)) {
-                return this->left*(one<T, SAFE_MATH> () + this->middle);
+                return this->left*(1.0 + this->middle);
             } else if (this->middle->is_match(this->right)) {
-                return this->middle*(one<T, SAFE_MATH> () + this->left);
+                return this->middle*(1.0 + this->left);
             }
 
 //  Common factor reduction. If the left and right are both multiply nodes check
@@ -3250,12 +3429,10 @@ namespace graph {
 //  fma(a,b,fma(b,a,c)) -> fma(2*a,b,c)
                 if (this->left->is_match(rfma->get_left()) &&
                     this->middle->is_match(rfma->get_middle())) {
-                    return fma(two<T, SAFE_MATH> ()*this->left, this->middle,
-                               rfma->get_right());
+                    return fma(2.0*this->left, this->middle, rfma->get_right());
                 } else if (this->left->is_match(rfma->get_middle()) &&
                            this->middle->is_match(rfma->get_left())) {
-                    return fma(two<T, SAFE_MATH> ()*this->left, this->middle,
-                               rfma->get_right());
+                    return fma(2.0*this->left, this->middle, rfma->get_right());
                 }
 
 //  fma(a,b/c,fma(e,f/c,g)) -> (a*b + e*f)/c + g
@@ -3320,16 +3497,16 @@ namespace graph {
             if (lp.get()) {
                 auto exponent = constant_cast(lp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
-                    return this->middle/pow(lp->get_left(),
-                                            none<T, SAFE_MATH> ()*lp->get_right()) + this->right;
+                    return this->middle/pow(lp->get_left(), -lp->get_right()) +
+                           this->right;
                 }
             }
             auto mp = pow_cast(this->middle);
             if (mp.get()) {
                 auto exponent = constant_cast(mp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
-                    return this->left/pow(mp->get_left(),
-                                            none<T, SAFE_MATH> ()*mp->get_right()) + this->right;
+                    return this->left/pow(mp->get_left(), -mp->get_right()) +
+                           this->right;
                 }
             }
 
@@ -3338,7 +3515,7 @@ namespace graph {
             if (md.get() && rd.get()) {
                 if (md->get_left()->is_match(rd->get_left())) {
                     return md->get_left()*(this->left/md->get_right() +
-                                           one<T, SAFE_MATH> ()/rd->get_right());
+                                           1.0/rd->get_right());
                 } else if (md->get_right()->is_match(rd->get_right())) {
                     return (this->left*md->get_left() +
                             rd->get_left())/md->get_right();
@@ -3349,7 +3526,7 @@ namespace graph {
             if (ld.get() && rd.get()) {
                 if (ld->get_left()->is_match(rd->get_left())) {
                     return ld->get_left()*(this->middle/ld->get_right() +
-                                           one<T, SAFE_MATH> ()/rd->get_right());
+                                           1.0/rd->get_right());
                 } else if (ld->get_right()->is_match(rd->get_right())) {
                     return (this->middle*ld->get_left() +
                             rd->get_left())/ld->get_right();
@@ -3868,6 +4045,138 @@ namespace graph {
 #else
         assert(false && "Should never reach.");
 #endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build divide node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> fma(const L l,
+                                  shared_leaf<T, SAFE_MATH> m,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        return fma<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)), m, r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build divide node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam M         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar M, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
+                                  const M m,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        return fma<T, SAFE_MATH> (l, constant<T, SAFE_MATH> (static_cast<T> (m)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build multiply node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
+                                  shared_leaf<T, SAFE_MATH> m,
+                                  const R r) {
+        return fma<T, SAFE_MATH> (l, m, constant<T, SAFE_MATH> (static_cast<T> (r)));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build divide node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam M         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, jit::float_scalar M, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> fma(const L l,
+                                  const M m,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        return fma<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)),
+                                  constant<T, SAFE_MATH> (static_cast<T> (m)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build divide node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam M         Float type for the constant.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar M, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
+                                  const M m,
+                                  const R r) {
+        return fma<T, SAFE_MATH> (l, constant<T, SAFE_MATH> (static_cast<T> (m)),
+                                  constant<T, SAFE_MATH> (static_cast<T> (r)));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build multiply node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @params[in] l Left branch.
+///  @params[in] m Middle branch.
+///  @params[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar L, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> fma(const L l,
+                                  shared_leaf<T, SAFE_MATH> m,
+                                  const R r) {
+        return fma<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)), m,
+                                  constant<T, SAFE_MATH> (static_cast<T> (r)));
     }
 
 ///  Convenience type alias for shared add nodes.

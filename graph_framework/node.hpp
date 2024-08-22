@@ -614,83 +614,9 @@ namespace graph {
         return constant<T, SAFE_MATH> (static_cast<T> (1.0));
     }
 
-//------------------------------------------------------------------------------
-///  @brief Create a negative one constant.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @returns A negative one constant.
-//------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH=false>
-     constexpr shared_leaf<T, SAFE_MATH> none() {
-        return constant<T, SAFE_MATH> (static_cast<T> (-1.0));
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Create a two constant.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @returns A two constant.
-//------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH=false>
-    constexpr shared_leaf<T, SAFE_MATH> two() {
-        return constant<T, SAFE_MATH> (static_cast<T> (2.0));
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Create a two constant.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @returns A two constant.
-//------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH=false>
-    constexpr shared_leaf<T, SAFE_MATH> pi() {
-        return constant<T, SAFE_MATH> (static_cast<T> (M_PI));
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Create a two constant.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @returns A two constant.
-//------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH=false>
-    constexpr shared_leaf<T, SAFE_MATH> half() {
-        return constant<T, SAFE_MATH> (static_cast<T> (0.5));
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Create a machine epsilon constant.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @returns A two constant.
-//------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH=false>
-    constexpr shared_leaf<T, SAFE_MATH> epsilon() {
-        return constant(std::numeric_limits<T>::epsilon());
-    }
-
-//------------------------------------------------------------------------------
-/// @brief Create an imaginary constant.
-///
-///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
-///
-///  @returns An imaginary constant.
-//------------------------------------------------------------------------------
-    template<jit::complex_scalar T, bool SAFE_MATH=false>
-    constexpr shared_leaf<T, SAFE_MATH> i() {
-        return constant<T, SAFE_MATH> (T(0.0, 1.0));
-    }
+///  Convinece type for imaginary constant.
+    template<jit::complex_scalar T>
+    constexpr T i = T(0.0, 1.0);
 
 ///  Convenience type alias for shared constant nodes.
     template<jit::float_scalar T, bool SAFE_MATH=false>

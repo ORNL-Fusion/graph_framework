@@ -467,10 +467,7 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
                            graph::shared_leaf<T, SAFE_MATH> y,
                            graph::shared_leaf<T, SAFE_MATH> z) final {
-            auto zero = graph::zero<T, SAFE_MATH> ();
-            return graph::vector(zero, zero,
-                                 graph::constant<T, SAFE_MATH> (static_cast<T> (0.1))*x +
-                                 graph::one<T, SAFE_MATH> ());
+            return graph::vector(0.0, 0.0, 0.1*x + 1.0);
         }
     };
 
@@ -701,10 +698,7 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
                            graph::shared_leaf<T, SAFE_MATH> y,
                            graph::shared_leaf<T, SAFE_MATH> z) final {
-            auto zero = graph::zero<T, SAFE_MATH> ();
-            return graph::vector(zero, zero,
-                                 graph::constant<T, SAFE_MATH> (static_cast<T> (0.01))*x +
-                                 graph::one<T, SAFE_MATH> ());
+            return graph::vector(0.0, 0.0, 0.01*x + 1.0);
         }
     };
 
@@ -1064,7 +1058,6 @@ namespace equilibrium {
                 ti_cache = (pressure - ne_cache*te_cache*q)/(ni_cache*q);
                 
                 auto phi = graph::atan(x, y);
-                auto none = graph::none<T, SAFE_MATH> ();
 
                 auto br = psi->df(z)/r;
 
@@ -1078,7 +1071,7 @@ namespace equilibrium {
                            b2_temp*r_norm*r_norm +
                            b3_temp*r_norm*r_norm*r_norm)/r;
 
-                auto bz = none*psi->df(r)/r;
+                auto bz = -psi->df(r)/r;
 
                 auto cos = graph::cos(phi);
                 auto sin = graph::sin(phi);
@@ -1626,12 +1619,11 @@ namespace equilibrium {
             auto cosv = graph::cos(v_cache);
             auto sinv = graph::sin(v_cache);
             auto one = graph::one<T, SAFE_MATH> ();
-            auto none = graph::none<T, SAFE_MATH> ();
             auto zero = graph::zero<T, SAFE_MATH> ();
 
-            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
-                                   graph::vector(sinv, cosv,      zero),
-                                   graph::vector(zero, zero,      one ));
+            auto m = graph::matrix(graph::vector(cosv, -sinv, zero),
+                                   graph::vector(sinv, cosv,  zero),
+                                   graph::vector(zero, zero,  one ));
             return m->dot(graph::vector(r->df(s_cache),
                                         zero,
                                         z->df(s_cache)));
@@ -1650,12 +1642,11 @@ namespace equilibrium {
             auto cosv = graph::cos(v_cache);
             auto sinv = graph::sin(v_cache);
             auto one = graph::one<T, SAFE_MATH> ();
-            auto none = graph::none<T, SAFE_MATH> ();
             auto zero = graph::zero<T, SAFE_MATH> ();
                         
-            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
-                                   graph::vector(sinv, cosv,      zero),
-                                   graph::vector(zero, zero,      one ));
+            auto m = graph::matrix(graph::vector(cosv, -sinv, zero),
+                                   graph::vector(sinv, cosv,  zero),
+                                   graph::vector(zero, zero,  one ));
             return m->dot(graph::vector(r->df(u_cache),
                                         zero,
                                         z->df(u_cache)));
@@ -1674,12 +1665,11 @@ namespace equilibrium {
             auto cosv = graph::cos(v_cache);
             auto sinv = graph::sin(v_cache);
             auto one = graph::one<T, SAFE_MATH> ();
-            auto none = graph::none<T, SAFE_MATH> ();
             auto zero = graph::zero<T, SAFE_MATH> ();
 
-            auto m = graph::matrix(graph::vector(cosv, none*sinv, zero),
-                                   graph::vector(sinv, cosv,      zero),
-                                   graph::vector(zero, zero,      one ));
+            auto m = graph::matrix(graph::vector(cosv, -sinv, zero),
+                                   graph::vector(sinv, cosv,  zero),
+                                   graph::vector(zero, zero,  one ));
             return m->dot(graph::vector(r->df(v_cache),
                                         r,
                                         z->df(v_cache)));
@@ -1812,10 +1802,9 @@ namespace equilibrium {
                 esupu_cache = esubv->cross(esubs)/jacobian;
                 esupv_cache = esubs->cross(esubu)/jacobian;
 
-                auto one = graph::one<T, SAFE_MATH> ();
                 auto phip = get_phi(s)->df(s);
                 auto jbsupu = get_chi(s_norm_f)->df(s) - phip*l->df(v);
-                auto jbsupv = phip*(one + l->df(u));
+                auto jbsupv = phip*(1.0 + l->df(u));
                 bvec_cache = (jbsupu*esubu + jbsupv*esubv)/jacobian;
             }
         }
@@ -1828,10 +1817,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
         get_profile(graph::shared_leaf<T, SAFE_MATH> s) {
-            auto one = graph::one<T, SAFE_MATH> ();
-            auto alpha = graph::constant<T, SAFE_MATH> (static_cast<T> (1.5));
-            auto beta = graph::two<T, SAFE_MATH> ();
-            return graph::pow((one - graph::pow(graph::sqrt(s*s), alpha)), beta);
+            return graph::pow((1.0 - graph::pow(graph::sqrt(s*s), 1.5)), 2.0);
         }
 
     public:
