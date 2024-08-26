@@ -189,12 +189,17 @@ void run_solver(const commandline::parser &cl,
     SOLVER_METHOD solve(omega, kx, ky, kz, x, y, z, t, dt, eq,
                         filename, num_rays, index);
 
-    if (!cl.is_option_set("init_kx_dist")) {
+    if (cl.is_option_set("init_kx") &&
+        !cl.is_option_set("init_kx_dist")) {
         solve.init(kx);
-    } else if (!cl.is_option_set("init_ky_dist")) {
+    } else if (cl.is_option_set("init_ky") &&
+               !cl.is_option_set("init_ky_dist")) {
         solve.init(ky);
-    } else {
+    } else if (cl.is_option_set("init_kz") &&
+               !cl.is_option_set("init_kz_dist")) {
         solve.init(kz);
+    } else {
+        solve.init();
     }
     solve.compile();
 
@@ -829,18 +834,21 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
         "uniform",
         "normal"
     });
+    cl.add_option("init_kx",           false, "Initalize kx");
     cl.add_option("init_kx_mean",      true,  "Inital kx mean");
     cl.add_option("init_kx_sigma",     true,  "Inital kx sigma");
     cl.add_option("init_ky_dist",      true,  "Inital ky distribution.", {
         "uniform",
         "normal"
     });
+    cl.add_option("init_ky",           false, "Initalize ky");
     cl.add_option("init_ky_mean",      true,  "Inital ky mean");
     cl.add_option("init_ky_sigma",     true,  "Inital ky sigma");
     cl.add_option("init_kz_dist",      true,  "Inital kz distribution.", {
         "uniform",
         "normal"
     });
+    cl.add_option("init_kz",           false, "Initalize kz");
     cl.add_option("init_kz_mean",      true,  "Inital kz mean");
     cl.add_option("init_kz_sigma",     true,  "Inital kz sigma");
     cl.add_option("init_x_dist",       true,  "Inital x distribution.", {

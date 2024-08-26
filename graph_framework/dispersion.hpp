@@ -1310,9 +1310,20 @@ namespace dispersion {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Get the disperison residule.
+///
+///  @return D*D
+//------------------------------------------------------------------------------
+        graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math>
+        get_residule() {
+            return this->D*this->D;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Get the disperison function.
 ///
-///  @return dx/dt
+///  @return D(x,y,z,kx,ky,kz,w)
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math>

@@ -177,6 +177,30 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Method to initalize the rays.
+///
+///  @returns The residule graph.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<typename DISPERSION_FUNCTION::base,
+                                   DISPERSION_FUNCTION::safe_math> init() final {
+                graph::input_nodes<typename DISPERSION_FUNCTION::base,
+                                   DISPERSION_FUNCTION::safe_math> inputs {
+                    graph::variable_cast(this->t),
+                    graph::variable_cast(this->w),
+                    graph::variable_cast(this->x),
+                    graph::variable_cast(this->y),
+                    graph::variable_cast(this->z),
+                    graph::variable_cast(this->kx),
+                    graph::variable_cast(this->ky),
+                    graph::variable_cast(this->kz)
+                };
+
+                residule = this->D.get_residule();
+
+                return residule;
+            }
+        
+//------------------------------------------------------------------------------
 ///  @brief Compile the solver function.
 //------------------------------------------------------------------------------
         virtual void compile() {
