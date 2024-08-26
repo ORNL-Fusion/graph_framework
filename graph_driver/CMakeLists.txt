@@ -7,6 +7,7 @@ add_test (
                                                       --endtime=2.0
                                                       --equilibrium=efit
                                                       --equilibrium_file=${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc
+                                                      --init_kx
                                                       --init_kx_mean=-700.0
                                                       --init_ky_dist=normal
                                                       --init_ky_mean=-100.0
