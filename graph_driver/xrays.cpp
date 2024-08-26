@@ -255,9 +255,8 @@ void run_solver(const commandline::parser &cl,
 
     if (index == 0 && print) {
         solve.print(sample);
-    } else {
-        solve.write_step();
     }
+    solve.write_step();
 }
 
 //------------------------------------------------------------------------------

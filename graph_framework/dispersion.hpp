@@ -654,8 +654,8 @@ namespace dispersion {
                       kz*eq->get_esup3(x, y, z))/w;
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_hat = b_vec->unit();
-            auto nperp = b_hat->cross(n)->length();
-            auto nperp2 = nperp*nperp;
+            auto nperp = b_hat->cross(n);
+            auto nperp2 = nperp->dot(nperp);
 
             auto w2 = w*w;
 
@@ -724,14 +724,14 @@ namespace dispersion {
                       ky*eq->get_esup2(x, y, z) +
                       kz*eq->get_esup3(x, y, z))/w;
             auto b_hat = b_vec->unit();
-            auto nperp = b_hat->cross(n)->length();
-            auto nperp2 = nperp*nperp;
-        
+            auto nperp = b_hat->cross(n);
+            auto nperp2 = nperp->dot(nperp);
+
             auto wh = wpe2 + wec*wec;
             
             auto w2 = w*w;
             
-            return 1.0 - wpe2/(w2)*(w2 - wpe2)/(w2 - wh) - nperp;
+            return 1.0 - wpe2/(w2)*(w2 - wpe2)/(w2 - wh) - nperp2;
         }
     };
 
@@ -929,8 +929,8 @@ namespace dispersion {
             auto n2 = n->dot(n);
             auto npara = n->dot(b_hat);
             auto npara2 = npara*npara;
-            auto nperp = b_hat->cross(n)->length();
-            auto nperp2 = nperp*nperp;
+            auto nperp = b_hat->cross(n);
+            auto nperp2 = nperp->dot(nperp);
             auto n2nperp2 = n2*nperp2;
 
             auto q_func = 1.0 - 2.0*q;
@@ -1033,8 +1033,8 @@ namespace dispersion {
             auto n2 = n->dot(n);
             auto npara = n->dot(b_hat);
             auto npara2 = npara*npara;
-            auto nperp = b_hat->cross(n)->length();
-            auto nperp2 = nperp*nperp;
+            auto nperp = b_hat->cross(n);
+            auto nperp2 = nperp->dot(nperp);
 
             auto zeta = (1.0 - ec/w)/(npara*ve);
             auto Z_func = this->z.Z(zeta);
@@ -1144,8 +1144,8 @@ namespace dispersion {
             auto n2 = n->dot(n);
             auto npara = b_hat->dot(n);
             auto npara2 = npara*npara;
-            auto nperp = b_hat->cross(n)->length();
-            auto nperp2 = nperp*nperp;
+            auto nperp = b_hat->cross(n);
+            auto nperp2 = nperp->dot(nperp);
     
             auto vtnorm = ve/physics<T, SAFE_MATH>::c;
 
