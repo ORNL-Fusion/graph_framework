@@ -879,6 +879,124 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
+///  @brief Ordinary wave dispersion function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam MODE      Mode selector -1 X-mode, +1 O-mode.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false, int MODE=1>
+    class single_mode_wave final : public physics<T, SAFE_MATH> {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Cold plasma dispersion relation for a single mode.
+///
+///  D = N^2 - (-B + MODE*Sqrt(B^2 - 4AC))/(2A)                              (1)
+///
+///  A = ε_1*sin^2(θ) + ε_3*cos^2(θ)                                         (2)
+///
+///  B = -ε_1*ε_3*(1 + cos^2(θ)) - (ε_1^2 - ε_2^2)*sin^2(θ)                  (3)
+///
+///  C = ε_3*(ε_1^2 + ε_2^2)                                                 (4)
+///
+///  θ is defined as
+///  cos(θ) = B·N/BN                                                         (5)
+///
+///  ε_1 = ε⟂ = 1 - Sum_i=1 X_i/(1 - Y^2_i)                                  (6)
+///
+///  ε_2 = g = -X_eY_e/(1 - Y_e^2) + Sum_i=2 X_iY_i/(1 - Y^2_i)              (7)
+///
+///  ε_3 = ε∥ = 1 - Sum_i=1 X_i                                              (8)
+///
+///  X_i = ωpi^2/ω^2                                                         (9)
+///
+///  Y_i = ωci/ω                                                            (10)
+///
+///  ωpi is the plasma frequency and ωci is the cyclotron frequency.
+///
+///  @params[in] w  Omega variable.
+///  @params[in] kx Kx variable.
+///  @params[in] ky Ky variable.
+///  @params[in] kz Kz variable.
+///  @params[in] x  x variable.
+///  @params[in] y  y variable.
+///  @params[in] z  z variable.
+///  @params[in] t  Current time.
+///  @params[in] eq The plasma equilibrium.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        D(graph::shared_leaf<T, SAFE_MATH> w,
+          graph::shared_leaf<T, SAFE_MATH> kx,
+          graph::shared_leaf<T, SAFE_MATH> ky,
+          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_leaf<T, SAFE_MATH> x,
+          graph::shared_leaf<T, SAFE_MATH> y,
+          graph::shared_leaf<T, SAFE_MATH> z,
+          graph::shared_leaf<T, SAFE_MATH> t,
+          equilibrium::shared<T, SAFE_MATH> &eq) {
+//  Dielectric terms.
+//  Frequencies
+            auto ne = eq->get_electron_density(x, y, z);
+            auto wpe2 = build_plasma_frequency(ne,
+                                               physics<T, SAFE_MATH>::q,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
+            auto b_vec = eq->get_magnetic_field(x, y, z);
+            auto b_len = b_vec->length();
+            auto ec = build_cyclotron_frequency(-physics<T, SAFE_MATH>::q,
+                                                b_len,
+                                                physics<T, SAFE_MATH>::me,
+                                                physics<T, SAFE_MATH>::c);
+
+            auto w2 = w*w;
+            auto denome = 1.0 - ec*ec/w2;
+            auto e11 = 1.0 - (wpe2/w2)/denome;
+            auto e12 = ((ec/w)*(wpe2/w2))/denome;
+            auto e33 = wpe2;
+
+            for (size_t i = 0, ie = eq->get_num_ion_species(); i < ie; i++) {
+                const T mi = eq->get_ion_mass(i);
+                const T charge = static_cast<T> (eq->get_ion_charge(i))
+                               * physics<T, SAFE_MATH>::q;
+
+                auto ni = eq->get_ion_density(i, x, y, z);
+                auto wpi2 = build_plasma_frequency(ni, charge, mi,
+                                                   physics<T, SAFE_MATH>::c,
+                                                   physics<T, SAFE_MATH>::epsilon0);
+                auto ic = build_cyclotron_frequency(charge, b_len, mi,
+                                                    physics<T, SAFE_MATH>::c);
+
+                auto denomi = 1.0 - ic*ic/w2;
+                e11 = e11 - (wpi2/w2)/denomi;
+                e12 = e12 + ((ic/w)*(wpi2/w2))/denomi;
+                e33 = e33 + wpi2;
+            }
+            e33 = 1.0 - e33/w2;
+
+//  Wave numbers.
+            auto n = (kx*eq->get_esup1(x, y, z) +
+                      ky*eq->get_esup2(x, y, z) +
+                      kz*eq->get_esup3(x, y, z))/w;
+            auto b_hat = b_vec->unit();
+
+            auto npara = b_hat->dot(n);
+            auto npara2 = npara*npara;
+            auto nperp = b_hat->cross(n);
+            auto nperp2 = nperp->dot(nperp);
+            auto n2 = nperp2 + npara2;
+
+            auto es = e11*e11 - e12*e12;
+            auto A = (e11*nperp2 + e33*npara2)/n2;
+            auto B = e11*e33*(1.0 + npara2/n2) + es*nperp2/n2;
+            auto C = e33*es;
+
+            const T sign = static_cast<T> (MODE);
+            return 2.0*A*n2 - B - sign*graph::sqrt(B*B - 4.0*A*C);
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Cold Plasma Dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
