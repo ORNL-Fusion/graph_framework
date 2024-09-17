@@ -1360,7 +1360,7 @@ namespace equilibrium {
 
                 auto q = graph::constant<T, SAFE_MATH> (static_cast<T> (1.60218E-19));
 
-                ni_cache = te_cache;
+                ni_cache = ne_cache;
                 ti_cache = (pressure - ne_cache*te_cache*q)/(ni_cache*q);
                 
                 auto phi = graph::atan(x, y);
