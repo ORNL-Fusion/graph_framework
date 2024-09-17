@@ -506,6 +506,28 @@ void trace_ray(const commandline::parser &cl,
                                                                                stream.str(),
                                                                                local_num_rays,
                                                                                thread_number);
+            } else if (dispersion == "cold_plasma-O") {
+                run_dispersion<dispersion::single_mode_wave<T, SAFE_MATH, 1>> (cl, omega,
+                                                                               kx, ky, kz,
+                                                                               x, y, z,
+                                                                               t, dt, eq,
+                                                                               num_steps,
+                                                                               sub_steps,
+                                                                               engine,
+                                                                               stream.str(),
+                                                                               local_num_rays,
+                                                                               thread_number);
+            } else if (dispersion == "cold_plasma-X") {
+                run_dispersion<dispersion::single_mode_wave<T, SAFE_MATH, -1>> (cl, omega,
+                                                                                kx, ky, kz,
+                                                                                x, y, z,
+                                                                                t, dt, eq,
+                                                                                num_steps,
+                                                                                sub_steps,
+                                                                                engine,
+                                                                                stream.str(),
+                                                                                local_num_rays,
+                                                                                thread_number);
             } else {
                 run_dispersion<dispersion::cold_plasma<T, SAFE_MATH>> (cl, omega,
                                                                        kx, ky, kz,
@@ -972,7 +994,9 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
         "bohm_gross",
         "ordinary_wave",
         "extra_ordinary_wave",
-        "cold_plasma"
+        "cold_plasma",
+        "cold_plasma-O",
+        "cold_plasma-X"
     });
     cl.add_option("equilibrium",       true,  "Equilibrium to use.", {
         "efit",
