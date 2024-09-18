@@ -30,6 +30,8 @@
 		C73690482A38C958001733B0 /* timing.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C7CEA0042948D02A00F61D09 /* timing.hpp */; };
 		C73690492A38C958001733B0 /* newton.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C73BBE9629F8669F0027BB7F /* newton.hpp */; };
 		C736904A2A38D1C7001733B0 /* erfi_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C736902B2A38AC0E001733B0 /* erfi_test.cpp */; };
+		C736E6B12C9B52CA00AAE3C0 /* xplayground.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C736E6AF2C9B52CA00AAE3C0 /* xplayground.cpp */; };
+		C736E6B22C9B52F100AAE3C0 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C73BBE7629F72C2A0027BB7F /* trigonometry_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C73BBE6929F7117E0027BB7F /* trigonometry_test.cpp */; };
 		C73BBE7E29F816E60027BB7F /* piecewise_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */; };
 		C73BBE8229F820810027BB7F /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
@@ -155,6 +157,15 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		C736902F2A38C498001733B0 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		C736E6A22C9B526500AAE3C0 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -304,6 +315,9 @@
 		C725CD792840088000D0EDE2 /* physics_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = physics_test.cpp; sourceTree = "<group>"; };
 		C736902B2A38AC0E001733B0 /* erfi_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = erfi_test.cpp; sourceTree = "<group>"; };
 		C73690312A38C498001733B0 /* erfi_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = erfi_test; sourceTree = BUILT_PRODUCTS_DIR; };
+		C736E6A42C9B526500AAE3C0 /* graph_playground */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_playground; sourceTree = BUILT_PRODUCTS_DIR; };
+		C736E6AE2C9B52CA00AAE3C0 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		C736E6AF2C9B52CA00AAE3C0 /* xplayground.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = xplayground.cpp; sourceTree = "<group>"; };
 		C73BBE6929F7117E0027BB7F /* trigonometry_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = trigonometry_test.cpp; sourceTree = "<group>"; };
 		C73BBE6F29F72BC50027BB7F /* trigonometry_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = trigonometry_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C73BBE7B29F816E50027BB7F /* piecewise_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = piecewise_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -362,6 +376,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C736E6A12C9B526500AAE3C0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C736E6B22C9B52F100AAE3C0 /* Metal.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -498,6 +520,15 @@
 			path = cmake;
 			sourceTree = "<group>";
 		};
+		C736E6B02C9B52CA00AAE3C0 /* graph_playground */ = {
+			isa = PBXGroup;
+			children = (
+				C736E6AE2C9B52CA00AAE3C0 /* CMakeLists.txt */,
+				C736E6AF2C9B52CA00AAE3C0 /* xplayground.cpp */,
+			);
+			path = graph_playground;
+			sourceTree = "<group>";
+		};
 		C74DF4582AA8BC7300319113 /* graph_benchmark */ = {
 			isa = PBXGroup;
 			children = (
@@ -515,6 +546,7 @@
 				C7931E6928073BCA0033B488 /* graph_tests */,
 				C79141B422DAAD0C00E0BA0D /* graph_driver */,
 				C74DF4582AA8BC7300319113 /* graph_benchmark */,
+				C736E6B02C9B52CA00AAE3C0 /* graph_playground */,
 				C7167B212AC5CE8500E03131 /* utilities */,
 				C717CB8C2A02E361008FBDD8 /* cmake */,
 				C79141A722DA9BF200E0BA0D /* Products */,
@@ -541,6 +573,7 @@
 				C73690312A38C498001733B0 /* erfi_test */,
 				C74DF4572AA8BC7300319113 /* graph_benchmark */,
 				C7170CB92C66A10D003274E2 /* efit_test */,
+				C736E6A42C9B526500AAE3C0 /* graph_playground */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -671,6 +704,25 @@
 			name = erfi_test;
 			productName = erfi_test;
 			productReference = C73690312A38C498001733B0 /* erfi_test */;
+			productType = "com.apple.product-type.tool";
+		};
+		C736E6A32C9B526500AAE3C0 /* graph_playground */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C736E6AA2C9B526500AAE3C0 /* Build configuration list for PBXNativeTarget "graph_playground" */;
+			buildPhases = (
+				C736E6A02C9B526500AAE3C0 /* Sources */,
+				C736E6A12C9B526500AAE3C0 /* Frameworks */,
+				C736E6A22C9B526500AAE3C0 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = graph_playground;
+			packageProductDependencies = (
+			);
+			productName = graph_playground;
+			productReference = C736E6A42C9B526500AAE3C0 /* graph_playground */;
 			productType = "com.apple.product-type.tool";
 		};
 		C73BBE6E29F72BC50027BB7F /* trigonometry_test */ = {
@@ -939,6 +991,9 @@
 					C73690302A38C498001733B0 = {
 						CreatedOnToolsVersion = 14.3;
 					};
+					C736E6A32C9B526500AAE3C0 = {
+						CreatedOnToolsVersion = 16.0;
+					};
 					C73BBE6E29F72BC50027BB7F = {
 						CreatedOnToolsVersion = 14.3;
 					};
@@ -1012,6 +1067,7 @@
 				C73690302A38C498001733B0 /* erfi_test */,
 				C74DF4562AA8BC7300319113 /* graph_benchmark */,
 				C7170CB82C66A10D003274E2 /* efit_test */,
+				C736E6A32C9B526500AAE3C0 /* graph_playground */,
 			);
 		};
 /* End PBXProject section */
@@ -1030,6 +1086,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				C736904A2A38D1C7001733B0 /* erfi_test.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C736E6A02C9B526500AAE3C0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C736E6B12C9B52CA00AAE3C0 /* xplayground.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1292,6 +1356,38 @@
 					"-fsanitize=undefined",
 					"-fsanitize=float-cast-overflow",
 				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		C736E6A82C9B526500AAE3C0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C736E6A92C9B526500AAE3C0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2193,6 +2289,15 @@
 			buildConfigurations = (
 				C73690362A38C498001733B0 /* Debug */,
 				C73690372A38C498001733B0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C736E6AA2C9B526500AAE3C0 /* Build configuration list for PBXNativeTarget "graph_playground" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C736E6A82C9B526500AAE3C0 /* Debug */,
+				C736E6A92C9B526500AAE3C0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
