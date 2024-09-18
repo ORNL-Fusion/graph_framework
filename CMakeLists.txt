@@ -312,6 +312,7 @@ endmacro ()
 
 add_subdirectory (graph_driver)
 add_subdirectory (graph_benchmark)
+add_subdirectory (graph_playground)
 
 #-------------------------------------------------------------------------------
 #  Define macro function to register tests.
