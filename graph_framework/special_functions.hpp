@@ -51,7 +51,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] z The complex argument.
+///  @param[in] z The complex argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -68,7 +68,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] x Argument.
+///  @param[in] x Argument.
 ///  @returns x^2
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -93,7 +93,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] x The real argument.
+///  @param[in] x The real argument.
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
     template<std::floating_point T>
@@ -528,7 +528,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] x The argument.
+///  @param[in] x The argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -597,7 +597,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] y100 Interval argument.
+///  @param[in] y100 Interval argument.
 ///  @returns erfcx(x) = exp(x^2)\*erfc(x) function, for real x
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -1019,7 +1019,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] x The argument.
+///  @param[in] x The argument.
 ///  @returns erfcx(x) = exp(x^2)\*erfc(x)
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -1117,7 +1117,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] x Argument.
+///  @param[in] x Argument.
 ///  @returns sinh(x)
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -1140,8 +1140,8 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] x    Argument of sine.
-///  @params[in] sinx Precomputed sine.
+///  @param[in] x    Argument of sine.
+///  @param[in] sinx Precomputed sine.
 ///  @returns sinc(x) = sin(x)/x
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -1158,7 +1158,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] z The complex argument.
+///  @param[in] z The complex argument.
 ///  @returns erfcx(z) = exp(z^2)\*erfz(z)
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -1421,9 +1421,9 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] z      Complex argument.
-///  @params[in] mRe_z2 Real argument squared.
-///  @params[in] mIm_z2 Imaginary argument squared.
+///  @param[in] z      Complex argument.
+///  @param[in] mRe_z2 Real argument squared.
+///  @param[in] mIm_z2 Imaginary argument squared.
 ///  @returns erf(z) where z = x + Iy.
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -1454,8 +1454,8 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] x Real argument.
-///  @params[in] y imaginary argument.
+///  @param[in] x Real argument.
+///  @param[in] y imaginary argument.
 ///  @returns erf(x+iy)
 //------------------------------------------------------------------------------
     template<typename T>
@@ -1481,7 +1481,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] z The complex argument.
+///  @param[in] z The complex argument.
 ///  @returns erf(z)
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
@@ -1566,7 +1566,7 @@ namespace special {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] z Complex argument.
+///  @param[in] z Complex argument.
 ///  @returns erfi(z)
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L

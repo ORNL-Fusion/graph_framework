@@ -19,10 +19,10 @@
 ///
 ///  @tparam SOLVER Class of solver to use.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
-///  @params[in] omega0    Ray frequency.
-///  @params[in] kx0       Wave number guess.
-///  @params[in] dt        Timestep for the solver.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] omega0    Ray frequency.
+///  @param[in] kx0       Wave number guess.
+///  @param[in] dt        Timestep for the solver.
 //------------------------------------------------------------------------------
 template<solver::method SOLVER>
 void test_solver(const typename SOLVER::base tolarance,
@@ -64,10 +64,10 @@ void test_solver(const typename SOLVER::base tolarance,
 ///
 ///  @tparam DISPERSION Class of dispersion function to use.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
-///  @params[in] omega0    Ray frequency.
-///  @params[in] kx0       Wave number guess.
-///  @params[in] dt        Timestep for the solver.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] omega0    Ray frequency.
+///  @param[in] kx0       Wave number guess.
+///  @param[in] dt        Timestep for the solver.
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
 void run_disperions_tests(const typename DISPERSION::base tolarance,
@@ -86,7 +86,7 @@ void run_disperions_tests(const typename DISPERSION::base tolarance,
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void run_tests(const T tolarance) {
@@ -101,8 +101,8 @@ void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU

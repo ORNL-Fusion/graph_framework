@@ -21,7 +21,7 @@
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] tolarance Test tolarance.
+///  @param[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
 template<std::floating_point T> void test_erfi(const T tolarance) {
     int ncid;
@@ -86,8 +86,8 @@ template<std::floating_point T> void test_erfi(const T tolarance) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     (void)argc;

@@ -18,8 +18,8 @@
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] mean  Mean value.
-///  @params[in] sigma Sigma value.
+///  @param[in] mean  Mean value.
+///  @param[in] sigma Sigma value.
 //------------------------------------------------------------------------------
 template<typename T>
 std::normal_distribution<T> set_distribution(const T mean,
@@ -32,8 +32,8 @@ std::normal_distribution<T> set_distribution(const T mean,
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] mean  Mean value.
-///  @params[in] sigma Sigma value.
+///  @param[in] mean  Mean value.
+///  @param[in] sigma Sigma value.
 //------------------------------------------------------------------------------
 template<typename T>
 std::normal_distribution<std::complex<T>> set_distribution(const std::complex<T> mean,
@@ -47,11 +47,11 @@ std::normal_distribution<std::complex<T>> set_distribution(const std::complex<T>
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in]     cl       Parsed commandline.
-///  @params[in,out] var      Variable to set.
-///  @params[in]     name     Variable name.
-///  @params[in,out] engine   Random engine.
-///  @params[in]     num_rays Numbers of rays.
+///  @param[in]     cl       Parsed commandline.
+///  @param[in,out] var      Variable to set.
+///  @param[in]     name     Variable name.
+///  @param[in,out] engine   Random engine.
+///  @param[in]     num_rays Numbers of rays.
 //------------------------------------------------------------------------------
 template<typename T, bool SAFE_MATH>
 void set_variable(const commandline::parser &cl,
@@ -76,11 +76,11 @@ void set_variable(const commandline::parser &cl,
 //------------------------------------------------------------------------------
 ///  @brief Initialize the x and y direction.
 ///
-///  @params[in]     cl       Parsed commandline.
-///  @params[in,out] x        X variable to set.
-///  @params[in,out] y        Y variable to set.
-///  @params[in,out] engine   Random engine.
-///  @params[in]     num_rays Numbers of rays.
+///  @param[in]     cl       Parsed commandline.
+///  @param[in,out] x        X variable to set.
+///  @param[in,out] y        Y variable to set.
+///  @param[in,out] engine   Random engine.
+///  @param[in]     num_rays Numbers of rays.
 //------------------------------------------------------------------------------
 template<typename T, bool SAFE_MATH>
 void set_xy_variables(const commandline::parser &cl,
@@ -140,23 +140,23 @@ void set_xy_variables(const commandline::parser &cl,
 ///
 ///  @tparam SOLVER_METHOD The solver method.
 ///
-///  @params[in]     cl        Parsed commandline.
-///  @params[in]     omega     Wave frequency.
-///  @params[in]     kx        Wave number in x direction.
-///  @params[in]     ky        Wave number in y direction.
-///  @params[in]     kz        Wave number in z direction.
-///  @params[in]     x         Initial position in x direction.
-///  @params[in]     y         Initial position in y direction.
-///  @params[in]     z         Initial position in z direction.
-///  @params[in]     t         Initial position in t direction.
-///  @params[in]     dt        Inital dt.
-///  @params[in]     eq        Equilibrium object.
-///  @params[in]     num_steps Equilibrium object.
-///  @params[in]     sub_steps Equilibrium object.
-///  @params[in,out] engine    Random engine.
-///  @params[in]     filename  Result filename, empty names will be blank.
-///  @params[in]     num_rays  Number of rays to write.
-///  @params[in]     index     Concurrent index.
+///  @param[in]     cl        Parsed commandline.
+///  @param[in]     omega     Wave frequency.
+///  @param[in]     kx        Wave number in x direction.
+///  @param[in]     ky        Wave number in y direction.
+///  @param[in]     kz        Wave number in z direction.
+///  @param[in]     x         Initial position in x direction.
+///  @param[in]     y         Initial position in y direction.
+///  @param[in]     z         Initial position in z direction.
+///  @param[in]     t         Initial position in t direction.
+///  @param[in]     dt        Inital dt.
+///  @param[in]     eq        Equilibrium object.
+///  @param[in]     num_steps Equilibrium object.
+///  @param[in]     sub_steps Equilibrium object.
+///  @param[in,out] engine    Random engine.
+///  @param[in]     filename  Result filename, empty names will be blank.
+///  @param[in]     num_rays  Number of rays to write.
+///  @param[in]     index     Concurrent index.
 //------------------------------------------------------------------------------
 template<solver::method SOLVER_METHOD>
 void run_solver(const commandline::parser &cl,
@@ -264,23 +264,23 @@ void run_solver(const commandline::parser &cl,
 ///
 ///  @tparam DISPERSION_FUNCTION The dispersion method.
 ///
-///  @params[in]     cl        Parsed commandline.
-///  @params[in]     omega     Wave frequency.
-///  @params[in]     kx        Wave number in x direction.
-///  @params[in]     ky        Wave number in y direction.
-///  @params[in]     kz        Wave number in z direction.
-///  @params[in]     x         Initial position in x direction.
-///  @params[in]     y         Initial position in y direction.
-///  @params[in]     z         Initial position in z direction.
-///  @params[in]     t         Initial position in t direction.
-///  @params[in]     dt        Inital dt.
-///  @params[in]     eq        Equilibrium object.
-///  @params[in]     num_steps Equilibrium object.
-///  @params[in]     sub_steps Equilibrium object.
-///  @params[in,out] engine    Random engine.
-///  @params[in]     filename  Result filename, empty names will be blank.
-///  @params[in]     num_rays  Number of rays to write.
-///  @params[in]     index     Concurrent index.
+///  @param[in]     cl        Parsed commandline.
+///  @param[in]     omega     Wave frequency.
+///  @param[in]     kx        Wave number in x direction.
+///  @param[in]     ky        Wave number in y direction.
+///  @param[in]     kz        Wave number in z direction.
+///  @param[in]     x         Initial position in x direction.
+///  @param[in]     y         Initial position in y direction.
+///  @param[in]     z         Initial position in z direction.
+///  @param[in]     t         Initial position in t direction.
+///  @param[in]     dt        Inital dt.
+///  @param[in]     eq        Equilibrium object.
+///  @param[in]     num_steps Equilibrium object.
+///  @param[in]     sub_steps Equilibrium object.
+///  @param[in,out] engine    Random engine.
+///  @param[in]     filename  Result filename, empty names will be blank.
+///  @param[in]     num_rays  Number of rays to write.
+///  @param[in]     index     Concurrent index.
 //------------------------------------------------------------------------------
 template<dispersion::function DISPERSION_FUNCTION>
 void run_dispersion(const commandline::parser &cl,
@@ -369,7 +369,7 @@ void run_dispersion(const commandline::parser &cl,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] cl Parsed commandline.
+///  @param[in] cl Parsed commandline.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
 equilibrium::shared<T, SAFE_MATH> make_equilibrium(const commandline::parser &cl) {
@@ -386,8 +386,8 @@ equilibrium::shared<T, SAFE_MATH> make_equilibrium(const commandline::parser &cl
 //------------------------------------------------------------------------------
 ///  @brief Generate the engine.
 ///
-///  @params[in] cl    Parsed commandline.
-///  @params[in] index Thread index.
+///  @param[in] cl    Parsed commandline.
+///  @param[in] index Thread index.
 //------------------------------------------------------------------------------
 std::mt19937_64 make_engine(const commandline::parser &cl,
                             const size_t index) {
@@ -404,10 +404,10 @@ std::mt19937_64 make_engine(const commandline::parser &cl,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] cl        Parsed commandline.
-///  @params[in] num_times Total number of time steps.
-///  @params[in] sub_steps Number of substeps to push the rays.
-///  @params[in] num_rays  Number of rays to trace.
+///  @param[in] cl        Parsed commandline.
+///  @param[in] num_times Total number of time steps.
+///  @param[in] sub_steps Number of substeps to push the rays.
+///  @param[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
 void trace_ray(const commandline::parser &cl,
@@ -533,18 +533,18 @@ void trace_ray(const commandline::parser &cl,
 ///
 ///  @tparam ABSORPTION_MODEL Absoption model to use.
 ///
-///  @params[in] kamp      Wave number amplitude.
-///  @params[in] kx        Wave number in x direction.
-///  @params[in] ky        Wave number in y direction.
-///  @params[in] kz        Wave number in z direction.
-///  @params[in] x         Initial position in x direction.
-///  @params[in] y         Initial position in y direction.
-///  @params[in] z         Initial position in z direction.
-///  @params[in] t         Initial position in t direction.
-///  @params[in] eq        Equilibrium object.
-///  @params[in] num_steps Number of time steps.
-///  @params[in] filename  Result filename, empty names will be blank.
-///  @params[in] index     Concurrent index.
+///  @param[in] kamp      Wave number amplitude.
+///  @param[in] kx        Wave number in x direction.
+///  @param[in] ky        Wave number in y direction.
+///  @param[in] kz        Wave number in z direction.
+///  @param[in] x         Initial position in x direction.
+///  @param[in] y         Initial position in y direction.
+///  @param[in] z         Initial position in z direction.
+///  @param[in] t         Initial position in t direction.
+///  @param[in] eq        Equilibrium object.
+///  @param[in] num_steps Number of time steps.
+///  @param[in] filename  Result filename, empty names will be blank.
+///  @param[in] index     Concurrent index.
 //------------------------------------------------------------------------------
 template<absorption::model ABSORPTION_MODEL>
 void run_absorption(const commandline::parser &cl,
@@ -588,10 +588,10 @@ void run_absorption(const commandline::parser &cl,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] cl        Parsed commandline.
-///  @params[in] num_times Total number of time steps.
-///  @params[in] sub_steps Number of substeps to push the rays.
-///  @params[in] num_rays  Number of rays to trace.
+///  @param[in] cl        Parsed commandline.
+///  @param[in] num_times Total number of time steps.
+///  @param[in] sub_steps Number of substeps to push the rays.
+///  @param[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
 void calculate_power(const commandline::parser &cl,
@@ -663,10 +663,10 @@ void calculate_power(const commandline::parser &cl,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] cl        Parsed commandline.
-///  @params[in] num_times Total number of time steps.
-///  @params[in] sub_steps Number of substeps to push the rays.
-///  @params[in] num_rays  Number of rays to trace.
+///  @param[in] cl        Parsed commandline.
+///  @param[in] num_times Total number of time steps.
+///  @param[in] sub_steps Number of substeps to push the rays.
+///  @param[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
 void bin_power(const commandline::parser &cl,
@@ -793,8 +793,8 @@ void bin_power(const commandline::parser &cl,
 //------------------------------------------------------------------------------
 ///  @brief Setup and parse commandline options.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 commandline::parser parse_commandline(int argc, const char * argv[]) {
     commandline::parser cl(argv[0]);
@@ -883,8 +883,8 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the driver.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU

@@ -17,8 +17,8 @@ namespace graph {
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] a Opperand A
-///  @params[in] b Opperand B
+///  @param[in] a Opperand A
+///  @param[in] b Opperand B
 ///  @returns True if a and b are combinable.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -45,8 +45,8 @@ namespace graph {
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] a Opperand A
-///  @params[in] b Opperand B
+///  @param[in] a Opperand A
+///  @param[in] b Opperand B
 ///  @returns True if a is promoteable over b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -68,8 +68,8 @@ namespace graph {
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] a Opperand A
-///  @params[in] b Opperand B
+///  @param[in] a Opperand A
+///  @param[in] b Opperand B
 ///  @returns True if a and b are combinable.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -84,8 +84,8 @@ namespace graph {
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] a Opperand A
-///  @params[in] b Opperand B
+///  @param[in] a Opperand A
+///  @param[in] b Opperand B
 ///  @returns True if a and b are combinable.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -115,8 +115,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] l Left node pointer.
-///  @params[in] r Right node pointer.
+///  @param[in] l Left node pointer.
+///  @param[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *l,
@@ -129,8 +129,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct an addition node.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
         add_node(shared_leaf<T, SAFE_MATH> l,
                  shared_leaf<T, SAFE_MATH> r) :
@@ -400,7 +400,7 @@ namespace graph {
 ///
 ///  d add(a,b)/dx = da/dx + db/dx
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -419,9 +419,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -451,7 +451,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -514,8 +514,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -545,8 +545,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> add(shared_leaf<T, SAFE_MATH> l,
@@ -579,8 +579,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator+(shared_leaf<T, SAFE_MATH> l,
@@ -598,8 +598,8 @@ namespace graph {
 ///  @tparam L         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator+(const L l,
@@ -617,8 +617,8 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator+(shared_leaf<T, SAFE_MATH> l,
@@ -636,7 +636,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -661,8 +661,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] l Left node pointer.
-///  @params[in] r Right node pointer.
+///  @param[in] l Left node pointer.
+///  @param[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *l,
@@ -675,8 +675,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Consruct a subtraction node.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
         subtract_node(shared_leaf<T, SAFE_MATH> l,
                       shared_leaf<T, SAFE_MATH> r) :
@@ -1045,7 +1045,7 @@ namespace graph {
 ///
 ///  d sub(a,b)/dx = da/dx - db/dx
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -1064,9 +1064,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -1096,7 +1096,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -1154,8 +1154,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -1182,8 +1182,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 ///  @returns l - r
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -1217,8 +1217,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 ///  @returns l - r
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -1237,8 +1237,8 @@ namespace graph {
 ///  @tparam L         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 ///  @returns l - r
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
@@ -1257,8 +1257,8 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 ///  @returns l - r
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
@@ -1276,7 +1276,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] a Argument to negate.
+///  @param[in] a Argument to negate.
 ///  @returns -1.0*a
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -1294,7 +1294,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -1317,8 +1317,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] l Left node pointer.
-///  @params[in] r Right node pointer.
+///  @param[in] l Left node pointer.
+///  @param[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *l,
@@ -1331,8 +1331,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Consruct a multiplcation node.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
         multiply_node(shared_leaf<T, SAFE_MATH> l,
                       shared_leaf<T, SAFE_MATH> r) :
@@ -1867,7 +1867,7 @@ namespace graph {
 ///
 ///  d mul(a,b)/dx = da/dx*b + a*db/dx
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
@@ -1886,9 +1886,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -1942,7 +1942,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -2005,8 +2005,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -2033,8 +2033,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> multiply(shared_leaf<T, SAFE_MATH> l,
@@ -2067,8 +2067,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator*(shared_leaf<T, SAFE_MATH> l,
@@ -2086,8 +2086,8 @@ namespace graph {
 ///  @tparam L         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator*(const L l,
@@ -2105,8 +2105,8 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator*(shared_leaf<T, SAFE_MATH> l,
@@ -2124,7 +2124,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -2147,8 +2147,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] l Left node pointer.
-///  @params[in] r Right node pointer.
+///  @param[in] l Left node pointer.
+///  @param[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *l,
@@ -2161,8 +2161,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct an addition node.
 ///
-///  @params[in] n Numerator branch.
-///  @params[in] d Denominator branch.
+///  @param[in] n Numerator branch.
+///  @param[in] d Denominator branch.
 //------------------------------------------------------------------------------
         divide_node(shared_leaf<T, SAFE_MATH> n,
                     shared_leaf<T, SAFE_MATH> d) :
@@ -2518,7 +2518,7 @@ namespace graph {
 ///
 ///  d div(n,d)/dx = dn/dx*1/d - n*/(d*d)*db/dx
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -2538,9 +2538,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -2586,7 +2586,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -2630,8 +2630,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -2658,8 +2658,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> divide(shared_leaf<T, SAFE_MATH> l,
@@ -2692,8 +2692,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator/(shared_leaf<T, SAFE_MATH> l,
@@ -2711,8 +2711,8 @@ namespace graph {
 ///  @tparam L         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator/(const L l,
@@ -2730,8 +2730,8 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator/(shared_leaf<T, SAFE_MATH> l,
@@ -2749,7 +2749,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -2774,9 +2774,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] l Left node pointer.
-///  @params[in] m Middle node pointer.
-///  @params[in] r Right node pointer.
+///  @param[in] l Left node pointer.
+///  @param[in] m Middle node pointer.
+///  @param[in] r Right node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *l,
@@ -2791,9 +2791,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a fused multiply add node.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
         fma_node(shared_leaf<T, SAFE_MATH> l,
                  shared_leaf<T, SAFE_MATH> m,
@@ -3843,7 +3843,7 @@ namespace graph {
 ///
 ///  d fma(a,b,c)/dx = da*b/dx + dc/dx = da/dx*b + a*db/dx + dc/dx
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -3868,9 +3868,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -3928,7 +3928,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -3990,8 +3990,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -4020,9 +4020,9 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
@@ -4057,9 +4057,9 @@ namespace graph {
 ///  @tparam L         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> fma(const L l,
@@ -4078,9 +4078,9 @@ namespace graph {
 ///  @tparam M         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar M, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
@@ -4099,9 +4099,9 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
@@ -4121,9 +4121,9 @@ namespace graph {
 ///  @tparam M         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, jit::float_scalar M, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> fma(const L l,
@@ -4144,9 +4144,9 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar M, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> fma(shared_leaf<T, SAFE_MATH> l,
@@ -4167,9 +4167,9 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> fma(const L l,
@@ -4189,7 +4189,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>

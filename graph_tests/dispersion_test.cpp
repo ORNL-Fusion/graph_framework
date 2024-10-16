@@ -17,9 +17,9 @@
 ///
 ///  @tparam DISPERSION Class of dispersion function to use.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
-///  @params[in] omega   Ray frequency.
-///  @params[in] k_guess Inital guess for the wave number.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] omega   Ray frequency.
+///  @param[in] k_guess Inital guess for the wave number.
 //------------------------------------------------------------------------------
 template<dispersion::function DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,
@@ -67,7 +67,7 @@ void test_solve(const typename DISPERSION::base tolarance,
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void run_tests(const T tolarance) {
@@ -83,8 +83,8 @@ void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU

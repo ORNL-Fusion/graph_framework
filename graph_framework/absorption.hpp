@@ -87,18 +87,18 @@ namespace absorption {
 //------------------------------------------------------------------------------
 ///  @brief Constructor for root finding.
 ///
-///  @params[in] kamp     Inital kamp.
-///  @params[in] w        Inital w.
-///  @params[in] kx       Inital kx.
-///  @params[in] ky       Inital ky.
-///  @params[in] kz       Inital kz.
-///  @params[in] x        Inital x.
-///  @params[in] y        Inital y.
-///  @params[in] z        Inital z.
-///  @params[in] t        Inital t.
-///  @params[in] eq       The plasma equilibrium.
-///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] index    Concurrent index.
+///  @param[in] kamp     Inital kamp.
+///  @param[in] w        Inital w.
+///  @param[in] kx       Inital kx.
+///  @param[in] ky       Inital ky.
+///  @param[in] kz       Inital kz.
+///  @param[in] x        Inital x.
+///  @param[in] y        Inital y.
+///  @param[in] z        Inital z.
+///  @param[in] t        Inital t.
+///  @param[in] eq       The plasma equilibrium.
+///  @param[in] filename Result filename, empty names will be blank.
+///  @param[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         root_finder(graph::shared_leaf<T, SAFE_MATH> kamp,
                     graph::shared_leaf<T, SAFE_MATH> w,
@@ -196,7 +196,7 @@ namespace absorption {
 //------------------------------------------------------------------------------
 ///  @brief Run the workflow.
 ///
-///  @params[in] time_index The time index to run the case for.
+///  @param[in] time_index The time index to run the case for.
 //------------------------------------------------------------------------------
         void run(const size_t time_index) {
             dataset.read(file, time_index);
@@ -269,18 +269,18 @@ namespace absorption {
 //------------------------------------------------------------------------------
 ///  @brief Constructor for weak damping.
 ///
-///  @params[in] kamp     Inital kamp.
-///  @params[in] w        Inital w.
-///  @params[in] kx       Inital kx.
-///  @params[in] ky       Inital ky.
-///  @params[in] kz       Inital kz.
-///  @params[in] x        Inital x.
-///  @params[in] y        Inital y.
-///  @params[in] z        Inital z.
-///  @params[in] t        Inital t.
-///  @params[in] eq       The plasma equilibrium.
-///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] index    Concurrent index.
+///  @param[in] kamp     Inital kamp.
+///  @param[in] w        Inital w.
+///  @param[in] kx       Inital kx.
+///  @param[in] ky       Inital ky.
+///  @param[in] kz       Inital kz.
+///  @param[in] x        Inital x.
+///  @param[in] y        Inital y.
+///  @param[in] z        Inital z.
+///  @param[in] t        Inital t.
+///  @param[in] eq       The plasma equilibrium.
+///  @param[in] filename Result filename, empty names will be blank.
+///  @param[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         weak_damping(graph::shared_leaf<T, SAFE_MATH> kamp,
                      graph::shared_leaf<T, SAFE_MATH> w,
@@ -361,7 +361,7 @@ namespace absorption {
 //------------------------------------------------------------------------------
 ///  @brief Run the workflow.
 ///
-///  @params[in] time_index The time index to run the case for.
+///  @param[in] time_index The time index to run the case for.
 //------------------------------------------------------------------------------
         void run(const size_t time_index) {
             dataset.read(file, time_index);

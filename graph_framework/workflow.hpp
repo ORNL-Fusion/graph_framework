@@ -33,11 +33,11 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Construct a workflow item.
 ///
-///  @params[in]     in      Input variables.
-///  @params[in]     out     Output nodes.
-///  @params[in]     maps    Setter maps.
-///  @params[in]     name    Name of the workitem.
-///  @params[in,out] context Jit context.
+///  @param[in]     in      Input variables.
+///  @param[in]     out     Output nodes.
+///  @param[in]     maps    Setter maps.
+///  @param[in]     name    Name of the workitem.
+///  @param[in,out] context Jit context.
 //------------------------------------------------------------------------------
         work_item(graph::input_nodes<T, SAFE_MATH> in,
                   graph::output_nodes<T, SAFE_MATH> out,
@@ -51,7 +51,7 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Set the kernel function.
 ///
-///  @params[in,out] context Jit context.
+///  @param[in,out] context Jit context.
 //------------------------------------------------------------------------------
         virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
             kernel = context.create_kernel_call(kernel_name, inputs, outputs,
@@ -86,13 +86,13 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Construct a workflow item.
 ///
-///  @params[in]     inputs   Input variables.
-///  @params[in]     outputs  Output nodes.
-///  @params[in]     maps     Setter maps.
-///  @params[in]     name     Name of the workitem.
-///  @params[in,out] context  Jit context.
-///  @params[in]     tol      Tolarance to solve the dispersion function to.
-///  @params[in]     max_iter Maximum number of iterations before giving up.
+///  @param[in]     inputs   Input variables.
+///  @param[in]     outputs  Output nodes.
+///  @param[in]     maps     Setter maps.
+///  @param[in]     name     Name of the workitem.
+///  @param[in,out] context  Jit context.
+///  @param[in]     tol      Tolarance to solve the dispersion function to.
+///  @param[in]     max_iter Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
         converge_item(graph::input_nodes<T, SAFE_MATH> inputs,
                       graph::output_nodes<T, SAFE_MATH> outputs,
@@ -109,7 +109,7 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Set the kernel function.
 ///
-///  @params[in,out] context Jit context.
+///  @param[in,out] context Jit context.
 //------------------------------------------------------------------------------
         virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
             work_item<T, SAFE_MATH>::create_kernel_call(context);
@@ -169,17 +169,17 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Workflow manager constructor.
 ///
-///  @params[in] index Concurrent index.
+///  @param[in] index Concurrent index.
 //------------------------------------------------------------------------------
         manager(const size_t index) : context(index), add_reduction(false) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Add a workflow item.
 ///
-///  @params[in] in   Input variables.
-///  @params[in] out  Output nodes.
-///  @params[in] maps Setter maps.
-///  @params[in] name Name of the workitem.
+///  @param[in] in   Input variables.
+///  @param[in] out  Output nodes.
+///  @param[in] maps Setter maps.
+///  @param[in] name Name of the workitem.
 //------------------------------------------------------------------------------
         void add_item(graph::input_nodes<T, SAFE_MATH> in,
                       graph::output_nodes<T, SAFE_MATH> out,
@@ -193,12 +193,12 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Add a workflow item.
 ///
-///  @params[in] in       Input variables.
-///  @params[in] out      Output nodes.
-///  @params[in] maps     Setter maps.
-///  @params[in] name     Name of the workitem.
-///  @params[in] tol      Tolarance to solve the dispersion function to.
-///  @params[in] max_iter Maximum number of iterations before giving up.
+///  @param[in] in       Input variables.
+///  @param[in] out      Output nodes.
+///  @param[in] maps     Setter maps.
+///  @param[in] name     Name of the workitem.
+///  @param[in] tol      Tolarance to solve the dispersion function to.
+///  @param[in] max_iter Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
         void add_converge_item(graph::input_nodes<T, SAFE_MATH> in,
                                graph::output_nodes<T, SAFE_MATH> out,
@@ -243,8 +243,8 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
-///  @params[in] node        Not to copy buffer to.
-///  @params[in] destination Device side buffer to copy to.
+///  @param[in] node        Not to copy buffer to.
+///  @param[in] destination Device side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_device(graph::shared_leaf<T, SAFE_MATH> &node,
                             T *destination) {
@@ -254,8 +254,8 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Copy contexts of buffer to host.
 ///
-///  @params[in]     node        Node to copy buffer from.
-///  @params[in,out] destination Host side buffer to copy to.
+///  @param[in]     node        Node to copy buffer from.
+///  @param[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_host(graph::shared_leaf<T, SAFE_MATH> &node,
                           T *destination) {
@@ -265,8 +265,8 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Print results.
 ///
-///  @params[in] index Particle index to print.
-///  @params[in] nodes Nodes to output.
+///  @param[in] index Particle index to print.
+///  @param[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
         void print(const size_t index,
                    const graph::output_nodes<T, SAFE_MATH> &nodes) {
@@ -276,8 +276,8 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Check the value.
 ///
-///  @params[in] index Ray index to check value for.
-///  @params[in] node  Node to check the value for.
+///  @param[in] index Ray index to check value for.
+///  @param[in] node  Node to check the value for.
 ///  @returns The value at the index.
 //------------------------------------------------------------------------------
         T check_value(const size_t index,

@@ -154,7 +154,7 @@ namespace jit {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in, out] stream Generic stream.
+///  @param[in, out] stream Generic stream.
 //------------------------------------------------------------------------------
     template<float_scalar T>
     void add_type(std::basic_ostream<char> &stream) {
@@ -193,7 +193,7 @@ namespace jit {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] value Value to convert.
+///  @param[in] value Value to convert.
 ///  @returns String with the value.
 //------------------------------------------------------------------------------
     template<scalar T>
@@ -225,8 +225,8 @@ namespace jit {
 ///
 ///  @tparam NODE Node class type.
 ///
-///  @params[in] prefix  Type prefix for the name.
-///  @params[in] pointer Address of the @ref{leaf_node}.
+///  @param[in] prefix  Type prefix for the name.
+///  @param[in] pointer Address of the @ref{leaf_node}.
 ///  @returns The pointer value as a string.
 //------------------------------------------------------------------------------
     template<class NODE>
@@ -261,8 +261,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Call operator.
 ///
-///  @params[in] left  Left hand side.
-///  @params[in] right Right hand side.
+///  @param[in] left  Left hand side.
+///  @param[in] right Right hand side.
 //------------------------------------------------------------------------------
         bool operator() (const T &left, const T &right) const {
             if constexpr (is_complex<T> ()) {

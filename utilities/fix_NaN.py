@@ -13,7 +13,7 @@ import numpy
 ##  Removes NaN's and noise spikes in the results. Also computes the power
 ##  absorption and bins the power into a 2D grid.
 ##
-##  @params params[in] args Command line arguments.
+##  @param params[in] args Command line arguments.
 #-------------------------------------------------------------------------------
 def main(**args):
     with netCDF4.Dataset('{}/bins.nc'.format(args['directory']), 'w') as bin_ref:
