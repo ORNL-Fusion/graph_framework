@@ -80,7 +80,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Construct a jit context object.
 ///
-///  @params[in] index Concurrent index. Not used.
+///  @param[in] index Concurrent index. Not used.
 //------------------------------------------------------------------------------
         context(const size_t index) : gpu_context(index) {
             source_buffer << std::setprecision(max_digits10<T> ());
@@ -92,10 +92,10 @@ namespace jit {
 ///
 ///  Build the source code for a kernel graph.
 ///
-///  @params[in] name    Name to call the kernel.
-///  @params[in] inputs  Input variables of the kernel.
-///  @params[in] outputs Output nodes of the graph to compute.
-///  @params[in] setters Map outputs back to input values.
+///  @param[in] name    Name to call the kernel.
+///  @param[in] inputs  Input variables of the kernel.
+///  @param[in] outputs Output nodes of the graph to compute.
+///  @param[in] setters Map outputs back to input values.
 //------------------------------------------------------------------------------
         void add_kernel(const std::string name,
                         graph::input_nodes<T, SAFE_MATH> inputs,
@@ -170,7 +170,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Add max reduction kernel.
 ///
-///  @params[in] size Size of the input buffer.
+///  @param[in] size Size of the input buffer.
 //------------------------------------------------------------------------------
         void add_max_reduction(const size_t size) {
             gpu_context.create_reduction(source_buffer, size);
@@ -206,7 +206,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Compile the kernel.
 ///
-///  @params[in] add_reduction Optional argument to generate the reduction
+///  @param[in] add_reduction Optional argument to generate the reduction
 ///                            kernel.
 //------------------------------------------------------------------------------
         void compile(const bool add_reduction=false) {
@@ -221,10 +221,10 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Create a kernel calling function.
 ///
-///  @params[in] kernel_name   Name of the kernel for later reference.
-///  @params[in] inputs        Input nodes of the kernel.
-///  @params[in] outputs       Output nodes of the kernel.
-///  @params[in] num_rays      Number of rays to trace.
+///  @param[in] kernel_name   Name of the kernel for later reference.
+///  @param[in] inputs        Input nodes of the kernel.
+///  @param[in] outputs       Output nodes of the kernel.
+///  @param[in] num_rays      Number of rays to trace.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
@@ -239,8 +239,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Create a max compute kernel calling function.
 ///
-///  @params[in] argument Node to reduce.
-///  @params[in] run      Function to run before reduction.
+///  @param[in] argument Node to reduce.
+///  @param[in] run      Function to run before reduction.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<T(void)> create_max_call(graph::shared_leaf<T, SAFE_MATH> &argument,
@@ -251,8 +251,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Print output.
 ///
-///  @params[in] index Particle index to print.
-///  @params[in] nodes Nodes to output.
+///  @param[in] index Particle index to print.
+///  @param[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
         void print(const size_t index,
                    const graph::output_nodes<T, SAFE_MATH> &nodes) {
@@ -262,8 +262,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Check the value.
 ///
-///  @params[in] index Ray index to check value for.
-///  @params[in] node  Node to check the value for.
+///  @param[in] index Ray index to check value for.
+///  @param[in] node  Node to check the value for.
 ///  @returns The value at the index.
 //------------------------------------------------------------------------------
         T check_value(const size_t index,
@@ -281,8 +281,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Copy contexts of buffer to device.
 ///
-///  @params[in] node   Not to copy buffer to.
-///  @params[in] source Host side buffer to copy from.
+///  @param[in] node   Not to copy buffer to.
+///  @param[in] source Host side buffer to copy from.
 //------------------------------------------------------------------------------
         void copy_to_device(graph::shared_leaf<T, SAFE_MATH> &node,
                             T *source) {
@@ -292,8 +292,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Copy contexts of buffer to host.
 ///
-///  @params[in]     node        Node to copy buffer from.
-///  @params[in,out] destination Host side buffer to copy to.
+///  @param[in]     node        Node to copy buffer from.
+///  @param[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_host(graph::shared_leaf<T, SAFE_MATH> &node,
                           T *destination) {
@@ -303,7 +303,7 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Get buffer frim the gpu\_context.
 ///
-///  @params[in] node Node to get the gpu buffer for.
+///  @param[in] node Node to get the gpu buffer for.
 //------------------------------------------------------------------------------
         T *get_buffer(graph::shared_leaf<T, SAFE_MATH> &node) {
             return gpu_context.get_buffer(node);

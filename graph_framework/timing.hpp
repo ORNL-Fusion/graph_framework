@@ -27,7 +27,7 @@ namespace timeing {
 //------------------------------------------------------------------------------
 ///  @brief Construct a time diagnostic object.
 ///
-///  @params[in] message Discription of what is being timed.
+///  @param[in] message Discription of what is being timed.
 //------------------------------------------------------------------------------
         measure_diagnostic(const std::string message = "") :
         label(message), start(std::chrono::high_resolution_clock::now()) {}
@@ -77,7 +77,7 @@ namespace timeing {
 //------------------------------------------------------------------------------
 ///  @brief Construct a time diagnostic object.
 ///
-///  @params[in] message Discription of what is being timed.
+///  @param[in] message Discription of what is being timed.
 //------------------------------------------------------------------------------
         measure_diagnostic_threaded(const std::string message = "") :
         label(message) {}
@@ -85,7 +85,7 @@ namespace timeing {
 //------------------------------------------------------------------------------
 ///  @brief Start time for a given thread.
 ///
-///  @params[in] thread_number The thread number to start the timer for.
+///  @param[in] thread_number The thread number to start the timer for.
 //------------------------------------------------------------------------------
         void start_time(const size_t thread_number) {
             sync_start.lock();
@@ -96,7 +96,7 @@ namespace timeing {
 //------------------------------------------------------------------------------
 ///  @brief End time for a given thread.
 ///
-///  @params[in] thread_number The thread number to start the timer for.
+///  @param[in] thread_number The thread number to start the timer for.
 //------------------------------------------------------------------------------
         void end_time(const size_t thread_number) {
             const auto temp = std::chrono::high_resolution_clock::now();

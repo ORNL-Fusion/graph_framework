@@ -40,7 +40,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend with a size.
 ///
-///  @params[in] s Size of he data buffer.
+///  @param[in] s Size of he data buffer.
 //------------------------------------------------------------------------------
         buffer(const size_t s) :
         memory(s) {}
@@ -48,8 +48,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend with a size.
 ///
-///  @params[in] s Size of he data buffer.
-///  @params[in] d Scalar data to initalize.
+///  @param[in] s Size of he data buffer.
+///  @param[in] d Scalar data to initalize.
 //------------------------------------------------------------------------------
         buffer(const size_t s, const T d) :
         memory(s, d) {}
@@ -57,7 +57,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend from a vector.
 ///
-///  @params[in] d Array buffer.
+///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
         buffer(const std::vector<T> &d) :
         memory(d) {}
@@ -65,7 +65,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend from a buffer backend.
 ///
-///  @params[in] d Backend buffer.
+///  @param[in] d Backend buffer.
 //------------------------------------------------------------------------------
         buffer(const buffer &d) :
         memory(d.memory) {}
@@ -94,7 +94,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Assign a constant value.
 ///
-///  @params[in] d Scalar data to set.
+///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         void set(const T d) {
             memory.assign(memory.size(), d);
@@ -103,7 +103,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Assign a vector value.
 ///
-///  @params[in] d Vector data to set.
+///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         void set(const std::vector<T> &d) {
             memory.assign(d.cbegin(), d.cend());
@@ -283,7 +283,7 @@ namespace backend {
 ///  Adds m_ij + v_i or v_i + m_ij. This will resize the buffer if it needs to 
 ///  be.
 ///
-///  @params[in] x The right operand.
+///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void add_row(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -319,7 +319,7 @@ namespace backend {
 ///  Adds m_ij + v_j or v_j + m_ij. This will resize the buffer if it needs to
 ///  be.
 ///
-///  @params[in] x The other operand.
+///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void add_col(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -355,7 +355,7 @@ namespace backend {
 ///  Sunbtracts m_ij - v_i or v_i - m_ij. This will resize the buffer if it
 ///  needs to be.
 ///
-///  @params[in] x The right operand.
+///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void subtract_row(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -391,7 +391,7 @@ namespace backend {
 ///  Sunbtracts m_ij - v_j or v_j - m_ij. This will resize the buffer if it
 ///  needs to be.
 ///
-///  @params[in] x The other operand.
+///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void subtract_col(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -427,7 +427,7 @@ namespace backend {
 ///  Multiplies m_ij * v_i or v_i * m_ij. This will resize the buffer if it
 ///  needs to be.
 ///
-///  @params[in] x The right operand.
+///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void multiply_row(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -463,7 +463,7 @@ namespace backend {
 ///  Multiplies m_ij * v_j or v_j * m_ij. This will resize the buffer if it
 ///  needs to be.
 ///
-///  @params[in] x The other operand.
+///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void multiply_col(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -499,7 +499,7 @@ namespace backend {
 ///  Divides m_ij / v_i or v_i / m_ij. This will resize the buffer if it needs 
 ///  to be.
 ///
-///  @params[in] x The right operand.
+///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void divide_row(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -535,7 +535,7 @@ namespace backend {
 ///  Divides m_ij / v_j or v_j / m_ij. This will resize the buffer if it needs
 ///  to be.
 ///
-///  @params[in] x The other operand.
+///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void divide_col(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -571,7 +571,7 @@ namespace backend {
 ///  Computes atan(m_ij, v_i) or atan(v_i, m_ij). This will resize the buffer if
 ///  it needs to be.
 ///
-///  @params[in] x The right operand.
+///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void atan_row(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -615,7 +615,7 @@ namespace backend {
 ///  Computes atan(m_ij, v_j) or atan(v_j, m_ij). This will resize the buffer if
 ///  it needs to be.
 ///
-///  @params[in] x The other operand.
+///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void atan_col(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -659,7 +659,7 @@ namespace backend {
 ///  Computes pow(m_ij, v_i) or pow(v_i, m_ij). This will resize the buffer if
 ///  it needs to be.
 ///
-///  @params[in] x The right operand.
+///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void pow_row(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -695,7 +695,7 @@ namespace backend {
 ///  Computes pow(m_ij, v_j) or pow(v_j, m_ij). This will resize the buffer if
 ///  it needs to be.
 ///
-///  @params[in] x The other operand.
+///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void pow_col(const buffer<T> &x) {
             if (size() > x.size()) {
@@ -734,8 +734,8 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] a Left operand.
-///  @params[in] b Right operand.
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
 ///  @returns a + b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
@@ -768,8 +768,8 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] a Left operand.
-///  @params[in] b Right operand.
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
 ///  @returns a == b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
@@ -792,8 +792,8 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] a Left operand.
-///  @params[in] b Right operand.
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
 ///  @returns a - b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
@@ -826,8 +826,8 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] a Left operand.
-///  @params[in] b Right operand.
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
 ///  @returns a * b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
@@ -860,8 +860,8 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] a Numerator.
-///  @params[in] b Denominator.
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
 ///  @returns a / b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
@@ -894,9 +894,9 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] a Left operand.
-///  @params[in] b Middle operand.
-///  @params[in] c Right operand.
+///  @param[in] a Left operand.
+///  @param[in] b Middle operand.
+///  @param[in] c Right operand.
 ///  @returns a*b + c.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
@@ -1002,8 +1002,8 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] base     Base to raise to the power of.
-///  @params[in] exponent Power to apply to the base.
+///  @param[in] base     Base to raise to the power of.
+///  @param[in] exponent Power to apply to the base.
 ///  @returns base^exponent.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
@@ -1075,8 +1075,8 @@ namespace backend {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] x X argument.
-///  @params[in] y Y argument.
+///  @param[in] x X argument.
+///  @param[in] y Y argument.
 ///  @returns atan2(y, x)
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>

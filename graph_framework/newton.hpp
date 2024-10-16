@@ -19,13 +19,13 @@ namespace solver {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in,out] work           Workflow manager.
-///  @params[in]     vars           The unknowns to solver for.
-///  @params[in]     inputs         Inputs for jit compile.
-///  @params[in]     func           Function to find the root of.
-///  @params[in]     tolarance      Tolarance to solve the dispersion function
+///  @param[in,out] work           Workflow manager.
+///  @param[in]     vars           The unknowns to solver for.
+///  @param[in]     inputs         Inputs for jit compile.
+///  @param[in]     func           Function to find the root of.
+///  @param[in]     tolarance      Tolarance to solve the dispersion function
 ///                                 to.
-///  @params[in]     max_iterations Maximum number of iterations before giving
+///  @param[in]     max_iterations Maximum number of iterations before giving
 ///                                 up.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>

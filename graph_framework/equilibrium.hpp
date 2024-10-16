@@ -43,8 +43,8 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Construct a generic equilibrum.
 ///
-///  @params[in] masses  Vector of ion masses.
-///  @params[in] charges Vector of ion charges.
+///  @param[in] masses  Vector of ion masses.
+///  @param[in] charges Vector of ion charges.
 //------------------------------------------------------------------------------
         generic(const std::vector<T> &masses,
                 const std::vector<uint8_t> &charges) :
@@ -70,7 +70,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the mass for an ion species.
 ///
-///  @params[in] index The species index.
+///  @param[in] index The species index.
 ///  @returns The mass for the ion at the index.
 //------------------------------------------------------------------------------
         T get_ion_mass(const size_t index) const {
@@ -80,7 +80,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the charge for an ion species.
 ///
-///  @params[in] index The species index.
+///  @param[in] index The species index.
 ///  @returns The number of ion species.
 //------------------------------------------------------------------------------
         uint8_t get_ion_charge(const size_t index) const {
@@ -90,9 +90,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -103,10 +103,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The ion density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -118,9 +118,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -131,10 +131,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The ion temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -146,9 +146,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -159,9 +159,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the x1 direction.
 ///
-///  @params[in] x1 X1 posiiton.
-///  @params[in] x2 X2 position.
-///  @params[in] x3 X3 position.
+///  @param[in] x1 X1 posiiton.
+///  @param[in] x2 X2 position.
+///  @param[in] x3 X3 position.
 ///  @returns The contravaraiant basis vector in x1.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -176,9 +176,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the x2 direction.
 ///
-///  @params[in] x1 X1 posiiton.
-///  @params[in] x2 X2 position.
-///  @params[in] x3 X3 position.
+///  @param[in] x1 X1 posiiton.
+///  @param[in] x2 X2 position.
+///  @param[in] x3 X3 position.
 ///  @returns The contravaraiant basis vector in x2.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -193,9 +193,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the x3 direction.
 ///
-///  @params[in] x1 X1 posiiton.
-///  @params[in] x2 X2 position.
-///  @params[in] x3 X3 position.
+///  @param[in] x1 X1 posiiton.
+///  @param[in] x2 X2 position.
+///  @param[in] x3 X3 position.
 ///  @returns The contravaraiant basis vector in x3.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -210,9 +210,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the x position.
 ///
-///  @params[in] x1 X1 posiiton.
-///  @params[in] x2 X2 position.
-///  @params[in] x3 X3 position.
+///  @param[in] x1 X1 posiiton.
+///  @param[in] x2 X2 position.
+///  @param[in] x3 X3 position.
 ///  @returns The x position.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -225,9 +225,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the y position.
 ///
-///  @params[in] x1 X1 posiiton.
-///  @params[in] x2 X2 position.
-///  @params[in] x3 X3 position.
+///  @param[in] x1 X1 posiiton.
+///  @param[in] x2 X2 position.
+///  @param[in] x3 X3 position.
 ///  @returns The y position.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -240,9 +240,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the z position.
 ///
-///  @params[in] x1 X1 posiiton.
-///  @params[in] x2 X2 position.
-///  @params[in] x3 X3 position.
+///  @param[in] x1 X1 posiiton.
+///  @param[in] x2 X2 position.
+///  @param[in] x3 X3 position.
 ///  @returns The z position.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -278,9 +278,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -295,10 +295,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -314,9 +314,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -329,10 +329,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -346,9 +346,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -394,9 +394,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -409,10 +409,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -426,9 +426,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -441,10 +441,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -458,9 +458,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -505,9 +505,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -522,10 +522,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -541,9 +541,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -556,10 +556,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -573,9 +573,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -621,9 +621,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -638,10 +638,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -655,9 +655,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -672,10 +672,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -689,9 +689,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -735,9 +735,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -751,10 +751,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -769,9 +769,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -784,10 +784,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @params[in] index The species index.
-///  @params[in] x     X position.
-///  @params[in] y     Y position.
-///  @params[in] z     Z position.
+///  @param[in] index The species index.
+///  @param[in] x     X position.
+///  @param[in] y     Y position.
+///  @param[in] z     Z position.
 ///  @returns The electron expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -801,9 +801,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -964,9 +964,9 @@ namespace equilibrium {
 ///
 ///  Sets the cached values if x and y do not match.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 //------------------------------------------------------------------------------
         void set_cache(graph::shared_leaf<T, SAFE_MATH> x,
                        graph::shared_leaf<T, SAFE_MATH> y,
@@ -1086,48 +1086,48 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Construct a EFIT equilibrium.
 ///
-///  @params[in] psimin     Minimum psi value.
-///  @params[in] dpsi       Change in psi value.
-///  @params[in] te_c0      Te c0 spline coefficient.
-///  @params[in] te_c1      Te c1 spline coefficient.
-///  @params[in] te_c2      Te c2 spline coefficient.
-///  @params[in] te_c3      Te c3 spline coefficient.
-///  @params[in] te_scale   Temperatire scale.
-///  @params[in] ne_c0      Ne c0 spline coefficient.
-///  @params[in] ne_c1      Ne c1 spline coefficient.
-///  @params[in] ne_c2      Ne c2 spline coefficient.
-///  @params[in] ne_c3      Ne c3 spline coefficient.
-///  @params[in] ne_scale   Denisty scale.
-///  @params[in] pres_c0    Pressure c0 spline coefficient.
-///  @params[in] pres_c1    Pressure c1 spline coefficient.
-///  @params[in] pres_c2    Pressure c2 spline coefficient.
-///  @params[in] pres_c3    Pressure c3 spline coefficient.
-///  @params[in] pres_scale Pressure scale.
-///  @params[in] rmin       Radial gird minimum.
-///  @params[in] dr         Radial grid spacing.
-///  @params[in] zmin       Vertical grid minimum.
-///  @params[in] dz         Vertical grid spacing.
-///  @params[in] fpol_c0    Flux function c0 spline coefficient.
-///  @params[in] fpol_c1    Flux function c1 spline coefficient.
-///  @params[in] fpol_c2    Flux function c2 spline coefficient.
-///  @params[in] fpol_c3    Flux function c3 spline coefficient.
-///  @params[in] num_cols   Number of columns for the 2D splines.
-///  @params[in] c00        Psi c00 spline coefficient.
-///  @params[in] c01        Psi c01 spline coefficient.
-///  @params[in] c02        Psi c02 spline coefficient.
-///  @params[in] c03        Psi c03 spline coefficient.
-///  @params[in] c10        Psi c10 spline coefficient.
-///  @params[in] c11        Psi c11 spline coefficient.
-///  @params[in] c12        Psi c12 spline coefficient.
-///  @params[in] c13        Psi c13 spline coefficient.
-///  @params[in] c20        Psi c20 spline coefficient.
-///  @params[in] c21        Psi c21 spline coefficient.
-///  @params[in] c22        Psi c22 spline coefficient.
-///  @params[in] c23        Psi c23 spline coefficient.
-///  @params[in] c30        Psi c30 spline coefficient.
-///  @params[in] c31        Psi c31 spline coefficient.
-///  @params[in] c32        Psi c32 spline coefficient.
-///  @params[in] c33        Psi c33 spline coefficient.
+///  @param[in] psimin     Minimum psi value.
+///  @param[in] dpsi       Change in psi value.
+///  @param[in] te_c0      Te c0 spline coefficient.
+///  @param[in] te_c1      Te c1 spline coefficient.
+///  @param[in] te_c2      Te c2 spline coefficient.
+///  @param[in] te_c3      Te c3 spline coefficient.
+///  @param[in] te_scale   Temperatire scale.
+///  @param[in] ne_c0      Ne c0 spline coefficient.
+///  @param[in] ne_c1      Ne c1 spline coefficient.
+///  @param[in] ne_c2      Ne c2 spline coefficient.
+///  @param[in] ne_c3      Ne c3 spline coefficient.
+///  @param[in] ne_scale   Denisty scale.
+///  @param[in] pres_c0    Pressure c0 spline coefficient.
+///  @param[in] pres_c1    Pressure c1 spline coefficient.
+///  @param[in] pres_c2    Pressure c2 spline coefficient.
+///  @param[in] pres_c3    Pressure c3 spline coefficient.
+///  @param[in] pres_scale Pressure scale.
+///  @param[in] rmin       Radial gird minimum.
+///  @param[in] dr         Radial grid spacing.
+///  @param[in] zmin       Vertical grid minimum.
+///  @param[in] dz         Vertical grid spacing.
+///  @param[in] fpol_c0    Flux function c0 spline coefficient.
+///  @param[in] fpol_c1    Flux function c1 spline coefficient.
+///  @param[in] fpol_c2    Flux function c2 spline coefficient.
+///  @param[in] fpol_c3    Flux function c3 spline coefficient.
+///  @param[in] num_cols   Number of columns for the 2D splines.
+///  @param[in] c00        Psi c00 spline coefficient.
+///  @param[in] c01        Psi c01 spline coefficient.
+///  @param[in] c02        Psi c02 spline coefficient.
+///  @param[in] c03        Psi c03 spline coefficient.
+///  @param[in] c10        Psi c10 spline coefficient.
+///  @param[in] c11        Psi c11 spline coefficient.
+///  @param[in] c12        Psi c12 spline coefficient.
+///  @param[in] c13        Psi c13 spline coefficient.
+///  @param[in] c20        Psi c20 spline coefficient.
+///  @param[in] c21        Psi c21 spline coefficient.
+///  @param[in] c22        Psi c22 spline coefficient.
+///  @param[in] c23        Psi c23 spline coefficient.
+///  @param[in] c30        Psi c30 spline coefficient.
+///  @param[in] c31        Psi c31 spline coefficient.
+///  @param[in] c32        Psi c32 spline coefficient.
+///  @param[in] c33        Psi c33 spline coefficient.
 //------------------------------------------------------------------------------
         efit(graph::shared_leaf<T, SAFE_MATH> psimin,
              graph::shared_leaf<T, SAFE_MATH> dpsi,
@@ -1191,9 +1191,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -1207,10 +1207,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @params[in] index The species index.
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] index The species index.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The ion density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -1225,9 +1225,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The electron temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -1241,10 +1241,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @params[in] index The species index.
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] index The species index.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns The ion temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -1259,9 +1259,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @params[in] x X position.
-///  @params[in] y Y position.
-///  @params[in] z Z position.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -1279,7 +1279,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] spline_file File name of contains the spline functions.
+///  @param[in] spline_file File name of contains the spline functions.
 ///  @returns A constructed EFIT equilibrium.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -1609,8 +1609,8 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the s direction.
 ///
-///  @params[in] r Radial posirtion.
-///  @params[in] z Vertical position.
+///  @param[in] r Radial posirtion.
+///  @param[in] z Vertical position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
         graph::shared_vector<T, SAFE_MATH>
@@ -1632,8 +1632,8 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the u direction.
 ///
-///  @params[in] r Radial posirtion.
-///  @params[in] z Vertical position.
+///  @param[in] r Radial posirtion.
+///  @param[in] z Vertical position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
         graph::shared_vector<T, SAFE_MATH>
@@ -1655,8 +1655,8 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the u direction.
 ///
-///  @params[in] r Radial posirtion.
-///  @params[in] z Vertical position.
+///  @param[in] r Radial posirtion.
+///  @param[in] z Vertical position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
         graph::shared_vector<T, SAFE_MATH>
@@ -1680,9 +1680,9 @@ namespace equilibrium {
 ///
 ///  J = e_s.e_u✕e_v
 ///
-///  @params[in] esub_s Covariant s basis.
-///  @params[in] esub_u Covariant u basis.
-///  @params[in] esub_v Covariant v basis.
+///  @param[in] esub_s Covariant s basis.
+///  @param[in] esub_u Covariant u basis.
+///  @param[in] esub_v Covariant v basis.
 ///  @returns The jacobian.
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
@@ -1695,7 +1695,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the poloidal flux.
 ///
-///  @params[in] s_norm Normalized S position.
+///  @param[in] s_norm Normalized S position.
 ///  @returns χ(s,u,v)
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
@@ -1714,7 +1714,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the toroidal flux.
 ///
-///  @params[in] s S position.
+///  @param[in] s S position.
 ///  @returns φ(s,u,v)
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
@@ -1727,9 +1727,9 @@ namespace equilibrium {
 ///
 ///  Sets the cached values if s, u, and v do not match.
 ///
-///  @params[in] s S position.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S position.
+///  @param[in] u U position.
+///  @param[in] v V position.
 //------------------------------------------------------------------------------
         void set_cache(graph::shared_leaf<T, SAFE_MATH> s,
                        graph::shared_leaf<T, SAFE_MATH> u,
@@ -1812,7 +1812,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the profile function.
 ///
-///  @params[in] s S posiiton.
+///  @param[in] s S posiiton.
 ///  @returns The profile function.
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
@@ -1824,29 +1824,29 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Construct a EFIT equilibrium.
 ///
-///  @params[in] sminh   Minimum s on the half grid.
-///  @params[in] sminf   Minimum s on the full grid.
-///  @params[in] ds      Change in s grid.
-///  @params[in] dphi    Change in torodial flux.
-///  @params[in] signj   Sign of the jacobian.
-///  @params[in] chi_c0  Poloidal flux c0.
-///  @params[in] chi_c1  Poloidal flux c1.
-///  @params[in] chi_c2  Poloidal flux c2.
-///  @params[in] chi_c3  Poloidal flux c3.
-///  @params[in] rmnc_c0 rmnc c0.
-///  @params[in] rmnc_c1 rmnc c1.
-///  @params[in] rmnc_c2 rmnc c2.
-///  @params[in] rmnc_c3 rmnc c3.
-///  @params[in] zmns_c0 zmns c0.
-///  @params[in] zmns_c1 zmns c1.
-///  @params[in] zmns_c2 zmns c2.
-///  @params[in] zmns_c3 zmns c3.
-///  @params[in] lmns_c0 lmns c0.
-///  @params[in] lmns_c1 lmns c1.
-///  @params[in] lmns_c2 lmns c2.
-///  @params[in] lmns_c3 lmns c3.
-///  @params[in] xm      Poloidal mode numbers.
-///  @params[in] xn      Toroidal mode numbers.
+///  @param[in] sminh   Minimum s on the half grid.
+///  @param[in] sminf   Minimum s on the full grid.
+///  @param[in] ds      Change in s grid.
+///  @param[in] dphi    Change in torodial flux.
+///  @param[in] signj   Sign of the jacobian.
+///  @param[in] chi_c0  Poloidal flux c0.
+///  @param[in] chi_c1  Poloidal flux c1.
+///  @param[in] chi_c2  Poloidal flux c2.
+///  @param[in] chi_c3  Poloidal flux c3.
+///  @param[in] rmnc_c0 rmnc c0.
+///  @param[in] rmnc_c1 rmnc c1.
+///  @param[in] rmnc_c2 rmnc c2.
+///  @param[in] rmnc_c3 rmnc c3.
+///  @param[in] zmns_c0 zmns c0.
+///  @param[in] zmns_c1 zmns c1.
+///  @param[in] zmns_c2 zmns c2.
+///  @param[in] zmns_c3 zmns c3.
+///  @param[in] lmns_c0 lmns c0.
+///  @param[in] lmns_c1 lmns c1.
+///  @param[in] lmns_c2 lmns c2.
+///  @param[in] lmns_c3 lmns c3.
+///  @param[in] xm      Poloidal mode numbers.
+///  @param[in] xn      Toroidal mode numbers.
 //------------------------------------------------------------------------------
         vmec(graph::shared_leaf<T, SAFE_MATH> sminh,
              graph::shared_leaf<T, SAFE_MATH> sminf,
@@ -1887,9 +1887,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the S direction.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The contravaraiant basis vector in s.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -1903,9 +1903,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the U direction.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The contravaraiant basis vector in u.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -1919,9 +1919,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the V direction.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The contravaraiant basis vector in v.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -1935,9 +1935,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The electron density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -1951,10 +1951,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion density.
 ///
-///  @params[in] index The species index.
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] index The species index.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The ion density expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -1968,9 +1968,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The electron temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -1984,10 +1984,10 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the ion temperature.
 ///
-///  @params[in] index The species index.
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] index The species index.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The ion temperature expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -2001,9 +2001,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns Magnetic field expression.
 //------------------------------------------------------------------------------
         virtual graph::shared_vector<T, SAFE_MATH>
@@ -2017,9 +2017,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the x position.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The x position.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -2033,9 +2033,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the y position.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The y position.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -2049,9 +2049,9 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the z position.
 ///
-///  @params[in] s S posiiton.
-///  @params[in] u U position.
-///  @params[in] v V position.
+///  @param[in] s S posiiton.
+///  @param[in] u U position.
+///  @param[in] v V position.
 ///  @returns The z position.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -2069,7 +2069,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] spline_file File name of contains the spline functions.
+///  @param[in] spline_file File name of contains the spline functions.
 ///  @returns A constructed VMEC equilibrium.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>

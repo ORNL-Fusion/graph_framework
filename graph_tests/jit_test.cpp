@@ -19,8 +19,8 @@
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] test      Test value.
-///  @params[in] tolarance Test tolarance.
+///  @param[in] test      Test value.
+///  @param[in] tolarance Test tolarance.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> 
 void check(const T test, const T tolarance) {
@@ -39,11 +39,11 @@ void check(const T test, const T tolarance) {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] inputs    Kernel input nodes.
-///  @params[in] outputs   Kernel output nodes.
-///  @params[in] setters   Kernel set nodes.
-///  @params[in] expected  Expected result.
-///  @params[in] tolarance Check tolarances.
+///  @param[in] inputs    Kernel input nodes.
+///  @param[in] outputs   Kernel output nodes.
+///  @param[in] setters   Kernel set nodes.
+///  @param[in] expected  Expected result.
+///  @param[in] tolarance Check tolarances.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void compile(graph::input_nodes<T> inputs,
@@ -326,7 +326,7 @@ template<jit::float_scalar T> void run_math_tests() {
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 ///
-///  @params[in] eq Equilibrium for the dispersion function.
+///  @param[in] eq Equilibrium for the dispersion function.
 //------------------------------------------------------------------------------
 template<dispersion::function DISPERSION_FUNCTION>
 void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
@@ -411,8 +411,8 @@ template<jit::float_scalar T> void run_tests() {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU

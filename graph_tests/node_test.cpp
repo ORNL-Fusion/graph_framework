@@ -176,8 +176,8 @@ template<jit::float_scalar T> void run_tests() {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     (void)argc;

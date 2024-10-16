@@ -16,9 +16,9 @@ namespace graph {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in,out] stream        String buffer stream.
-///  @params[in]     register_name Reister for the argument.
-///  @params[in]     length        Dimension length of argument.
+///  @param[in,out] stream        String buffer stream.
+///  @param[in]     register_name Reister for the argument.
+///  @param[in]     length        Dimension length of argument.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void compile_index(std::ostringstream &stream,
@@ -78,7 +78,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] d Backend buffer.
+///  @param[in] d Backend buffer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d) {
@@ -93,8 +93,8 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @params[in] d Backend buffer.
-///  @params[in] x Argument.
+///  @param[in] d Backend buffer.
+///  @param[in] x Argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
@@ -106,7 +106,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Stores the data in a hash.
 ///
-///  @params[in] d Backend buffer.
+///  @param[in] d Backend buffer.
 ///  @returns The hash the node is stored in.
 //------------------------------------------------------------------------------
         static size_t hash_data(const backend::buffer<T> &d) {
@@ -134,8 +134,8 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Construct 1D a piecewise constant node.
 ///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] x Argument.
+///  @param[in] d Data to initalize the piecewise constant.
+///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         piecewise_1D_node(const backend::buffer<T> &d,
                           shared_leaf<T, SAFE_MATH> x) :
@@ -173,7 +173,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
@@ -183,13 +183,13 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream          String buffer stream.
-///  @params[in,out] registers       List of defined registers.
-///  @params[in,out] visited         List of visited nodes.
-///  @params[in,out] usage           List of register usage count.
-///  @params[in,out] textures1d      List of 1D textures.
-///  @params[in,out] textures2d      List of 2D textures.
-///  @params[in,out] avail_const_mem Available constant memory.
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
@@ -275,9 +275,9 @@ void compile_index(std::ostringstream &stream,
 ///    c'_i = c_i - 3*d_i*i                                                  (4)
 ///    d'_i = d_i                                                            (5)
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -337,7 +337,7 @@ void compile_index(std::ostringstream &stream,
 ///  The argument of this node can be defered so we need to check if the
 ///  arguments are null.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -361,8 +361,8 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -464,8 +464,8 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] x Argument.
+///  @param[in] d Data to initalize the piecewise constant.
+///  @param[in] x Argument.
 ///  @returns A reduced piecewise\_1D node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -499,7 +499,7 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -557,7 +557,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] d Backend buffer.
+///  @param[in] d Backend buffer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d) {
@@ -572,9 +572,9 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @params[in] d Backend buffer.
-///  @params[in] x X argument.
-///  @params[in] y Y argument.
+///  @param[in] d Backend buffer.
+///  @param[in] x X argument.
+///  @param[in] y Y argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
@@ -588,7 +588,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Stores the data in a hash.
 ///
-///  @params[in] d Backend buffer.
+///  @param[in] d Backend buffer.
 ///  @returns The hash the node is stored in.
 //------------------------------------------------------------------------------
         static size_t hash_data(const backend::buffer<T> &d) {
@@ -618,10 +618,10 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Construct 2D a piecewise constant node.
 ///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] n Number of columns.
-///  @params[in] x X Argument.
-///  @params[in] y Y Argument.
+///  @param[in] d Data to initalize the piecewise constant.
+///  @param[in] n Number of columns.
+///  @param[in] x X Argument.
+///  @param[in] y Y Argument.
 //------------------------------------------------------------------------------
         piecewise_2D_node(const backend::buffer<T> &d,
                           const size_t n,
@@ -685,7 +685,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
@@ -695,13 +695,13 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream          String buffer stream.
-///  @params[in,out] registers       List of defined registers.
-///  @params[in,out] visited         List of visited nodes.
-///  @params[in,out] usage           List of register usage count.
-///  @params[in,out] textures1d      List of 1D textures.
-///  @params[in,out] textures2d      List of 2D textures.
-///  @params[in,out] avail_const_mem Available constant memory.
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
@@ -804,9 +804,9 @@ void compile_index(std::ostringstream &stream,
 ///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)   (17)
 ///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)     (18)
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -875,7 +875,7 @@ void compile_index(std::ostringstream &stream,
 ///
 ///  Assumes both arguments are either set or not set.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -902,8 +902,8 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -981,7 +981,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Check if the args match.
 ///
-///  @params[in] x Node to match.
+///  @param[in] x Node to match.
 ///  @returns True if the arguments match.
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
@@ -996,7 +996,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Do the rows match.
 ///
-///  @params[in] x Node to match.
+///  @param[in] x Node to match.
 ///  @returns True if the row arguments match.
 //------------------------------------------------------------------------------
         bool is_row_match(shared_leaf<T, SAFE_MATH> x) {
@@ -1011,7 +1011,7 @@ void compile_index(std::ostringstream &stream,
 ///
 ///  The number of rows is the column dimension.
 ///
-///  @params[in] x Node to match.
+///  @param[in] x Node to match.
 ///  @returns True if the column arguments match.
 //------------------------------------------------------------------------------
         bool is_col_match(shared_leaf<T, SAFE_MATH> x) {
@@ -1028,10 +1028,10 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] d Data to initalize the piecewise constant.
-///  @params[in] n Number of columns.
-///  @params[in] x Argument.
-///  @params[in] y Argument.
+///  @param[in] d Data to initalize the piecewise constant.
+///  @param[in] n Number of columns.
+///  @param[in] x Argument.
+///  @param[in] y Argument.
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false> 
@@ -1067,7 +1067,7 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>

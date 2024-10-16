@@ -111,7 +111,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Construct a cpu context.
 ///
-///  @params[in] index Concurrent index. Not used.
+///  @param[in] index Concurrent index. Not used.
 //------------------------------------------------------------------------------
         cpu_context(const size_t index) {
             llvm::InitializeNativeTarget();
@@ -121,9 +121,9 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Compile the kernels.
 ///
-///  @params[in] kernel_source Source code buffer for the kernel.
-///  @params[in] names         Names of the kernel functions.
-///  @params[in] add_reduction Include the reduction kernel.
+///  @param[in] kernel_source Source code buffer for the kernel.
+///  @param[in] names         Names of the kernel functions.
+///  @param[in] add_reduction Include the reduction kernel.
 //------------------------------------------------------------------------------
         void compile(const std::string kernel_source,
                      std::vector<std::string> names,
@@ -212,12 +212,12 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a kernel calling function.
 ///
-///  @params[in] kernel_name Name of the kernel for later reference.
-///  @params[in] inputs      Input nodes of the kernel.
-///  @params[in] outputs     Output nodes of the kernel.
-///  @params[in] num_rays    Number of rays to trace.
-///  @params[in] tex1d_list  List of 1D textures.
-///  @params[in] tex2d_list  List of 1D textures.
+///  @param[in] kernel_name Name of the kernel for later reference.
+///  @param[in] inputs      Input nodes of the kernel.
+///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] num_rays    Number of rays to trace.
+///  @param[in] tex1d_list  List of 1D textures.
+///  @param[in] tex2d_list  List of 1D textures.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
@@ -266,8 +266,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a max compute pipeline.
 ///
-///  @params[in] argument Node to reduce.
-///  @params[in] run      Function to run before reduction.
+///  @param[in] argument Node to reduce.
+///  @param[in] run      Function to run before reduction.
 //------------------------------------------------------------------------------
         std::function<T(void)> create_max_call(graph::shared_leaf<T, SAFE_MATH> &argument,
                                                std::function<void(void)> run) {
@@ -304,8 +304,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @params[in] index Particle index to print.
-///  @params[in] nodes Nodes to output.
+///  @param[in] index Particle index to print.
+///  @param[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
         void print_results(const size_t index,
                            const graph::output_nodes<T, SAFE_MATH> &nodes) {
@@ -323,8 +323,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Check the value.
 ///
-///  @params[in] index Ray index to check value for.
-///  @params[in] node  Node to check the value for.
+///  @param[in] index Ray index to check value for.
+///  @param[in] node  Node to check the value for.
 ///  @returns The value at the index.
 //------------------------------------------------------------------------------
         T check_value(const size_t index,
@@ -335,8 +335,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
-///  @params[in] node   Not to copy buffer to.
-///  @params[in] source Host side buffer to copy from.
+///  @param[in] node   Not to copy buffer to.
+///  @param[in] source Host side buffer to copy from.
 //------------------------------------------------------------------------------
         void copy_to_device(graph::shared_leaf<T, SAFE_MATH> node,
                             T *source) {
@@ -348,8 +348,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to host.
 ///
-///  @params[in]     node        Node to copy buffer from.
-///  @params[in,out] destination Host side buffer to copy to.
+///  @param[in]     node        Node to copy buffer from.
+///  @param[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_host(const graph::shared_leaf<T, SAFE_MATH> node,
                           T *destination) {
@@ -361,7 +361,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create the source header.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
+///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
             source_buffer << "#include <map>" << std::endl;
@@ -377,16 +377,16 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create kernel prefix.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     name          Name to call the kernel.
-///  @params[in]     inputs        Input variables of the kernel.
-///  @params[in]     outputs       Output nodes of the graph to compute.
-///  @params[in]     size          Size of the input buffer.
-///  @params[in]     is_constant   Flags if the input is read only.
-///  @params[in,out] registers     Map of used registers.
-///  @params[in]     usage         List of register usage count.
-///  @params[in]     textures1d    List of 1D kernel textures.
-///  @params[in]     textures2d    List of 2D kernel textures.
+///  @param[in,out] source_buffer Source buffer stream.
+///  @param[in]     name          Name to call the kernel.
+///  @param[in]     inputs        Input variables of the kernel.
+///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     size          Size of the input buffer.
+///  @param[in]     is_constant   Flags if the input is read only.
+///  @param[in,out] registers     Map of used registers.
+///  @param[in]     usage         List of register usage count.
+///  @param[in]     textures1d    List of 1D kernel textures.
+///  @param[in]     textures2d    List of 2D kernel textures.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
@@ -439,11 +439,11 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create kernel postfix.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     outputs       Output nodes of the graph to compute.
-///  @params[in]     setters       Map outputs back to input values.
-///  @params[in,out] registers     Map of used registers.
-///  @params[in]     usage         List of register usage count.
+///  @param[in,out] source_buffer Source buffer stream.
+///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     setters       Map outputs back to input values.
+///  @param[in,out] registers     Map of used registers.
+///  @param[in]     usage         List of register usage count.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
@@ -508,8 +508,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a reduction kernel.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     size          Size of the input buffer.
+///  @param[in,out] source_buffer Source buffer stream.
+///  @param[in]     size          Size of the input buffer.
 //------------------------------------------------------------------------------
         void create_reduction(std::ostringstream &source_buffer,
                               const size_t size) {}
@@ -522,7 +522,7 @@ namespace gpu {
 ///  memory pointer from that. This allows one thread to run the kernel while a
 ///  different thread can use the results.
 ///
-///  @params[in] node Node to get the buffer for.
+///  @param[in] node Node to get the buffer for.
 //------------------------------------------------------------------------------
         T *get_buffer(graph::shared_leaf<T, SAFE_MATH> &node) {
             if (!host_buffers.contains(node.get())) {

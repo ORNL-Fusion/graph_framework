@@ -106,7 +106,7 @@ void test_constant() {
 ///
 ///  @tparam SOLVER Class of solver to use.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<solver::method SOLVER>
 void test_bohm_gross(const typename SOLVER::base tolarance) {
@@ -203,7 +203,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 ///
 ///  @tparam SOLVER Class of solver to use.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<solver::method SOLVER>
 void test_light_wave(const typename SOLVER::base tolarance) {
@@ -280,7 +280,7 @@ void test_light_wave(const typename SOLVER::base tolarance) {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void test_acoustic_wave(const T tolarance) {
@@ -512,10 +512,10 @@ void test_cold_plasma_cutoffs() {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
-///  @params[in] n0        Starting nz value.
-///  @params[in] x0        Starting x guess.
-///  @params[in] kx0       Starting kx guess.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] n0        Starting nz value.
+///  @param[in] x0        Starting x guess.
+///  @param[in] kx0       Starting kx guess.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void test_reflection(const T tolarance,
@@ -622,7 +622,7 @@ template<jit::float_scalar T> void test_efit() {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @params[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolarance Tolarance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void run_tests(const T tolarance) {
     test_constant<T> ();
@@ -640,8 +640,8 @@ template<jit::float_scalar T> void run_tests(const T tolarance) {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU

@@ -98,10 +98,10 @@ public:
 //------------------------------------------------------------------------------
 ///  @brief Check error.
 ///
-///  @params[in] test      Test value.
-///  @params[in] expected  Expected result.
-///  @params[in] tolarance Error tolarance.
-///  @params[in] name      Name of the test.
+///  @param[in] test      Test value.
+///  @param[in] expected  Expected result.
+///  @param[in] tolarance Error tolarance.
+///  @param[in] name      Name of the test.
 //------------------------------------------------------------------------------
 template <jit::float_scalar T>
 void check_error(const T test, const T expected, const T tolarance,
@@ -170,8 +170,8 @@ void run_test() {
 //------------------------------------------------------------------------------
 ///  @brief Main program of the test.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
 int main(int argc, const char * argv[]) {
     START_GPU

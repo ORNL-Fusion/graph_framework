@@ -97,18 +97,18 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new solver_interface with inital conditions.
 ///
-///  @params[in] w        Inital w.
-///  @params[in] kx       Inital kx.
-///  @params[in] ky       Inital ky.
-///  @params[in] kz       Inital kz.
-///  @params[in] x        Inital x.
-///  @params[in] y        Inital y.
-///  @params[in] z        Inital z.
-///  @params[in] t        Inital t.
-///  @params[in] eq       The plasma equilibrium.
-///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] num_rays Number of rays to write.
-///  @params[in] index    Concurrent index.
+///  @param[in] w        Inital w.
+///  @param[in] kx       Inital kx.
+///  @param[in] ky       Inital ky.
+///  @param[in] kz       Inital kz.
+///  @param[in] x        Inital x.
+///  @param[in] y        Inital y.
+///  @param[in] z        Inital z.
+///  @param[in] t        Inital t.
+///  @param[in] eq       The plasma equilibrium.
+///  @param[in] filename Result filename, empty names will be blank.
+///  @param[in] num_rays Number of rays to write.
+///  @param[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         solver_interface(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                             DISPERSION_FUNCTION::safe_math> w,
@@ -146,10 +146,10 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Method to initalize the rays.
 ///
-///  @params[in,out] x              Variable reference to update.
-///  @params[in]     tolarance      Tolarance to solve to dispersion function
+///  @param[in,out] x              Variable reference to update.
+///  @param[in]     tolarance      Tolarance to solve to dispersion function
 ///                                 to.
-///  @params[in]     max_iterations Maximum number of iterations to run.
+///  @param[in]     max_iterations Maximum number of iterations to run.
 ///  @returns The residule graph.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<typename DISPERSION_FUNCTION::base,
@@ -286,7 +286,7 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Check the residule.
 ///
-///  @params[in] index Ray index to check residule for.
+///  @param[in] index Ray index to check residule for.
 ///  @returns The value of the residule at the index.
 //------------------------------------------------------------------------------
         typename DISPERSION_FUNCTION::base check_residule(const size_t index) {
@@ -296,7 +296,7 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @params[in] index Ray index to print results of.
+///  @param[in] index Ray index to print results of.
 //------------------------------------------------------------------------------
         void print(const size_t index) {
             work.print(index, {
@@ -492,19 +492,19 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @params[in] w        Inital omega.
-///  @params[in] kx       Inital kx.
-///  @params[in] ky       Inital ky.
-///  @params[in] kz       Inital kz.
-///  @params[in] x        Inital x.
-///  @params[in] y        Inital y.
-///  @params[in] z        Inital z.
-///  @params[in] t        Inital t.
-///  @params[in] dt       Inital dt.
-///  @params[in] eq       Equilibrium object.
-///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] num_rays Number of rays to write.
-///  @params[in] index    Concurrent index.
+///  @param[in] w        Inital omega.
+///  @param[in] kx       Inital kx.
+///  @param[in] ky       Inital ky.
+///  @param[in] kz       Inital kz.
+///  @param[in] x        Inital x.
+///  @param[in] y        Inital y.
+///  @param[in] z        Inital z.
+///  @param[in] t        Inital t.
+///  @param[in] dt       Inital dt.
+///  @param[in] eq       Equilibrium object.
+///  @param[in] filename Result filename, empty names will be blank.
+///  @param[in] num_rays Number of rays to write.
+///  @param[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         rk2(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                DISPERSION_FUNCTION::safe_math> w,
@@ -660,19 +660,19 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @params[in] w        Inital omega.
-///  @params[in] kx       Inital kx.
-///  @params[in] ky       Inital ky.
-///  @params[in] kz       Inital kz.
-///  @params[in] x        Inital x.
-///  @params[in] y        Inital y.
-///  @params[in] z        Inital z.
-///  @params[in] t        Inital t.
-///  @params[in] dt       Inital dt.
-///  @params[in] eq       Equilibrium object.
-///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] num_rays Number of rays to write.
-///  @params[in] index    Concurrent index.
+///  @param[in] w        Inital omega.
+///  @param[in] kx       Inital kx.
+///  @param[in] ky       Inital ky.
+///  @param[in] kz       Inital kz.
+///  @param[in] x        Inital x.
+///  @param[in] y        Inital y.
+///  @param[in] z        Inital z.
+///  @param[in] t        Inital t.
+///  @param[in] dt       Inital dt.
+///  @param[in] eq       Equilibrium object.
+///  @param[in] filename Result filename, empty names will be blank.
+///  @param[in] num_rays Number of rays to write.
+///  @param[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                DISPERSION_FUNCTION::safe_math> w,
@@ -791,19 +791,19 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @params[in] w        Inital omega.
-///  @params[in] kx       Inital kx.
-///  @params[in] ky       Inital ky.
-///  @params[in] kz       Inital kz.
-///  @params[in] x        Inital x.
-///  @params[in] y        Inital y.
-///  @params[in] z        Inital z.
-///  @params[in] t        Inital t.
-///  @params[in] dt       Inital dt.
-///  @params[in] eq       Equilibrium object.
-///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] num_rays Number of rays to write.
-///  @params[in] index    Concurrent index.
+///  @param[in] w        Inital omega.
+///  @param[in] kx       Inital kx.
+///  @param[in] ky       Inital ky.
+///  @param[in] kz       Inital kz.
+///  @param[in] x        Inital x.
+///  @param[in] y        Inital y.
+///  @param[in] z        Inital z.
+///  @param[in] t        Inital t.
+///  @param[in] dt       Inital dt.
+///  @param[in] eq       Equilibrium object.
+///  @param[in] filename Result filename, empty names will be blank.
+///  @param[in] num_rays Number of rays to write.
+///  @param[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         adaptive_rk4(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                         DISPERSION_FUNCTION::safe_math> w,
@@ -925,19 +925,19 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a split simplextic integrator.
 ///
-///  @params[in] w        Inital omega.
-///  @params[in] kx       Inital kx.
-///  @params[in] ky       Inital ky.
-///  @params[in] kz       Inital kz.
-///  @params[in] x        Inital x.
-///  @params[in] y        Inital y.
-///  @params[in] z        Inital z.
-///  @params[in] t        Inital t.
-///  @params[in] dt       Inital dt.
-///  @params[in] eq       Equilibrium object.
-///  @params[in] filename Result filename, empty names will be blank.
-///  @params[in] num_rays Number of rays to write.
-///  @params[in] index    Concurrent index.
+///  @param[in] w        Inital omega.
+///  @param[in] kx       Inital kx.
+///  @param[in] ky       Inital ky.
+///  @param[in] kz       Inital kz.
+///  @param[in] x        Inital x.
+///  @param[in] y        Inital y.
+///  @param[in] z        Inital z.
+///  @param[in] t        Inital t.
+///  @param[in] dt       Inital dt.
+///  @param[in] eq       Equilibrium object.
+///  @param[in] filename Result filename, empty names will be blank.
+///  @param[in] num_rays Number of rays to write.
+///  @param[in] index    Concurrent index.
 //------------------------------------------------------------------------------
         split_simplextic(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                             DISPERSION_FUNCTION::safe_math> w,

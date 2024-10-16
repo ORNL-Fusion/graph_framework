@@ -27,7 +27,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] a Argument node pointer.
+///  @param[in] a Argument node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *a) {
@@ -38,7 +38,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a sine\_node node.
 ///
-///  @params[in] x Argument.
+///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         sine_node(shared_leaf<T, SAFE_MATH> x) :
         straight_node<T, SAFE_MATH> (x, sine_node::to_string(x.get())) {}
@@ -105,7 +105,7 @@ namespace graph {
 ///
 ///  d sin(a)/dx = cos(a)*da/dx
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -124,9 +124,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> compile(std::ostringstream &stream,
@@ -151,7 +151,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -191,8 +191,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -217,7 +217,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Argument.
+///  @param[in] x Argument.
 ///  @returns A reduced sin node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -250,7 +250,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -273,7 +273,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] a Argument node pointer.
+///  @param[in] a Argument node pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *a) {
@@ -284,7 +284,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a cosine_node node.
 ///
-///  @params[in] x Argument.
+///  @param[in] x Argument.
 //------------------------------------------------------------------------------
         cosine_node(shared_leaf<T, SAFE_MATH> x) :
         straight_node<T, SAFE_MATH> (x, cosine_node::to_string(x.get())) {}
@@ -351,7 +351,7 @@ namespace graph {
 ///
 ///  d sin(a)/dx = cos(a)*da/dx
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -370,9 +370,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -398,7 +398,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -438,8 +438,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -464,7 +464,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Argument.
+///  @param[in] x Argument.
 ///  @returns A reduced cos node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -497,7 +497,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -516,7 +516,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Argument.
+///  @param[in] x Argument.
 ///  @returns A reduced tan node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -539,8 +539,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] l Left pointer.
-///  @params[in] r Left pointer.
+///  @param[in] l Left pointer.
+///  @param[in] r Left pointer.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
     static std::string to_string(leaf_node<T, SAFE_MATH> *l,
@@ -553,8 +553,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a arctan\_node node.
 ///
-///  @params[in] x Argument.
-///  @params[in] y Argument.
+///  @param[in] x Argument.
+///  @param[in] y Argument.
 //------------------------------------------------------------------------------
         arctan_node(shared_leaf<T, SAFE_MATH> x,
                     shared_leaf<T, SAFE_MATH> y) :
@@ -648,7 +648,7 @@ namespace graph {
 ///
 ///  d atan(x,y)/dx = 1/(1 + (y/x)^2)*d (y/x)/dx
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -668,9 +668,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -706,7 +706,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -750,8 +750,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -778,8 +778,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> atan(shared_leaf<T, SAFE_MATH> l,
@@ -809,8 +809,8 @@ namespace graph {
 ///  @tparam L         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> atan(const L l,
@@ -825,8 +825,8 @@ namespace graph {
 ///  @tparam R         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> atan(shared_leaf<T, SAFE_MATH> l,
@@ -844,7 +844,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>

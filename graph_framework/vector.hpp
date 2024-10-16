@@ -32,9 +32,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new vector_quantity.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 //------------------------------------------------------------------------------
         vector_quantity(shared_leaf<T, SAFE_MATH> x,
                         shared_leaf<T, SAFE_MATH> y,
@@ -72,7 +72,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Vector dot product.
 ///
-///  @params[in] v2 Second vector.
+///  @param[in] v2 Second vector.
 ///  @returns v1.v2
 //------------------------------------------------------------------------------
         shared_leaf<T, SAFE_MATH>
@@ -85,7 +85,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Vector cross product.
 ///
-///  @params[in] v2 Second vector.
+///  @param[in] v2 Second vector.
 ///  @returns v1 X v2
 //------------------------------------------------------------------------------
         std::shared_ptr<vector_quantity<T, SAFE_MATH>>
@@ -124,9 +124,9 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 ///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -143,9 +143,9 @@ namespace graph {
 ///  @tparam L         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 ///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
@@ -162,9 +162,9 @@ namespace graph {
 ///  @tparam M         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 ///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar M, bool SAFE_MATH=false>
@@ -181,9 +181,9 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 ///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
@@ -201,9 +201,9 @@ namespace graph {
 ///  @tparam M         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 ///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, jit::float_scalar M, bool SAFE_MATH=false>
@@ -222,9 +222,9 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 ///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar M, jit::float_scalar R, bool SAFE_MATH=false>
@@ -243,9 +243,9 @@ namespace graph {
 ///  @tparam R         Float type for the constant.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 ///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, jit::float_scalar R, bool SAFE_MATH=false>
@@ -262,9 +262,9 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x X vector component.
-///  @params[in] y Y vector component.
-///  @params[in] z Z Vector component.
+///  @param[in] x X vector component.
+///  @param[in] y Y vector component.
+///  @param[in] z Z Vector component.
 ///  @returns A vector.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -282,8 +282,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] l Left vector.
-///  @params[in] r Right vector.
+///  @param[in] l Left vector.
+///  @param[in] r Right vector.
 ///  @returns The vector vector addition.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -300,8 +300,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] s Scalar term.
-///  @params[in] v Vector term.
+///  @param[in] s Scalar term.
+///  @param[in] v Vector term.
 ///  @returns The scalar vector multiply.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -318,8 +318,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] v Vector numerator.
-///  @params[in] s Scalar denominator.
+///  @param[in] v Vector numerator.
+///  @param[in] s Scalar denominator.
 ///  @returns The vector scalar division.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -353,9 +353,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new matrix_quantity.
 ///
-///  @params[in] r1 Row 1 matrix component.
-///  @params[in] r2 Row 2 matrix component.
-///  @params[in] r3 Row 3 matrix component.
+///  @param[in] r1 Row 1 matrix component.
+///  @param[in] r2 Row 2 matrix component.
+///  @param[in] r3 Row 3 matrix component.
 //------------------------------------------------------------------------------
         matrix_quantity(shared_vector<T, SAFE_MATH> r1,
                         shared_vector<T, SAFE_MATH> r2,
@@ -365,7 +365,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Multiply matrix by vector.
 ///
-///  @params[in] v Vector vector.
+///  @param[in] v Vector vector.
 ///  @returns v1.v2
 //------------------------------------------------------------------------------
         shared_vector<T, SAFE_MATH>
@@ -386,9 +386,9 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] r1 Row 1 matrix component.
-///  @params[in] r2 Row 2 matrix component.
-///  @params[in] r3 Row 3 matrix component.
+///  @param[in] r1 Row 1 matrix component.
+///  @param[in] r2 Row 2 matrix component.
+///  @param[in] r3 Row 3 matrix component.
 ///  @returns A matrix.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>

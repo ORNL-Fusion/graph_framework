@@ -32,8 +32,8 @@ namespace commandline {
 //------------------------------------------------------------------------------
 ///  @brief Take end string.
 ///
-///  @params[in] string    String to take.
-///  @params[in] character Character to split at.
+///  @param[in] string    String to take.
+///  @param[in] character Character to split at.
 //------------------------------------------------------------------------------
         static std::string_view take_end(const char *string,
                                          const char character) {
@@ -55,10 +55,10 @@ namespace commandline {
 //------------------------------------------------------------------------------
 ///  @brief Add commandline option.
 ///
-///  @params[in] option      The command option.
-///  @params[in] takes_value Flag to indicate the option takes a value.
-///  @params[in] help_text   The help text of the option.
-///  @params[in] values      An optional set of values.
+///  @param[in] option      The command option.
+///  @param[in] takes_value Flag to indicate the option takes a value.
+///  @param[in] help_text   The help text of the option.
+///  @param[in] values      An optional set of values.
 //------------------------------------------------------------------------------
         void add_option(const std::string &option,
                         const bool takes_value,
@@ -73,7 +73,7 @@ namespace commandline {
 //------------------------------------------------------------------------------
 ///  @brief Display help.
 ///
-///  @params[in] command Name of the program.
+///  @param[in] command Name of the program.
 //------------------------------------------------------------------------------
         void show_help(const std::string &command) const {
             sync.lock();
@@ -108,8 +108,8 @@ namespace commandline {
 //------------------------------------------------------------------------------
 ///  @brief Parse the command line.
 ///
-///  @params[in] argc Number of commandline arguments.
-///  @params[in] argv Array of commandline arguments.
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
 //------------------------------------------------------------------------------
         void parse(const int argc, const char * argv[]) {
             for (int i = 1; i < argc; i++) {
@@ -145,7 +145,7 @@ namespace commandline {
 //------------------------------------------------------------------------------
 ///  @brief Check if option is set.
 ///
-///  @params[in] option The option to check.
+///  @param[in] option The option to check.
 //------------------------------------------------------------------------------
         bool is_option_set(const std::string &option) const {
             return parsed_options.find(option) != parsed_options.cend();

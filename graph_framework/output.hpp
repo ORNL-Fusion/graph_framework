@@ -19,7 +19,7 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Check the error status.
 ///
-///  @params[in] status Error status code.
+///  @param[in] status Error status code.
 //------------------------------------------------------------------------------
     static void check_error(const int status) {
         assert(status == NC_NOERR && nc_strerror(status));
@@ -43,8 +43,8 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new result file.
 ///
-///  @params[in] filename Name of the result file.
-///  @params[in] num_rays Number of rays.
+///  @param[in] filename Name of the result file.
+///  @param[in] num_rays Number of rays.
 //------------------------------------------------------------------------------
         result_file(const std::string &filename,
                     const size_t num_rays) :
@@ -67,7 +67,7 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Open a new result file.
 ///
-///  @params[in] filename Name of the result file.
+///  @param[in] filename Name of the result file.
 //------------------------------------------------------------------------------
         result_file(const std::string &filename) {
             sync.lock();
@@ -209,7 +209,7 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Construct a dataset.
 ///
-///  @params[in] result A result file reference.
+///  @param[in] result A result file reference.
 //------------------------------------------------------------------------------
         data_set(const result_file &result) {
             sync.lock();
@@ -250,10 +250,10 @@ namespace output {
 ///
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] result  A result file reference.
-///  @params[in] name    Name of the variable.
-///  @params[in] node    Node to create variable for.
-///  @params[in] context Context for the gpu.
+///  @param[in] result  A result file reference.
+///  @param[in] name    Name of the variable.
+///  @param[in] node    Node to create variable for.
+///  @param[in] context Context for the gpu.
 //------------------------------------------------------------------------------
         template<bool SAFE_MATH=false>
         void create_variable(const result_file &result,
@@ -276,9 +276,9 @@ namespace output {
 ///
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] result  A result file reference.
-///  @params[in] name    Name of the variable.
-///  @params[in] node    Node to create variable for.
+///  @param[in] result  A result file reference.
+///  @param[in] name    Name of the variable.
+///  @param[in] node    Node to create variable for.
 //------------------------------------------------------------------------------
         template<bool SAFE_MATH=false>
         void reference_variable(const result_file &result,
@@ -312,9 +312,9 @@ namespace output {
 ///
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] result  A result file reference.
-///  @params[in] name    Name of the variable.
-///  @params[in] node    Node to create variable for.
+///  @param[in] result  A result file reference.
+///  @param[in] name    Name of the variable.
+///  @param[in] node    Node to create variable for.
 //------------------------------------------------------------------------------
         template<bool SAFE_MATH=false>
         void reference_imag_variable(const result_file &result,
@@ -347,7 +347,7 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Write step.
 ///
-///  @params[in] result A result file reference.
+///  @param[in] result A result file reference.
 //------------------------------------------------------------------------------
         void write(const result_file &result) {
             write(result, result.get_unlimited_size());
@@ -356,8 +356,8 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Write step.
 ///
-///  @params[in] result A result file reference.
-///  @params[in] index  Time index.
+///  @param[in] result A result file reference.
+///  @param[in] index  Time index.
 //------------------------------------------------------------------------------
         void write(const result_file &result,
                    const size_t index) {
@@ -405,8 +405,8 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Read step.
 ///
-///  @params[in] result A result file reference.
-///  @params[in] index  Time index.
+///  @param[in] result A result file reference.
+///  @param[in] index  Time index.
 //------------------------------------------------------------------------------
         void read(const result_file &result,
                   const size_t index) {

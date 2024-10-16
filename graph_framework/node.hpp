@@ -42,9 +42,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a basic node.
 ///
-///  @params[in] s      Node string to hash.
-///  @params[in] count  Number of nodes in the subgraph.
-///  @params[in] pseudo Node contains pseudo variable.
+///  @param[in] s      Node string to hash.
+///  @param[in] count  Number of nodes in the subgraph.
+///  @param[in] pseudo Node contains pseudo variable.
 //------------------------------------------------------------------------------
         leaf_node(const std::string s,
                   const size_t count,
@@ -76,7 +76,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
@@ -88,13 +88,13 @@ namespace graph {
 ///  Some nodes require additions to the preamble however most don't so define a
 ///  generic method that does nothing.
 ///
-///  @params[in,out] stream          String buffer stream.
-///  @params[in,out] registers       List of defined registers.
-///  @params[in,out] visited         List of visited nodes.
-///  @params[in,out] usage           List of register usage count.
-///  @params[in,out] textures1d      List of 1D textures.
-///  @params[in,out] textures2d      List of 2D textures.
-///  @params[in,out] avail_const_mem Available constant memory.
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
@@ -113,9 +113,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
@@ -126,7 +126,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) = 0;
@@ -134,7 +134,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Check if the base of the powers match.
 ///
-///  @params[in] x Other graph to check if the bases match.
+///  @param[in] x Other graph to check if the bases match.
 ///  @returns True if the powers of the nodes match.
 //------------------------------------------------------------------------------
         bool is_power_base_match(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) {
@@ -144,15 +144,15 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @params[in] d Scalar data to set.
+///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const T d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @params[in] index Buffer index to set value.
-///  @params[in] d     Scalar data to set.
+///  @param[in] index Buffer index to set value.
+///  @param[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const size_t index,
                          const T d) {}
@@ -160,14 +160,14 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @params[in] d Vector data to set.
+///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<T> &d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @params[in] d Backend buffer data to set.
+///  @param[in] d Backend buffer data to set.
 //------------------------------------------------------------------------------
         virtual void set(const backend::buffer<T> &d) {}
 
@@ -179,8 +179,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>> to_vizgraph(std::stringstream &stream,
@@ -316,7 +316,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Build the vizgraph input.
 ///
-///  @params[in] node      Node to build the graph of.
+///  @param[in] node      Node to build the graph of.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     void make_vizgraph(shared_leaf<T, SAFE_MATH> node) {
@@ -346,7 +346,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] d Scalar data to initalize.
+///  @param[in] d Scalar data to initalize.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const T d) {
@@ -361,7 +361,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
 ///
-///  @params[in] d Array buffer.
+///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
         constant_node(const backend::buffer<T> &d) :
         leaf_node<T, SAFE_MATH> (constant_node::to_string(d.at(0)), 1, false), data(d) {
@@ -391,7 +391,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
@@ -401,9 +401,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -430,7 +430,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -472,8 +472,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -550,7 +550,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] d Array buffer.
+///  @param[in] d Array buffer.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -579,7 +579,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] d Scalar data to initalize.
+///  @param[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -628,7 +628,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -658,8 +658,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a straight node.
 ///
-///  @params[in] a Argument.
-///  @params[in] s Node string to hash.
+///  @param[in] a Argument.
+///  @param[in] s Node string to hash.
 //------------------------------------------------------------------------------
         straight_node(shared_leaf<T, SAFE_MATH> a,
                       const std::string s) :
@@ -678,13 +678,13 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream          String buffer stream.
-///  @params[in,out] registers       List of defined registers.
-///  @params[in,out] visited         List of visited nodes.
-///  @params[in,out] usage           List of register usage count.
-///  @params[in,out] textures1d      List of 1D textures.
-///  @params[in,out] textures2d      List of 2D textures.
-///  @params[in,out] avail_const_mem Available constant memory.
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
@@ -708,9 +708,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -771,9 +771,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Assigns the left and right branches.
 ///
-///  @params[in] l Left branch.
-///  @params[in] r Right branch.
-///  @params[in] s Node string to hash.
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+///  @param[in] s Node string to hash.
 //------------------------------------------------------------------------------
         branch_node(shared_leaf<T, SAFE_MATH> l,
                     shared_leaf<T, SAFE_MATH> r,
@@ -785,11 +785,11 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Assigns the left and right branches.
 ///
-///  @params[in] l     Left branch.
-///  @params[in] r     Right branch.
-///  @params[in] s     Node string to hash.
-///  @params[in] count Number of nodes in the subgraph.
-///  @params[in] pseudo Node contains pseudo variable.
+///  @param[in] l     Left branch.
+///  @param[in] r     Right branch.
+///  @param[in] s     Node string to hash.
+///  @param[in] count Number of nodes in the subgraph.
+///  @param[in] pseudo Node contains pseudo variable.
 //------------------------------------------------------------------------------
         branch_node(shared_leaf<T, SAFE_MATH> l,
                     shared_leaf<T, SAFE_MATH> r,
@@ -802,13 +802,13 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream          String buffer stream.
-///  @params[in,out] registers       List of defined registers.
-///  @params[in,out] visited         List of visited nodes.
-///  @params[in,out] usage           List of register usage count.
-///  @params[in,out] textures1d      List of 1D textures.
-///  @params[in,out] textures2d      List of 2D textures.
-///  @params[in,out] avail_const_mem Available constant memory.
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
@@ -891,10 +891,10 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Reduces and assigns the left and right branches.
 ///
-///  @params[in] l Left branch.
-///  @params[in] m Middle branch.
-///  @params[in] r Right branch.
-///  @params[in] s Node string to hash.
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
+///  @param[in] s Node string to hash.
 //------------------------------------------------------------------------------
         triple_node(shared_leaf<T, SAFE_MATH> l,
                     shared_leaf<T, SAFE_MATH> m,
@@ -912,13 +912,13 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
 ///
-///  @params[in,out] stream          String buffer stream.
-///  @params[in,out] registers       List of defined registers.
-///  @params[in,out] visited         List of visited nodes.
-///  @params[in,out] usage           List of register usage count.
-///  @params[in,out] textures1d      List of 1D textures.
-///  @params[in,out] textures2d      List of 2D textures.
-///  @params[in,out] avail_const_mem Available constant memory.
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
                                       jit::register_map &registers,
@@ -986,7 +986,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] p Pointer to the node.
+///  @param[in] p Pointer to the node.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(variable_node<T, SAFE_MATH> *p) {
@@ -997,8 +997,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node with a size.
 ///
-///  @params[in] s      Size of the data buffer.
-///  @params[in] symbol Symbol of the variable used in equations.
+///  @param[in] s      Size of the data buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
         variable_node(const size_t s,
                       const std::string &symbol) :
@@ -1008,9 +1008,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a scalar.
 ///
-///  @params[in] s      Size of he data buffer.
-///  @params[in] d      Scalar data to initalize.
-///  @params[in] symbol Symbol of the variable used in equations.
+///  @param[in] s      Size of he data buffer.
+///  @param[in] d      Scalar data to initalize.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
         variable_node(const size_t s, const T d,
                       const std::string &symbol) :
@@ -1022,8 +1022,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from a vector.
 ///
-///  @params[in] d      Array buffer.
-///  @params[in] symbol Symbol of the variable used in equations.
+///  @param[in] d      Array buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
         variable_node(const std::vector<T> &d,
                       const std::string &symbol) :
@@ -1035,8 +1035,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a variable node from backend buffer.
 ///
-///  @params[in] d      Backend buffer.
-///  @params[in] symbol Symbol of the variable used in equations.
+///  @param[in] d      Backend buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
         variable_node(const backend::buffer<T> &d,
                       const std::string &symbol) :
@@ -1068,7 +1068,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
@@ -1078,9 +1078,9 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
-///  @params[in]     usage     List of register usage count.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
@@ -1093,7 +1093,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -1103,7 +1103,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @params[in] d Scalar data to set.
+///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const T d) {
             buffer.set(d);
@@ -1112,8 +1112,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @params[in] index Index to place the value at.
-///  @params[in] d     Scalar data to set.
+///  @param[in] index Index to place the value at.
+///  @param[in] d     Scalar data to set.
 //------------------------------------------------------------------------------
         virtual void set(const size_t index, const T d) {
             buffer[index] = d;
@@ -1122,7 +1122,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @params[in] d Vector data to set.
+///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const std::vector<T> &d) {
             buffer.set(d);
@@ -1131,7 +1131,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
-///  @params[in] d Vector data to set.
+///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         virtual void set(const backend::buffer<T> &d) {
             buffer = d;
@@ -1154,8 +1154,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -1230,8 +1230,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] s      Size of the data buffer.
-///  @params[in] symbol Symbol of the variable used in equations.
+///  @param[in] s      Size of the data buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const size_t s,
@@ -1245,9 +1245,9 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] s      Size of he data buffer.
-///  @params[in] d      Scalar data to initalize.
-///  @params[in] symbol Symbol of the variable used in equations.
+///  @param[in] s      Size of he data buffer.
+///  @param[in] d      Scalar data to initalize.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const size_t s, const T d,
@@ -1261,8 +1261,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] d      Array buffer.
-///  @params[in] symbol Symbol of the variable used in equations.
+///  @param[in] d      Array buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const std::vector<T> &d,
@@ -1276,8 +1276,8 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] d      Array buffer.
-///  @params[in] symbol Symbol of the variable used in equations.
+///  @param[in] d      Array buffer.
+///  @param[in] symbol Symbol of the variable used in equations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> variable(const backend::buffer<T> &d,
@@ -1302,7 +1302,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -1329,7 +1329,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
-///  @params[in] p Pointer to the node argument.
+///  @param[in] p Pointer to the node argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *p) {
@@ -1340,7 +1340,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a pseudo variable node.
 ///
-///  @params[in] a Argument.
+///  @param[in] a Argument.
 //------------------------------------------------------------------------------
         pseudo_variable_node(shared_leaf<T, SAFE_MATH> a) :
         straight_node<T, SAFE_MATH> (a, pseudo_variable_node::to_string(a.get())) {}
@@ -1359,7 +1359,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
-///  @params[in] x The variable to take the derivative to.
+///  @param[in] x The variable to take the derivative to.
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
@@ -1369,7 +1369,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Querey if the nodes match.
 ///
-///  @params[in] x Other graph to check if it is a match.
+///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
@@ -1442,8 +1442,8 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
 ///
-///  @params[in,out] stream    String buffer stream.
-///  @params[in,out] registers List of defined registers.
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
@@ -1468,7 +1468,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Argument.
+///  @param[in] x Argument.
 ///  @returns A reduced pseudo variable node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -1486,7 +1486,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @params[in] x Leaf node to attempt cast.
+///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>

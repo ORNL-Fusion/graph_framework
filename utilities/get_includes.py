@@ -8,7 +8,7 @@ import subprocess
 #-------------------------------------------------------------------------------
 ##  @brief Parse the output to get the include directories.
 ##
-##  @params params[in] args Command line arguments.
+##  @param params[in] args Command line arguments.
 #-------------------------------------------------------------------------------
 def main(**args):
     output = subprocess.run([args['compiler'], '-Wp,-v', '-x', 'c++', '/dev/null', '-fsyntax-only'],
