@@ -282,8 +282,9 @@ target_link_libraries (llvm_dep
 find_package(Doxygen)
 
 if (DOXYGEN_FOUND)
-    set(DOXYGEN_PROJECT_NAME "Graph Framework")
-    set(DOXYGEN_EXCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/LLVM ${CMAKE_CURRENT_SOURCE_DIR}/build)
+    set (DOXYGEN_PROJECT_NAME "Graph Framework")
+    set (DOXYGEN_EXCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/LLVM ${CMAKE_CURRENT_SOURCE_DIR}/build)
+    set (DOXYGEN_GENERATE_TREEVIEW YES)
 
     doxygen_add_docs (doc)
 endif ()
