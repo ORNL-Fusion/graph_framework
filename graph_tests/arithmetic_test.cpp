@@ -2747,6 +2747,11 @@ template<jit::float_scalar T> void test_fma() {
            "Expected a piecewise 1d node on the left.");
     assert(graph::piecewise_2D_cast(fma_promote_cast->get_middle()).get() &&
            "Expected a piecewise 2d node in the middle.");
+
+//  fma(a,b,-c*d) -> a*b - c*d
+    auto fma_to_sub = graph::fma(var_a,var_b,-1.0*var_c);
+    auto fma_to_sub_cast = graph::subtract_cast(fma_to_sub);
+    assert(fma_to_sub_cast.get() && "Expected a subtract node.");
 }
 
 //------------------------------------------------------------------------------
