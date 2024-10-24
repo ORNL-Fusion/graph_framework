@@ -2889,7 +2889,15 @@ namespace graph {
                     return this->middle*(this->left + rm->get_left());
                 }
 
-//  Change cases like 
+//  Chnage case of
+//  fma(a,b,-c1*b) -> a*b - c1*b
+                auto rmlc = constant_cast(rm->get_left());
+                if (rmlc.get() && rmlc->evaluate().is_negative()) {
+                    return this->left*this->middle -
+                           (-1.0*rm->get_left())*rm->get_right();
+                }
+
+//  Change cases like
 //  fma(c1,a,c2*b) -> c1*fma(c3,b,a)
 //  fma(a,c1,c2*b) -> c1*fma(c3,b,a)
 //  fma(c1,a,b*c2) -> c1*fma(c3,b,a)
