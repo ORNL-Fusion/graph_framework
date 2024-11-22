@@ -81,7 +81,7 @@ using complex_type = conditional<is_float<T>::value,
 ///
 ///  @tparam T Base type.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns A null value.
 //------------------------------------------------------------------------------
 template<typename T>
@@ -93,7 +93,7 @@ T real(const complex_type<T> x) {
 //------------------------------------------------------------------------------
 ///  @brief Wrapper template for hip float real.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns The real part.
 //------------------------------------------------------------------------------
 template<>
@@ -105,7 +105,7 @@ float real<float> (const complex_type<float> x) {
 //------------------------------------------------------------------------------
 ///  @brief Wrapper template for hip double real.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns The real part.
 //------------------------------------------------------------------------------
 template<>
@@ -119,7 +119,7 @@ double real<double> (const complex_type<double> x) {
 ///
 ///  @tparam T Base type.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns A null value.
 //------------------------------------------------------------------------------
 template<typename T>
@@ -131,7 +131,7 @@ T imag(const complex_type<T> x) {
 //------------------------------------------------------------------------------
 ///  @brief Wrapper template for hip float imag.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns The imag part.
 //------------------------------------------------------------------------------
 template<>
@@ -143,7 +143,7 @@ float imag<float> (const complex_type<float> x) {
 //------------------------------------------------------------------------------
 ///  @brief Wrapper template for hip double imag.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns The imag part.
 //------------------------------------------------------------------------------
 template<>
@@ -159,7 +159,7 @@ double imag<double> (const complex_type<double> x) {
 ///
 ///  @tparam T Base type.
 ///
-///  @params[in] x Exp argument.
+///  @param[in] x Exp argument.
 ///  @returns A null.
 //------------------------------------------------------------------------------
 template<typename T>
@@ -172,7 +172,7 @@ T exp(const T x) {
 //------------------------------------------------------------------------------
 ///  @brief Complex exponetial for float.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns exp(x)
 //------------------------------------------------------------------------------
 template<>
@@ -186,7 +186,7 @@ complex_type<float> exp<complex_type<float>> (const complex_type<float> x) {
 //------------------------------------------------------------------------------
 ///  @brief Complex exponetial for double.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns exp(x)
 //------------------------------------------------------------------------------
 template<>
@@ -288,8 +288,8 @@ struct numeric_limits<double> {
 ///
 ///  @tparam T Base type.
 ///
-///  @params[in] r Real part.
-///  @params[in] i Imaginary part.
+///  @param[in] r Real part.
+///  @param[in] i Imaginary part.
 //------------------------------------------------------------------------------
 template<typename T>
 DEVICE_FUNCTION
@@ -301,8 +301,8 @@ complex_type<T> make_complex(const T r, const T i) {
 //------------------------------------------------------------------------------
 ///  @brief Make a complex type.
 ///
-///  @params[in] r Real part.
-///  @params[in] i Imaginary part.
+///  @param[in] r Real part.
+///  @param[in] i Imaginary part.
 //------------------------------------------------------------------------------
 template<>
 DEVICE_FUNCTION
@@ -313,8 +313,8 @@ complex_type<float> make_complex(const float r, const float i) {
 //------------------------------------------------------------------------------
 ///  @brief Make a complex type.
 ///
-///  @params[in] r Real part.
-///  @params[in] i Imaginary part.
+///  @param[in] r Real part.
+///  @param[in] i Imaginary part.
 //------------------------------------------------------------------------------
 template<>
 DEVICE_FUNCTION
@@ -329,7 +329,7 @@ complex_type<double> make_complex(const double r, const double i) {
 ///
 ///  @tparam T Base type.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns A null value.
 //------------------------------------------------------------------------------
 template<typename T>
@@ -342,7 +342,7 @@ T sqrt(const T x) {
 //------------------------------------------------------------------------------
 ///  @brief Complex sqrt for float type.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns sqrt(x)
 //------------------------------------------------------------------------------
 template<>
@@ -358,7 +358,7 @@ complex_type<float> sqrt<complex_type<float>> (const complex_type<float> x) {
 //------------------------------------------------------------------------------
 ///  @brief Complex sqrt for float type.
 ///  
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns sqrt(x)
 //------------------------------------------------------------------------------
 template<>
@@ -378,7 +378,7 @@ complex_type<double> sqrt<complex_type<double>> (const complex_type<double> x) {
 ///
 ///  @tparam T Base type.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns A null value.
 //------------------------------------------------------------------------------
 template<typename T>
@@ -391,7 +391,7 @@ T log(const T x) {
 //------------------------------------------------------------------------------
 ///  @brief Complex log for float type.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns log(x)
 //------------------------------------------------------------------------------
 template<>
@@ -406,7 +406,7 @@ complex_type<float> log<complex_type<float>> (const complex_type<float> x) {
 //------------------------------------------------------------------------------
 ///  @brief Complex log for float type.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns log(x)
 //------------------------------------------------------------------------------
 template<>
@@ -423,8 +423,8 @@ complex_type<double> log<complex_type<double>> (const complex_type<double> x) {
 ///
 ///  @tparam T Base type.
 ///
-///  @params[in] x Complex base.
-///  @params[in] y Complex exponent.
+///  @param[in] x Complex base.
+///  @param[in] y Complex exponent.
 ///  @returns pow(x, y)
 //------------------------------------------------------------------------------
 template<typename T>
@@ -438,7 +438,7 @@ T pow(const T x, const T y) {
 ///
 ///  @tparam T Base type.
 ///
-///  @params[in] x Complex argument.
+///  @param[in] x Complex argument.
 ///  @returns abs(x)
 //------------------------------------------------------------------------------
 template<typename T>
@@ -476,8 +476,8 @@ using complex_type = std::complex<T>;
 ///  
 ///  @tparam T Base type.
 ///
-///  @params[in] r Real part.
-///  @params[in] i Imaginary part.
+///  @param[in] r Real part.
+///  @param[in] i Imaginary part.
 //------------------------------------------------------------------------------
 #if __cplusplus >= 202002L
 template<std::floating_point T>
