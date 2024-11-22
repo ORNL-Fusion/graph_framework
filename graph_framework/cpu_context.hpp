@@ -16,6 +16,7 @@
 //  Clang headers will define IBAction and IBOutlet these so undefine them here.
 #undef IBAction
 #undef IBOutlet
+#include "llvm/Support/VirtualFileSystem.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -178,7 +179,9 @@ namespace gpu {
 
             clang::CompilerInstance clang;
             clang.setInvocation(invocation);
-            clang.createDiagnostics();
+            std::shared_ptr<llvm::vfs::FileSystem> VFS =
+                std::make_shared<llvm::vfs::InMemoryFileSystem> ();
+            clang.createDiagnostics(*VFS.get());
 
             const auto target_options = std::make_shared<clang::TargetOptions> ();
             target_options->Triple = llvm::sys::getProcessTriple();
