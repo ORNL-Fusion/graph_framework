@@ -198,6 +198,7 @@ FetchContent_GetProperties (
 )
 
 #  Do not build llvm until pull command is finished.
+add_dependencies (gpu-resource-headers pull_llvm)
 add_dependencies (llvm-offload-resource-headers pull_llvm)
 add_dependencies (LLVMDemangle pull_llvm)
 add_dependencies (Remarks_exports pull_llvm)
