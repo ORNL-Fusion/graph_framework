@@ -59,7 +59,6 @@ template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
     source.add_kernel("test_kernel", inputs, outputs, setters);
 
     source.compile();
-    source.print_source();
 
     auto run = source.create_kernel_call("test_kernel", inputs, outputs, 1);
     run();
@@ -68,7 +67,6 @@ template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
     source.copy_to_host(outputs.back(), &result);
 
     const T diff = std::abs(result - expected);
-    std::cout << expected << " " << result << " " << diff << " " << tolarance << std::endl;
     check(diff, tolarance);
 }
 

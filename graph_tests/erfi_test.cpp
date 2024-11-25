@@ -76,7 +76,6 @@ template<std::floating_point T> void test_erfi(const T tolarance) {
                        "Real parts don't match.");
             }
         } else if (!std::isinf(std::real(test)) && !std::isinf(std::imag(test))) {
-            std::cout << std::abs(static_cast<T> (1) - test/gold) << std::endl;
             assert(std::abs(static_cast<T> (1) - test/gold) <= tolarance &&
                    "Results don't match.");
         }

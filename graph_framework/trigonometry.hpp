@@ -815,7 +815,7 @@ namespace graph {
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> atan(const L l,
                                   shared_leaf<T, SAFE_MATH> r) {
-        return atan(constant<T, SAFE_MATH> (static_cast<L> (l)), r);
+        return atan(constant<T, SAFE_MATH> (static_cast<T> (l)), r);
     }
 
 //------------------------------------------------------------------------------
@@ -831,7 +831,7 @@ namespace graph {
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> atan(shared_leaf<T, SAFE_MATH> l,
                                   const R r) {
-        return atan(l, constant<T, SAFE_MATH> (static_cast<R> (r)));
+        return atan(l, constant<T, SAFE_MATH> (static_cast<T> (r)));
     }
 
 ///  Convenience type alias for shared add nodes.
