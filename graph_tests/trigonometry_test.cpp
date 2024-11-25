@@ -85,11 +85,11 @@ template<jit::float_scalar T> void test_tan() {
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void test_atan() {
-    assert(graph::constant_cast(graph::atan(graph::constant(static_cast<T> (10.0)),
+    assert(graph::constant_cast(graph::atan(10.0,
                                             graph::constant(static_cast<T> (11.0)))).get() &&
            "Expected constant");
     assert(graph::constant_cast(graph::atan(graph::zero<T> (),
-                                            graph::constant(static_cast<T> (11.0)))).get() &&
+                                            11.0)).get() &&
            "Expected constant");
 
     auto x = graph::variable<T> (1, "");
