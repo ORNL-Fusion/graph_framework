@@ -411,6 +411,7 @@ namespace graph {
                 jit::register_map &registers,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
+#ifdef USE_CONSTANT_CACHE
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
@@ -422,6 +423,15 @@ namespace graph {
                 }
                 stream << temp << "; // used "
                        << usage.at(this) << std::endl;
+#else
+                if constexpr (jit::is_complex<T> ()) {
+                    registers[this] = jit::get_type_string<T> () + "("
+                                    + jit::format_to_string(this->evaluate().at(0))
+                                    + ")";
+                } else {
+                    registers[this] = jit::format_to_string(this->evaluate().at(0));
+                }
+#endif
             }
 
             return this->shared_from_this();

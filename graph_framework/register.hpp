@@ -150,6 +150,26 @@ namespace jit {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Get the type string.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @returns The type as a string.
+//------------------------------------------------------------------------------
+    template<float_scalar T>
+    std::string get_type_string() {
+        if constexpr (is_complex<T> ()) {
+            if constexpr (use_cuda()) {
+                return "cuda::std::complex<" + type_to_string<T> () + ">";
+            } else {
+                return "std::complex<" + type_to_string<T> () + ">";
+            }
+        } else {
+            return type_to_string<T> ();
+        }
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Write out the node base type to a general stream.
 ///
 ///  @tparam T Base type of the calculation.
@@ -158,16 +178,7 @@ namespace jit {
 //------------------------------------------------------------------------------
     template<float_scalar T>
     void add_type(std::basic_ostream<char> &stream) {
-        if constexpr (is_complex<T> ()) {
-            if constexpr (use_cuda()) {
-                stream << "cuda::";
-            }
-            stream << "std::complex<";
-        }
-        stream << type_to_string<T> ();
-        if constexpr (is_complex<T> ()) {
-            stream << ">";
-        }
+        stream << get_type_string<T> ();
     }
 
 //------------------------------------------------------------------------------
@@ -205,7 +216,7 @@ namespace jit {
                                 buffer.end(),
                                 value, 16).ptr;
         } else if constexpr (is_complex<T> ()) {
-            return format_to_string(std::real(value)) + " " +
+            return format_to_string(std::real(value)) + "," +
                    format_to_string(std::imag(value));
         } else {
             end = std::to_chars(buffer.begin(), buffer.end(),
