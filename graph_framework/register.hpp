@@ -246,7 +246,7 @@ namespace jit {
         assert((prefix == 'r' || prefix == 'v' ||
                 prefix == 'o' || prefix == 'a') &&
                "Expected a variable (v), register (r), output (o) or array (a) prefix.");
-        return std::string(1, prefix) + "_" +
+        return std::string(1, prefix) +
                format_to_string(reinterpret_cast<size_t> (pointer));
     }
 

@@ -167,8 +167,8 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = sqrt("
-                       << registers[a.get()] << "); // used "
-                       << usage.at(this) << std::endl;
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -458,7 +458,8 @@ namespace graph {
                         stream << ")";
                     }
                 }
-                stream << "; // used " << usage.at(this) << std::endl;
+                stream << "";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -695,8 +696,8 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = log("
-                       << registers[a.get()] << "); // used "
-                       << usage.at(this) << std::endl;
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -1048,13 +1049,12 @@ namespace graph {
                     for (size_t i = 1; i < end; i++) {
                         stream << "*" << registers[l.get()];
                     }
-                    stream << ";";
                 } else {
                     stream << "pow("
                            << registers[l.get()] << ", "
-                           << registers[r.get()] << ");";
+                           << registers[r.get()] << ")";
                 }
-                stream << " // used " << usage.at(this) << std::endl;
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -1368,8 +1368,8 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = special::erfi("
-                       << registers[a.get()] << "); // used "
-                       << usage.at(this) << std::endl;
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();

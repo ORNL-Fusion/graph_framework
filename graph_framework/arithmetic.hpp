@@ -441,8 +441,8 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[l.get()] << " + "
-                       << registers[r.get()] << "; // used "
-                       << usage.at(this) << std::endl;
+                       << registers[r.get()];
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -1086,8 +1086,8 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[l.get()] << " - "
-                       << registers[r.get()] << "; // used "
-                       << usage.at(this) << std::endl;
+                       << registers[r.get()];
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -1932,8 +1932,8 @@ namespace graph {
                     stream << " : ";
                 }
                 stream << registers[l.get()] << "*"
-                       << registers[r.get()] << "; // used "
-                       << usage.at(this) << std::endl;
+                       << registers[r.get()];
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -2577,8 +2577,8 @@ namespace graph {
                     stream << " : ";
                 }
                 stream << registers[l.get()] << "/"
-                       << registers[r.get()] << "; // used "
-                       << usage.at(this) << std::endl;
+                       << registers[r.get()];
+                this->endline(stream, usage);
             }
             return this->shared_from_this();
         }
@@ -3920,14 +3920,14 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     stream << registers[l.get()] << "*"
                            << registers[m.get()] << " + "
-                           << registers[r.get()] << ";";
+                           << registers[r.get()];
                 } else {
                     stream << "fma("
                            << registers[l.get()] << ", "
                            << registers[m.get()] << ", "
-                           << registers[r.get()] << ");";
+                           << registers[r.get()] << ")";
                 }
-                stream << " // used " << usage.at(this) << std::endl;
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();

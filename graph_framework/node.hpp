@@ -103,11 +103,13 @@ namespace graph {
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
                                       int &avail_const_mem) {
+#ifdef SHOW_USE_COUNT
             if (usage.find(this) == usage.end()) {
                 usage[this] = 1;
             } else {
                 ++usage[this];
             }
+#endif
         }
 
 //------------------------------------------------------------------------------
@@ -288,6 +290,21 @@ namespace graph {
             return this->shared_from_this();
         }
 
+//------------------------------------------------------------------------------
+///  @brief End a line in the kernel source.
+///
+///  @param[in,out] stream String buffer stream.
+///  @param[in]     usage  List of register usage count.
+//------------------------------------------------------------------------------
+        virtual void endline(std::ostringstream &stream,
+                             const jit::register_usage &usage) const final {
+            stream << ";"
+#ifdef SHOW_USE_COUNT
+                   << " // used " << usage.at(this)
+#endif
+                   << std::endl;
+        }
+
 ///  Cache for constructed nodes.
         inline thread_local static std::map<size_t,
                                             std::shared_ptr<leaf_node<T, SAFE_MATH>>> cache;
@@ -421,8 +438,8 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     jit::add_type<T> (stream);
                 }
-                stream << temp << "; // used "
-                       << usage.at(this) << std::endl;
+                stream << temp;
+                this->endline(stream, usage);
 #else
                 if constexpr (jit::is_complex<T> ()) {
                     registers[this] = jit::get_type_string<T> () + "("
@@ -709,9 +726,11 @@ namespace graph {
                                             textures1d, textures2d,
                                             avail_const_mem);
                 visited.insert(this);
+#ifdef SHOW_USE_COUNT
                 usage[this] = 1;
             } else {
                 ++usage[this];
+#endif
             }
         }
 
@@ -837,9 +856,11 @@ namespace graph {
                                               textures1d, textures2d,
                                               avail_const_mem);
                 visited.insert(this);
+#ifdef SHOW_USE_COUNT
                 usage[this] = 1;
             } else {
                 ++usage[this];
+#endif
             }
         }
 
@@ -951,9 +972,11 @@ namespace graph {
                                               textures1d, textures2d,
                                               avail_const_mem);
                 visited.insert(this);
+#ifdef SHOW_USE_COUNT
                 usage[this] = 1;
             } else {
                 ++usage[this];
+#endif
             }
         }
 
