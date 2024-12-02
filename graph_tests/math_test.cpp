@@ -304,6 +304,13 @@ void test_pow() {
             !graph::multiply_cast(powpow_var_cast->get_right())) &&
            "Did not expect multiply node.");
 
+//  (a/(b*Sqrt(c)))^2 -> a^2/(b^2*c)
+    auto var_c = graph::variable<T> (1, "");
+    auto denomsqrt = graph::pow(var_a/(var_b*graph::sqrt(var_c)),
+                                graph::constant<T> (static_cast<T> (2.0)));
+    assert(graph::divide_cast(denomsqrt).get() &&
+           "Expected a divide node.");
+
 //  Test pow of exp
 //  Exp[x]^n -> Exp[n*x] when n is an integer.
     auto powexp_int = graph::pow(graph::exp(var_a), 3.0);

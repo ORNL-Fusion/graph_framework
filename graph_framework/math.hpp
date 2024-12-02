@@ -976,6 +976,21 @@ namespace graph {
                     return pow(ld->get_left(), this->right) /
                            pow(ld->get_right(), this->right);
                 }
+
+//  Handle cases where (a/(b*sqrt(c))), (a/(sqrt(c)*b)), (a/(b*c^d)), (a/(c^d*b))
+                auto ldm = multiply_cast(ld->get_right());
+                if (ldm.get()) {
+                    if (ldm->get_left()->is_constant()    ||
+                        ldm->get_right()->is_constant()   ||
+                        sqrt_cast(ldm->get_left()).get()  ||
+                        sqrt_cast(ldm->get_right()).get() ||
+                        pow_cast(ldm->get_left()).get()   ||
+                        pow_cast(ldm->get_right()).get()) {
+                        return pow(ld->get_left(), this->right) /
+                               (pow(ldm->get_left(), this->right) *
+                                pow(ldm->get_right(), this->right));
+                    }
+                }
             }
 
 //  Reduce sqrt(a)^b
