@@ -2861,6 +2861,88 @@ template<jit::float_scalar T> void test_fma() {
     auto fma_to_sub = graph::fma(var_a,var_b,-1.0*var_c);
     auto fma_to_sub_cast = graph::subtract_cast(fma_to_sub);
     assert(fma_to_sub_cast.get() && "Expected a subtract node.");
+
+//  Test common denominators.
+//  fma(a/(b*c),d,e/c) -> fma(a,d,e*b)/(b*c)
+    auto common_denom1 = graph::fma(var_a/(var_b*var_c), var_d, var_e/var_c);
+    auto common_denom1_cast = graph::divide_cast(common_denom1);
+    assert(common_denom1_cast.get() && "Expected a divide node.");
+    assert(common_denom1_cast->get_right()->is_match(var_b*var_c) &&
+           "Expected var_b*var_c as common denominator.");
+    assert(common_denom1_cast->get_left()->is_match(graph::fma(var_a,
+                                                               var_d,
+                                                               var_e*var_b)) &&
+           "Expected fma(a,d,e*b) as numerator.");
+//  fma(a/(c*b),d,e/c) -> fma(a,d,e*b)/(c*b)
+    auto common_denom2 = graph::fma(var_a/(var_c*var_b), var_d, var_e/var_c);
+    auto common_denom2_cast = graph::divide_cast(common_denom2);
+    assert(common_denom2_cast.get() && "Expected a divide node.");
+    assert(common_denom2_cast->get_right()->is_match(var_c*var_b) &&
+           "Expected var_b*var_c as common denominator.");
+    assert(common_denom2_cast->get_left()->is_match(graph::fma(var_a,
+                                                               var_d,
+                                                               var_e*var_b)) &&
+           "Expected fma(a,d,e*b) as numerator.");
+//  fma(a/c,d,e/(c*b)) -> fma(a*b,d,e)/(b*c)
+    auto common_denom3 = graph::fma(var_a/var_c, var_d, var_e/(var_b*var_c));
+    auto common_denom3_cast = graph::divide_cast(common_denom3);
+    assert(common_denom3_cast.get() && "Expected a divide node.");
+    assert(common_denom3_cast->get_right()->is_match(var_b*var_c) &&
+           "Expected var_b*var_c as common denominator.");
+    assert(common_denom3_cast->get_left()->is_match(graph::fma(var_a*var_b,
+                                                               var_d,
+                                                               var_e)) &&
+           "Expected fma(a*b,d,e) as numerator.");
+//  fma(a/c,d,e/(b*c)) -> fma(a,d,e*b)/(c*b)
+    auto common_denom4 = graph::fma(var_a/var_c, var_d, var_e/(var_c*var_b));
+    auto common_denom4_cast = graph::divide_cast(common_denom4);
+    assert(common_denom4_cast.get() && "Expected a divide node.");
+    assert(common_denom4_cast->get_right()->is_match(var_c*var_b) &&
+           "Expected var_b*var_c as common denominator.");
+    assert(common_denom4_cast->get_left()->is_match(graph::fma(var_a*var_b,
+                                                               var_d,
+                                                               var_e)) &&
+           "Expected fma(a*b,d,e) as numerator.");
+//  fma(a,d/(b*c),e/c) -> fma(a,d,e*b)/(b*c)
+    auto common_denom5 = graph::fma(var_a, var_d/(var_b*var_c), var_e/var_c);
+    auto common_denom5_cast = graph::divide_cast(common_denom5);
+    assert(common_denom5_cast.get() && "Expected a divide node.");
+    assert(common_denom5_cast->get_right()->is_match(var_b*var_c) &&
+           "Expected var_b*var_c as common denominator.");
+    assert(common_denom5_cast->get_left()->is_match(graph::fma(var_a,
+                                                               var_d,
+                                                               var_e*var_b)) &&
+           "Expected fma(a,d,e*b) as numerator.");
+//  fma(a,d/(c*b),e/c) -> fma(a,d,e*b)/(c*b)
+    auto common_denom6 = graph::fma(var_a, var_d/(var_c*var_b), var_e/var_c);
+    auto common_denom6_cast = graph::divide_cast(common_denom6);
+    assert(common_denom6_cast.get() && "Expected a divide node.");
+    assert(common_denom6_cast->get_right()->is_match(var_c*var_b) &&
+           "Expected var_b*var_c as common denominator.");
+    assert(common_denom6_cast->get_left()->is_match(graph::fma(var_a,
+                                                               var_d,
+                                                               var_e*var_b)) &&
+           "Expected fma(a,d,e*b) as numerator.");
+//  fma(a,d/c,e/(b*c)) -> fma(a,d*b,e)/(b*c)
+    auto common_denom7 = graph::fma(var_a, var_d/var_c, var_e/(var_b*var_c));
+    auto common_denom7_cast = graph::divide_cast(common_denom7);
+    assert(common_denom7_cast.get() && "Expected a divide node.");
+    assert(common_denom7_cast->get_right()->is_match(var_b*var_c) &&
+           "Expected var_b*var_c as common denominator.");
+    assert(common_denom7_cast->get_left()->is_match(graph::fma(var_a,
+                                                               var_d*var_b,
+                                                               var_e)) &&
+           "Expected fma(a,d*b,e) as numerator.");
+//  fma(a,d/c,e/(c*b)) -> fma(a,d*b,e)/(c*b)
+    auto common_denom8 = graph::fma(var_a, var_d/var_c, var_e/(var_c*var_b));
+    auto common_denom8_cast = graph::divide_cast(common_denom8);
+    assert(common_denom8_cast.get() && "Expected a divide node.");
+    assert(common_denom8_cast->get_right()->is_match(var_c*var_b) &&
+           "Expected var_b*var_c as common denominator.");
+    assert(common_denom8_cast->get_left()->is_match(graph::fma(var_a,
+                                                               var_d*var_b,
+                                                               var_e)) &&
+           "Expected fma(a,d*b,e) as numerator.");
 }
 
 //------------------------------------------------------------------------------

@@ -3169,6 +3169,67 @@ namespace graph {
                 }
             }
 
+//  Common denominator reductions.
+            if (ld.get() && rd.get()) {
+//  fma(a/(b*c),d,e/c) -> fma(a,d,e*b)/(b*c)
+//  fma(a/(c*b),d,e/c) -> fma(a,d,e*b)/(c*b)
+//  fma(a/c,d,e/(c*b)) -> fma(a*b,d,e)/(b*c)
+//  fma(a/c,d,e/(b*c)) -> fma(a*b,d,e)/(c*b)
+                auto ldrm = multiply_cast(ld->get_right());
+                auto rdrm = multiply_cast(rd->get_right());
+
+                if (ldrm.get()) {
+                    if (ldrm->get_right()->is_match(rd->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rd->get_left()*ldrm->get_left()) /
+                               ld->get_right();
+                    } else if (ldrm->get_left()->is_match(rd->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rd->get_left()*ldrm->get_right()) /
+                               ld->get_right();
+                    }
+                } else if (rdrm.get()) {
+                    if (rdrm->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left()*rdrm->get_left(),
+                                   this->middle, rd->get_left()) /
+                               rd->get_right();
+                    } else if (rdrm->get_left()->is_match(ld->get_right())) {
+                        return fma(ld->get_left()*rdrm->get_right(),
+                                   this->middle, rd->get_left()) /
+                               rd->get_right();
+                    }
+                }
+            } else if (md.get() && rd.get()) {
+//  fma(a,d/(b*c),e/c) -> fma(a,d,e*b)/(b*c)
+//  fma(a,d/(c*b),e/c) -> fma(a,d,e*b)/(c*b)
+//  fma(a,d/c,e/(c*b)) -> fma(a,d*b,e)/(b*c)
+//  fma(a,d/c,e/(b*c)) -> fma(a,d*b,e)/(c*b)
+                auto mdrm = multiply_cast(md->get_right());
+                auto rdrm = multiply_cast(rd->get_right());
+
+                if (mdrm.get()) {
+                    if (mdrm->get_right()->is_match(rd->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rd->get_left()*mdrm->get_left()) /
+                               md->get_right();
+                    } else if (mdrm->get_left()->is_match(rd->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rd->get_left()*mdrm->get_right()) /
+                               md->get_right();
+                    }
+                } else if (rdrm.get()) {
+                    if (rdrm->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left()*rdrm->get_left(),
+                                   rd->get_left()) /
+                               rd->get_right();
+                    } else if (rdrm->get_left()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left()*rdrm->get_right(),
+                                   rd->get_left()) /
+                               rd->get_right();
+                    }
+                }
+            }
+
 //  Chained fma reductions.
             auto rfma = fma_cast(this->right);
             if (rfma.get()) {
