@@ -236,18 +236,26 @@ template<jit::float_scalar T> void test_add() {
     auto muliply_divide_factor = var_a/(var_b*var_c) + var_d/(var_e*var_c);
     auto muliply_divide_factor_cast = divide_cast(muliply_divide_factor);
     assert(muliply_divide_factor_cast.get() && "Expected divide node.");
+    assert(muliply_divide_factor_cast->get_right()->is_match(var_c) &&
+           "Expected var_c to be factored out.");
 //  (a/(b*c) + d/(c*e)) -> (a/b + d/e)/c
     auto muliply_divide_factor2 = var_a/(var_b*var_c) + var_d/(var_c*var_e);
     auto muliply_divide_factor_cast2 = divide_cast(muliply_divide_factor2);
     assert(muliply_divide_factor_cast2.get() && "Expected divide node.");
+    assert(muliply_divide_factor_cast2->get_right()->is_match(var_c) &&
+           "Expected var_c to be factored out.");
 //  (a/(c*b) + d/(e*c)) -> (a/b + d/e)/c
     auto muliply_divide_factor3 = var_a/(var_c*var_b) + var_d/(var_e*var_c);
     auto muliply_divide_factor_cast3 = divide_cast(muliply_divide_factor3);
     assert(muliply_divide_factor_cast3.get() && "Expected divide node.");
+    assert(muliply_divide_factor_cast3->get_right()->is_match(var_c) &&
+           "Expected var_c to be factored out.");
 //  (a/(c*b) + d/(c*e)) -> (a/b + d/e)/c
     auto muliply_divide_factor4 = var_a/(var_c*var_b) + var_d/(var_c*var_e);
     auto muliply_divide_factor_cast4 = divide_cast(muliply_divide_factor4);
     assert(muliply_divide_factor_cast4.get() && "Expected divide node.");
+    assert(muliply_divide_factor_cast4->get_right()->is_match(var_c) &&
+           "Expected var_c to be factored out.");
 
 //  Test node properties.
     assert(three->is_constant() && "Expected a constant.");
@@ -268,22 +276,46 @@ template<jit::float_scalar T> void test_add() {
     assert(!var_var_add->is_power_like() && "Did not expect a power like.");
 
 //  Test common denominators.
-//  a/b + c/(b*d) -> (a*b + c)/(b*d)
+//  a/b + c/(b*d) -> (a*d + c)/(b*d)
     auto common_denom1 = var_a/var_b + var_c/(var_b*var_d);
     auto common_denom1_cast = graph::divide_cast(common_denom1);
     assert(common_denom1_cast.get() && "Expected a divide node.");
-//  a/b + c/(d*b) -> (a*b + c)/(d*b)
+    assert(common_denom1_cast->get_right()->is_match(var_b*var_d) &&
+           "Expected var_b*var_d as common denominator.");
+    assert(common_denom1_cast->get_left()->is_match(graph::fma(var_a,
+                                                               var_d,
+                                                               var_c)) &&
+           "Expected fma(a,d,c) as numerator.");
+//  a/b + c/(d*b) -> (a*d + c)/(d*b)
     auto common_denom2 = var_a/var_b + var_c/(var_d*var_b);
     auto common_denom2_cast = graph::divide_cast(common_denom2);
     assert(common_denom2_cast.get() && "Expected a divide node.");
-//  a/(b*d) + c/b -> (c*b + a)/(b*d)
+    assert(common_denom2_cast->get_right()->is_match(var_d*var_b) &&
+           "Expected var_b*var_d as common denominator.");
+    assert(common_denom2_cast->get_left()->is_match(graph::fma(var_a,
+                                                               var_d,
+                                                               var_c)) &&
+           "Expected fma(a,d,c) as numerator.");
+//  a/(b*d) + c/b -> (c*d + a)/(b*d)
     auto common_denom3 = var_a/(var_b*var_d) + var_c/var_b;
     auto common_denom3_cast = graph::divide_cast(common_denom3);
     assert(common_denom3_cast.get() && "Expected a divide node.");
-//  a/(d*b) + c/b -> (c*b + a)/(d*b)
+    assert(common_denom3_cast->get_right()->is_match(var_b*var_d) &&
+           "Expected var_b*var_d as common denominator.");
+    assert(common_denom3_cast->get_left()->is_match(graph::fma(var_c,
+                                                               var_d,
+                                                               var_a)) &&
+           "Expected fma(c,d,a) as numerator.");
+//  a/(d*b) + c/b -> (c*d + a)/(d*b)
     auto common_denom4 = var_a/(var_d*var_b) + var_c/var_b;
     auto common_denom4_cast = graph::divide_cast(common_denom4);
     assert(common_denom4_cast.get() && "Expected a divide node.");
+    assert(common_denom4_cast->get_right()->is_match(var_d*var_b) &&
+           "Expected var_b*var_d as common denominator.");
+    assert(common_denom4_cast->get_left()->is_match(graph::fma(var_c,
+                                                               var_d,
+                                                               var_a)) &&
+           "Expected fma(c,d,a) as numerator.");
 }
 
 //------------------------------------------------------------------------------
@@ -621,6 +653,65 @@ template<jit::float_scalar T> void test_subtract() {
     auto neg_vara_minus_varb = (-var_a) - var_b;
     assert(graph::multiply_cast(neg_vara_minus_varb).get() &&
            "Expected a multiply node.");
+
+//  (a/(b*c) - d/(e*c)) -> (a/b + d/e)/c
+    auto muliply_divide_factor = var_a/(var_b*var_c) - var_d/(var_e*var_c);
+    auto muliply_divide_factor_cast = divide_cast(muliply_divide_factor);
+    assert(muliply_divide_factor_cast.get() && "Expected divide node.");
+    assert(muliply_divide_factor_cast->get_right()->is_match(var_c) &&
+           "Expected var_c to be factored out.");
+//  (a/(b*c) - d/(c*e)) -> (a/b - d/e)/c
+    auto muliply_divide_factor2 = var_a/(var_b*var_c) - var_d/(var_c*var_e);
+    auto muliply_divide_factor_cast2 = divide_cast(muliply_divide_factor2);
+    assert(muliply_divide_factor_cast2.get() && "Expected divide node.");
+    assert(muliply_divide_factor_cast2->get_right()->is_match(var_c) &&
+           "Expected var_c to be factored out.");
+//  (a/(c*b) - d/(e*c)) -> (a/b - d/e)/c
+    auto muliply_divide_factor3 = var_a/(var_c*var_b) - var_d/(var_e*var_c);
+    auto muliply_divide_factor_cast3 = divide_cast(muliply_divide_factor3);
+    assert(muliply_divide_factor_cast3.get() && "Expected divide node.");
+    assert(muliply_divide_factor_cast3->get_right()->is_match(var_c) &&
+           "Expected var_c to be factored out.");
+//  (a/(c*b) - d/(c*e)) -> (a/b - d/e)/c
+    auto muliply_divide_factor4 = var_a/(var_c*var_b) - var_d/(var_c*var_e);
+    auto muliply_divide_factor_cast4 = divide_cast(muliply_divide_factor4);
+    assert(muliply_divide_factor_cast4.get() && "Expected divide node.");
+    assert(muliply_divide_factor_cast4->get_right()->is_match(var_c) &&
+           "Expected var_c to be factored out.");
+
+//  Test common denominators.
+//  a/b - c/(b*d) -> (a*d - c)/(b*d)
+    auto common_denom1 = var_a/var_b - var_c/(var_b*var_d);
+    auto common_denom1_cast = graph::divide_cast(common_denom1);
+    assert(common_denom1_cast.get() && "Expected a divide node.");
+    assert(common_denom1_cast->get_right()->is_match(var_b*var_d) &&
+           "Expected var_b*var_d as common denominator.");
+    assert(common_denom1_cast->get_left()->is_match(var_a*var_d - var_c) &&
+           "Expected a*d - c as numerator.");
+//  a/b - c/(d*b) -> (a*d - c)/(d*b)
+    auto common_denom2 = var_a/var_b - var_c/(var_d*var_b);
+    auto common_denom2_cast = graph::divide_cast(common_denom2);
+    assert(common_denom2_cast.get() && "Expected a divide node.");
+    assert(common_denom2_cast->get_right()->is_match(var_d*var_b) &&
+           "Expected var_b*var_d as common denominator.");
+    assert(common_denom2_cast->get_left()->is_match(var_a*var_d - var_c) &&
+           "Expected a*d - c as numerator.");
+//  a/(b*d) - c/b -> (a - c*d)/(b*d)
+    auto common_denom3 = var_a/(var_b*var_d) - var_c/var_b;
+    auto common_denom3_cast = graph::divide_cast(common_denom3);
+    assert(common_denom3_cast.get() && "Expected a divide node.");
+    assert(common_denom3_cast->get_right()->is_match(var_b*var_d) &&
+           "Expected var_b*var_d as common denominator.");
+    assert(common_denom3_cast->get_left()->is_match(var_a - var_c*var_d) &&
+           "Expected a - c*d as numerator.");
+//  a/(d*b) - c/b -> (a - c*d)/(d*b)
+    auto common_denom4 = var_a/(var_d*var_b) - var_c/var_b;
+    auto common_denom4_cast = graph::divide_cast(common_denom4);
+    assert(common_denom4_cast.get() && "Expected a divide node.");
+    assert(common_denom4_cast->get_right()->is_match(var_d*var_b) &&
+           "Expected var_b*var_d as common denominator.");
+    assert(common_denom4_cast->get_left()->is_match(var_a - var_c*var_d) &&
+           "Expected a - c*d as numerator.");
 }
 
 //------------------------------------------------------------------------------

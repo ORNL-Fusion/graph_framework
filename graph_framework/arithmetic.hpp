@@ -281,26 +281,26 @@ namespace graph {
 //  a/(d*b) + c/b -> (c*b + a)/(b*d)
                 if (rdrm.get()) {
                     if (ld->get_right()->is_match(rdrm->get_left())) {
-                        return fma(rd->get_left(),
+                        return fma(ld->get_left(),
                                    rdrm->get_right(),
-                                   ld->get_left()) /
+                                   rd->get_left()) /
                                rd->get_right();
                     } else if (ld->get_right()->is_match(rdrm->get_right())) {
-                        return fma(rd->get_left(),
+                        return fma(ld->get_left(),
                                    rdrm->get_left(),
-                                   ld->get_left()) /
+                                   rd->get_left()) /
                                rd->get_right();
                     }
                 } else if (ldrm.get()) {
                     if (rd->get_right()->is_match(ldrm->get_left())) {
-                        return fma(ld->get_left(),
+                        return fma(rd->get_left(),
                                    ldrm->get_right(),
-                                   rd->get_left()) /
+                                   ld->get_left()) /
                                ld->get_right();
                     } else if (rd->get_right()->is_match(ldrm->get_right())) {
-                        return fma(ld->get_left(),
+                        return fma(rd->get_left(),
                                    ldrm->get_left(),
-                                   rd->get_left()) /
+                                   ld->get_left()) /
                                ld->get_right();
                     }
                 }
@@ -979,9 +979,54 @@ namespace graph {
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
 
-            if (ld.get() && rd.get() &&
-                ld->get_right()->is_match(rd->get_right())) {
-                return (ld->get_left() - rd->get_left())/ld->get_right();
+            if (ld.get() && rd.get()) {
+                if (ld->get_right()->is_match(rd->get_right())) {
+                    return (ld->get_left() - rd->get_left())/ld->get_right();
+                }
+
+//  (a/(c*b) - d/(e*c)) -> (a/b - d/e)/c
+//  (a/(b*c) - d/(e*c)) -> (a/b - d/e)/c
+//  (a/(c*b) - d/(c*e)) -> (a/b - d/e)/c
+//  (a/(b*c) - d/(c*e)) -> (a/b - d/e)/c
+                auto ldrm = multiply_cast(ld->get_right());
+                auto rdrm = multiply_cast(rd->get_right());
+                if (ldrm.get() && rdrm.get()) {
+                    if (ldrm->get_right()->is_match(rdrm->get_right())) {
+                        return (ld->get_left()/ldrm->get_left() -
+                                rd->get_left()/rdrm->get_left())/ldrm->get_right();
+                    } else if (ldrm->get_right()->is_match(rdrm->get_left())) {
+                        return (ld->get_left()/ldrm->get_left() -
+                                rd->get_left()/rdrm->get_right())/ldrm->get_right();
+                    } else if (ldrm->get_left()->is_match(rdrm->get_right())) {
+                        return (ld->get_left()/ldrm->get_right() -
+                                rd->get_left()/rdrm->get_left())/ldrm->get_left();
+                    } else if (ldrm->get_left()->is_match(rdrm->get_left())) {
+                        return (ld->get_left()/ldrm->get_right() -
+                                rd->get_left()/rdrm->get_right())/ldrm->get_left();
+                    }
+                }
+
+//  a/b - c/(b*d) -> (a*d - c)/(b*d)
+//  a/b - c/(d*b) -> (a*d - c)/(b*d)
+//  a/(b*d) - c/b -> (a - c*d)/(b*d)
+//  a/(d*b) - c/b -> (a - c*d)/(b*d)
+                if (rdrm.get()) {
+                    if (ld->get_right()->is_match(rdrm->get_left())) {
+                        return (ld->get_left()*rdrm->get_right() - rd->get_left()) /
+                               rd->get_right();
+                    } else if (ld->get_right()->is_match(rdrm->get_right())) {
+                        return (ld->get_left()*rdrm->get_left() - rd->get_left()) /
+                               rd->get_right();
+                    }
+                } else if (ldrm.get()) {
+                    if (rd->get_right()->is_match(ldrm->get_left())) {
+                        return (ld->get_left() - rd->get_left()*ldrm->get_right()) /
+                               ld->get_right();
+                    } else if (rd->get_right()->is_match(ldrm->get_right())) {
+                        return (ld->get_left() - rd->get_left()*ldrm->get_left()) /
+                               ld->get_right();
+                    }
+                }
             }
 
 //  Move cases like
