@@ -266,6 +266,24 @@ template<jit::float_scalar T> void test_add() {
     assert(!var_var_add->is_constant() && "Did not expect a constant.");
     assert(var_var_add->is_all_variables() && "Expected a variable.");
     assert(!var_var_add->is_power_like() && "Did not expect a power like.");
+
+//  Test common denominators.
+//  a/b + c/(b*d) -> (a*b + c)/(b*d)
+    auto common_denom1 = var_a/var_b + var_c/(var_b*var_d);
+    auto common_denom1_cast = graph::divide_cast(common_denom1);
+    assert(common_denom1_cast.get() && "Expected a divide node.");
+//  a/b + c/(d*b) -> (a*b + c)/(d*b)
+    auto common_denom2 = var_a/var_b + var_c/(var_d*var_b);
+    auto common_denom2_cast = graph::divide_cast(common_denom2);
+    assert(common_denom2_cast.get() && "Expected a divide node.");
+//  a/(b*d) + c/b -> (c*b + a)/(b*d)
+    auto common_denom3 = var_a/(var_b*var_d) + var_c/var_b;
+    auto common_denom3_cast = graph::divide_cast(common_denom3);
+    assert(common_denom3_cast.get() && "Expected a divide node.");
+//  a/(d*b) + c/b -> (c*b + a)/(d*b)
+    auto common_denom4 = var_a/(var_d*var_b) + var_c/var_b;
+    auto common_denom4_cast = graph::divide_cast(common_denom4);
+    assert(common_denom4_cast.get() && "Expected a divide node.");
 }
 
 //------------------------------------------------------------------------------

@@ -274,6 +274,36 @@ namespace graph {
                                 rd->get_left()/rdrm->get_right())/ldrm->get_left();
                     }
                 }
+
+//  a/b + c/(b*d) -> (a*b + c)/(b*d)
+//  a/b + c/(d*b) -> (a*b + c)/(b*d)
+//  a/(b*d) + c/b -> (c*b + a)/(b*d)
+//  a/(d*b) + c/b -> (c*b + a)/(b*d)
+                if (rdrm.get()) {
+                    if (ld->get_right()->is_match(rdrm->get_left())) {
+                        return fma(rd->get_left(),
+                                   rdrm->get_right(),
+                                   ld->get_left()) /
+                               rd->get_right();
+                    } else if (ld->get_right()->is_match(rdrm->get_right())) {
+                        return fma(rd->get_left(),
+                                   rdrm->get_left(),
+                                   ld->get_left()) /
+                               rd->get_right();
+                    }
+                } else if (ldrm.get()) {
+                    if (rd->get_right()->is_match(ldrm->get_left())) {
+                        return fma(ld->get_left(),
+                                   ldrm->get_right(),
+                                   rd->get_left()) /
+                               ld->get_right();
+                    } else if (rd->get_right()->is_match(ldrm->get_right())) {
+                        return fma(ld->get_left(),
+                                   ldrm->get_left(),
+                                   rd->get_left()) /
+                               ld->get_right();
+                    }
+                }
             }
 
 //  Chained addition reductions.
