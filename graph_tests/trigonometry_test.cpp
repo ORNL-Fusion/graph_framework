@@ -98,7 +98,7 @@ template<jit::float_scalar T> void test_atan() {
     assert(graph::atan_cast(atanxy).get() && "Expected an atan node");
 
 //  Test derivatives.
-    assert(graph::multiply_cast(atanxy->df(x)).get() &&
+    assert(graph::divide_cast(atanxy->df(x)).get() &&
            "Expected multiply node.");
     assert(graph::divide_cast(atanxy->df(y)).get() &&
            "Expected divide node.");

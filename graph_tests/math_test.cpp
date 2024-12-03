@@ -52,8 +52,8 @@ void test_sqrt() {
            "Expected 0.5*sqrt(3)");
 
 //  Reduction sqrt(c*x*c*y) = c*Sqrt(x*y)
-    auto x1 = 2.0*graph::variable<T> (1, "x");
-    auto x2 = 3.0*graph::variable<T> (1, "y");
+    auto x1 = 2.0*graph::variable<T> (1, "");
+    auto x2 = 3.0*graph::variable<T> (1, "");
     auto x = graph::sqrt(x1*x2);
     auto x_cast = graph::multiply_cast(x);
     assert(x_cast.get() && "Expected a multiply node.");

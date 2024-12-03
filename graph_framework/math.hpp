@@ -109,10 +109,17 @@ namespace graph {
                 }
             }
 
-//  Handle casses like sqrt(x^a/b) and sqrt(a/x^b) or sqrt(c/b) and sqrt(a/c)
-//  where c is a constant.
             auto ad = divide_cast(this->arg);
             if (ad.get()) {
+//  sqrt((c1*x)/y) -> c2*sqrt(x/y)
+                auto alm = multiply_cast(ad->get_left());
+                if (alm.get() && alm->get_left()->is_constant()) {
+                    return sqrt(alm->get_left()) *
+                           sqrt(alm->get_right()/ad->get_right());
+                }
+
+//  Handle cases like sqrt(x^a/b) and sqrt(a/x^b) or sqrt(c/b) and sqrt(a/c)
+//  where c is a constant.
                 if (pow_cast(ad->get_left()).get()  ||
                     ad->get_left()->is_constant()   ||
                     pow_cast(ad->get_right()).get() ||

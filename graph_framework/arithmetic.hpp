@@ -235,6 +235,18 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
+//  v1 + -c*v2 -> v1 - c*v2
+//  -c*v1 + v2 -> v2 - c*v1
+            if (rm.get()                      &&
+                rm->get_left()->is_constant() &&
+                rm->get_left()->evaluate().is_negative()) {
+                return this->left - (-this->right);
+            } else if (rm.get()                      &&
+                       rm->get_left()->is_constant() &&
+                       rm->get_left()->evaluate().is_negative()) {
+                return this->right - (-this->left);
+            }
+
 //  a*b + c -> fma(a,b,c)
 //  a + b*c -> fma(b,c,a)
             if (lm.get()) {
@@ -247,6 +259,31 @@ namespace graph {
 //  for a common denominator. So you can change a/b + c/b -> (a + c)/d.
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
+
+//  c is a constant.
+//  a + -c/b -> a - c/b
+//  a + (-c*d)/b -> a - (c*d)/b
+//  -c/a + b -> b - c/a
+//  (-c*d)/a + b -> b - (c*d)/a
+            if (rd.get()) {
+                auto rdlm = multiply_cast(rd->get_left());
+                if ((rd->get_left()->is_constant() &&
+                     rd->get_left()->evaluate().is_negative()) ||
+                    (rdlm.get() &&
+                     (rdlm->get_left()->is_constant() &&
+                      rdlm->get_left()->evaluate().is_negative()))) {
+                    return this->left - (-rd->get_left())/rd->get_right();
+                }
+            } else if (ld.get()) {
+                auto ldlm = multiply_cast(ld->get_left());
+                if ((ld->get_left()->is_constant() &&
+                     ld->get_left()->evaluate().is_negative()) ||
+                    (ldlm.get() &&
+                     (ldlm->get_left()->is_constant() &&
+                      ldlm->get_left()->evaluate().is_negative()))) {
+                    return this->right - (-ld->get_left())/ld->get_right();
+                }
+            }
 
             if (ld.get() && rd.get()) {
                 if (ld->get_right()->is_match(rd->get_right())) {
@@ -817,15 +854,11 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
 //  Assume constants are on the left.
-//  v1 - -1*v2 -> v1 + v2
 //  v1 - -c*v2 -> v1 + c*v2
-            if (rm.get()) {
-                auto rmc = constant_cast(rm->get_left());
-                if (rmc.get() && rmc->is(-1)) {
-                    return this->left + rm->get_right();
-                } else if (rmc.get() && rmc->evaluate().is_negative()) {
-                    return this->left + -rm->get_left()*rm->get_right();
-                }
+            if (rm.get()                      &&
+                rm->get_left()->is_constant() &&
+                rm->get_left()->evaluate().is_negative()) {
+                return this->left + (-this->right);
             }
 
             if (lm.get()) {
@@ -978,6 +1011,31 @@ namespace graph {
 //  for a common denominator. So you can change a/b - c/b -> (a - c)/d.
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
+
+//  c is a constant.
+//  a - -c/b -> a + c/b
+//  a - (-c*d)/b -> a + (c*d)/b
+//  -c/a - b -> b + c/a
+//  (-c*d)/a - b -> b + (c*d)/a
+            if (rd.get()) {
+                auto rdlm = multiply_cast(rd->get_left());
+                if ((rd->get_left()->is_constant() &&
+                     rd->get_left()->evaluate().is_negative()) ||
+                    (rdlm.get() &&
+                     (rdlm->get_left()->is_constant() &&
+                      rdlm->get_left()->evaluate().is_negative()))) {
+                    return this->left + (-1.0*rd->get_left())/rd->get_right();
+                }
+            } else if (ld.get()) {
+                auto ldlm = multiply_cast(ld->get_left());
+                if ((ld->get_left()->is_constant() &&
+                     ld->get_left()->evaluate().is_negative()) ||
+                    (ldlm.get() &&
+                     (ldlm->get_left()->is_constant() &&
+                      ldlm->get_left()->evaluate().is_negative()))) {
+                    return this->right + (-1.0*ld->get_left())/ld->get_right();
+                }
+            }
 
             if (ld.get() && rd.get()) {
                 if (ld->get_right()->is_match(rd->get_right())) {
@@ -1680,17 +1738,12 @@ namespace graph {
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
 
-            if (ld.get()) {
-//  (c/v1)*v2 -> c*(v2/v1)
-                if (ld->get_left()->is_constant()) {
-                    return ld->get_left()*(this->right/ld->get_right());
-                }
-            }
-
-//  c1*(c2/v) -> c3/v
-            if (rd.get() && this->left->is_constant() &&
-                rd->get_left()->is_constant()) {
+//  a*(b/c) -> (a*b)/c
+//  (a/c)*b -> (a*b)/c
+            if (rd.get()) {
                 return (this->left*rd->get_left())/rd->get_right();
+            } else if (ld.get()) {
+                return (ld->get_left()*this->right)/ld->get_right();
             }
 
 //  (a/b)*(c/a) -> c/b
@@ -2467,20 +2520,6 @@ namespace graph {
                 return ld->get_left()/(ld->get_right()*this->right);
             }
 
-//  Assume variables, sqrt of variables, and powers of variables are on the
-//  right.
-//  (a*v)/c -> (a/c)*v
-            if (lm.get() && lm->get_right()->is_all_variables() &&
-                !lm->get_left()->is_all_variables()) {
-                return (lm->get_left()/this->right)*lm->get_right();
-            }
-
-//  (c*v1)/v2 -> c*(v1/v2)
-            if (lm.get() && lm->get_left()->is_constant() &&
-                !lm->get_right()->is_constant()) {
-                return lm->get_left()*(lm->get_right()/this->right);
-            }
-
 //  Power reductions.
             if (this->left->is_power_base_match(this->right)) {
                 return pow(this->left->get_power_base(),
@@ -2516,6 +2555,33 @@ namespace graph {
                     return lm->get_right()*(lm->get_left()/this->right);
                 }
             }
+//  ((c*exp(a))*d)/exp(b)
+//  ((exp(a)*c)*d)/exp(b)
+//  (c*(exp(a)*d))/exp(b)
+//  (c*(d*exp(a)))/exp(b)
+            if (rexp.get() && lm.get()) {
+                auto lmlm = multiply_cast(lm->get_left());
+                auto lmrm = multiply_cast(lm->get_right());
+
+                if (lmlm.get()) {
+                    if (exp_cast(lmlm->get_right()).get()) {
+                        return lmlm->get_left()*lm->get_right() *
+                               (lmlm->get_right()/this->right);
+                    } else if (exp_cast(lmlm->get_left()).get()) {
+                        return lmlm->get_right()*lm->get_right() *
+                               (lmlm->get_left()/this->right);
+                    }
+                } else if (lmrm.get()) {
+                    if (exp_cast(lmrm->get_right()).get()) {
+                        return lmrm->get_left()*lm->get_left() *
+                               (lmrm->get_right()/this->right);
+                    } else if (exp_cast(lmrm->get_left()).get()) {
+                        return lmrm->get_right()*lm->get_left() *
+                               (lmrm->get_left()/this->right);
+                    }
+                }
+            }
+
 //  exp(a)/(c*exp(b)) -> (exp(a)/exp(b))/c
 //  exp(a)/(exp(b)*c) -> (exp(a)/exp(b))/c
             if (lexp.get() && rm.get()) {
@@ -3148,25 +3214,6 @@ namespace graph {
             auto md = divide_cast(this->middle);
             if (md.get() && md->get_right()->is_match(this->left)) {
                 return md->get_left() + this->right;
-            }
-
-//  Special case divide by variables.
-
-//  Move fma(a/c, b, e) -> fma(a,b,e*c)/c
-//  Move fma(a, b/c, e) -> fma(a,b,e*c)/c
-            if (ld.get() && ld->get_left()->is_all_variables()) {
-                auto temp = fma(ld->get_left(), this->middle,
-                                this->right*ld->get_right())/ld->get_right();
-                if (temp->get_complexity() < this->get_complexity()) {
-                    return temp;
-                }
-            }
-            if (md.get() && md->get_left()->is_all_variables()) {
-                auto temp = fma(this->left, md->get_left(),
-                                this->right*md->get_right())/md->get_right();
-                if (temp->get_complexity() < this->get_complexity()) {
-                    return temp;
-                }
             }
 
 //  Common denominator reductions.
