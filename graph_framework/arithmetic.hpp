@@ -2427,60 +2427,20 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
-//  c1/(c2*v) -> c3/v
-//  c1/(c2*c3) -> c4/c3
+//  Move constants to the numerator.
+//  a/(c1*b) -> (c2*a)/b
+//  a/(b*c1) -> (c2*a)/b
             if (rm.get()) {
-                if (is_constant_combineable(rm->get_left(), 
-                                            this->left)) {
-                    auto temp = this->left/rm->get_left();
-                    if (temp->is_normal()) {
-                        return temp/rm->get_right();
-                    }
-                }
-                if (is_constant_combineable(rm->get_right(),
-                                            this->left)) {
-                    auto temp = this->left/rm->get_right();
-                    if (temp->is_normal()) {
-                        return temp/rm->get_left();
-                    }
+                if (rm->get_left()->is_constant() &&
+                    rm->get_left()->is_normal()) {
+                    return ((1.0/rm->get_left())*this->left)/rm->get_right();
+                } else if (rm->get_right()->is_constant() &&
+                           rm->get_right()->is_normal()) {
+                    return ((1.0/rm->get_right())*this->left)/rm->get_left();
                 }
             }
 
             if (lm.get() && rm.get()) {
-//  Test for constants that can be reduced out.
-//  (c1*a)/(c2*b) -> c3*a/b
-//  (a*c1)/(c2*b) -> c3*a/b
-//  (c1*a)/(b*c2) -> c3*a/b
-//  (a*c1)/(b*c2) -> c3*a/b
-                if (is_constant_combineable(lm->get_left(),
-                                            rm->get_left())) {
-                    auto temp = lm->get_left()/rm->get_left();
-                    if (temp->is_normal()) {
-                        return temp*lm->get_right()/rm->get_right();
-                    }
-                }
-                if (is_constant_combineable(lm->get_left(),
-                                            rm->get_right())) {
-                    auto temp = lm->get_left()/rm->get_right();
-                    if (temp->is_normal()) {
-                        return temp*lm->get_right()/rm->get_left();
-                    }
-                } 
-                if (is_constant_combineable(lm->get_right(),
-                                            rm->get_left())) {
-                    auto temp = lm->get_right()/rm->get_left();
-                    if (temp->is_normal()) {
-                        return temp*lm->get_left()/rm->get_right();
-                    }
-                }
-                if (is_constant_combineable(lm->get_right(),
-                                            rm->get_right())) {
-                    auto temp = lm->get_right()/rm->get_right();
-                    if (temp->is_normal()) {
-                        return temp*lm->get_left()/rm->get_left();
-                    }
-                }
-
 //  (a*b)/(a*c) -> b/c
 //  (b*a)/(a*c) -> b/c
 //  (a*b)/(c*a) -> b/c
