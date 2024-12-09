@@ -2399,6 +2399,42 @@ namespace graph {
                 return (1.0/this->right)*this->left;
             }
 
+//  a/(b/c + d) -> a*c/(c*d + b)
+//  a/(d + b/c) -> a*c/(c*d + b)
+            auto ra = add_cast(this->right);
+            if (ra.get()) {
+                auto rald = divide_cast(ra->get_left());
+                auto rard = divide_cast(ra->get_right());
+                if (rald.get()) {
+                    return this->left*rald->get_right() /
+                           fma(rald->get_right(),
+                               ra->get_right(),
+                               rald->get_left());
+                } else if (rard.get()) {
+                    return this->left*rard->get_right() /
+                           fma(rard->get_right(),
+                               ra->get_left(),
+                               rard->get_left());
+                }
+            }
+
+//  a/(b/c - d) -> a*c/(b - c*d)
+//  a/(d - b/c) -> a*c/(c*d - b)
+            auto rs = subtract_cast(this->right);
+            if (rs.get()) {
+                auto rsld = divide_cast(rs->get_left());
+                auto rsrd = divide_cast(rs->get_right());
+                if (rsld.get()) {
+                    return this->left*rsld->get_right() /
+                           (rsld->get_left() -
+                            rsld->get_right()*rs->get_right());
+                } else if (rsrd.get()) {
+                    return this->left*rsrd->get_right() /
+                           (rsrd->get_right()*rs->get_left() -
+                            rsrd->get_left());
+                }
+            }
+
 //  fma(a,d,c*d)/d -> a + c
 //  fma(a,d,d*c)/d -> a + c
 //  fma(d,a,c*d)/d -> a + c
@@ -2437,6 +2473,76 @@ namespace graph {
                 } else if (rm->get_right()->is_constant() &&
                            rm->get_right()->is_normal()) {
                     return ((1.0/rm->get_right())*this->left)/rm->get_left();
+                }
+
+//  a/((b/c + d)*e) -> a*c/((c*d + b)*e)
+//  a/((d + b/c)*e) -> a*c/((c*d + b)*e)
+//  a/(e*(b/c + d)) -> a*c/((c*d + b)*e)
+//  a/(e*(d + b/c)) -> a*c/((c*d + b)*e)
+                auto rmla = add_cast(rm->get_left());
+                auto rmra = add_cast(rm->get_right());
+                if (rmla.get()) {
+                    auto rmlald = divide_cast(rmla->get_left());
+                    auto rmlard = divide_cast(rmla->get_right());
+                    if (rmlald.get()) {
+                        return this->left*rmlald->get_right() /
+                               (fma(rmlald->get_right(),
+                                    rmla->get_right(),
+                                    rmlald->get_left())*rm->get_right());
+                    } else if (rmlard.get()) {
+                        return this->left*rmlard->get_right() /
+                               (fma(rmlard->get_right(),
+                                    rmla->get_left(),
+                                    rmlard->get_left())*rm->get_right());
+                    }
+                }
+                if (rmra.get()) {
+                    auto rmrald = divide_cast(rmra->get_left());
+                    auto rmrard = divide_cast(rmra->get_right());
+                    if (rmrald.get()) {
+                        return this->left*rmrald->get_right() /
+                               (fma(rmrald->get_right(),
+                                    rmra->get_right(),
+                                    rmrald->get_left())*rm->get_left());
+                    } else if (rmrard.get()) {
+                        return this->left*rmrard->get_right() /
+                               (fma(rmrard->get_right(),
+                                    rmra->get_left(),
+                                    rmrard->get_left())*rm->get_left());
+                    }
+                }
+
+//  a/((b/c - d)*e) -> a*c/((b - c*d)*e)
+//  a/(e*(b/c - d)) -> a*c/((b - c*d)*e)
+//  a/((d - b/c)*e) -> a*c/((c*d - b)*e)
+//  a/(e*(d + b/c)) -> a*c/((c*d - b)*e)
+                auto rmls = subtract_cast(rm->get_left());
+                auto rmrs = subtract_cast(rm->get_right());
+                if (rmls.get()) {
+                    auto rmlsld = divide_cast(rmls->get_left());
+                    auto rmlsrd = divide_cast(rmls->get_right());
+                    if (rmlsld.get()) {
+                        return this->left*rmlsld->get_right() /
+                               ((rmlsld->get_left() -
+                                 rmlsld->get_right()*rmls->get_right())*rm->get_right());
+                    } else if (rmlsrd.get()) {
+                        return this->left*rmlsrd->get_right() /
+                               ((rmlsrd->get_right()*rmls->get_left() -
+                                 rmlsrd->get_left())*rm->get_right());
+                    }
+                }
+                if (rmrs.get()) {
+                    auto rmrsld = divide_cast(rmrs->get_left());
+                    auto rmrsrd = divide_cast(rmrs->get_right());
+                    if (rmrsld.get()) {
+                        return this->left*rmrsld->get_right() /
+                               ((rmrsld->get_left() -
+                                 rmrsld->get_right()*rmrs->get_right())*rm->get_left());
+                    } else if (rmrsrd.get()) {
+                        return this->left*rmrsrd->get_right() /
+                               ((rmrsrd->get_right()*rmrs->get_left() -
+                                 rmrsrd->get_left())*rm->get_left());
+                    }
                 }
             }
 

@@ -297,7 +297,11 @@ namespace graph {
 ///  @param[in]     usage  List of register usage count.
 //------------------------------------------------------------------------------
         virtual void endline(std::ostringstream &stream,
-                             const jit::register_usage &usage) const final {
+                             const jit::register_usage &usage)
+#ifndef SHOW_USE_COUNT
+                             const
+#endif
+                             final {
             stream << ";"
 #ifdef SHOW_USE_COUNT
                    << " // used " << usage.at(this)

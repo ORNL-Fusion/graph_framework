@@ -453,8 +453,6 @@ template<jit::float_scalar T> void test_subtract() {
 
 //  v1 - -c*v2 -> v1 + c*v2
     auto negate = var_a - (-2.0*var_b);
-    negate->to_latex();
-    std::cout << std::endl;
     assert(graph::fma_cast(negate).get() && "Expected addition node.");
 
 //  v1 - -1*v2 -> v1 + v2
@@ -2090,6 +2088,108 @@ template<jit::float_scalar T> void test_divide() {
            "Expected exp(a - b).");
     assert(exp_over_exp17_cast->get_left()->is_match(expression_c*expression_d) &&
            "Expected c*d.");
+
+//  a/(b/c + d) -> a*c/(c*d + b)
+    auto b = graph::variable<T> (1, "");
+    auto c = graph::variable<T> (1, "");
+    auto d = graph::variable<T> (1, "");
+    auto nest_div1 = a/(b/c + d);
+    auto nest_div1_cast = graph::divide_cast(nest_div1);
+    assert(nest_div1_cast.get() && "Expected divide node.");
+    assert(nest_div1_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div1_cast->get_right()->is_match(c*d + b) &&
+           "Expected c*d + b in the numerator.");
+//  a/(b + b/c) -> a*c/(c*d + b)
+    auto nest_div2 = a/(d + b/c);
+    auto nest_div2_cast = graph::divide_cast(nest_div2);
+    assert(nest_div2_cast.get() && "Expected divide node.");
+    assert(nest_div2_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div2_cast->get_right()->is_match(c*d + b) &&
+           "Expected c*d + b in the numerator.");
+//  a/(b/c - d) -> a*c/(b - c*d)
+    auto nest_div3 = a/(b/c - d);
+    auto nest_div3_cast = graph::divide_cast(nest_div3);
+    assert(nest_div3_cast.get() && "Expected divide node.");
+    assert(nest_div3_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div3_cast->get_right()->is_match(b - c*d) &&
+           "Expected b - c*d in the numerator.");
+//  a/(d - b/c) -> a*c/(c*d - b)
+    auto nest_div4 = a/(d - b/c );
+    auto nest_div4_cast = graph::divide_cast(nest_div4);
+    assert(nest_div4_cast.get() && "Expected divide node.");
+    assert(nest_div4_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div4_cast->get_right()->is_match(c*d - b) &&
+           "Expected c*d - b in the numerator.");
+
+//  a/((b/c + d)*e) -> a*c/((c*d + b)*e)
+    auto e = graph::variable<T> (1, "");
+    auto nest_div5 = a/((b/c + d)*e);
+    auto nest_div5_cast = graph::divide_cast(nest_div5);
+    assert(nest_div5_cast.get() && "Expected divide node.");
+    assert(nest_div5_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div5_cast->get_right()->is_match((c*d + b)*e) &&
+           "Expected (c*d + b)*e in the numerator.");
+//  a/(e*(b/c + d)) -> a*c/((c*d + b)*e)
+    auto nest_div6 = a/((a + e)*(b/c + d));
+    auto nest_div6_cast = graph::divide_cast(nest_div6);
+    assert(nest_div6_cast.get() && "Expected divide node.");
+    assert(nest_div6_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div6_cast->get_right()->is_match((c*d + b)*(a + e)) &&
+           "Expected (c*d + b)*e in the numerator.");
+//  a/((d + b/c)*e) -> a*c/((c*d + b)*e)
+    auto nest_div7 = a/((d + b/c)*e);
+    auto nest_div7_cast = graph::divide_cast(nest_div7);
+    assert(nest_div7_cast.get() && "Expected divide node.");
+    assert(nest_div7_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div7_cast->get_right()->is_match((c*d + b)*e) &&
+           "Expected (c*d + b)*e in the numerator.");
+//  a/(e*(d + b/c)) -> a*c/((c*d + b)*e)
+    auto nest_div8 = a/((a + e)*(d + b/c));
+    auto nest_div8_cast = graph::divide_cast(nest_div8);
+    assert(nest_div8_cast.get() && "Expected divide node.");
+    assert(nest_div8_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div8_cast->get_right()->is_match((c*d + b)*(a + e)) &&
+           "Expected (c*d + b)*e in the numerator.");
+//  a/((b/c - d)*e) -> a*c/((b - c*d)*e)
+    auto nest_div9 = a/((b/c - d)*e);
+    auto nest_div9_cast = graph::divide_cast(nest_div9);
+    assert(nest_div9_cast.get() && "Expected divide node.");
+    assert(nest_div9_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div9_cast->get_right()->is_match((b - c*d)*e) &&
+           "Expected (b - c*d)*e in the numerator.");
+//  a/(e*(b/c - d)) -> a*c/((b - c*d)*e)
+    auto nest_div10 = a/((a + e)*(b/c - d));
+    auto nest_div10_cast = graph::divide_cast(nest_div10);
+    assert(nest_div10_cast.get() && "Expected divide node.");
+    assert(nest_div10_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div10_cast->get_right()->is_match((b - c*d)*(a + e)) &&
+           "Expected (b - c*d)*e in the numerator.");
+//  a/((d - b/c)*e) -> a*c/((c*d - b)*e)
+    auto nest_div11 = a/((d - b/c)*e);
+    auto nest_div11_cast = graph::divide_cast(nest_div11);
+    assert(nest_div11_cast.get() && "Expected divide node.");
+    assert(nest_div11_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div11_cast->get_right()->is_match((c*d - b)*e) &&
+           "Expected (c*d - b)*e in the numerator.");
+//  a/(e*(d + b/c)) -> a*c/((c*d - b)*e)
+    auto nest_div12 = a/((a + e)*(d - b/c));
+    auto nest_div12_cast = graph::divide_cast(nest_div12);
+    assert(nest_div12_cast.get() && "Expected divide node.");
+    assert(nest_div12_cast->get_left()->is_match(a*c) &&
+           "Expected a*c in the numerator.");
+    assert(nest_div12_cast->get_right()->is_match((c*d - b)*(a + e)) &&
+           "Expected (c*d - b)*e in the numerator.");
 }
 
 //------------------------------------------------------------------------------
