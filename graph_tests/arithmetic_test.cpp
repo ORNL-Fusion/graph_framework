@@ -2182,7 +2182,7 @@ template<jit::float_scalar T> void test_divide() {
            "Expected a*c in the numerator.");
     assert(nest_div11_cast->get_right()->is_match((c*d - b)*e) &&
            "Expected (c*d - b)*e in the numerator.");
-//  a/(e*(d + b/c)) -> a*c/((c*d - b)*e)
+//  a/(e*(d - b/c)) -> a*c/((c*d - b)*e)
     auto nest_div12 = a/((a + e)*(d - b/c));
     auto nest_div12_cast = graph::divide_cast(nest_div12);
     assert(nest_div12_cast.get() && "Expected divide node.");
@@ -2190,6 +2190,62 @@ template<jit::float_scalar T> void test_divide() {
            "Expected a*c in the numerator.");
     assert(nest_div12_cast->get_right()->is_match((c*d - b)*(a + e)) &&
            "Expected (c*d - b)*e in the numerator.");
+
+//  (a*b)^2/(a^2) = b^2
+    auto powdiv = graph::pow(a*b, 2.0)/graph::pow(a, 2.0);
+    assert(powdiv->is_match(b*b));
+//  (b*a)^2/(a^2) = b^2
+    auto powdiv2 = graph::pow(b*a, 2.0)/graph::pow(a, 2.0);
+    assert(powdiv2->is_match(b*b));
+//  (a*b)^2/((a^2)*c) = b^2/c
+    auto powdiv3 = graph::pow(a*b, 2.0)/(graph::pow(a, 2.0)*c);
+    assert(powdiv3->is_match((b*b)/c));
+//  (b*a)^2/((a^2)*c) = b^2/c
+    auto powdiv4 = graph::pow(b*a, 2.0)/(graph::pow(a, 2.0)*c);
+    assert(powdiv4->is_match((b*b)/c));
+//  (a*b)^2/(c*(a^2)) = b^2/c
+    auto powdiv5 = graph::pow(a*b, 2.0)/(expression_c*graph::pow(a, 2.0));
+    assert(powdiv5->is_match((b*b)/expression_c));
+//  (b*a)^2/(c*(a^2)) = b^2/c
+    auto powdiv6 = graph::pow(b*a, 2.0)/(expression_c*graph::pow(a, 2.0));
+    assert(powdiv6->is_match((b*b)/expression_c));
+//  (e*(a*b)^2)/(a^2) = e*b^2
+    auto expression_e = 1.0 + e;
+    auto powdiv7 = expression_e*graph::pow(a*b, 2.0)/graph::pow(a, 2.0);
+    assert(powdiv7->is_match(expression_e*b*b));
+//  ((a*b)^2*e)/(a^2) = e*b^2
+    auto powdiv8 = graph::pow(a*b, 2.0)*expression_e/graph::pow(a, 2.0);
+    assert(powdiv8->is_match(expression_e*b*b));
+//  (e*(b*a)^2)/(a^2) = e*b^2
+    auto powdiv9 = expression_e*graph::pow(b*a, 2.0)/graph::pow(a, 2.0);
+    assert(powdiv9->is_match(expression_e*b*b));
+//  ((b*a)^2*e)/(a^2) = e*b^2
+    auto powdiv10 = graph::pow(b*a, 2.0)*expression_e/graph::pow(a, 2.0);
+    assert(powdiv10->is_match(expression_e*b*b));
+//  e*(a*b)^2/((a^2)*c) = e*b^2/c
+    auto powdiv11 = expression_e*graph::pow(a*b, 2.0)/(graph::pow(a, 2.0)*expression_c);
+    assert(powdiv11->is_match((expression_e*b*b)/expression_c));
+//  e*(b*a)^2/((a^2)*c) = e*b^2/c
+    auto powdiv12 = expression_e*graph::pow(b*a, 2.0)/(graph::pow(a, 2.0)*expression_c);
+    assert(powdiv12->is_match((expression_e*b*b)/expression_c));
+//  (a*b)^2*e/((a^2)*c) = e*b^2/c
+    auto powdiv13 = graph::pow(a*b, 2.0)*expression_e/(graph::pow(a, 2.0)*expression_c);
+    assert(powdiv13->is_match((expression_e*b*b)/expression_c));
+//  (b*a)^2*e/((a^2)*c) = e*b^2/c
+    auto powdiv14 = graph::pow(b*a, 2.0)*expression_e/(graph::pow(a, 2.0)*expression_c);
+    assert(powdiv14->is_match((expression_e*b*b)/expression_c));
+//  e*(a*b)^2/(c*(a^2)) = e*b^2/c
+    auto powdiv15 = expression_e*graph::pow(a*b, 2.0)/(expression_c*graph::pow(a, 2.0));
+    assert(powdiv15->is_match((expression_e*b*b)/expression_c));
+//  e*(b*a)^2/(c*(a^2)) = e*b^2/c
+    auto powdiv16 = expression_e*graph::pow(b*a, 2.0)/(expression_c*graph::pow(a, 2.0));
+    assert(powdiv16->is_match((expression_e*b*b)/expression_c));
+//  (a*b)^2*e/(c*(a^2)) = e*b^2/c
+    auto powdiv17 = graph::pow(a*b, 2.0)*expression_e/(expression_c*graph::pow(a, 2.0));
+    assert(powdiv17->is_match((expression_e*b*b)/expression_c));
+//  (b*a)^2*e/(c*(a^2)) = e*b^2/c
+    auto powdiv18 = graph::pow(a*b, 2.0)*expression_e/(expression_c*graph::pow(a, 2.0));
+    assert(powdiv18->is_match((expression_e*b*b)/expression_c));
 }
 
 //------------------------------------------------------------------------------

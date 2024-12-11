@@ -1581,10 +1581,14 @@ namespace graph {
 
 //  Move variables, sqrt of variables, and powers of variables to the right.
 //  Disable if the left is a constant like to avoid an infinite loop.
-            if (this->left->is_power_like()   &&
-                !this->right->is_power_like() &&
-                !this->left->is_constant()) {
-                return this->right*this->left;
+            if ((this->left->is_power_like()   &&
+                 !this->right->is_power_like())  ||
+                (this->left->is_power_like()   &&
+                 this->right->is_power_like()  &&
+                 this->right->get_complexity() > this->left->get_complexity())) {
+                if (!this->left->is_constant()) {
+                    return this->right*this->left;
+                }
             }
 
 //  Disable if the right is power like to avoid infinite loop.
@@ -2515,7 +2519,7 @@ namespace graph {
 //  a/((b/c - d)*e) -> a*c/((b - c*d)*e)
 //  a/(e*(b/c - d)) -> a*c/((b - c*d)*e)
 //  a/((d - b/c)*e) -> a*c/((c*d - b)*e)
-//  a/(e*(d + b/c)) -> a*c/((c*d - b)*e)
+//  a/(e*(d - b/c)) -> a*c/((c*d - b)*e)
                 auto rmls = subtract_cast(rm->get_left());
                 auto rmrs = subtract_cast(rm->get_right());
                 if (rmls.get()) {
@@ -2599,6 +2603,202 @@ namespace graph {
                 auto exponent = constant_cast(rp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
                     return this->left*pow(rp->get_left(), -rp->get_right());
+                }
+            }
+
+//  (a*b)^c/(a^d) = a^(c - d)*b^c
+//  (b*a)^c/(a^d) = a^(c - d)*b^c
+            auto lp = pow_cast(this->left);
+            if (lp.get()) {
+                auto lpm = multiply_cast(this->left->get_power_base());
+                if (lpm.get()) {
+                    if (lpm->get_left()->is_match(this->right->get_power_base())) {
+                        return pow(this->right->get_power_base(),
+                                   this->left->get_power_exponent() -
+                                   this->right->get_power_exponent()) *
+                               pow(lpm->get_right(),
+                                   this->left->get_power_exponent());
+                    } else if (lpm->get_right()->is_match(this->right->get_power_base())) {
+                        return pow(this->right->get_power_base(),
+                                   this->left->get_power_exponent() -
+                                   this->right->get_power_exponent()) *
+                               pow(lpm->get_left(),
+                                   this->left->get_power_exponent());
+                    }
+                }
+            }
+//  (a*b)^c/((a^d)*e) = a^(c - d)*b^c/e
+//  (b*a)^c/((a^d)*e) = a^(c - d)*b^c/e
+//  (a*b)^c/(e*(a^d)) = a^(c - d)*b^c/e
+//  (b*a)^c/(e*(a^d)) = a^(c - d)*b^c/e
+            if (lp.get() && rm.get()) {
+                auto lpm = multiply_cast(this->left->get_power_base());
+                if (lpm.get()) {
+                    if (lpm->get_left()->is_match(rm->get_left()->get_power_base())) {
+                        return (pow(rm->get_left()->get_power_base(),
+                                    this->left->get_power_exponent() -
+                                    rm->get_left()->get_power_exponent()) *
+                                pow(lpm->get_right(),
+                                    this->left->get_power_exponent())) /
+                               rm->get_right();
+                    } else if (lpm->get_right()->is_match(rm->get_left()->get_power_base())) {
+                        return (pow(rm->get_left()->get_power_base(),
+                                    this->left->get_power_exponent() -
+                                    rm->get_left()->get_power_exponent()) *
+                                pow(lpm->get_left(),
+                                    this->left->get_power_exponent())) /
+                               rm->get_right();
+                    } else if (lpm->get_left()->is_match(rm->get_right()->get_power_base())) {
+                        return (pow(rm->get_right()->get_power_base(),
+                                    this->left->get_power_exponent() -
+                                    rm->get_right()->get_power_exponent()) *
+                                pow(lpm->get_right(),
+                                    this->left->get_power_exponent())) /
+                               rm->get_left();
+                    } else if (lpm->get_right()->is_match(rm->get_right()->get_power_base())) {
+                        return (pow(rm->get_right()->get_power_base(),
+                                    this->left->get_power_exponent() -
+                                    rm->get_right()->get_power_exponent()) *
+                                pow(lpm->get_left(),
+                                    this->left->get_power_exponent())) /
+                               rm->get_left();
+                    }
+                }
+            }
+
+//  (f*(a*b)^c)/(a^d) = f*a^(c - d)*b^c
+//  (f*(b*a)^c)/(a^d) = f*a^(c - d)*b^c
+//  (((a*b)^c)*f)/(a^d) = f*a^(c - d)*b^c
+//  (((b*a)^c)*f)/(a^d) = f*a^(c - d)*b^c
+            if (lm.get()) {
+                auto lmlp = pow_cast(lm->get_left());
+                auto lmrp = pow_cast(lm->get_right());
+                if (lmlp.get()) {
+                    auto lmlpm = multiply_cast(lmlp->get_power_base());
+                    if (lmlpm.get()) {
+                        if (lmlpm->get_left()->is_match(this->right->get_power_base())) {
+                            return lm->get_right() *
+                                   pow(this->right->get_power_base(),
+                                       lmlp->get_power_exponent() -
+                                       this->right->get_power_exponent()) *
+                                   pow(lmlpm->get_right(),
+                                       lmlp->get_power_exponent());
+                        } else if (lmlpm->get_right()->is_match(this->right->get_power_base())) {
+                            return lm->get_right() *
+                                   pow(this->right->get_power_base(),
+                                       lmlp->get_power_exponent() -
+                                       this->right->get_power_exponent()) *
+                                   pow(lmlpm->get_left(),
+                                       lmlp->get_power_exponent());
+                        }
+                    }
+                } else if (lmrp.get()) {
+                    auto lmrpm = multiply_cast(lmrp->get_power_base());
+                    if (lmrpm.get()) {
+                        if (lmrpm->get_left()->is_match(this->right->get_power_base())) {
+                            return lm->get_left() *
+                                   pow(this->right->get_power_base(),
+                                       lmrp->get_power_exponent() -
+                                       this->right->get_power_exponent()) *
+                                   pow(lmrpm->get_right(),
+                                       lmrp->get_power_exponent());
+                        } else if (lmrpm->get_right()->is_match(this->right->get_power_base())) {
+                            return lm->get_left() *
+                                   pow(this->right->get_power_base(),
+                                       lmrp->get_power_exponent() -
+                                       this->right->get_power_exponent()) *
+                                   pow(lmrpm->get_left(),
+                                       lmrp->get_power_exponent());
+                        }
+                    }
+                }
+            }
+
+//  f*(a*b)^c/((a^d)*e) = a^(c - d)*b^c/e
+//  f*(b*a)^c/((a^d)*e) = a^(c - d)*b^c/e
+//  f*(a*b)^c/(e*(a^d)) = a^(c - d)*b^c/e
+//  f*(b*a)^c/(e*(a^d)) = a^(c - d)*b^c/e
+//  (a*b)^c*f/((a^d)*e) = a^(c - d)*b^c/e
+//  (b*a)^c*f/((a^d)*e) = a^(c - d)*b^c/e
+//  (a*b)^c*f/(e*(a^d)) = a^(c - d)*b^c/e
+//  (b*a)^c*f/(e*(a^d)) = a^(c - d)*b^c/e
+            if (lm.get() && rm.get()) {
+                auto lmlp = pow_cast(lm->get_left());
+                auto lmrp = pow_cast(lm->get_right());
+                if (lmlp.get()) {
+                    auto lmlpm = multiply_cast(lmlp->get_power_base());
+                    if (lmlpm.get()) {
+                        if (lmlpm->get_left()->is_match(rm->get_left()->get_power_base())) {
+                            return lm->get_right() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmlp->get_power_exponent() -
+                                        rm->get_left()->get_power_exponent())) *
+                                   pow(lmlpm->get_right(),
+                                       lmlp->get_power_exponent()) /
+                                   rm->get_right();
+                        } else if (lmlpm->get_right()->is_match(rm->get_left()->get_power_base())) {
+                            return lm->get_right() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmlp->get_power_exponent() -
+                                        rm->get_left()->get_power_exponent())) *
+                                   pow(lmlpm->get_left(),
+                                       lmlp->get_power_exponent()) /
+                                   rm->get_right();
+                        } else if (lmlpm->get_left()->is_match(rm->get_right()->get_power_base())) {
+                            return lm->get_right() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmlp->get_power_exponent() -
+                                        rm->get_right()->get_power_exponent())) *
+                                   pow(lmlpm->get_right(),
+                                       lmlp->get_power_exponent()) /
+                                   rm->get_left();
+                        } else if (lmlpm->get_right()->is_match(rm->get_right()->get_power_base())) {
+                            return lm->get_right() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmlp->get_power_exponent() -
+                                        rm->get_right()->get_power_exponent())) *
+                                   pow(lmlpm->get_left(),
+                                       lmlp->get_power_exponent()) /
+                                   rm->get_left();
+                        }
+                    }
+                } else if (lmrp.get()) {
+                    auto lmrpm = multiply_cast(lmrp->get_power_base());
+                    if (lmrpm.get()) {
+                        if (lmrpm->get_left()->is_match(rm->get_left()->get_power_base())) {
+                            return lm->get_left() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmrp->get_power_exponent() -
+                                        rm->get_left()->get_power_exponent())) *
+                                   pow(lmrpm->get_right(),
+                                       lmrp->get_power_exponent()) /
+                                   rm->get_right();
+                        } else if (lmrpm->get_right()->is_match(rm->get_left()->get_power_base())) {
+                            return lm->get_left() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmrp->get_power_exponent() -
+                                        rm->get_left()->get_power_exponent())) *
+                                   pow(lmrpm->get_left(),
+                                       lmrp->get_power_exponent()) /
+                                   rm->get_right();
+                        } else if (lmrpm->get_left()->is_match(rm->get_right()->get_power_base())) {
+                            return lm->get_left() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmrp->get_power_exponent() -
+                                        rm->get_right()->get_power_exponent())) *
+                                   pow(lmrpm->get_right(),
+                                       lmrp->get_power_exponent()) /
+                                   rm->get_left();
+                        } else if (lmrpm->get_right()->is_match(rm->get_right()->get_power_base())) {
+                            return lm->get_left() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmrp->get_power_exponent() -
+                                        rm->get_right()->get_power_exponent())) *
+                                   pow(lmrpm->get_left(),
+                                       lmrp->get_power_exponent()) /
+                                   rm->get_left();
+                        }
+                    }
                 }
             }
 
