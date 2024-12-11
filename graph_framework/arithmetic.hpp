@@ -290,6 +290,25 @@ namespace graph {
                     return (ld->get_left() + rd->get_left())/ld->get_right();
                 }
 
+//  a*b/c + d*b/e -> (a/c + d/e)*b
+                auto ldlm = multiply_cast(ld->get_left());
+                auto rdlm = multiply_cast(rd->get_left());
+                if (ldlm.get() && rdlm.get()) {
+                    if (ldlm->get_right()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_left()/ld->get_right() +
+                                rdlm->get_left()/rd->get_right())*ldlm->get_right();
+                    } else if (ldlm->get_right()->is_match(rdlm->get_left())) {
+                        return (ldlm->get_left()/ld->get_right() +
+                                rdlm->get_right()/rd->get_right())*ldlm->get_right();
+                    } else if (ldlm->get_left()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_right()/ld->get_right() +
+                                rdlm->get_left()/rd->get_right())*ldlm->get_left();
+                    } else if (ldlm->get_left()->is_match(rdlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() +
+                                rdlm->get_right()/rd->get_right())*ldlm->get_left();
+                    }
+                }
+
 //  (a/(c*b) + d/(e*c)) -> (a/b + d/e)/c
 //  (a/(b*c) + d/(e*c)) -> (a/b + d/e)/c
 //  (a/(c*b) + d/(c*e)) -> (a/b + d/e)/c
@@ -1015,8 +1034,8 @@ namespace graph {
 //  c is a constant.
 //  a - -c/b -> a + c/b
 //  a - (-c*d)/b -> a + (c*d)/b
-//  -c/a - b -> b + c/a
-//  (-c*d)/a - b -> b + (c*d)/a
+//  -c/a - b -> -(b + c/a)
+//  (-c*d)/a - b -> -(b + (c*d)/a)
             if (rd.get()) {
                 auto rdlm = multiply_cast(rd->get_left());
                 if ((rd->get_left()->is_constant() &&
@@ -1024,7 +1043,7 @@ namespace graph {
                     (rdlm.get() &&
                      (rdlm->get_left()->is_constant() &&
                       rdlm->get_left()->evaluate().is_negative()))) {
-                    return this->left + (-1.0*rd->get_left())/rd->get_right();
+                    return this->left + -this->right;
                 }
             } else if (ld.get()) {
                 auto ldlm = multiply_cast(ld->get_left());
@@ -1033,7 +1052,7 @@ namespace graph {
                     (ldlm.get() &&
                      (ldlm->get_left()->is_constant() &&
                       ldlm->get_left()->evaluate().is_negative()))) {
-                    return this->right + (-1.0*ld->get_left())/ld->get_right();
+                    return -(-this->left + this->right);
                 }
             }
 
@@ -2666,11 +2685,35 @@ namespace graph {
                 }
             }
 
+            if (lm.get()) {
+//  a*(b*c)/c -> a*b
+//  a*(c*b)/c -> a*b
+//  (a*c)*b/c -> a*b
+//  (c*a)*b/c -> a*b
+                auto lmrm = multiply_cast(lm->get_right());
+                auto lmlm = multiply_cast(lm->get_left());
+                if (lmrm.get()) {
+                    if (lmrm->get_right()->is_power_base_match(this->right)) {
+                        return lm->get_left()*lmrm->get_left() *
+                               (lmrm->get_right()/this->right);
+                    } else if (lmrm->get_left()->is_power_base_match(this->right)) {
+                        return lm->get_left()*lmrm->get_right() *
+                               (lmrm->get_left()/this->right);
+                    }
+                } else if (lmlm.get()) {
+                    if (lmlm->get_right()->is_power_base_match(this->right)) {
+                        return lm->get_right()*lmlm->get_left() *
+                               (lmlm->get_right()/this->right);
+                    } else if (lmlm->get_left()->is_power_base_match(this->right)) {
+                        return lm->get_right()*lmlm->get_right() *
+                               (lmlm->get_left()/this->right);
+                    }
+                }
+
 //  (f*(a*b)^c)/(a^d) = f*a^(c - d)*b^c
 //  (f*(b*a)^c)/(a^d) = f*a^(c - d)*b^c
 //  (((a*b)^c)*f)/(a^d) = f*a^(c - d)*b^c
 //  (((b*a)^c)*f)/(a^d) = f*a^(c - d)*b^c
-            if (lm.get()) {
                 auto lmlp = pow_cast(lm->get_left());
                 auto lmrp = pow_cast(lm->get_right());
                 if (lmlp.get()) {

@@ -327,6 +327,26 @@ void test_pow() {
     assert(graph::constant_cast(graph::pow(graph::constant<T> (static_cast<T> (2.0)),
                                            graph::constant<T> (static_cast<T> (3.0)))).get() &&
            "Expected a constant node.");
+
+//  (-a/b)^2 -> (a/b)^2
+    assert(graph::pow(-var_a/var_b, 2.0)->is_match(graph::pow(var_a/var_b, 2.0)) &&
+           "Expected (a/b)^2.");
+//  (-a/b)^4 -> (a/b)^4
+    assert(graph::pow(-var_a/var_b, 4.0)->is_match(graph::pow(var_a/var_b, 4.0)) &&
+           "Expected (a/b)^4.");
+//  (-a/b)^3 -> -(a/b)^3
+    assert(graph::pow(-var_a/var_b, 3.0)->is_match(-graph::pow(var_a, 3.0)/graph::pow(var_b, 3.0)) &&
+           "Expected -(a/b)^3");
+
+//  (a*sqrt(b^2))^2-> (a*b)^2
+    assert(graph::pow(var_a*graph::sqrt(var_b*var_b), 2.0)->is_match(var_a*var_a*var_b*var_b) &&
+           "Expected (a*b)^2.");
+//  (a*sqrt(b^2))^4-> (a*b)^4
+    assert(graph::pow(var_a*graph::sqrt(var_b*var_b), 4.0)->is_match(graph::pow(var_a, 4.0)*graph::pow(var_b, 4.0)) &&
+           "Expected (a*b)^4.");
+//  (a*sqrt(b^2)/c)^2-> (a*b/c)^2
+    assert(graph::pow(var_a*graph::sqrt(var_b*var_b)/var_c, 2.0)->is_match(var_a*var_a*var_b*var_b/(var_c*var_c)) &&
+           "Expected (a*b/c)^2.");
 }
 
 //------------------------------------------------------------------------------

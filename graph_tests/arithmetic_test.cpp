@@ -99,9 +99,9 @@ template<jit::float_scalar T> void test_add() {
            "Expected value of one.");
     
 //  Test common factors.
-    auto var_a = graph::variable<T> (1, "");
-    auto var_b = graph::variable<T> (1, "");
-    auto var_c = graph::variable<T> (1, "");
+    auto var_a = graph::variable<T> (1, "a");
+    auto var_b = graph::variable<T> (1, "b");
+    auto var_c = graph::variable<T> (1, "c");
     auto common_a = var_a*var_b + var_a*var_c;
     assert(graph::add_cast(common_a).get() == nullptr &&
            "Did not expect add node.");
@@ -130,7 +130,7 @@ template<jit::float_scalar T> void test_add() {
     assert(graph::multiply_cast(match).get() && "Expected multiply node.");
 
 //  Reduce (a/y)^e + (b/y)^e -> (a^2 + b^2)/(y^e).
-    auto var_d = graph::variable<T> (1, "");
+    auto var_d = graph::variable<T> (1, "d");
     auto common_power1 = graph::pow(var_a/var_b,var_c) +
                          graph::pow(var_d/var_b,var_c);
     assert(graph::divide_cast(common_power1) && "Expected Divide node.");
@@ -148,7 +148,7 @@ template<jit::float_scalar T> void test_add() {
     assert(graph::subtract_cast(add_neg).get() && "Expected subtract node.");
 
 //  (c1*v1 + c2) + (c3*v1 + c4) -> c5*v1 + c6
-    auto var_e = graph::variable<T> (1, "");
+    auto var_e = graph::variable<T> (1, "e");
     auto addfma1 = graph::fma(var_b, var_a, var_d)
                  + graph::fma(var_c, var_a, var_e);
     assert(graph::fma_cast(addfma1).get() &&
@@ -316,6 +316,31 @@ template<jit::float_scalar T> void test_add() {
                                                                var_d,
                                                                var_a)) &&
            "Expected fma(c,d,a) as numerator.");
+
+//  a*b/c + d*b/e -> (a/c + d/e)*b
+    auto factor = var_a*var_b/var_c + var_d*var_b/var_e;
+    auto factor_cast = graph::multiply_cast(factor);
+    assert(factor_cast.get() && "Expected a multiply node.");
+    assert(factor->is_match((var_a/var_c + var_d/var_e)*var_b) &&
+           "Expected (a/c + d/e)*b.");
+//  a*b/c + b*d/e -> (a/c + d/e)*b
+    auto factor2 = var_a*var_b/var_c + var_b*var_d/var_e;
+    auto factor2_cast = graph::multiply_cast(factor2);
+    assert(factor2_cast.get() && "Expected a multiply node.");
+    assert(factor2->is_match((var_a/var_c + var_d/var_e)*var_b) &&
+           "Expected (a/c + d/e)*b.");
+//  b*a/c + d*b/e -> (a/c + d/e)*b
+    auto factor3 = var_b*var_a/var_c + var_d*var_b/var_e;
+    auto factor3_cast = graph::multiply_cast(factor3);
+    assert(factor3_cast.get() && "Expected a multiply node.");
+    assert(factor3->is_match((var_a/var_c + var_d/var_e)*var_b) &&
+           "Expected (a/c + d/e)*b.");
+//  b*a/c + b*d/e -> (a/c + d/e)*b
+    auto factor4 = var_b*var_a/var_c + var_b*var_d/var_e;
+    auto factor4_cast = graph::multiply_cast(factor4);
+    assert(factor4_cast.get() && "Expected a multiply node.");
+    assert(factor4->is_match((var_a/var_c + var_d/var_e)*var_b) &&
+           "Expected (a/c + d/e)*b.");
 }
 
 //------------------------------------------------------------------------------
@@ -712,6 +737,13 @@ template<jit::float_scalar T> void test_subtract() {
            "Expected var_b*var_d as common denominator.");
     assert(common_denom4_cast->get_left()->is_match(var_a - var_c*var_d) &&
            "Expected a - c*d as numerator.");
+
+//  -a/b - d -> -(a/b + d)
+    auto common_neg = -var_a/var_b - var_c;
+    auto common_neg_cast = graph::multiply_cast(common_neg);
+    assert(common_neg_cast.get() && "Expected a multiply node.");
+    assert(common_neg->is_match(-(var_a/var_b + var_c)) &&
+           "Expected -(a/b + d)");
 }
 
 //------------------------------------------------------------------------------
@@ -2246,6 +2278,15 @@ template<jit::float_scalar T> void test_divide() {
 //  (b*a)^2*e/(c*(a^2)) = e*b^2/c
     auto powdiv18 = graph::pow(a*b, 2.0)*expression_e/(expression_c*graph::pow(a, 2.0));
     assert(powdiv18->is_match((expression_e*b*b)/expression_c));
+
+//  a*(b*c)/c -> a*b
+    assert(((a*(b*c))/c)->is_match(a*b) && "Expected a*b");
+//  a*(c*b)/c -> a*b
+    assert(((a*(c*b))/c)->is_match(a*b) && "Expected a*b");
+//  (a*c)*b/c -> a*b
+    assert((((a*c)*b)/c)->is_match(a*b) && "Expected a*b");
+//  (c*a)*b/c -> a*b
+    assert((((c*a)*b)/c)->is_match(a*b) && "Expected a*b");
 }
 
 //------------------------------------------------------------------------------

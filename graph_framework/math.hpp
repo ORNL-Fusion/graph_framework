@@ -971,9 +971,33 @@ namespace graph {
                 }
             }
 
-//  Handle cases where (c/x)^a, (x/c)^a, (a/sqrt(b))^c and (a/b^c)^2.
             auto ld = divide_cast(this->left);
             if (ld.get()) {
+//  For even exponents e.
+//  (-a/b)^e -> (a/b)^e
+                auto ldlm = multiply_cast(ld->get_left());
+                if (ldlm.get()) {
+                    if (rc.get() &&
+                        rc->evaluate().is_even()) {
+                        if (ldlm->get_left()->is_constant() &&
+                            ldlm->get_left()->evaluate().is_negative()) {
+                            return pow(ldlm->get_right()/ld->get_right(),
+                                       this->right);
+                        }
+                    }
+                    if (ldlm->get_left()->is_constant()    ||
+                        ldlm->get_right()->is_constant()   ||
+                        sqrt_cast(ldlm->get_left()).get()  ||
+                        sqrt_cast(ldlm->get_right()).get() ||
+                        pow_cast(ldlm->get_left()).get()   ||
+                        pow_cast(ldlm->get_right()).get()) {
+                        return pow(ldlm->get_left(), this->right) *
+                               pow(ldlm->get_right(), this->right)/
+                               pow(ld->get_right(), this->right);
+                    }
+                }
+                
+//  Handle cases where (c/x)^a, (x/c)^a, (a/sqrt(b))^c and (a/b^c)^2.
                 if (ld->get_left()->is_constant()    ||
                     ld->get_right()->is_constant()   ||
                     sqrt_cast(ld->get_left()).get()  ||
