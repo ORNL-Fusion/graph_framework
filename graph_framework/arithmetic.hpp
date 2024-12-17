@@ -290,10 +290,40 @@ namespace graph {
                     return (ld->get_left() + rd->get_left())/ld->get_right();
                 }
 
-//  a*b/c + d*b/e -> (a/c + d/e)*b
                 auto ldlm = multiply_cast(ld->get_left());
                 auto rdlm = multiply_cast(rd->get_left());
+//  a/b - c*a/d -> (1/b - c/d)*a
+//  a/b - a*c/d -> (1/b - c/d)*a
+//  c*a/b - a/d -> (c/b - 1/d)*a
+//  a*c/b - a/d -> (c/b - 1/d)*a
+                if (rdlm.get()) {
+                    if (ld->get_left()->is_match(rdlm->get_left())) {
+                        return (1.0/ld->get_right() +
+                                rdlm->get_right()/rd->get_right())*rdlm->get_left();
+                    } else if (ld->get_left()->is_match(rdlm->get_right())) {
+                        return (1.0/ld->get_right() +
+                                rdlm->get_left()/rd->get_right())*rdlm->get_right();
+                    }
+                } else if (ldlm.get()) {
+                    if (rd->get_left()->is_match(ldlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() +
+                                1.0/rd->get_right())*ldlm->get_left();
+                    } else if (rd->get_left()->is_match(ldlm->get_right())) {
+                        return (ldlm->get_left()/ld->get_right() +
+                                1.0/rd->get_right())*ldlm->get_right();
+                    }
+                }
+
+//  c1*a/b + c2*a/d = c3*(a/b + c4*a/d)
+//  a*b/c + d*b/e -> (a/c + d/e)*b
                 if (ldlm.get() && rdlm.get()) {
+                    if (is_constant_combineable(ldlm->get_left(),
+                                                rdlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() +
+                                rdlm->get_left()/ldlm->get_left() *
+                                rdlm->get_right()/rd->get_right())*ldlm->get_left();
+                    }
+
                     if (ldlm->get_right()->is_match(rdlm->get_right())) {
                         return (ldlm->get_left()/ld->get_right() +
                                 rdlm->get_left()/rd->get_right())*ldlm->get_right();
@@ -1059,6 +1089,55 @@ namespace graph {
             if (ld.get() && rd.get()) {
                 if (ld->get_right()->is_match(rd->get_right())) {
                     return (ld->get_left() - rd->get_left())/ld->get_right();
+                }
+
+                auto ldlm = multiply_cast(ld->get_left());
+                auto rdlm = multiply_cast(rd->get_left());
+//  a/b - c*a/d -> (1/b - c/d)*a
+//  a/b - a*c/d -> (1/b - c/d)*a
+//  c*a/b - a/d -> (c/b - 1/d)*a
+//  a*c/b - a/d -> (c/b - 1/d)*a
+                if (rdlm.get()) {
+                    if (ld->get_left()->is_match(rdlm->get_left())) {
+                        return (1.0/ld->get_right() -
+                                rdlm->get_right()/rd->get_right())*rdlm->get_left();
+                    } else if (ld->get_left()->is_match(rdlm->get_right())) {
+                        return (1.0/ld->get_right() -
+                                rdlm->get_left()/rd->get_right())*rdlm->get_right();
+                    }
+                } else if (ldlm.get()) {
+                    if (rd->get_left()->is_match(ldlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() -
+                                1.0/rd->get_right())*ldlm->get_left();
+                    } else if (rd->get_left()->is_match(ldlm->get_right())) {
+                        return (ldlm->get_left()/ld->get_right() -
+                                1.0/rd->get_right())*ldlm->get_right();
+                    }
+                }
+
+//  c1*a/b - c2*a/d = c3*(a/b - c4*a/d)
+//  a*b/c - d*b/e -> (a/c - d/e)*b
+                if (ldlm.get() && rdlm.get()) {
+                    if (is_constant_combineable(ldlm->get_left(),
+                                                rdlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() -
+                                rdlm->get_left()/ldlm->get_left() *
+                                rdlm->get_right()/rd->get_right())*ldlm->get_left();
+                    }
+
+                    if (ldlm->get_right()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_left()/ld->get_right() -
+                                rdlm->get_left()/rd->get_right())*ldlm->get_right();
+                    } else if (ldlm->get_right()->is_match(rdlm->get_left())) {
+                        return (ldlm->get_left()/ld->get_right() -
+                                rdlm->get_right()/rd->get_right())*ldlm->get_right();
+                    } else if (ldlm->get_left()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_right()/ld->get_right() -
+                                rdlm->get_left()/rd->get_right())*ldlm->get_left();
+                    } else if (ldlm->get_left()->is_match(rdlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() -
+                                rdlm->get_right()/rd->get_right())*ldlm->get_left();
+                    }
                 }
 
 //  (a/(c*b) - d/(e*c)) -> (a/b - d/e)/c

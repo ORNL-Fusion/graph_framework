@@ -341,6 +341,49 @@ template<jit::float_scalar T> void test_add() {
     assert(factor4_cast.get() && "Expected a multiply node.");
     assert(factor4->is_match((var_a/var_c + var_d/var_e)*var_b) &&
            "Expected (a/c + d/e)*b.");
+
+//  c1*a/b + c2*a/d = c3*(a/b + c4*a/d)
+    auto two = graph::constant(static_cast<T> (2.0));
+    auto common_const = two*var_a/var_b + three*var_c/var_d;
+    auto common_const_cast = graph::multiply_cast(common_const);
+    assert(common_const_cast.get() && "Expected a multiply node.");
+    assert(common_const_cast->get_left()->is_match(two) &&
+           "Expected a constant of 2.0");
+    assert(common_const_cast->get_right()->is_match(var_a/var_b + 3.0/2.0*var_c/var_d) &&
+           "Expected a/b + 3/2*c/d");
+
+//  a/b - c*a/d -> (1/b + c/d)*a
+    auto common_var = var_a/var_b + var_c*var_a/var_d;
+    auto common_var_cast = graph::multiply_cast(common_var);
+    assert(common_var_cast.get() && "Expected a multiply node.");
+    assert(common_var_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var_cast->get_left()->is_match(1.0/var_b + var_c/var_d) &&
+           "Expected 1/b + c/d");
+//  a/b - a*c/d -> (1/b + c/d)*a
+    auto common_var2 = var_a/var_b + var_a*var_c/var_d;
+    auto common_var2_cast = graph::multiply_cast(common_var2);
+    assert(common_var2_cast.get() && "Expected a multiply node.");
+    assert(common_var2_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var2_cast->get_left()->is_match(1.0/var_b + var_c/var_d) &&
+           "Expected 1/b + c/d");
+//  c*a/b - a/d -> (c/b + 1/d)*a
+    auto common_var3 = var_c*var_a/var_b + var_a/var_d;
+    auto common_var3_cast = graph::multiply_cast(common_var3);
+    assert(common_var3_cast.get() && "Expected a multiply node.");
+    assert(common_var3_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var3_cast->get_left()->is_match(var_c/var_b + 1.0/var_d) &&
+           "Expected c/b + 1/d");
+//  a*c/b - a/d -> (c/b + 1/d)*a
+    auto common_var4 = var_a*var_c/var_b + var_a/var_d;
+    auto common_var4_cast = graph::multiply_cast(common_var4);
+    assert(common_var4_cast.get() && "Expected a multiply node.");
+    assert(common_var4_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var4_cast->get_left()->is_match(var_c/var_b + 1.0/var_d) &&
+           "Expected c/b + 1/d");
 }
 
 //------------------------------------------------------------------------------
@@ -744,6 +787,74 @@ template<jit::float_scalar T> void test_subtract() {
     assert(common_neg_cast.get() && "Expected a multiply node.");
     assert(common_neg->is_match(-(var_a/var_b + var_c)) &&
            "Expected -(a/b + d)");
+
+//  a*b/c - d*b/e -> (a/c - d/e)*b
+    auto factor5 = var_a*var_b/var_c - var_d*var_b/var_e;
+    auto factor5_cast = graph::multiply_cast(factor5);
+    assert(factor5_cast.get() && "Expected a multiply node.");
+    assert(factor5->is_match((var_a/var_c - var_d/var_e)*var_b) &&
+           "Expected (a/c - d/e)*b.");
+//  a*b/c - b*d/e -> (a/c - d/e)*b
+    auto factor6 = var_a*var_b/var_c - var_b*var_d/var_e;
+    auto factor6_cast = graph::multiply_cast(factor6);
+    assert(factor6_cast.get() && "Expected a multiply node.");
+    assert(factor6->is_match((var_a/var_c - var_d/var_e)*var_b) &&
+           "Expected (a/c - d/e)*b.");
+//  b*a/c - d*b/e -> (a/c - d/e)*b
+    auto factor7 = var_b*var_a/var_c - var_d*var_b/var_e;
+    auto factor7_cast = graph::multiply_cast(factor7);
+    assert(factor7_cast.get() && "Expected a multiply node.");
+    assert(factor7->is_match((var_a/var_c - var_d/var_e)*var_b) &&
+           "Expected (a/c - d/e)*b.");
+//  b*a/c - b*d/e -> (a/c - d/e)*b
+    auto factor8 = var_b*var_a/var_c - var_b*var_d/var_e;
+    auto factor8_cast = graph::multiply_cast(factor8);
+    assert(factor8_cast.get() && "Expected a multiply node.");
+    assert(factor8->is_match((var_a/var_c - var_d/var_e)*var_b) &&
+           "Expected (a/c - d/e)*b.");
+    
+//  c1*a/b - c2*a/d = c3*(a/b - c4*a/d)
+    auto two = graph::constant(static_cast<T> (2.0));
+    auto common_const = two*var_a/var_b - 3.0*var_c/var_d;
+    auto common_const_cast = graph::multiply_cast(common_const);
+    assert(common_const_cast.get() && "Expected a multiply node.");
+    assert(common_const_cast->get_left()->is_match(two) &&
+           "Expected a constant of 2.0");
+    assert(common_const_cast->get_right()->is_match(var_a/var_b - 3.0/2.0*var_c/var_d) &&
+           "Expected a/b - 3/2*c/d");
+
+//  a/b - c*a/d -> (1/b - c/d)*a
+    auto common_var = var_a/var_b - var_c*var_a/var_d;
+    auto common_var_cast = graph::multiply_cast(common_var);
+    assert(common_var_cast.get() && "Expected a multiply node.");
+    assert(common_var_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var_cast->get_left()->is_match(1.0/var_b - var_c/var_d) &&
+           "Expected 1/b - c/d");
+//  a/b - a*c/d -> (1/b - c/d)*a
+    auto common_var2 = var_a/var_b - var_a*var_c/var_d;
+    auto common_var2_cast = graph::multiply_cast(common_var2);
+    assert(common_var2_cast.get() && "Expected a multiply node.");
+    assert(common_var2_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var2_cast->get_left()->is_match(1.0/var_b - var_c/var_d) &&
+           "Expected 1/b - c/d");
+//  c*a/b - a/d -> (c/b - 1/d)*a
+    auto common_var3 = var_c*var_a/var_b - var_a/var_d;
+    auto common_var3_cast = graph::multiply_cast(common_var3);
+    assert(common_var3_cast.get() && "Expected a multiply node.");
+    assert(common_var3_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var3_cast->get_left()->is_match(var_c/var_b - 1.0/var_d) &&
+           "Expected c/b - 1/d");
+//  a*c/b - a/d -> (c/b - 1/d)*a
+    auto common_var4 = var_a*var_c/var_b - var_a/var_d;
+    auto common_var4_cast = graph::multiply_cast(common_var4);
+    assert(common_var4_cast.get() && "Expected a multiply node.");
+    assert(common_var4_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var4_cast->get_left()->is_match(var_c/var_b - 1.0/var_d) &&
+           "Expected c/b - 1/d");
 }
 
 //------------------------------------------------------------------------------

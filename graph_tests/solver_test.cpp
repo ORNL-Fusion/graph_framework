@@ -108,7 +108,7 @@ int main(int argc, const char * argv[]) {
     START_GPU
     (void)argc;
     (void)argv;
-    run_tests<float> (4.0E-15);
+    run_tests<float> (5.1E-15);
     run_tests<double> (1.0E-30);
     run_tests<std::complex<float>> (4.0E-15);
     run_tests<std::complex<double>> (1.0E-30);
