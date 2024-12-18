@@ -52,7 +52,6 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     bool is_constant_promotable(shared_leaf<T, SAFE_MATH> a,
                                 shared_leaf<T, SAFE_MATH> b) {
-
         auto b1 = piecewise_1D_cast(b);
         auto b2 = piecewise_2D_cast(b);
 
@@ -75,7 +74,27 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     bool is_variable_combineable(shared_leaf<T, SAFE_MATH> a,
                                  shared_leaf<T, SAFE_MATH> b) {
-        return a->get_power_base()->is_match(b->get_power_base());
+        return a->is_power_base_match(b);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the variable is variable is promotable.
+///
+///  @tparam T         Base type of the nodes.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @param[in] a Opperand A
+///  @param[in] b Opperand B
+///  @returns True if a and b are combinable.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    bool is_variable_promotable(shared_leaf<T, SAFE_MATH> a,
+                                 shared_leaf<T, SAFE_MATH> b) {
+        return !b->is_constant()                           &&
+               (a->is_all_variables()                       &&
+                (!b->is_all_variables()                     ||
+                 (b->is_all_variables() &&
+                  a->get_complexity() < b->get_complexity())));
     }
 
 //------------------------------------------------------------------------------
@@ -1677,22 +1696,8 @@ namespace graph {
                 return this->right*this->left;
             }
 
-//  Move variables, sqrt of variables, and powers of variables to the right.
-//  Disable if the left is a constant like to avoid an infinite loop.
-            if ((this->left->is_power_like()   &&
-                 !this->right->is_power_like())  ||
-                (this->left->is_power_like()   &&
-                 this->right->is_power_like()  &&
-                 this->right->get_complexity() > this->left->get_complexity())) {
-                if (!this->left->is_constant()) {
-                    return this->right*this->left;
-                }
-            }
-
 //  Disable if the right is power like to avoid infinite loop.
-            if (this->left->is_all_variables()   &&
-                !this->right->is_all_variables() &&
-                !this->right->is_power_like()) {
+            if (is_variable_promotable(this->left, this->right)) {
                 return this->right*this->left;
             }
 
@@ -1714,18 +1719,8 @@ namespace graph {
             }
 
 //  Gather common terms.
-//  (a*b)*a -> (a*a)*b
-//  (b*a)*a -> (a*a)*b
-//  a*(a*b) -> (a*a)*b
-//  a*(b*a) -> (a*a)*b
             auto lm = multiply_cast(this->left);
             if (lm.get()) {
-                if (this->right->is_match(lm->get_left())) {
-                    return (this->right*lm->get_left())*lm->get_right();
-                } else if (this->right->is_match(lm->get_right())) {
-                    return (this->right*lm->get_right())*lm->get_left();
-                }
-
 //  Promote constants before variables.
 //  (c*v1)*v2 -> c*(v1*v2)
                 if (is_constant_promotable(lm->get_left(),
@@ -1733,18 +1728,32 @@ namespace graph {
                     return lm->get_left()*(lm->get_right()*this->right);
                 }
 
+//  (a^c*b)*a^d -> a^(c+d)*b
+//  (b*a^c)*a^d -> a^(c+d)*b
+                if (is_variable_combineable(this->right, lm->get_left())) {
+                    return (this->right*lm->get_left())*lm->get_right();
+                } else if (is_variable_combineable(this->right, lm->get_right())) {
+                    return (this->right*lm->get_right())*lm->get_left();
+                }
+
 //  Assume variables, sqrt of variables, and powers of variables are on the
 //  right.
 //  (a*v)*b -> (a*b)*v
-                if (lm->get_right()->is_power_like() &&
-                    !(this->right->is_power_like() ||
-                      this->right->is_all_variables())) {
+                if (is_variable_promotable(lm->get_right(), this->right)) {
                     return (lm->get_left()*this->right)*lm->get_right();
                 }
-                if (lm->get_right()->is_all_variables() &&
-                    !(this->right->is_power_like()   ||
-                      this->right->is_all_variables())) {
-                    return (lm->get_left()*this->right)*lm->get_right();
+                
+//  (a*(b*c)^e)*c^f -> a*b^e*c^(e+f)
+                auto lmrp = pow_cast(lm->get_right());
+                if (lmrp.get()) {
+                    auto lmrplm = multiply_cast(lmrp->get_left());
+                    if (lmrplm.get() &&
+                        is_variable_combineable(lmrplm->get_right(),
+                                                this->right)) {
+                        return (lm->get_left()*pow(lmrplm->get_left(),
+                                                   lmrp->get_right()))*pow(this->right->get_power_base(),
+                                                                           lmrp->get_right() + this->right->get_power_exponent());
+                    }
                 }
             }
 
@@ -1760,10 +1769,18 @@ namespace graph {
                     }
                 }
 
-                if (this->left->is_match(rm->get_left())) {
+//  a*(a*b) -> a^2*b
+//  a*(b*a) -> a^2*b
+                if (is_variable_combineable(this->left, rm->get_left())) {
                     return (this->left*rm->get_left())*rm->get_right();
-                } else if (this->left->is_match(rm->get_right())) {
+                } else if (is_variable_combineable(this->left, rm->get_right())) {
                     return (this->left*rm->get_right())*rm->get_left();
+                }
+                
+//  Assume variables are on the left.
+//  a*(b*v) -> (a*b)*v
+                if (is_variable_promotable(rm->get_right(), this->left)) {
+                    return (this->left*rm->get_left())*rm->get_right();
                 }
             }
 
@@ -1864,17 +1881,10 @@ namespace graph {
             }
 
 //  Power reductions.
-            if (this->left->is_power_base_match(this->right)) {
+            if (is_variable_combineable(this->left, this->right)) {
                 return pow(this->left->get_power_base(),
                            this->left->get_power_exponent() +
                            this->right->get_power_exponent());
-            }
-//  (a*b^c)*b^d -> a*b^(c + d)
-            if (lm.get() &&
-                lm->get_right()->is_power_base_match(this->right)) {
-                return lm->get_left()*pow(this->right->get_power_base(),
-                                          lm->get_right()->get_power_exponent() +
-                                          this->right->get_power_exponent());
             }
 
 //  a*b^-c -> a/b^c
@@ -1897,14 +1907,15 @@ namespace graph {
             auto lpd = divide_cast(this->left->get_power_base());
             if (lpd.get()) {
 //  (a/b)^c*b^d -> a^c*b^(c-d)
-                if (lpd->get_right()->is_power_base_match(this->right)) {
+                if (is_variable_combineable(lpd->get_right(),
+                                            this->right)) {
                     return pow(lpd->get_left(), this->left->get_power_exponent()) *
                            pow(this->right->get_power_base(),
                                this->right->get_power_exponent() -
                                this->left->get_power_exponent()*lpd->get_right()->get_power_exponent());
                 }
 //  (b/a)^c*b^d -> b^(c+d)/a^c
-                if (lpd->get_left()->is_power_base_match(this->right)) {
+                if (is_variable_combineable(lpd->get_left(), this->right)) {
                     return pow(this->right->get_power_base(),
                                this->right->get_power_exponent() +
                                this->left->get_power_exponent()*lpd->get_left()->get_power_exponent()) /
@@ -1914,14 +1925,16 @@ namespace graph {
             auto rpd = divide_cast(this->right->get_power_base());
             if (rpd.get()) {
 //  b^d*(a/b)^c -> a^c*b^(c-d)
-                if (rpd->get_right()->is_power_base_match(this->left)) {
+                if (is_variable_combineable(rpd->get_right(),
+                                            this->left)) {
                     return pow(rpd->get_left(), this->right->get_power_exponent()) *
                            pow(this->left->get_power_base(),
                                this->left->get_power_exponent() -
                                this->right->get_power_exponent()*rpd->get_right()->get_power_exponent());
                 }
 //  b^d*(b/a)^c -> b^(c+d)/a^c
-                if (rpd->get_left()->is_power_base_match(this->left)) {
+                if (is_variable_combineable(rpd->get_left(),
+                                            this->left)) {
                     return pow(this->right->get_power_base(),
                                this->right->get_power_exponent() +
                                this->right->get_power_exponent()*rpd->get_left()->get_power_exponent()) /
@@ -2675,9 +2688,11 @@ namespace graph {
 
 //  (v1^a*v2)/v1^b -> v2*(v1^a/v1^b)
 //  (v2*v1^a)/v1^b -> v2*(v1^a/v1^b)
-                if (lm->get_left()->is_power_base_match(this->right)) {
+                if (is_variable_combineable(lm->get_left(),
+                                            this->right)) {
                     return lm->get_right()*(lm->get_left()/this->right);
-                } else if (lm->get_right()->is_power_base_match(this->right)) {
+                } else if (is_variable_combineable(lm->get_right(),
+                                                   this->right)) {
                     return lm->get_left()*(lm->get_right()/this->right);
                 }
             }
@@ -2689,7 +2704,8 @@ namespace graph {
             }
 
 //  Power reductions.
-            if (this->left->is_power_base_match(this->right)) {
+            if (is_variable_combineable(this->left,
+                                        this->right)) {
                 return pow(this->left->get_power_base(),
                            this->left->get_power_exponent() -
                            this->right->get_power_exponent());
@@ -2772,18 +2788,22 @@ namespace graph {
                 auto lmrm = multiply_cast(lm->get_right());
                 auto lmlm = multiply_cast(lm->get_left());
                 if (lmrm.get()) {
-                    if (lmrm->get_right()->is_power_base_match(this->right)) {
+                    if (is_variable_combineable(lmrm->get_right(),
+                                                this->right)) {
                         return lm->get_left()*lmrm->get_left() *
                                (lmrm->get_right()/this->right);
-                    } else if (lmrm->get_left()->is_power_base_match(this->right)) {
+                    } else if (is_variable_combineable(lmrm->get_left(),
+                                                       this->right)) {
                         return lm->get_left()*lmrm->get_right() *
                                (lmrm->get_left()/this->right);
                     }
                 } else if (lmlm.get()) {
-                    if (lmlm->get_right()->is_power_base_match(this->right)) {
+                    if (is_variable_combineable(lmlm->get_right(),
+                                                this->right)) {
                         return lm->get_right()*lmlm->get_left() *
                                (lmlm->get_right()/this->right);
-                    } else if (lmlm->get_left()->is_power_base_match(this->right)) {
+                    } else if (is_variable_combineable(lmlm->get_left(),
+                                                       this->right)) {
                         return lm->get_right()*lmlm->get_right() *
                                (lmlm->get_left()/this->right);
                     }

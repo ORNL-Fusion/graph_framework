@@ -99,9 +99,9 @@ template<jit::float_scalar T> void test_add() {
            "Expected value of one.");
     
 //  Test common factors.
-    auto var_a = graph::variable<T> (1, "a");
-    auto var_b = graph::variable<T> (1, "b");
-    auto var_c = graph::variable<T> (1, "c");
+    auto var_a = graph::variable<T> (1, "");
+    auto var_b = graph::variable<T> (1, "");
+    auto var_c = graph::variable<T> (1, "");
     auto common_a = var_a*var_b + var_a*var_c;
     assert(graph::add_cast(common_a).get() == nullptr &&
            "Did not expect add node.");
@@ -130,7 +130,7 @@ template<jit::float_scalar T> void test_add() {
     assert(graph::multiply_cast(match).get() && "Expected multiply node.");
 
 //  Reduce (a/y)^e + (b/y)^e -> (a^2 + b^2)/(y^e).
-    auto var_d = graph::variable<T> (1, "d");
+    auto var_d = graph::variable<T> (1, "");
     auto common_power1 = graph::pow(var_a/var_b,var_c) +
                          graph::pow(var_d/var_b,var_c);
     assert(graph::divide_cast(common_power1) && "Expected Divide node.");
@@ -148,7 +148,7 @@ template<jit::float_scalar T> void test_add() {
     assert(graph::subtract_cast(add_neg).get() && "Expected subtract node.");
 
 //  (c1*v1 + c2) + (c3*v1 + c4) -> c5*v1 + c6
-    auto var_e = graph::variable<T> (1, "e");
+    auto var_e = graph::variable<T> (1, "");
     auto addfma1 = graph::fma(var_b, var_a, var_d)
                  + graph::fma(var_c, var_a, var_e);
     assert(graph::fma_cast(addfma1).get() &&
@@ -1680,6 +1680,57 @@ template<jit::float_scalar T> void test_multiply() {
            "Expected a divide node.");
     assert(todivide1->is_match((var_a*var_b)/var_c) &&
            "Expected a (a*b)/c");
+    
+//  e1*(e2*v) -> (e1*e2)*v
+    auto promote_var = var_b*(var_c*a);
+    auto promote_var_cast = graph::multiply_cast(promote_var);
+    assert(promote_var_cast.get() && "Expected a multiply node.");
+    assert(promote_var_cast->get_right()->is_match(a) && "Expected a");
+    assert(promote_var_cast->get_left()->is_match(var_b*var_c) &&
+           "Expected (2 + b)*(3 + c)");
+//  e1*(e2*v^2) -> (e1*e2)*v^2
+    auto promote_var2 = var_b*(var_c*(a*a));
+    auto promote_var2_cast = graph::multiply_cast(promote_var2);
+    assert(promote_var2_cast.get() && "Expected a multiply node.");
+    assert(promote_var2_cast->get_right()->is_match(a*a) && "Expected a^2");
+    assert(promote_var2_cast->get_left()->is_match(var_b*var_c) &&
+           "Expected (2 + b)*(3 + c)");
+//  (e1*v)*e2 -> (e1*e2)*v
+    auto promote_var3 = (var_b*a)*var_c;
+    auto promote_var3_cast = graph::multiply_cast(promote_var3);
+    assert(promote_var3_cast.get() && "Expected a multiply node.");
+    assert(promote_var3_cast->get_right()->is_match(a) && "Expected a");
+    assert(promote_var3_cast->get_left()->is_match(var_b*var_c) &&
+           "Expected (2 + b)*(3 + c)");
+//  (e1*v^2)*e2 -> (e1*e2)*v^2
+    auto promote_var4 = (var_b*(a*a))*var_c;
+    auto promote_var4_cast = graph::multiply_cast(promote_var4);
+    assert(promote_var4_cast.get() && "Expected a multiply node.");
+    assert(promote_var4_cast->get_right()->is_match(a*a) && "Expected a^2");
+    assert(promote_var4_cast->get_left()->is_match(var_b*var_c) &&
+           "Expected (2 + b)*(3 + c)");
+    
+//  (a*b)*a -> a^2*b
+    auto gather = (var_a*var_b)*var_a;
+    auto gather_cast = graph::multiply_cast(gather);
+    assert(gather_cast.get() && "Expected a multiply node.");
+    assert(gather_cast->get_right()->is_match(var_b) && "Expected b");
+    assert(gather_cast->get_left()->is_match(var_a*var_a) && "Expected a^2");
+//  (b*a)*a -> a^2*b
+    auto gather2 = (var_b*var_a)*var_a;
+    auto gather2_cast = graph::multiply_cast(gather2);
+    assert(gather2_cast.get() && "Expected a multiply node.");
+    assert(gather2_cast->get_right()->is_match(var_b) && "Expected b");
+    assert(gather2_cast->get_left()->is_match(var_a*var_a) && "Expected a^2");
+
+//  (a*(b*c)^2)*c^2 -> a*b^2*c^4
+    auto common_pow = (var_a*graph::pow(var_b*var_c, 2.0))*graph::pow(var_c, 2.0);
+    auto common_pow_cast = graph::multiply_cast(common_pow);
+    assert(common_pow_cast.get() && "Expected a multiply node.");
+    assert(common_pow_cast->get_left()->is_match(var_a*graph::pow(var_b,2.0)) &&
+           "Expected a*b^2.");
+    assert(common_pow_cast->get_right()->is_match(graph::pow(var_c,4.0)) &&
+           "Expected c^4.");
 }
 
 //------------------------------------------------------------------------------
