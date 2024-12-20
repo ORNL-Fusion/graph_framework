@@ -1054,7 +1054,7 @@ template<jit::float_scalar T> void test_multiply() {
 
 //  Test gather of terms. This test is setup to trigger an infinite recursive
 //  loop if a critical check is not in place no need to check the values.
-    auto a = graph::variable<T> (1, "");
+    auto a = graph::variable<T> (1, "a");
     auto aaa = (a*sqrt(a))*(a*sqrt(a));
 
 //  Test power reduction.
@@ -1731,6 +1731,39 @@ template<jit::float_scalar T> void test_multiply() {
            "Expected a*b^2.");
     assert(common_pow_cast->get_right()->is_match(graph::pow(var_c,4.0)) &&
            "Expected c^4.");
+
+//  (b*a)^2*a^2 -> b^2*a^4
+    auto common_pow2 = graph::pow(var_b*var_a, 2.0)*graph::pow(var_a, 2.0);
+    auto common_pow2_cast = graph::multiply_cast(common_pow2);
+    assert(common_pow2_cast.get() && "Expected a multiply node.");
+    assert(common_pow2_cast->get_left()->is_match(graph::pow(var_b, 2.0)) &&
+           "Expected b^2.");
+    assert(common_pow2_cast->get_right()->is_match(graph::pow(var_a, 4.0)) &&
+           "Expected a^4.");
+//  (a*b)^2*a^2 -> b^2*a^4
+    auto common_pow3 = graph::pow(var_a*var_b, 2.0)*graph::pow(var_a, 2.0);
+    auto common_pow3_cast = graph::multiply_cast(common_pow3);
+    assert(common_pow3_cast.get() && "Expected a multiply node.");
+    assert(common_pow3_cast->get_left()->is_match(graph::pow(var_b, 2.0)) &&
+           "Expected b^2.");
+    assert(common_pow3_cast->get_right()->is_match(graph::pow(var_a, 4.0)) &&
+           "Expected a^4.");
+//  a^2*(b*a)^2 -> b^2*a^4
+    auto common_pow4 = graph::pow(var_a, 2.0)*graph::pow(var_b*var_a, 2.0);
+    auto common_pow4_cast = graph::multiply_cast(common_pow4);
+    assert(common_pow4_cast.get() && "Expected a multiply node.");
+    assert(common_pow4_cast->get_left()->is_match(graph::pow(var_b, 2.0)) &&
+           "Expected b^2.");
+    assert(common_pow4_cast->get_right()->is_match(graph::pow(var_a, 4.0)) &&
+           "Expected a^4.");
+//  a^2*(b*a)^2 -> b^2*a^4
+    auto common_pow5 = graph::pow(var_a, 2.0)*graph::pow(var_a*var_b, 2.0);
+    auto common_pow5_cast = graph::multiply_cast(common_pow5);
+    assert(common_pow5_cast.get() && "Expected a multiply node.");
+    assert(common_pow5_cast->get_left()->is_match(graph::pow(var_b, 2.0)) &&
+           "Expected b^2.");
+    assert(common_pow5_cast->get_right()->is_match(graph::pow(var_a, 4.0)) &&
+           "Expected a^4.");
 }
 
 //------------------------------------------------------------------------------
@@ -2449,6 +2482,10 @@ template<jit::float_scalar T> void test_divide() {
     assert((((a*c)*b)/c)->is_match(a*b) && "Expected a*b");
 //  (c*a)*b/c -> a*b
     assert((((c*a)*b)/c)->is_match(a*b) && "Expected a*b");
+
+//  (a*b*c)^2/a^2 -> (b*c)^2
+//  (a*b*c)^2/(a^2*d) -> (b*c)^2/d
+//  (e*(a*b*c)^2)/(a^2*d) -> e*(b*c)^2/d
 }
 
 //------------------------------------------------------------------------------

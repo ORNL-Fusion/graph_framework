@@ -1752,7 +1752,8 @@ namespace graph {
                                                 this->right)) {
                         return (lm->get_left()*pow(lmrplm->get_left(),
                                                    lmrp->get_right()))*pow(this->right->get_power_base(),
-                                                                           lmrp->get_right() + this->right->get_power_exponent());
+                                                                           lmrp->get_right() +
+                                                                           this->right->get_power_exponent());
                     }
                 }
             }
@@ -1901,6 +1902,50 @@ namespace graph {
                 auto exponent = constant_cast(lp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
                     return this->right/pow(lp->get_left(), -lp->get_right());
+                }
+            }
+
+//  (b*a)^c*a^d -> b^c*a^(c + d)
+//  (a*b)^c*a^d -> b^c*a^(c + d)
+//  a^d*(b*a)^c -> b^c*a^(c + d)
+//  a^d*(a*b)^c -> b^c*a^(c + d)
+            if (lp.get() && rp.get()) {
+                auto lplm = multiply_cast(lp->get_left());
+                auto rplm = multiply_cast(rp->get_left());
+                if (lplm.get()) {
+                    if (is_variable_combineable(lplm->get_right(),
+                                                this->right)) {
+                        return pow(lplm->get_left()->get_power_base(),
+                                   this->left->get_power_exponent())*
+                               pow(this->right->get_power_base(),
+                                   this->left->get_power_exponent() +
+                                   this->right->get_power_exponent());
+                    } else if (is_variable_combineable(lplm->get_left(),
+                                                       this->right)) {
+                        return pow(lplm->get_right()->get_power_base(),
+                                   this->left->get_power_exponent())*
+                               pow(this->right->get_power_base(),
+                                   this->left->get_power_exponent() +
+                                   this->right->get_power_exponent());
+                    }
+                }
+
+                if (rplm.get()) {
+                    if (is_variable_combineable(rplm->get_right(),
+                                                this->left)) {
+                        return pow(rplm->get_left()->get_power_base(),
+                                   this->right->get_power_exponent())*
+                               pow(this->left->get_power_base(),
+                                   this->left->get_power_exponent() +
+                                   this->right->get_power_exponent());
+                    } else if (is_variable_combineable(rplm->get_left(),
+                                                       this->left)) {
+                        return pow(rplm->get_right()->get_power_base(),
+                                   this->right->get_power_exponent())*
+                               pow(this->left->get_power_base(),
+                                   this->left->get_power_exponent() +
+                                   this->right->get_power_exponent());
+                    }
                 }
             }
 
@@ -2577,6 +2622,22 @@ namespace graph {
 //  Common factor reduction. (a*b)/(a*c) = b/c.
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
+
+            if (lm.get() && rm.get()) {
+                if (is_variable_combineable(lm->get_left(),
+                                            rm->get_left()) ||
+                    is_variable_combineable(lm->get_right(),
+                                            rm->get_right())) {
+                    return (lm->get_left()/rm->get_left()) *
+                           (lm->get_right()/rm->get_right());
+                } else if (is_variable_combineable(lm->get_left(),
+                                                   rm->get_right()) ||
+                           is_variable_combineable(lm->get_right(),
+                                                   rm->get_left())) {
+                    return (lm->get_left()/rm->get_right()) *
+                           (lm->get_right()/rm->get_left());
+                }
+            }
 
 //  Move constants to the numerator.
 //  a/(c1*b) -> (c2*a)/b

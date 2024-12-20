@@ -86,16 +86,6 @@ namespace graph {
                                     ap2->get_right());
             }
 
-//  Handle casses like sqrt(a^b).
-            auto ap = pow_cast(this->arg);
-            if (ap.get()) {
-                auto bc = constant_cast(ap->get_right());
-                if ((bc.get() && !bc->is(2)) || !bc.get()) {
-                    return pow(ap->get_left(),
-                               ap->get_right()/2.0);
-                }
-            }
-
 //  Handle casses like sqrt(c*x) where c is constant or cases like
 //  sqrt((x^a)*y).
             auto am = multiply_cast(this->arg);
@@ -1009,17 +999,51 @@ namespace graph {
                 }
 
 //  Handle cases where (a/(b*sqrt(c))), (a/(sqrt(c)*b)), (a/(b*c^d)), (a/(c^d*b))
-                auto ldm = multiply_cast(ld->get_right());
-                if (ldm.get()) {
-                    if (ldm->get_left()->is_constant()    ||
-                        ldm->get_right()->is_constant()   ||
-                        sqrt_cast(ldm->get_left()).get()  ||
-                        sqrt_cast(ldm->get_right()).get() ||
-                        pow_cast(ldm->get_left()).get()   ||
-                        pow_cast(ldm->get_right()).get()) {
+                auto ldrm = multiply_cast(ld->get_right());
+                if (ldrm.get()) {
+                    if (ldrm->get_left()->is_constant()    ||
+                        ldrm->get_right()->is_constant()   ||
+                        sqrt_cast(ldrm->get_left()).get()  ||
+                        sqrt_cast(ldrm->get_right()).get() ||
+                        pow_cast(ldrm->get_left()).get()   ||
+                        pow_cast(ldrm->get_right()).get()) {
                         return pow(ld->get_left(), this->right) /
-                               (pow(ldm->get_left(), this->right) *
-                                pow(ldm->get_right(), this->right));
+                               (pow(ldrm->get_left(), this->right) *
+                                pow(ldrm->get_right(), this->right));
+                    }
+                }
+
+                if (is_variable_combineable(ld->get_left(),
+                                            ld->get_right())) {
+                    return pow(ld->get_left()->get_power_base(),
+                               this->right*(ld->get_left()->get_power_exponent() -
+                                            ld->get_right()->get_power_exponent()));
+                }
+
+                if (ldrm.get()) {
+                    auto ldrmlm = multiply_cast(ldrm->get_left());
+                    if (ldrmlm.get()) {
+                        if (is_variable_combineable(ldrm->get_right(),
+                                                    ldrmlm->get_right()->get_power_base())) {
+                            return pow(ld->get_left()/ldrmlm->get_left(),
+                                       this->right) /
+                                   pow(ldrm->get_right()*ldrmlm->get_right(),
+                                       this->right);
+                        } else if (is_variable_combineable(ldrm->get_right(),
+                                                           ldrmlm->get_left()->get_power_base())) {
+                            return pow(ld->get_left()/ldrmlm->get_right(),
+                                       this->right) /
+                                   pow(ldrm->get_right()*ldrmlm->get_left(),
+                                       this->right);
+                        } else if (is_variable_combineable(ldrmlm->get_left(),
+                                                           ldrmlm->get_right()->get_power_base()) ||
+                                   is_variable_combineable(ldrmlm->get_right(),
+                                                           ldrmlm->get_left()->get_power_base())) {
+                             return pow(ld->get_left()/ldrm->get_right(),
+                                        this->right) /
+                                    pow(ldrmlm->get_left()*ldrmlm->get_right(),
+                                        this->right);
+                        }
                     }
                 }
             }
