@@ -335,9 +335,13 @@ namespace graph {
 
 //  c1*a/b + c2*a/d = c3*(a/b + c4*a/d)
 //  a*b/c + d*b/e -> (a/c + d/e)*b
+//  Make sure we prevent combining constants when we just need to factor out a
+//  common term.
+//  c1*a/b + c2*a/d -> (c1/b + c2/d)*a
                 if (ldlm.get() && rdlm.get()) {
                     if (is_constant_combineable(ldlm->get_left(),
-                                                rdlm->get_left())) {
+                                                rdlm->get_left()) &&
+                        !ldlm->get_right()->is_match(rdlm->get_right())) {
                         return (ldlm->get_right()/ld->get_right() +
                                 rdlm->get_left()/ldlm->get_left() *
                                 rdlm->get_right()/rd->get_right())*ldlm->get_left();
@@ -1134,11 +1138,15 @@ namespace graph {
                     }
                 }
 
-//  c1*a/b - c2*a/d = c3*(a/b - c4*a/d)
+//  c1*a/b - c2*e/d = c3*(a/b - c4*e/d)
 //  a*b/c - d*b/e -> (a/c - d/e)*b
+//  Make sure we prevent combining constants when we just need to factor out a
+//  common term.
+//  c1*a/b - c2*a/d -> (c1/b - c2/d)*a
                 if (ldlm.get() && rdlm.get()) {
                     if (is_constant_combineable(ldlm->get_left(),
-                                                rdlm->get_left())) {
+                                                rdlm->get_left()) &&
+                        !ldlm->get_right()->is_match(rdlm->get_right())) {
                         return (ldlm->get_right()/ld->get_right() -
                                 rdlm->get_left()/ldlm->get_left() *
                                 rdlm->get_right()/rd->get_right())*ldlm->get_left();

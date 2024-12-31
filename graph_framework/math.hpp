@@ -959,6 +959,22 @@ namespace graph {
                     return pow(lm->get_left(), this->right) *
                            pow(lm->get_right(), this->right);
                 }
+
+//  ((Sqrt(a)*b)*c)^d -> a^(d/2)*(b*c)^d
+//  ((b*Sqrt(a))*c)^d -> a^(d/2)*(b*c)^d
+                auto lmlm = multiply_cast(lm->get_left());
+                if (lmlm.get()) {
+                    if (lmlm->get_left()->is_constant()    ||
+                        lmlm->get_right()->is_constant()   ||
+                        sqrt_cast(lmlm->get_left()).get()  ||
+                        sqrt_cast(lmlm->get_right()).get() ||
+                        pow_cast(lmlm->get_left()).get()   ||
+                        pow_cast(lmlm->get_right()).get()) {
+                        return pow(lmlm->get_left(), this->right) *
+                               pow(lmlm->get_right(), this->right) *
+                               pow(lm->get_right(), this->right);
+                    }
+                }
             }
 
             auto ld = divide_cast(this->left);

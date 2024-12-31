@@ -350,7 +350,7 @@ void test_pow() {
            "Expected (a*b/c)^2.");
 
 //  (a^b*c/Sqrt(a)d)^2 -> (a^(2*b - 1)*c^2)/d^2
-    auto var_d = graph::variable<T> (1, "d");
+    auto var_d = graph::variable<T> (1, "");
     auto pow_combine = graph::pow((graph::pow(var_a, var_b)*var_c) /
                                   (graph::sqrt(var_a)*var_d), 2.0);
     auto pow_combine_cast = graph::divide_cast(pow_combine);
@@ -402,6 +402,13 @@ void test_pow() {
            "Expected (b/c)^2.");
     assert(pow_combine6_cast->get_right()->is_match(graph::pow(expr_a, 4.0)) &&
            "Expected (b/c)^2.");
+
+//  (Sqrt(a)*b*c)^d -> a^(d/2)*(b*c)^d
+    auto sqrtpow = graph::pow(var_c*var_d*graph::sqrt(var_a), var_b);
+    assert(sqrtpow.get()->is_match(graph::pow(var_a, var_b/2.0) *
+                                   graph::pow(var_c, var_b) *
+                                   graph::pow(var_d, var_b)) &&
+           "Expected a^(d/2)*b^2*c^d.");
 }
 
 //------------------------------------------------------------------------------

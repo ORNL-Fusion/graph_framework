@@ -384,6 +384,14 @@ template<jit::float_scalar T> void test_add() {
            "Expected var_a");
     assert(common_var4_cast->get_left()->is_match(var_c/var_b + 1.0/var_d) &&
            "Expected c/b + 1/d");
+
+    auto common_var5 = 2.0*var_a/var_b + 3.0*var_a/var_c;
+    auto common_var5_cast = graph::multiply_cast(common_var5);
+    assert(common_var5_cast.get() && "Expected a multiply node.");
+    assert(common_var5_cast->get_right()->is_match(var_a) &&
+           "Expected var_a");
+    assert(common_var5_cast->get_left()->is_match(2.0/var_b + 3.0/var_c) &&
+           "Expected 2/b + 3/c");
 }
 
 //------------------------------------------------------------------------------
@@ -855,6 +863,14 @@ template<jit::float_scalar T> void test_subtract() {
            "Expected var_a");
     assert(common_var4_cast->get_left()->is_match(var_c/var_b - 1.0/var_d) &&
            "Expected c/b - 1/d");
+
+    auto common_var5 = 2.0*var_c/var_a - 3.0*var_c/var_b;
+    auto common_var5_cast = graph::multiply_cast(common_var5);
+    assert(common_var5_cast.get() && "Expected a multiply node.");
+    assert(common_var5_cast->get_right()->is_match(var_c) &&
+           "Expected var_a");
+    assert(common_var5_cast->get_left()->is_match(2.0/var_a - 3.0/var_b) &&
+           "Expected 2/a - 3/b");
 }
 
 //------------------------------------------------------------------------------
