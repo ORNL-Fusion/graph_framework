@@ -52,8 +52,8 @@ void test_sqrt() {
            "Expected 0.5*sqrt(3)");
 
 //  Reduction sqrt(c*x*c*y) = c*Sqrt(x*y)
-    auto x1 = 2.0*graph::variable<T> (1, "x");
-    auto x2 = 3.0*graph::variable<T> (1, "y");
+    auto x1 = 2.0*graph::variable<T> (1, "");
+    auto x2 = 3.0*graph::variable<T> (1, "");
     auto x = graph::sqrt(x1*x2);
     auto x_cast = graph::multiply_cast(x);
     assert(x_cast.get() && "Expected a multiply node.");
@@ -97,6 +97,7 @@ void test_sqrt() {
     assert(graph::sqrt_cast(cxby_sqrt_cast->get_right()).get() &&
            "Expected sqrt node.");
 
+#if 0
 //  Reduction Sqrt(x^a) -> x^(a/2)
     auto sqpow = graph::sqrt(graph::pow(x_var, y_var));
     auto sqpow_cast = graph::pow_cast(sqpow);
@@ -106,7 +107,7 @@ void test_sqrt() {
     auto constant_cast = graph::constant_cast(exp_cast->get_left());
     assert(constant_cast.get() && "Expected constant node on the left.");
     assert(constant_cast->is(0.5) && "Expected a value of 0.5");
-
+#endif
 //  Test node properties.
     auto sqrt_const = graph::sqrt(graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                            static_cast<T> (2.0)}), var));
@@ -304,6 +305,13 @@ void test_pow() {
             !graph::multiply_cast(powpow_var_cast->get_right())) &&
            "Did not expect multiply node.");
 
+//  (a/(b*Sqrt(c)))^2 -> a^2/(b^2*c)
+    auto var_c = graph::variable<T> (1, "");
+    auto denomsqrt = graph::pow(var_a/(var_b*graph::sqrt(var_c)),
+                                graph::constant<T> (static_cast<T> (2.0)));
+    assert(graph::divide_cast(denomsqrt).get() &&
+           "Expected a divide node.");
+
 //  Test pow of exp
 //  Exp[x]^n -> Exp[n*x] when n is an integer.
     auto powexp_int = graph::pow(graph::exp(var_a), 3.0);
@@ -320,6 +328,87 @@ void test_pow() {
     assert(graph::constant_cast(graph::pow(graph::constant<T> (static_cast<T> (2.0)),
                                            graph::constant<T> (static_cast<T> (3.0)))).get() &&
            "Expected a constant node.");
+
+//  (-a/b)^2 -> (a/b)^2
+    assert(graph::pow(-var_a/var_b, 2.0)->is_match(graph::pow(var_a/var_b, 2.0)) &&
+           "Expected (a/b)^2.");
+//  (-a/b)^4 -> (a/b)^4
+    assert(graph::pow(-var_a/var_b, 4.0)->is_match(graph::pow(var_a/var_b, 4.0)) &&
+           "Expected (a/b)^4.");
+//  (-a/b)^3 -> -(a/b)^3
+    assert(graph::pow(-var_a/var_b, 3.0)->is_match(-graph::pow(var_a, 3.0)/graph::pow(var_b, 3.0)) &&
+           "Expected -(a/b)^3");
+
+//  (a*sqrt(b^2))^2-> (a*b)^2
+    assert(graph::pow(var_a*graph::sqrt(var_b*var_b), 2.0)->is_match(var_a*var_a*var_b*var_b) &&
+           "Expected (a*b)^2.");
+//  (a*sqrt(b^2))^4-> (a*b)^4
+    assert(graph::pow(var_a*graph::sqrt(var_b*var_b), 4.0)->is_match(graph::pow(var_a, 4.0)*graph::pow(var_b, 4.0)) &&
+           "Expected (a*b)^4.");
+//  (a*sqrt(b^2)/c)^2-> (a*b/c)^2
+    assert(graph::pow(var_a*graph::sqrt(var_b*var_b)/var_c, 2.0)->is_match(var_a*var_a*var_b*var_b/(var_c*var_c)) &&
+           "Expected (a*b/c)^2.");
+
+//  (a^b*c/Sqrt(a)d)^2 -> (a^(2*b - 1)*c^2)/d^2
+    auto var_d = graph::variable<T> (1, "");
+    auto pow_combine = graph::pow((graph::pow(var_a, var_b)*var_c) /
+                                  (graph::sqrt(var_a)*var_d), 2.0);
+    auto pow_combine_cast = graph::divide_cast(pow_combine);
+    assert(pow_combine_cast.get() && "Expected a divide node.");
+    assert(pow_combine_cast->get_right()->is_match(graph::pow(var_d, 2.0)) &&
+           "Expected d^2 in deniminator.");
+    assert(pow_combine_cast->get_left()->is_match(graph::pow(var_a,
+                                                             2.0*(var_b - 0.5)) *
+                                                  var_c*var_c) &&
+           "Expected a^(2*b - 1)*c^2 in the numerator.");
+
+//  (b/(c*Sqrt(a)*a))^2 -> b^2/(a^4*c^2)
+    auto expr_a = 1.0 - var_a;
+    auto expr_b = 1.0 + var_b;
+    auto expr_c = 1.0 - var_c;
+    auto pow_combine2 = graph::pow(expr_b/(expr_c*expr_a*graph::sqrt(expr_a*expr_a)), 2.0);
+    auto pow_combine2_cast = graph::divide_cast(pow_combine2);
+    assert(pow_combine2_cast.get() && "Expected a divide node.");
+    assert(pow_combine2_cast->get_right()->is_match(graph::pow(expr_c, 2.0)*
+                                                    graph::pow(expr_a, 4.0)) &&
+           "Expected a^4 in the denominator.");
+    assert(pow_combine2_cast->get_left()->is_match(graph::pow(expr_b, 2.0)) &&
+           "Expected (b/c)^4 in the numerator.");
+    auto pow_combine3 = graph::pow(expr_b/(expr_c*graph::sqrt(expr_a*expr_a)*expr_a), 2.0);
+    auto pow_combine3_cast = graph::divide_cast(pow_combine3);
+    assert(pow_combine3_cast.get() && "Expected a divide node.");
+    assert(pow_combine3_cast->get_left()->is_match(graph::pow(expr_b/expr_c, 2.0)) &&
+           "Expected (b/c)^2.");
+    assert(pow_combine3_cast->get_right()->is_match(graph::pow(expr_a, 4.0)) &&
+           "Expected (b/c)^2.");
+    auto pow_combine4 = graph::pow(expr_b/(graph::sqrt(expr_a*expr_a)*expr_c*expr_a), 2.0);
+    auto pow_combine4_cast = graph::divide_cast(pow_combine4);
+    assert(pow_combine4_cast.get() && "Expected a divide node.");
+    assert(pow_combine4_cast->get_left()->is_match(graph::pow(expr_b/expr_c, 2.0)) &&
+           "Expected (b/c)^2.");
+    assert(pow_combine4_cast->get_right()->is_match(graph::pow(expr_a, 4.0)) &&
+           "Expected (b/c)^2.");
+    auto pow_combine5 = graph::pow(expr_b/(expr_a*graph::sqrt(expr_a*expr_a)*expr_c), 2.0);
+    auto pow_combine5_cast = graph::divide_cast(pow_combine5);
+    assert(pow_combine5_cast.get() && "Expected a divide node.");
+    assert(pow_combine5_cast->get_left()->is_match(graph::pow(expr_b/expr_c, 2.0)) &&
+           "Expected (b/c)^2.");
+    assert(pow_combine5_cast->get_right()->is_match(graph::pow(expr_a, 4.0)) &&
+           "Expected (b/c)^2.");
+    auto pow_combine6 = graph::pow(expr_b/(graph::sqrt(expr_a*expr_a)*expr_a*expr_c), 2.0);
+    auto pow_combine6_cast = graph::divide_cast(pow_combine6);
+    assert(pow_combine6_cast.get() && "Expected a divide node.");
+    assert(pow_combine6_cast->get_left()->is_match(graph::pow(expr_b/expr_c, 2.0)) &&
+           "Expected (b/c)^2.");
+    assert(pow_combine6_cast->get_right()->is_match(graph::pow(expr_a, 4.0)) &&
+           "Expected (b/c)^2.");
+
+//  (Sqrt(a)*b*c)^d -> a^(d/2)*(b*c)^d
+    auto sqrtpow = graph::pow(var_c*var_d*graph::sqrt(var_a), var_b);
+    assert(sqrtpow.get()->is_match(graph::pow(var_a, var_b/2.0) *
+                                   graph::pow(var_c, var_b) *
+                                   graph::pow(var_d, var_b)) &&
+           "Expected a^(d/2)*b^2*c^d.");
 }
 
 //------------------------------------------------------------------------------

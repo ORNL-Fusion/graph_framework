@@ -7,6 +7,9 @@ project (rays CXX)
 #-------------------------------------------------------------------------------
 option (USE_PCH "Enable the use of precompiled headers" ON)
 option (SAVE_KERNEL_SOURCE "Writes the kernel source code to a file." OFF)
+option (USE_INPUT_CACHE "Cache the values kernel input values." OFF)
+option (USE_CONSTANT_CACHE "Cache the value of constantants in kernel registers." OFF)
+option (SHOW_USE_COUNT "Add a comment showing the use count in kernel sources." OFF)
 
 #-------------------------------------------------------------------------------
 #  Set the cmake module path.
@@ -75,8 +78,6 @@ else ()
         )
     endif ()
 endif ()
-
-option (USE_INPUT_CACHE "Cache the values kernel input values." OFF)
 
 add_library (gpu_lib INTERFACE)
 target_link_libraries (gpu_lib

@@ -52,7 +52,6 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     bool is_constant_promotable(shared_leaf<T, SAFE_MATH> a,
                                 shared_leaf<T, SAFE_MATH> b) {
-
         auto b1 = piecewise_1D_cast(b);
         auto b2 = piecewise_2D_cast(b);
 
@@ -75,7 +74,27 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     bool is_variable_combineable(shared_leaf<T, SAFE_MATH> a,
                                  shared_leaf<T, SAFE_MATH> b) {
-        return a->get_power_base()->is_match(b->get_power_base());
+        return a->is_power_base_match(b);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the variable is variable is promotable.
+///
+///  @tparam T         Base type of the nodes.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @param[in] a Opperand A
+///  @param[in] b Opperand B
+///  @returns True if a and b are combinable.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    bool is_variable_promotable(shared_leaf<T, SAFE_MATH> a,
+                                 shared_leaf<T, SAFE_MATH> b) {
+        return !b->is_constant()                           &&
+               (a->is_all_variables()                       &&
+                (!b->is_all_variables()                     ||
+                 (b->is_all_variables() &&
+                  a->get_complexity() < b->get_complexity())));
     }
 
 //------------------------------------------------------------------------------
@@ -235,6 +254,18 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
+//  v1 + -c*v2 -> v1 - c*v2
+//  -c*v1 + v2 -> v2 - c*v1
+            if (rm.get()                      &&
+                rm->get_left()->is_constant() &&
+                rm->get_left()->evaluate().is_negative()) {
+                return this->left - (-this->right);
+            } else if (rm.get()                      &&
+                       rm->get_left()->is_constant() &&
+                       rm->get_left()->evaluate().is_negative()) {
+                return this->right - (-this->left);
+            }
+
 //  a*b + c -> fma(a,b,c)
 //  a + b*c -> fma(b,c,a)
             if (lm.get()) {
@@ -248,9 +279,87 @@ namespace graph {
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
 
+//  c is a constant.
+//  a + -c/b -> a - c/b
+//  a + (-c*d)/b -> a - (c*d)/b
+//  -c/a + b -> b - c/a
+//  (-c*d)/a + b -> b - (c*d)/a
+            if (rd.get()) {
+                auto rdlm = multiply_cast(rd->get_left());
+                if ((rd->get_left()->is_constant() &&
+                     rd->get_left()->evaluate().is_negative()) ||
+                    (rdlm.get() &&
+                     (rdlm->get_left()->is_constant() &&
+                      rdlm->get_left()->evaluate().is_negative()))) {
+                    return this->left - (-rd->get_left())/rd->get_right();
+                }
+            } else if (ld.get()) {
+                auto ldlm = multiply_cast(ld->get_left());
+                if ((ld->get_left()->is_constant() &&
+                     ld->get_left()->evaluate().is_negative()) ||
+                    (ldlm.get() &&
+                     (ldlm->get_left()->is_constant() &&
+                      ldlm->get_left()->evaluate().is_negative()))) {
+                    return this->right - (-ld->get_left())/ld->get_right();
+                }
+            }
+
             if (ld.get() && rd.get()) {
                 if (ld->get_right()->is_match(rd->get_right())) {
                     return (ld->get_left() + rd->get_left())/ld->get_right();
+                }
+
+                auto ldlm = multiply_cast(ld->get_left());
+                auto rdlm = multiply_cast(rd->get_left());
+//  a/b - c*a/d -> (1/b - c/d)*a
+//  a/b - a*c/d -> (1/b - c/d)*a
+//  c*a/b - a/d -> (c/b - 1/d)*a
+//  a*c/b - a/d -> (c/b - 1/d)*a
+                if (rdlm.get()) {
+                    if (ld->get_left()->is_match(rdlm->get_left())) {
+                        return (1.0/ld->get_right() +
+                                rdlm->get_right()/rd->get_right())*rdlm->get_left();
+                    } else if (ld->get_left()->is_match(rdlm->get_right())) {
+                        return (1.0/ld->get_right() +
+                                rdlm->get_left()/rd->get_right())*rdlm->get_right();
+                    }
+                } else if (ldlm.get()) {
+                    if (rd->get_left()->is_match(ldlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() +
+                                1.0/rd->get_right())*ldlm->get_left();
+                    } else if (rd->get_left()->is_match(ldlm->get_right())) {
+                        return (ldlm->get_left()/ld->get_right() +
+                                1.0/rd->get_right())*ldlm->get_right();
+                    }
+                }
+
+//  c1*a/b + c2*a/d = c3*(a/b + c4*a/d)
+//  a*b/c + d*b/e -> (a/c + d/e)*b
+//  Make sure we prevent combining constants when we just need to factor out a
+//  common term.
+//  c1*a/b + c2*a/d -> (c1/b + c2/d)*a
+                if (ldlm.get() && rdlm.get()) {
+                    if (is_constant_combineable(ldlm->get_left(),
+                                                rdlm->get_left()) &&
+                        !ldlm->get_right()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_right()/ld->get_right() +
+                                rdlm->get_left()/ldlm->get_left() *
+                                rdlm->get_right()/rd->get_right())*ldlm->get_left();
+                    }
+
+                    if (ldlm->get_right()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_left()/ld->get_right() +
+                                rdlm->get_left()/rd->get_right())*ldlm->get_right();
+                    } else if (ldlm->get_right()->is_match(rdlm->get_left())) {
+                        return (ldlm->get_left()/ld->get_right() +
+                                rdlm->get_right()/rd->get_right())*ldlm->get_right();
+                    } else if (ldlm->get_left()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_right()/ld->get_right() +
+                                rdlm->get_left()/rd->get_right())*ldlm->get_left();
+                    } else if (ldlm->get_left()->is_match(rdlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() +
+                                rdlm->get_right()/rd->get_right())*ldlm->get_left();
+                    }
                 }
 
 //  (a/(c*b) + d/(e*c)) -> (a/b + d/e)/c
@@ -272,6 +381,36 @@ namespace graph {
                     } else if (ldrm->get_left()->is_match(rdrm->get_left())) {
                         return (ld->get_left()/ldrm->get_right() +
                                 rd->get_left()/rdrm->get_right())/ldrm->get_left();
+                    }
+                }
+
+//  a/b + c/(b*d) -> (a*b + c)/(b*d)
+//  a/b + c/(d*b) -> (a*b + c)/(b*d)
+//  a/(b*d) + c/b -> (c*b + a)/(b*d)
+//  a/(d*b) + c/b -> (c*b + a)/(b*d)
+                if (rdrm.get()) {
+                    if (ld->get_right()->is_match(rdrm->get_left())) {
+                        return fma(ld->get_left(),
+                                   rdrm->get_right(),
+                                   rd->get_left()) /
+                               rd->get_right();
+                    } else if (ld->get_right()->is_match(rdrm->get_right())) {
+                        return fma(ld->get_left(),
+                                   rdrm->get_left(),
+                                   rd->get_left()) /
+                               rd->get_right();
+                    }
+                } else if (ldrm.get()) {
+                    if (rd->get_right()->is_match(ldrm->get_left())) {
+                        return fma(rd->get_left(),
+                                   ldrm->get_right(),
+                                   ld->get_left()) /
+                               ld->get_right();
+                    } else if (rd->get_right()->is_match(ldrm->get_right())) {
+                        return fma(rd->get_left(),
+                                   ldrm->get_left(),
+                                   ld->get_left()) /
+                               ld->get_right();
                     }
                 }
             }
@@ -441,8 +580,8 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[l.get()] << " + "
-                       << registers[r.get()] << "; // used "
-                       << usage.at(this) << std::endl;
+                       << registers[r.get()];
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -787,15 +926,11 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
 //  Assume constants are on the left.
-//  v1 - -1*v2 -> v1 + v2
 //  v1 - -c*v2 -> v1 + c*v2
-            if (rm.get()) {
-                auto rmc = constant_cast(rm->get_left());
-                if (rmc.get() && rmc->is(-1)) {
-                    return this->left + rm->get_right();
-                } else if (rmc.get() && rmc->evaluate().is_negative()) {
-                    return this->left + -rm->get_left()*rm->get_right();
-                }
+            if (rm.get()                      &&
+                rm->get_left()->is_constant() &&
+                rm->get_left()->evaluate().is_negative()) {
+                return this->left + (-this->right);
             }
 
             if (lm.get()) {
@@ -949,9 +1084,132 @@ namespace graph {
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
 
-            if (ld.get() && rd.get() &&
-                ld->get_right()->is_match(rd->get_right())) {
-                return (ld->get_left() - rd->get_left())/ld->get_right();
+//  c is a constant.
+//  a - -c/b -> a + c/b
+//  a - (-c*d)/b -> a + (c*d)/b
+//  -c/a - b -> -(b + c/a)
+//  (-c*d)/a - b -> -(b + (c*d)/a)
+            if (rd.get()) {
+                auto rdlm = multiply_cast(rd->get_left());
+                if ((rd->get_left()->is_constant() &&
+                     rd->get_left()->evaluate().is_negative()) ||
+                    (rdlm.get() &&
+                     (rdlm->get_left()->is_constant() &&
+                      rdlm->get_left()->evaluate().is_negative()))) {
+                    return this->left + -this->right;
+                }
+            } else if (ld.get()) {
+                auto ldlm = multiply_cast(ld->get_left());
+                if ((ld->get_left()->is_constant() &&
+                     ld->get_left()->evaluate().is_negative()) ||
+                    (ldlm.get() &&
+                     (ldlm->get_left()->is_constant() &&
+                      ldlm->get_left()->evaluate().is_negative()))) {
+                    return -(-this->left + this->right);
+                }
+            }
+
+            if (ld.get() && rd.get()) {
+                if (ld->get_right()->is_match(rd->get_right())) {
+                    return (ld->get_left() - rd->get_left())/ld->get_right();
+                }
+
+                auto ldlm = multiply_cast(ld->get_left());
+                auto rdlm = multiply_cast(rd->get_left());
+//  a/b - c*a/d -> (1/b - c/d)*a
+//  a/b - a*c/d -> (1/b - c/d)*a
+//  c*a/b - a/d -> (c/b - 1/d)*a
+//  a*c/b - a/d -> (c/b - 1/d)*a
+                if (rdlm.get()) {
+                    if (ld->get_left()->is_match(rdlm->get_left())) {
+                        return (1.0/ld->get_right() -
+                                rdlm->get_right()/rd->get_right())*rdlm->get_left();
+                    } else if (ld->get_left()->is_match(rdlm->get_right())) {
+                        return (1.0/ld->get_right() -
+                                rdlm->get_left()/rd->get_right())*rdlm->get_right();
+                    }
+                } else if (ldlm.get()) {
+                    if (rd->get_left()->is_match(ldlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() -
+                                1.0/rd->get_right())*ldlm->get_left();
+                    } else if (rd->get_left()->is_match(ldlm->get_right())) {
+                        return (ldlm->get_left()/ld->get_right() -
+                                1.0/rd->get_right())*ldlm->get_right();
+                    }
+                }
+
+//  c1*a/b - c2*e/d = c3*(a/b - c4*e/d)
+//  a*b/c - d*b/e -> (a/c - d/e)*b
+//  Make sure we prevent combining constants when we just need to factor out a
+//  common term.
+//  c1*a/b - c2*a/d -> (c1/b - c2/d)*a
+                if (ldlm.get() && rdlm.get()) {
+                    if (is_constant_combineable(ldlm->get_left(),
+                                                rdlm->get_left()) &&
+                        !ldlm->get_right()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_right()/ld->get_right() -
+                                rdlm->get_left()/ldlm->get_left() *
+                                rdlm->get_right()/rd->get_right())*ldlm->get_left();
+                    }
+
+                    if (ldlm->get_right()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_left()/ld->get_right() -
+                                rdlm->get_left()/rd->get_right())*ldlm->get_right();
+                    } else if (ldlm->get_right()->is_match(rdlm->get_left())) {
+                        return (ldlm->get_left()/ld->get_right() -
+                                rdlm->get_right()/rd->get_right())*ldlm->get_right();
+                    } else if (ldlm->get_left()->is_match(rdlm->get_right())) {
+                        return (ldlm->get_right()/ld->get_right() -
+                                rdlm->get_left()/rd->get_right())*ldlm->get_left();
+                    } else if (ldlm->get_left()->is_match(rdlm->get_left())) {
+                        return (ldlm->get_right()/ld->get_right() -
+                                rdlm->get_right()/rd->get_right())*ldlm->get_left();
+                    }
+                }
+
+//  (a/(c*b) - d/(e*c)) -> (a/b - d/e)/c
+//  (a/(b*c) - d/(e*c)) -> (a/b - d/e)/c
+//  (a/(c*b) - d/(c*e)) -> (a/b - d/e)/c
+//  (a/(b*c) - d/(c*e)) -> (a/b - d/e)/c
+                auto ldrm = multiply_cast(ld->get_right());
+                auto rdrm = multiply_cast(rd->get_right());
+                if (ldrm.get() && rdrm.get()) {
+                    if (ldrm->get_right()->is_match(rdrm->get_right())) {
+                        return (ld->get_left()/ldrm->get_left() -
+                                rd->get_left()/rdrm->get_left())/ldrm->get_right();
+                    } else if (ldrm->get_right()->is_match(rdrm->get_left())) {
+                        return (ld->get_left()/ldrm->get_left() -
+                                rd->get_left()/rdrm->get_right())/ldrm->get_right();
+                    } else if (ldrm->get_left()->is_match(rdrm->get_right())) {
+                        return (ld->get_left()/ldrm->get_right() -
+                                rd->get_left()/rdrm->get_left())/ldrm->get_left();
+                    } else if (ldrm->get_left()->is_match(rdrm->get_left())) {
+                        return (ld->get_left()/ldrm->get_right() -
+                                rd->get_left()/rdrm->get_right())/ldrm->get_left();
+                    }
+                }
+
+//  a/b - c/(b*d) -> (a*d - c)/(b*d)
+//  a/b - c/(d*b) -> (a*d - c)/(b*d)
+//  a/(b*d) - c/b -> (a - c*d)/(b*d)
+//  a/(d*b) - c/b -> (a - c*d)/(b*d)
+                if (rdrm.get()) {
+                    if (ld->get_right()->is_match(rdrm->get_left())) {
+                        return (ld->get_left()*rdrm->get_right() - rd->get_left()) /
+                               rd->get_right();
+                    } else if (ld->get_right()->is_match(rdrm->get_right())) {
+                        return (ld->get_left()*rdrm->get_left() - rd->get_left()) /
+                               rd->get_right();
+                    }
+                } else if (ldrm.get()) {
+                    if (rd->get_right()->is_match(ldrm->get_left())) {
+                        return (ld->get_left() - rd->get_left()*ldrm->get_right()) /
+                               ld->get_right();
+                    } else if (rd->get_right()->is_match(ldrm->get_right())) {
+                        return (ld->get_left() - rd->get_left()*ldrm->get_left()) /
+                               ld->get_right();
+                    }
+                }
             }
 
 //  Move cases like
@@ -1086,8 +1344,8 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = "
                        << registers[l.get()] << " - "
-                       << registers[r.get()] << "; // used "
-                       << usage.at(this) << std::endl;
+                       << registers[r.get()];
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -1446,18 +1704,8 @@ namespace graph {
                 return this->right*this->left;
             }
 
-//  Move variables, sqrt of variables, and powers of variables to the right.
-//  Disable if the left is a constant like to avoid an infinite loop.
-            if (this->left->is_power_like()   &&
-                !this->right->is_power_like() &&
-                !this->left->is_constant()) {
-                return this->right*this->left;
-            }
-
 //  Disable if the right is power like to avoid infinite loop.
-            if (this->left->is_all_variables()   &&
-                !this->right->is_all_variables() &&
-                !this->right->is_power_like()) {
+            if (is_variable_promotable(this->left, this->right)) {
                 return this->right*this->left;
             }
 
@@ -1479,18 +1727,8 @@ namespace graph {
             }
 
 //  Gather common terms.
-//  (a*b)*a -> (a*a)*b
-//  (b*a)*a -> (a*a)*b
-//  a*(a*b) -> (a*a)*b
-//  a*(b*a) -> (a*a)*b
             auto lm = multiply_cast(this->left);
             if (lm.get()) {
-                if (this->right->is_match(lm->get_left())) {
-                    return (this->right*lm->get_left())*lm->get_right();
-                } else if (this->right->is_match(lm->get_right())) {
-                    return (this->right*lm->get_right())*lm->get_left();
-                }
-
 //  Promote constants before variables.
 //  (c*v1)*v2 -> c*(v1*v2)
                 if (is_constant_promotable(lm->get_left(),
@@ -1498,18 +1736,33 @@ namespace graph {
                     return lm->get_left()*(lm->get_right()*this->right);
                 }
 
+//  (a^c*b)*a^d -> a^(c+d)*b
+//  (b*a^c)*a^d -> a^(c+d)*b
+                if (is_variable_combineable(this->right, lm->get_left())) {
+                    return (this->right*lm->get_left())*lm->get_right();
+                } else if (is_variable_combineable(this->right, lm->get_right())) {
+                    return (this->right*lm->get_right())*lm->get_left();
+                }
+
 //  Assume variables, sqrt of variables, and powers of variables are on the
 //  right.
 //  (a*v)*b -> (a*b)*v
-                if (lm->get_right()->is_power_like() &&
-                    !(this->right->is_power_like() ||
-                      this->right->is_all_variables())) {
+                if (is_variable_promotable(lm->get_right(), this->right)) {
                     return (lm->get_left()*this->right)*lm->get_right();
                 }
-                if (lm->get_right()->is_all_variables() &&
-                    !(this->right->is_power_like()   ||
-                      this->right->is_all_variables())) {
-                    return (lm->get_left()*this->right)*lm->get_right();
+                
+//  (a*(b*c)^e)*c^f -> a*b^e*c^(e+f)
+                auto lmrp = pow_cast(lm->get_right());
+                if (lmrp.get()) {
+                    auto lmrplm = multiply_cast(lmrp->get_left());
+                    if (lmrplm.get() &&
+                        is_variable_combineable(lmrplm->get_right(),
+                                                this->right)) {
+                        return (lm->get_left()*pow(lmrplm->get_left(),
+                                                   lmrp->get_right()))*pow(this->right->get_power_base(),
+                                                                           lmrp->get_right() +
+                                                                           this->right->get_power_exponent());
+                    }
                 }
             }
 
@@ -1525,10 +1778,18 @@ namespace graph {
                     }
                 }
 
-                if (this->left->is_match(rm->get_left())) {
+//  a*(a*b) -> a^2*b
+//  a*(b*a) -> a^2*b
+                if (is_variable_combineable(this->left, rm->get_left())) {
                     return (this->left*rm->get_left())*rm->get_right();
-                } else if (this->left->is_match(rm->get_right())) {
+                } else if (is_variable_combineable(this->left, rm->get_right())) {
                     return (this->left*rm->get_right())*rm->get_left();
+                }
+                
+//  Assume variables are on the left.
+//  a*(b*v) -> (a*b)*v
+                if (is_variable_promotable(rm->get_right(), this->left)) {
+                    return (this->left*rm->get_left())*rm->get_right();
                 }
             }
 
@@ -1605,17 +1866,12 @@ namespace graph {
             auto ld = divide_cast(this->left);
             auto rd = divide_cast(this->right);
 
-            if (ld.get()) {
-//  (c/v1)*v2 -> c*(v2/v1)
-                if (ld->get_left()->is_constant()) {
-                    return ld->get_left()*(this->right/ld->get_right());
-                }
-            }
-
-//  c1*(c2/v) -> c3/v
-            if (rd.get() && this->left->is_constant() &&
-                rd->get_left()->is_constant()) {
+//  a*(b/c) -> (a*b)/c
+//  (a/c)*b -> (a*b)/c
+            if (rd.get()) {
                 return (this->left*rd->get_left())/rd->get_right();
+            } else if (ld.get()) {
+                return (ld->get_left()*this->right)/ld->get_right();
             }
 
 //  (a/b)*(c/a) -> c/b
@@ -1634,17 +1890,10 @@ namespace graph {
             }
 
 //  Power reductions.
-            if (this->left->is_power_base_match(this->right)) {
+            if (is_variable_combineable(this->left, this->right)) {
                 return pow(this->left->get_power_base(),
                            this->left->get_power_exponent() +
                            this->right->get_power_exponent());
-            }
-//  (a*b^c)*b^d -> a*b^(c + d)
-            if (lm.get() &&
-                lm->get_right()->is_power_base_match(this->right)) {
-                return lm->get_left()*pow(this->right->get_power_base(),
-                                          lm->get_right()->get_power_exponent() +
-                                          this->right->get_power_exponent());
             }
 
 //  a*b^-c -> a/b^c
@@ -1664,17 +1913,62 @@ namespace graph {
                 }
             }
 
+//  (b*a)^c*a^d -> b^c*a^(c + d)
+//  (a*b)^c*a^d -> b^c*a^(c + d)
+//  a^d*(b*a)^c -> b^c*a^(c + d)
+//  a^d*(a*b)^c -> b^c*a^(c + d)
+            if (lp.get() && rp.get()) {
+                auto lplm = multiply_cast(lp->get_left());
+                auto rplm = multiply_cast(rp->get_left());
+                if (lplm.get()) {
+                    if (is_variable_combineable(lplm->get_right(),
+                                                this->right)) {
+                        return pow(lplm->get_left()->get_power_base(),
+                                   this->left->get_power_exponent())*
+                               pow(this->right->get_power_base(),
+                                   this->left->get_power_exponent() +
+                                   this->right->get_power_exponent());
+                    } else if (is_variable_combineable(lplm->get_left(),
+                                                       this->right)) {
+                        return pow(lplm->get_right()->get_power_base(),
+                                   this->left->get_power_exponent())*
+                               pow(this->right->get_power_base(),
+                                   this->left->get_power_exponent() +
+                                   this->right->get_power_exponent());
+                    }
+                }
+
+                if (rplm.get()) {
+                    if (is_variable_combineable(rplm->get_right(),
+                                                this->left)) {
+                        return pow(rplm->get_left()->get_power_base(),
+                                   this->right->get_power_exponent())*
+                               pow(this->left->get_power_base(),
+                                   this->left->get_power_exponent() +
+                                   this->right->get_power_exponent());
+                    } else if (is_variable_combineable(rplm->get_left(),
+                                                       this->left)) {
+                        return pow(rplm->get_right()->get_power_base(),
+                                   this->right->get_power_exponent())*
+                               pow(this->left->get_power_base(),
+                                   this->left->get_power_exponent() +
+                                   this->right->get_power_exponent());
+                    }
+                }
+            }
+
             auto lpd = divide_cast(this->left->get_power_base());
             if (lpd.get()) {
 //  (a/b)^c*b^d -> a^c*b^(c-d)
-                if (lpd->get_right()->is_power_base_match(this->right)) {
+                if (is_variable_combineable(lpd->get_right(),
+                                            this->right)) {
                     return pow(lpd->get_left(), this->left->get_power_exponent()) *
                            pow(this->right->get_power_base(),
                                this->right->get_power_exponent() -
                                this->left->get_power_exponent()*lpd->get_right()->get_power_exponent());
                 }
 //  (b/a)^c*b^d -> b^(c+d)/a^c
-                if (lpd->get_left()->is_power_base_match(this->right)) {
+                if (is_variable_combineable(lpd->get_left(), this->right)) {
                     return pow(this->right->get_power_base(),
                                this->right->get_power_exponent() +
                                this->left->get_power_exponent()*lpd->get_left()->get_power_exponent()) /
@@ -1684,14 +1978,16 @@ namespace graph {
             auto rpd = divide_cast(this->right->get_power_base());
             if (rpd.get()) {
 //  b^d*(a/b)^c -> a^c*b^(c-d)
-                if (rpd->get_right()->is_power_base_match(this->left)) {
+                if (is_variable_combineable(rpd->get_right(),
+                                            this->left)) {
                     return pow(rpd->get_left(), this->right->get_power_exponent()) *
                            pow(this->left->get_power_base(),
                                this->left->get_power_exponent() -
                                this->right->get_power_exponent()*rpd->get_right()->get_power_exponent());
                 }
 //  b^d*(b/a)^c -> b^(c+d)/a^c
-                if (rpd->get_left()->is_power_base_match(this->left)) {
+                if (is_variable_combineable(rpd->get_left(),
+                                            this->left)) {
                     return pow(this->right->get_power_base(),
                                this->right->get_power_exponent() +
                                this->right->get_power_exponent()*rpd->get_left()->get_power_exponent()) /
@@ -1932,8 +2228,8 @@ namespace graph {
                     stream << " : ";
                 }
                 stream << registers[l.get()] << "*"
-                       << registers[r.get()] << "; // used "
-                       << usage.at(this) << std::endl;
+                       << registers[r.get()];
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -2271,6 +2567,42 @@ namespace graph {
                 return (1.0/this->right)*this->left;
             }
 
+//  a/(b/c + d) -> a*c/(c*d + b)
+//  a/(d + b/c) -> a*c/(c*d + b)
+            auto ra = add_cast(this->right);
+            if (ra.get()) {
+                auto rald = divide_cast(ra->get_left());
+                auto rard = divide_cast(ra->get_right());
+                if (rald.get()) {
+                    return this->left*rald->get_right() /
+                           fma(rald->get_right(),
+                               ra->get_right(),
+                               rald->get_left());
+                } else if (rard.get()) {
+                    return this->left*rard->get_right() /
+                           fma(rard->get_right(),
+                               ra->get_left(),
+                               rard->get_left());
+                }
+            }
+
+//  a/(b/c - d) -> a*c/(b - c*d)
+//  a/(d - b/c) -> a*c/(c*d - b)
+            auto rs = subtract_cast(this->right);
+            if (rs.get()) {
+                auto rsld = divide_cast(rs->get_left());
+                auto rsrd = divide_cast(rs->get_right());
+                if (rsld.get()) {
+                    return this->left*rsld->get_right() /
+                           (rsld->get_left() -
+                            rsld->get_right()*rs->get_right());
+                } else if (rsrd.get()) {
+                    return this->left*rsrd->get_right() /
+                           (rsrd->get_right()*rs->get_left() -
+                            rsrd->get_left());
+                }
+            }
+
 //  fma(a,d,c*d)/d -> a + c
 //  fma(a,d,d*c)/d -> a + c
 //  fma(d,a,c*d)/d -> a + c
@@ -2299,60 +2631,106 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
-//  c1/(c2*v) -> c3/v
-//  c1/(c2*c3) -> c4/c3
+            if (lm.get() && rm.get()) {
+                if (is_variable_combineable(lm->get_left(),
+                                            rm->get_left()) ||
+                    is_variable_combineable(lm->get_right(),
+                                            rm->get_right())) {
+                    return (lm->get_left()/rm->get_left()) *
+                           (lm->get_right()/rm->get_right());
+                } else if (is_variable_combineable(lm->get_left(),
+                                                   rm->get_right()) ||
+                           is_variable_combineable(lm->get_right(),
+                                                   rm->get_left())) {
+                    return (lm->get_left()/rm->get_right()) *
+                           (lm->get_right()/rm->get_left());
+                }
+            }
+
+//  Move constants to the numerator.
+//  a/(c1*b) -> (c2*a)/b
+//  a/(b*c1) -> (c2*a)/b
             if (rm.get()) {
-                if (is_constant_combineable(rm->get_left(), 
-                                            this->left)) {
-                    auto temp = this->left/rm->get_left();
-                    if (temp->is_normal()) {
-                        return temp/rm->get_right();
+                if (rm->get_left()->is_constant() &&
+                    rm->get_left()->is_normal()) {
+                    return ((1.0/rm->get_left())*this->left)/rm->get_right();
+                } else if (rm->get_right()->is_constant() &&
+                           rm->get_right()->is_normal()) {
+                    return ((1.0/rm->get_right())*this->left)/rm->get_left();
+                }
+
+//  a/((b/c + d)*e) -> a*c/((c*d + b)*e)
+//  a/((d + b/c)*e) -> a*c/((c*d + b)*e)
+//  a/(e*(b/c + d)) -> a*c/((c*d + b)*e)
+//  a/(e*(d + b/c)) -> a*c/((c*d + b)*e)
+                auto rmla = add_cast(rm->get_left());
+                auto rmra = add_cast(rm->get_right());
+                if (rmla.get()) {
+                    auto rmlald = divide_cast(rmla->get_left());
+                    auto rmlard = divide_cast(rmla->get_right());
+                    if (rmlald.get()) {
+                        return this->left*rmlald->get_right() /
+                               (fma(rmlald->get_right(),
+                                    rmla->get_right(),
+                                    rmlald->get_left())*rm->get_right());
+                    } else if (rmlard.get()) {
+                        return this->left*rmlard->get_right() /
+                               (fma(rmlard->get_right(),
+                                    rmla->get_left(),
+                                    rmlard->get_left())*rm->get_right());
                     }
                 }
-                if (is_constant_combineable(rm->get_right(),
-                                            this->left)) {
-                    auto temp = this->left/rm->get_right();
-                    if (temp->is_normal()) {
-                        return temp/rm->get_left();
+                if (rmra.get()) {
+                    auto rmrald = divide_cast(rmra->get_left());
+                    auto rmrard = divide_cast(rmra->get_right());
+                    if (rmrald.get()) {
+                        return this->left*rmrald->get_right() /
+                               (fma(rmrald->get_right(),
+                                    rmra->get_right(),
+                                    rmrald->get_left())*rm->get_left());
+                    } else if (rmrard.get()) {
+                        return this->left*rmrard->get_right() /
+                               (fma(rmrard->get_right(),
+                                    rmra->get_left(),
+                                    rmrard->get_left())*rm->get_left());
+                    }
+                }
+
+//  a/((b/c - d)*e) -> a*c/((b - c*d)*e)
+//  a/(e*(b/c - d)) -> a*c/((b - c*d)*e)
+//  a/((d - b/c)*e) -> a*c/((c*d - b)*e)
+//  a/(e*(d - b/c)) -> a*c/((c*d - b)*e)
+                auto rmls = subtract_cast(rm->get_left());
+                auto rmrs = subtract_cast(rm->get_right());
+                if (rmls.get()) {
+                    auto rmlsld = divide_cast(rmls->get_left());
+                    auto rmlsrd = divide_cast(rmls->get_right());
+                    if (rmlsld.get()) {
+                        return this->left*rmlsld->get_right() /
+                               ((rmlsld->get_left() -
+                                 rmlsld->get_right()*rmls->get_right())*rm->get_right());
+                    } else if (rmlsrd.get()) {
+                        return this->left*rmlsrd->get_right() /
+                               ((rmlsrd->get_right()*rmls->get_left() -
+                                 rmlsrd->get_left())*rm->get_right());
+                    }
+                }
+                if (rmrs.get()) {
+                    auto rmrsld = divide_cast(rmrs->get_left());
+                    auto rmrsrd = divide_cast(rmrs->get_right());
+                    if (rmrsld.get()) {
+                        return this->left*rmrsld->get_right() /
+                               ((rmrsld->get_left() -
+                                 rmrsld->get_right()*rmrs->get_right())*rm->get_left());
+                    } else if (rmrsrd.get()) {
+                        return this->left*rmrsrd->get_right() /
+                               ((rmrsrd->get_right()*rmrs->get_left() -
+                                 rmrsrd->get_left())*rm->get_left());
                     }
                 }
             }
 
             if (lm.get() && rm.get()) {
-//  Test for constants that can be reduced out.
-//  (c1*a)/(c2*b) -> c3*a/b
-//  (a*c1)/(c2*b) -> c3*a/b
-//  (c1*a)/(b*c2) -> c3*a/b
-//  (a*c1)/(b*c2) -> c3*a/b
-                if (is_constant_combineable(lm->get_left(),
-                                            rm->get_left())) {
-                    auto temp = lm->get_left()/rm->get_left();
-                    if (temp->is_normal()) {
-                        return temp*lm->get_right()/rm->get_right();
-                    }
-                }
-                if (is_constant_combineable(lm->get_left(),
-                                            rm->get_right())) {
-                    auto temp = lm->get_left()/rm->get_right();
-                    if (temp->is_normal()) {
-                        return temp*lm->get_right()/rm->get_left();
-                    }
-                } 
-                if (is_constant_combineable(lm->get_right(),
-                                            rm->get_left())) {
-                    auto temp = lm->get_right()/rm->get_left();
-                    if (temp->is_normal()) {
-                        return temp*lm->get_left()/rm->get_right();
-                    }
-                }
-                if (is_constant_combineable(lm->get_right(),
-                                            rm->get_right())) {
-                    auto temp = lm->get_right()/rm->get_right();
-                    if (temp->is_normal()) {
-                        return temp*lm->get_left()/rm->get_left();
-                    }
-                }
-
 //  (a*b)/(a*c) -> b/c
 //  (b*a)/(a*c) -> b/c
 //  (a*b)/(c*a) -> b/c
@@ -2379,9 +2757,11 @@ namespace graph {
 
 //  (v1^a*v2)/v1^b -> v2*(v1^a/v1^b)
 //  (v2*v1^a)/v1^b -> v2*(v1^a/v1^b)
-                if (lm->get_left()->is_power_base_match(this->right)) {
+                if (is_variable_combineable(lm->get_left(),
+                                            this->right)) {
                     return lm->get_right()*(lm->get_left()/this->right);
-                } else if (lm->get_right()->is_power_base_match(this->right)) {
+                } else if (is_variable_combineable(lm->get_right(),
+                                                   this->right)) {
                     return lm->get_left()*(lm->get_right()/this->right);
                 }
             }
@@ -2392,22 +2772,9 @@ namespace graph {
                 return ld->get_left()/(ld->get_right()*this->right);
             }
 
-//  Assume variables, sqrt of variables, and powers of variables are on the
-//  right.
-//  (a*v)/c -> (a/c)*v
-            if (lm.get() && lm->get_right()->is_all_variables() &&
-                !lm->get_left()->is_all_variables()) {
-                return (lm->get_left()/this->right)*lm->get_right();
-            }
-
-//  (c*v1)/v2 -> c*(v1/v2)
-            if (lm.get() && lm->get_left()->is_constant() &&
-                !lm->get_right()->is_constant()) {
-                return lm->get_left()*(lm->get_right()/this->right);
-            }
-
 //  Power reductions.
-            if (this->left->is_power_base_match(this->right)) {
+            if (is_variable_combineable(this->left,
+                                        this->right)) {
                 return pow(this->left->get_power_base(),
                            this->left->get_power_exponent() -
                            this->right->get_power_exponent());
@@ -2419,6 +2786,230 @@ namespace graph {
                 auto exponent = constant_cast(rp->get_right());
                 if (exponent.get() && exponent->evaluate().is_negative()) {
                     return this->left*pow(rp->get_left(), -rp->get_right());
+                }
+            }
+
+//  (a*b)^c/(a^d) = a^(c - d)*b^c
+//  (b*a)^c/(a^d) = a^(c - d)*b^c
+            auto lp = pow_cast(this->left);
+            if (lp.get()) {
+                auto lpm = multiply_cast(this->left->get_power_base());
+                if (lpm.get()) {
+                    if (lpm->get_left()->is_match(this->right->get_power_base())) {
+                        return pow(this->right->get_power_base(),
+                                   this->left->get_power_exponent() -
+                                   this->right->get_power_exponent()) *
+                               pow(lpm->get_right(),
+                                   this->left->get_power_exponent());
+                    } else if (lpm->get_right()->is_match(this->right->get_power_base())) {
+                        return pow(this->right->get_power_base(),
+                                   this->left->get_power_exponent() -
+                                   this->right->get_power_exponent()) *
+                               pow(lpm->get_left(),
+                                   this->left->get_power_exponent());
+                    }
+                }
+            }
+//  (a*b)^c/((a^d)*e) = a^(c - d)*b^c/e
+//  (b*a)^c/((a^d)*e) = a^(c - d)*b^c/e
+//  (a*b)^c/(e*(a^d)) = a^(c - d)*b^c/e
+//  (b*a)^c/(e*(a^d)) = a^(c - d)*b^c/e
+            if (lp.get() && rm.get()) {
+                auto lpm = multiply_cast(this->left->get_power_base());
+                if (lpm.get()) {
+                    if (lpm->get_left()->is_match(rm->get_left()->get_power_base())) {
+                        return (pow(rm->get_left()->get_power_base(),
+                                    this->left->get_power_exponent() -
+                                    rm->get_left()->get_power_exponent()) *
+                                pow(lpm->get_right(),
+                                    this->left->get_power_exponent())) /
+                               rm->get_right();
+                    } else if (lpm->get_right()->is_match(rm->get_left()->get_power_base())) {
+                        return (pow(rm->get_left()->get_power_base(),
+                                    this->left->get_power_exponent() -
+                                    rm->get_left()->get_power_exponent()) *
+                                pow(lpm->get_left(),
+                                    this->left->get_power_exponent())) /
+                               rm->get_right();
+                    } else if (lpm->get_left()->is_match(rm->get_right()->get_power_base())) {
+                        return (pow(rm->get_right()->get_power_base(),
+                                    this->left->get_power_exponent() -
+                                    rm->get_right()->get_power_exponent()) *
+                                pow(lpm->get_right(),
+                                    this->left->get_power_exponent())) /
+                               rm->get_left();
+                    } else if (lpm->get_right()->is_match(rm->get_right()->get_power_base())) {
+                        return (pow(rm->get_right()->get_power_base(),
+                                    this->left->get_power_exponent() -
+                                    rm->get_right()->get_power_exponent()) *
+                                pow(lpm->get_left(),
+                                    this->left->get_power_exponent())) /
+                               rm->get_left();
+                    }
+                }
+            }
+
+            if (lm.get()) {
+//  a*(b*c)/c -> a*b
+//  a*(c*b)/c -> a*b
+//  (a*c)*b/c -> a*b
+//  (c*a)*b/c -> a*b
+                auto lmrm = multiply_cast(lm->get_right());
+                auto lmlm = multiply_cast(lm->get_left());
+                if (lmrm.get()) {
+                    if (is_variable_combineable(lmrm->get_right(),
+                                                this->right)) {
+                        return lm->get_left()*lmrm->get_left() *
+                               (lmrm->get_right()/this->right);
+                    } else if (is_variable_combineable(lmrm->get_left(),
+                                                       this->right)) {
+                        return lm->get_left()*lmrm->get_right() *
+                               (lmrm->get_left()/this->right);
+                    }
+                } else if (lmlm.get()) {
+                    if (is_variable_combineable(lmlm->get_right(),
+                                                this->right)) {
+                        return lm->get_right()*lmlm->get_left() *
+                               (lmlm->get_right()/this->right);
+                    } else if (is_variable_combineable(lmlm->get_left(),
+                                                       this->right)) {
+                        return lm->get_right()*lmlm->get_right() *
+                               (lmlm->get_left()/this->right);
+                    }
+                }
+
+//  (f*(a*b)^c)/(a^d) = f*a^(c - d)*b^c
+//  (f*(b*a)^c)/(a^d) = f*a^(c - d)*b^c
+//  (((a*b)^c)*f)/(a^d) = f*a^(c - d)*b^c
+//  (((b*a)^c)*f)/(a^d) = f*a^(c - d)*b^c
+                auto lmlp = pow_cast(lm->get_left());
+                auto lmrp = pow_cast(lm->get_right());
+                if (lmlp.get()) {
+                    auto lmlpm = multiply_cast(lmlp->get_power_base());
+                    if (lmlpm.get()) {
+                        if (lmlpm->get_left()->is_match(this->right->get_power_base())) {
+                            return lm->get_right() *
+                                   pow(this->right->get_power_base(),
+                                       lmlp->get_power_exponent() -
+                                       this->right->get_power_exponent()) *
+                                   pow(lmlpm->get_right(),
+                                       lmlp->get_power_exponent());
+                        } else if (lmlpm->get_right()->is_match(this->right->get_power_base())) {
+                            return lm->get_right() *
+                                   pow(this->right->get_power_base(),
+                                       lmlp->get_power_exponent() -
+                                       this->right->get_power_exponent()) *
+                                   pow(lmlpm->get_left(),
+                                       lmlp->get_power_exponent());
+                        }
+                    }
+                } else if (lmrp.get()) {
+                    auto lmrpm = multiply_cast(lmrp->get_power_base());
+                    if (lmrpm.get()) {
+                        if (lmrpm->get_left()->is_match(this->right->get_power_base())) {
+                            return lm->get_left() *
+                                   pow(this->right->get_power_base(),
+                                       lmrp->get_power_exponent() -
+                                       this->right->get_power_exponent()) *
+                                   pow(lmrpm->get_right(),
+                                       lmrp->get_power_exponent());
+                        } else if (lmrpm->get_right()->is_match(this->right->get_power_base())) {
+                            return lm->get_left() *
+                                   pow(this->right->get_power_base(),
+                                       lmrp->get_power_exponent() -
+                                       this->right->get_power_exponent()) *
+                                   pow(lmrpm->get_left(),
+                                       lmrp->get_power_exponent());
+                        }
+                    }
+                }
+            }
+
+//  f*(a*b)^c/((a^d)*e) = a^(c - d)*b^c/e
+//  f*(b*a)^c/((a^d)*e) = a^(c - d)*b^c/e
+//  f*(a*b)^c/(e*(a^d)) = a^(c - d)*b^c/e
+//  f*(b*a)^c/(e*(a^d)) = a^(c - d)*b^c/e
+//  (a*b)^c*f/((a^d)*e) = a^(c - d)*b^c/e
+//  (b*a)^c*f/((a^d)*e) = a^(c - d)*b^c/e
+//  (a*b)^c*f/(e*(a^d)) = a^(c - d)*b^c/e
+//  (b*a)^c*f/(e*(a^d)) = a^(c - d)*b^c/e
+            if (lm.get() && rm.get()) {
+                auto lmlp = pow_cast(lm->get_left());
+                auto lmrp = pow_cast(lm->get_right());
+                if (lmlp.get()) {
+                    auto lmlpm = multiply_cast(lmlp->get_power_base());
+                    if (lmlpm.get()) {
+                        if (lmlpm->get_left()->is_match(rm->get_left()->get_power_base())) {
+                            return lm->get_right() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmlp->get_power_exponent() -
+                                        rm->get_left()->get_power_exponent())) *
+                                   pow(lmlpm->get_right(),
+                                       lmlp->get_power_exponent()) /
+                                   rm->get_right();
+                        } else if (lmlpm->get_right()->is_match(rm->get_left()->get_power_base())) {
+                            return lm->get_right() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmlp->get_power_exponent() -
+                                        rm->get_left()->get_power_exponent())) *
+                                   pow(lmlpm->get_left(),
+                                       lmlp->get_power_exponent()) /
+                                   rm->get_right();
+                        } else if (lmlpm->get_left()->is_match(rm->get_right()->get_power_base())) {
+                            return lm->get_right() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmlp->get_power_exponent() -
+                                        rm->get_right()->get_power_exponent())) *
+                                   pow(lmlpm->get_right(),
+                                       lmlp->get_power_exponent()) /
+                                   rm->get_left();
+                        } else if (lmlpm->get_right()->is_match(rm->get_right()->get_power_base())) {
+                            return lm->get_right() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmlp->get_power_exponent() -
+                                        rm->get_right()->get_power_exponent())) *
+                                   pow(lmlpm->get_left(),
+                                       lmlp->get_power_exponent()) /
+                                   rm->get_left();
+                        }
+                    }
+                } else if (lmrp.get()) {
+                    auto lmrpm = multiply_cast(lmrp->get_power_base());
+                    if (lmrpm.get()) {
+                        if (lmrpm->get_left()->is_match(rm->get_left()->get_power_base())) {
+                            return lm->get_left() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmrp->get_power_exponent() -
+                                        rm->get_left()->get_power_exponent())) *
+                                   pow(lmrpm->get_right(),
+                                       lmrp->get_power_exponent()) /
+                                   rm->get_right();
+                        } else if (lmrpm->get_right()->is_match(rm->get_left()->get_power_base())) {
+                            return lm->get_left() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmrp->get_power_exponent() -
+                                        rm->get_left()->get_power_exponent())) *
+                                   pow(lmrpm->get_left(),
+                                       lmrp->get_power_exponent()) /
+                                   rm->get_right();
+                        } else if (lmrpm->get_left()->is_match(rm->get_right()->get_power_base())) {
+                            return lm->get_left() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmrp->get_power_exponent() -
+                                        rm->get_right()->get_power_exponent())) *
+                                   pow(lmrpm->get_right(),
+                                       lmrp->get_power_exponent()) /
+                                   rm->get_left();
+                        } else if (lmrpm->get_right()->is_match(rm->get_right()->get_power_base())) {
+                            return lm->get_left() *
+                                   (pow(rm->get_left()->get_power_base(),
+                                        lmrp->get_power_exponent() -
+                                        rm->get_right()->get_power_exponent())) *
+                                   pow(lmrpm->get_left(),
+                                       lmrp->get_power_exponent()) /
+                                   rm->get_left();
+                        }
+                    }
                 }
             }
 
@@ -2441,6 +3032,33 @@ namespace graph {
                     return lm->get_right()*(lm->get_left()/this->right);
                 }
             }
+//  ((c*exp(a))*d)/exp(b)
+//  ((exp(a)*c)*d)/exp(b)
+//  (c*(exp(a)*d))/exp(b)
+//  (c*(d*exp(a)))/exp(b)
+            if (rexp.get() && lm.get()) {
+                auto lmlm = multiply_cast(lm->get_left());
+                auto lmrm = multiply_cast(lm->get_right());
+
+                if (lmlm.get()) {
+                    if (exp_cast(lmlm->get_right()).get()) {
+                        return lmlm->get_left()*lm->get_right() *
+                               (lmlm->get_right()/this->right);
+                    } else if (exp_cast(lmlm->get_left()).get()) {
+                        return lmlm->get_right()*lm->get_right() *
+                               (lmlm->get_left()/this->right);
+                    }
+                } else if (lmrm.get()) {
+                    if (exp_cast(lmrm->get_right()).get()) {
+                        return lmrm->get_left()*lm->get_left() *
+                               (lmrm->get_right()/this->right);
+                    } else if (exp_cast(lmrm->get_left()).get()) {
+                        return lmrm->get_right()*lm->get_left() *
+                               (lmrm->get_left()/this->right);
+                    }
+                }
+            }
+
 //  exp(a)/(c*exp(b)) -> (exp(a)/exp(b))/c
 //  exp(a)/(exp(b)*c) -> (exp(a)/exp(b))/c
             if (lexp.get() && rm.get()) {
@@ -2577,8 +3195,8 @@ namespace graph {
                     stream << " : ";
                 }
                 stream << registers[l.get()] << "/"
-                       << registers[r.get()] << "; // used "
-                       << usage.at(this) << std::endl;
+                       << registers[r.get()];
+                this->endline(stream, usage);
             }
             return this->shared_from_this();
         }
@@ -3075,22 +3693,64 @@ namespace graph {
                 return md->get_left() + this->right;
             }
 
-//  Special case divide by variables.
+//  Common denominator reductions.
+            if (ld.get() && rd.get()) {
+//  fma(a/(b*c),d,e/c) -> fma(a,d,e*b)/(b*c)
+//  fma(a/(c*b),d,e/c) -> fma(a,d,e*b)/(c*b)
+//  fma(a/c,d,e/(c*b)) -> fma(a*b,d,e)/(b*c)
+//  fma(a/c,d,e/(b*c)) -> fma(a*b,d,e)/(c*b)
+                auto ldrm = multiply_cast(ld->get_right());
+                auto rdrm = multiply_cast(rd->get_right());
 
-//  Move fma(a/c, b, e) -> fma(a,b,e*c)/c
-//  Move fma(a, b/c, e) -> fma(a,b,e*c)/c
-            if (ld.get() && ld->get_left()->is_all_variables()) {
-                auto temp = fma(ld->get_left(), this->middle,
-                                this->right*ld->get_right())/ld->get_right();
-                if (temp->get_complexity() < this->get_complexity()) {
-                    return temp;
+                if (ldrm.get()) {
+                    if (ldrm->get_right()->is_match(rd->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rd->get_left()*ldrm->get_left()) /
+                               ld->get_right();
+                    } else if (ldrm->get_left()->is_match(rd->get_right())) {
+                        return fma(ld->get_left(), this->middle,
+                                   rd->get_left()*ldrm->get_right()) /
+                               ld->get_right();
+                    }
+                } else if (rdrm.get()) {
+                    if (rdrm->get_right()->is_match(ld->get_right())) {
+                        return fma(ld->get_left()*rdrm->get_left(),
+                                   this->middle, rd->get_left()) /
+                               rd->get_right();
+                    } else if (rdrm->get_left()->is_match(ld->get_right())) {
+                        return fma(ld->get_left()*rdrm->get_right(),
+                                   this->middle, rd->get_left()) /
+                               rd->get_right();
+                    }
                 }
-            }
-            if (md.get() && md->get_left()->is_all_variables()) {
-                auto temp = fma(this->left, md->get_left(),
-                                this->right*md->get_right())/md->get_right();
-                if (temp->get_complexity() < this->get_complexity()) {
-                    return temp;
+            } else if (md.get() && rd.get()) {
+//  fma(a,d/(b*c),e/c) -> fma(a,d,e*b)/(b*c)
+//  fma(a,d/(c*b),e/c) -> fma(a,d,e*b)/(c*b)
+//  fma(a,d/c,e/(c*b)) -> fma(a,d*b,e)/(b*c)
+//  fma(a,d/c,e/(b*c)) -> fma(a,d*b,e)/(c*b)
+                auto mdrm = multiply_cast(md->get_right());
+                auto rdrm = multiply_cast(rd->get_right());
+
+                if (mdrm.get()) {
+                    if (mdrm->get_right()->is_match(rd->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rd->get_left()*mdrm->get_left()) /
+                               md->get_right();
+                    } else if (mdrm->get_left()->is_match(rd->get_right())) {
+                        return fma(this->left, md->get_left(),
+                                   rd->get_left()*mdrm->get_right()) /
+                               md->get_right();
+                    }
+                } else if (rdrm.get()) {
+                    if (rdrm->get_right()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left()*rdrm->get_left(),
+                                   rd->get_left()) /
+                               rd->get_right();
+                    } else if (rdrm->get_left()->is_match(md->get_right())) {
+                        return fma(this->left, md->get_left()*rdrm->get_right(),
+                                   rd->get_left()) /
+                               rd->get_right();
+                    }
                 }
             }
 
@@ -3920,14 +4580,14 @@ namespace graph {
                 if constexpr (jit::is_complex<T> ()) {
                     stream << registers[l.get()] << "*"
                            << registers[m.get()] << " + "
-                           << registers[r.get()] << ";";
+                           << registers[r.get()];
                 } else {
                     stream << "fma("
                            << registers[l.get()] << ", "
                            << registers[m.get()] << ", "
-                           << registers[r.get()] << ");";
+                           << registers[r.get()] << ")";
                 }
-                stream << " // used " << usage.at(this) << std::endl;
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();

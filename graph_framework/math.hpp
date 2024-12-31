@@ -86,16 +86,6 @@ namespace graph {
                                     ap2->get_right());
             }
 
-//  Handle casses like sqrt(a^b).
-            auto ap = pow_cast(this->arg);
-            if (ap.get()) {
-                auto bc = constant_cast(ap->get_right());
-                if ((bc.get() && !bc->is(2)) || !bc.get()) {
-                    return pow(ap->get_left(),
-                               ap->get_right()/2.0);
-                }
-            }
-
 //  Handle casses like sqrt(c*x) where c is constant or cases like
 //  sqrt((x^a)*y).
             auto am = multiply_cast(this->arg);
@@ -109,10 +99,17 @@ namespace graph {
                 }
             }
 
-//  Handle casses like sqrt(x^a/b) and sqrt(a/x^b) or sqrt(c/b) and sqrt(a/c)
-//  where c is a constant.
             auto ad = divide_cast(this->arg);
             if (ad.get()) {
+//  sqrt((c1*x)/y) -> c2*sqrt(x/y)
+                auto alm = multiply_cast(ad->get_left());
+                if (alm.get() && alm->get_left()->is_constant()) {
+                    return sqrt(alm->get_left()) *
+                           sqrt(alm->get_right()/ad->get_right());
+                }
+
+//  Handle cases like sqrt(x^a/b) and sqrt(a/x^b) or sqrt(c/b) and sqrt(a/c)
+//  where c is a constant.
                 if (pow_cast(ad->get_left()).get()  ||
                     ad->get_left()->is_constant()   ||
                     pow_cast(ad->get_right()).get() ||
@@ -167,8 +164,8 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = sqrt("
-                       << registers[a.get()] << "); // used "
-                       << usage.at(this) << std::endl;
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -458,7 +455,8 @@ namespace graph {
                         stream << ")";
                     }
                 }
-                stream << "; // used " << usage.at(this) << std::endl;
+                stream << "";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -695,8 +693,8 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = log("
-                       << registers[a.get()] << "); // used "
-                       << usage.at(this) << std::endl;
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -961,11 +959,51 @@ namespace graph {
                     return pow(lm->get_left(), this->right) *
                            pow(lm->get_right(), this->right);
                 }
+
+//  ((Sqrt(a)*b)*c)^d -> a^(d/2)*(b*c)^d
+//  ((b*Sqrt(a))*c)^d -> a^(d/2)*(b*c)^d
+                auto lmlm = multiply_cast(lm->get_left());
+                if (lmlm.get()) {
+                    if (lmlm->get_left()->is_constant()    ||
+                        lmlm->get_right()->is_constant()   ||
+                        sqrt_cast(lmlm->get_left()).get()  ||
+                        sqrt_cast(lmlm->get_right()).get() ||
+                        pow_cast(lmlm->get_left()).get()   ||
+                        pow_cast(lmlm->get_right()).get()) {
+                        return pow(lmlm->get_left(), this->right) *
+                               pow(lmlm->get_right(), this->right) *
+                               pow(lm->get_right(), this->right);
+                    }
+                }
             }
 
-//  Handle cases where (c/x)^a, (x/c)^a, (a/sqrt(b))^c and (a/b^c)^2.
             auto ld = divide_cast(this->left);
             if (ld.get()) {
+//  For even exponents e.
+//  (-a/b)^e -> (a/b)^e
+                auto ldlm = multiply_cast(ld->get_left());
+                if (ldlm.get()) {
+                    if (rc.get() &&
+                        rc->evaluate().is_even()) {
+                        if (ldlm->get_left()->is_constant() &&
+                            ldlm->get_left()->evaluate().is_negative()) {
+                            return pow(ldlm->get_right()/ld->get_right(),
+                                       this->right);
+                        }
+                    }
+                    if (ldlm->get_left()->is_constant()    ||
+                        ldlm->get_right()->is_constant()   ||
+                        sqrt_cast(ldlm->get_left()).get()  ||
+                        sqrt_cast(ldlm->get_right()).get() ||
+                        pow_cast(ldlm->get_left()).get()   ||
+                        pow_cast(ldlm->get_right()).get()) {
+                        return pow(ldlm->get_left(), this->right) *
+                               pow(ldlm->get_right(), this->right)/
+                               pow(ld->get_right(), this->right);
+                    }
+                }
+                
+//  Handle cases where (c/x)^a, (x/c)^a, (a/sqrt(b))^c and (a/b^c)^2.
                 if (ld->get_left()->is_constant()    ||
                     ld->get_right()->is_constant()   ||
                     sqrt_cast(ld->get_left()).get()  ||
@@ -974,6 +1012,55 @@ namespace graph {
                     pow_cast(ld->get_right()).get()) {
                     return pow(ld->get_left(), this->right) /
                            pow(ld->get_right(), this->right);
+                }
+
+//  Handle cases where (a/(b*sqrt(c))), (a/(sqrt(c)*b)), (a/(b*c^d)), (a/(c^d*b))
+                auto ldrm = multiply_cast(ld->get_right());
+                if (ldrm.get()) {
+                    if (ldrm->get_left()->is_constant()    ||
+                        ldrm->get_right()->is_constant()   ||
+                        sqrt_cast(ldrm->get_left()).get()  ||
+                        sqrt_cast(ldrm->get_right()).get() ||
+                        pow_cast(ldrm->get_left()).get()   ||
+                        pow_cast(ldrm->get_right()).get()) {
+                        return pow(ld->get_left(), this->right) /
+                               (pow(ldrm->get_left(), this->right) *
+                                pow(ldrm->get_right(), this->right));
+                    }
+                }
+
+                if (is_variable_combineable(ld->get_left(),
+                                            ld->get_right())) {
+                    return pow(ld->get_left()->get_power_base(),
+                               this->right*(ld->get_left()->get_power_exponent() -
+                                            ld->get_right()->get_power_exponent()));
+                }
+
+                if (ldrm.get()) {
+                    auto ldrmlm = multiply_cast(ldrm->get_left());
+                    if (ldrmlm.get()) {
+                        if (is_variable_combineable(ldrm->get_right(),
+                                                    ldrmlm->get_right()->get_power_base())) {
+                            return pow(ld->get_left()/ldrmlm->get_left(),
+                                       this->right) /
+                                   pow(ldrm->get_right()*ldrmlm->get_right(),
+                                       this->right);
+                        } else if (is_variable_combineable(ldrm->get_right(),
+                                                           ldrmlm->get_left()->get_power_base())) {
+                            return pow(ld->get_left()/ldrmlm->get_right(),
+                                       this->right) /
+                                   pow(ldrm->get_right()*ldrmlm->get_left(),
+                                       this->right);
+                        } else if (is_variable_combineable(ldrmlm->get_left(),
+                                                           ldrmlm->get_right()->get_power_base()) ||
+                                   is_variable_combineable(ldrmlm->get_right(),
+                                                           ldrmlm->get_left()->get_power_base())) {
+                             return pow(ld->get_left()/ldrm->get_right(),
+                                        this->right) /
+                                    pow(ldrmlm->get_left()*ldrmlm->get_right(),
+                                        this->right);
+                        }
+                    }
                 }
             }
 
@@ -1048,13 +1135,12 @@ namespace graph {
                     for (size_t i = 1; i < end; i++) {
                         stream << "*" << registers[l.get()];
                     }
-                    stream << ";";
                 } else {
                     stream << "pow("
                            << registers[l.get()] << ", "
-                           << registers[r.get()] << ");";
+                           << registers[r.get()] << ")";
                 }
-                stream << " // used " << usage.at(this) << std::endl;
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -1368,8 +1454,8 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = special::erfi("
-                       << registers[a.get()] << "); // used "
-                       << usage.at(this) << std::endl;
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();

@@ -141,8 +141,8 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = sin("
-                       << registers[a.get()] << "); // used "
-                       << usage.at(this) << std::endl;
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -388,8 +388,8 @@ namespace graph {
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = cos("
-                       << registers[a.get()] << "); // used "
-                       << usage.at(this) << std::endl;
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -697,7 +697,8 @@ namespace graph {
                            << registers[r.get()] << ","
                            << registers[l.get()];
                 }
-                stream << "); // used " << usage.at(this) << std::endl;
+                stream << ")";
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();

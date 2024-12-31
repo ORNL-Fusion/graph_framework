@@ -178,6 +178,21 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Is every element even.
+///
+///  @returns Returns true if every element is negative.
+//------------------------------------------------------------------------------
+        bool is_even() const {
+            for (const T &d : memory) {
+                if (std::fmod(std::real(d), std::real(static_cast<T> (2.0)))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Is every element negative one.
 ///
 ///  @returns Returns true if every element is negative one.

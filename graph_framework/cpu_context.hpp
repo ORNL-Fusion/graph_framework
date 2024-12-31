@@ -435,7 +435,10 @@ namespace gpu {
                 source_buffer << " " << registers[input.get()]
                               << " = " << jit::to_string('v', input.get())
                               << "[i]; // " << input->get_symbol()
-                              << " used " << usage.at(input.get()) << std::endl;
+#ifdef SHOW_USE_COUNT
+                              << " used " << usage.at(input.get())
+#endif
+                              << std::endl;
             }
         }
 

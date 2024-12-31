@@ -254,9 +254,11 @@ void compile_index(std::ostringstream &stream,
                     }
                 }
                 visited.insert(this);
+#ifdef SHOW_USE_COUNT
                 usage[this] = 1;
             } else {
                 ++usage[this];
+#endif
             }
         }
 
@@ -310,7 +312,7 @@ void compile_index(std::ostringstream &stream,
                 if constexpr (jit::use_metal<T> ()) {
                     stream << ".read(";
                     compile_index<T> (stream, registers[a.get()], length);
-                    stream << ").r;";
+                    stream << ").r";
 #ifdef USE_CUDA_TEXTURES
                 } else if constexpr (jit::use_cuda()) {
                     stream << ", ";
@@ -318,14 +320,14 @@ void compile_index(std::ostringstream &stream,
                     if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
                         stream << ")";
                     }
-                    stream << ");";
+                    stream << ")";
 #endif
                 } else {
                     stream << "[";
                     compile_index<T> (stream, registers[a.get()], length);
-                    stream << "];";
+                    stream << "]";
                 }
-                stream << " // used " << usage.at(this) <<std::endl;
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();
@@ -770,9 +772,11 @@ void compile_index(std::ostringstream &stream,
                     }
                 }
                 visited.insert(this);
+#ifdef SHOW_USE_COUNT
                 usage[this] = 1;
             } else {
                 ++usage[this];
+#endif
             }
         }
 
@@ -845,7 +849,7 @@ void compile_index(std::ostringstream &stream,
                     compile_index<T> (stream, registers[y.get()], num_columns);
                     stream << ",";
                     compile_index<T> (stream, registers[x.get()], num_rows);
-                    stream << ")).r;";
+                    stream << ")).r";
 #ifdef USE_CUDA_TEXTURES
                 } else if constexpr (jit::use_cuda()) {
                     stream << ", ";
@@ -855,16 +859,16 @@ void compile_index(std::ostringstream &stream,
                     if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
                         stream << ")";
                     }
-                    stream << ");";
+                    stream << ")";
 #endif
-                }  else {
+                } else {
                     stream << "[";
                     compile_index<T> (stream, registers[x.get()], num_rows);
                     stream << "*" << num_columns << " + ";
                     compile_index<T> (stream, registers[y.get()], num_columns);
-                    stream << "];";
+                    stream << "]";
                 }
-                stream << " // used " << usage.at(this) << std::endl;
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();

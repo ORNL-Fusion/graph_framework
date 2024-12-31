@@ -22,6 +22,8 @@ target_compile_definitions (rays
                             VMEC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/vmec.nc"
                             $<$<BOOL:${USE_CUDA}>:HEADER_DIR="$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>">
                             $<$<BOOL:${SAVE_KERNEL_SOURCE}>:SAVE_KERNEL_SOURCE>
+                            $<$<BOOL:${USE_CONSTANT_CACHE}>:USE_CONSTANT_CACHE>
+                            $<$<BOOL:${SHOW_USE_COUNT}>:SHOW_USE_COUNT>
 )
 
 target_include_directories (rays
