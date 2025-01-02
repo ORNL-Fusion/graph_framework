@@ -160,6 +160,8 @@ namespace workflow {
     private:
 ///  JIT context.
         jit::context<T, SAFE_MATH> context;
+///  List of prework items.
+        std::vector<std::unique_ptr<work_item<T, SAFE_MATH>>> preitems;
 ///  List of work items.
         std::vector<std::unique_ptr<work_item<T, SAFE_MATH>>> items;
 ///  Use reduction.
@@ -172,6 +174,23 @@ namespace workflow {
 ///  @param[in] index Concurrent index.
 //------------------------------------------------------------------------------
         manager(const size_t index) : context(index), add_reduction(false) {}
+
+//------------------------------------------------------------------------------
+///  @brief Add a pre workflow item.
+///
+///  @param[in] in   Input variables.
+///  @param[in] out  Output nodes.
+///  @param[in] maps Setter maps.
+///  @param[in] name Name of the workitem.
+//------------------------------------------------------------------------------
+        void add_preitem(graph::input_nodes<T, SAFE_MATH> in,
+                         graph::output_nodes<T, SAFE_MATH> out,
+                         graph::map_nodes<T, SAFE_MATH> maps,
+                         const std::string name) {
+            preitems.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
+                                                                          maps, name,
+                                                                          context));
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Add a workflow item.
@@ -219,8 +238,20 @@ namespace workflow {
         void compile() {
             context.compile(add_reduction);
 
+            for (auto &item : preitems) {
+                item->create_kernel_call(context);
+            }
             for (auto &item : items) {
                 item->create_kernel_call(context);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run prework items.
+//------------------------------------------------------------------------------
+        void pre_run() {
+            for (auto &item : preitems) {
+                item->run();
             }
         }
 
