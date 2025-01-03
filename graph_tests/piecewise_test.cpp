@@ -129,9 +129,6 @@ template<jit::float_scalar T> void piecewise_1D() {
            "Expected a piecewise_1D node.");
     assert(graph::add_cast(graph::fma(p1, 2.0, p2)).get() &&
            "Expected an add node.");
-    auto temp = graph::fma(p1, p2, 2.0);
-    assert(graph::multiply_cast(graph::fma(p1, p2, 2.0)).get() &&
-           "Expected a multiply node.");
     assert(graph::add_cast(graph::fma(p1, p3, p2)).get() &&
            "Expected an add node.");
     assert(graph::piecewise_1D_cast(graph::fma(p1, p3, 2.0)).get() &&
@@ -231,6 +228,43 @@ template<jit::float_scalar T> void piecewise_1D() {
                                                        static_cast<T> (10.0)}), a);
     assert(graph::constant_cast(pc).get() &&
            "Expected a constant.");
+
+//  fma(p1,c1 + a,p2) -> fma(p1,a,p3)
+    auto fma_combine = fma(p1,1.0 + a,p3);
+    auto fma_combine_cast = graph::fma_cast(fma_combine);
+    assert(fma_combine_cast.get() && "Expected an fma node.");
+    assert(fma_combine_cast->get_middle()->is_match(a) &&
+           "Expected a in the middle.");
+    assert(fma_combine_cast->get_left()->is_match(p1) &&
+           "Expected p1 on the left.");
+    assert(fma_combine_cast->get_right()->is_match(p1 + p3) &&
+           "Expected p1 + p3 on the right.");
+//  fma(p1,c1 - a,p2) -> p3 - p1*a
+    auto fma_combine2 = fma(p1,1.0 - a,p3);
+    auto fma_combine2_cast = graph::subtract_cast(fma_combine2);
+    assert(fma_combine2_cast.get() && "Expected an subtract node.");
+    assert(fma_combine2_cast->get_right()->is_match(p1*a) &&
+           "Expected p1*a on the right.");
+    assert(fma_combine2_cast->get_left()->is_match(p1 + p3) &&
+           "Expected p1 + p3 on the left.");
+//  p1*(c1 + a) - p2 -> fma(p1,a,p3)
+    auto fma_combine3 = p1*(1.0 + a) - p3;
+    auto fma_combine3_cast = graph::fma_cast(fma_combine3);
+    assert(fma_combine3_cast.get() && "Expected a fma node.");
+    assert(fma_combine3_cast->get_middle()->is_match(a) &&
+           "Expected a in the middle.");
+    assert(fma_combine3_cast->get_left()->is_match(p1) &&
+           "Expected p1 on the left.");
+    assert(fma_combine3_cast->get_right()->is_match(p1 - p3) &&
+           "Expected p1 - p3 on the right.");
+//  p1*(c1 - a) - p2 -> p3 - p1*a
+    auto fma_combine4 = p1*(1.0 - a) - p3;
+    auto fma_combine4_cast = graph::subtract_cast(fma_combine4);
+    assert(fma_combine4_cast.get() && "Expected an subtract node.");
+    assert(fma_combine4_cast->get_right()->is_match(p1*a) &&
+           "Expected p1*a on the right.");
+    assert(fma_combine4_cast->get_left()->is_match(p1 - p3) &&
+           "Expected p1 - p3 on the left.");
 }
 
 //------------------------------------------------------------------------------
@@ -319,8 +353,6 @@ template<jit::float_scalar T> void piecewise_2D() {
            "Expected a piecewise_2D node.");
     assert(graph::add_cast(graph::fma(p1, 2.0, p2)).get() &&
            "Expected an add node.");
-    assert(graph::multiply_cast(graph::fma(p1, p2, 2.0)).get() &&
-           "Expected a multiply node.");
     assert(graph::add_cast(graph::fma(p1, p3, p2)).get() &&
            "Expected an add node.");
     assert(graph::piecewise_2D_cast(graph::fma(p1, p3, 2.0)).get() &&
@@ -606,6 +638,43 @@ template<jit::float_scalar T> void piecewise_2D() {
                  graph::variable_cast(ay)},
                 {col_test}, {},
                 static_cast<T> (8.0), 0.0);
+
+//  fma(p1,c1 + a,p2) -> fma(p1,a,p3)
+    auto fma_combine = fma(p1,1.0 + ax,p3);
+    auto fma_combine_cast = graph::fma_cast(fma_combine);
+    assert(fma_combine_cast.get() && "Expected an fma node.");
+    assert(fma_combine_cast->get_middle()->is_match(ax) &&
+           "Expected a in the middle.");
+    assert(fma_combine_cast->get_left()->is_match(p1) &&
+           "Expected p1 on the left.");
+    assert(fma_combine_cast->get_right()->is_match(p1 + p3) &&
+           "Expected p1 + p3 on the right.");
+//  fma(p1,c1 - a,p2) -> p3 - p1*a
+    auto fma_combine2 = fma(p1,1.0 - ax,p3);
+    auto fma_combine2_cast = graph::subtract_cast(fma_combine2);
+    assert(fma_combine2_cast.get() && "Expected an subtract node.");
+    assert(fma_combine2_cast->get_right()->is_match(p1*ax) &&
+           "Expected p1*a on the right.");
+    assert(fma_combine2_cast->get_left()->is_match(p1 + p3) &&
+           "Expected p1 + p3 on the left.");
+//  p1*(c1 + a) - p2 -> fma(p1,a,p3)
+    auto fma_combine3 = p1*(1.0 + ax) - p3;
+    auto fma_combine3_cast = graph::fma_cast(fma_combine3);
+    assert(fma_combine3_cast.get() && "Expected a fma node.");
+    assert(fma_combine3_cast->get_middle()->is_match(ax) &&
+           "Expected a in the middle.");
+    assert(fma_combine3_cast->get_left()->is_match(p1) &&
+           "Expected p1 on the left.");
+    assert(fma_combine3_cast->get_right()->is_match(p1 - p3) &&
+           "Expected p1 - p3 on the right.");
+//  p1*(c1 - a) - p2 -> p3 - p1*a
+    auto fma_combine4 = p1*(1.0 - ax) - p3;
+    auto fma_combine4_cast = graph::subtract_cast(fma_combine4);
+    assert(fma_combine4_cast.get() && "Expected an subtract node.");
+    assert(fma_combine4_cast->get_right()->is_match(p1*ax) &&
+           "Expected p1*a on the right.");
+    assert(fma_combine4_cast->get_left()->is_match(p1 - p3) &&
+           "Expected p1 - p3 on the left.");
 }
 
 //------------------------------------------------------------------------------

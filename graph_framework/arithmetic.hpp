@@ -925,6 +925,32 @@ namespace graph {
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
 
+//  c1*(c2 + a) - c3 -> fma(c1,a,c4)
+            if (lm.get()) {
+                auto lmra = add_cast(lm->get_right());
+                if (lmra.get()) {
+                    if (is_constant_combineable(lm->get_left(),
+                                                lmra->get_left()) &&
+                        is_constant_combineable(lm->get_left(),
+                                                this->right)) {
+                        return fma(lm->get_left(),
+                                   lmra->get_right(),
+                                   lm->get_left()*lmra->get_left() - this->right);
+                    }
+                }
+
+                auto lmrs = subtract_cast(lm->get_right());
+                if (lmrs.get()) {
+                    if (is_constant_combineable(lm->get_left(),
+                                                lmrs->get_left()) &&
+                        is_constant_combineable(lm->get_left(),
+                                                this->right)) {
+                        return lm->get_left()*lmrs->get_left() - this->right -
+                               lm->get_left()*lmrs->get_right();
+                    }
+                }
+            }
+
 //  Assume constants are on the left.
 //  v1 - -c*v2 -> v1 + c*v2
             if (rm.get()                      &&
@@ -3491,6 +3517,27 @@ namespace graph {
                 return this->middle*(1.0 + this->left);
             }
 
+//  fma(c1,c2 + a,c3) -> fma(c4,a,c5)
+            auto ma = add_cast(this->middle);
+            if (ma.get()) {
+                if (is_constant_combineable(this->left, ma->get_left()) &&
+                    is_constant_combineable(this->left, this->right)) {
+                    return fma(this->left,
+                               ma->get_right(),
+                               fma(this->left, ma->get_left(), this->right));
+                }
+            }
+
+//  fma(c1,c2 - a,c3) -> c4 - c5*a
+            auto ms = subtract_cast(this->middle);
+            if (ms.get()) {
+                if (is_constant_combineable(this->left, ms->get_left()) &&
+                    is_constant_combineable(this->left, this->right)) {
+                    return fma(this->left, ms->get_left(), this->right) -
+                           this->left*ms->get_right();
+                }
+            }
+
 //  Common factor reduction. If the left and right are both multiply nodes check
 //  for a common factor. So you can change a*b + (a*c) -> a*(b + c).
             auto lm = multiply_cast(this->left);
@@ -4146,15 +4193,6 @@ namespace graph {
                 if (rdm->get_complexity() < this->middle->get_complexity() +
                                             this->right->get_complexity()) {
                     return (this->left + rdm)*this->middle;
-                }
-            }
-
-//  Promote constants out to the left.
-            if (is_constant_combineable(this->left, this->right) &&
-                !this->left->has_constant_zero()) {
-                auto temp = this->right/this->left;
-                if (temp->is_normal()) {
-                    return this->left*(this->middle + temp);
                 }
             }
 
