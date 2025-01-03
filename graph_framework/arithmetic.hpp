@@ -919,6 +919,42 @@ namespace graph {
                                     pl2->get_left(),
                                     pl2->get_right());
             }
+// (c1 + a) - c2 -> c3 + a
+// c1 - (c2 + a) -> c3 + a
+            auto la = add_cast(this->left);
+            if (la.get()) {
+                if (is_constant_combineable(la->get_left(), this->right)) {
+                    return (la->get_left() - this->right) + la->get_right();
+                }
+            }
+            auto ra = add_cast(this->right);
+            if (ra.get()) {
+                if (is_constant_combineable(this->left, ra->get_left())) {
+                    return (this->left - ra->get_left()) + ra->get_right();
+                }
+            }
+
+// (c1 - a) - c2 -> c3 - a
+// (a - c3) - c2 -> a + c3
+            auto ls = subtract_cast(this->left);
+            if (ls.get()) {
+                if (is_constant_combineable(ls->get_left(), this->right)) {
+                    return (ls->get_left() - this->right) - ls->get_right();
+                } else if (is_constant_combineable(ls->get_right(),
+                                                   this->right)) {
+                    return -(ls->get_right() + this->right) - ls->get_left();
+                }
+            }
+// c1 - (c2 - a) -> c3 - a
+// c1 - (a - c2) -> c3 - a
+            auto rs = subtract_cast(this->right);
+            if (rs.get()) {
+                if (is_constant_combineable(this->left, rs->get_left())) {
+                    return (this->left - rs->get_left()) - rs->get_right();
+                } else if (is_constant_combineable(this->left, rs->get_right())) {
+                    return (this->left + rs->get_right()) - rs->get_left();
+                }
+            }
 
 //  Common factor reduction. If the left and right are both muliply nodes check
 //  for a common factor. So you can change a*b - a*c -> a*(b - c).
@@ -938,7 +974,7 @@ namespace graph {
                                    lm->get_left()*lmra->get_left() - this->right);
                     }
                 }
-
+//  c1*(c2 - a) - c3 -> c4 - c1*a
                 auto lmrs = subtract_cast(lm->get_right());
                 if (lmrs.get()) {
                     if (is_constant_combineable(lm->get_left(),
@@ -1077,7 +1113,6 @@ namespace graph {
             }
 
 //  Chained subtraction reductions.
-            auto ls = subtract_cast(this->left);
             if (ls.get()) {
                 auto lrm = multiply_cast(ls->get_right());
                 if (lrm.get() && rm.get()) {
@@ -4666,8 +4701,8 @@ namespace graph {
                 this->left->to_latex();
             }
             std::cout << " ";
-            if (add_cast(this->right).get() ||
-                subtract_cast(this->right).get()) {
+            if (add_cast(this->middle).get() ||
+                subtract_cast(this->middle).get()) {
                 std::cout << "\\left(";
                 this->middle->to_latex();
                 std::cout << "\\right)";
