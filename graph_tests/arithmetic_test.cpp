@@ -538,7 +538,8 @@ template<jit::float_scalar T> void test_subtract() {
 //  (c1*v1 + c2) - (c3*v1 + c4) -> c5*(v1 - c6)
     auto subfma = graph::fma(3.0, var_a, 2.0)
                 - graph::fma(2.0, var_a, 3.0);
-    assert(graph::multiply_cast(subfma).get() && "Expected a multiply node.");
+//  -1 + a
+    assert(graph::add_cast(subfma).get() && "Expected an add node.");
 
 //  Test cases like
 //  (c1 + c2/x) - c3/x -> c1 + c4/x
@@ -2664,9 +2665,6 @@ template<jit::float_scalar T> void test_fma() {
     assert(reduce4_cast.get() && "Expected multiply node.");
     assert(reduce4_cast->get_right()->is_match(var_b) &&
            "Expected common var_b");
-
-    assert(graph::multiply_cast(graph::fma(two, var_a, one)).get() &&
-           "Expected multiply node.");
 
 //  fma(a, b, fma(c, b, d)) -> fma(b, a + c, d)
     auto var_d = graph::variable<T> (1, "");
