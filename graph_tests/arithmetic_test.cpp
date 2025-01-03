@@ -872,6 +872,49 @@ template<jit::float_scalar T> void test_subtract() {
            "Expected var_a");
     assert(common_var5_cast->get_left()->is_match(2.0/var_a - 3.0/var_b) &&
            "Expected 2/a - 3/b");
+
+    auto constant_combine = (1.0 - var_a) - 2.0;
+    auto constant_combine_cast = graph::subtract_cast(constant_combine);
+    assert(constant_combine_cast.get() && "Expected a subtract node.");
+    assert(constant_combine_cast->get_left()->evaluate().at(0) == static_cast<T> (-1.0) &&
+           "Expected -1 on the left.");
+    assert(constant_combine_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+    auto constant_combine2 = (1.0 + var_a) - 2.0;
+    auto constant_combine_cast2 = graph::add_cast(constant_combine2);
+    assert(constant_combine_cast2.get() && "Expected a add node.");
+    assert(constant_combine_cast2->get_left()->evaluate().at(0) == static_cast<T> (-1.0) &&
+           "Expected -1 on the left.");
+    assert(constant_combine_cast2->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+    auto constant_combine3 = (var_a - 1.0) - 2.0;
+    auto constant_combine3_cast = graph::subtract_cast(constant_combine3);
+    assert(constant_combine3_cast.get() && "Expected a subtract node.");
+    assert(constant_combine3_cast->get_left()->evaluate().at(0) == static_cast<T> (-3.0) &&
+           "Expected -1 on the left.");
+    assert(constant_combine3_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+    auto constant_combine4 = 2.0 - (1.0 - var_a);
+    auto constant_combine4_cast = graph::subtract_cast(constant_combine4);
+    assert(constant_combine4_cast.get() && "Expected a subtract node.");
+    assert(constant_combine4_cast->get_left()->evaluate().at(0) == static_cast<T> (1.0) &&
+           "Expected 1 on the left.");
+    assert(constant_combine4_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+    auto constant_combine5 = 2.0 - (1.0 + var_a);
+    auto constant_combine5_cast = graph::add_cast(constant_combine5);
+    assert(constant_combine5_cast.get() && "Expected an add node.");
+    assert(constant_combine5_cast->get_left()->evaluate().at(0) == static_cast<T> (1.0) &&
+           "Expected 1 on the left.");
+    assert(constant_combine5_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+    auto constant_combine6 = 2.0 - (var_a - 1.0);
+    auto constant_combine6_cast = graph::subtract_cast(constant_combine6);
+    assert(constant_combine6_cast.get() && "Expected a subtract node.");
+    assert(constant_combine6_cast->get_left()->evaluate().at(0) == static_cast<T> (3.0) &&
+           "Expected 3 on the left.");
+    assert(constant_combine6_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
 }
 
 //------------------------------------------------------------------------------
