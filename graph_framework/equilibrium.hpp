@@ -162,9 +162,11 @@ namespace equilibrium {
 ///
 ///  The characteristic field is equilibrium dependent.
 ///
+///  @params[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
-        virtual graph::shared_leaf<T, SAFE_MATH> get_characteristic_field() = 0;
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the x1 direction.
@@ -374,10 +376,11 @@ namespace equilibrium {
 ///
 ///  To avoid divide by zeros use the value of 1.
 ///
+///  @params[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
-        get_characteristic_field() final {
+        get_characteristic_field(const size_t device_number=0) final {
             return graph::one<T, SAFE_MATH> ();
         }
     };
@@ -497,10 +500,11 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
+///  @params[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
-        get_characteristic_field() final {
+        get_characteristic_field(const size_t device_number=0) final {
             return graph::one<T, SAFE_MATH> ();
         }
     };
@@ -625,10 +629,11 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
+///  @params[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
-        get_characteristic_field() final {
+        get_characteristic_field(const size_t device_number=0) final {
             return graph::one<T, SAFE_MATH> ();
         }
     };
@@ -752,10 +757,11 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
+///  @params[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
-        get_characteristic_field() final {
+        get_characteristic_field(const size_t device_number=0) final {
             return graph::one<T, SAFE_MATH> ();
         }
     };
@@ -877,10 +883,11 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
+///  @params[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
-        get_characteristic_field() final {
+        get_characteristic_field(const size_t device_number=0) final {
             return graph::one<T, SAFE_MATH> ();
         }
     };
@@ -1361,10 +1368,11 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
+///  @params[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
-        get_characteristic_field() final {
+        get_characteristic_field(const size_t device_number=0) final {
             auto x_axis = graph::variable<T, SAFE_MATH> (1, "x");
             auto y_axis = graph::variable<T, SAFE_MATH> (1, "y");
             auto z_axis = graph::variable<T, SAFE_MATH> (1, "z");
@@ -1380,7 +1388,7 @@ namespace equilibrium {
                 graph::variable_cast(z_axis)
             };
 
-            workflow::manager<T, SAFE_MATH> work(0);
+            workflow::manager<T, SAFE_MATH> work(device_number);
             solver::newton(work, {
                 x_axis, z_axis
             }, inputs, psi_norm_cache, static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
@@ -2141,10 +2149,11 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
+///  @params[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
-        get_characteristic_field() final {
+        get_characteristic_field(const size_t device_number=0) final {
             auto s_axis = graph::zero<T, SAFE_MATH> ();
             auto u_axis = graph::zero<T, SAFE_MATH> ();
             auto v_axis = graph::zero<T, SAFE_MATH> ();

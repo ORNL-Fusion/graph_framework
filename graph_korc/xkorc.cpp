@@ -1,0 +1,150 @@
+#include "../graph_framework/equilibrium.hpp"
+#include "../graph_framework/timing.hpp"
+
+//------------------------------------------------------------------------------
+///  @brief Main program of the driver.
+///
+///  @param[in] argc Number of commandline arguments.
+///  @param[in] argv Array of commandline arguments.
+//------------------------------------------------------------------------------
+int main(int argc, const char * argv[]) {
+    START_GPU
+    (void)argc;
+    (void)argv;
+
+    const timeing::measure_diagnostic t_total("Total Time");
+
+    const size_t num_particles = 1000000;
+    std::cout << "Num particles " << num_particles << std::endl;
+    std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<double>::max_concurrency()),
+                                                       static_cast<unsigned int> (num_particles)),
+                                              static_cast<unsigned int> (1)));
+
+    const size_t batch = num_particles/threads.size();
+    const size_t extra = num_particles%threads.size();
+
+    for (size_t i = 0, ie = threads.size(); i < ie; i++) {
+        threads[i] = std::thread([num_particles, batch, extra] (const size_t thread_number) -> void {
+            const size_t local_num_particles = batch + (extra > thread_number ? 1 : 0);
+
+            const timeing::measure_diagnostic t_setup("Setup Time");
+            
+            auto eq = equilibrium::make_efit<double> (EFIT_FILE);
+            //auto eq = equilibrium::make_slab_density<double> ();
+            auto b0 = eq->get_characteristic_field(thread_number);
+            const double q = 1.602176634E-19;
+            const double me = 9.1093837139E-31;
+            const double c = 299792458.0;
+            
+            auto gryo_period = me/(q*b0);
+            std::cout << "gryo_period " << gryo_period->evaluate().at(0) << std::endl;
+            auto larmor_radius = c*gryo_period;
+            std::cout << "larmor_radius " << larmor_radius->evaluate().at(0) << std::endl;
+
+            std::cout << "Local num particles " << local_num_particles << std::endl;
+            
+            auto ux = graph::variable<double> (local_num_particles, "u_{x}");
+            auto uy = graph::variable<double> (local_num_particles, "u_{y}");
+            auto uz = graph::variable<double> (local_num_particles, "u_{z}");
+            
+            ux->set(0.99);
+            uy->set(0.0);
+            uz->set(0.0);
+            
+            auto x = graph::variable<double> (local_num_particles, "x");
+            auto y = graph::variable<double> (local_num_particles, "y");
+            auto z = graph::variable<double> (local_num_particles, "z");
+            auto pos = graph::vector(x, y, z);
+            
+            x->set(1.7);
+            y->set(0.0);
+            z->set(0.0);
+            
+            auto u_vec = graph::vector(ux, uy, uz);
+            
+            auto gamma = graph::variable<double> (local_num_particles, "\\gamma");
+            
+            auto dt = graph::constant<double> (0.1);
+            
+            auto gamma_init = graph::sqrt(1.0 - ux*ux - uy*uy - uz*uz);
+            
+            auto u_init = gamma_init*u_vec;
+            
+            workflow::manager<double> work(0);
+            work.add_preitem({
+                graph::variable_cast(x),
+                graph::variable_cast(y),
+                graph::variable_cast(z),
+                graph::variable_cast(ux),
+                graph::variable_cast(uy),
+                graph::variable_cast(uz),
+                graph::variable_cast(gamma)
+            }, {}, {
+                {u_init->get_x(), graph::variable_cast(ux)},
+                {u_init->get_y(), graph::variable_cast(uy)},
+                {u_init->get_z(), graph::variable_cast(uz)},
+                {gamma_init, graph::variable_cast(gamma)}
+            }, "initalize_gamma");
+            
+            auto pos_next = pos + larmor_radius*dt*u_vec/gamma;
+            
+            auto b_vec = eq->get_magnetic_field(pos_next->get_x(),
+                                                pos_next->get_y(),
+                                                pos_next->get_z())/b0;
+            
+            auto u_prime = u_vec + dt*u_vec->cross(b_vec)/(2.0*gamma);
+            
+            auto tau = dt*0.5*b_vec;
+            auto tau_sq = tau->dot(tau);
+            auto speed_sq = u_vec->dot(u_vec);
+            auto sigma = 1.0 + speed_sq - tau_sq;
+            auto ustar = u_vec->dot(tau);
+            
+            auto gamma_next = graph::sqrt(0.5*(sigma + graph::sqrt(sigma*sigma + 4.0*(tau_sq + ustar*ustar))));
+            auto t = tau/gamma_next;
+            
+            auto s = 1.0/(1.0 + t->dot(t));
+            auto u_prime_dot_t = u_prime->dot(t);
+            
+            auto u_next = s*(u_prime + u_prime_dot_t*t + u_prime->cross(t));
+            
+            work.add_item({
+                graph::variable_cast(x),
+                graph::variable_cast(y),
+                graph::variable_cast(z),
+                graph::variable_cast(ux),
+                graph::variable_cast(uy),
+                graph::variable_cast(uz),
+                graph::variable_cast(gamma)
+            }, {}, {
+                {pos_next->get_x(), graph::variable_cast(x)},
+                {pos_next->get_y(), graph::variable_cast(y)},
+                {pos_next->get_z(), graph::variable_cast(z)},
+                {u_next->get_x(), graph::variable_cast(ux)},
+                {u_next->get_y(), graph::variable_cast(uy)},
+                {u_next->get_z(), graph::variable_cast(uz)},
+                {gamma_next, graph::variable_cast(gamma)}
+            }, "step");
+            
+            work.compile();
+            t_setup.print();
+            
+            const timeing::measure_diagnostic t_run("Run Time");
+            work.pre_run();
+            for (size_t i = 0; i < 1000000; i++) {
+                work.run();
+            }
+            work.wait();
+            t_run.print();
+        }, i);
+    }
+
+    for (std::thread &t : threads) {
+        t.join();
+    }
+
+    std::cout << std::endl << "Timing:" << std::endl;
+    t_total.print();
+
+    END_GPU
+}
