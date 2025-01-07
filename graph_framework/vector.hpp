@@ -295,6 +295,24 @@ namespace graph {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Subtraction operator.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @param[in] l Left vector.
+///  @param[in] r Right vector.
+///  @returns The vector vector addition.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_vector<T, SAFE_MATH> operator-(shared_vector<T, SAFE_MATH> l,
+                                          shared_vector<T, SAFE_MATH> r) {
+        return vector(l->get_x() - r->get_x(),
+                      l->get_y() - r->get_y(),
+                      l->get_z() - r->get_z());
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Multiplication operator.
 ///
 ///  @tparam T         Base type of the calculation.

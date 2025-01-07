@@ -14,7 +14,7 @@ int main(int argc, const char * argv[]) {
 
     const timeing::measure_diagnostic t_total("Total Time");
 
-    const size_t num_particles = 1000000;
+    const size_t num_particles = 1;
     std::cout << "Num particles " << num_particles << std::endl;
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<double>::max_concurrency()),
                                                        static_cast<unsigned int> (num_particles)),
@@ -28,49 +28,53 @@ int main(int argc, const char * argv[]) {
             const size_t local_num_particles = batch + (extra > thread_number ? 1 : 0);
 
             const timeing::measure_diagnostic t_setup("Setup Time");
-            
+
             auto eq = equilibrium::make_efit<double> (EFIT_FILE);
             //auto eq = equilibrium::make_slab_density<double> ();
             auto b0 = eq->get_characteristic_field(thread_number);
             const double q = 1.602176634E-19;
             const double me = 9.1093837139E-31;
             const double c = 299792458.0;
-            
+
             auto gryo_period = me/(q*b0);
             std::cout << "gryo_period " << gryo_period->evaluate().at(0) << std::endl;
             auto larmor_radius = c*gryo_period;
             std::cout << "larmor_radius " << larmor_radius->evaluate().at(0) << std::endl;
 
             std::cout << "Local num particles " << local_num_particles << std::endl;
-            
+
             auto ux = graph::variable<double> (local_num_particles, "u_{x}");
             auto uy = graph::variable<double> (local_num_particles, "u_{y}");
             auto uz = graph::variable<double> (local_num_particles, "u_{z}");
-            
+
             ux->set(0.99);
             uy->set(0.0);
             uz->set(0.0);
-            
+
             auto x = graph::variable<double> (local_num_particles, "x");
             auto y = graph::variable<double> (local_num_particles, "y");
             auto z = graph::variable<double> (local_num_particles, "z");
             auto pos = graph::vector(x, y, z);
-            
+
             x->set(1.7);
             y->set(0.0);
             z->set(0.0);
-            
+
             auto u_vec = graph::vector(ux, uy, uz);
-            
+
             auto gamma = graph::variable<double> (local_num_particles, "\\gamma");
-            
-            auto dt = graph::constant<double> (0.1);
-            
+
+            auto dt = graph::constant<double> (0.01);
+
             auto gamma_init = graph::sqrt(1.0 - ux*ux - uy*uy - uz*uz);
-            
+
             auto u_init = gamma_init*u_vec;
-            
-            workflow::manager<double> work(0);
+
+            auto b_vec = eq->get_magnetic_field(pos->get_x(),
+                                                pos->get_y(),
+                                                pos->get_z())/b0;
+
+            workflow::manager<double> work(thread_number);
             work.add_preitem({
                 graph::variable_cast(x),
                 graph::variable_cast(y),
@@ -85,29 +89,25 @@ int main(int argc, const char * argv[]) {
                 {u_init->get_z(), graph::variable_cast(uz)},
                 {gamma_init, graph::variable_cast(gamma)}
             }, "initalize_gamma");
-            
-            auto pos_next = pos + larmor_radius*dt*u_vec/gamma;
-            
-            auto b_vec = eq->get_magnetic_field(pos_next->get_x(),
-                                                pos_next->get_y(),
-                                                pos_next->get_z())/b0;
-            
-            auto u_prime = u_vec + dt*u_vec->cross(b_vec)/(2.0*gamma);
-            
-            auto tau = dt*0.5*b_vec;
+
+            auto u_prime = u_vec - dt*u_vec->cross(b_vec)/(2.0*gamma);
+
+            auto tau = -0.5*dt*b_vec;
             auto tau_sq = tau->dot(tau);
-            auto speed_sq = u_vec->dot(u_vec);
+            auto speed_sq = u_prime->dot(u_prime);
             auto sigma = 1.0 + speed_sq - tau_sq;
-            auto ustar = u_vec->dot(tau);
-            
+            auto ustar = u_prime->dot(tau);
+
             auto gamma_next = graph::sqrt(0.5*(sigma + graph::sqrt(sigma*sigma + 4.0*(tau_sq + ustar*ustar))));
             auto t = tau/gamma_next;
-            
-            auto s = 1.0/(1.0 + t->dot(t));
+
+            auto s = 1.0 + t->dot(t);
             auto u_prime_dot_t = u_prime->dot(t);
-            
-            auto u_next = s*(u_prime + u_prime_dot_t*t + u_prime->cross(t));
-            
+
+            auto u_next = (u_prime + u_prime_dot_t*t + u_prime->cross(t))/s;
+
+            auto pos_next = pos + larmor_radius*dt*u_next/gamma;
+
             work.add_item({
                 graph::variable_cast(x),
                 graph::variable_cast(y),
@@ -116,7 +116,11 @@ int main(int argc, const char * argv[]) {
                 graph::variable_cast(uy),
                 graph::variable_cast(uz),
                 graph::variable_cast(gamma)
-            }, {}, {
+            }, {
+                tau_sq,
+                tau->get_x()*tau->get_x(),
+                tau->get_y()*tau->get_y(),
+            }, {
                 {pos_next->get_x(), graph::variable_cast(x)},
                 {pos_next->get_y(), graph::variable_cast(y)},
                 {pos_next->get_z(), graph::variable_cast(z)},
@@ -125,14 +129,24 @@ int main(int argc, const char * argv[]) {
                 {u_next->get_z(), graph::variable_cast(uz)},
                 {gamma_next, graph::variable_cast(gamma)}
             }, "step");
-            
+            tau->get_x()->to_latex();
+            std::cout << "\\\\" << std::endl;
+            tau->get_y()->to_latex();
+            std::cout << "\\\\" << std::endl;
+            (tau->get_x()*tau->get_x())->to_latex();
+            std::cout << "\\\\" << std::endl;
+            (tau->get_y()*tau->get_y())->to_latex();
+            std::cout << "\\\\" << std::endl;
+    
             work.compile();
             t_setup.print();
-            
+
             const timeing::measure_diagnostic t_run("Run Time");
             work.pre_run();
+            work.print(0, {x, y, z, ux, uy, uz, gamma, tau_sq, tau->get_x()*tau->get_x(), tau->get_y()*tau->get_y()});
             for (size_t i = 0; i < 1000000; i++) {
                 work.run();
+                work.print(0, {x, y, z, ux, uy, uz, gamma, tau_sq, tau->get_x()*tau->get_x(), tau->get_y()*tau->get_y()});
             }
             work.wait();
             t_run.print();
