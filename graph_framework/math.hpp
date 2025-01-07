@@ -985,9 +985,9 @@ namespace graph {
                 if (ldlm.get()) {
                     if (rc.get() &&
                         rc->evaluate().is_even()) {
-                        if (ldlm->get_left()->is_constant() &&
-                            ldlm->get_left()->evaluate().is_negative()) {
-                            return pow(ldlm->get_right()/ld->get_right(),
+                        if (ldlm->get_left()->is_constant()) {
+                            return pow(ldlm->get_left(), this->right) *
+                                   pow(ldlm->get_right()/ld->get_right(),
                                        this->right);
                         }
                     }
