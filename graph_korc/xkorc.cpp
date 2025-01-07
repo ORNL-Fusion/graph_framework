@@ -64,9 +64,9 @@ int main(int argc, const char * argv[]) {
 
             auto gamma = graph::variable<double> (local_num_particles, "\\gamma");
 
-            auto dt = graph::constant<double> (0.01);
+            auto dt = graph::constant<double> (0.25);
 
-            auto gamma_init = graph::sqrt(1.0 - ux*ux - uy*uy - uz*uz);
+            auto gamma_init = 1.0/graph::sqrt(1.0 - u_vec->dot(u_vec));
 
             auto u_init = gamma_init*u_vec;
 
@@ -116,11 +116,7 @@ int main(int argc, const char * argv[]) {
                 graph::variable_cast(uy),
                 graph::variable_cast(uz),
                 graph::variable_cast(gamma)
-            }, {
-                tau_sq,
-                tau->get_x()*tau->get_x(),
-                tau->get_y()*tau->get_y(),
-            }, {
+            }, {}, {
                 {pos_next->get_x(), graph::variable_cast(x)},
                 {pos_next->get_y(), graph::variable_cast(y)},
                 {pos_next->get_z(), graph::variable_cast(z)},
@@ -129,24 +125,14 @@ int main(int argc, const char * argv[]) {
                 {u_next->get_z(), graph::variable_cast(uz)},
                 {gamma_next, graph::variable_cast(gamma)}
             }, "step");
-            tau->get_x()->to_latex();
-            std::cout << "\\\\" << std::endl;
-            tau->get_y()->to_latex();
-            std::cout << "\\\\" << std::endl;
-            (tau->get_x()*tau->get_x())->to_latex();
-            std::cout << "\\\\" << std::endl;
-            (tau->get_y()*tau->get_y())->to_latex();
-            std::cout << "\\\\" << std::endl;
     
             work.compile();
             t_setup.print();
 
             const timeing::measure_diagnostic t_run("Run Time");
             work.pre_run();
-            work.print(0, {x, y, z, ux, uy, uz, gamma, tau_sq, tau->get_x()*tau->get_x(), tau->get_y()*tau->get_y()});
             for (size_t i = 0; i < 1000000; i++) {
                 work.run();
-                work.print(0, {x, y, z, ux, uy, uz, gamma, tau_sq, tau->get_x()*tau->get_x(), tau->get_y()*tau->get_y()});
             }
             work.wait();
             t_run.print();
