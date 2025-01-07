@@ -409,6 +409,14 @@ void test_pow() {
                                    graph::pow(var_c, var_b) *
                                    graph::pow(var_d, var_b)) &&
            "Expected a^(d/2)*b^2*c^d.");
+
+    auto factorconst = graph::pow(-0.5*var_a/var_b, 2.0);
+    auto factorconst_cast = graph::multiply_cast(factorconst);
+    assert(factorconst_cast.get() && "Expected a multiply node.");
+    assert(factorconst_cast->get_left()->is_match(graph::constant<T> (static_cast<T> (0.25))) &&
+           "Expected 0.25 on the left.");
+    assert(factorconst_cast->get_right()->is_match(graph::pow(var_a/var_b, 2.0)) &&
+           "Expected (a/b)^2 on the right.");
 }
 
 //------------------------------------------------------------------------------
