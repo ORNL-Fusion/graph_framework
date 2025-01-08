@@ -14,7 +14,7 @@ int main(int argc, const char * argv[]) {
 
     const timeing::measure_diagnostic t_total("Total Time");
 
-    const size_t num_particles = 1;
+    const size_t num_particles = 10000000;
     std::cout << "Num particles " << num_particles << std::endl;
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<double>::max_concurrency()),
                                                        static_cast<unsigned int> (num_particles)),
@@ -76,9 +76,6 @@ int main(int argc, const char * argv[]) {
 
             workflow::manager<double> work(thread_number);
             work.add_preitem({
-                graph::variable_cast(x),
-                graph::variable_cast(y),
-                graph::variable_cast(z),
                 graph::variable_cast(ux),
                 graph::variable_cast(uy),
                 graph::variable_cast(uz),
