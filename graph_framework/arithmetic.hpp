@@ -520,6 +520,20 @@ namespace graph {
                                 pow(prm->get_left(), pl->get_right()));
                     }
                 }
+
+//  cos(x)^2 + sin(x)^2 -> 1
+//  sin(x)^2 + cos(x)^2 -> 1
+                auto plrc = constant_cast(pl->get_right());
+                if (plrc.get() && plrc->is(static_cast<T> (2.0))) {
+                    auto pls = sin_cast(pl->get_left());
+                    auto prc = cos_cast(pr->get_left());
+                    auto plc = cos_cast(pl->get_left());
+                    auto prs = sin_cast(pr->get_left());
+                    if ((pls.get() && prc.get() && pls->get_arg()->is_match(prc->get_arg())) ||
+                        (plc.get() && prs.get() && plc->get_arg()->is_match(prs->get_arg()))) {
+                        return one<T, SAFE_MATH> ();
+                    }
+                }
             }
 
 //  (a/y)^e + b/y^e -> (a^2 + b)/(y^e)

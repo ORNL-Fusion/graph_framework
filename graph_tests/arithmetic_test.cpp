@@ -433,6 +433,19 @@ template<jit::float_scalar T> void test_add() {
     assert(common_power_factor4_cast->get_left()->is_match(var_b*var_b +
                                                            var_c*var_c) &&
            "Expected b^2 + c^2 on the left.");
+
+//  cos(x)^2 + sin(x)^2 -> 1
+    auto trig = graph::cos(var_a)*graph::cos(var_a)
+              + graph::sin(var_a)*graph::sin(var_a);
+    auto trig_cast = graph::constant_cast(trig);
+    assert(trig_cast.get() && "Expected a constant node.");
+    assert(trig_cast->is(static_cast<T> (1.0)) && "Expected 1.");
+//  sin(x)^2 + cos(x)^2 -> 1
+    auto trig2 = graph::sin(var_a)*graph::sin(var_a)
+               + graph::cos(var_a)*graph::cos(var_a);
+    auto trig2_cast = graph::constant_cast(trig2);
+    assert(trig2_cast.get() && "Expected a constant node.");
+    assert(trig2_cast->is(static_cast<T> (1.0)) && "Expected 1.");
 }
 
 //------------------------------------------------------------------------------
