@@ -490,12 +490,41 @@ namespace graph {
                 }
             }
 
-//  Handle cases like:
+            auto pl = pow_cast(this->left);
+            auto pr = pow_cast(this->right);
+
+//  (a*b)^c + (a*d)^c -> a^c*(b^c + d^c)
+//  (b*a)^c + (a*d)^c -> a^c*(b^c + d^c)
+//  (a*b)^c + (d*a)^c -> a^c*(b^c + d^c)
+//  (b*a)^c + (d*a)^c -> a^c*(b^c + d^c)
+            if (pl.get() && pr.get() &&
+                pl->get_right()->is_match(pr->get_right())) {
+                auto plm = multiply_cast(pl->get_left());
+                auto prm = multiply_cast(pr->get_left());
+                if (plm.get() && prm.get()) {
+                    if (plm->get_left()->is_match(prm->get_left())) {
+                        return pow(plm->get_left(), pl->get_right())*
+                               (pow(plm->get_right(), pl->get_right()) +
+                                pow(prm->get_right(), pl->get_right()));
+                    } else if (plm->get_left()->is_match(prm->get_right())) {
+                        return pow(plm->get_left(), pl->get_right())*
+                               (pow(plm->get_right(), pl->get_right()) +
+                                pow(prm->get_left(), pl->get_right()));
+                    } else if (plm->get_right()->is_match(prm->get_left())) {
+                        return pow(plm->get_right(), pl->get_right())*
+                               (pow(plm->get_left(), pl->get_right()) +
+                                pow(prm->get_right(), pl->get_right()));
+                    } else if (plm->get_right()->is_match(prm->get_right())) {
+                        return pow(plm->get_right(), pl->get_right())*
+                               (pow(plm->get_left(), pl->get_right()) +
+                                pow(prm->get_left(), pl->get_right()));
+                    }
+                }
+            }
+
 //  (a/y)^e + b/y^e -> (a^2 + b)/(y^e)
 //  b/y^e + (a/y)^e -> (b + a^2)/(y^e)
 //  (a/y)^e + (b/y)^e -> (a^2 + b^2)/(y^e)
-            auto pl = pow_cast(this->left);
-            auto pr = pow_cast(this->right);
             if (pl.get() && rd.get()) {
                 auto rdp = pow_cast(rd->get_right());
                 if (rdp.get() && pl->get_right()->is_match(rdp->get_right())) {

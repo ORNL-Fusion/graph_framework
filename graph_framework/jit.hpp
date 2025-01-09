@@ -133,7 +133,7 @@ namespace jit {
 
             for (auto &in : inputs) {
                 if (usage.find(in.get()) == usage.end()) {
-                    usage[in.get()] == 0;
+                    usage[in.get()] = 0;
                 }
             }
 
