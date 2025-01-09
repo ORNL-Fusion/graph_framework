@@ -17,6 +17,7 @@
 #include "piecewise.hpp"
 #include "math.hpp"
 #include "arithmetic.hpp"
+#include "newton.hpp"
 
 namespace equilibrium {
 ///  Lock to syncronize netcdf accross threads.
@@ -155,6 +156,17 @@ namespace equilibrium {
         get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
                            graph::shared_leaf<T, SAFE_MATH> y,
                            graph::shared_leaf<T, SAFE_MATH> z) = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  The characteristic field is equilibrium dependent.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) = 0;
 
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the x1 direction.
@@ -358,6 +370,19 @@ namespace equilibrium {
             auto zero = graph::zero<T, SAFE_MATH> ();
             return graph::vector(zero, zero, zero);
         }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  To avoid divide by zeros use the value of 1.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) final {
+            return graph::one<T, SAFE_MATH> ();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -468,6 +493,19 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> y,
                            graph::shared_leaf<T, SAFE_MATH> z) final {
             return graph::vector(0.0, 0.0, 0.1*x + 1.0);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  Use the value at the y intercept.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) final {
+            return graph::one<T, SAFE_MATH> ();
         }
     };
 
@@ -585,6 +623,19 @@ namespace equilibrium {
             auto zero = graph::zero<T, SAFE_MATH> ();
             return graph::vector(zero, zero, graph::one<T, SAFE_MATH> ());
         }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  Use the value at the y intercept.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) final {
+            return graph::one<T, SAFE_MATH> ();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -700,6 +751,19 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> z) final {
             return graph::vector(0.0, 0.0, 0.01*x + 1.0);
         }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  Use the value at the y intercept.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) final {
+            return graph::one<T, SAFE_MATH> ();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -812,6 +876,19 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> z) final {
             auto zero = graph::zero<T, SAFE_MATH> ();
             return graph::vector(graph::one<T, SAFE_MATH> (), zero, zero);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  Use the value at the y intercept.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) final {
+            return graph::one<T, SAFE_MATH> ();
         }
     };
 
@@ -959,6 +1036,57 @@ namespace equilibrium {
 ///  Cached magnetic field vector.
         graph::shared_vector<T, SAFE_MATH> b_cache;
 
+///  Cached magnetic field vector.
+        graph::shared_leaf<T, SAFE_MATH> psi_norm_cache;
+
+//------------------------------------------------------------------------------
+///  @brief Build psi.
+///
+///  @param[in] r_norm The normalized radial position.
+///  @param[in] z_norm The normalized z position.
+///  @returns The psi value.
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        build_psi(graph::shared_leaf<T, SAFE_MATH> r_norm,
+                  graph::shared_leaf<T, SAFE_MATH> z_norm) {
+            auto c00_temp = graph::piecewise_2D(c00, num_cols, r_norm, z_norm);
+            auto c01_temp = graph::piecewise_2D(c01, num_cols, r_norm, z_norm);
+            auto c02_temp = graph::piecewise_2D(c02, num_cols, r_norm, z_norm);
+            auto c03_temp = graph::piecewise_2D(c03, num_cols, r_norm, z_norm);
+
+            auto c10_temp = graph::piecewise_2D(c10, num_cols, r_norm, z_norm);
+            auto c11_temp = graph::piecewise_2D(c11, num_cols, r_norm, z_norm);
+            auto c12_temp = graph::piecewise_2D(c12, num_cols, r_norm, z_norm);
+            auto c13_temp = graph::piecewise_2D(c13, num_cols, r_norm, z_norm);
+
+            auto c20_temp = graph::piecewise_2D(c20, num_cols, r_norm, z_norm);
+            auto c21_temp = graph::piecewise_2D(c21, num_cols, r_norm, z_norm);
+            auto c22_temp = graph::piecewise_2D(c22, num_cols, r_norm, z_norm);
+            auto c23_temp = graph::piecewise_2D(c23, num_cols, r_norm, z_norm);
+
+            auto c30_temp = graph::piecewise_2D(c30, num_cols, r_norm, z_norm);
+            auto c31_temp = graph::piecewise_2D(c31, num_cols, r_norm, z_norm);
+            auto c32_temp = graph::piecewise_2D(c32, num_cols, r_norm, z_norm);
+            auto c33_temp = graph::piecewise_2D(c33, num_cols, r_norm, z_norm);
+
+            return   c00_temp
+                   + c01_temp*z_norm
+                   + c02_temp*(z_norm*z_norm)
+                   + c03_temp*(z_norm*z_norm*z_norm)
+                   + c10_temp*r_norm
+                   + c11_temp*r_norm*z_norm
+                   + c12_temp*r_norm*(z_norm*z_norm)
+                   + c13_temp*r_norm*(z_norm*z_norm*z_norm)
+                   + c20_temp*(r_norm*r_norm)
+                   + c21_temp*(r_norm*r_norm)*z_norm
+                   + c22_temp*(r_norm*r_norm)*(z_norm*z_norm)
+                   + c23_temp*(r_norm*r_norm)*(z_norm*z_norm*z_norm)
+                   + c30_temp*(r_norm*r_norm*r_norm)
+                   + c31_temp*(r_norm*r_norm*r_norm)*z_norm
+                   + c32_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm)
+                   + c33_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm*z_norm);
+        }
+
 //------------------------------------------------------------------------------
 ///  @brief Set cache values.
 ///
@@ -979,78 +1107,41 @@ namespace equilibrium {
                 z_cache = z;
 
                 auto r = graph::sqrt(x*x + y*y);
-                
                 auto r_norm = (r - rmin)/dr;
                 auto z_norm = (z - zmin)/dz;
 
-                auto c00_temp = graph::piecewise_2D(c00, num_cols, r_norm, z_norm);
-                auto c01_temp = graph::piecewise_2D(c01, num_cols, r_norm, z_norm);
-                auto c02_temp = graph::piecewise_2D(c02, num_cols, r_norm, z_norm);
-                auto c03_temp = graph::piecewise_2D(c03, num_cols, r_norm, z_norm);
+                auto psi = build_psi(r_norm, z_norm);
+                psi_norm_cache = (psi - psimin)/dpsi;
 
-                auto c10_temp = graph::piecewise_2D(c10, num_cols, r_norm, z_norm);
-                auto c11_temp = graph::piecewise_2D(c11, num_cols, r_norm, z_norm);
-                auto c12_temp = graph::piecewise_2D(c12, num_cols, r_norm, z_norm);
-                auto c13_temp = graph::piecewise_2D(c13, num_cols, r_norm, z_norm);
-
-                auto c20_temp = graph::piecewise_2D(c20, num_cols, r_norm, z_norm);
-                auto c21_temp = graph::piecewise_2D(c21, num_cols, r_norm, z_norm);
-                auto c22_temp = graph::piecewise_2D(c22, num_cols, r_norm, z_norm);
-                auto c23_temp = graph::piecewise_2D(c23, num_cols, r_norm, z_norm);
-
-                auto c30_temp = graph::piecewise_2D(c30, num_cols, r_norm, z_norm);
-                auto c31_temp = graph::piecewise_2D(c31, num_cols, r_norm, z_norm);
-                auto c32_temp = graph::piecewise_2D(c32, num_cols, r_norm, z_norm);
-                auto c33_temp = graph::piecewise_2D(c33, num_cols, r_norm, z_norm);
-
-                auto psi = c00_temp
-                         + c01_temp*z_norm
-                         + c02_temp*(z_norm*z_norm)
-                         + c03_temp*(z_norm*z_norm*z_norm)
-                         + c10_temp*r_norm
-                         + c11_temp*r_norm*z_norm
-                         + c12_temp*r_norm*(z_norm*z_norm)
-                         + c13_temp*r_norm*(z_norm*z_norm*z_norm)
-                         + c20_temp*(r_norm*r_norm)
-                         + c21_temp*(r_norm*r_norm)*z_norm
-                         + c22_temp*(r_norm*r_norm)*(z_norm*z_norm)
-                         + c23_temp*(r_norm*r_norm)*(z_norm*z_norm*z_norm)
-                         + c30_temp*(r_norm*r_norm*r_norm)
-                         + c31_temp*(r_norm*r_norm*r_norm)*z_norm
-                         + c32_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm)
-                         + c33_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm*z_norm);
-
-                auto psi_norm = (psi - psimin)/dpsi;
-                
-                auto n0_temp = graph::piecewise_1D(ne_c0, psi_norm);
-                auto n1_temp = graph::piecewise_1D(ne_c1, psi_norm);
-                auto n2_temp = graph::piecewise_1D(ne_c2, psi_norm);
-                auto n3_temp = graph::piecewise_1D(ne_c3, psi_norm);
+                auto n0_temp = graph::piecewise_1D(ne_c0, psi_norm_cache);
+                auto n1_temp = graph::piecewise_1D(ne_c1, psi_norm_cache);
+                auto n2_temp = graph::piecewise_1D(ne_c2, psi_norm_cache);
+                auto n3_temp = graph::piecewise_1D(ne_c3, psi_norm_cache);
 
                 ne_cache = ne_scale*(n0_temp +
-                                     n1_temp*psi_norm +
-                                     n2_temp*psi_norm*psi_norm +
-                                     n3_temp*psi_norm*psi_norm*psi_norm);
+                                     n1_temp*psi_norm_cache +
+                                     n2_temp*psi_norm_cache*psi_norm_cache +
+                                     n3_temp*psi_norm_cache*psi_norm_cache*psi_norm_cache);
 
-                auto t0_temp = graph::piecewise_1D(te_c0, psi_norm);
-                auto t1_temp = graph::piecewise_1D(te_c1, psi_norm);
-                auto t2_temp = graph::piecewise_1D(te_c2, psi_norm);
-                auto t3_temp = graph::piecewise_1D(te_c3, psi_norm);
+                auto t0_temp = graph::piecewise_1D(te_c0, psi_norm_cache);
+                auto t1_temp = graph::piecewise_1D(te_c1, psi_norm_cache);
+                auto t2_temp = graph::piecewise_1D(te_c2, psi_norm_cache);
+                auto t3_temp = graph::piecewise_1D(te_c3, psi_norm_cache);
 
                 te_cache = te_scale*(t0_temp +
-                                     t1_temp*psi_norm +
-                                     t2_temp*psi_norm*psi_norm +
-                                     t3_temp*psi_norm*psi_norm*psi_norm);
+                                     t1_temp*psi_norm_cache +
+                                     t2_temp*psi_norm_cache*psi_norm_cache +
+                                     t3_temp*psi_norm_cache*psi_norm_cache*psi_norm_cache);
 
-                auto p0_temp = graph::piecewise_1D(pres_c0, psi_norm);
-                auto p1_temp = graph::piecewise_1D(pres_c1, psi_norm);
-                auto p2_temp = graph::piecewise_1D(pres_c2, psi_norm);
-                auto p3_temp = graph::piecewise_1D(pres_c3, psi_norm);
+                auto p0_temp = graph::piecewise_1D(pres_c0, psi_norm_cache);
+                auto p1_temp = graph::piecewise_1D(pres_c1, psi_norm_cache);
+                auto p2_temp = graph::piecewise_1D(pres_c2, psi_norm_cache);
+                auto p3_temp = graph::piecewise_1D(pres_c3, psi_norm_cache);
 
                 auto pressure = pres_scale*(p0_temp +
-                                            p1_temp*psi_norm +
-                                            p2_temp*psi_norm*psi_norm +
-                                            p3_temp*psi_norm*psi_norm*psi_norm);
+                                            p1_temp*psi_norm_cache +
+                                            p2_temp*psi_norm_cache*psi_norm_cache +
+                                            p3_temp*psi_norm_cache*psi_norm_cache*psi_norm_cache);
 
                 auto q = graph::constant<T, SAFE_MATH> (static_cast<T> (1.60218E-19));
 
@@ -1270,6 +1361,45 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> z) {
             set_cache(x, y, z);
             return b_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  Use the value at the y intercept.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) final {
+            auto x_axis = graph::variable<T, SAFE_MATH> (1, "x");
+            auto y_axis = graph::variable<T, SAFE_MATH> (1, "y");
+            auto z_axis = graph::variable<T, SAFE_MATH> (1, "z");
+            x_axis->set(static_cast<T> (1.7));
+            y_axis->set(static_cast<T> (0.0));
+            z_axis->set(static_cast<T> (0.0));
+            auto b_vec = get_magnetic_field(x_axis, y_axis, z_axis);
+            auto b_mod = b_vec->length();
+
+            graph::input_nodes<T, SAFE_MATH> inputs {
+                graph::variable_cast(x_axis),
+                graph::variable_cast(y_axis),
+                graph::variable_cast(z_axis)
+            };
+
+            workflow::manager<T, SAFE_MATH> work(device_number);
+            solver::newton(work, {
+                x_axis, z_axis
+            }, inputs, psi_norm_cache, static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
+            work.add_item(inputs, {b_mod}, {}, "bmod_at_axis");
+            work.compile();
+            work.run();
+
+            T result;
+            work.copy_to_host(b_mod, &result);
+
+            return graph::constant<T, SAFE_MATH> (result);
         }
     };
 
@@ -2012,6 +2142,23 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> v) {
             set_cache(s, u, v);
             return bvec_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  Use the value at the y intercept.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) final {
+            auto s_axis = graph::zero<T, SAFE_MATH> ();
+            auto u_axis = graph::zero<T, SAFE_MATH> ();
+            auto v_axis = graph::zero<T, SAFE_MATH> ();
+            auto b_vec = get_magnetic_field(s_axis, u_axis, v_axis);
+            return b_vec->length();
         }
 
 //------------------------------------------------------------------------------

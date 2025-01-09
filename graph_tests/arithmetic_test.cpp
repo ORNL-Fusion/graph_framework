@@ -392,6 +392,47 @@ template<jit::float_scalar T> void test_add() {
            "Expected var_a");
     assert(common_var5_cast->get_left()->is_match(2.0/var_b + 3.0/var_c) &&
            "Expected 2/b + 3/c");
+
+//  (a*b)^c + (a*d)^c -> a^c*(b^c + d^c)
+    auto common_power_factor = graph::pow(var_a*var_b, 2.0)
+                             + graph::pow(var_a*var_c, 2.0);
+    auto common_power_factor_cast = multiply_cast(common_power_factor);
+    assert(common_power_factor_cast.get() && "Expected a multiply node.");
+    assert(common_power_factor_cast->get_right()->is_match(var_a*var_a) &&
+           "Expected a^2 on the right.");
+    assert(common_power_factor_cast->get_left()->is_match(var_b*var_b +
+                                                          var_c*var_c) &&
+           "Expected b^2 + c^2 on the left.");
+//  (a*b)^c + (d*a)^c -> a^c*(b^c + d^c)
+    auto common_power_factor2 = graph::pow(var_a*var_b, 2.0)
+                              + graph::pow(var_c*var_a, 2.0);
+    auto common_power_factor2_cast = multiply_cast(common_power_factor2);
+    assert(common_power_factor2_cast.get() && "Expected a multiply node.");
+    assert(common_power_factor2_cast->get_right()->is_match(var_a*var_a) &&
+           "Expected a^2 on the right.");
+    assert(common_power_factor2_cast->get_left()->is_match(var_b*var_b +
+                                                           var_c*var_c) &&
+           "Expected b^2 + c^2 on the left.");
+//  (b*a)^c + (a*d)^c -> a^c*(b^c + d^c)
+    auto common_power_factor3 = graph::pow(var_b*var_a, 2.0)
+                              + graph::pow(var_a*var_c, 2.0);
+    auto common_power_factor3_cast = multiply_cast(common_power_factor3);
+    assert(common_power_factor3_cast.get() && "Expected a multiply node.");
+    assert(common_power_factor3_cast->get_right()->is_match(var_a*var_a) &&
+           "Expected a^2 on the right.");
+    assert(common_power_factor3_cast->get_left()->is_match(var_b*var_b +
+                                                           var_c*var_c) &&
+           "Expected b^2 + c^2 on the left.");
+//  (b*a)^c + (d*a)^c -> a^c*(b^c + d^c)
+    auto common_power_factor4 = graph::pow(var_b*var_a, 2.0)
+                              + graph::pow(var_c*var_a, 2.0);
+    auto common_power_factor4_cast = multiply_cast(common_power_factor4);
+    assert(common_power_factor4_cast.get() && "Expected a multiply node.");
+    assert(common_power_factor4_cast->get_right()->is_match(var_a*var_a) &&
+           "Expected a^2 on the right.");
+    assert(common_power_factor4_cast->get_left()->is_match(var_b*var_b +
+                                                           var_c*var_c) &&
+           "Expected b^2 + c^2 on the left.");
 }
 
 //------------------------------------------------------------------------------

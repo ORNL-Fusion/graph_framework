@@ -24,9 +24,10 @@ namespace solver {
 ///  @param[in]     inputs         Inputs for jit compile.
 ///  @param[in]     func           Function to find the root of.
 ///  @param[in]     tolarance      Tolarance to solve the dispersion function
-///                                 to.
+///                                to.
 ///  @param[in]     max_iterations Maximum number of iterations before giving
-///                                 up.
+///                                up.
+///  @param[in]     step           Newton step size.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     void newton(workflow::manager<T, SAFE_MATH> &work,
@@ -34,10 +35,11 @@ namespace solver {
                 graph::input_nodes<T, SAFE_MATH> inputs,
                 graph::shared_leaf<T, SAFE_MATH> func,
                 const T tolarance = 1.0E-30,
-                const size_t max_iterations = 1000) {
+                const size_t max_iterations = 1000,
+                const T step = 1.0) {
         graph::map_nodes<T, SAFE_MATH> setters;
         for (auto x : vars) {
-            setters.push_back({x - func/func->df(x),
+            setters.push_back({x - step*func/func->df(x),
                                graph::variable_cast(x)});
         }
 

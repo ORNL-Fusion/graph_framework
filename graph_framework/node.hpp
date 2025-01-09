@@ -1113,6 +1113,36 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  Some nodes require additions to the preamble however most don't so define a
+///  generic method that does nothing.
+///
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::ostringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
+            if (usage.find(this) == usage.end()) {
+                usage[this] = 1;
+#ifdef SHOW_USE_COUNT
+            } else {
+                ++usage[this];
+#endif
+            }
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
 ///  @param[in,out] stream    String buffer stream.
