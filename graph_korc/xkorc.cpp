@@ -99,7 +99,7 @@ void run_korc() {
             
             auto u_next = (u_prime + u_prime_dot_t*t + u_prime->cross(t))/s;
             
-            auto pos_next = pos + larmor_radius*dt*u_next/gamma;
+            auto pos_next = pos + larmor_radius*dt*u_next/gamma_next;
             
             work.add_item({
                 graph::variable_cast(x),
@@ -143,15 +143,16 @@ void run_korc() {
             const timeing::measure_diagnostic t_run("Run Time");
             work.pre_run();
             for (size_t i = 0; i < 1000000; i++) {
-                sync.join();
+                /*sync.join();
                 work.wait();
                 sync = std::thread([&file, &dataset] () -> void {
                     dataset.write(file);
-                });
+                });*/
                 
                 work.run();
             }
-            
+            work.wait();
+
             sync.join();
             dataset.write(file);
             work.wait();
