@@ -905,7 +905,7 @@ namespace dispersion {
             auto ne = eq->get_electron_density(x, y, z);
             auto te = eq->get_electron_temperature(x, y, z);
 
-            auto ve = graph::sqrt(2.0*physics<T, SAFE_MATH>::q*te /
+            auto ve = graph::sqrt(static_cast<T> (2.0)*physics<T, SAFE_MATH>::q*te /
                                   physics<T, SAFE_MATH>::me)
                     / physics<T, SAFE_MATH>::c;
 
@@ -1009,7 +1009,7 @@ namespace dispersion {
             auto ne = eq->get_electron_density(x, y, z);
             auto te = eq->get_electron_temperature(x, y, z);
             
-            auto ve = graph::sqrt(2.0*physics<T, SAFE_MATH>::q*te /
+            auto ve = graph::sqrt(static_cast<T> (2.0)*physics<T, SAFE_MATH>::q*te /
                                   physics<T, SAFE_MATH>::me)
                     / physics<T, SAFE_MATH>::c;
 
@@ -1122,7 +1122,7 @@ namespace dispersion {
             auto ne = eq->get_electron_density(x, y, z);
             auto te = eq->get_electron_temperature(x, y, z);
 
-            auto ve = graph::sqrt(2.0*physics<T, SAFE_MATH>::q*te /
+            auto ve = graph::sqrt(static_cast<T> (2.0)*physics<T, SAFE_MATH>::q*te /
                                   physics<T, SAFE_MATH>::me);
 
 //  Setup characteristic frequencies.
