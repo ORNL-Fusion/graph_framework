@@ -449,16 +449,19 @@ namespace gpu {
 ///  @param[in]     outputs       Output nodes of the graph to compute.
 ///  @param[in]     setters       Map outputs back to input values.
 ///  @param[in,out] registers     Map of used registers.
+///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    jit::register_map &registers,
+                                   jit::register_map &indices,
                                    const jit::register_usage &usage) {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
                                                                   registers,
+                                                                  indices,
                                                                   usage);
                 source_buffer << "        " << jit::to_string('v', in.get());
                 source_buffer << "[i] = ";
@@ -484,6 +487,7 @@ namespace gpu {
             for (auto &out : outputs) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
                                                                   registers,
+                                                                  indices,
                                                                   usage);
                 source_buffer << "        " << jit::to_string('o', out.get());
                 source_buffer << "[i] = ";

@@ -150,6 +150,43 @@ namespace jit {
     }
 
 //------------------------------------------------------------------------------
+///  @brief Get smallest integer type.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] max_size The maximum size needed.
+///  @returns The smallest integer type as a string.
+//------------------------------------------------------------------------------
+    template<float_scalar T>
+    std::string smallest_int_type(const size_t max_size) {
+        if (max_size <= std::numeric_limits<unsigned char>::max()) {
+            if constexpr (jit::use_metal<T> ()) {
+                return "ushort";
+            } else {
+                return "unsigned char";
+            }
+        } else if (max_size <= std::numeric_limits<unsigned short>::max()) {
+            if constexpr (jit::use_metal<T> ()) {
+                return "ushort";
+            } else {
+                return "unsigned short";
+            }
+        } else if (max_size <= std::numeric_limits<unsigned int>::max()) {
+            if constexpr (jit::use_metal<T> ()) {
+                return "uint";
+            } else {
+                return "unsigned int";
+            }
+        } else {
+            if constexpr (jit::use_metal<T> ()) {
+                return "uint";
+            } else {
+                return "size_t";
+            }
+        }
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Get the type string.
 ///
 ///  @tparam T Base type of the calculation.
@@ -244,8 +281,9 @@ namespace jit {
     std::string to_string(const char prefix,
                           const NODE *pointer) {
         assert((prefix == 'r' || prefix == 'v' ||
-                prefix == 'o' || prefix == 'a') &&
-               "Expected a variable (v), register (r), output (o) or array (a) prefix.");
+                prefix == 'o' || prefix == 'a' ||
+                prefix == 'i') &&
+               "Expected a variable (v), register (r), output (o), array (a) or index (i) prefix.");
         return std::string(1, prefix) +
                format_to_string(reinterpret_cast<size_t> (pointer));
     }

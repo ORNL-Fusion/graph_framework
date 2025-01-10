@@ -117,12 +117,14 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
+///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                jit::register_map &indices,
                 const jit::register_usage &usage) = 0;
 
 //------------------------------------------------------------------------------
@@ -424,12 +426,14 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
+///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
 #ifdef USE_CONSTANT_CACHE
@@ -743,14 +747,16 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
+///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                jit::register_map &indices,
                 const jit::register_usage &usage) {
-            return this->arg->compile(stream, registers, usage);
+            return this->arg->compile(stream, registers, indices, usage);
         }
 
 //------------------------------------------------------------------------------
@@ -1147,12 +1153,14 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
+///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                jit::register_map &indices,
                 const jit::register_usage &usage) {
            return this->shared_from_this();
         }
