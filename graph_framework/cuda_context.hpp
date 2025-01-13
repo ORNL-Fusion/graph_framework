@@ -746,6 +746,7 @@ namespace gpu {
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    jit::register_map &registers,
+                                   jit::register_map &indices,
                                    const jit::register_usage &usage) {
             for (auto &[out, in] : setters) {
                 graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
