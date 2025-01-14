@@ -293,12 +293,15 @@ void compile_index(std::ostringstream &stream,
                 jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
+#ifdef USE_INDEX_CACHE
                 if (indices.find(this->arg.get()) == indices.end()) {
+#endif
                     const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                     shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
                                                                      registers,
                                                                      indices,
                                                                      usage);
+#ifdef USE_INDEX_CACHE
                     indices[a.get()] = jit::to_string('i', a.get());
                     stream << "        const "
                            << jit::smallest_int_type<T> (length) << " "
@@ -306,6 +309,7 @@ void compile_index(std::ostringstream &stream,
                     compile_index<T> (stream, registers[a.get()], length);
                     a->endline(stream, usage);
                 }
+#endif
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -326,22 +330,39 @@ void compile_index(std::ostringstream &stream,
 #endif
                 stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
                 if constexpr (jit::use_metal<T> ()) {
+#ifdef USE_INDEX_CACHE
                     stream << ".read("
-                           << indices[this->arg.get()];
+                           << indices[this->arg.get()]
+                           << ").r";
+#else
+                    stream << ".read(";
+                    compile_index<T> (stream, registers[a.get()], length);
                     stream << ").r";
+#endif
 #ifdef USE_CUDA_TEXTURES
                 } else if constexpr (jit::use_cuda()) {
+#ifdef USE_INDEX_CACHE
                     stream << ", "
                            << indices[this->arg.get()];
+#else
+                    stream << ", ";
+                    compile_index<T> (stream, registers[a.get()], length);
+#endif
                     if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
                         stream << ")";
                     }
                     stream << ")";
 #endif
                 } else {
+#ifdef USE_INDEX_CACHE
                     stream << "["
                            << indices[this->arg.get()]
                            << "]";
+#else
+                    stream << "[";
+                    compile_index<T> (stream, registers[a.get()], length);
+                    stream << "]";
+#endif
                 }
                 this->endline(stream, usage);
             }
@@ -839,11 +860,14 @@ void compile_index(std::ostringstream &stream,
                 const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
                 const size_t num_rows = length/num_columns;
 
+#ifdef USE_INDEX_CACHE
                 if (indices.find(this->left.get()) == indices.end()) {
+#endif
                     shared_leaf<T, SAFE_MATH> x = this->left->compile(stream,
                                                                       registers,
                                                                       indices,
                                                                       usage);
+#ifdef USE_INDEX_CACHE
                     indices[x.get()] = jit::to_string('i', x.get());
                     stream << "        const "
                            << jit::smallest_int_type<T> (num_rows) << " "
@@ -852,10 +876,12 @@ void compile_index(std::ostringstream &stream,
                     x->endline(stream, usage);
                 }
                 if (indices.find(this->right.get()) == indices.end()) {
+#endif
                     shared_leaf<T, SAFE_MATH> y = this->right->compile(stream,
                                                                        registers,
                                                                        indices,
                                                                        usage);
+#ifdef USE_INDEX_CACHE
                     indices[y.get()] = jit::to_string('i', y.get());
                     stream << "        const "
                            << jit::smallest_int_type<T> (num_columns) << " "
@@ -882,7 +908,8 @@ void compile_index(std::ostringstream &stream,
                                << ";" << std::endl;
                     }
                 }
-                
+#endif
+
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
@@ -902,6 +929,7 @@ void compile_index(std::ostringstream &stream,
 #endif
                 stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
                 if constexpr (jit::use_metal<T> ()) {
+#ifdef USE_INDEX_CACHE
                     stream << ".read("
                            << jit::smallest_int_type<T> (std::max(num_rows,
                                                                   num_columns))
@@ -910,21 +938,43 @@ void compile_index(std::ostringstream &stream,
                            << ","
                            << indices[this->left.get()]
                            << ")).r";
+#else
+                    stream << ".read(uint2(";
+                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << ",";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    stream << ")).r";
+#endif
 #ifdef USE_CUDA_TEXTURES
                 } else if constexpr (jit::use_cuda()) {
+#ifdef USE_INDEX_CACHE
                     stream << ", "
                            << indices[this->right.get()]
                            << ", "
                            << indices[this->left.get()];
+#else
+                    stream << ", ";
+                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << ", ";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+#endif
                     if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
                         stream << ")";
                     }
                     stream << ")";
 #endif
                 } else {
+#ifdef USE_INDEX_CACHE
                     stream << "["
                            << indices[temp.get()]
                            << "]";
+#else
+                    stream << "[";
+                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    stream << "*" << num_columns << " + ";
+                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    stream << "]";
+#endif
                 }
                 this->endline(stream, usage);
             }
