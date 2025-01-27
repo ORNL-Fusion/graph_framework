@@ -8,7 +8,7 @@
 #ifndef arithmetic_h
 #define arithmetic_h
 
-#include "trigonometry.hpp"
+#include "node.hpp"
 
 namespace graph {
 //------------------------------------------------------------------------------
@@ -741,12 +741,12 @@ namespace graph {
 //  Test for hash collisions.
         for (size_t i = temp->get_hash();
              i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
-                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
-                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
@@ -1563,12 +1563,12 @@ namespace graph {
 //  Test for hash collisions.
         for (size_t i = temp->get_hash();
              i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
-                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
-                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
@@ -1822,8 +1822,8 @@ namespace graph {
             }
 
 //  Move trig to the right.
-            auto cl = graph::cos_cast(this->left);
-            auto sl = graph::sin_cast(this->left);
+            auto cl = cos_cast(this->left);
+            auto sl = sin_cast(this->left);
             if ((cl.get() && !this->right->is_power_like() &&
                  !this->right->is_all_variables() &&
                  !sin_cast(this->right).get()) ||
@@ -2455,12 +2455,12 @@ namespace graph {
 //  Test for hash collisions.
         for (size_t i = temp->get_hash();
              i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
-                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
-                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
@@ -3406,12 +3406,12 @@ namespace graph {
 //  Test for hash collisions.
         for (size_t i = temp->get_hash();
              i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
-                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
-                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
@@ -4837,12 +4837,12 @@ namespace graph {
 //  Test for hash collisions.
         for (size_t i = temp->get_hash();
              i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
-                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
-                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)

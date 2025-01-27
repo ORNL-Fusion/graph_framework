@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-///  @file absoprtion.hpp
-///  @brief Base class for a dispersion relation.
+///  @file absorption.hpp
+///  @brief Base class for an absorption model.
 ///
 ///  Defines functions for computing power absorbtion.
 //------------------------------------------------------------------------------
@@ -11,6 +11,7 @@
 #include <thread>
 
 #include "newton.hpp"
+#include "output.hpp"
 
 namespace absorption {
 //******************************************************************************

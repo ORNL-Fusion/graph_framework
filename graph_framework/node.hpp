@@ -312,13 +312,21 @@ namespace graph {
         }
 
 // Create one struct that holds both caches: for constructed nodes and for the backend buffers
-    struct caches_t {
-        std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> main_cache;
-        std::map<size_t, backend::buffer<T>> backend_cache;
-    };
+//------------------------------------------------------------------------------
+///  @brief Data structure to contain the two caches.
+///
+///  This a avoids an issue on gnu compilers where it would try to redefine the
+///  __tls_guard twice depending on the include order.
+//------------------------------------------------------------------------------
+        struct caches_t {
+///  Cache of node.
+            std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> nodes;
+///  Cache of backend buffers.
+            std::map<size_t, backend::buffer<T>> backends;
+        };
 
-// We define only one inline static thread_local variable
-    inline static thread_local caches_t caches;
+///  A per thread instance of the cache structure.
+        inline static thread_local caches_t caches;
 
 ///  Type def to retrieve the backend type.
         typedef T base;
@@ -595,12 +603,12 @@ namespace graph {
         auto temp = std::make_shared<constant_node<T, SAFE_MATH>> (d);
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
-                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
-                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
@@ -1370,7 +1378,7 @@ namespace graph {
     using input_nodes = std::vector<shared_variable<T, SAFE_MATH>>;
 ///  Convenience type alias for maping end codes back to inputs.
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    using map_nodes = std::vector<std::pair<graph::shared_leaf<T, SAFE_MATH>,
+    using map_nodes = std::vector<std::pair<shared_leaf<T, SAFE_MATH>,
                                             shared_variable<T, SAFE_MATH>>>;
 
 //------------------------------------------------------------------------------
