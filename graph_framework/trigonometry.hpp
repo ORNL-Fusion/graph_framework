@@ -228,12 +228,12 @@ namespace graph {
         auto temp = std::make_shared<sine_node<T, SAFE_MATH>> (x)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::cache.end()) {
-                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
+                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
-                return leaf_node<T, SAFE_MATH>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
@@ -478,12 +478,12 @@ namespace graph {
         auto temp = std::make_shared<cosine_node<T, SAFE_MATH>> (x)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::cache.end()) {
-                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
+                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
-                return leaf_node<T, SAFE_MATH>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
@@ -798,12 +798,12 @@ namespace graph {
         auto temp = std::make_shared<arctan_node<T, SAFE_MATH>> (l, r)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::cache.end()) {
-                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
+                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
-                return leaf_node<T, SAFE_MATH>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)

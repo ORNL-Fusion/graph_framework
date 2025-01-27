@@ -311,12 +311,14 @@ namespace graph {
                    << std::endl;
         }
 
-///  Cache for constructed nodes.
-        inline thread_local static std::map<size_t,
-                                            std::shared_ptr<leaf_node<T, SAFE_MATH>>> cache;
-///  Cache for the backend buffers.
-        inline thread_local static std::map<size_t,
-                                            backend::buffer<T>> backend_cache;
+// Create one struct that holds both caches: for constructed nodes and for the backend buffers
+    struct caches_t {
+        std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> main_cache;
+        std::map<size_t, backend::buffer<T>> backend_cache;
+    };
+
+// We define only one inline static thread_local variable
+    inline static thread_local caches_t caches;
 
 ///  Type def to retrieve the backend type.
         typedef T base;
@@ -593,12 +595,12 @@ namespace graph {
         auto temp = std::make_shared<constant_node<T, SAFE_MATH>> (d);
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::cache.end()) {
-                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.main_cache.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.main_cache.end()) {
+                leaf_node<T, SAFE_MATH>::caches.main_cache[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
-                return leaf_node<T, SAFE_MATH>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.main_cache[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.main_cache[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
