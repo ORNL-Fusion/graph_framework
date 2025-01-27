@@ -116,11 +116,11 @@ void compile_index(std::ostringstream &stream,
         static size_t hash_data(const backend::buffer<T> &d) {
             const size_t h = std::hash<std::string>{} (piecewise_1D_node::to_string(d));
             for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
-                if (leaf_node<T, SAFE_MATH>::backend_cache.find(i) ==
-                    leaf_node<T, SAFE_MATH>::backend_cache.end()) {
-                    leaf_node<T, SAFE_MATH>::backend_cache[i] = d;
+                if (leaf_node<T, SAFE_MATH>::caches.backends.find(i) ==
+                    leaf_node<T, SAFE_MATH>::caches.backends.end()) {
+                    leaf_node<T, SAFE_MATH>::caches.backends[i] = d;
                     return i;
-                } else if (d == leaf_node<T, SAFE_MATH>::backend_cache[i]) {
+                } else if (d == leaf_node<T, SAFE_MATH>::caches.backends[i]) {
                     return i;
                 }
             }
@@ -156,7 +156,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash];
+            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash];
         }
 
 //------------------------------------------------------------------------------
@@ -207,16 +207,16 @@ void compile_index(std::ostringstream &stream,
                                             visited, usage,
                                             textures1d, textures2d,
                                             avail_const_mem);
-                if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
-                    registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
-                        jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
-                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                if (registers.find(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()) == registers.end()) {
+                    registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] =
+                        jit::to_string('a', leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data());
+                    const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
                                                length);
 #ifdef USE_CUDA_TEXTURES
                     } else if constexpr (jit::use_cuda()) {
-                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
                                                length);
 #endif
                     } else {
@@ -229,30 +229,30 @@ void compile_index(std::ostringstream &stream,
                         }
                         stream << "const ";
                         jit::add_type<T> (stream);
-                        stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
+                        stream << " " << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] << "[] = {";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
+                        stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0];
                         for (size_t i = 1; i < length; i++) {
                             stream << ", ";
                             if constexpr (jit::is_complex<T> ()) {
                                 jit::add_type<T> (stream);
                             }
-                            stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                            stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i];
                         }
                         stream << "};" << std::endl;
                     }
                 } else {
 //  When using textures, the register can be defined in a previous kernel. We
 //  need to add the textures again.
-                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                    const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
                                                length);
 #ifdef USE_CUDA_TEXTURES
                     } else if constexpr (jit::use_cuda()) {
-                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                        textures1d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
                                                length);
 #endif
                     }
@@ -296,7 +296,7 @@ void compile_index(std::ostringstream &stream,
 #ifdef USE_INDEX_CACHE
                 if (indices.find(this->arg.get()) == indices.end()) {
 #endif
-                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                    const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                     shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
                                                                      registers,
                                                                      indices,
@@ -328,7 +328,7 @@ void compile_index(std::ostringstream &stream,
                     }
                 }
 #endif
-                stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
+                stream << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()];
                 if constexpr (jit::use_metal<T> ()) {
 #ifdef USE_INDEX_CACHE
                     stream << ".read("
@@ -435,7 +435,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns True the node has a zero constant value.
 //------------------------------------------------------------------------------
         virtual bool has_constant_zero() const {
-            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].has_zero();
+            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].has_zero();
         }
 
 //------------------------------------------------------------------------------
@@ -493,7 +493,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The size of the buffer.
 //------------------------------------------------------------------------------
         size_t get_size() const {
-            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
         }
     };
 
@@ -513,12 +513,12 @@ void compile_index(std::ostringstream &stream,
         auto temp = std::make_shared<piecewise_1D_node<T, SAFE_MATH>> (d, x)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::cache.end()) {
-                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
-                return leaf_node<T, SAFE_MATH>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)
@@ -633,11 +633,11 @@ void compile_index(std::ostringstream &stream,
         static size_t hash_data(const backend::buffer<T> &d) {
             const size_t h = std::hash<std::string>{} (piecewise_2D_node::to_string(d));
             for (size_t i = h; i < std::numeric_limits<size_t>::max(); i++) {
-                if (leaf_node<T, SAFE_MATH>::backend_cache.find(i) ==
-                    leaf_node<T, SAFE_MATH>::backend_cache.end()) {
-                    leaf_node<T, SAFE_MATH>::backend_cache[i] = d;
+                if (leaf_node<T, SAFE_MATH>::caches.backends.find(i) ==
+                    leaf_node<T, SAFE_MATH>::caches.backends.end()) {
+                    leaf_node<T, SAFE_MATH>::caches.backends[i] = d;
                     return i;
-                } else if (d == leaf_node<T, SAFE_MATH>::backend_cache[i]) {
+                } else if (d == leaf_node<T, SAFE_MATH>::caches.backends[i]) {
                     return i;
                 }
             }
@@ -688,7 +688,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The number of columns in the constant.
 //------------------------------------------------------------------------------
         size_t get_num_rows() const {
-            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size() /
+            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size() /
                    num_columns;
         }
 
@@ -702,7 +702,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash];
+            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash];
         }
 
 //------------------------------------------------------------------------------
@@ -758,16 +758,16 @@ void compile_index(std::ostringstream &stream,
                                               visited, usage,
                                               textures1d, textures2d,
                                               avail_const_mem);
-                if (registers.find(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()) == registers.end()) {
-                    registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] =
-                        jit::to_string('a', leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data());
-                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                if (registers.find(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()) == registers.end()) {
+                    registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] =
+                        jit::to_string('a', leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data());
+                    const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
                                                std::array<size_t, 2> ({length/num_columns, num_columns}));
 #ifdef USE_CUDA_TEXTURES
                     } else if constexpr (jit::use_cuda()) {
-                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
                                                std::array<size_t, 2> ({length/num_columns, num_columns}));
 #endif
                     } else {
@@ -780,30 +780,30 @@ void compile_index(std::ostringstream &stream,
                         }
                         stream << "const ";
                         jit::add_type<T> (stream);
-                        stream << " " << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()] << "[] = {";
+                        stream << " " << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] << "[] = {";
                         if constexpr (jit::is_complex<T> ()) {
                             jit::add_type<T> (stream);
                         }
-                        stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][0];
+                        stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0];
                         for (size_t i = 1; i < length; i++) {
                             stream << ", ";
                             if constexpr (jit::is_complex<T> ()) {
                                 jit::add_type<T> (stream);
                             }
-                            stream << leaf_node<T, SAFE_MATH>::backend_cache[data_hash][i];
+                            stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i];
                         }
                         stream << "};" << std::endl;
                     }
                 } else {
 //  When using textures, the register can be defined in a previous kernel. We
 //  need to add the textures again.
-                    const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                    const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
-                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
                                                std::array<size_t, 2> ({length/num_columns, num_columns}));
 #ifdef USE_CUDA_TEXTURES
                     } else if constexpr (jit::use_cuda()) {
-                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data(),
+                        textures2d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
                                                std::array<size_t, 2> ({length/num_columns, num_columns}));
 #endif
                     }
@@ -857,7 +857,7 @@ void compile_index(std::ostringstream &stream,
                 jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                 const size_t num_rows = length/num_columns;
 
 #ifdef USE_INDEX_CACHE
@@ -898,7 +898,7 @@ void compile_index(std::ostringstream &stream,
                              ) {
                     if (indices.find(temp.get()) == indices.end()) {
                         indices[temp.get()] = jit::to_string('i', temp.get());
-                        const size_t length = leaf_node<T, SAFE_MATH>::backend_cache[data_hash].size();
+                        const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                         stream << "        const "
                                << jit::smallest_int_type<T> (length) << " "
                                << indices[temp.get()] << " = "
@@ -927,7 +927,7 @@ void compile_index(std::ostringstream &stream,
                     }
                 }
 #endif
-                stream << registers[leaf_node<T, SAFE_MATH>::backend_cache[data_hash].data()];
+                stream << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()];
                 if constexpr (jit::use_metal<T> ()) {
 #ifdef USE_INDEX_CACHE
                     stream << ".read("
@@ -1051,7 +1051,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns True the node has a zero constant value.
 //------------------------------------------------------------------------------
         virtual bool has_constant_zero() const {
-            return leaf_node<T, SAFE_MATH>::backend_cache[data_hash].has_zero();
+            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].has_zero();
         }
 
 //------------------------------------------------------------------------------
@@ -1154,12 +1154,12 @@ void compile_index(std::ostringstream &stream,
         auto temp = std::make_shared<piecewise_2D_node<T, SAFE_MATH>> (d, n, x, y)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::cache.find(i) ==
-                leaf_node<T, SAFE_MATH>::cache.end()) {
-                leaf_node<T, SAFE_MATH>::cache[i] = temp;
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
                 return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::cache[i])) {
-                return leaf_node<T, SAFE_MATH>::cache[i];
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
             }
         }
 #if defined(__clang__) || defined(__GNUC__)

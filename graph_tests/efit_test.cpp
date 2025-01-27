@@ -14,7 +14,6 @@
 #include <netcdf.h>
 
 #include "equilibrium.hpp"
-#include "workflow.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Class interface for gold data.
