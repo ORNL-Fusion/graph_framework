@@ -60,7 +60,7 @@ void run_korc() {
             
             auto gamma = graph::variable<T> (local_num_particles, "\\gamma");
             
-            auto dt = graph::constant<T> (0.25);
+            auto dt = graph::constant<T> (0.5);
             
             auto gamma_init = 1.0/graph::sqrt(1.0 - u_vec->dot(u_vec));
             
@@ -143,11 +143,11 @@ void run_korc() {
             const timeing::measure_diagnostic t_run("Run Time");
             work.pre_run();
             for (size_t i = 0; i < 1000000; i++) {
-                /*sync.join();
+                sync.join();
                 work.wait();
                 sync = std::thread([&file, &dataset] () -> void {
                     dataset.write(file);
-                });*/
+                });
                 
                 work.run();
             }

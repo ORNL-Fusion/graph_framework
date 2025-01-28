@@ -2597,6 +2597,9 @@ template<jit::float_scalar T> void test_divide() {
 //  (c*a)*b/c -> a*b
     assert((((c*a)*b)/c)->is_match(a*b) && "Expected a*b");
 
+//  a/(b/c) -> a*c/b
+    assert((a/(b/c))->is_match(a*c/b) && "Expected a*b/c");
+
 //  (a*b*c)^2/a^2 -> (b*c)^2
 //  (a*b*c)^2/(a^2*d) -> (b*c)^2/d
 //  (e*(a*b*c)^2)/(a^2*d) -> e*(b*c)^2/d
@@ -2713,9 +2716,9 @@ template<jit::float_scalar T> void test_fma() {
            "Expected a value of one.");
 
 //  Test reduction.
-    auto var_a = graph::variable<T> (1, "");
-    auto var_b = graph::variable<T> (1, "");
-    auto var_c = graph::variable<T> (1, "");
+    auto var_a = graph::variable<T> (1, "a");
+    auto var_b = graph::variable<T> (1, "b");
+    auto var_c = graph::variable<T> (1, "c");
 
 //  fma(1,a,b) = a + b
     auto one_times_vara_plus_varb = graph::fma(one, var_a, var_b);
@@ -2764,7 +2767,7 @@ template<jit::float_scalar T> void test_fma() {
            "Expected common var_b");
 
 //  fma(a, b, fma(c, b, d)) -> fma(b, a + c, d)
-    auto var_d = graph::variable<T> (1, "");
+    auto var_d = graph::variable<T> (1, "d");
     auto match1 = graph::fma(var_b, var_a + var_c, var_d);
     auto nested_fma1 = graph::fma(var_a, var_b, 
                                   graph::fma(var_c, var_b, var_d));

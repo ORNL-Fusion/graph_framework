@@ -385,7 +385,7 @@ namespace graph {
         static std::string to_string(const T d) {
             return jit::format_to_string<T> (d);
         }
-        
+
     private:
 ///  Storage buffer for the data.
         const backend::buffer<T> data;
@@ -464,7 +464,8 @@ namespace graph {
                                     + jit::format_to_string(this->evaluate().at(0))
                                     + ")";
                 } else {
-                    registers[this] = jit::format_to_string(this->evaluate().at(0));
+                    registers[this] = "(" + jit::get_type_string<T> () + ")"
+                                    + jit::format_to_string(this->evaluate().at(0));
                 }
 #endif
             }
