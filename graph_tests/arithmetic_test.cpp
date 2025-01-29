@@ -1179,7 +1179,7 @@ template<jit::float_scalar T> void test_multiply() {
     assert(var_times_var_result.size() == 1 && "Expected single value.");
     assert(var_times_var_result.at(0) == static_cast<T> (36) &&
            "Expected 6*6 for result.");
-    
+
 //  Test c1*(c2*v) -> c3*v
     auto c3 = 2.0*(3.0*a);
     auto c3_cast = graph::multiply_cast(c3);
@@ -1660,7 +1660,7 @@ template<jit::float_scalar T> void test_multiply() {
     assert(exp_mul13_cast.get() && "Expected divide node.");
     assert(graph::exp_cast(exp_mul13_cast->get_left()).get() &&
            "Expected a exp node on the left.");
-    
+
 //  cos(v)*a -> a*cos(v)
     auto cosine = graph::cos(variable);
     auto sine = graph::sin(variable);
@@ -1794,7 +1794,7 @@ template<jit::float_scalar T> void test_multiply() {
            "Expected a divide node.");
     assert(todivide1->is_match((var_a*var_b)/var_c) &&
            "Expected a (a*b)/c");
-    
+
 //  e1*(e2*v) -> (e1*e2)*v
     auto promote_var = var_b*(var_c*a);
     auto promote_var_cast = graph::multiply_cast(promote_var);
@@ -1823,7 +1823,7 @@ template<jit::float_scalar T> void test_multiply() {
     assert(promote_var4_cast->get_right()->is_match(a*a) && "Expected a^2");
     assert(promote_var4_cast->get_left()->is_match(var_b*var_c) &&
            "Expected (2 + b)*(3 + c)");
-    
+
 //  (a*b)*a -> a^2*b
     auto gather = (var_a*var_b)*var_a;
     auto gather_cast = graph::multiply_cast(gather);
@@ -1931,7 +1931,7 @@ template<jit::float_scalar T> void test_divide() {
            "Expected to recover numerator.");
     assert((zero/variable)->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected a value of zero.");
-    
+
     auto two_divided_var = 2.0/variable;
     assert(graph::divide_cast(two_divided_var).get() &&
            "Expected divide node.");
@@ -2267,7 +2267,7 @@ template<jit::float_scalar T> void test_divide() {
     auto fma_divide6 = graph::fma(graph::variable<T> (1, ""), a, a)/a;
     auto fma_divide6_cast = graph::add_cast(fma_divide6);
     assert(fma_divide6_cast.get() && "Expected an add node.");
-    
+
 //  (a*b^c)/b^d -> a*b^(c - d)
     auto common_power = (variable*graph::pow(a, 3.0))/graph::pow(a, 2.0);
     assert(graph::multiply_cast(common_power).get() &&
@@ -2597,6 +2597,9 @@ template<jit::float_scalar T> void test_divide() {
 //  (c*a)*b/c -> a*b
     assert((((c*a)*b)/c)->is_match(a*b) && "Expected a*b");
 
+//  a/(b/c) -> a*c/b
+    assert((a/(b/c))->is_match(a*c/b) && "Expected a*b/c");
+
 //  (a*b*c)^2/a^2 -> (b*c)^2
 //  (a*b*c)^2/(a^2*d) -> (b*c)^2/d
 //  (e*(a*b*c)^2)/(a^2*d) -> e*(b*c)^2/d
@@ -2630,7 +2633,7 @@ template<jit::float_scalar T> void test_fma() {
            "Expected two.");
     assert(one_times_zero_plus_two->evaluate()[0] == static_cast<T> (2.0) &&
            "Expected a value of two.");
-    
+
     auto one_times_two_plus_zero = graph::fma(one, two, zero);
     auto one_times_two_plus_zero_cast =
         graph::constant_cast(one_times_two_plus_zero);
@@ -2684,7 +2687,7 @@ template<jit::float_scalar T> void test_fma() {
     assert(constant_df_cast->is(0) && "Expected zero.");
     assert(constant_df->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected a value of zero.");
-    
+
     auto zero_times_var_plus_two_df = zero_times_var_plus_two->df(var);
     auto zero_times_var_plus_two_df_cast =
         graph::constant_cast(zero_times_var_plus_two_df);
@@ -2722,7 +2725,7 @@ template<jit::float_scalar T> void test_fma() {
     auto one_times_vara_plus_varb_cast =
         graph::add_cast(one_times_vara_plus_varb);
     assert(one_times_vara_plus_varb_cast.get() && "Expected an add node.");
-    
+
 //  fma(a,1,b) = a + b
     auto vara_times_one_plus_varb = graph::fma(var_a, one, var_b);
     auto vara_times_one_plus_varb_cast =
@@ -3071,7 +3074,7 @@ template<jit::float_scalar T> void test_fma() {
     assert(chained_fma_cast2.get() && "Expected muliply node.");
     assert(constant_cast(chained_fma_cast2->get_left()) &&
            "Expected constant node.");
-    
+
 //  fma(a,b/c,fma(d,e/c,g)) -> (a*b + d*e)/c + g
     auto chained_fma3 = fma(var_a, var_b/var_c, fma(var_d, var_e/var_c, var));
     assert(add_cast(chained_fma3).get() && "expected add node.");

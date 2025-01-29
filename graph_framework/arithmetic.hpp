@@ -2883,9 +2883,14 @@ namespace graph {
             }
 
 //  (a/b)/c -> a/(b*c)
+//  a/(b/c) -> a*c/b
             auto ld = divide_cast(this->left);
+            auto rd = divide_cast(this->right);
             if (ld.get()) {
                 return ld->get_left()/(ld->get_right()*this->right);
+            }
+            if (rd.get()) {
+                return this->left*rd->get_right()/rd->get_left();
             }
 
 //  Power reductions.
@@ -3223,7 +3228,6 @@ namespace graph {
 
 //  exp(a)/(c/exp(b)) -> (exp(a)*exp(b))/c
 //  exp(a)/(exp(b)/c) -> c*(exp(a)/exp(b))
-            auto rd = divide_cast(this->right);
             if (rd.get() && lexp.get()) {
                 auto rdre = exp_cast(rd->get_right());
                 if (rdre.get()) {
@@ -3813,8 +3817,8 @@ namespace graph {
                     }
                 }
                 if (is_constant_combineable(this->middle,
-                                                   rd->get_left()) &&
-                           !this->middle->has_constant_zero()) {
+                                            rd->get_left()) &&
+                    !this->middle->has_constant_zero()) {
                     auto temp = rd->get_left()/this->middle;
                     if (temp->is_normal()) {
                         return this->middle*(this->left +
@@ -3836,6 +3840,12 @@ namespace graph {
 
 //  Common denominator reductions.
             if (ld.get() && rd.get()) {
+//  fma(b/c,a,b,d) -> b(a/c + 1/d)
+                if (ld->get_left()->is_match(rd->get_left())) {
+                    return ld->get_left()*(this->middle/ld->get_right() +
+                                           1.0/rd->get_right());
+                }
+
 //  fma(a/(b*c),d,e/c) -> fma(a,d,e*b)/(b*c)
 //  fma(a/(c*b),d,e/c) -> fma(a,d,e*b)/(c*b)
 //  fma(a/c,d,e/(c*b)) -> fma(a*b,d,e)/(b*c)

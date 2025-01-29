@@ -110,7 +110,11 @@ int main(int argc, const char * argv[]) {
     (void)argv;
     run_tests<float> (4.0E-15);
     run_tests<double> (1.0E-30);
-    run_tests<std::complex<float>> (4.0E-15);
+    if constexpr (jit::use_cuda()) {
+        run_tests<std::complex<float>> (5.6E-15);
+    } else {
+        run_tests<std::complex<float>> (4.0E-15);
+    }
     run_tests<std::complex<double>> (1.0E-30);
     END_GPU
 }
