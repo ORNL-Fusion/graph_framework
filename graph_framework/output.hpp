@@ -382,7 +382,7 @@ namespace output {
                                                       var.buffer));
                     }
                 } else {
-                    if constexpr (jit::is_complex<T> ()) {\
+                    if constexpr (jit::is_complex<T> ()) {
                         check_error(nc_put_vara_double(result.get_ncid(),
                                                        var.id,
                                                        start.data(),
