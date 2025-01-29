@@ -10,7 +10,7 @@ template<jit::float_scalar T>
 void run_korc() {
     const timeing::measure_diagnostic t_total("Total Time");
     
-    const size_t num_particles = 1;
+    const size_t num_particles = 1000000;
     std::cout << "Num particles " << num_particles << std::endl;
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T>::max_concurrency()),
                                                        static_cast<unsigned int> (num_particles)),
