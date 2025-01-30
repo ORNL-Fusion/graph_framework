@@ -2024,6 +2024,45 @@ namespace graph {
                     return this->right/pow(lp->get_left(), -lp->get_right());
                 }
             }
+//  a^b*c^b -> (a*c)^b
+            if (lp.get() && rp.get()) {
+                if (lp->get_right()->is_match(rp->get_right())) {
+                    return pow(lp->get_left()*rp->get_left(), lp->get_right());
+                }
+            }
+// (a*b^c)*d^c -> a*(b*d)^c
+// (a^c*b)*d^c -> b*(a*d)^c
+// a^c*(b*d^c) -> b*(a*d)^c
+// a^c*(b^c*d) -> d*(a*b)^c
+            if (lm.get() && rp.get()) {
+                auto lmlp = pow_cast(lm->get_left());
+                auto lmrp = pow_cast(lm->get_right());
+                if (lmrp.get()) {
+                    if (lmrp->get_right()->is_match(rp->get_right())) {
+                        return lm->get_left()*pow(lmrp->get_left()*rp->get_left(),
+                                                  rp->get_right());
+                    }
+                } else if (lmlp.get()) {
+                    if (lmlp->get_right()->is_match(rp->get_right())) {
+                        return lm->get_right()*pow(lmlp->get_left()*rp->get_left(),
+                                                   rp->get_right());
+                    }
+                }
+            } else if (rm.get() && lp.get()) {
+                auto rmlp = pow_cast(rm->get_left());
+                auto rmrp = pow_cast(rm->get_right());
+                if (rmrp.get()) {
+                    if (rmrp->get_right()->is_match(lp->get_right())) {
+                        return rm->get_left()*pow(lp->get_left()*rmrp->get_left(),
+                                                  lp->get_right());
+                    }
+                } else if (rmlp.get()) {
+                    if (rmlp->get_right()->is_match(lp->get_right())) {
+                        return rm->get_right()*pow(lp->get_left()*rmlp->get_left(),
+                                                   lp->get_right());
+                    }
+                }
+            }
 
 //  (b*a)^c*a^d -> b^c*a^(c + d)
 //  (a*b)^c*a^d -> b^c*a^(c + d)
@@ -2931,6 +2970,14 @@ namespace graph {
                     }
                 }
             }
+
+//  a^b/c^b -> (a/c)^b
+            if (lp.get() && rp.get()) {
+                if (lp->get_right()->is_match(rp->get_right())) {
+                    return pow(lp->get_left()/rp->get_left(), lp->get_right());
+                }
+            }
+
 //  (a*b)^c/((a^d)*e) = a^(c - d)*b^c/e
 //  (b*a)^c/((a^d)*e) = a^(c - d)*b^c/e
 //  (a*b)^c/(e*(a^d)) = a^(c - d)*b^c/e
@@ -4317,6 +4364,31 @@ namespace graph {
                 if (exponent.get() && exponent->evaluate().is_negative()) {
                     return this->left/pow(mp->get_left(), -mp->get_right()) +
                            this->right;
+                }
+            }
+
+//  a^b*c^b + d -> (a*c)^b + d
+            if (lp.get() && mp.get()) {
+                if (lp->get_right()->is_match(mp->get_right())) {
+                    return pow(lp->get_left()*mp->get_left(),
+                               lp->get_right()) +
+                           this->right;
+                }
+            }
+
+//  fma(2,(ab)^2,a^2b) -> a^2*fma(2, b^2, b)
+            if (rm.get() && mp.get()) {
+                auto mplm = multiply_cast(mp->get_left());
+                if (mplm.get()) {
+                    if (is_variable_combineable(mplm->get_left(),
+                                                rm->get_left())) {
+                        return pow(mplm->get_left(),
+                                   mp->get_right()) *
+                               fma(this->left,
+                                   pow(mplm->get_right(),
+                                       mp->get_right()),
+                                   this->right/mplm->get_left());
+                    }
                 }
             }
 
