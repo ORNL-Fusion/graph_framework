@@ -4341,8 +4341,10 @@ namespace graph {
                 }
             } else if (this->middle->is_all_variables()) {
                 auto rdm = this->right/this->middle;
-                if (rdm->get_complexity() < this->middle->get_complexity() +
-                                            this->right->get_complexity()) {
+                auto rdmc = constant_cast(rdm->get_power_exponent());
+                if ((rdm->get_complexity() < this->middle->get_complexity() +
+                                             this->right->get_complexity()) &&
+                    !(rdmc.get() && rdmc->evaluate().is_negative())) {
                     return (this->left + rdm)*this->middle;
                 }
             }
@@ -4365,6 +4367,19 @@ namespace graph {
                     return this->left/pow(mp->get_left(), -mp->get_right()) +
                            this->right;
                 }
+
+//  fma(2,a^2,a) -> a*fma(2,a,1)
+//  Note this case is handled eailer. fma(2,a,a^2) -> a*fma(2,1,a)
+                if (is_variable_combineable(this->middle,
+                                            this->right)) {
+                    auto temp = this->right/this->middle;
+                    auto temp_exponent = constant_cast(temp->get_power_exponent());
+                    if (temp_exponent.get() && temp_exponent->evaluate().is_negative()) {
+                        return this->right*fma(this->left,
+                                               this->middle/this->right,
+                                               1.0);
+                    }
+                }
             }
 
 //  a^b*c^b + d -> (a*c)^b + d
@@ -4382,12 +4397,43 @@ namespace graph {
                 if (mplm.get()) {
                     if (is_variable_combineable(mplm->get_left(),
                                                 rm->get_left())) {
-                        return pow(mplm->get_left(),
-                                   mp->get_right()) *
-                               fma(this->left,
-                                   pow(mplm->get_right(),
-                                       mp->get_right()),
-                                   this->right/mplm->get_left());
+                        auto temp = pow(mplm->get_left(),
+                                        mp->get_right());
+                        return temp*fma(this->left,
+                                        this->middle/temp,
+                                        this->right/temp);
+                    } else if (is_variable_combineable(mplm->get_right(),
+                                                       rm->get_left())) {
+                        auto temp = pow(mplm->get_right(),
+                                        mp->get_right());
+                        return temp*fma(this->left,
+                                        this->middle/temp,
+                                        this->right/temp);
+                    }
+                }
+            }
+//  fma(2,(a*b)^2,fma(a^2,b,c)) -> fma(a^2,fma(2,b^2,b),c)
+            if (rfma.get() && mp.get()) {
+                auto mplm = multiply_cast(mp->get_left());
+                if (mplm.get()) {
+                    if (is_variable_combineable(mplm->get_left(),
+                                                rfma->get_left())) {
+                        auto temp = pow(mplm->get_left(),
+                                        mp->get_right());
+                        return fma(temp,
+                                   fma(this->left,
+                                       this->middle/temp,
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    } else if (is_variable_combineable(mplm->get_right(),
+                                                       rfma->get_left())) {
+                        auto temp = pow(mplm->get_right(),
+                                        mp->get_right());
+                        return fma(temp,
+                                   fma(this->left,
+                                       this->middle/temp,
+                                       rfma->get_middle()),
+                                   rfma->get_right());
                     }
                 }
             }

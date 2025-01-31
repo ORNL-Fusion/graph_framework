@@ -139,6 +139,8 @@ void run_test() {
 
     auto bvec = eq->get_magnetic_field(x, y, z);
     auto ne = eq->get_electron_density(x, y, z);
+    ne->to_latex();
+    std::cout << std::endl << std::endl;
     auto te = eq->get_electron_temperature(x, y, z);
 
     workflow::manager<T> work(0);
