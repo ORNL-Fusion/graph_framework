@@ -1073,18 +1073,18 @@ namespace equilibrium {
                    + c01_temp*z_norm
                    + c02_temp*(z_norm*z_norm)
                    + c03_temp*(z_norm*z_norm*z_norm)
-                   + c10_temp*r_norm
-                   + c11_temp*r_norm*z_norm
-                   + c12_temp*r_norm*(z_norm*z_norm)
-                   + c13_temp*r_norm*(z_norm*z_norm*z_norm)
-                   + c20_temp*(r_norm*r_norm)
-                   + c21_temp*(r_norm*r_norm)*z_norm
-                   + c22_temp*(r_norm*r_norm)*(z_norm*z_norm)
-                   + c23_temp*(r_norm*r_norm)*(z_norm*z_norm*z_norm)
-                   + c30_temp*(r_norm*r_norm*r_norm)
-                   + c31_temp*(r_norm*r_norm*r_norm)*z_norm
-                   + c32_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm)
-                   + c33_temp*(r_norm*r_norm*r_norm)*(z_norm*z_norm*z_norm);
+                   + r_norm*(c10_temp +
+                             c11_temp*z_norm +
+                             c12_temp*(z_norm*z_norm) +
+                               c13_temp*(z_norm*z_norm*z_norm))
+                   + (r_norm*r_norm)*(c20_temp +
+                                      c21_temp*z_norm +
+                                      c22_temp*(z_norm*z_norm) +
+                                      c23_temp*(z_norm*z_norm*z_norm))
+                   + (r_norm*r_norm*r_norm)*(c30_temp +
+                                             c31_temp*z_norm +
+                                             c32_temp*(z_norm*z_norm) +
+                                             c33_temp*(z_norm*z_norm*z_norm));
         }
 
 //------------------------------------------------------------------------------

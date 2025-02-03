@@ -139,8 +139,6 @@ void run_test() {
 
     auto bvec = eq->get_magnetic_field(x, y, z);
     auto ne = eq->get_electron_density(x, y, z);
-    ne->to_latex();
-    std::cout << std::endl << std::endl;
     auto te = eq->get_electron_temperature(x, y, z);
 
     workflow::manager<T> work(0);
@@ -155,15 +153,15 @@ void run_test() {
     work.run();
 
     for (size_t i = 0, ie = gold.r_grid.size()*gold.z_grid.size(); i < ie; i++) {
-        check_error(work.check_value(i, bvec->get_x()), gold.bx_grid[i], 4.0E-11,
+        check_error(work.check_value(i, bvec->get_x()), gold.bx_grid[i], 9.0E-12,
                     "Expected a match in bx.");
         check_error(work.check_value(i, bvec->get_y()), gold.by_grid[i], 1.0E-20,
                     "Expected a match in by.");
-        check_error(work.check_value(i, bvec->get_z()), gold.bz_grid[i], 3.0E-12,
+        check_error(work.check_value(i, bvec->get_z()), gold.bz_grid[i], 4.0E-12,
                     "Expected a match in bz.");
-        check_error(work.check_value(i, ne), gold.ne_grid[i], 5.0E-13,
+        check_error(work.check_value(i, ne), gold.ne_grid[i], 8.0E-13,
                     "Expected a match in ne.");
-        check_error(work.check_value(i, te), gold.te_grid[i], 5.0E-13,
+        check_error(work.check_value(i, te), gold.te_grid[i], 8.0E-13,
                     "Expected a match in te.");
     }
 }

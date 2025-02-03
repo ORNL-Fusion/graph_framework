@@ -143,11 +143,11 @@ void run_korc() {
             const timeing::measure_diagnostic t_run("Run Time");
             work.pre_run();
             for (size_t i = 0; i < 1000000; i++) {
-                sync.join();
+/*                sync.join();
                 work.wait();
                 sync = std::thread([&file, &dataset] () -> void {
                     dataset.write(file);
-                });
+                });*/
                 
                 work.run();
             }
@@ -181,6 +181,7 @@ int main(int argc, const char * argv[]) {
     (void)argv;
 
     run_korc<double> ();
+//    run_korc<float> ();
 
     END_GPU
 }
