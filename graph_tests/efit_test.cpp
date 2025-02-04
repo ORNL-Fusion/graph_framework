@@ -153,7 +153,7 @@ void run_test() {
     work.run();
 
     for (size_t i = 0, ie = gold.r_grid.size()*gold.z_grid.size(); i < ie; i++) {
-        check_error(work.check_value(i, bvec->get_x()), gold.bx_grid[i], 9.0E-12,
+        check_error(work.check_value(i, bvec->get_x()), gold.bx_grid[i], 10.0E-11,
                     "Expected a match in bx.");
         check_error(work.check_value(i, bvec->get_y()), gold.by_grid[i], 1.0E-20,
                     "Expected a match in by.");

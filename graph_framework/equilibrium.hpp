@@ -1069,22 +1069,12 @@ namespace equilibrium {
             auto c32_temp = graph::piecewise_2D(c32, num_cols, r_norm, z_norm);
             auto c33_temp = graph::piecewise_2D(c33, num_cols, r_norm, z_norm);
 
-            return   c00_temp
-                   + c01_temp*z_norm
-                   + c02_temp*(z_norm*z_norm)
-                   + c03_temp*(z_norm*z_norm*z_norm)
-                   + r_norm*(c10_temp +
-                             c11_temp*z_norm +
-                             c12_temp*(z_norm*z_norm) +
-                               c13_temp*(z_norm*z_norm*z_norm))
-                   + (r_norm*r_norm)*(c20_temp +
-                                      c21_temp*z_norm +
-                                      c22_temp*(z_norm*z_norm) +
-                                      c23_temp*(z_norm*z_norm*z_norm))
-                   + (r_norm*r_norm*r_norm)*(c30_temp +
-                                             c31_temp*z_norm +
-                                             c32_temp*(z_norm*z_norm) +
-                                             c33_temp*(z_norm*z_norm*z_norm));
+            auto c0 = ((c03_temp*z_norm + c02_temp)*z_norm + c01_temp)*z_norm + c00_temp;
+            auto c1 = ((c13_temp*z_norm + c12_temp)*z_norm + c11_temp)*z_norm + c10_temp;
+            auto c2 = ((c23_temp*z_norm + c22_temp)*z_norm + c21_temp)*z_norm + c20_temp;
+            auto c3 = ((c33_temp*z_norm + c32_temp)*z_norm + c31_temp)*z_norm + c30_temp;
+
+            return ((c3*r_norm + c2)*r_norm + c1)*r_norm + c0;
         }
 
 //------------------------------------------------------------------------------
@@ -1118,30 +1108,27 @@ namespace equilibrium {
                 auto n2_temp = graph::piecewise_1D(ne_c2, psi_norm_cache);
                 auto n3_temp = graph::piecewise_1D(ne_c3, psi_norm_cache);
 
-                ne_cache = ne_scale*(n0_temp +
-                                     n1_temp*psi_norm_cache +
-                                     n2_temp*psi_norm_cache*psi_norm_cache +
-                                     n3_temp*psi_norm_cache*psi_norm_cache*psi_norm_cache);
+                ne_cache = ne_scale
+                         * (((n3_temp*psi_norm_cache + n2_temp) *
+                             psi_norm_cache + n1_temp)*psi_norm_cache + n0_temp);
 
                 auto t0_temp = graph::piecewise_1D(te_c0, psi_norm_cache);
                 auto t1_temp = graph::piecewise_1D(te_c1, psi_norm_cache);
                 auto t2_temp = graph::piecewise_1D(te_c2, psi_norm_cache);
                 auto t3_temp = graph::piecewise_1D(te_c3, psi_norm_cache);
 
-                te_cache = te_scale*(t0_temp +
-                                     t1_temp*psi_norm_cache +
-                                     t2_temp*psi_norm_cache*psi_norm_cache +
-                                     t3_temp*psi_norm_cache*psi_norm_cache*psi_norm_cache);
+                te_cache = te_scale
+                         * (((t3_temp*psi_norm_cache + t2_temp) *
+                             psi_norm_cache + t1_temp)*psi_norm_cache + t0_temp);
 
                 auto p0_temp = graph::piecewise_1D(pres_c0, psi_norm_cache);
                 auto p1_temp = graph::piecewise_1D(pres_c1, psi_norm_cache);
                 auto p2_temp = graph::piecewise_1D(pres_c2, psi_norm_cache);
                 auto p3_temp = graph::piecewise_1D(pres_c3, psi_norm_cache);
 
-                auto pressure = pres_scale*(p0_temp +
-                                            p1_temp*psi_norm_cache +
-                                            p2_temp*psi_norm_cache*psi_norm_cache +
-                                            p3_temp*psi_norm_cache*psi_norm_cache*psi_norm_cache);
+                auto pressure = pres_scale
+                              * (((p3_temp*psi_norm_cache + p2_temp) *
+                                  psi_norm_cache + p1_temp)*psi_norm_cache + p0_temp);
 
                 auto q = graph::constant<T, SAFE_MATH> (static_cast<T> (1.60218E-19));
 
@@ -1157,10 +1144,8 @@ namespace equilibrium {
                 auto b2_temp = graph::piecewise_1D(fpol_c2, r_norm);
                 auto b3_temp = graph::piecewise_1D(fpol_c3, r_norm);
 
-                auto bp = (b0_temp +
-                           b1_temp*r_norm +
-                           b2_temp*r_norm*r_norm +
-                           b3_temp*r_norm*r_norm*r_norm)/r;
+                auto bp = (((b3_temp*r_norm + b2_temp) *
+                            r_norm + b1_temp)*r_norm + b0_temp)/r;
 
                 auto bz = -psi->df(r)/r;
 
@@ -1835,10 +1820,7 @@ namespace equilibrium {
             auto c2_temp = graph::piecewise_1D(chi_c2, s_norm);
             auto c3_temp = graph::piecewise_1D(chi_c3, s_norm);
 
-            return c0_temp +
-                   c1_temp*s_norm +
-                   c2_temp*s_norm*s_norm +
-                   c3_temp*s_norm*s_norm*s_norm;
+            return ((c3_temp*s_norm + c2_temp)*s_norm + c1_temp)*s_norm + c0_temp;
         }
 
 //------------------------------------------------------------------------------
@@ -1895,18 +1877,12 @@ namespace equilibrium {
                     auto lmns_c2_temp = graph::piecewise_1D(lmns_c2[i], s_norm_h);
                     auto lmns_c3_temp = graph::piecewise_1D(lmns_c3[i], s_norm_h);
 
-                    auto rmnc = rmnc_c0_temp
-                              + rmnc_c1_temp*s_norm_f
-                              + rmnc_c2_temp*s_norm_f*s_norm_f
-                              + rmnc_c3_temp*s_norm_f*s_norm_f*s_norm_f;
-                    auto zmns = zmns_c0_temp
-                              + zmns_c1_temp*s_norm_f
-                              + zmns_c2_temp*s_norm_f*s_norm_f
-                              + zmns_c3_temp*s_norm_f*s_norm_f*s_norm_f;
-                    auto lmns = lmns_c0_temp
-                              + lmns_c1_temp*s_norm_h
-                              + lmns_c2_temp*s_norm_h*s_norm_h
-                              + lmns_c3_temp*s_norm_h*s_norm_h*s_norm_h;
+                    auto rmnc = ((rmnc_c3_temp*s_norm_f + rmnc_c2_temp)*s_norm_f +
+                                 rmnc_c1_temp)*s_norm_f + rmnc_c0_temp;
+                    auto zmns = ((zmns_c3_temp*s_norm_f + zmns_c2_temp)*s_norm_f +
+                                 zmns_c1_temp)*s_norm_f + zmns_c0_temp;
+                    auto lmns = ((lmns_c3_temp*s_norm_h + lmns_c2_temp)*s_norm_h +
+                                 lmns_c1_temp)*s_norm_h + lmns_c0_temp;
 
                     auto m = graph::constant<T, SAFE_MATH> (xm[i]);
                     auto n = graph::constant<T, SAFE_MATH> (xn[i]);
