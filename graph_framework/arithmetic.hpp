@@ -2024,6 +2024,45 @@ namespace graph {
                     return this->right/pow(lp->get_left(), -lp->get_right());
                 }
             }
+//  a^b*c^b -> (a*c)^b
+            if (lp.get() && rp.get()) {
+                if (lp->get_right()->is_match(rp->get_right())) {
+                    return pow(lp->get_left()*rp->get_left(), lp->get_right());
+                }
+            }
+// (a*b^c)*d^c -> a*(b*d)^c
+// (a^c*b)*d^c -> b*(a*d)^c
+// a^c*(b*d^c) -> b*(a*d)^c
+// a^c*(b^c*d) -> d*(a*b)^c
+            if (lm.get() && rp.get()) {
+                auto lmlp = pow_cast(lm->get_left());
+                auto lmrp = pow_cast(lm->get_right());
+                if (lmrp.get()) {
+                    if (lmrp->get_right()->is_match(rp->get_right())) {
+                        return lm->get_left()*pow(lmrp->get_left()*rp->get_left(),
+                                                  rp->get_right());
+                    }
+                } else if (lmlp.get()) {
+                    if (lmlp->get_right()->is_match(rp->get_right())) {
+                        return lm->get_right()*pow(lmlp->get_left()*rp->get_left(),
+                                                   rp->get_right());
+                    }
+                }
+            } else if (rm.get() && lp.get()) {
+                auto rmlp = pow_cast(rm->get_left());
+                auto rmrp = pow_cast(rm->get_right());
+                if (rmrp.get()) {
+                    if (rmrp->get_right()->is_match(lp->get_right())) {
+                        return rm->get_left()*pow(lp->get_left()*rmrp->get_left(),
+                                                  lp->get_right());
+                    }
+                } else if (rmlp.get()) {
+                    if (rmlp->get_right()->is_match(lp->get_right())) {
+                        return rm->get_right()*pow(lp->get_left()*rmlp->get_left(),
+                                                   lp->get_right());
+                    }
+                }
+            }
 
 //  (b*a)^c*a^d -> b^c*a^(c + d)
 //  (a*b)^c*a^d -> b^c*a^(c + d)
@@ -2931,6 +2970,14 @@ namespace graph {
                     }
                 }
             }
+
+//  a^b/c^b -> (a/c)^b
+            if (lp.get() && rp.get()) {
+                if (lp->get_right()->is_match(rp->get_right())) {
+                    return pow(lp->get_left()/rp->get_left(), lp->get_right());
+                }
+            }
+
 //  (a*b)^c/((a^d)*e) = a^(c - d)*b^c/e
 //  (b*a)^c/((a^d)*e) = a^(c - d)*b^c/e
 //  (a*b)^c/(e*(a^d)) = a^(c - d)*b^c/e
@@ -3706,6 +3753,30 @@ namespace graph {
                     }
                 }
 
+//  fma(a,b*c,b*d) -> b*fma(a,c,d)
+//  fma(a,c*b,b*d) -> b*fma(a,c,d)
+//  fma(a,b*c,d*b) -> b*fma(a,c,d)
+//  fma(a,c*b,d*b) -> b*fma(a,c,d)
+                if (mm.get()) {
+                    if (mm->get_left()->is_match(rm->get_left())) {
+                        return mm->get_left()*fma(this->left,
+                                                  mm->get_right(),
+                                                  rm->get_right());
+                    } else if (mm->get_left()->is_match(rm->get_right())) {
+                        return mm->get_left()*fma(this->left,
+                                                  mm->get_right(),
+                                                  rm->get_left());
+                    } else if (mm->get_right()->is_match(rm->get_left())) {
+                        return mm->get_right()*fma(this->left,
+                                                   mm->get_left(),
+                                                   rm->get_right());
+                    } else if (mm->get_right()->is_match(rm->get_right())) {
+                        return mm->get_right()*fma(this->left,
+                                                   mm->get_left(),
+                                                   rm->get_left());
+                    }
+                }
+
 //  Convert fma(a*b,c,d*e) -> fma(d,e,a*b*c)
 //  Convert fma(a,b*c,d*e) -> fma(d,e,a*b*c)
                 if ((lm.get() || mm.get()) &&
@@ -3800,6 +3871,19 @@ namespace graph {
                     return fma(mm->get_left(),
                                this->left*mm->get_right(),
                                this->right);
+                }
+            }
+
+//  fma(a,b*c,b) -> b*fma(a,c,1)
+            if (mm.get()) {
+                if (mm->get_left()->is_match(this->right)) {
+                    return mm->get_left()*fma(this->left,
+                                              mm->get_right(),
+                                              1.0);
+                } else if (mm->get_right()->is_match(this->right)) {
+                    return mm->get_right()*fma(this->left,
+                                              mm->get_left(),
+                                              1.0);
                 }
             }
 
@@ -4294,8 +4378,10 @@ namespace graph {
                 }
             } else if (this->middle->is_all_variables()) {
                 auto rdm = this->right/this->middle;
-                if (rdm->get_complexity() < this->middle->get_complexity() +
-                                            this->right->get_complexity()) {
+                auto rdmc = constant_cast(rdm->get_power_exponent());
+                if ((rdm->get_complexity() < this->middle->get_complexity() +
+                                             this->right->get_complexity()) &&
+                    !(rdmc.get() && rdmc->evaluate().is_negative())) {
                     return (this->left + rdm)*this->middle;
                 }
             }
@@ -4317,6 +4403,90 @@ namespace graph {
                 if (exponent.get() && exponent->evaluate().is_negative()) {
                     return this->left/pow(mp->get_left(), -mp->get_right()) +
                            this->right;
+                }
+
+//  fma(2,a^2,a) -> a*fma(2,a,1)
+//  Note this case is handled eailer. fma(2,a,a^2) -> a*fma(2,1,a)
+                if (is_variable_combineable(this->middle,
+                                            this->right)) {
+                    auto temp = this->right/this->middle;
+                    auto temp_exponent = constant_cast(temp->get_power_exponent());
+                    if (temp_exponent.get() && temp_exponent->evaluate().is_negative()) {
+                        return this->right*fma(this->left,
+                                               this->middle/this->right,
+                                               1.0);
+                    }
+                }
+            }
+
+//  a^b*c^b + d -> (a*c)^b + d
+            if (lp.get() && mp.get()) {
+                if (lp->get_right()->is_match(mp->get_right())) {
+                    return pow(lp->get_left()*mp->get_left(),
+                               lp->get_right()) +
+                           this->right;
+                }
+            }
+
+//  fma(2,(ab)^2,a^2b) -> a^2*fma(2, b^2, b)
+            if (rm.get() && mp.get()) {
+                auto mplm = multiply_cast(mp->get_left());
+                if (mplm.get()) {
+                    if (is_variable_combineable(mplm->get_left(),
+                                                rm->get_left())) {
+                        auto temp = pow(mplm->get_left(),
+                                        mp->get_right());
+                        return temp*fma(this->left,
+                                        this->middle/temp,
+                                        this->right/temp);
+                    } else if (is_variable_combineable(mplm->get_right(),
+                                                       rm->get_left())) {
+                        auto temp = pow(mplm->get_right(),
+                                        mp->get_right());
+                        return temp*fma(this->left,
+                                        this->middle/temp,
+                                        this->right/temp);
+                    }
+                }
+            }
+//  fma(2,(a*b)^2,fma(a^2,b,c)) -> fma(a^2,fma(2,b^2,b),c)
+            if (rfma.get() && mp.get()) {
+                auto mplm = multiply_cast(mp->get_left());
+                if (mplm.get()) {
+                    if (is_variable_combineable(mplm->get_left(),
+                                                rfma->get_left())) {
+                        auto temp = pow(mplm->get_left(),
+                                        mp->get_right());
+                        return fma(temp,
+                                   fma(this->left,
+                                       this->middle/temp,
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    } else if (is_variable_combineable(mplm->get_right(),
+                                                       rfma->get_left())) {
+                        auto temp = pow(mplm->get_right(),
+                                        mp->get_right());
+                        return fma(temp,
+                                   fma(this->left,
+                                       this->middle/temp,
+                                       rfma->get_middle()),
+                                   rfma->get_right());
+                    }
+                    
+//  fma(2,(a*b)^2,fma(3,a^2*b,c)) -> a^2*fma(2,b^2,fma(3,b,c))
+                    auto rfmamm = multiply_cast(rfma->get_middle());
+                    if (rfmamm.get()) {
+                        if (is_variable_combineable(mplm->get_left(),
+                                                    rfmamm->get_left())) {
+                            auto temp = pow(mplm->get_left(),
+                                            mp->get_right());
+                            return temp*fma(this->left,
+                                            this->middle/temp,
+                                            fma(rfma->get_left(),
+                                                rfma->get_middle()/temp,
+                                                rfma->get_right()));
+                        }
+                    }
                 }
             }
 

@@ -660,6 +660,19 @@ namespace graph {
         return constant<T, SAFE_MATH> (static_cast<T> (1.0));
     }
 
+//------------------------------------------------------------------------------
+///  @brief Create a one constant.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @returns A one constant.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH>
+    constexpr shared_leaf<T, SAFE_MATH> none() {
+        return constant<T, SAFE_MATH> (static_cast<T> (-1.0));
+    }
+
 ///  Convinece type for imaginary constant.
     template<jit::complex_scalar T>
     constexpr T i = T(0.0, 1.0);

@@ -957,8 +957,9 @@ namespace graph {
             }
 
 //  Handle cases where (c*x)^a, (x*c)^a, (a*sqrt(b))^c and (a*b^c)^2.
+//  These reductions only make sense if the power is constant.
             auto lm = multiply_cast(this->left);
-            if (lm.get()) {
+            if (lm.get() && rc.get()) {
                 if (lm->get_left()->is_constant()    ||
                     lm->get_right()->is_constant()   ||
                     sqrt_cast(lm->get_left()).get()  ||
@@ -986,8 +987,9 @@ namespace graph {
                 }
             }
 
+//  These reductions only make sense if the power is constant.
             auto ld = divide_cast(this->left);
-            if (ld.get()) {
+            if (ld.get() && rc.get()) {
 //  For even exponents e.
 //  (-a/b)^e -> (a/b)^e
                 auto ldlm = multiply_cast(ld->get_left());
@@ -1009,6 +1011,36 @@ namespace graph {
                         return pow(ldlm->get_left(), this->right) *
                                pow(ldlm->get_right(), this->right)/
                                pow(ld->get_right(), this->right);
+                    }
+
+                    auto ldlmlm = multiply_cast(ldlm->get_left());
+                    if (ldlmlm.get()) {
+                        if (ldlmlm->get_left()->is_constant()    ||
+                            ldlmlm->get_right()->is_constant()   ||
+                            sqrt_cast(ldlmlm->get_left()).get()  ||
+                            sqrt_cast(ldlmlm->get_right()).get() ||
+                            pow_cast(ldlmlm->get_left()).get()   ||
+                            pow_cast(ldlmlm->get_right()).get()) {
+                            return (pow(ldlmlm->get_left(), this->right)  *
+                                    pow(ldlmlm->get_right(), this->right) *
+                                    pow(ldlm->get_right(), this->right)) /
+                                   pow(ld->get_right(), this->right);
+                        }
+                    }
+
+                    auto ldlmrm = multiply_cast(ldlm->get_right());
+                    if (ldlmrm.get()) {
+                        if (ldlmrm->get_left()->is_constant()    ||
+                            ldlmrm->get_right()->is_constant()   ||
+                            sqrt_cast(ldlmrm->get_left()).get()  ||
+                            sqrt_cast(ldlmrm->get_right()).get() ||
+                            pow_cast(ldlmrm->get_left()).get()   ||
+                            pow_cast(ldlmrm->get_right()).get()) {
+                            return (pow(ldlmrm->get_left(), this->right)  *
+                                    pow(ldlmrm->get_right(), this->right) *
+                                    pow(ldlm->get_left(), this->right)) /
+                                   pow(ld->get_right(), this->right);
+                        }
                     }
                 }
                 
@@ -1035,6 +1067,36 @@ namespace graph {
                         return pow(ld->get_left(), this->right) /
                                (pow(ldrm->get_left(), this->right) *
                                 pow(ldrm->get_right(), this->right));
+                    }
+
+                    auto ldrmlm = multiply_cast(ldrm->get_left());
+                    if (ldrmlm.get()) {
+                        if (ldrmlm->get_left()->is_constant()    ||
+                            ldrmlm->get_right()->is_constant()   ||
+                            sqrt_cast(ldrmlm->get_left()).get()  ||
+                            sqrt_cast(ldrmlm->get_right()).get() ||
+                            pow_cast(ldrmlm->get_left()).get()   ||
+                            pow_cast(ldrmlm->get_right()).get()) {
+                            return pow(ld->get_left(), this->right) /
+                                   (pow(ldrmlm->get_left(), this->right)  *
+                                    pow(ldrmlm->get_right(), this->right) *
+                                    pow(ldrm->get_right(), this->right));
+                        }
+                    }
+
+                    auto ldrmrm = multiply_cast(ldrm->get_right());
+                    if (ldrmrm.get()) {
+                        if (ldrmrm->get_left()->is_constant()    ||
+                            ldrmrm->get_right()->is_constant()   ||
+                            sqrt_cast(ldrmrm->get_left()).get()  ||
+                            sqrt_cast(ldrmrm->get_right()).get() ||
+                            pow_cast(ldrmrm->get_left()).get()   ||
+                            pow_cast(ldrmrm->get_right()).get()) {
+                            return pow(ld->get_left(), this->right) /
+                                   (pow(ldrmrm->get_left(), this->right)  *
+                                    pow(ldrmrm->get_right(), this->right) *
+                                    pow(ldrm->get_left(), this->right));
+                        }
                     }
                 }
 
