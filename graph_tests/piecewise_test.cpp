@@ -241,12 +241,14 @@ template<jit::float_scalar T> void piecewise_1D() {
            "Expected p1 + p3 on the right.");
 //  fma(p1,c1 - a,p2) -> p3 - p1*a
     auto fma_combine2 = fma(p1,1.0 - a,p3);
-    auto fma_combine2_cast = graph::subtract_cast(fma_combine2);
-    assert(fma_combine2_cast.get() && "Expected an subtract node.");
-    assert(fma_combine2_cast->get_right()->is_match(p1*a) &&
-           "Expected p1*a on the right.");
-    assert(fma_combine2_cast->get_left()->is_match(p1 + p3) &&
-           "Expected p1 + p3 on the left.");
+    auto fma_combine2_cast = graph::fma_cast(fma_combine2);
+    assert(fma_combine2_cast.get() && "Expected a fma node.");
+    assert(fma_combine2_cast->get_left()->is_match(-p1) &&
+           "Expected -p1 on the left.");
+    assert(fma_combine2_cast->get_middle()->is_match(a) &&
+           "Expected a in the middle.");
+    assert(fma_combine2_cast->get_right()->is_match(p1 + p3) &&
+           "Expected p1 + p3 on the right.");
 //  p1*(c1 + a) - p2 -> fma(p1,a,p3)
     auto fma_combine3 = p1*(1.0 + a) - p3;
     auto fma_combine3_cast = graph::fma_cast(fma_combine3);
@@ -651,12 +653,14 @@ template<jit::float_scalar T> void piecewise_2D() {
            "Expected p1 + p3 on the right.");
 //  fma(p1,c1 - a,p2) -> p3 - p1*a
     auto fma_combine2 = fma(p1,1.0 - ax,p3);
-    auto fma_combine2_cast = graph::subtract_cast(fma_combine2);
-    assert(fma_combine2_cast.get() && "Expected an subtract node.");
-    assert(fma_combine2_cast->get_right()->is_match(p1*ax) &&
-           "Expected p1*a on the right.");
-    assert(fma_combine2_cast->get_left()->is_match(p1 + p3) &&
-           "Expected p1 + p3 on the left.");
+    auto fma_combine2_cast = graph::fma_cast(fma_combine2);
+    assert(fma_combine2_cast.get() && "Expected a fma node.");
+    assert(fma_combine2_cast->get_left()->is_match(-p1) &&
+           "Expected -p1 on the right.");
+    assert(fma_combine2_cast->get_middle()->is_match(ax) &&
+           "Expected a in the middle.");
+    assert(fma_combine2_cast->get_right()->is_match(p1 + p3) &&
+           "Expected p1 + p3 on the right.");
 //  p1*(c1 + a) - p2 -> fma(p1,a,p3)
     auto fma_combine3 = p1*(1.0 + ax) - p3;
     auto fma_combine3_cast = graph::fma_cast(fma_combine3);

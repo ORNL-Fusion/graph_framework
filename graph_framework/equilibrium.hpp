@@ -1143,7 +1143,7 @@ namespace equilibrium {
                 auto b1_temp = graph::piecewise_1D(fpol_c1, r_norm);
                 auto b2_temp = graph::piecewise_1D(fpol_c2, r_norm);
                 auto b3_temp = graph::piecewise_1D(fpol_c3, r_norm);
-
+                
                 auto bp = (((b3_temp*r_norm + b2_temp) *
                             r_norm + b1_temp)*r_norm + b0_temp)/r;
 
