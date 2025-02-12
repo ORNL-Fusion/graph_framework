@@ -1925,6 +1925,48 @@ template<jit::float_scalar T> void test_multiply() {
     assert(gather_power5_cast->get_right()->is_match(graph::pow(var_a*var_b,
                                                                 var_c)) &&
            "Expected (a*b)^c.");
+
+//  c3*fma(c1,a,c2) -> fma(c4,a,c5)
+    auto constant_reduction = 0.25*fma(2.0, v1, 3.0);
+    assert(constant_reduction->is_match(fma(2.0*0.25, v1, 3.0*0.25)) &&
+           "Expected (0.5*a + 0.75)");
+//  c3*(fma(c1,a,c2)*b) -> fma(c4,a,c5)*b
+    auto constant_reduction2 = 0.25*(fma(2.0, v1, 3.0)*v2);
+    assert(constant_reduction2->is_match(fma(2.0*0.25, v1, 3.0*0.25)*v2) &&
+           "Expected (0.5*a + 0.75)*b");
+//  c1*(fma(c2,a,c3)*b + c4) -> fma(c5,a,c6)*b + c7
+    auto constant_reduction3 = 0.25*(fma(fma(2.0, v1, 3.0),v2,2.0));
+    assert(constant_reduction3->is_match(fma(fma(2.0*0.25, v1, 3.0*0.25),v2,0.5)) &&
+           "Expected (0.5*a + 0.75)*b + 0.5");
+//  c1*((fma(c2,a,c3)*b + c4)*c) -> (fma(c5,a,c6)*b + c7)*c
+    auto constant_reduction4 = 0.25*(fma(fma(2.0, v1, 3.0),v2,2.0)*v1);
+    assert(constant_reduction4->is_match(fma(fma(2.0*0.25, v1, 3.0*0.25),v2,0.5)*v1) &&
+           "Expected ((0.5*a + 0.75)*b + 0.5)*c");
+
+//  fma(c1,x,c2)*(c3 + x) -> fma(fma(c1,x,c4),x,c5)
+    auto expand = graph::fma(0.2, v1, 3.0)*(4.0 + v1);
+    assert(expand->is_match(graph::fma(graph::fma(0.2, v1, 3.8), v1, 12.0)));
+//  fma(fma(c1,x,c2),x,c3)*(c4 + x) -> fma(fma(fma(c1,x,c5),x,c6),x,c7)
+    auto expand2 = graph::fma(fma(0.2,v1,2.3),v1,3.0)*(4.0 + v1);
+    assert(expand2->is_match(graph::fma(graph::fma(graph::fma(0.2,
+                                                              v1,
+                                                              0.2*4.0 + 2.3),
+                                                   v1,
+                                                   12.2),
+                                        v1,
+                                        12.0)) &&
+           "Exptected (((0.2*x + 3.1)*x + 12.2)*x + 12");
+
+//  c1*fma(fma(fma(c2,x,c3),x,c4),x,c5) -> fma(fma(fma(c6,x,c7),x,c8),x,c9)
+    auto consume = 10.0*(graph::fma(graph::fma(graph::fma(0.2,v1,2.3),v1,3.0),v1,0.1));
+    assert(consume->is_match(graph::fma(graph::fma(graph::fma(2.0,
+                                                              v1,
+                                                              23.0),
+                                                   v1,
+                                                   30.0),
+                                        v1,
+                                        1.0)) &&
+           "Expected fma(fma(fma(2,x,23),x,30,x,1))");
 }
 
 //------------------------------------------------------------------------------
@@ -3705,6 +3747,36 @@ template<jit::float_scalar T> void test_fma() {
            "Expected b.");
     assert(factorize6_cast->get_left()->is_match(graph::fma(var_a,var_c,var_d)) &&
            "Expected a*c + d.");
+
+//  fma(c1,a - c2,c3) -> fma(c1,a,c4)
+    auto consume = graph::fma(2.0,var_a - 3.0,20.0);
+    assert(consume->is_match(graph::fma(2.0,var_a,14.0)) &&
+           "Expected fma(2,x,14)");
+//  fma(c1,c2 - a,c3) -> fma(-c1,a,c4)
+    auto consume2 = graph::fma(2.0,3.0 - var_a,20.0);
+    assert(consume2->is_match(graph::fma(-2.0,var_a,26.0)) &&
+           "Expected fma(-2,x,26)");
+
+//  fma(fma(c1,a,c2),a - c3,c4) -> fma(fma(c1,x,c5),x,c6)
+    auto gather = graph::fma(graph::fma(2.0,var_a,20.0),var_a - 2.0,30.0);
+    assert(gather->is_match(graph::fma(graph::fma(2.0,var_a,16.0),var_a,-10.0)) &&
+           "Expected fma(fma(2,x,16),x,-10)");
+//  fma(fma(fma(c1,a,c2),a,c3),a - c4,c5) -> fma(fma(c1,x,c6),x,c6),x,c8)
+    auto gather2 = graph::fma(graph::fma(graph::fma(2.0,
+                                                    var_a,
+                                                    20.0),
+                                         var_a,
+                                         30.0),
+                              var_a - 2.0,
+                              50.0);
+    assert(gather2->is_match(graph::fma(graph::fma(graph::fma(2.0,
+                                                              var_a,
+                                                              16.0),
+                                                   var_a,
+                                                   -10.0),
+                                        var_a,
+                                        -10.0)) &&
+           "Expected fma(fma(fma(2,x,16),x,-10),x,-10)");
 }
 
 //------------------------------------------------------------------------------

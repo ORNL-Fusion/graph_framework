@@ -1903,6 +1903,33 @@ namespace graph {
                 if (is_variable_promotable(rm->get_right(), this->left)) {
                     return (this->left*rm->get_left())*rm->get_right();
                 }
+
+                auto rmlfma = fma_cast(rm->get_left());
+                if (rmlfma.get()) {
+                    if (is_constant_combineable(this->left,
+                                                rmlfma->get_left()) &&
+                        is_constant_combineable(this->left,
+                                                rmlfma->get_right())) {
+                        return fma(this->left*rmlfma->get_left(),
+                                   rmlfma->get_middle(),
+                                   this->left*rmlfma->get_right())*rm->get_right();
+                    }
+
+                    auto rmlfmalfma = fma_cast(rmlfma->get_left());
+                    if (rmlfmalfma.get()) {
+                        if (is_constant_combineable(this->left,
+                                                    rmlfmalfma->get_left()) &&
+                            is_constant_combineable(this->left,
+                                                    rmlfmalfma->get_right()) &&
+                            is_constant_combineable(this->left, rmlfma->get_right())) {
+                            return fma(fma(this->left*rmlfmalfma->get_left(),
+                                           rmlfmalfma->get_middle(),
+                                           this->left*rmlfmalfma->get_right()),
+                                       rmlfma->get_middle(),
+                                       this->left*rmlfma->get_right())*rm->get_right();
+                        }
+                    }
+                }
             }
 
 //  v1*(c*v2) -> c*(v1*v2)
@@ -2296,6 +2323,79 @@ namespace graph {
                         return (lm->get_right()/rd->get_right()) *
                                (lm->get_left()*rd->get_left());
                     }
+                }
+            }
+
+//  c3*fma(c1,a,c2) -> fma(c4,a,c5)
+            auto rfma = fma_cast(this->right);
+            if (rfma.get()) {
+                if (is_constant_combineable(this->left, rfma->get_left()) &&
+                    is_constant_combineable(this->left, rfma->get_right())) {
+                    return fma(this->left*rfma->get_left(),
+                               rfma->get_middle(),
+                               this->left*rfma->get_right());
+                }
+
+                auto rfmalfma = fma_cast(rfma->get_left());
+                if (rfmalfma.get()) {
+                    if (is_constant_combineable(this->left, rfmalfma->get_left())  &&
+                        is_constant_combineable(this->left, rfmalfma->get_right()) &&
+                        is_constant_combineable(this->left, rfma->get_right())) {
+                        return fma(fma(this->left*rfmalfma->get_left(),
+                                       rfmalfma->get_middle(),
+                                       this->left*rfmalfma->get_right()),
+                                   rfma->get_middle(),
+                                   this->left*rfma->get_right());
+                    }
+                    
+                    auto rfmalfmalfma = fma_cast(rfmalfma->get_left());
+                    if (rfmalfmalfma.get()) {
+                        if (is_constant_combineable(this->left, rfmalfmalfma->get_left())  &&
+                            is_constant_combineable(this->left, rfmalfmalfma->get_right()) &&
+                            is_constant_combineable(this->left, rfmalfma->get_right())     &&
+                            is_constant_combineable(this->left, rfma->get_right())) {
+                            return fma(fma(fma(this->left*rfmalfmalfma->get_left(),
+                                               rfmalfmalfma->get_middle(),
+                                               this->left*rfmalfmalfma->get_right()),
+                                           rfmalfma->get_middle(),
+                                           this->left*rfmalfma->get_right()),
+                                       rfma->get_middle(),
+                                       this->left*rfma->get_right());
+                        }
+                    }
+                }
+            }
+
+//  fma(c1,x,c2)*(c3 + x) -> fma(fma(c1,x,c4),x,c5)
+            auto lfma = fma_cast(this->left);
+            auto ra = add_cast(this->right);
+            if (lfma.get() && ra.get()) {
+                if (ra->get_right()->is_match(lfma->get_middle())             &&
+                    is_constant_combineable(ra->get_left(), lfma->get_left()) &&
+                    is_constant_combineable(ra->get_left(), lfma->get_right())) {
+                    return fma(fma(lfma->get_left(),
+                                   ra->get_right(),
+                                   ra->get_left()*lfma->get_left() + lfma->get_right()),
+                               ra->get_right(),
+                               lfma->get_right()*ra->get_left());
+                }
+
+//  fma(fma(c1,x,c2),x,c3)*(c4 + x) -> fma(fma(fma(c1,x,c5),x,c6),x,c7)
+                auto lfmalfma = fma_cast(lfma->get_left());
+                if (ra->get_right()->is_match(lfma->get_middle())                  &&
+                    ra->get_right()->is_match(lfmalfma->get_middle())              &&
+                    is_constant_combineable(ra->get_left(), lfma->get_right())     &&
+                    is_constant_combineable(ra->get_left(), lfmalfma->get_right()) &&
+                    is_constant_combineable(ra->get_left(), lfmalfma->get_left())) {
+                    return fma(fma(fma(lfmalfma->get_left(),
+                                       ra->get_right(),
+                                       ra->get_left()*lfmalfma->get_left() +
+                                       lfmalfma->get_right()),
+                                   ra->get_right(),
+                                   ra->get_left()*lfmalfma->get_right() +
+                                   lfma->get_right()),
+                               ra->get_right(),
+                               ra->get_left()*lfma->get_right());
                 }
             }
 
@@ -3673,13 +3773,53 @@ namespace graph {
                 }
             }
 
-//  fma(c1,c2 - a,c3) -> c4 - c5*a
+//  fma(c1,c2 - a,c3) -> fma(-c1,a,c1*c2 + c3)
+//  fma(c1,a - c2,c3) -> fma(c1,a,c3 - c1*c2)
             auto ms = subtract_cast(this->middle);
             if (ms.get()) {
                 if (is_constant_combineable(this->left, ms->get_left()) &&
                     is_constant_combineable(this->left, this->right)) {
-                    return fma(this->left, ms->get_left(), this->right) -
-                           this->left*ms->get_right();
+                    return fma(-this->left, ms->get_right(),
+                               this->left*ms->get_left() + this->right);
+                } else if (is_constant_combineable(this->left, ms->get_right()) &&
+                           is_constant_combineable(this->left, this->right)) {
+                    return fma(this->left, ms->get_left(),
+                               this->right - this->left*ms->get_right());
+                }
+
+                auto lfma = fma_cast(this->left);
+                if (lfma.get()) {
+                    if (is_constant_combineable(ms->get_right(), lfma->get_left())  &&
+                        is_constant_combineable(ms->get_right(), lfma->get_right()) &&
+                        is_constant_combineable(this->right, lfma->get_right())     &&
+                        lfma->get_middle()->is_match(ms->get_left())) {
+                        return fma(fma(lfma->get_left(),
+                                       ms->get_left(),
+                                       lfma->get_right() - lfma->get_left()*ms->get_right()),
+                                   ms->get_left(),
+                                   this->right - lfma->get_right()*ms->get_right());
+                    }
+
+                    auto lfmalfma = fma_cast(lfma->get_left());
+                    if (lfmalfma.get()) {
+                        if (lfma->get_middle()->is_match(ms->get_left())                    &&
+                            lfmalfma->get_middle()->is_match(ms->get_left())                &&
+                            is_constant_combineable(ms->get_right(), lfmalfma->get_left())  &&
+                            is_constant_combineable(ms->get_right(), lfmalfma->get_right()) &&
+                            is_constant_combineable(ms->get_right(), lfma->get_right())     &&
+                            is_constant_combineable(ms->get_right(), this->right)) {
+                            return fma(fma(fma(lfmalfma->get_left(),
+                                               ms->get_left(),
+                                               lfmalfma->get_right() -
+                                               lfmalfma->get_left()*ms->get_right()),
+                                           ms->get_left(),
+                                           lfma->get_right() -
+                                           lfmalfma->get_right()*ms->get_right()),
+                                       ms->get_left(),
+                                       this->right -
+                                       lfma->get_right()*ms->get_right());
+                        }
+                    }
                 }
             }
 
