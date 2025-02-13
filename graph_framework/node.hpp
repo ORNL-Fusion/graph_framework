@@ -335,6 +335,18 @@ namespace graph {
 ///  Convenience type alias for shared leaf nodes.
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_leaf = std::shared_ptr<leaf_node<T, SAFE_MATH>>;
+//------------------------------------------------------------------------------
+///  @brief Create a null leaf.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @returns A null leaf.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> null_leaf() {
+        return shared_leaf<T, SAFE_MATH> ();
+    }
 ///  Convenience type alias for a vector of output nodes.
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using output_nodes = std::vector<shared_leaf<T, SAFE_MATH>>;

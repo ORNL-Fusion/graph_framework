@@ -1967,6 +1967,17 @@ template<jit::float_scalar T> void test_multiply() {
                                         v1,
                                         1.0)) &&
            "Expected fma(fma(fma(2,x,23),x,30,x,1))");
+
+//  c1*(fma(fma(fma(c2,x,c3),x,c4),x,c5)*y) -> fma(fma(fma(c6,x,c7),x,c8),x,c9)*y
+    auto consume2 = 10.0*(graph::fma(graph::fma(graph::fma(5.0,v1,0.4),v1,0.3),v1,0.3)*v2);
+    assert(consume2->is_match(graph::fma(graph::fma(graph::fma(50.0,
+                                                               v1,
+                                                               4.0),
+                                                    v1,
+                                                    3.0),
+                                         v1,
+                                         3.0)*v2) &&
+           "Expected fma(fma(fma(50,x,4),x,3),x,3)*y");
 }
 
 //------------------------------------------------------------------------------
@@ -3777,6 +3788,52 @@ template<jit::float_scalar T> void test_fma() {
                                         var_a,
                                         -10.0)) &&
            "Expected fma(fma(fma(2,x,16),x,-10),x,-10)");
+/*
+//  fma(fma(c1,a,c2),b - c3,fma(c4,a,c5) -> fma(fma(c6,a,c8),b,fma(c9,a,c10))
+    auto gather3 = graph::fma(graph::fma(2.0,
+                                         var_a,
+                                         20.0),
+                              var_b - 2.0,
+                              graph::fma(2.0,
+                                         var_a,
+                                         21.0));
+    assert(gather3->is_match(graph::fma(graph::fma(2.0,var_a,20.0),var_b,graph::fma(2.0,var_a,-19.0))) &&
+           "Expected fma(fma(2,x,20),y,fma(2,x,-19))");
+
+//  fma(fma(fma(fma(c1,a,c2),a,c3),a,c4),b - c5,fma(fma(fma(c6,a,c7),a,c8),a,c9)) ->
+//  fma(fma(fma(fma(c10,a,c11),a,c12),a,c13),b,fma(fma(fma(c14,a,c15),a,c16),a,c17))
+    auto gather4 = graph::fma(graph::fma(graph::fma(graph::fma(2.0,
+                                                               var_a,
+                                                               20.0),
+                                                    var_a,
+                                                    30.0),
+                                         var_a,
+                                         50.0),
+                              var_b - 2.0,
+                              graph::fma(graph::fma(graph::fma(2.0,
+                                                               var_a,
+                                                               21.0),
+                                                    var_a,
+                                                    31.0),
+                                         var_a,
+                                         51.0));
+    assert(gather3->is_match(graph::fma(graph::fma(graph::fma(graph::fma(2.0,
+                                                                         var_a,
+                                                                         20.0),
+                                                              var_a,
+                                                              30.0),
+                                                   var_a,
+                                                   50.0),
+                                        var_b ,
+                                        graph::fma(graph::fma(graph::fma(2.0,
+                                                                         var_a,
+                                                                         -19.0),
+                                                              var_a,
+                                                              -29.0),
+                                                   var_a,
+                                                   -49.0))) &&
+           "Expected fma(fma(fma(fma(2,x,20),x,30),x,50),b,fma(fma(fma(2,x,-19),-29),-49)");
+ */
 }
 
 //------------------------------------------------------------------------------
