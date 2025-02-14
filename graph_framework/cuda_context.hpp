@@ -232,14 +232,15 @@ namespace gpu {
             }
 
             const std::string temp = arch.str();
-            std::array<const char *, 7> options({
+            std::array<const char *, 8> options({
                 temp.c_str(),
                 "--std=c++17",
                 "--relocatable-device-code=false",
                 "--include-path=" CUDA_INCLUDE,
                 "--include-path=" HEADER_DIR,
                 "--extra-device-vectorization",
-                "--device-as-default-execution-space"
+                "--device-as-default-execution-space",
+                "--use_fast_math"
             });
 
             if (nvrtcCompileProgram(kernel_program, options.size(), options.data())) {
@@ -283,7 +284,7 @@ namespace gpu {
                 reinterpret_cast<void *> (0)
             };
 
-            check_error(cuModuleLoadDataEx(&module, ptx, 1,
+            check_error(cuModuleLoadDataEx(&module, ptx, module_options.size(),
                                            module_options.data(),
                                            module_values.data()), "cuModuleLoadDataEx");
 
