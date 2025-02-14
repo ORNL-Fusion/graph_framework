@@ -111,6 +111,19 @@ void check_error(const T test, const T expected, const T tolarance,
 }
 
 //------------------------------------------------------------------------------
+///  @brief Check error.
+///
+///  @param[in] test      Test value.
+///  @param[in] expected  Expected result.
+///  @param[in] name      Name of the test.
+//------------------------------------------------------------------------------
+template <jit::float_scalar T>
+void check_error(const T test, const T tolarance,
+                 const char *name) {
+    assert(test*test <= tolarance && name);
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests.
 ///
 ///  @tparam T Base type of the calculation.
@@ -141,28 +154,35 @@ void run_test() {
     auto ne = eq->get_electron_density(x, y, z);
     auto te = eq->get_electron_temperature(x, y, z);
 
+//  Test the divergence.
+    auto div = bvec->get_x()->df(x)
+             + bvec->get_y()->df(y)
+             + bvec->get_z()->df(z);
+    
     workflow::manager<T> work(0);
     work.add_item({
         graph::variable_cast(x),
         graph::variable_cast(y),
         graph::variable_cast(z)
     }, {
-        bvec->get_x(), bvec->get_y(), bvec->get_z(), ne, te
+        bvec->get_x(), bvec->get_y(), bvec->get_z(), ne, te, div
     }, {}, "test_kernel");
     work.compile();
     work.run();
 
     for (size_t i = 0, ie = gold.r_grid.size()*gold.z_grid.size(); i < ie; i++) {
-        check_error(work.check_value(i, bvec->get_x()), gold.bx_grid[i], 10.0E-11,
+        check_error(work.check_value(i, bvec->get_x()), gold.bx_grid[i], 4.0E-12,
                     "Expected a match in bx.");
-        check_error(work.check_value(i, bvec->get_y()), gold.by_grid[i], 1.0E-20,
+        check_error(work.check_value(i, bvec->get_y()), gold.by_grid[i], 2.0E-30,
                     "Expected a match in by.");
-        check_error(work.check_value(i, bvec->get_z()), gold.bz_grid[i], 5.0E-12,
+        check_error(work.check_value(i, bvec->get_z()), gold.bz_grid[i], 3.0E-13,
                     "Expected a match in bz.");
-        check_error(work.check_value(i, ne), gold.ne_grid[i], 2.1E-12,
+        check_error(work.check_value(i, ne), gold.ne_grid[i], 3.0E-13,
                     "Expected a match in ne.");
-        check_error(work.check_value(i, te), gold.te_grid[i], 2.1E-12,
+        check_error(work.check_value(i, te), gold.te_grid[i], 3.0E-13,
                     "Expected a match in te.");
+        check_error(work.check_value(i, div), 1.0E-20,
+                    "Expected div(B)=0.");
     }
 }
 

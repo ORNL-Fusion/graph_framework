@@ -905,6 +905,31 @@ namespace equilibrium {
         return std::make_shared<guassian_density<T, SAFE_MATH>> ();
     }
 
+//------------------------------------------------------------------------------
+///  @brief Build a 1D spline.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @param[in] c      Array of spline coeffiecents.
+///  @param[in] x      Spline argument.
+///  @param[in] scale  Scale factor for argument.
+///  @param[in] offset Offset value for argument.
+///  @returns The graph expression for a 1D spline.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    graph::shared_leaf<T, SAFE_MATH> build_1D_spline(graph::output_nodes<T, SAFE_MATH> c,
+                                                     graph::shared_leaf<T, SAFE_MATH> x,
+                                                     const T scale,
+                                                     const T offset) {
+        auto c3 = c[3]/(scale*scale*scale);
+        auto c2 = c[2]/(scale*scale) - static_cast<T> (3.0)*offset*c[3]/(scale*scale*scale);
+        auto c1 = c[1]/scale - static_cast<T> (2.0)*offset*c[2]/(scale*scale) + static_cast<T> (3.0)*offset*offset*c[3]/(scale*scale*scale);
+        auto c0 = c[0] - offset*c[1]/scale + offset*offset*c[2]/(scale*scale) - offset*offset*offset*c[3]/(scale*scale*scale);
+
+        return graph::fma(graph::fma(graph::fma(c3, x, c2), x, c1), x, c0);
+    }
+
 //******************************************************************************
 //  2D EFIT equilibrium.
 //******************************************************************************
@@ -921,9 +946,9 @@ namespace equilibrium {
     class efit final : public generic<T, SAFE_MATH> {
     private:
 ///  Minimum psi.
-        graph::shared_leaf<T, SAFE_MATH> psimin;
+        const T psimin;
 ///  Psi grid spacing.
-        graph::shared_leaf<T, SAFE_MATH> dpsi;
+        const T dpsi;
 
 //  Temperature spline coefficients.
 ///  Temperature c0.
@@ -962,13 +987,13 @@ namespace equilibrium {
         graph::shared_leaf<T, SAFE_MATH> pres_scale;
 
 ///  Minimum R.
-        graph::shared_leaf<T, SAFE_MATH> rmin;
+        const T rmin;
 ///  R grid spacing.
-        graph::shared_leaf<T, SAFE_MATH> dr;
+        const T dr;
 ///  Minimum Z.
-        graph::shared_leaf<T, SAFE_MATH> zmin;
+        const T zmin;
 ///  Z grid spacing.
-        graph::shared_leaf<T, SAFE_MATH> dz;
+        const T dz;
 
 //  Fpol spline coefficients.
 ///  Fpol c0.
@@ -1036,43 +1061,53 @@ namespace equilibrium {
 ///  Cached magnetic field vector.
         graph::shared_vector<T, SAFE_MATH> b_cache;
 
-///  Cached magnetic field vector.
-        graph::shared_leaf<T, SAFE_MATH> psi_norm_cache;
+///  Cached magnetic flux.
+        graph::shared_leaf<T, SAFE_MATH> psi_cache;
 
 //------------------------------------------------------------------------------
 ///  @brief Build psi.
 ///
-///  @param[in] r_norm The normalized radial position.
-///  @param[in] z_norm The normalized z position.
+///  @param[in] r        The normalized radial position.
+///  @param[in] r_scale  Scale factor for r.
+///  @param[in] r_offset Offset factor for r.
+///  @param[in] z The normalized z position.
+///  @param[in] z_scale  Scale factor for z.
+///  @param[in] z_offset Offset factor for z.
 ///  @returns The psi value.
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
-        build_psi(graph::shared_leaf<T, SAFE_MATH> r_norm,
-                  graph::shared_leaf<T, SAFE_MATH> z_norm) {
-            auto c00_temp = graph::piecewise_2D(c00, num_cols, r_norm, z_norm);
-            auto c01_temp = graph::piecewise_2D(c01, num_cols, r_norm, z_norm);
-            auto c02_temp = graph::piecewise_2D(c02, num_cols, r_norm, z_norm);
-            auto c03_temp = graph::piecewise_2D(c03, num_cols, r_norm, z_norm);
+        build_psi(graph::shared_leaf<T, SAFE_MATH> r,
+                  const T r_scale,
+                  const T r_offset,
+                  graph::shared_leaf<T, SAFE_MATH> z,
+                  const T z_scale,
+                  const T z_offset) {
+            auto c00_temp = graph::piecewise_2D(c00, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c01_temp = graph::piecewise_2D(c01, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c02_temp = graph::piecewise_2D(c02, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c03_temp = graph::piecewise_2D(c03, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
 
-            auto c10_temp = graph::piecewise_2D(c10, num_cols, r_norm, z_norm);
-            auto c11_temp = graph::piecewise_2D(c11, num_cols, r_norm, z_norm);
-            auto c12_temp = graph::piecewise_2D(c12, num_cols, r_norm, z_norm);
-            auto c13_temp = graph::piecewise_2D(c13, num_cols, r_norm, z_norm);
+            auto c10_temp = graph::piecewise_2D(c10, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c11_temp = graph::piecewise_2D(c11, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c12_temp = graph::piecewise_2D(c12, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c13_temp = graph::piecewise_2D(c13, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
 
-            auto c20_temp = graph::piecewise_2D(c20, num_cols, r_norm, z_norm);
-            auto c21_temp = graph::piecewise_2D(c21, num_cols, r_norm, z_norm);
-            auto c22_temp = graph::piecewise_2D(c22, num_cols, r_norm, z_norm);
-            auto c23_temp = graph::piecewise_2D(c23, num_cols, r_norm, z_norm);
+            auto c20_temp = graph::piecewise_2D(c20, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c21_temp = graph::piecewise_2D(c21, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c22_temp = graph::piecewise_2D(c22, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c23_temp = graph::piecewise_2D(c23, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
 
-            auto c30_temp = graph::piecewise_2D(c30, num_cols, r_norm, z_norm);
-            auto c31_temp = graph::piecewise_2D(c31, num_cols, r_norm, z_norm);
-            auto c32_temp = graph::piecewise_2D(c32, num_cols, r_norm, z_norm);
-            auto c33_temp = graph::piecewise_2D(c33, num_cols, r_norm, z_norm);
+            auto c30_temp = graph::piecewise_2D(c30, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c31_temp = graph::piecewise_2D(c31, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c32_temp = graph::piecewise_2D(c32, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c33_temp = graph::piecewise_2D(c33, num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
 
-            auto c0 = ((c03_temp*z_norm + c02_temp)*z_norm + c01_temp)*z_norm + c00_temp;
-            auto c1 = ((c13_temp*z_norm + c12_temp)*z_norm + c11_temp)*z_norm + c10_temp;
-            auto c2 = ((c23_temp*z_norm + c22_temp)*z_norm + c21_temp)*z_norm + c20_temp;
-            auto c3 = ((c33_temp*z_norm + c32_temp)*z_norm + c31_temp)*z_norm + c30_temp;
+            auto r_norm = (r - r_offset)/r_scale;
+
+            auto c0 = build_1D_spline({c00_temp, c01_temp, c02_temp, c03_temp}, z, z_scale, z_offset);
+            auto c1 = build_1D_spline({c10_temp, c11_temp, c12_temp, c13_temp}, z, z_scale, z_offset);
+            auto c2 = build_1D_spline({c20_temp, c21_temp, c22_temp, c23_temp}, z, z_scale, z_offset);
+            auto c3 = build_1D_spline({c30_temp, c31_temp, c32_temp, c33_temp}, z, z_scale, z_offset);
 
             return ((c3*r_norm + c2)*r_norm + c1)*r_norm + c0;
         }
@@ -1097,38 +1132,29 @@ namespace equilibrium {
                 z_cache = z;
 
                 auto r = graph::sqrt(x*x + y*y);
-                auto r_norm = (r - rmin)/dr;
-                auto z_norm = (z - zmin)/dz;
 
-                auto psi = build_psi(r_norm, z_norm);
-                psi_norm_cache = (psi - psimin)/dpsi;
+                psi_cache = build_psi(r, dr, rmin, z, dz, zmin);
 
-                auto n0_temp = graph::piecewise_1D(ne_c0, psi_norm_cache);
-                auto n1_temp = graph::piecewise_1D(ne_c1, psi_norm_cache);
-                auto n2_temp = graph::piecewise_1D(ne_c2, psi_norm_cache);
-                auto n3_temp = graph::piecewise_1D(ne_c3, psi_norm_cache);
+                auto n0_temp = graph::piecewise_1D(ne_c0, psi_cache, dpsi, psimin);
+                auto n1_temp = graph::piecewise_1D(ne_c1, psi_cache, dpsi, psimin);
+                auto n2_temp = graph::piecewise_1D(ne_c2, psi_cache, dpsi, psimin);
+                auto n3_temp = graph::piecewise_1D(ne_c3, psi_cache, dpsi, psimin);
 
-                ne_cache = ne_scale
-                         * (((n3_temp*psi_norm_cache + n2_temp) *
-                             psi_norm_cache + n1_temp)*psi_norm_cache + n0_temp);
+                ne_cache = ne_scale*build_1D_spline({n0_temp, n1_temp, n2_temp, n3_temp}, psi_cache, dpsi, psimin);
 
-                auto t0_temp = graph::piecewise_1D(te_c0, psi_norm_cache);
-                auto t1_temp = graph::piecewise_1D(te_c1, psi_norm_cache);
-                auto t2_temp = graph::piecewise_1D(te_c2, psi_norm_cache);
-                auto t3_temp = graph::piecewise_1D(te_c3, psi_norm_cache);
+                auto t0_temp = graph::piecewise_1D(te_c0, psi_cache, dpsi, psimin);
+                auto t1_temp = graph::piecewise_1D(te_c1, psi_cache, dpsi, psimin);
+                auto t2_temp = graph::piecewise_1D(te_c2, psi_cache, dpsi, psimin);
+                auto t3_temp = graph::piecewise_1D(te_c3, psi_cache, dpsi, psimin);
 
-                te_cache = te_scale
-                         * (((t3_temp*psi_norm_cache + t2_temp) *
-                             psi_norm_cache + t1_temp)*psi_norm_cache + t0_temp);
+                te_cache = te_scale*build_1D_spline({t0_temp, t1_temp, t2_temp, t3_temp}, psi_cache, dpsi, psimin);
 
-                auto p0_temp = graph::piecewise_1D(pres_c0, psi_norm_cache);
-                auto p1_temp = graph::piecewise_1D(pres_c1, psi_norm_cache);
-                auto p2_temp = graph::piecewise_1D(pres_c2, psi_norm_cache);
-                auto p3_temp = graph::piecewise_1D(pres_c3, psi_norm_cache);
+                auto p0_temp = graph::piecewise_1D(pres_c0, psi_cache, dpsi, psimin) - psimin;
+                auto p1_temp = graph::piecewise_1D(pres_c1, psi_cache, dpsi, psimin);
+                auto p2_temp = graph::piecewise_1D(pres_c2, psi_cache, dpsi, psimin);
+                auto p3_temp = graph::piecewise_1D(pres_c3, psi_cache, dpsi, psimin);
 
-                auto pressure = pres_scale
-                              * (((p3_temp*psi_norm_cache + p2_temp) *
-                                  psi_norm_cache + p1_temp)*psi_norm_cache + p0_temp);
+                auto pressure = pres_scale*build_1D_spline({p0_temp, p1_temp, p2_temp, p3_temp}, psi_cache, dpsi, psimin);
 
                 auto q = graph::constant<T, SAFE_MATH> (static_cast<T> (1.60218E-19));
 
@@ -1137,17 +1163,16 @@ namespace equilibrium {
                 
                 auto phi = graph::atan(x, y);
 
-                auto br = psi->df(z)/r;
+                auto br = psi_cache->df(z)/r;
 
-                auto b0_temp = graph::piecewise_1D(fpol_c0, r_norm);
-                auto b1_temp = graph::piecewise_1D(fpol_c1, r_norm);
-                auto b2_temp = graph::piecewise_1D(fpol_c2, r_norm);
-                auto b3_temp = graph::piecewise_1D(fpol_c3, r_norm);
+                auto b0_temp = graph::piecewise_1D(fpol_c0, r, dr, rmin);
+                auto b1_temp = graph::piecewise_1D(fpol_c1, r, dr, rmin);
+                auto b2_temp = graph::piecewise_1D(fpol_c2, r, dr, rmin);
+                auto b3_temp = graph::piecewise_1D(fpol_c3, r, dr, rmin);
                 
-                auto bp = (((b3_temp*r_norm + b2_temp) *
-                            r_norm + b1_temp)*r_norm + b0_temp)/r;
+                auto bp = build_1D_spline({b0_temp, b1_temp, b2_temp, b3_temp}, r, dr, rmin)/r;
 
-                auto bz = -psi->df(r)/r;
+                auto bz = -psi_cache->df(r)/r;
 
                 auto cos = graph::cos(phi);
                 auto sin = graph::sin(phi);
@@ -1205,8 +1230,8 @@ namespace equilibrium {
 ///  @param[in] c32        Psi c32 spline coefficient.
 ///  @param[in] c33        Psi c33 spline coefficient.
 //------------------------------------------------------------------------------
-        efit(graph::shared_leaf<T, SAFE_MATH> psimin,
-             graph::shared_leaf<T, SAFE_MATH> dpsi,
+        efit(const T psimin,
+             const T dpsi,
              const backend::buffer<T> te_c0,
              const backend::buffer<T> te_c1,
              const backend::buffer<T> te_c2,
@@ -1222,10 +1247,10 @@ namespace equilibrium {
              const backend::buffer<T> pres_c2,
              const backend::buffer<T> pres_c3,
              graph::shared_leaf<T, SAFE_MATH> pres_scale,
-             graph::shared_leaf<T, SAFE_MATH> rmin,
-             graph::shared_leaf<T, SAFE_MATH> dr,
-             graph::shared_leaf<T, SAFE_MATH> zmin,
-             graph::shared_leaf<T, SAFE_MATH> dz,
+             const T rmin,
+             const T dr,
+             const T zmin,
+             const T dz,
              const backend::buffer<T> fpol_c0,
              const backend::buffer<T> fpol_c1,
              const backend::buffer<T> fpol_c2,
@@ -1376,7 +1401,7 @@ namespace equilibrium {
             workflow::manager<T, SAFE_MATH> work(device_number);
             solver::newton(work, {
                 x_axis, z_axis
-            }, inputs, psi_norm_cache, static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
+            }, inputs, (psi_cache - psimin)/dpsi, static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
             work.add_item(inputs, {b_mod}, {}, "bmod_at_axis");
             work.compile();
             work.run();
@@ -1567,12 +1592,12 @@ namespace equilibrium {
         nc_close(ncid);
         sync.unlock();
 
-        auto rmin = graph::constant<T, SAFE_MATH> (static_cast<T> (rmin_value));
-        auto dr = graph::constant<T, SAFE_MATH> (static_cast<T> (dr_value));
-        auto zmin = graph::constant<T, SAFE_MATH> (static_cast<T> (zmin_value));
-        auto dz = graph::constant<T, SAFE_MATH> (static_cast<T> (dz_value));
-        auto psimin = graph::constant<T, SAFE_MATH> (static_cast<T> (psimin_value));
-        auto dpsi = graph::constant<T, SAFE_MATH> (static_cast<T> (dpsi_value));
+        auto rmin = static_cast<T> (rmin_value);
+        auto dr = static_cast<T> (dr_value);
+        auto zmin = static_cast<T> (zmin_value);
+        auto dz = static_cast<T> (dz_value);
+        auto psimin = static_cast<T> (psimin_value);
+        auto dpsi = static_cast<T> (dpsi_value);
         auto pres_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (pres_scale_value));
         auto ne_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (ne_scale_value));
         auto te_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (te_scale_value));
@@ -1641,11 +1666,11 @@ namespace equilibrium {
     class vmec final : public generic<T, SAFE_MATH> {
     private:
 ///  Minimum s on the half grid.
-        graph::shared_leaf<T, SAFE_MATH> sminh;
+        const T sminh;
 ///  Minimum s on the full grid.
-        graph::shared_leaf<T, SAFE_MATH> sminf;
+        const T sminf;
 ///  Change in s grid.
-        graph::shared_leaf<T, SAFE_MATH> ds;
+        const T ds;
 ///  Sign of the jacobian.
         graph::shared_leaf<T, SAFE_MATH> signj;
 
@@ -1814,13 +1839,13 @@ namespace equilibrium {
 ///  @returns χ(s,u,v)
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
-        get_chi(graph::shared_leaf<T, SAFE_MATH> s_norm) {
-            auto c0_temp = graph::piecewise_1D(chi_c0, s_norm);
-            auto c1_temp = graph::piecewise_1D(chi_c1, s_norm);
-            auto c2_temp = graph::piecewise_1D(chi_c2, s_norm);
-            auto c3_temp = graph::piecewise_1D(chi_c3, s_norm);
+        get_chi(graph::shared_leaf<T, SAFE_MATH> s) {
+            auto c0_temp = graph::piecewise_1D(chi_c0, s, ds, sminf);
+            auto c1_temp = graph::piecewise_1D(chi_c1, s, ds, sminf);
+            auto c2_temp = graph::piecewise_1D(chi_c2, s, ds, sminf);
+            auto c3_temp = graph::piecewise_1D(chi_c3, s, ds, sminf);
 
-            return ((c3_temp*s_norm + c2_temp)*s_norm + c1_temp)*s_norm + c0_temp;
+            return build_1D_spline({c0_temp, c1_temp, c2_temp, c3_temp}, s, ds, sminf);
         }
 
 //------------------------------------------------------------------------------
@@ -1854,7 +1879,6 @@ namespace equilibrium {
                 v_cache = v;
                 
                 auto s_norm_f = (s - sminf)/ds;
-                auto s_norm_h = (s - sminh)/ds;
 
                 auto zero = graph::zero<T, SAFE_MATH> ();
                 auto r = zero;
@@ -1862,27 +1886,27 @@ namespace equilibrium {
                 auto l = zero;
 
                 for (size_t i = 0, ie = xm.size(); i < ie; i++) {
-                    auto rmnc_c0_temp = graph::piecewise_1D(rmnc_c0[i], s_norm_f);
-                    auto rmnc_c1_temp = graph::piecewise_1D(rmnc_c1[i], s_norm_f);
-                    auto rmnc_c2_temp = graph::piecewise_1D(rmnc_c2[i], s_norm_f);
-                    auto rmnc_c3_temp = graph::piecewise_1D(rmnc_c3[i], s_norm_f);
+                    auto rmnc_c0_temp = graph::piecewise_1D(rmnc_c0[i], s, ds, sminf);
+                    auto rmnc_c1_temp = graph::piecewise_1D(rmnc_c1[i], s, ds, sminf);
+                    auto rmnc_c2_temp = graph::piecewise_1D(rmnc_c2[i], s, ds, sminf);
+                    auto rmnc_c3_temp = graph::piecewise_1D(rmnc_c3[i], s, ds, sminf);
 
-                    auto zmns_c0_temp = graph::piecewise_1D(zmns_c0[i], s_norm_f);
-                    auto zmns_c1_temp = graph::piecewise_1D(zmns_c1[i], s_norm_f);
-                    auto zmns_c2_temp = graph::piecewise_1D(zmns_c2[i], s_norm_f);
-                    auto zmns_c3_temp = graph::piecewise_1D(zmns_c3[i], s_norm_f);
+                    auto zmns_c0_temp = graph::piecewise_1D(zmns_c0[i], s, ds, sminf);
+                    auto zmns_c1_temp = graph::piecewise_1D(zmns_c1[i], s, ds, sminf);
+                    auto zmns_c2_temp = graph::piecewise_1D(zmns_c2[i], s, ds, sminf);
+                    auto zmns_c3_temp = graph::piecewise_1D(zmns_c3[i], s, ds, sminf);
 
-                    auto lmns_c0_temp = graph::piecewise_1D(lmns_c0[i], s_norm_h);
-                    auto lmns_c1_temp = graph::piecewise_1D(lmns_c1[i], s_norm_h);
-                    auto lmns_c2_temp = graph::piecewise_1D(lmns_c2[i], s_norm_h);
-                    auto lmns_c3_temp = graph::piecewise_1D(lmns_c3[i], s_norm_h);
+                    auto lmns_c0_temp = graph::piecewise_1D(lmns_c0[i], s, ds, sminh);
+                    auto lmns_c1_temp = graph::piecewise_1D(lmns_c1[i], s, ds, sminh);
+                    auto lmns_c2_temp = graph::piecewise_1D(lmns_c2[i], s, ds, sminh);
+                    auto lmns_c3_temp = graph::piecewise_1D(lmns_c3[i], s, ds, sminh);
 
-                    auto rmnc = ((rmnc_c3_temp*s_norm_f + rmnc_c2_temp)*s_norm_f +
-                                 rmnc_c1_temp)*s_norm_f + rmnc_c0_temp;
-                    auto zmns = ((zmns_c3_temp*s_norm_f + zmns_c2_temp)*s_norm_f +
-                                 zmns_c1_temp)*s_norm_f + zmns_c0_temp;
-                    auto lmns = ((lmns_c3_temp*s_norm_h + lmns_c2_temp)*s_norm_h +
-                                 lmns_c1_temp)*s_norm_h + lmns_c0_temp;
+                    auto rmnc = build_1D_spline({rmnc_c0_temp, rmnc_c1_temp, rmnc_c2_temp, rmnc_c3_temp},
+                                                s, ds, sminf);
+                    auto zmns = build_1D_spline({zmns_c0_temp, zmns_c1_temp, zmns_c2_temp, zmns_c3_temp},
+                                                s, ds, sminf);
+                    auto lmns = build_1D_spline({lmns_c0_temp, lmns_c1_temp, lmns_c2_temp, lmns_c3_temp},
+                                                s, ds, sminh);
 
                     auto m = graph::constant<T, SAFE_MATH> (xm[i]);
                     auto n = graph::constant<T, SAFE_MATH> (xn[i]);
@@ -1954,9 +1978,9 @@ namespace equilibrium {
 ///  @param[in] xm      Poloidal mode numbers.
 ///  @param[in] xn      Toroidal mode numbers.
 //------------------------------------------------------------------------------
-        vmec(graph::shared_leaf<T, SAFE_MATH> sminh,
-             graph::shared_leaf<T, SAFE_MATH> sminf,
-             graph::shared_leaf<T, SAFE_MATH> ds,
+        vmec(const T sminh,
+             const T sminf,
+             const T ds,
              graph::shared_leaf<T, SAFE_MATH> dphi,
              graph::shared_leaf<T, SAFE_MATH> signj,
              const backend::buffer<T> chi_c0,
@@ -2367,9 +2391,9 @@ namespace equilibrium {
         nc_close(ncid);
         sync.unlock();
 
-        auto sminf = graph::constant<T, SAFE_MATH> (static_cast<T> (sminf_value));
-        auto sminh = graph::constant<T, SAFE_MATH> (static_cast<T> (sminh_value));
-        auto ds = graph::constant<T, SAFE_MATH> (static_cast<T> (ds_value));
+        auto sminf = static_cast<T> (sminf_value);
+        auto sminh = static_cast<T> (sminh_value);
+        auto ds = static_cast<T> (ds_value);
         auto dphi = graph::constant<T, SAFE_MATH> (static_cast<T> (dphi_value));
         auto signj = graph::constant<T, SAFE_MATH> (static_cast<T> (signj_value));
 

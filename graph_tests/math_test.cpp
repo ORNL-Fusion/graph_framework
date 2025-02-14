@@ -104,7 +104,8 @@ void test_sqrt() {
 #endif
 //  Test node properties.
     auto sqrt_const = graph::sqrt(graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                           static_cast<T> (2.0)}), var));
+                                                                           static_cast<T> (2.0)}),
+                                                          var, 1.0, 0.0));
     assert(sqrt_const->is_constant() && "Expected a constant.");
     assert(!sqrt_const->is_all_variables() && "Did not expect a variable.");
     assert(sqrt_const->is_power_like() && "Expected a power like.");
@@ -265,7 +266,8 @@ void test_pow() {
 //  Test node properties.
     auto var_a = graph::variable<T> (1, "");
     auto pow_const = graph::pow(3.0, graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                              static_cast<T> (2.0)}), var_a));
+                                                                              static_cast<T> (2.0)}),
+                                                             var_a, 1.0, 0.0));
     assert(pow_const->is_constant() && "Expected a constant.");
     assert(!pow_const->is_all_variables() && "Did not expect a variable.");
     assert(pow_const->is_power_like() && "Expected a power like.");

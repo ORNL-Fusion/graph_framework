@@ -80,13 +80,16 @@ template<jit::float_scalar T> void piecewise_1D() {
     auto b = graph::variable<T> (1, "");
     auto p1 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                        static_cast<T> (2.0),
-                                                       static_cast<T> (3.0)}), a);
+                                                       static_cast<T> (3.0)}),
+                                      a, 1.0, 0.0);
     auto p2 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (2.0),
                                                        static_cast<T> (4.0),
-                                                       static_cast<T> (6.0)}), b);
+                                                       static_cast<T> (6.0)}),
+                                      b, 1.0, 0.0);
     auto p3 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (2.0),
                                                        static_cast<T> (4.0),
-                                                       static_cast<T> (6.0)}), a);
+                                                       static_cast<T> (6.0)}),
+                                      a, 1.0, 0.0);
 
     assert(graph::constant_cast(p1*0.0).get() &&
            "Expected a constant node.");
@@ -225,7 +228,8 @@ template<jit::float_scalar T> void piecewise_1D() {
 
     auto pc = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (10.0),
                                                        static_cast<T> (10.0),
-                                                       static_cast<T> (10.0)}), a);
+                                                       static_cast<T> (10.0)}),
+                                      a, 1.0, 0.0);
     assert(graph::constant_cast(pc).get() &&
            "Expected a constant.");
 
@@ -282,21 +286,21 @@ template<jit::float_scalar T> void piecewise_2D() {
     auto p1 = graph::piecewise_2D<T> (std::vector<T> ({
         static_cast<T> (1.0), static_cast<T> (2.0),
         static_cast<T> (3.0), static_cast<T> (4.0)
-    }), 2, ax, ay);
+    }), 2, ax, 1.0, 0.0, ay, 1.0, 0.0);
     auto p2 = graph::piecewise_2D<T> (std::vector<T> ({
         static_cast<T> (2.0), static_cast<T> (4.0),
         static_cast<T> (6.0), static_cast<T> (10.0)
-    }), 2, bx, by);
+    }), 2, bx, 1.0, 0.0, by, 1.0, 0.0);
     auto p3 = graph::piecewise_2D<T> (std::vector<T> ({
         static_cast<T> (2.0), static_cast<T> (4.0),
         static_cast<T> (6.0), static_cast<T> (10.0)
-    }), 2, ax, ay);
+    }), 2, ax, 1.0, 0.0, ay, 1.0, 0.0);
     auto p4 = graph::piecewise_1D<T> (std::vector<T> ({
         static_cast<T> (2.0), static_cast<T> (4.0)
-    }),  ax);
+    }),  ax, 1.0, 0.0);
     auto p5 = graph::piecewise_1D<T> (std::vector<T> ({
         static_cast<T> (2.0), static_cast<T> (4.0)
-    }), ay);
+    }), ay, 1.0, 0.0);
 
     assert(graph::constant_cast(p1*0.0).get() &&
            "Expected a constant node.");
@@ -592,7 +596,7 @@ template<jit::float_scalar T> void piecewise_2D() {
                                                        static_cast<T> (10.0),
                                                        static_cast<T> (10.0),
                                                        static_cast<T> (10.0)}),
-                                      2, ax, bx);
+                                      2, ax, 1.0, 0.0, bx, 1.0, 0.0);
     assert(graph::constant_cast(pc).get() &&
            "Expected a constant.");
 
@@ -600,17 +604,17 @@ template<jit::float_scalar T> void piecewise_2D() {
         static_cast<T> (1.0),
         static_cast<T> (2.0),
         static_cast<T> (3.0)
-    }), ax);
+    }), ax, 1.0, 0.0);
     auto pcc = graph::piecewise_1D<T> (std::vector<T> ({
         static_cast<T> (1.0),
         static_cast<T> (2.0),
         static_cast<T> (3.0)
-    }), ay);
+    }), ay, 1.0, 0.0);
     auto p2Dc = graph::piecewise_2D<T> (std::vector<T> ({
         static_cast<T> (1.0), static_cast<T> (2.0), 
         static_cast<T> (3.0), static_cast<T> (4.0),
         static_cast<T> (5.0), static_cast<T> (6.0)
-    }), 2, ax, ay);
+    }), 2, ax, 1.0, 0.0, ay, 1.0, 0.0);
 
     auto row_test = prc + p2Dc;
     auto row_test_cast = graph::piecewise_2D_cast(row_test);

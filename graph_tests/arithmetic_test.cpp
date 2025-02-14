@@ -262,7 +262,8 @@ template<jit::float_scalar T> void test_add() {
     assert(!three->is_all_variables() && "Did not expect a variable.");
     assert(three->is_power_like() && "Expected a power like.");
     auto constant_add = three + graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                         static_cast<T> (2.0)}), var_a);
+                                                                         static_cast<T> (2.0)}),
+                                                        var_a, 1.0, 0.0);
     assert(constant_add->is_constant() && "Expected a constant.");
     assert(!constant_add->is_all_variables() && "Did not expect a variable.");
     assert(constant_add->is_power_like() && "Expected a power like.");
@@ -736,7 +737,8 @@ template<jit::float_scalar T> void test_subtract() {
     assert(!zero->is_all_variables() && "Did not expect a variable.");
     assert(zero->is_power_like() && "Expected a power like.");
     auto constant_sub = one - graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                       static_cast<T> (2.0)}), var_a);
+                                                                       static_cast<T> (2.0)}), var_a,
+                                                      1.0, 0.0);
     assert(constant_sub->is_constant() && "Expected a constant.");
     assert(!constant_sub->is_all_variables() && "Did not expect a variable.");
     assert(constant_sub->is_power_like() && "Expected a power like.");
@@ -1405,7 +1407,8 @@ template<jit::float_scalar T> void test_multiply() {
     assert(!two_times_three->is_all_variables() && "Did not expect a variable.");
     assert(two_times_three->is_power_like() && "Expected a power like.");
     auto constant_mul = three*graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                       static_cast<T> (2.0)}), variable);
+                                                                       static_cast<T> (2.0)}),
+                                                      variable, 1.0, 0.0);
     assert(constant_mul->is_constant() && "Expected a constant.");
     assert(!constant_mul->is_all_variables() && "Did not expect a variable.");
     assert(constant_mul->is_power_like() && "Expected a power like.");
@@ -1967,6 +1970,17 @@ template<jit::float_scalar T> void test_multiply() {
                                         v1,
                                         1.0)) &&
            "Expected fma(fma(fma(2,x,23),x,30,x,1))");
+
+//  c1*(fma(fma(fma(c2,x,c3),x,c4),x,c5)*y) -> fma(fma(fma(c6,x,c7),x,c8),x,c9)*y
+    auto consume2 = 10.0*(graph::fma(graph::fma(graph::fma(5.0,v1,0.4),v1,0.3),v1,0.3)*v2);
+    assert(consume2->is_match(graph::fma(graph::fma(graph::fma(50.0,
+                                                               v1,
+                                                               4.0),
+                                                    v1,
+                                                    3.0),
+                                         v1,
+                                         3.0)*v2) &&
+           "Expected fma(fma(fma(50,x,4),x,3),x,3)*y");
 }
 
 //------------------------------------------------------------------------------
@@ -2371,7 +2385,8 @@ template<jit::float_scalar T> void test_divide() {
     assert(!two_divided_three->is_all_variables() && "Did not expect a variable.");
     assert(two_divided_three->is_power_like() && "Expected a power like.");
     auto constant_div = two_divided_three/graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                                   static_cast<T> (2.0)}), variable);
+                                                                                   static_cast<T> (2.0)}),
+                                                                  variable, 1.0, 0.0);
     assert(constant_div->is_constant() && "Expected a constant.");
     assert(!constant_div->is_all_variables() && "Did not expect a variable.");
     assert(constant_div->is_power_like() && "Expected a power like.");
@@ -3220,7 +3235,7 @@ template<jit::float_scalar T> void test_fma() {
     auto constant_fma = graph::fma(one_two_three,
                                    graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                             static_cast<T> (2.0)}),
-                                                           var_a),
+                                                           var_a, 1.0, 0.0),
                                    one);
     assert(!constant_fma->is_all_variables() && "Did not expect a variable.");
     assert(constant_fma->is_power_like() && "Expected a power like.");
@@ -3250,7 +3265,7 @@ template<jit::float_scalar T> void test_fma() {
     auto piecewise1 = graph::fma<T> (2.0,
                                      graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                               static_cast<T> (2.0)}),
-                                                             var_a)*var_a,
+                                                             var_a, 1.0, 0.0)*var_a,
                                      var_b);
     auto piecewise1_cast = graph::fma_cast(piecewise1);
     assert(piecewise1_cast.get() && "Expected a fma node.");
@@ -3258,8 +3273,9 @@ template<jit::float_scalar T> void test_fma() {
            "Expected a piecewise_1D node.");
     auto piecewise2 = graph::fma<T> (2.0,
                                      graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                              static_cast<T> (2.0)}),
-                                                             1, var_a, var_b)*var_a,
+                                                                              static_cast<T> (2.0)}), 1,
+                                                             var_a, 1.0, 0.0,
+                                                             var_b, 1.0, 0.0)*var_a,
                                      var_b);
     auto piecewise2_cast = graph::fma_cast(piecewise2);
     assert(piecewise2_cast.get() && "Expected a fma node.");
@@ -3506,12 +3522,13 @@ template<jit::float_scalar T> void test_fma() {
 //  fma(p2,p1,a) -> fma(p1,p2,a)
     auto p1 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                        static_cast<T> (2.0)}),
-                                      var_a);
+                                      var_a, 1.0, 0.0);
     auto p2 = graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                        static_cast<T> (2.0),
                                                        static_cast<T> (3.0),
-                                                       static_cast<T> (4.0)}),
-                                      2, var_b, var_c);
+                                                       static_cast<T> (4.0)}), 2,
+                                      var_b, 1.0, 0.0,
+                                      var_c, 1.0, 0.0);
     auto fma_promote = graph::fma(p2, p1, var_a);
     auto fma_promote_cast = graph::fma_cast(fma_promote);
     assert(fma_promote_cast.get() && "Expected a fma node.");
@@ -3777,6 +3794,52 @@ template<jit::float_scalar T> void test_fma() {
                                         var_a,
                                         -10.0)) &&
            "Expected fma(fma(fma(2,x,16),x,-10),x,-10)");
+/*
+//  fma(fma(c1,a,c2),b - c3,fma(c4,a,c5) -> fma(fma(c6,a,c8),b,fma(c9,a,c10))
+    auto gather3 = graph::fma(graph::fma(2.0,
+                                         var_a,
+                                         20.0),
+                              var_b - 2.0,
+                              graph::fma(2.0,
+                                         var_a,
+                                         21.0));
+    assert(gather3->is_match(graph::fma(graph::fma(2.0,var_a,20.0),var_b,graph::fma(2.0,var_a,-19.0))) &&
+           "Expected fma(fma(2,x,20),y,fma(2,x,-19))");
+
+//  fma(fma(fma(fma(c1,a,c2),a,c3),a,c4),b - c5,fma(fma(fma(c6,a,c7),a,c8),a,c9)) ->
+//  fma(fma(fma(fma(c10,a,c11),a,c12),a,c13),b,fma(fma(fma(c14,a,c15),a,c16),a,c17))
+    auto gather4 = graph::fma(graph::fma(graph::fma(graph::fma(2.0,
+                                                               var_a,
+                                                               20.0),
+                                                    var_a,
+                                                    30.0),
+                                         var_a,
+                                         50.0),
+                              var_b - 2.0,
+                              graph::fma(graph::fma(graph::fma(2.0,
+                                                               var_a,
+                                                               21.0),
+                                                    var_a,
+                                                    31.0),
+                                         var_a,
+                                         51.0));
+    assert(gather3->is_match(graph::fma(graph::fma(graph::fma(graph::fma(2.0,
+                                                                         var_a,
+                                                                         20.0),
+                                                              var_a,
+                                                              30.0),
+                                                   var_a,
+                                                   50.0),
+                                        var_b ,
+                                        graph::fma(graph::fma(graph::fma(2.0,
+                                                                         var_a,
+                                                                         -19.0),
+                                                              var_a,
+                                                              -29.0),
+                                                   var_a,
+                                                   -49.0))) &&
+           "Expected fma(fma(fma(fma(2,x,20),x,30),x,50),b,fma(fma(fma(2,x,-19),-29),-49)");
+ */
 }
 
 //------------------------------------------------------------------------------
