@@ -149,6 +149,7 @@ namespace gpu {
             llvm::SmallVector<const char *, 8> args = split_string(arg_string);
             args.push_back(filename.c_str());
 #ifdef NDEBUG
+            args.push_back("-ffast-math");
             args.push_back("-O3");
 #else
             args.push_back("-debug-info-kind=standalone");

@@ -301,7 +301,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         MTLCompileOptions *compile_options() {
             MTLCompileOptions *options = [MTLCompileOptions new];
-            options.fastMathEnabled = NO;
+            options.fastMathEnabled = YES;
             return options;
         }
 
