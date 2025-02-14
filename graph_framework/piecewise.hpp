@@ -19,11 +19,15 @@ namespace graph {
 ///  @param[in,out] stream        String buffer stream.
 ///  @param[in]     register_name Reister for the argument.
 ///  @param[in]     length        Dimension length of argument.
+///  @param[in]     scale        Argument scale factor.
+///  @param[in]     offset        Argument offset factor.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void compile_index(std::ostringstream &stream,
                    const std::string &register_name,
-                   const size_t length) {
+                   const size_t length,
+                   const T scale,
+                   const T offset) {
     const std::string type = jit::smallest_int_type<T> (length);
     stream << "min(max(("
            << type
@@ -31,7 +35,15 @@ void compile_index(std::ostringstream &stream,
     if constexpr (jit::is_complex<T> ()) {
         stream << "real(";
     }
-    stream << register_name;
+    stream << "((" << register_name << " - ";
+    if constexpr (jit::is_complex<T> ()) {
+        stream << jit::get_type_string<T> ();
+    }
+    stream << offset << ")/";
+    if constexpr (jit::is_complex<T> ()) {
+        stream << jit::get_type_string<T> ();
+    }
+    stream << scale << ")";
     if constexpr (jit::is_complex<T> ()) {
         stream << ")";
     }
@@ -78,6 +90,11 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class piecewise_1D_node final : public straight_node<T, SAFE_MATH> {
+///  Scale factor for the argument.
+        const T scale;
+///  Offset factor for the argument.
+        const T offset;
+
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -138,13 +155,18 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Construct 1D a piecewise constant node.
 ///
-///  @param[in] d Data to initalize the piecewise constant.
-///  @param[in] x Argument.
+///  @param[in] d      Data to initalize the piecewise constant.
+///  @param[in] x      Argument.
+///  @param[in] scale  Scale factor for the argument.
+///  @param[in] offset Offset factor for the argument.
 //------------------------------------------------------------------------------
         piecewise_1D_node(const backend::buffer<T> &d,
-                          shared_leaf<T, SAFE_MATH> x) :
+                          shared_leaf<T, SAFE_MATH> x,
+                          const T scale,
+                          const T offset) :
         straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x)),
-        data_hash(piecewise_1D_node::hash_data(d)) {}
+        data_hash(piecewise_1D_node::hash_data(d)), scale(scale),
+        offset(offset) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of the piecewise constant.
@@ -306,7 +328,8 @@ void compile_index(std::ostringstream &stream,
                     stream << "        const "
                            << jit::smallest_int_type<T> (length) << " "
                            << indices[a.get()] << " = ";
-                    compile_index<T> (stream, registers[a.get()], length);
+                    compile_index<T> (stream, registers[a.get()], length,
+                                      scale, offset);
                     a->endline(stream, usage);
                 }
 #endif
@@ -336,7 +359,8 @@ void compile_index(std::ostringstream &stream,
                            << ").r";
 #else
                     stream << ".read(";
-                    compile_index<T> (stream, registers[a.get()], length);
+                    compile_index<T> (stream, registers[a.get()], length,
+                                      scale, offset);
                     stream << ").r";
 #endif
 #ifdef USE_CUDA_TEXTURES
@@ -346,7 +370,8 @@ void compile_index(std::ostringstream &stream,
                            << indices[this->arg.get()];
 #else
                     stream << ", ";
-                    compile_index<T> (stream, registers[a.get()], length);
+                    compile_index<T> (stream, registers[a.get()], length,
+                                      scale, offset);
 #endif
                     if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
                         stream << ")";
@@ -360,7 +385,8 @@ void compile_index(std::ostringstream &stream,
                            << "]";
 #else
                     stream << "[";
-                    compile_index<T> (stream, registers[a.get()], length);
+                    compile_index<T> (stream, registers[a.get()], length,
+                                      scale, offset);
                     stream << "]";
 #endif
                 }
@@ -482,9 +508,29 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get()                           &&
-                   this->arg->is_match(temp->get_arg()) &&
-                   (temp->get_size() == this->get_size());
+            return temp.get()                             &&
+                   this->arg->is_match(temp->get_arg())   &&
+                   (temp->get_size() == this->get_size()) &&
+                   (temp->get_scale() == this->scale)     &&
+                   (temp->get_offset() == this->offset);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x argument scale.
+///
+///  @returns The scale factor for x.
+//------------------------------------------------------------------------------
+        T get_scale() const {
+            return scale;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x argument offset.
+///
+///  @returns The offset factor for x.
+//------------------------------------------------------------------------------
+        T get_offset() const {
+            return offset;
         }
 
 //------------------------------------------------------------------------------
@@ -509,8 +555,12 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> piecewise_1D(const backend::buffer<T> &d,
-                                           shared_leaf<T, SAFE_MATH> x) {
-        auto temp = std::make_shared<piecewise_1D_node<T, SAFE_MATH>> (d, x)->reduce();
+                                           shared_leaf<T, SAFE_MATH> x,
+                                           const T scale,
+                                           const T offset) {
+        auto temp = std::make_shared<piecewise_1D_node<T, SAFE_MATH>> (d, x,
+                                                                       scale,
+                                                                       offset)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
             if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
@@ -593,6 +643,15 @@ void compile_index(std::ostringstream &stream,
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class piecewise_2D_node final : public branch_node<T, SAFE_MATH> {
     private:
+///  Scale factor for the x argument.
+        const T x_scale;
+///  Offset factor for the x argument.
+        const T x_offset;
+///  Scale factor for the y argument.
+        const T y_scale;
+///  Offset factor for the y argument.
+        const T y_offset;
+
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
@@ -657,18 +716,27 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Construct 2D a piecewise constant node.
 ///
-///  @param[in] d Data to initalize the piecewise constant.
-///  @param[in] n Number of columns.
-///  @param[in] x X Argument.
-///  @param[in] y Y Argument.
+///  @param[in] d        Data to initalize the piecewise constant.
+///  @param[in] n        Number of columns.
+///  @param[in] x        X Argument.
+///  @param[in] x_scale  Scale factor for the xargument.
+///  @param[in] x_offset Offset factor for the x argument.
+///  @param[in] y        Y Argument.
+///  @param[in] y_scale  Scale factor for the y argument.
+///  @param[in] y_offset Offset factor for the y argument.
 //------------------------------------------------------------------------------
         piecewise_2D_node(const backend::buffer<T> &d,
                           const size_t n,
                           shared_leaf<T, SAFE_MATH> x,
-                          shared_leaf<T, SAFE_MATH> y) :
+                          const T x_scale,
+                          const T x_offset,
+                          shared_leaf<T, SAFE_MATH> y,
+                          const T y_scale,
+                          const T y_offset) :
         branch_node<T, SAFE_MATH> (x, y, piecewise_2D_node::to_string(d, x, y)),
         data_hash(piecewise_2D_node::hash_data(d)),
-        num_columns(n) {
+        num_columns(n), x_scale(x_scale), x_offset(x_offset), y_scale(y_scale),
+        y_offset(y_offset) {
             assert(d.size()%n == 0 &&
                    "Expected the data buffer to be a multiple of the number of columns.");
         }
@@ -690,6 +758,42 @@ void compile_index(std::ostringstream &stream,
         size_t get_num_rows() const {
             return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size() /
                    num_columns;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x argument scale.
+///
+///  @returns The scale factor for x.
+//------------------------------------------------------------------------------
+        T get_x_scale() const {
+            return x_scale;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x argument offset.
+///
+///  @returns The offset factor for x.
+//------------------------------------------------------------------------------
+        T get_x_offset() const {
+            return x_offset;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get y argument scale.
+///
+///  @returns The scale factor for y.
+//------------------------------------------------------------------------------
+        T get_y_scale() const {
+            return y_scale;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get y argument offset.
+///
+///  @returns The offset factor for x.
+//------------------------------------------------------------------------------
+        T get_y_offset() const {
+            return y_offset;
         }
 
 //------------------------------------------------------------------------------
@@ -872,7 +976,8 @@ void compile_index(std::ostringstream &stream,
                     stream << "        const "
                            << jit::smallest_int_type<T> (num_rows) << " "
                            << indices[x.get()] << " = ";
-                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    compile_index<T> (stream, registers[x.get()], num_rows,
+                                      x_scale, x_offset);
                     x->endline(stream, usage);
                 }
                 if (indices.find(this->right.get()) == indices.end()) {
@@ -886,7 +991,8 @@ void compile_index(std::ostringstream &stream,
                     stream << "        const "
                            << jit::smallest_int_type<T> (num_columns) << " "
                            << indices[y.get()] << " = ";
-                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    compile_index<T> (stream, registers[y.get()], num_columns,
+                                      y_scale, y_offset);
                     y->endline(stream, usage);
                 }
 
@@ -940,9 +1046,11 @@ void compile_index(std::ostringstream &stream,
                            << ")).r";
 #else
                     stream << ".read(uint2(";
-                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    compile_index<T> (stream, registers[y.get()], num_columns,
+                                      y_scale, y_offset);
                     stream << ",";
-                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    compile_index<T> (stream, registers[x.get()], num_rows,
+                                      x_scale, x_offset);
                     stream << ")).r";
 #endif
 #ifdef USE_CUDA_TEXTURES
@@ -954,9 +1062,11 @@ void compile_index(std::ostringstream &stream,
                            << indices[this->left.get()];
 #else
                     stream << ", ";
-                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    compile_index<T> (stream, registers[y.get()], num_columns,
+                                      y_scale, y_offset);
                     stream << ", ";
-                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    compile_index<T> (stream, registers[x.get()], num_rows,
+                                      x_scale, x_offset);
 #endif
                     if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
                         stream << ")";
@@ -970,9 +1080,11 @@ void compile_index(std::ostringstream &stream,
                            << "]";
 #else
                     stream << "[";
-                    compile_index<T> (stream, registers[x.get()], num_rows);
+                    compile_index<T> (stream, registers[x.get()], num_rows,
+                                      x_scale, x_offset);
                     stream << "*" << num_columns << " + ";
-                    compile_index<T> (stream, registers[y.get()], num_columns);
+                    compile_index<T> (stream, registers[y.get()], num_columns,
+                                      y_scale, y_offset);
                     stream << "]";
 #endif
                 }
@@ -1098,11 +1210,15 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_2D_cast(x);
-            return temp.get()                                     &&
-                   this->left->is_match(temp->get_left())         &&
-                   this->right->is_match(temp->get_right())       &&
-                   (temp->get_num_rows() == this->get_num_rows()) &&
-                   (temp->get_num_columns() == this->get_num_columns());
+            return temp.get()                                           &&
+                   this->left->is_match(temp->get_left())               &&
+                   this->right->is_match(temp->get_right())             &&
+                   (temp->get_num_rows() == this->get_num_rows())       &&
+                   (temp->get_num_columns() == this->get_num_columns()) &&
+                   (temp->get_x_scale() == this->x_scale)               &&
+                   (temp->get_x_offset() == this->x_offset)             &&
+                   (temp->get_y_scale() == this->y_scale)               &&
+                   (temp->get_y_offset() == this->y_offset);
         }
 
 //------------------------------------------------------------------------------
@@ -1113,9 +1229,11 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_row_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get()                            &&
-                   this->left->is_match(temp->get_arg()) &&
-                   (temp->get_size() == this->get_num_rows());
+            return temp.get()                                 &&
+                   this->left->is_match(temp->get_arg())      &&
+                   (temp->get_size() == this->get_num_rows()) &&
+                   (temp->get_scale() == this->x_scale)     &&
+                   (temp->get_offset() == this->x_offset);
         }
 
 //------------------------------------------------------------------------------
@@ -1128,9 +1246,11 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_col_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get()                             &&
-                   this->right->is_match(temp->get_arg()) &&
-                   (temp->get_size() == this->get_num_columns());
+            return temp.get()                                    &&
+                   this->right->is_match(temp->get_arg())        &&
+                   (temp->get_size() == this->get_num_columns()) &&
+                   (temp->get_scale() == this->y_scale)        &&
+                   (temp->get_offset() == this->y_offset);
         }
     };
 
@@ -1140,18 +1260,28 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @param[in] d Data to initalize the piecewise constant.
-///  @param[in] n Number of columns.
-///  @param[in] x Argument.
-///  @param[in] y Argument.
+///  @param[in] d        Data to initalize the piecewise constant.
+///  @param[in] n        Number of columns.
+///  @param[in] x        X argument.
+///  @param[in] x_scale  Scale for x argument.
+///  @param[in] x_offset Offset for x argument.
+///  @param[in] y        Argument.
+///  @param[in] y_scale  Scale for y argument.
+///  @param[in] y_offset Offset for y argument.
 ///  @returns A reduced sqrt node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false> 
     shared_leaf<T, SAFE_MATH> piecewise_2D(const backend::buffer<T> &d,
-                 const size_t n,
-                 shared_leaf<T, SAFE_MATH> x,
-                 shared_leaf<T, SAFE_MATH> y) {
-        auto temp = std::make_shared<piecewise_2D_node<T, SAFE_MATH>> (d, n, x, y)->reduce();
+                                           const size_t n,
+                                           shared_leaf<T, SAFE_MATH> x,
+                                           const T x_scale,
+                                           const T x_offset,
+                                           shared_leaf<T, SAFE_MATH> y,
+                                           const T y_scale,
+                                           const T y_offset) {
+        auto temp = std::make_shared<piecewise_2D_node<T, SAFE_MATH>> (d, n,
+                                                                       x, x_scale, x_offset,
+                                                                       y, y_scale, y_offset)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
             if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==

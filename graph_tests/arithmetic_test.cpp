@@ -262,7 +262,8 @@ template<jit::float_scalar T> void test_add() {
     assert(!three->is_all_variables() && "Did not expect a variable.");
     assert(three->is_power_like() && "Expected a power like.");
     auto constant_add = three + graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                         static_cast<T> (2.0)}), var_a);
+                                                                         static_cast<T> (2.0)}),
+                                                        var_a, 1.0, 0.0);
     assert(constant_add->is_constant() && "Expected a constant.");
     assert(!constant_add->is_all_variables() && "Did not expect a variable.");
     assert(constant_add->is_power_like() && "Expected a power like.");
@@ -736,7 +737,8 @@ template<jit::float_scalar T> void test_subtract() {
     assert(!zero->is_all_variables() && "Did not expect a variable.");
     assert(zero->is_power_like() && "Expected a power like.");
     auto constant_sub = one - graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                       static_cast<T> (2.0)}), var_a);
+                                                                       static_cast<T> (2.0)}), var_a,
+                                                      1.0, 0.0);
     assert(constant_sub->is_constant() && "Expected a constant.");
     assert(!constant_sub->is_all_variables() && "Did not expect a variable.");
     assert(constant_sub->is_power_like() && "Expected a power like.");
@@ -1405,7 +1407,8 @@ template<jit::float_scalar T> void test_multiply() {
     assert(!two_times_three->is_all_variables() && "Did not expect a variable.");
     assert(two_times_three->is_power_like() && "Expected a power like.");
     auto constant_mul = three*graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                       static_cast<T> (2.0)}), variable);
+                                                                       static_cast<T> (2.0)}),
+                                                      variable, 1.0, 0.0);
     assert(constant_mul->is_constant() && "Expected a constant.");
     assert(!constant_mul->is_all_variables() && "Did not expect a variable.");
     assert(constant_mul->is_power_like() && "Expected a power like.");
@@ -2382,7 +2385,8 @@ template<jit::float_scalar T> void test_divide() {
     assert(!two_divided_three->is_all_variables() && "Did not expect a variable.");
     assert(two_divided_three->is_power_like() && "Expected a power like.");
     auto constant_div = two_divided_three/graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                                   static_cast<T> (2.0)}), variable);
+                                                                                   static_cast<T> (2.0)}),
+                                                                  variable, 1.0, 0.0);
     assert(constant_div->is_constant() && "Expected a constant.");
     assert(!constant_div->is_all_variables() && "Did not expect a variable.");
     assert(constant_div->is_power_like() && "Expected a power like.");
@@ -3231,7 +3235,7 @@ template<jit::float_scalar T> void test_fma() {
     auto constant_fma = graph::fma(one_two_three,
                                    graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                             static_cast<T> (2.0)}),
-                                                           var_a),
+                                                           var_a, 1.0, 0.0),
                                    one);
     assert(!constant_fma->is_all_variables() && "Did not expect a variable.");
     assert(constant_fma->is_power_like() && "Expected a power like.");
@@ -3261,7 +3265,7 @@ template<jit::float_scalar T> void test_fma() {
     auto piecewise1 = graph::fma<T> (2.0,
                                      graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                                               static_cast<T> (2.0)}),
-                                                             var_a)*var_a,
+                                                             var_a, 1.0, 0.0)*var_a,
                                      var_b);
     auto piecewise1_cast = graph::fma_cast(piecewise1);
     assert(piecewise1_cast.get() && "Expected a fma node.");
@@ -3269,8 +3273,9 @@ template<jit::float_scalar T> void test_fma() {
            "Expected a piecewise_1D node.");
     auto piecewise2 = graph::fma<T> (2.0,
                                      graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (1.0),
-                                                                              static_cast<T> (2.0)}),
-                                                             1, var_a, var_b)*var_a,
+                                                                              static_cast<T> (2.0)}), 1,
+                                                             var_a, 1.0, 0.0,
+                                                             var_b, 1.0, 0.0)*var_a,
                                      var_b);
     auto piecewise2_cast = graph::fma_cast(piecewise2);
     assert(piecewise2_cast.get() && "Expected a fma node.");
@@ -3517,12 +3522,13 @@ template<jit::float_scalar T> void test_fma() {
 //  fma(p2,p1,a) -> fma(p1,p2,a)
     auto p1 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                        static_cast<T> (2.0)}),
-                                      var_a);
+                                      var_a, 1.0, 0.0);
     auto p2 = graph::piecewise_2D<T> (std::vector<T> ({static_cast<T> (1.0),
                                                        static_cast<T> (2.0),
                                                        static_cast<T> (3.0),
-                                                       static_cast<T> (4.0)}),
-                                      2, var_b, var_c);
+                                                       static_cast<T> (4.0)}), 2,
+                                      var_b, 1.0, 0.0,
+                                      var_c, 1.0, 0.0);
     auto fma_promote = graph::fma(p2, p1, var_a);
     auto fma_promote_cast = graph::fma_cast(fma_promote);
     assert(fma_promote_cast.get() && "Expected a fma node.");

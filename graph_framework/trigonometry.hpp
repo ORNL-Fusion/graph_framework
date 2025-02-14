@@ -69,15 +69,17 @@ namespace graph {
             auto ap1 = piecewise_1D_cast(this->arg);
             if (ap1.get()) {
                 return piecewise_1D(this->evaluate(),
-                                    ap1->get_arg());
+                                    ap1->get_arg(),
+                                    ap1->get_scale(),
+                                    ap1->get_offset());
             }
 
             auto ap2 = piecewise_2D_cast(this->arg);
             if (ap2.get()) {
                 return piecewise_2D(this->evaluate(),
                                     ap2->get_num_columns(),
-                                    ap2->get_left(),
-                                    ap2->get_right());
+                                    ap2->get_left(), ap2->get_x_scale(), ap2->get_x_offset(),
+                                    ap2->get_right(), ap2->get_y_scale(), ap2->get_y_offset());
             }
 
 //  Sin(ArcTan(x, y)) -> y/Sqrt(x^2 + y^2)
@@ -318,15 +320,17 @@ namespace graph {
             auto ap1 = piecewise_1D_cast(this->arg);
             if (ap1.get()) {
                 return piecewise_1D(this->evaluate(),
-                                    ap1->get_arg());
+                                    ap1->get_arg(),
+                                    ap1->get_scale(),
+                                    ap1->get_offset());
             }
 
             auto ap2 = piecewise_2D_cast(this->arg);
             if (ap2.get()) {
                 return piecewise_2D(this->evaluate(),
                                     ap2->get_num_columns(),
-                                    ap2->get_left(),
-                                    ap2->get_right());
+                                    ap2->get_left(), ap2->get_x_scale(), ap2->get_x_offset(),
+                                    ap2->get_right(), ap2->get_y_scale(), ap2->get_y_offset());
             }
 
 //  Cos(ArcTan(x, y)) -> x/Sqrt(x^2 + y^2)
@@ -595,9 +599,11 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg());
+                return piecewise_1D(this->evaluate(), pl1->get_arg(),
+                                    pl1->get_scale(), pl1->get_offset());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg());
+                return piecewise_1D(this->evaluate(), pr1->get_arg(),
+                                    pr1->get_scale(), pr1->get_offset());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -606,13 +612,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(),
-                                    pl2->get_right());
+                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
+                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
                                     pr2->get_num_columns(),
-                                    pr2->get_left(),
-                                    pr2->get_right());
+                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
+                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -621,29 +627,29 @@ namespace graph {
                 result.atan_row(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(),
-                                    pr2->get_right());
+                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
+                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.atan_col(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(),
-                                    pr2->get_right());
+                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
+                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.atan_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(),
-                                    pl2->get_right());
+                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
+                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.atan_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(),
-                                    pl2->get_right());
+                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
+                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
             }
 
             return this->shared_from_this();
