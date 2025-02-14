@@ -111,6 +111,19 @@ void check_error(const T test, const T expected, const T tolarance,
 }
 
 //------------------------------------------------------------------------------
+///  @brief Check error.
+///
+///  @param[in] test      Test value.
+///  @param[in] expected  Expected result.
+///  @param[in] name      Name of the test.
+//------------------------------------------------------------------------------
+template <jit::float_scalar T>
+void check_error(const T test, const T tolarance,
+                 const char *name) {
+    assert(test*test <= tolarance && name);
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests.
 ///
 ///  @tparam T Base type of the calculation.
@@ -141,13 +154,18 @@ void run_test() {
     auto ne = eq->get_electron_density(x, y, z);
     auto te = eq->get_electron_temperature(x, y, z);
 
+//  Test the divergence.
+    auto div = bvec->get_x()->df(x)
+             + bvec->get_y()->df(y)
+             + bvec->get_z()->df(z);
+    
     workflow::manager<T> work(0);
     work.add_item({
         graph::variable_cast(x),
         graph::variable_cast(y),
         graph::variable_cast(z)
     }, {
-        bvec->get_x(), bvec->get_y(), bvec->get_z(), ne, te
+        bvec->get_x(), bvec->get_y(), bvec->get_z(), ne, te, div
     }, {}, "test_kernel");
     work.compile();
     work.run();
@@ -163,6 +181,8 @@ void run_test() {
                     "Expected a match in ne.");
         check_error(work.check_value(i, te), gold.te_grid[i], 3.0E-13,
                     "Expected a match in te.");
+        check_error(work.check_value(i, div), 1.0E-20,
+                    "Expected div(B)=0.");
     }
 }
 
