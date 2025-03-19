@@ -1,3 +1,5 @@
+#include <random>
+
 #include "../graph_framework/equilibrium.hpp"
 #include "../graph_framework/timing.hpp"
 #include "../graph_framework/output.hpp"
@@ -11,7 +13,7 @@ template<jit::float_scalar T>
 void run_korc() {
     const timing::measure_diagnostic t_total("Total Time");
     
-    const size_t num_particles = 1000000;
+    const size_t num_particles = 100000;
     std::cout << "Num particles " << num_particles << std::endl;
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T>::max_concurrency()),
                                                        static_cast<unsigned int> (num_particles)),
@@ -39,23 +41,35 @@ void run_korc() {
             std::cout << "larmor_radius " << larmor_radius->evaluate().at(0) << std::endl;
             
             std::cout << "Local num particles " << local_num_particles << std::endl;
-            
+
+            std::mt19937_64 engine((thread_number + 1)*static_cast<uint64_t> (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+            std::normal_distribution<T> normal(static_cast<T> (0.0), static_cast<T> (0.1));
+
             auto ux = graph::variable<T> (local_num_particles, "u_{x}");
             auto uy = graph::variable<T> (local_num_particles, "u_{y}");
             auto uz = graph::variable<T> (local_num_particles, "u_{z}");
-            
+
             ux->set(0.0);
-            uy->set(0.99);
-            uz->set(0.1);
+            uy->set(0.9);
+            for (size_t j = 0; j < local_num_particles; j++) {
+                T temp = normal(engine);
+                uz->set(j, temp);
+                while (0.9*0.9 + temp*temp > 1.0) {
+                    temp = normal(engine);
+                    uz->set(j, temp);
+                }
+            }
             
             auto x = graph::variable<T> (local_num_particles, "x");
             auto y = graph::variable<T> (local_num_particles, "y");
             auto z = graph::variable<T> (local_num_particles, "z");
             auto pos = graph::vector(x, y, z);
             
-            x->set(1.7);
-            y->set(0.0);
-            z->set(0.0);
+            for (size_t j = 0; j < local_num_particles; j++) {
+                x->set(j, 1.7 + normal(engine));
+                y->set(j, 0.0);
+                z->set(j, normal(engine));
+            }
             
             auto u_vec = graph::vector(ux, uy, uz);
             
@@ -143,19 +157,20 @@ void run_korc() {
             
             const timing::measure_diagnostic t_run("Run Time");
             work.pre_run();
-            for (size_t i = 0; i < 1000000; i++) {
-/*                sync.join();
+            for (size_t j = 0; j < 10000; j++) {
+                sync.join();
                 work.wait();
                 sync = std::thread([&file, &dataset] () -> void {
                     dataset.write(file);
-                });*/
-                
-                work.run();
+                });
+                for (size_t k = 0; k < 10; k++) {
+                    work.run();
+                }
             }
             work.wait();
 
             sync.join();
-            dataset.write(file);
+            //dataset.write(file);
             work.wait();
             
             t_run.print();

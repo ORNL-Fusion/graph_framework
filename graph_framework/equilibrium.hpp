@@ -1132,6 +1132,22 @@ namespace equilibrium {
         return graph::fma(graph::fma(graph::fma(c3, x, c2), x, c1), x, c0);
     }
 
+//------------------------------------------------------------------------------
+///  @brief Check the error status.
+///
+///  @param[in] status Error status code.
+//------------------------------------------------------------------------------
+    static void check_error(const int status) {
+#ifdef NDEBUG
+        if (status) {
+            std::cerr << nc_strerror(status) << std::endl;
+            exit(status);
+        }
+#else
+        assert(status == NC_NOERR && nc_strerror(status));
+#endif
+    }
+
 //******************************************************************************
 //  2D EFIT equilibrium.
 //******************************************************************************
@@ -1584,7 +1600,7 @@ namespace equilibrium {
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
-        get_characteristic_field(const size_t device_number=0) final {
+        get_characteristic_field(const size_t device_number=0) {
             auto x_axis = graph::variable<T, SAFE_MATH> (1, "x");
             auto y_axis = graph::variable<T, SAFE_MATH> (1, "y");
             auto z_axis = graph::variable<T, SAFE_MATH> (1, "z");
@@ -1623,83 +1639,83 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] spline_file File name of contains the spline functions.
+///  @param[in] spline_file File name that contains the spline functions.
 ///  @returns A constructed EFIT equilibrium.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_efit(const std::string &spline_file) {
         int ncid;
         sync.lock();
-        nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);
+        check_error(nc_open(spline_file.c_str(), NC_NOWRITE, &ncid));
 
 //  Load scalar quantities.
         int varid;
 
         double rmin_value;
-        nc_inq_varid(ncid, "rmin", &varid);
-        nc_get_var(ncid, varid, &rmin_value);
+        check_error(nc_inq_varid(ncid, "rmin", &varid));
+        check_error(nc_get_var(ncid, varid, &rmin_value));
 
         double dr_value;
-        nc_inq_varid(ncid, "dr", &varid);
-        nc_get_var(ncid, varid, &dr_value);
+        check_error(nc_inq_varid(ncid, "dr", &varid));
+        check_error(nc_get_var(ncid, varid, &dr_value));
 
         double zmin_value;
-        nc_inq_varid(ncid, "zmin", &varid);
-        nc_get_var(ncid, varid, &zmin_value);
+        check_error(nc_inq_varid(ncid, "zmin", &varid));
+        check_error(nc_get_var(ncid, varid, &zmin_value));
 
         double dz_value;
-        nc_inq_varid(ncid, "dz", &varid);
-        nc_get_var(ncid, varid, &dz_value);
+        check_error(nc_inq_varid(ncid, "dz", &varid));
+        check_error(nc_get_var(ncid, varid, &dz_value));
 
         double psimin_value;
-        nc_inq_varid(ncid, "psimin", &varid);
-        nc_get_var(ncid, varid, &psimin_value);
+        check_error(nc_inq_varid(ncid, "psimin", &varid));
+        check_error(nc_get_var(ncid, varid, &psimin_value));
 
         double dpsi_value;
-        nc_inq_varid(ncid, "dpsi", &varid);
-        nc_get_var(ncid, varid, &dpsi_value);
+        check_error(nc_inq_varid(ncid, "dpsi", &varid));
+        check_error(nc_get_var(ncid, varid, &dpsi_value));
 
         double pres_scale_value;
-        nc_inq_varid(ncid, "pres_scale", &varid);
-        nc_get_var(ncid, varid, &pres_scale_value);
+        check_error(nc_inq_varid(ncid, "pres_scale", &varid));
+        check_error(nc_get_var(ncid, varid, &pres_scale_value));
 
         double ne_scale_value;
-        nc_inq_varid(ncid, "ne_scale", &varid);
-        nc_get_var(ncid, varid, &ne_scale_value);
+        check_error(nc_inq_varid(ncid, "ne_scale", &varid));
+        check_error(nc_get_var(ncid, varid, &ne_scale_value));
 
         double te_scale_value;
-        nc_inq_varid(ncid, "te_scale", &varid);
-        nc_get_var(ncid, varid, &te_scale_value);
+        check_error(nc_inq_varid(ncid, "te_scale", &varid));
+        check_error(nc_get_var(ncid, varid, &te_scale_value));
 
 //  Load 1D quantities.
         int dimid;
 
         size_t numr;
-        nc_inq_dimid(ncid, "numr", &dimid);
-        nc_inq_dimlen(ncid, dimid, &numr);
+        check_error(nc_inq_dimid(ncid, "numr", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &numr));
 
         size_t numpsi;
-        nc_inq_dimid(ncid, "numpsi", &dimid);
-        nc_inq_dimlen(ncid, dimid, &numpsi);
+        check_error(nc_inq_dimid(ncid, "numpsi", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &numpsi));
 
         std::vector<double> fpol_c0_buffer(numpsi);
         std::vector<double> fpol_c1_buffer(numpsi);
         std::vector<double> fpol_c2_buffer(numpsi);
         std::vector<double> fpol_c3_buffer(numpsi);
 
-        nc_inq_varid(ncid, "fpol_c0", &varid);
-        nc_get_var(ncid, varid, fpol_c0_buffer.data());
-        nc_inq_varid(ncid, "fpol_c1", &varid);
-        nc_get_var(ncid, varid, fpol_c1_buffer.data());
-        nc_inq_varid(ncid, "fpol_c2", &varid);
-        nc_get_var(ncid, varid, fpol_c2_buffer.data());
-        nc_inq_varid(ncid, "fpol_c3", &varid);
-        nc_get_var(ncid, varid, fpol_c3_buffer.data());
+        check_error(nc_inq_varid(ncid, "fpol_c0", &varid));
+        check_error(nc_get_var(ncid, varid, fpol_c0_buffer.data()));
+        check_error(nc_inq_varid(ncid, "fpol_c1", &varid));
+        check_error(nc_get_var(ncid, varid, fpol_c1_buffer.data()));
+        check_error(nc_inq_varid(ncid, "fpol_c2", &varid));
+        check_error(nc_get_var(ncid, varid, fpol_c2_buffer.data()));
+        check_error(nc_inq_varid(ncid, "fpol_c3", &varid));
+        check_error(nc_get_var(ncid, varid, fpol_c3_buffer.data()));
 
 //  Load psi grids.
         size_t numz;
-        nc_inq_dimid(ncid, "numz", &dimid);
-        nc_inq_dimlen(ncid, dimid, &numz);
+        check_error(nc_inq_dimid(ncid, "numz", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &numz));
         
         std::vector<double> psi_c00_buffer(numz*numr);
         std::vector<double> psi_c01_buffer(numz*numr);
@@ -1718,82 +1734,82 @@ namespace equilibrium {
         std::vector<double> psi_c32_buffer(numz*numr);
         std::vector<double> psi_c33_buffer(numz*numr);
 
-        nc_inq_varid(ncid, "psi_c00", &varid);
-        nc_get_var(ncid, varid, psi_c00_buffer.data());
-        nc_inq_varid(ncid, "psi_c01", &varid);
-        nc_get_var(ncid, varid, psi_c01_buffer.data());
-        nc_inq_varid(ncid, "psi_c02", &varid);
-        nc_get_var(ncid, varid, psi_c02_buffer.data());
-        nc_inq_varid(ncid, "psi_c03", &varid);
-        nc_get_var(ncid, varid, psi_c03_buffer.data());
-        nc_inq_varid(ncid, "psi_c10", &varid);
-        nc_get_var(ncid, varid, psi_c10_buffer.data());
-        nc_inq_varid(ncid, "psi_c11", &varid);
-        nc_get_var(ncid, varid, psi_c11_buffer.data());
-        nc_inq_varid(ncid, "psi_c12", &varid);
-        nc_get_var(ncid, varid, psi_c12_buffer.data());
-        nc_inq_varid(ncid, "psi_c13", &varid);
-        nc_get_var(ncid, varid, psi_c13_buffer.data());
-        nc_inq_varid(ncid, "psi_c20", &varid);
-        nc_get_var(ncid, varid, psi_c20_buffer.data());
-        nc_inq_varid(ncid, "psi_c21", &varid);
-        nc_get_var(ncid, varid, psi_c21_buffer.data());
-        nc_inq_varid(ncid, "psi_c22", &varid);
-        nc_get_var(ncid, varid, psi_c22_buffer.data());
-        nc_inq_varid(ncid, "psi_c23", &varid);
-        nc_get_var(ncid, varid, psi_c23_buffer.data());
-        nc_inq_varid(ncid, "psi_c30", &varid);
-        nc_get_var(ncid, varid, psi_c30_buffer.data());
-        nc_inq_varid(ncid, "psi_c31", &varid);
-        nc_get_var(ncid, varid, psi_c31_buffer.data());
-        nc_inq_varid(ncid, "psi_c32", &varid);
-        nc_get_var(ncid, varid, psi_c32_buffer.data());
-        nc_inq_varid(ncid, "psi_c33", &varid);
-        nc_get_var(ncid, varid, psi_c33_buffer.data());
+        check_error(nc_inq_varid(ncid, "psi_c00", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c00_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c01", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c01_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c02", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c02_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c03", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c03_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c10", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c10_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c11", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c11_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c12", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c12_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c13", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c13_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c20", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c20_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c21", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c21_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c22", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c22_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c23", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c23_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c30", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c30_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c31", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c31_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c32", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c32_buffer.data()));
+        check_error(nc_inq_varid(ncid, "psi_c33", &varid));
+        check_error(nc_get_var(ncid, varid, psi_c33_buffer.data()));
 
         std::vector<double> pressure_c0_buffer(numpsi);
         std::vector<double> pressure_c1_buffer(numpsi);
         std::vector<double> pressure_c2_buffer(numpsi);
         std::vector<double> pressure_c3_buffer(numpsi);
 
-        nc_inq_varid(ncid, "pressure_c0", &varid);
-        nc_get_var(ncid, varid, pressure_c0_buffer.data());
-        nc_inq_varid(ncid, "pressure_c1", &varid);
-        nc_get_var(ncid, varid, pressure_c1_buffer.data());
-        nc_inq_varid(ncid, "pressure_c2", &varid);
-        nc_get_var(ncid, varid, pressure_c2_buffer.data());
-        nc_inq_varid(ncid, "pressure_c3", &varid);
-        nc_get_var(ncid, varid, pressure_c3_buffer.data());
+        check_error(nc_inq_varid(ncid, "pressure_c0", &varid));
+        check_error(nc_get_var(ncid, varid, pressure_c0_buffer.data()));
+        check_error(nc_inq_varid(ncid, "pressure_c1", &varid));
+        check_error(nc_get_var(ncid, varid, pressure_c1_buffer.data()));
+        check_error(nc_inq_varid(ncid, "pressure_c2", &varid));
+        check_error(nc_get_var(ncid, varid, pressure_c2_buffer.data()));
+        check_error(nc_inq_varid(ncid, "pressure_c3", &varid));
+        check_error(nc_get_var(ncid, varid, pressure_c3_buffer.data()));
 
         std::vector<double> te_c0_buffer(numpsi);
         std::vector<double> te_c1_buffer(numpsi);
         std::vector<double> te_c2_buffer(numpsi);
         std::vector<double> te_c3_buffer(numpsi);
 
-        nc_inq_varid(ncid, "te_c0", &varid);
-        nc_get_var(ncid, varid, te_c0_buffer.data());
-        nc_inq_varid(ncid, "te_c1", &varid);
-        nc_get_var(ncid, varid, te_c1_buffer.data());
-        nc_inq_varid(ncid, "te_c2", &varid);
-        nc_get_var(ncid, varid, te_c2_buffer.data());
-        nc_inq_varid(ncid, "te_c3", &varid);
-        nc_get_var(ncid, varid, te_c3_buffer.data());
+        check_error(nc_inq_varid(ncid, "te_c0", &varid));
+        check_error(nc_get_var(ncid, varid, te_c0_buffer.data()));
+        check_error(nc_inq_varid(ncid, "te_c1", &varid));
+        check_error(nc_get_var(ncid, varid, te_c1_buffer.data()));
+        check_error(nc_inq_varid(ncid, "te_c2", &varid));
+        check_error(nc_get_var(ncid, varid, te_c2_buffer.data()));
+        check_error(nc_inq_varid(ncid, "te_c3", &varid));
+        check_error(nc_get_var(ncid, varid, te_c3_buffer.data()));
 
         std::vector<double> ne_c0_buffer(numpsi);
         std::vector<double> ne_c1_buffer(numpsi);
         std::vector<double> ne_c2_buffer(numpsi);
         std::vector<double> ne_c3_buffer(numpsi);
 
-        nc_inq_varid(ncid, "ne_c0", &varid);
-        nc_get_var(ncid, varid, ne_c0_buffer.data());
-        nc_inq_varid(ncid, "ne_c1", &varid);
-        nc_get_var(ncid, varid, ne_c1_buffer.data());
-        nc_inq_varid(ncid, "ne_c2", &varid);
-        nc_get_var(ncid, varid, ne_c2_buffer.data());
-        nc_inq_varid(ncid, "ne_c3", &varid);
-        nc_get_var(ncid, varid, ne_c3_buffer.data());
-                    
-        nc_close(ncid);
+        check_error(nc_inq_varid(ncid, "ne_c0", &varid));
+        check_error(nc_get_var(ncid, varid, ne_c0_buffer.data()));
+        check_error(nc_inq_varid(ncid, "ne_c1", &varid));
+        check_error(nc_get_var(ncid, varid, ne_c1_buffer.data()));
+        check_error(nc_inq_varid(ncid, "ne_c2", &varid));
+        check_error(nc_get_var(ncid, varid, ne_c2_buffer.data()));
+        check_error(nc_inq_varid(ncid, "ne_c3", &varid));
+        check_error(nc_get_var(ncid, varid, ne_c3_buffer.data()));
+
+        check_error(nc_close(ncid));
         sync.unlock();
 
         auto rmin = static_cast<T> (rmin_value);
@@ -2427,93 +2443,93 @@ namespace equilibrium {
     shared<T, SAFE_MATH> make_vmec(const std::string &spline_file) {
         int ncid;
         sync.lock();
-        nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);
+        check_error(nc_open(spline_file.c_str(), NC_NOWRITE, &ncid));
 
 //  Load scalar quantities.
         int varid;
 
         double sminf_value;
-        nc_inq_varid(ncid, "sminf", &varid);
-        nc_get_var(ncid, varid, &sminf_value);
+        check_error(nc_inq_varid(ncid, "sminf", &varid));
+        check_error(nc_get_var(ncid, varid, &sminf_value));
 
         double sminh_value;
-        nc_inq_varid(ncid, "sminh", &varid);
-        nc_get_var(ncid, varid, &sminh_value);
+        check_error(nc_inq_varid(ncid, "sminh", &varid));
+        check_error(nc_get_var(ncid, varid, &sminh_value));
 
         double ds_value;
-        nc_inq_varid(ncid, "ds", &varid);
-        nc_get_var(ncid, varid, &ds_value);
+        check_error(nc_inq_varid(ncid, "ds", &varid));
+        check_error(nc_get_var(ncid, varid, &ds_value));
 
         double dphi_value;
-        nc_inq_varid(ncid, "dphi", &varid);
-        nc_get_var(ncid, varid, &dphi_value);
+        check_error(nc_inq_varid(ncid, "dphi", &varid));
+        check_error(nc_get_var(ncid, varid, &dphi_value));
 
         double signj_value;
-        nc_inq_varid(ncid, "signj", &varid);
-        nc_get_var(ncid, varid, &signj_value);
+        check_error(nc_inq_varid(ncid, "signj", &varid));
+        check_error(nc_get_var(ncid, varid, &signj_value));
 
 //  Load 1D quantities.
         int dimid;
 
         size_t numsf;
-        nc_inq_dimid(ncid, "numsf", &dimid);
-        nc_inq_dimlen(ncid, dimid, &numsf);
+        check_error(nc_inq_dimid(ncid, "numsf", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &numsf));
 
         std::vector<double> chi_c0_buffer(numsf);
         std::vector<double> chi_c1_buffer(numsf);
         std::vector<double> chi_c2_buffer(numsf);
         std::vector<double> chi_c3_buffer(numsf);
 
-        nc_inq_varid(ncid, "chi_c0", &varid);
-        nc_get_var(ncid, varid, chi_c0_buffer.data());
-        nc_inq_varid(ncid, "chi_c1", &varid);
-        nc_get_var(ncid, varid, chi_c1_buffer.data());
-        nc_inq_varid(ncid, "chi_c2", &varid);
-        nc_get_var(ncid, varid, chi_c2_buffer.data());
-        nc_inq_varid(ncid, "chi_c3", &varid);
-        nc_get_var(ncid, varid, chi_c3_buffer.data());
+        check_error(nc_inq_varid(ncid, "chi_c0", &varid));
+        check_error(nc_get_var(ncid, varid, chi_c0_buffer.data()));
+        check_error(nc_inq_varid(ncid, "chi_c1", &varid));
+        check_error(nc_get_var(ncid, varid, chi_c1_buffer.data()));
+        check_error(nc_inq_varid(ncid, "chi_c2", &varid));
+        check_error(nc_get_var(ncid, varid, chi_c2_buffer.data()));
+        check_error(nc_inq_varid(ncid, "chi_c3", &varid));
+        check_error(nc_get_var(ncid, varid, chi_c3_buffer.data()));
 
 //  Load 2D quantities.
         size_t numsh;
-        nc_inq_dimid(ncid, "numsh", &dimid);
-        nc_inq_dimlen(ncid, dimid, &numsh);
+        check_error(nc_inq_dimid(ncid, "numsh", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &numsh));
 
         size_t nummn;
-        nc_inq_dimid(ncid, "nummn", &dimid);
-        nc_inq_dimlen(ncid, dimid, &nummn);
+        check_error(nc_inq_dimid(ncid, "nummn", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &nummn));
 
         std::vector<std::vector<double>> rmnc_c0_buffer(nummn, std::vector<double> (numsf));
         std::vector<std::vector<double>> rmnc_c1_buffer(nummn, std::vector<double> (numsf));
         std::vector<std::vector<double>> rmnc_c2_buffer(nummn, std::vector<double> (numsf));
         std::vector<std::vector<double>> rmnc_c3_buffer(nummn, std::vector<double> (numsf));
 
-        nc_inq_varid(ncid, "rmnc_c0", &varid);
+        check_error(nc_inq_varid(ncid, "rmnc_c0", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsf};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        rmnc_c0_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    rmnc_c0_buffer[i].data()));
         }
-        nc_inq_varid(ncid, "rmnc_c1", &varid);
+        check_error(nc_inq_varid(ncid, "rmnc_c1", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsf};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        rmnc_c1_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    rmnc_c1_buffer[i].data()));
         }
-        nc_inq_varid(ncid, "rmnc_c2", &varid);
+        check_error(nc_inq_varid(ncid, "rmnc_c2", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsf};
             nc_get_vara(ncid, varid, start.data(), count.data(),
                         rmnc_c2_buffer[i].data());
         }
-        nc_inq_varid(ncid, "rmnc_c3", &varid);
+        check_error(nc_inq_varid(ncid, "rmnc_c3", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsf};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        rmnc_c3_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    rmnc_c3_buffer[i].data()));
         }
 
         std::vector<std::vector<double>> zmns_c0_buffer(nummn, std::vector<double> (numsf));
@@ -2521,33 +2537,33 @@ namespace equilibrium {
         std::vector<std::vector<double>> zmns_c2_buffer(nummn, std::vector<double> (numsf));
         std::vector<std::vector<double>> zmns_c3_buffer(nummn, std::vector<double> (numsf));
 
-        nc_inq_varid(ncid, "zmns_c0", &varid);
+        check_error(nc_inq_varid(ncid, "zmns_c0", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsf};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        zmns_c0_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    zmns_c0_buffer[i].data()));
         }
-        nc_inq_varid(ncid, "zmns_c1", &varid);
+        check_error(nc_inq_varid(ncid, "zmns_c1", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsf};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        zmns_c1_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    zmns_c1_buffer[i].data()));
         }
-        nc_inq_varid(ncid, "zmns_c2", &varid);
+        check_error(nc_inq_varid(ncid, "zmns_c2", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsf};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        zmns_c2_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    zmns_c2_buffer[i].data()));
         }
-        nc_inq_varid(ncid, "zmns_c3", &varid);
+        check_error(nc_inq_varid(ncid, "zmns_c3", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsf};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        zmns_c3_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    zmns_c3_buffer[i].data()));
         }
 
         std::vector<std::vector<double>> lmns_c0_buffer(nummn, std::vector<double> (numsh));
@@ -2555,44 +2571,44 @@ namespace equilibrium {
         std::vector<std::vector<double>> lmns_c2_buffer(nummn, std::vector<double> (numsh));
         std::vector<std::vector<double>> lmns_c3_buffer(nummn, std::vector<double> (numsh));
 
-        nc_inq_varid(ncid, "lmns_c0", &varid);
+        check_error(nc_inq_varid(ncid, "lmns_c0", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsh};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        lmns_c0_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    lmns_c0_buffer[i].data()));
         }
-        nc_inq_varid(ncid, "lmns_c1", &varid);
+        check_error(nc_inq_varid(ncid, "lmns_c1", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsh};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        lmns_c1_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    lmns_c1_buffer[i].data()));
         }
-        nc_inq_varid(ncid, "lmns_c2", &varid);
+        check_error(nc_inq_varid(ncid, "lmns_c2", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsh};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        lmns_c2_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    lmns_c2_buffer[i].data()));
         }
-        nc_inq_varid(ncid, "lmns_c3", &varid);
+        check_error(nc_inq_varid(ncid, "lmns_c3", &varid));
         for (size_t i = 0; i < nummn; i++) {
             const array<size_t, 2> start = {i, 0};
             const array<size_t, 2> count = {1, numsh};
-            nc_get_vara(ncid, varid, start.data(), count.data(),
-                        lmns_c3_buffer[i].data());
+            check_error(nc_get_vara(ncid, varid, start.data(), count.data(),
+                                    lmns_c3_buffer[i].data()));
         }
 
         std::vector<double> xm_buffer(nummn);
-        nc_inq_varid(ncid, "xm", &varid);
-        nc_get_var(ncid, varid, xm_buffer.data());
+        check_error(nc_inq_varid(ncid, "xm", &varid));
+        check_error(nc_get_var(ncid, varid, xm_buffer.data()));
 
         std::vector<double> xn_buffer(nummn);
-        nc_inq_varid(ncid, "xn", &varid);
-        nc_get_var(ncid, varid, xn_buffer.data());
+        check_error(nc_inq_varid(ncid, "xn", &varid));
+        check_error(nc_get_var(ncid, varid, xn_buffer.data()));
 
-        nc_close(ncid);
+        check_error(nc_close(ncid));
         sync.unlock();
 
         auto sminf = static_cast<T> (sminf_value);
@@ -2648,6 +2664,580 @@ namespace equilibrium {
                                                      lmns_c0, lmns_c1, lmns_c2, lmns_c3,
                                                      xm, xn);
     }
+
+//******************************************************************************
+//  MPEX Equilibrium
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief MPEX equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class mpex final : public generic<T, SAFE_MATH> {
+    private:
+///  Minimum z.
+        const T zmin;
+///  Change in z grid.
+        const T dz;
+///  Minimum r.
+        const T rmin;
+///  Change in r grid.
+        const T dr;
+///  Minimum aphi.
+        const T aphimin;
+///  Change in aphi.
+        const T daphi;
+
+///  Ne scale.
+        const T nescale;
+///  Te scale.
+        const T tescale;
+///  Profile spline coeffients.
+        const std::array<backend::buffer<T>, 4> profile;
+
+///  Number of columns.
+        const size_t num_cols;
+
+///  psi current.
+        const T ps1_current;
+///  psi coefficents.
+        const std::array<backend::buffer<T>, 16> ps1;
+///  tr1 current.
+        const T tr1_current;
+///  tr1 coefficents.
+        const std::array<backend::buffer<T>, 16> tr1;
+///  ps2 current.
+        const T ps2_current;
+///  ps2 coefficents.
+        const std::array<backend::buffer<T>, 16> ps2;
+
+//  Cached values.
+///  X position cache.
+        graph::shared_leaf<T, SAFE_MATH> x_cache;
+///  Y position cache.
+        graph::shared_leaf<T, SAFE_MATH> y_cache;
+///  Z position cache.
+        graph::shared_leaf<T, SAFE_MATH> z_cache;
+
+///  Aphi cache.
+        graph::shared_leaf<T, SAFE_MATH> aphi_cache;
+///  Profile cache.
+        graph::shared_leaf<T, SAFE_MATH> profile_cache;
+
+//------------------------------------------------------------------------------
+///  @brief Build 2D spline.
+///
+///  @param[in] coefficents The spline coefficents.
+///  @param[in] r           The normalized radial position.
+///  @param[in] r_scale     Scale factor for r.
+///  @param[in] r_offset    Offset factor for r.
+///  @param[in] z           The normalized z position.
+///  @param[in] z_scale     Scale factor for z.
+///  @param[in] z_offset    Offset factor for z.
+///  @returns The psi value.
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T, SAFE_MATH>
+        build_2D_spline(const std::array<backend::buffer<T>, 16> &coefficents,
+                        graph::shared_leaf<T, SAFE_MATH> r,
+                        const T r_scale,
+                        const T r_offset,
+                        graph::shared_leaf<T, SAFE_MATH> z,
+                        const T z_scale,
+                        const T z_offset) {
+            auto c00_temp = graph::piecewise_2D(coefficents[0], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c01_temp = graph::piecewise_2D(coefficents[1], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c02_temp = graph::piecewise_2D(coefficents[2], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c03_temp = graph::piecewise_2D(coefficents[3], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+
+            auto c10_temp = graph::piecewise_2D(coefficents[4], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c11_temp = graph::piecewise_2D(coefficents[5], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c12_temp = graph::piecewise_2D(coefficents[6], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c13_temp = graph::piecewise_2D(coefficents[7], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+
+            auto c20_temp = graph::piecewise_2D(coefficents[8], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c21_temp = graph::piecewise_2D(coefficents[9], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c22_temp = graph::piecewise_2D(coefficents[10], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c23_temp = graph::piecewise_2D(coefficents[11], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+
+            auto c30_temp = graph::piecewise_2D(coefficents[12], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c31_temp = graph::piecewise_2D(coefficents[13], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c32_temp = graph::piecewise_2D(coefficents[14], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+            auto c33_temp = graph::piecewise_2D(coefficents[15], num_cols, r, r_scale, r_offset, z, z_scale, z_offset);
+
+            auto r_norm = (r - r_offset)/r_scale;
+
+            auto c0 = build_1D_spline({c00_temp, c01_temp, c02_temp, c03_temp}, z, z_scale, z_offset);
+            auto c1 = build_1D_spline({c10_temp, c11_temp, c12_temp, c13_temp}, z, z_scale, z_offset);
+            auto c2 = build_1D_spline({c20_temp, c21_temp, c22_temp, c23_temp}, z, z_scale, z_offset);
+            auto c3 = build_1D_spline({c30_temp, c31_temp, c32_temp, c33_temp}, z, z_scale, z_offset);
+
+            return ((c3*r_norm + c2)*r_norm + c1)*r_norm + c0;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Set cache values.
+///
+///  Sets the cached values if x and y do not match.
+///
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
+//------------------------------------------------------------------------------
+        void set_cache(graph::shared_leaf<T, SAFE_MATH> x,
+                       graph::shared_leaf<T, SAFE_MATH> y,
+                       graph::shared_leaf<T, SAFE_MATH> z) {
+            if (!x->is_match(x_cache) ||
+                !y->is_match(y_cache) ||
+                !z->is_match(z_cache)) {
+                x_cache = x;
+                y_cache = y;
+                z_cache = z;
+
+                auto r = graph::sqrt(x*x + y*y);
+
+                auto aphi_ps1 = ps1_current*build_2D_spline(ps1, z, dz, zmin, r, dr, rmin);
+                auto aphi_tr1 = tr1_current*build_2D_spline(tr1, z, dz, zmin, r, dr, rmin);
+                auto aphi_ps2 = ps2_current*build_2D_spline(ps2, z, dz, zmin, r, dr, rmin);
+
+                aphi_cache = aphi_ps1 + aphi_tr1 + aphi_ps2;
+
+                auto abs_aphi = graph::sqrt(aphi_cache*aphi_cache);
+
+                auto c0_temp = graph::piecewise_1D(profile[0], abs_aphi, daphi, aphimin);
+                auto c1_temp = graph::piecewise_1D(profile[1], abs_aphi, daphi, aphimin);
+                auto c2_temp = graph::piecewise_1D(profile[2], abs_aphi, daphi, aphimin);
+                auto c3_temp = graph::piecewise_1D(profile[3], abs_aphi, daphi, aphimin);
+
+                profile_cache = build_1D_spline({c0_temp, c1_temp, c2_temp, c3_temp}, abs_aphi, daphi, aphimin);
+            }
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a EFIT equilibrium.
+///
+///  @param[in] zmin        Minimum z value.
+///  @param[in] dz          Change in z value.
+///  @param[in] rmin        Minimum r value.
+///  @param[in] dr          Change in r value.
+///  @param[in] aphimin     Minimum aphi value.
+///  @param[in] daphi       Change in ahi value.
+///  @param[in] nescale     Electron density scale.
+///  @param[in] tescale     Electron temperature scale.
+///  @param[in] profile     Spline cefficents for profiles.
+///  @param[in] ps1_current Current for the ps1 magnetics.
+///  @param[in] ps1         Spline coefficents for ps1 magnetics.
+///  @param[in] ps2_current Current for the tr1 magnetics.
+///  @param[in] ps2         Spline coefficents for ps2 magnetics.
+///  @param[in] tr1_current Current for the tr1 magnetics.
+///  @param[in] tr1         Spline coefficents for tr1 magnetics.
+//------------------------------------------------------------------------------
+        mpex(const T zmin,
+             const T dz,
+             const T rmin,
+             const T dr,
+             const T aphimin,
+             const T daphi,
+             const T nescale,
+             const T tescale,
+             const std::array<backend::buffer<T>, 4> &profile,
+             const size_t num_cols,
+             const T ps1_current,
+             const std::array<backend::buffer<T>, 16> &ps1,
+             const T ps2_current,
+             const std::array<backend::buffer<T>, 16> &ps2,
+             const T tr1_current,
+             const std::array<backend::buffer<T>, 16> &tr1) :
+        generic<T, SAFE_MATH> ({3.34449469E-27} ,{1}),
+        zmin(zmin), dz(dz), rmin(rmin), dr(dr),
+        aphimin(aphimin), daphi(daphi), nescale(nescale), tescale(tescale),
+        profile(profile),
+        num_cols(num_cols),
+        ps1_current(ps1_current), ps1(ps1),
+        ps2_current(ps2_current), ps2(ps2),
+        tr1_current(tr1_current), tr1(tr1) {
+            auto zero = graph::zero<T, SAFE_MATH> ();
+            x_cache = zero;
+            y_cache = zero;
+            z_cache = zero;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron density.
+///
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
+///  @returns The electron density expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) {
+            set_cache(x, y, z);
+            return nescale*profile_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion density.
+///
+///  @param[in] index The species index.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
+///  @returns The ion density expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) {
+            return get_electron_density(x, y, z);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron temperature.
+///
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
+///  @returns The electron temperature expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) {
+            set_cache(x, y, z);
+            return tescale*profile_cache;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion temperature.
+///
+///  @param[in] index The species index.
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
+///  @returns The ion temperature expression.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) {
+            return get_electron_temperature(x, y, z);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the magnetic field.
+///
+///  @param[in] x X position.
+///  @param[in] y Y position.
+///  @param[in] z Z position.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) {
+            set_cache(x, y, z);
+
+            auto phi = graph::atan(x, y);
+            auto a_x = -graph::sin(phi)*aphi_cache;
+            auto a_y = graph::cos(phi)*aphi_cache;
+
+            return graph::vector(-a_y->df(z),
+                                 a_x->df(z),
+                                 a_y->df(x) - a_x->df(y));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic field.
+///
+///  Use the value at the y intercept.
+///
+///  @params[in] device_number Device to use.
+///  @returns The characteristic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) {
+            return graph::one<T, SAFE_MATH> ();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build an MPEX equilibrium.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use safe math operations.
+///
+///  @param[in] spline_file File name that contains the spline functions.
+///  @param[in] nescale     Scale factor for electron density profiles.
+///  @param[in] tescale     Scale factor for electron temperature profiles.
+///  @param[in] ps1_current Current for the ps1 coils.
+///  @param[in] ps2_current Current for the tr1 coils.
+///  @param[in] tr1_current Current for the x coils.
+///  @param[in] tr2_current Current for the ps2 coils.
+///  @returns A constructed MPEX equilibrium.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_mpex(const std::string &spline_file,
+                                   const T nescale,
+                                   const T tescale,
+                                   const T ps1_current,
+                                   const T ps2_current,
+                                   const T tr1_current,
+                                   const T tr2_current) {
+        int ncid;
+        sync.lock();
+        check_error(nc_open(spline_file.c_str(), NC_NOWRITE, &ncid));
+
+//  Load scalar quantities.
+        int varid;
+
+        double rmin_value;
+        check_error(nc_inq_varid(ncid, "rmin", &varid));
+        check_error(nc_get_var(ncid, varid, &rmin_value));
+
+        double dr_value;
+        check_error(nc_inq_varid(ncid, "dr", &varid));
+        check_error(nc_get_var(ncid, varid, &dr_value));
+
+        double zmin_value;
+        check_error(nc_inq_varid(ncid, "zmin", &varid));
+        check_error(nc_get_var(ncid, varid, &zmin_value));
+
+        double dz_value;
+        check_error(nc_inq_varid(ncid, "dz", &varid));
+        check_error(nc_get_var(ncid, varid, &dz_value));
+
+        double aphimin_value;
+        check_error(nc_inq_varid(ncid, "aphimin", &varid));
+        check_error(nc_get_var(ncid, varid, &aphimin_value));
+
+        double daphi_value;
+        check_error(nc_inq_varid(ncid, "daphi", &varid));
+        check_error(nc_get_var(ncid, varid, &daphi_value));
+
+//  Load 1D quantities.
+        int dimid;
+
+        size_t numphi;
+        check_error(nc_inq_dimid(ncid, "numphi", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &numphi));
+
+        std::array<backend::buffer<T>, 4> profile = {
+            backend::buffer<T> (numphi),
+            backend::buffer<T> (numphi),
+            backend::buffer<T> (numphi),
+            backend::buffer<T> (numphi)
+        };
+        check_error(nc_inq_varid(ncid, "profile_c0", &varid));
+        check_error(nc_get_var(ncid, varid, profile[0].data()));
+        check_error(nc_inq_varid(ncid, "profile_c1", &varid));
+        check_error(nc_get_var(ncid, varid, profile[1].data()));
+        check_error(nc_inq_varid(ncid, "profile_c2", &varid));
+        check_error(nc_get_var(ncid, varid, profile[2].data()));
+        check_error(nc_inq_varid(ncid, "profile_c3", &varid));
+        check_error(nc_get_var(ncid, varid, profile[3].data()));
+
+//  Load 2D quantities.
+        size_t numr;
+        check_error(nc_inq_dimid(ncid, "numr", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &numr));
+
+        size_t numz;
+        check_error(nc_inq_dimid(ncid, "numz", &dimid));
+        check_error(nc_inq_dimlen(ncid, dimid, &numz));
+
+        std::array<backend::buffer<T>, 16> ps1 = {
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz)
+        };
+        check_error(nc_inq_varid(ncid, "ps1_c00", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[0].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c01", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[1].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c02", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[2].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c03", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[3].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c10", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[4].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c11", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[5].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c12", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[6].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c13", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[7].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c20", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[8].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c21", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[9].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c22", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[10].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c23", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[11].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c30", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[12].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c31", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[13].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c32", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[14].data()));
+        check_error(nc_inq_varid(ncid, "ps1_c33", &varid));
+        check_error(nc_get_var(ncid, varid, ps1[15].data()));
+
+        std::array<backend::buffer<T>, 16> tr1 = {
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz)
+        };
+        check_error(nc_inq_varid(ncid, "tr1_c00", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[0].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c01", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[1].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c02", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[2].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c03", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[3].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c10", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[4].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c11", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[5].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c12", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[6].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c13", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[7].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c20", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[8].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c21", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[9].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c22", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[10].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c23", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[11].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c30", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[12].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c31", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[13].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c32", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[14].data()));
+        check_error(nc_inq_varid(ncid, "tr1_c33", &varid));
+        check_error(nc_get_var(ncid, varid, tr1[15].data()));
+
+        std::array<backend::buffer<T>, 16> x = {
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz)
+        };
+
+        std::array<backend::buffer<T>, 16> ps2 = {
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz),
+            backend::buffer<T> (numr*numz)
+        };
+        check_error(nc_inq_varid(ncid, "ps2_c00", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[0].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c01", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[1].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c02", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[2].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c03", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[3].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c10", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[4].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c11", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[5].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c12", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[6].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c13", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[7].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c20", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[8].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c21", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[9].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c22", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[10].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c23", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[11].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c30", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[12].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c31", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[13].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c32", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[14].data()));
+        check_error(nc_inq_varid(ncid, "ps2_c33", &varid));
+        check_error(nc_get_var(ncid, varid, ps2[15].data()));
+
+        check_error(nc_close(ncid));
+        sync.unlock();
+
+        return std::make_shared<mpex<T, SAFE_MATH>> (static_cast<T> (zmin_value),
+                                                     static_cast<T> (dz_value),
+                                                     static_cast<T> (rmin_value),
+                                                     static_cast<T> (dr_value),
+                                                     static_cast<T> (aphimin_value),
+                                                     static_cast<T> (daphi_value),
+                                                     nescale, tescale,
+                                                     profile, numr,
+                                                     ps1_current, ps1,
+                                                     ps2_current, ps2,
+                                                     tr1_current, tr1);
+    };
 }
 
 #endif /* equilibrium_h */

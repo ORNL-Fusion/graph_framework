@@ -23,7 +23,14 @@ namespace output {
 ///  @param[in] status Error status code.
 //------------------------------------------------------------------------------
     static void check_error(const int status) {
+#ifdef NDEBUG
+        if (status) {
+            std::cerr << nc_strerror(status) << std::endl;
+            exit(status);
+        }
+#else
         assert(status == NC_NOERR && nc_strerror(status));
+#endif
     }
 
 //------------------------------------------------------------------------------
@@ -85,7 +92,9 @@ namespace output {
 ///  @brief Destructor.
 //------------------------------------------------------------------------------
         ~result_file() {
+            sync.lock();
             check_error(nc_close(ncid));
+            sync.unlock();
         }
 
 //------------------------------------------------------------------------------
