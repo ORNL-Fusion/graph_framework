@@ -378,6 +378,14 @@ equilibrium::shared<T, SAFE_MATH> make_equilibrium(const commandline::parser &cl
 
     if (eq == "efit") {
         return equilibrium::make_efit<T, SAFE_MATH> (file_name);
+    } else if (eq == "mpex") {
+        return equilibrium::make_mpex<T, SAFE_MATH> (file_name,
+                                                     cl.get_option_value<T> ("mpex_ne_scale"),
+                                                     cl.get_option_value<T> ("mpex_te_scale"),
+                                                     cl.get_option_value<T> ("mpex_ps1_current"),
+                                                     cl.get_option_value<T> ("mpex_ps2_current"),
+                                                     cl.get_option_value<T> ("mpex_tr1_current"),
+                                                     cl.get_option_value<T> ("mpex_tr2_current"));
     } else {
         return equilibrium::make_vmec<T, SAFE_MATH> (file_name);
     }
@@ -820,13 +828,21 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
     });
     cl.add_option("equilibrium",       true,  "Equilibrium to use.", {
         "efit",
-        "vmec"
+        "vmec",
+        "mpex"
     });
     cl.add_option("equilibrium_file",  true,  "File to read the equilibrum from.");
     cl.add_option("init_w_dist",       true,  "Inital omega distribution.", {
         "uniform",
         "normal"
     });
+    cl.add_option("mpex_ne_scale",     true,  "Scale factor for electron density profiles.");
+    cl.add_option("mpex_te_scale",     true,  "Scale factor for electron temperature profiles.");
+    cl.add_option("mpex_ps2_current",  true,  "Current for the ps2 coil set.");
+    cl.add_option("mpex_ps1_current",  true,  "Current for the ps1 coil set.");
+    cl.add_option("mpex_ps2_current",  true,  "Current for the ps2 coil set.");
+    cl.add_option("mpex_tr1_current",  true,  "Current for the tr1 coil set.");
+    cl.add_option("mpex_tr2_current",  true,  "Current for the tr2 coil set.");
     cl.add_option("init_w_mean",       true,  "Inital omega mean");
     cl.add_option("init_w_sigma",      true,  "Inital omega sigma");
     cl.add_option("init_kx_dist",      true,  "Inital kx distribution.", {
@@ -902,6 +918,11 @@ int main(int argc, const char * argv[]) {
     const bool use_safe_math = true;
 
     typedef double base;
+
+    std::cout << "Using " << cl.get_option_value<std::string> ("equilibrium") << " equilibrium from " << cl.get_option_value<std::string> ("equilibrium_file") << std::endl;
+    std::cout << "Using " << cl.get_option_value<std::string> ("dispersion") << " dispersion relation" << std::endl;
+    std::cout << "Using " << cl.get_option_value<std::string> ("solver") <<  " solver methd" << std::endl;
+    std::cout << "Using " << cl.get_option_value<std::string> ("absorption_model") << " absorption model" << std::endl << std::endl;
 
     trace_ray<base> (cl, num_times, sub_steps, num_rays);
     calculate_power<std::complex<base>, use_safe_math> (cl,
