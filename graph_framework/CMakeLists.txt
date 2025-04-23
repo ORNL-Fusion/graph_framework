@@ -25,6 +25,7 @@ target_compile_definitions (rays
                             $<$<BOOL:${USE_CONSTANT_CACHE}>:USE_CONSTANT_CACHE>
                             $<$<BOOL:${SHOW_USE_COUNT}>:SHOW_USE_COUNT>
                             $<$<BOOL:${USE_INDEX_CACHE}>:USE_INDEX_CACHE>
+                            $<IF:$<BOOL:${USE_VERBOSE}>,USE_VERBOSE=true,USE_VERBOSE=false>
 )
 
 target_include_directories (rays

@@ -11,6 +11,7 @@ option (USE_INPUT_CACHE "Cache the values kernel input values." OFF)
 option (USE_CONSTANT_CACHE "Cache the value of constantants in kernel registers." OFF)
 option (SHOW_USE_COUNT "Add a comment showing the use count in kernel sources." OFF)
 option (USE_INDEX_CACHE "Cache index values instead of computing them every time." OFF)
+option (USE_VERBOSE "Verbose jit option." OFF)
 
 #-------------------------------------------------------------------------------
 #  Set the cmake module path.
@@ -260,6 +261,15 @@ target_include_directories (llvm_dep
                             $<BUILD_INTERFACE:${llvm_binary_dir}/tools/clang/include>
 )
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# MCJIT isn't adding the compiler-rt library so explicitly add it. This is only
+# shown to happen on macOS but may affect Linux as well.
+    find_library (MACOS_LIB_RT "clang_rt.osx"
+                  PATHS /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17.0.0/lib/darwin
+                  REQUIRED
+    )
+endif ()
+
 #  Need to manually figure out the native arch.
 string(REGEX MATCH "^[^-]*" LLVM_NATIVE_ARCH ${LLVM_HOST_TRIPLE})
 if (LLVM_NATIVE_ARCH MATCHES "arm64")
@@ -277,6 +287,11 @@ target_link_libraries (llvm_dep
                        LLVMOrcJIT
                        LLVMOrcDebugging
                        LLVMOrcTargetProcess
+)
+
+target_compile_definitions (llvm_dep
+                            INTERFACE
+                            $<$<PLATFORM_ID:Darwin>:MACOS_LIB_RT=\"${MACOS_LIB_RT}\">
 )
 
 #-------------------------------------------------------------------------------

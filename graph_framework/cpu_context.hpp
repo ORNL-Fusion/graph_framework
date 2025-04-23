@@ -211,6 +211,10 @@ namespace gpu {
 
             auto error = jit->addIRModule(llvm::orc::ThreadSafeModule(std::move(ir_module),
                                                                       llvm::orc::ThreadSafeContext(std::move(context))));
+
+#ifdef MACOS_LIB_RT
+            error = jit->linkStaticLibraryInto(jit->getMainJITDylib(), MACOS_LIB_RT);
+#endif
         }
 
 //------------------------------------------------------------------------------
