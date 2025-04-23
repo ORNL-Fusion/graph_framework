@@ -33,7 +33,7 @@ namespace jit {
     concept scalar = float_scalar<T> || std::integral<T>;
 
 ///  Verbose output.
-    static bool verbose = false;
+    static bool verbose = USE_VERBOSE;
 
 //------------------------------------------------------------------------------
 ///  @brief Test if a type is complex.
