@@ -184,8 +184,8 @@ namespace gpu {
                 std::make_shared<llvm::vfs::InMemoryFileSystem> ();
             clang.createDiagnostics(*VFS.get());
 
-            const auto target_options = std::make_shared<clang::TargetOptions> ();
-            target_options->Triple = llvm::sys::getProcessTriple();
+            clang::TargetOptions target_options;
+            target_options.Triple = llvm::sys::getProcessTriple();
             auto *target_info = clang::TargetInfo::CreateTargetInfo(diagnostic_engine,
                                                                     target_options);
             clang.setTarget(target_info);
@@ -223,6 +223,7 @@ namespace gpu {
 ///  @param[in] kernel_name Name of the kernel for later reference.
 ///  @param[in] inputs      Input nodes of the kernel.
 ///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] state       Random states.
 ///  @param[in] num_rays    Number of rays to trace.
 ///  @param[in] tex1d_list  List of 1D textures.
 ///  @param[in] tex2d_list  List of 1D textures.
@@ -231,17 +232,11 @@ namespace gpu {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays,
                                                      const jit::texture1d_list &tex1d_list,
                                                      const jit::texture2d_list &tex2d_list) {
             auto entry = std::move(jit->lookup(kernel_name)).get();
-            auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
-
-            if (!kernel) {
-                std::cerr << "Failed to load function. " << kernel_name
-                          << std::endl;
-                exit(-1);
-            }
 
             std::map<size_t, T *> buffers;
 
@@ -262,13 +257,43 @@ namespace gpu {
                 buffers[reinterpret_cast<size_t> (output.get())] = kernel_arguments[output.get()].data();
             }
 
-            if (jit::verbose) {
-                std::cout << "  Function pointer: " << reinterpret_cast<size_t> (kernel) << std::endl;
-            }
+            if (state.get()) {
+                auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &, typename graph::random_state_node<T, SAFE_MATH>::mt_state *)> ();
 
-            return [kernel, buffers] () mutable {
-                kernel(buffers);
-            };
+                if (!kernel) {
+                    std::cerr << "Failed to load function. " << kernel_name
+                              << std::endl;
+                    exit(-1);
+                }
+
+                if (jit::verbose) {
+                    std::cout << "  Function pointer: "
+                              << reinterpret_cast<size_t> (kernel)
+                              << std::endl;
+                }
+
+                return [kernel, buffers, state] () mutable {
+                    kernel(buffers, state->data());
+                };
+            } else {
+                auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
+
+                if (!kernel) {
+                    std::cerr << "Failed to load function. " << kernel_name
+                              << std::endl;
+                    exit(-1);
+                }
+
+                if (jit::verbose) {
+                    std::cout << "  Function pointer: "
+                              << reinterpret_cast<size_t> (kernel)
+                              << std::endl;
+                }
+
+                return [kernel, buffers] () mutable {
+                    kernel(buffers);
+                };
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -389,6 +414,7 @@ namespace gpu {
 ///  @param[in]     name          Name to call the kernel.
 ///  @param[in]     inputs        Input variables of the kernel.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     state         Random states.
 ///  @param[in]     size          Size of the input buffer.
 ///  @param[in]     is_constant   Flags if the input is read only.
 ///  @param[in,out] registers     Map of used registers.
@@ -400,7 +426,8 @@ namespace gpu {
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
-                                  const size_t size, 
+                                  graph::shared_random_state<T, SAFE_MATH> state,
+                                  const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
                                   const jit::register_usage &usage,
@@ -411,7 +438,11 @@ namespace gpu {
 
             source_buffer << "    map<size_t, ";
             jit::add_type<T> (source_buffer);
-            source_buffer << " *> &args) {" << std::endl;
+            source_buffer << " *> &args";
+            if (state.get()) {
+                source_buffer << ", mt_state *" << jit::to_string('s', state.get());
+            }
+            source_buffer << ") {" << std::endl;
 
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 source_buffer << "    ";
@@ -442,6 +473,17 @@ namespace gpu {
                               << "[i]; // " << input->get_symbol()
 #ifdef SHOW_USE_COUNT
                               << " used " << usage.at(input.get())
+#endif
+                              << std::endl;
+            }
+            if (state.get()) {
+                registers[state.get()] = jit::to_string('r', state.get());
+                source_buffer << "        mt_state "
+                              << registers[state.get()] << " = ";
+                source_buffer << jit::to_string('s', state.get())
+                              << "[i]; // "
+#ifdef SHOW_USE_COUNT
+                              << "used " << usage.at(state.get())
 #endif
                               << std::endl;
             }

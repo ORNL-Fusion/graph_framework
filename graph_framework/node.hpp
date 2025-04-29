@@ -680,7 +680,7 @@ namespace graph {
 ///
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> none() {
         return constant<T, SAFE_MATH> (static_cast<T> (-1.0));
     }

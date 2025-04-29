@@ -166,7 +166,7 @@ void run_test() {
         graph::variable_cast(z)
     }, {
         bvec->get_x(), bvec->get_y(), bvec->get_z(), ne, te, div
-    }, {}, "test_kernel");
+    }, {}, graph::shared_random_state<T> (), "test_kernel");
     work.compile();
     work.run();
 

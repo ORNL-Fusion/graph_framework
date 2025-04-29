@@ -282,8 +282,8 @@ namespace jit {
                           const NODE *pointer) {
         assert((prefix == 'r' || prefix == 'v' ||
                 prefix == 'o' || prefix == 'a' ||
-                prefix == 'i') &&
-               "Expected a variable (v), register (r), output (o), array (a) or index (i) prefix.");
+                prefix == 'i' || prefix == 's') &&
+               "Expected a variable (v), register (r), output (o), array (a), index (i), or state (s) prefix.");
         return std::string(1, prefix) +
                format_to_string(reinterpret_cast<size_t> (pointer));
     }
