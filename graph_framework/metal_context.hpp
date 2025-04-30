@@ -10,7 +10,7 @@
 
 #import <Metal/Metal.h>
 
-#include "node.hpp"
+#include "random.hpp"
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -98,6 +98,7 @@ namespace gpu {
 ///  @param[in] kernel_name Name of the kernel for later reference.
 ///  @param[in] inputs      Input nodes of the kernel.
 ///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] state       Random states.
 ///  @param[in] num_rays    Number of rays to trace.
 ///  @param[in] tex1d_list  List of 1D textures.
 ///  @param[in] tex2d_list  List of 1D textures.
@@ -106,6 +107,7 @@ namespace gpu {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<float, SAFE_MATH> inputs,
                                                      graph::output_nodes<float, SAFE_MATH> outputs,
+                                                     graph::shared_random_state<float, SAFE_MATH> state,
                                                      const size_t num_rays,
                                                      const jit::texture1d_list &tex1d_list,
                                                      const jit::texture2d_list &tex2d_list) {
@@ -122,10 +124,10 @@ namespace gpu {
                 compute.buffers[i].mutability = bufferMutability[kernel_name][i];
             }
 
-            id<MTLComputePipelineState> state = [device newComputePipelineStateWithDescriptor:compute
-                                                                                      options:MTLPipelineOptionNone
-                                                                                   reflection:NULL
-                                                                                        error:&error];
+            id<MTLComputePipelineState> pipline = [device newComputePipelineStateWithDescriptor:compute
+                                                                                        options:MTLPipelineOptionNone
+                                                                                     reflection:NULL
+                                                                                          error:&error];
 
             if (error) {
                 NSLog(@"%@", error);
@@ -145,10 +147,20 @@ namespace gpu {
             }
             for (graph::shared_leaf<float, SAFE_MATH> &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
-                    kernel_arguments[output.get()] = [device newBufferWithLength:[buffers.back() length]
+                    kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
                                                                          options:MTLResourceStorageModeManaged];
                 }
                 buffers.push_back(kernel_arguments[output.get()]);
+            }
+            if (state.get()) {
+                if (!kernel_arguments.contains(state.get())) {
+                    kernel_arguments[state.get()] = [device newBufferWithBytes:state->data()
+                                                                        length:state->get_size_bytes()
+                                                                       options:MTLResourceCPUCacheModeWriteCombined |
+                                                                               MTLResourceStorageModeManaged        |
+                                                                               MTLResourceHazardTrackingModeUntracked];
+                }
+                buffers.push_back(kernel_arguments[state.get()]);
             }
 
             std::vector<id<MTLTexture>> textures;
@@ -202,8 +214,8 @@ namespace gpu {
             NSRange range = NSMakeRange(0, buffers.size());
             NSRange tex_range = NSMakeRange(0, textures.size());
 
-            NSUInteger threads_per_group = state.maxTotalThreadsPerThreadgroup;
-            NSUInteger thread_width = state.threadExecutionWidth;
+            NSUInteger threads_per_group = pipline.maxTotalThreadsPerThreadgroup;
+            NSUInteger thread_width = pipline.threadExecutionWidth;
             NSUInteger thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
 
             if (jit::verbose) {
@@ -214,11 +226,11 @@ namespace gpu {
                 std::cout << "    Total problem size     : " << threads_per_group*thread_groups << std::endl;
             }
 
-            return [this, state, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
+            return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
                 command_buffer = [queue commandBuffer];
                 id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
-                [encoder setComputePipelineState:state];
+                [encoder setComputePipelineState:pipline];
                 [encoder setBuffers:buffers.data()
                             offsets:offsets.data()
                           withRange:range];
@@ -301,7 +313,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
         MTLCompileOptions *compile_options() {
             MTLCompileOptions *options = [MTLCompileOptions new];
-            options.fastMathEnabled = YES;
+            options.mathMode = MTLMathModeFast;
+            options.mathFloatingPointFunctions = MTLMathFloatingPointFunctionsFast;
             return options;
         }
 
@@ -401,6 +414,7 @@ namespace gpu {
 ///  @param[in]     name          Name to call the kernel.
 ///  @param[in]     inputs        Input variables of the kernel.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     state         Random states.
 ///  @param[in]     size          Size of the input buffer.
 ///  @param[in]     is_constant   Flags if the input is read only.
 ///  @param[in,out] registers     Map of used registers.
@@ -412,7 +426,8 @@ namespace gpu {
                                   const std::string name,
                                   graph::input_nodes<float, SAFE_MATH> &inputs,
                                   graph::output_nodes<float, SAFE_MATH> &outputs,
-                                  const size_t size, 
+                                  graph::shared_random_state<float, SAFE_MATH> state,
+                                  const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
                                   const jit::register_usage &usage,
@@ -442,6 +457,13 @@ namespace gpu {
                 source_buffer << "    device float *"
                               << jit::to_string('o', outputs[i].get())
                               << " [[buffer(" << i + inputs.size() << ")]],"
+                              << std::endl;
+            }
+            if (state.get()) {
+                bufferMutability[name].push_back(MTLMutabilityMutable);
+                source_buffer << "    device mt_state *"
+                              << jit::to_string('s', state.get())
+                              << " [[buffer(" << inputs.size() + outputs.size() << ")]],"
                               << std::endl;
             }
             size_t index = 0;
@@ -477,6 +499,20 @@ namespace gpu {
                 }
 #else
                 registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+#endif
+            }
+            if (state.get()) {
+#ifdef USE_INPUT_CACHE
+                registers[state.get()] = jit::to_string('r', state.get());
+                source_buffer << "        device mt_state &" << registers[state.get()] << " = "
+                              << jit::to_string('s', state.get())
+                              << "[index];"
+#ifdef SHOW_USE_COUNT
+                              << " // used " << usage.at(input.get())
+#endif
+                              << std::endl;
+#else
+                registers[state.get()] = jit::to_string('s', state.get()) + "[index]";
 #endif
             }
         }

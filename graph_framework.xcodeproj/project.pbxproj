@@ -39,6 +39,7 @@
 		C74DF4602AA8BD1900319113 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C79141B622DAAD0C00E0BA0D /* xrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C79141B522DAAD0C00E0BA0D /* xrays.cpp */; };
 		C7B676082AA9023F005AB34C /* xrays_bench.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7B676072AA9023F005AB34C /* xrays_bench.cpp */; };
+		C7D12D9A2DBAB31F00925420 /* random.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C7D12D992DBAB31F00925420 /* random.hpp */; };
 		C7D371132A0595A40074676E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C7E5644528A2A1AA000F31A2 /* backend_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E7328074F540033B488 /* backend_test.cpp */; };
 		C7E5645128A2A1DD000F31A2 /* dispersion_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7931E6B28073BCA0033B488 /* dispersion_test.cpp */; };
@@ -327,6 +328,9 @@
 		C760B1AB2BC6D760001737A3 /* get_includes.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = get_includes.py; sourceTree = "<group>"; };
 		C7678FBD2B45C2850025F37E /* bin.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = bin.py; sourceTree = "<group>"; };
 		C77E6DF522DD64E700469621 /* trigonometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trigonometry.hpp; sourceTree = "<group>"; };
+		C78F3D872DC122B1002E3D94 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		C78F3D882DC122B1002E3D94 /* xkorc.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = xkorc.cpp; sourceTree = "<group>"; };
+		C78F3D8A2DC122C7002E3D94 /* random_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = random_test.cpp; sourceTree = "<group>"; };
 		C79141A622DA9BF200E0BA0D /* libgraph_framework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgraph_framework.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		C79141AE22DA9C3000E0BA0D /* node.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = node.hpp; sourceTree = "<group>"; };
 		C79141B322DAAD0C00E0BA0D /* graph_driver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_driver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -348,6 +352,7 @@
 		C7B677DA29E464AE00D3ADC6 /* cpu_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cpu_context.hpp; sourceTree = "<group>"; };
 		C7CEA0042948D02A00F61D09 /* timing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = timing.hpp; sourceTree = "<group>"; };
 		C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cuda_context.hpp; sourceTree = "<group>"; };
+		C7D12D992DBAB31F00925420 /* random.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = random.hpp; sourceTree = "<group>"; };
 		C7D3C5B02C654AD3008AD8C6 /* efit_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = efit_test.cpp; sourceTree = "<group>"; };
 		C7E134492A3CB3EC0083F6A7 /* output.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = output.hpp; sourceTree = "<group>"; };
 		C7E5643E28A2A16F000F31A2 /* backend_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = backend_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -538,6 +543,15 @@
 			path = graph_benchmark;
 			sourceTree = "<group>";
 		};
+		C78F3D892DC122B1002E3D94 /* graph_korc */ = {
+			isa = PBXGroup;
+			children = (
+				C78F3D872DC122B1002E3D94 /* CMakeLists.txt */,
+				C78F3D882DC122B1002E3D94 /* xkorc.cpp */,
+			);
+			path = graph_korc;
+			sourceTree = "<group>";
+		};
 		C791419D22DA9BF200E0BA0D = {
 			isa = PBXGroup;
 			children = (
@@ -547,6 +561,7 @@
 				C79141B422DAAD0C00E0BA0D /* graph_driver */,
 				C74DF4582AA8BC7300319113 /* graph_benchmark */,
 				C736E6B02C9B52CA00AAE3C0 /* graph_playground */,
+				C78F3D892DC122B1002E3D94 /* graph_korc */,
 				C7167B212AC5CE8500E03131 /* utilities */,
 				C717CB8C2A02E361008FBDD8 /* cmake */,
 				C79141A722DA9BF200E0BA0D /* Products */,
@@ -590,6 +605,7 @@
 				C71C1FF827F621E7006997C2 /* vector.hpp */,
 				C723210222DC0D0A006BBF13 /* arithmetic.hpp */,
 				C77E6DF522DD64E700469621 /* trigonometry.hpp */,
+				C7D12D992DBAB31F00925420 /* random.hpp */,
 				C71C1FF527F5379D006997C2 /* dispersion.hpp */,
 				C70AA9792AB48FE2002DAF1C /* absorption.hpp */,
 				C71C1FF627F5F5A8006997C2 /* solver.hpp */,
@@ -635,6 +651,7 @@
 				C7FA0DFD29590B7400A31E4D /* jit_test.cpp */,
 				C73BBE6929F7117E0027BB7F /* trigonometry_test.cpp */,
 				C73BBE7D29F816E60027BB7F /* piecewise_test.cpp */,
+				C78F3D8A2DC122C7002E3D94 /* random_test.cpp */,
 			);
 			path = graph_tests;
 			sourceTree = "<group>";
@@ -655,6 +672,7 @@
 				C736903E2A38C958001733B0 /* trigonometry.hpp in Headers */,
 				C736903F2A38C958001733B0 /* dispersion.hpp in Headers */,
 				C73690402A38C958001733B0 /* solver.hpp in Headers */,
+				C7D12D9A2DBAB31F00925420 /* random.hpp in Headers */,
 				C73690412A38C958001733B0 /* backend.hpp in Headers */,
 				C73690422A38C958001733B0 /* equilibrium.hpp in Headers */,
 				C73690432A38C958001733B0 /* jit.hpp in Headers */,
@@ -1344,7 +1362,6 @@
 					"-lLLVMAnalysis",
 					"-lLLVMScalarOpts",
 					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
 					"-lLLVMCodeGen",
 					"-lLLVMTargetParser",
 					"-lLLVMScalarOpts",
@@ -1450,7 +1467,6 @@
 					"-lLLVMAnalysis",
 					"-lLLVMScalarOpts",
 					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
 					"-lLLVMCodeGen",
 					"-lLLVMTargetParser",
 					"-lLLVMScalarOpts",
@@ -1600,7 +1616,6 @@
 					"-lLLVMAnalysis",
 					"-lLLVMScalarOpts",
 					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
 					"-lLLVMCodeGen",
 					"-lLLVMTargetParser",
 					"-lLLVMScalarOpts",
@@ -1701,7 +1716,6 @@
 					"-lLLVMAnalysis",
 					"-lLLVMScalarOpts",
 					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
 					"-lLLVMCodeGen",
 					"-lLLVMTargetParser",
 					"-lLLVMScalarOpts",

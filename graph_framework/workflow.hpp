@@ -26,6 +26,8 @@ namespace workflow {
         graph::input_nodes<T, SAFE_MATH> inputs;
 ///  Output nodes.
         graph::output_nodes<T, SAFE_MATH> outputs;
+///  Random state node.
+        graph::shared_random_state<T, SAFE_MATH> state;
 ///  Kernel function.
         std::function<void(void)> kernel;
 
@@ -36,16 +38,18 @@ namespace workflow {
 ///  @param[in]     in      Input variables.
 ///  @param[in]     out     Output nodes.
 ///  @param[in]     maps    Setter maps.
+///  @param[in]     state   Random state node.
 ///  @param[in]     name    Name of the workitem.
 ///  @param[in,out] context Jit context.
 //------------------------------------------------------------------------------
         work_item(graph::input_nodes<T, SAFE_MATH> in,
                   graph::output_nodes<T, SAFE_MATH> out,
                   graph::map_nodes<T, SAFE_MATH> maps,
+                  graph::shared_random_state<T, SAFE_MATH> state,
                   const std::string name,
                   jit::context<T, SAFE_MATH> &context) :
-        inputs(in), outputs(out), kernel_name(name) {
-            context.add_kernel(name, in, out, maps);
+        inputs(in), outputs(out), kernel_name(name), state(state) {
+            context.add_kernel(name, in, out, maps, state);
         }
 
 //------------------------------------------------------------------------------
@@ -54,8 +58,11 @@ namespace workflow {
 ///  @param[in,out] context Jit context.
 //------------------------------------------------------------------------------
         virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
+            const size_t size = inputs.size() ? inputs.back()->size() :
+                                                (state.get() ? state->size() :
+                                                               0);
             kernel = context.create_kernel_call(kernel_name, inputs, outputs,
-                                                inputs.back()->size());
+                                                state, size);
         }
 
 //------------------------------------------------------------------------------
@@ -90,6 +97,7 @@ namespace workflow {
 ///  @param[in]     outputs  Output nodes.
 ///  @param[in]     maps     Setter maps.
 ///  @param[in]     name     Name of the workitem.
+///  @param[in]     state    Random state node.
 ///  @param[in,out] context  Jit context.
 ///  @param[in]     tol      Tolarance to solve the dispersion function to.
 ///  @param[in]     max_iter Maximum number of iterations before giving up.
@@ -97,11 +105,12 @@ namespace workflow {
         converge_item(graph::input_nodes<T, SAFE_MATH> inputs,
                       graph::output_nodes<T, SAFE_MATH> outputs,
                       graph::map_nodes<T, SAFE_MATH> maps,
+                      graph::shared_random_state<T, SAFE_MATH> state,
                       const std::string name,
                       jit::context<T, SAFE_MATH> &context,
                       const T tol=1.0E-30,
                       const size_t max_iter=1000) :
-        work_item<T, SAFE_MATH> (inputs, outputs, maps, name, context),
+        work_item<T, SAFE_MATH> (inputs, outputs, maps, state, name, context),
         tolarance(tol), max_iterations(max_iter) {
             context.add_max_reduction(inputs.back()->size());
         }
@@ -178,35 +187,39 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Add a pre workflow item.
 ///
-///  @param[in] in   Input variables.
-///  @param[in] out  Output nodes.
-///  @param[in] maps Setter maps.
-///  @param[in] name Name of the workitem.
+///  @param[in] in    Input variables.
+///  @param[in] out   Output nodes.
+///  @param[in] maps  Setter maps.
+///  @param[in] state Random state node.
+///  @param[in] name  Name of the workitem.
 //------------------------------------------------------------------------------
         void add_preitem(graph::input_nodes<T, SAFE_MATH> in,
                          graph::output_nodes<T, SAFE_MATH> out,
                          graph::map_nodes<T, SAFE_MATH> maps,
+                         graph::shared_random_state<T, SAFE_MATH> state,
                          const std::string name) {
             preitems.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
-                                                                          maps, name,
-                                                                          context));
+                                                                          maps, state,
+                                                                          name, context));
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Add a workflow item.
 ///
-///  @param[in] in   Input variables.
-///  @param[in] out  Output nodes.
-///  @param[in] maps Setter maps.
-///  @param[in] name Name of the workitem.
+///  @param[in] in    Input variables.
+///  @param[in] out   Output nodes.
+///  @param[in] maps  Setter maps.
+///  @param[in] state Random state node.
+///  @param[in] name  Name of the workitem.
 //------------------------------------------------------------------------------
         void add_item(graph::input_nodes<T, SAFE_MATH> in,
                       graph::output_nodes<T, SAFE_MATH> out,
                       graph::map_nodes<T, SAFE_MATH> maps,
+                      graph::shared_random_state<T, SAFE_MATH> state,
                       const std::string name) {
             items.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
-                                                                       maps, name,
-                                                                       context));
+                                                                       maps, state,
+                                                                       name, context));
         }
 
 //------------------------------------------------------------------------------
@@ -215,6 +228,7 @@ namespace workflow {
 ///  @param[in] in       Input variables.
 ///  @param[in] out      Output nodes.
 ///  @param[in] maps     Setter maps.
+///  @param[in] state    Random state node.
 ///  @param[in] name     Name of the workitem.
 ///  @param[in] tol      Tolarance to solve the dispersion function to.
 ///  @param[in] max_iter Maximum number of iterations before giving up.
@@ -222,13 +236,14 @@ namespace workflow {
         void add_converge_item(graph::input_nodes<T, SAFE_MATH> in,
                                graph::output_nodes<T, SAFE_MATH> out,
                                graph::map_nodes<T, SAFE_MATH> maps,
+                               graph::shared_random_state<T, SAFE_MATH> state,
                                const std::string name,
                                const T tol=1.0E-30,
                                const size_t max_iter=1000) {
             add_reduction = true;
             items.push_back(std::make_unique<converge_item<T, SAFE_MATH>> (in, out,
-                                                                           maps, name,
-                                                                           context,
+                                                                           maps, state,
+                                                                           name, context,
                                                                            tol, max_iter));
         }
 

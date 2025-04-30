@@ -1149,7 +1149,7 @@ namespace equilibrium {
 
                 te_cache = te_scale*build_1D_spline({t0_temp, t1_temp, t2_temp, t3_temp}, psi_cache, dpsi, psimin);
 
-                auto p0_temp = graph::piecewise_1D(pres_c0, psi_cache, dpsi, psimin) - psimin;
+                auto p0_temp = graph::piecewise_1D(pres_c0, psi_cache, dpsi, psimin);
                 auto p1_temp = graph::piecewise_1D(pres_c1, psi_cache, dpsi, psimin);
                 auto p2_temp = graph::piecewise_1D(pres_c2, psi_cache, dpsi, psimin);
                 auto p3_temp = graph::piecewise_1D(pres_c3, psi_cache, dpsi, psimin);
@@ -1165,12 +1165,12 @@ namespace equilibrium {
 
                 auto br = psi_cache->df(z)/r;
 
-                auto b0_temp = graph::piecewise_1D(fpol_c0, r, dr, rmin);
-                auto b1_temp = graph::piecewise_1D(fpol_c1, r, dr, rmin);
-                auto b2_temp = graph::piecewise_1D(fpol_c2, r, dr, rmin);
-                auto b3_temp = graph::piecewise_1D(fpol_c3, r, dr, rmin);
+                auto b0_temp = graph::piecewise_1D(fpol_c0, psi_cache, dpsi, psimin);
+                auto b1_temp = graph::piecewise_1D(fpol_c1, psi_cache, dpsi, psimin);
+                auto b2_temp = graph::piecewise_1D(fpol_c2, psi_cache, dpsi, psimin);
+                auto b3_temp = graph::piecewise_1D(fpol_c3, psi_cache, dpsi, psimin);
                 
-                auto bp = build_1D_spline({b0_temp, b1_temp, b2_temp, b3_temp}, r, dr, rmin)/r;
+                auto bp = build_1D_spline({b0_temp, b1_temp, b2_temp, b3_temp}, psi_cache, dpsi, psimin)/r;
 
                 auto bz = -psi_cache->df(r)/r;
 
@@ -1401,8 +1401,10 @@ namespace equilibrium {
             workflow::manager<T, SAFE_MATH> work(device_number);
             solver::newton(work, {
                 x_axis, z_axis
-            }, inputs, (psi_cache - psimin)/dpsi, static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
-            work.add_item(inputs, {b_mod}, {}, "bmod_at_axis");
+            }, inputs, (psi_cache - psimin)/dpsi, graph::shared_random_state<T, SAFE_MATH> (), static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
+            work.add_item(inputs, {b_mod}, {},
+                          graph::shared_random_state<T, SAFE_MATH> (),
+                          "bmod_at_axis");
             work.compile();
             work.run();
 
@@ -1478,10 +1480,10 @@ namespace equilibrium {
         nc_inq_dimid(ncid, "numpsi", &dimid);
         nc_inq_dimlen(ncid, dimid, &numpsi);
 
-        std::vector<double> fpol_c0_buffer(numr);
-        std::vector<double> fpol_c1_buffer(numr);
-        std::vector<double> fpol_c2_buffer(numr);
-        std::vector<double> fpol_c3_buffer(numr);
+        std::vector<double> fpol_c0_buffer(numpsi);
+        std::vector<double> fpol_c1_buffer(numpsi);
+        std::vector<double> fpol_c2_buffer(numpsi);
+        std::vector<double> fpol_c3_buffer(numpsi);
 
         nc_inq_varid(ncid, "fpol_c0", &varid);
         nc_get_var(ncid, varid, fpol_c0_buffer.data());
@@ -1835,7 +1837,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the poloidal flux.
 ///
-///  @param[in] s_norm Normalized S position.
+///  @param[in] s S position.
 ///  @returns χ(s,u,v)
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>

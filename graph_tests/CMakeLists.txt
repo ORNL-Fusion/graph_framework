@@ -11,6 +11,7 @@ add_test_target (trigonometry_test)
 add_test_target (piecewise_test)
 add_test_target (erfi_test)
 add_test_target (efit_test)
+add_test_target (random_test)
 
 target_compile_definitions (erfi_test
                             PRIVATE

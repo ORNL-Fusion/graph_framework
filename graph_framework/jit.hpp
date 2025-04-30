@@ -96,14 +96,18 @@ namespace jit {
 ///  @param[in] inputs  Input variables of the kernel.
 ///  @param[in] outputs Output nodes of the graph to compute.
 ///  @param[in] setters Map outputs back to input values.
+///  @param[in] state   Random state node.
 //------------------------------------------------------------------------------
         void add_kernel(const std::string name,
                         graph::input_nodes<T, SAFE_MATH> inputs,
                         graph::output_nodes<T, SAFE_MATH> outputs,
-                        graph::map_nodes<T, SAFE_MATH> setters) {
+                        graph::map_nodes<T, SAFE_MATH> setters,
+                        graph::shared_random_state<T, SAFE_MATH> state) {
             kernel_names.push_back(name);
 
-            const size_t size = inputs[0]->size();
+            const size_t size = inputs.size() ? inputs[0]->size() :
+                                                (state.get() ? state->size() :
+                                                               0);
 
             std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;
@@ -138,7 +142,7 @@ namespace jit {
             }
 
             gpu_context.create_kernel_prefix(source_buffer,
-                                             name, inputs, outputs, 
+                                             name, inputs, outputs, state,
                                              size, is_constant,
                                              registers, usage,
                                              kernel_1dtextures[name],
@@ -223,17 +227,19 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Create a kernel calling function.
 ///
-///  @param[in] kernel_name   Name of the kernel for later reference.
-///  @param[in] inputs        Input nodes of the kernel.
-///  @param[in] outputs       Output nodes of the kernel.
-///  @param[in] num_rays      Number of rays to trace.
+///  @param[in] kernel_name  Name of the kernel for later reference.
+///  @param[in] inputs       Input nodes of the kernel.
+///  @param[in] outputs      Output nodes of the kernel.
+///  @param[in] state        Random states.
+///  @param[in] num_rays     Number of rays to trace.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays) {
-            return gpu_context.create_kernel_call(kernel_name, inputs, outputs, num_rays,
+            return gpu_context.create_kernel_call(kernel_name, inputs, outputs, state, num_rays,
                                                   kernel_1dtextures[kernel_name],
                                                   kernel_2dtextures[kernel_name]);
         }

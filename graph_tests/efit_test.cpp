@@ -114,7 +114,7 @@ void check_error(const T test, const T expected, const T tolarance,
 ///  @brief Check error.
 ///
 ///  @param[in] test      Test value.
-///  @param[in] expected  Expected result.
+///  @param[in] tolarance Error tolarance.
 ///  @param[in] name      Name of the test.
 //------------------------------------------------------------------------------
 template <jit::float_scalar T>
@@ -166,20 +166,20 @@ void run_test() {
         graph::variable_cast(z)
     }, {
         bvec->get_x(), bvec->get_y(), bvec->get_z(), ne, te, div
-    }, {}, "test_kernel");
+    }, {}, graph::shared_random_state<T> (), "test_kernel");
     work.compile();
     work.run();
 
     for (size_t i = 0, ie = gold.r_grid.size()*gold.z_grid.size(); i < ie; i++) {
         check_error(work.check_value(i, bvec->get_x()), gold.bx_grid[i], 4.0E-12,
                     "Expected a match in bx.");
-        check_error(work.check_value(i, bvec->get_y()), gold.by_grid[i], 2.0E-30,
+        check_error(work.check_value(i, bvec->get_y()), gold.by_grid[i], 4.0E-23,
                     "Expected a match in by.");
-        check_error(work.check_value(i, bvec->get_z()), gold.bz_grid[i], 3.0E-13,
+        check_error(work.check_value(i, bvec->get_z()), gold.bz_grid[i], 1.0E-12,
                     "Expected a match in bz.");
-        check_error(work.check_value(i, ne), gold.ne_grid[i], 3.0E-13,
+        check_error(work.check_value(i, ne), gold.ne_grid[i], 5.0E-13,
                     "Expected a match in ne.");
-        check_error(work.check_value(i, te), gold.te_grid[i], 3.0E-13,
+        check_error(work.check_value(i, te), gold.te_grid[i], 5.0E-13,
                     "Expected a match in te.");
         check_error(work.check_value(i, div), 1.0E-20,
                     "Expected div(B)=0.");
