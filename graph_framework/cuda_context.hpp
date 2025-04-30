@@ -14,7 +14,7 @@
 #include <cuda.h>
 #include <nvrtc.h>
 
-#include "node.hpp"
+#include "random.hpp"
 
 #define MAX_REG 128
 #define MAX_CONSTANT_MEMORY
@@ -608,11 +608,26 @@ namespace gpu {
 ///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
+            source_buffer << "typedef unsigned int uint32_t;"                << std::endl
+                          << "typedef unsigned short uint16_t;"              << std::endl
+                          << "typedef short int16_t;"                        << std::endl
+                          << "template<typename T, size_t S>"                << std::endl
+                          << "class array {"                                 << std::endl
+                          << "private:"                                      << std::endl
+                          << "    T _buffer[S];"                             << std::endl
+                          << "public:"                                       << std::endl
+                          << "    T operator[] (const size_t index) const {" << std::endl
+                          << "        return _buffer[index];"                << std::endl
+                          << "    }"                                         << std::endl
+                          << "    T &operator[] (const size_t index) {"      << std::endl
+                          << "        return _buffer[index];"                << std::endl
+                          << "    }"                                         << std::endl
+                          << "};"                                            << std::endl;
             if constexpr (jit::is_complex<T> ()) {
-                source_buffer << "#define CUDA_DEVICE_CODE" << std::endl;
-                source_buffer << "#define M_PI " << M_PI << std::endl;
-                source_buffer << "#include <cuda/std/complex>" << std::endl;
-                source_buffer << "#include <special_functions.hpp>" << std::endl;
+                source_buffer << "#define CUDA_DEVICE_CODE"         << std::endl
+                              << "#define M_PI " << M_PI            << std::endl
+                              << "#include <cuda/std/complex>"      << std::endl
+                              << "#include <special_functions.hpp>" << std::endl;
 #ifdef USE_CUDA_TEXTURES
                 if constexpr (jit::is_float<T> ()) {
                     source_buffer << "static __inline__ __device__ complex<float> to_cmp_float(float2 p) {"
@@ -632,10 +647,10 @@ namespace gpu {
                 }
             } else if constexpr (jit::is_double<T> ()) {
                 source_buffer << "static __inline__ __device__ double to_double(uint2 p) {"
-                << std::endl
-                << "    return __hiloint2double(p.y, p.x);"
-                << std::endl
-                << "}" << std::endl;
+                              << std::endl
+                              << "    return __hiloint2double(p.y, p.x);"
+                              << std::endl
+                              << "}" << std::endl;
             }
 #else
             }
@@ -661,7 +676,7 @@ namespace gpu {
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
-                                  graph::shared_random_state<float, SAFE_MATH> state,
+                                  graph::shared_random_state<T, SAFE_MATH> state,
                                   const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
@@ -672,13 +687,15 @@ namespace gpu {
             source_buffer << "extern \"C\" __global__ void "
                           << name << "(" << std::endl;
 
-            source_buffer << "    ";
-            if (is_constant[0]) {
-                source_buffer << "const ";
+            if (inputs.size()) {
+                source_buffer << "    ";
+                if (is_constant[0]) {
+                    source_buffer << "const ";
+                }
+                jit::add_type<T> (source_buffer);
+                source_buffer << " * __restrict__ "
+                              << jit::to_string('v', inputs[0].get());
             }
-            jit::add_type<T> (source_buffer);
-            source_buffer << " * __restrict__ "
-                          << jit::to_string('v', inputs[0].get());
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
                 source_buffer << ", // " << inputs[i - 1]->get_symbol()
 #ifndef USE_INPUT_CACHE
@@ -696,19 +713,22 @@ namespace gpu {
                               << jit::to_string('v', inputs[i].get());
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                source_buffer << ",";
                 if (i == 0) {
-                    source_buffer << " // "
-                                  << inputs[inputs.size() - 1]->get_symbol();
+                    if (inputs.size()) {
+                        source_buffer << ", // "
+                                      << inputs[inputs.size() - 1]->get_symbol();
 #ifndef USE_INPUT_CACHE
 #ifdef SHOW_USE_COUNT
-                    source_buffer << " used "
-                                  << usage.at(inputs[inputs.size() - 1].get());
+                        source_buffer << " used "
+                                      << usage.at(inputs[inputs.size() - 1].get());
 #endif
 #endif
+                        source_buffer << std::endl;
+                    }
+                } else {
+                    source_buffer << "," << std::endl;
                 }
 
-                source_buffer << std::endl;
                 source_buffer << "    ";
                 jit::add_type<T> (source_buffer);
                 source_buffer << " *  __restrict__ "
@@ -757,7 +777,7 @@ namespace gpu {
             if (state.get()) {
 #ifdef USE_INPUT_CACHE
                 registers[state.get()] = jit::to_string('r', state.get());
-                source_buffer << "        mt_state " << registers[state.get()] << " = "
+                source_buffer << "        mt_state &" << registers[state.get()] << " = "
                               << jit::to_string('s', state.get())
                               << "[index];"
 #ifdef SHOW_USE_COUNT

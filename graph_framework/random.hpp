@@ -543,7 +543,7 @@ namespace graph {
 ///  @returns An attemped dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    shared_random_state<T, SAFE_MATH> random_cast(shared_leaf<T, SAFE_MATH> x) {
+    shared_random<T, SAFE_MATH> random_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<random_node<T, SAFE_MATH>> (x);
     }
 
