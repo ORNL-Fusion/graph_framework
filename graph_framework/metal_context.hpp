@@ -313,7 +313,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
         MTLCompileOptions *compile_options() {
             MTLCompileOptions *options = [MTLCompileOptions new];
-            options.fastMathEnabled = YES;
+            options.mathMode = MTLMathModeFast;
+            options.mathFloatingPointFunctions = MTLMathFloatingPointFunctionsFast;
             return options;
         }
 
@@ -503,7 +504,7 @@ namespace gpu {
             if (state.get()) {
 #ifdef USE_INPUT_CACHE
                 registers[state.get()] = jit::to_string('r', state.get());
-                source_buffer << "        mt_state " << registers[state.get()] << " = "
+                source_buffer << "        device mt_state &" << registers[state.get()] << " = "
                               << jit::to_string('s', state.get())
                               << "[index];"
 #ifdef SHOW_USE_COUNT

@@ -478,7 +478,7 @@ namespace gpu {
             }
             if (state.get()) {
                 registers[state.get()] = jit::to_string('r', state.get());
-                source_buffer << "        mt_state "
+                source_buffer << "        mt_state &"
                               << registers[state.get()] << " = ";
                 source_buffer << jit::to_string('s', state.get())
                               << "[i]; // "
