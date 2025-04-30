@@ -294,10 +294,11 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a kernel calling function.
 ///
-///  @param[in] kernel_name   Name of the kernel for later reference.
-///  @param[in] inputs        Input nodes of the kernel.
-///  @param[in] outputs       Output nodes of the kernel.
-///  @param[in] num_rays      Number of rays to trace.'
+///  @param[in] kernel_name Name of the kernel for later reference.
+///  @param[in] inputs      Input nodes of the kernel.
+///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] state       Random states.
+///  @param[in] num_rays    Number of rays to trace.'
 ///  @param[in] tex1d_list  List of 1D textures.
 ///  @param[in] tex2d_list  List of 1D textures.
 ///  @returns A lambda function to run the kernel.
@@ -305,6 +306,7 @@ namespace gpu {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays,
                                                      const jit::texture1d_list &tex1d_list,
                                                      const jit::texture2d_list &tex2d_list) {
@@ -338,6 +340,21 @@ namespace gpu {
                                 "cuMemAllocManaged");
                 }
                 buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
+            }
+
+            if (state.get()) {
+                if (!kernel_arguments.contains(state.get())) {
+                    kernel_arguments.try_emplace(state.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[state.get()],
+                                                  state->get_size_bytes(),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(kernel_arguments[state.get()],
+                                             state->data(),
+                                             state->get_size_bytes()),
+                                "cuMemcpyHtoD");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[state.get()]));
             }
 
 #ifdef USE_CUDA_TEXTURES
@@ -632,6 +649,7 @@ namespace gpu {
 ///  @param[in]     name          Name to call the kernel.
 ///  @param[in]     inputs        Input variables of the kernel.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     state         Random states.
 ///  @param[in]     size          Size of the input buffer.
 ///  @param[in]     is_constant   Flags if the input is read only.
 ///  @param[in,out] registers     Map of used registers.
@@ -643,6 +661,7 @@ namespace gpu {
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
+                                  graph::shared_random_state<float, SAFE_MATH> state,
                                   const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
@@ -695,6 +714,11 @@ namespace gpu {
                 source_buffer << " *  __restrict__ "
                               << jit::to_string('o', outputs[i].get());
             }
+            if (state.get()) {
+                source_buffer << "," << std::endl
+                              << "    mt_state * __restrict__ "
+                              << jit::to_string('s', state.get());
+            }
 #ifdef USE_CUDA_TEXTURES
             for (auto &[key, value] : textures1d) {
                 source_buffer << "," << std::endl;
@@ -707,11 +731,10 @@ namespace gpu {
                               << jit::to_string('a', key);
             }
 #endif
-            source_buffer << ") {" << std::endl;
-
-            source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
-                          << std::endl;
-            source_buffer << "    if (index < " << size << ") {" << std::endl;
+            source_buffer << ") {" << std::endl
+                          << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
+                          << std::endl
+                          << "    if (index < " << size << ") {" << std::endl;
 
             for (auto &input : inputs) {
 #ifdef USE_INPUT_CACHE
@@ -729,6 +752,20 @@ namespace gpu {
                 }
 #else
                 registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+#endif
+            }
+            if (state.get()) {
+#ifdef USE_INPUT_CACHE
+                registers[state.get()] = jit::to_string('r', state.get());
+                source_buffer << "        mt_state " << registers[state.get()] << " = "
+                              << jit::to_string('s', state.get())
+                              << "[index];"
+#ifdef SHOW_USE_COUNT
+                              << " // used " << usage.at(state.get())
+#endif
+                              << std::endl;
+#else
+                registers[state.get()] = jit::to_string('s', state.get()) + "[index]";
 #endif
             }
         }

@@ -505,9 +505,9 @@ namespace gpu {
                 registers[state.get()] = jit::to_string('r', state.get());
                 source_buffer << "        mt_state " << registers[state.get()] << " = "
                               << jit::to_string('s', state.get())
-                              << "[index]; // "
+                              << "[index];"
 #ifdef SHOW_USE_COUNT
-                              << " used " << usage.at(input.get())
+                              << " // used " << usage.at(input.get())
 #endif
                               << std::endl;
 #else
