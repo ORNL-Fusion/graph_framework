@@ -178,8 +178,7 @@ namespace gpu {
             invocation->getPreprocessorOpts().addRemappedFile(filename.c_str(),
                                                               buffer.release());
 
-            clang::CompilerInstance clang;
-            clang.setInvocation(invocation);
+            clang::CompilerInstance clang(invocation);
             std::shared_ptr<llvm::vfs::FileSystem> VFS =
                 std::make_shared<llvm::vfs::InMemoryFileSystem> ();
             clang.createDiagnostics(*VFS.get());
