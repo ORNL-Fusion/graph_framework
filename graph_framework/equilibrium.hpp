@@ -1404,7 +1404,7 @@ namespace equilibrium {
             }, inputs, (psi_cache - psimin)/dpsi, graph::shared_random_state<T, SAFE_MATH> (), static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
             work.add_item(inputs, {b_mod}, {},
                           graph::shared_random_state<T, SAFE_MATH> (),
-                          "bmod_at_axis");
+                          "bmod_at_axis", inputs.back()->size());
             work.compile();
             work.run();
 

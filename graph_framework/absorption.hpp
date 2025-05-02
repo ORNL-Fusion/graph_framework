@@ -140,7 +140,7 @@ namespace absorption {
 
             work.add_item(inputs, {}, setters,
                           graph::shared_random_state<T, SAFE_MATH> (),
-                          "root_find_init_kernel");
+                          "root_find_init_kernel", inputs.back()->size());
 
             inputs.push_back(graph::variable_cast(this->t));
             inputs.push_back(graph::variable_cast(this->w));
@@ -170,7 +170,7 @@ namespace absorption {
             };
             work.add_item(inputs, {}, setters,
                           graph::shared_random_state<T, SAFE_MATH> (),
-                          "final_kamp");
+                          "final_kamp", inputs.back()->size());
         }
 
 //------------------------------------------------------------------------------
@@ -337,7 +337,7 @@ namespace absorption {
             
             work.add_item(inputs, {}, setters,
                           graph::shared_random_state<T, SAFE_MATH> (),
-                          "weak_damping_kimg_kernel");
+                          "weak_damping_kimg_kernel", inputs.back()->size());
         }
 
 //------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
                                            const T tolarance) {
     jit::context<T> source(0);
     source.add_kernel("test_kernel", inputs, outputs, setters,
-                      graph::shared_random_state<T> ());
+                      graph::shared_random_state<T> (), inputs.back()->size());
 
     source.compile();
 

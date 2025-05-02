@@ -1,5 +1,6 @@
 #include "../graph_framework/equilibrium.hpp"
 #include "../graph_framework/timing.hpp"
+#include "../graph_framework/output.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Run Korc
@@ -81,7 +82,7 @@ void run_korc() {
                 {u_init->get_y(), graph::variable_cast(uy)},
                 {u_init->get_z(), graph::variable_cast(uz)},
                 {gamma_init, graph::variable_cast(gamma)}
-            }, graph::shared_random_state<T> (), "initalize_gamma");
+            }, graph::shared_random_state<T> (), "initalize_gamma", local_num_particles);
             
             auto u_prime = u_vec - dt*u_vec->cross(b_vec)/(2.0*gamma);
             
@@ -117,7 +118,7 @@ void run_korc() {
                 {u_next->get_y(), graph::variable_cast(uy)},
                 {u_next->get_z(), graph::variable_cast(uz)},
                 {gamma_next, graph::variable_cast(gamma)}
-            }, graph::shared_random_state<T> (), "step");
+            }, graph::shared_random_state<T> (), "step", local_num_particles);
             
             work.compile();
             

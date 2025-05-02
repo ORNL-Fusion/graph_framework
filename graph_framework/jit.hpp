@@ -63,6 +63,9 @@ namespace jit {
         gpu_context_type gpu_context;
 
     public:
+///  Size of random state needed.
+        constexpr static size_t random_state_size = gpu_context_type::random_state_size;
+
 //------------------------------------------------------------------------------
 ///  @brief Get the maximum number of concurrent instances.
 ///
@@ -97,17 +100,15 @@ namespace jit {
 ///  @param[in] outputs Output nodes of the graph to compute.
 ///  @param[in] setters Map outputs back to input values.
 ///  @param[in] state   Random state node.
+///  @param[in] size    Size of the kernel.
 //------------------------------------------------------------------------------
         void add_kernel(const std::string name,
                         graph::input_nodes<T, SAFE_MATH> inputs,
                         graph::output_nodes<T, SAFE_MATH> outputs,
                         graph::map_nodes<T, SAFE_MATH> setters,
-                        graph::shared_random_state<T, SAFE_MATH> state) {
+                        graph::shared_random_state<T, SAFE_MATH> state,
+                        const size_t size) {
             kernel_names.push_back(name);
-
-            const size_t size = inputs.size() ? inputs[0]->size() :
-                                                (state.get() ? state->size() :
-                                                               0);
 
             std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;

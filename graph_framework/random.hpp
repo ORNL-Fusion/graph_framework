@@ -379,32 +379,26 @@ namespace graph {
                 if constexpr (jit::use_metal<T> ()) {
                     stream << "device ";
                 }
-                stream <<"mt_state &state) {"                                       << std::endl
-                       << "    uint16_t k = state.index;"                           << std::endl
-                       << "    int16_t j = k - 623;"                                << std::endl
-                       << "    if (j < 0) {"                                        << std::endl
-                       << "        j += 624;"                                       << std::endl
-                       << "    }"                                                   << std::endl
-                       << "    uint32_t x = (state.array[k] & 0xffffffffU << 31) |" << std::endl
-                       << "                 (state.array[j] & 0xffffffffU >> 1);"   << std::endl
-                       << "    uint32_t xA = x >> 1;"                               << std::endl
-                       << "    if (x & 0x00000001U) {"                              << std::endl
-                       << "        xA ^= 0x9908b0dfU;"                              << std::endl
-                       << "    }"                                                   << std::endl
-                       << "    j = k - 227;"                                        << std::endl
-                       << "    if (j < 0) {"                                        << std::endl
-                       << "        j += 624;"                                       << std::endl
-                       << "    }"                                                   << std::endl
-                       << "    x = state.array[j]^xA;"                              << std::endl
-                       << "    state.array[k++] = x;"                               << std::endl
-                       << "    state.index = k;"                                    << std::endl
-                       << "    uint32_t y = x^(x >> 11);"                           << std::endl
-                       << "    y = y^((y << 7) & 0x9d2c5680U);"                     << std::endl
-                       << "    y = y^((y << 15) & 0xefc60000U);"                    << std::endl
+                stream <<"mt_state &state) {"                                 << std::endl
+                       << "    uint16_t k = state.index;"                     << std::endl
+                       << "    uint16_t j = (k + 1) % 624;"                   << std::endl
+                       << "    uint32_t x = (state.array[k] & 0x80000000U) |" << std::endl
+                       << "                 (state.array[j] & 0x7fffffffU);"  << std::endl
+                       << "    uint32_t xA = x >> 1;"                         << std::endl
+                       << "    if (x & 0x00000001U) {"                        << std::endl
+                       << "        xA ^= 0x9908b0dfU;"                        << std::endl
+                       << "    }"                                             << std::endl
+                       << "    j = (k - 227) % 624;"                          << std::endl
+                       << "    x = state.array[j]^xA;"                        << std::endl
+                       << "    state.array[k] = x;"                           << std::endl
+                       << "    state.index = (k + 1) % 624;"                  << std::endl
+                       << "    uint32_t y = x^(x >> 11);"                     << std::endl
+                       << "    y = y^((y << 7) & 0x9d2c5680U);"               << std::endl
+                       << "    y = y^((y << 15) & 0xefc60000U);"                      << std::endl
                        << "    return static_cast<";
                 jit::add_type<T> (stream);
-                stream << "> (y^(y >> 18));"                                        << std::endl
-                       << "}"                                                       << std::endl;
+                stream << "> (y^(y >> 18));"                                          << std::endl
+                       << "}"                                                         << std::endl;
 #ifdef SHOW_USE_COUNT
             } else {
                 ++usage[this];

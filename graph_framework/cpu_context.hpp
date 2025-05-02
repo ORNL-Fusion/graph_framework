@@ -90,6 +90,9 @@ namespace gpu {
         std::map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
 
     public:
+///  Size of random state needed.
+        constexpr static size_t random_state_size = 1;
+
 ///  Remaining constant memory in bytes. NOT USED.
         int remaining_const_memory;
 
@@ -396,7 +399,8 @@ namespace gpu {
 ///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
-            source_buffer << "#include <map>" << std::endl;
+            source_buffer << "#include <map>" << std::endl
+                          << "#include <array>" << std::endl;
             if (jit::is_complex<T> ()) {
                 source_buffer << "#include <complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
@@ -439,7 +443,8 @@ namespace gpu {
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args";
             if (state.get()) {
-                source_buffer << ", mt_state *" << jit::to_string('s', state.get());
+                source_buffer << "," << std::endl
+                              << "    mt_state *" << jit::to_string('s', state.get());
             }
             source_buffer << ") {" << std::endl;
 
@@ -460,7 +465,16 @@ namespace gpu {
                               << " = args[" << reinterpret_cast<size_t> (output.get()) 
                               << "];" << std::endl;
             }
-
+            if (state.get()) {
+                registers[state.get()] = jit::to_string('r', state.get());
+                source_buffer << "    mt_state &"
+                              << registers[state.get()] << " = "
+                              << jit::to_string('s', state.get()) << "[0];"
+#ifdef SHOW_USE_COUNT
+                              << " // used " << usage.at(state.get())
+#endif
+                              << std::endl;
+            }
             source_buffer << "    for (size_t i = 0; i < " << size << "; i++) {" << std::endl;
 
             for (auto &input : inputs) {
@@ -472,17 +486,6 @@ namespace gpu {
                               << "[i]; // " << input->get_symbol()
 #ifdef SHOW_USE_COUNT
                               << " used " << usage.at(input.get())
-#endif
-                              << std::endl;
-            }
-            if (state.get()) {
-                registers[state.get()] = jit::to_string('r', state.get());
-                source_buffer << "        mt_state &"
-                              << registers[state.get()] << " = ";
-                source_buffer << jit::to_string('s', state.get())
-                              << "[i]; // "
-#ifdef SHOW_USE_COUNT
-                              << "used " << usage.at(state.get())
 #endif
                               << std::endl;
             }

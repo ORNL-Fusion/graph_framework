@@ -738,7 +738,7 @@ void bin_power(const commandline::parser &cl,
                 {z, graph::variable_cast(z_last)},
                 {p_next, graph::variable_cast(power)},
                 {k_next, graph::variable_cast(k_sum)}
-            }, graph::shared_random_state<T, SAFE_MATH> (), "power");
+            }, graph::shared_random_state<T, SAFE_MATH> (), "power", local_num_rays);
             work.compile();
 
             output::result_file file(stream.str());
