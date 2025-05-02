@@ -235,7 +235,7 @@ namespace solver {
             work.add_item(inputs, outputs, setters,
                           graph::shared_random_state<typename DISPERSION_FUNCTION::base,
                                                      DISPERSION_FUNCTION::safe_math> (),
-                          "solver_kernel");
+                          "solver_kernel", inputs.back()->size());
             work.compile();
 
             dataset.create_variable(file, "time",     this->t, work.get_context());
@@ -903,7 +903,7 @@ namespace solver {
             this->work.add_item(inputs, outputs, setters,
                                 graph::shared_random_state<typename DISPERSION_FUNCTION::base,
                                                            DISPERSION_FUNCTION::safe_math> (),
-                                "solver_kernel");
+                                "solver_kernel", inputs.back()->size());
             this->work.compile();
         }
     };

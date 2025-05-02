@@ -37,6 +37,10 @@
 		C73BBE8229F820810027BB7F /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C73E2A7A2A4A216400BED03A /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C74DF4602AA8BD1900319113 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
+		C78F3D972DC41AF2002E3D94 /* random_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C78F3D8A2DC122C7002E3D94 /* random_test.cpp */; };
+		C78F3D982DC41B05002E3D94 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
+		C78F3DA72DC41BB8002E3D94 /* xkorc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C78F3D882DC122B1002E3D94 /* xkorc.cpp */; };
+		C78F3DA82DC41BCA002E3D94 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C79141B622DAAD0C00E0BA0D /* xrays.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C79141B522DAAD0C00E0BA0D /* xrays.cpp */; };
 		C7B676082AA9023F005AB34C /* xrays_bench.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7B676072AA9023F005AB34C /* xrays_bench.cpp */; };
 		C7D12D9A2DBAB31F00925420 /* random.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C7D12D992DBAB31F00925420 /* random.hpp */; };
@@ -202,6 +206,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		C78F3D8D2DC41ACA002E3D94 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		C78F3D9B2DC41B26002E3D94 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		C79141B122DAAD0C00E0BA0D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -331,6 +353,8 @@
 		C78F3D872DC122B1002E3D94 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		C78F3D882DC122B1002E3D94 /* xkorc.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = xkorc.cpp; sourceTree = "<group>"; };
 		C78F3D8A2DC122C7002E3D94 /* random_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = random_test.cpp; sourceTree = "<group>"; };
+		C78F3D8F2DC41ACA002E3D94 /* random_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = random_test; sourceTree = BUILT_PRODUCTS_DIR; };
+		C78F3D9D2DC41B26002E3D94 /* graph_korc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_korc; sourceTree = BUILT_PRODUCTS_DIR; };
 		C79141A622DA9BF200E0BA0D /* libgraph_framework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgraph_framework.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		C79141AE22DA9C3000E0BA0D /* node.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = node.hpp; sourceTree = "<group>"; };
 		C79141B322DAAD0C00E0BA0D /* graph_driver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_driver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -412,6 +436,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				C74DF4602AA8BD1900319113 /* Metal.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C78F3D8C2DC41ACA002E3D94 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C78F3D982DC41B05002E3D94 /* Metal.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C78F3D9A2DC41B26002E3D94 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C78F3DA82DC41BCA002E3D94 /* Metal.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -589,6 +629,8 @@
 				C74DF4572AA8BC7300319113 /* graph_benchmark */,
 				C7170CB92C66A10D003274E2 /* efit_test */,
 				C736E6A42C9B526500AAE3C0 /* graph_playground */,
+				C78F3D8F2DC41ACA002E3D94 /* random_test */,
+				C78F3D9D2DC41B26002E3D94 /* graph_korc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -794,6 +836,44 @@
 			name = graph_benchmark;
 			productName = graph_benchmark;
 			productReference = C74DF4572AA8BC7300319113 /* graph_benchmark */;
+			productType = "com.apple.product-type.tool";
+		};
+		C78F3D8E2DC41ACA002E3D94 /* random_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C78F3D932DC41ACA002E3D94 /* Build configuration list for PBXNativeTarget "random_test" */;
+			buildPhases = (
+				C78F3D8B2DC41ACA002E3D94 /* Sources */,
+				C78F3D8C2DC41ACA002E3D94 /* Frameworks */,
+				C78F3D8D2DC41ACA002E3D94 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = random_test;
+			packageProductDependencies = (
+			);
+			productName = random_test;
+			productReference = C78F3D8F2DC41ACA002E3D94 /* random_test */;
+			productType = "com.apple.product-type.tool";
+		};
+		C78F3D9C2DC41B26002E3D94 /* graph_korc */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C78F3DA12DC41B26002E3D94 /* Build configuration list for PBXNativeTarget "graph_korc" */;
+			buildPhases = (
+				C78F3D992DC41B26002E3D94 /* Sources */,
+				C78F3D9A2DC41B26002E3D94 /* Frameworks */,
+				C78F3D9B2DC41B26002E3D94 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = graph_korc;
+			packageProductDependencies = (
+			);
+			productName = graph_korc;
+			productReference = C78F3D9D2DC41B26002E3D94 /* graph_korc */;
 			productType = "com.apple.product-type.tool";
 		};
 		C79141A522DA9BF200E0BA0D /* graph_framework */ = {
@@ -1021,6 +1101,12 @@
 					C74DF4562AA8BC7300319113 = {
 						CreatedOnToolsVersion = 14.3.1;
 					};
+					C78F3D8E2DC41ACA002E3D94 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					C78F3D9C2DC41B26002E3D94 = {
+						CreatedOnToolsVersion = 16.3;
+					};
 					C79141A522DA9BF200E0BA0D = {
 						CreatedOnToolsVersion = 10.2.1;
 					};
@@ -1086,6 +1172,8 @@
 				C74DF4562AA8BC7300319113 /* graph_benchmark */,
 				C7170CB82C66A10D003274E2 /* efit_test */,
 				C736E6A32C9B526500AAE3C0 /* graph_playground */,
+				C78F3D8E2DC41ACA002E3D94 /* random_test */,
+				C78F3D9C2DC41B26002E3D94 /* graph_korc */,
 			);
 		};
 /* End PBXProject section */
@@ -1136,6 +1224,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				C7B676082AA9023F005AB34C /* xrays_bench.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C78F3D8B2DC41ACA002E3D94 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C78F3D972DC41AF2002E3D94 /* random_test.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C78F3D992DC41B26002E3D94 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C78F3DA72DC41BB8002E3D94 /* xkorc.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1311,94 +1415,8 @@
 					"$(inherited)",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.5;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMCGData",
-					"-lLLVMSandboxIR",
-					"-lLLVMObjectYAML",
-					"-lLLVMFrontendAtomic",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1416,94 +1434,8 @@
 					"$(inherited)",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.5;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMCGData",
-					"-lLLVMSandboxIR",
-					"-lLLVMObjectYAML",
-					"-lLLVMFrontendAtomic",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1518,13 +1450,9 @@
 					"$(inherited)",
 					"ERFI_FILE=\\\"/Users/m4c/test_erfi.nc\\\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				OTHER_CPLUSPLUSFLAGS = (
-					"$(OTHER_CFLAGS)",
-					"-fsanitize=float-divide-by-zero",
-					"-fsanitize=undefined",
-					"-fsanitize=float-cast-overflow",
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1541,13 +1469,9 @@
 					"$(inherited)",
 					"ERFI_FILE=\\\"/Users/m4c/test_erfi.nc\\\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				OTHER_CPLUSPLUSFLAGS = (
-					"$(OTHER_CFLAGS)",
-					"-fsanitize=float-divide-by-zero",
-					"-fsanitize=undefined",
-					"-fsanitize=float-cast-overflow",
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1565,93 +1489,8 @@
 					"$(inherited)",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMSandboxIR",
-					"-lLLVMFrontendAtomic",
-					"-lLLVMCGData",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1665,93 +1504,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMSandboxIR",
-					"-lLLVMFrontendAtomic",
-					"-lLLVMCGData",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1766,7 +1520,8 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1777,7 +1532,8 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1793,96 +1549,8 @@
 					"$(inherited)",
 					USE_INPUT_CACHE,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMCodeGenData",
-					"-lLLVMCGData",
-					"-lLLVMSandboxIR",
-					"-lLLVMObjectYAML",
-					"-lLLVMFrontendAtomic",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1893,96 +1561,8 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMCodeGenData",
-					"-lLLVMCGData",
-					"-lLLVMSandboxIR",
-					"-lLLVMObjectYAML",
-					"-lLLVMFrontendAtomic",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1999,7 +1579,8 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2016,7 +1597,80 @@
 					USE_METAL,
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		C78F3D942DC41ACA002E3D94 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C78F3D952DC41ACA002E3D94 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		C78F3DA22DC41B26002E3D94 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C78F3DA32DC41B26002E3D94 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2071,8 +1725,8 @@
 					USE_METAL,
 					"\"CXX_ARGS=\\\"-I/Users/m4c/Projects/graph_framework/graph_framework -I/usr/local/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -fgnuc-version=4.2.1 -std=gnu++2a\\\"\"",
 					STATIC,
+					"MACOS_LIB_RT=\\\"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17.0.0/lib/darwin/libclang_rt.osx.a\\\"",
 					"USE_VERBOSE=false",
-					"DEBUG=1",
 					"$(inherited)",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -2089,7 +1743,7 @@
 					"build/_deps/llvm-build/lib",
 					/usr/local/lib,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -2144,7 +1798,6 @@
 					"-lLLVMAnalysis",
 					"-lLLVMScalarOpts",
 					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
 					"-lLLVMCodeGen",
 					"-lLLVMTargetParser",
 					"-lLLVMScalarOpts",
@@ -2161,6 +1814,10 @@
 					"-lLLVMAArch64Desc",
 					"-lLLVMAArch64AsmParser",
 					"-lLLVMAArch64CodeGen",
+					"-lLLVMCGData",
+					"-lLLVMSandboxIR",
+					"-lLLVMObjectYAML",
+					"-lLLVMFrontendAtomic",
 					"-lclangFrontend",
 					"-lclangBasic",
 					"-lclangEdit",
@@ -2252,7 +1909,7 @@
 					"build/_deps/llvm-build/lib",
 					/usr/local/lib,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -2307,7 +1964,6 @@
 					"-lLLVMAnalysis",
 					"-lLLVMScalarOpts",
 					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
 					"-lLLVMCodeGen",
 					"-lLLVMTargetParser",
 					"-lLLVMScalarOpts",
@@ -2324,6 +1980,10 @@
 					"-lLLVMAArch64Desc",
 					"-lLLVMAArch64AsmParser",
 					"-lLLVMAArch64CodeGen",
+					"-lLLVMCGData",
+					"-lLLVMSandboxIR",
+					"-lLLVMObjectYAML",
+					"-lLLVMFrontendAtomic",
 					"-lclangFrontend",
 					"-lclangBasic",
 					"-lclangEdit",
@@ -2360,7 +2020,7 @@
 				DEVELOPMENT_TEAM = 2M4J3Y9U5K;
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2377,7 +2037,7 @@
 				DEVELOPMENT_TEAM = 2M4J3Y9U5K;
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2395,7 +2055,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2412,7 +2072,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				OTHER_CPLUSPLUSFLAGS = "";
 				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2427,7 +2087,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2439,7 +2100,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2451,7 +2113,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2463,7 +2126,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2475,95 +2139,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMCGData",
-					"-lLLVMSandboxIR",
-					"-lLLVMFrontendAtomic",
-					"-lLLVMObjectYAML",
-					"-lLLVMAArch64CodeGen",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -2576,95 +2153,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGenData",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMCGData",
-					"-lLLVMSandboxIR",
-					"-lLLVMFrontendAtomic",
-					"-lLLVMObjectYAML",
-					"-lLLVMAArch64CodeGen",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 			};
@@ -2677,7 +2167,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2689,7 +2180,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2701,7 +2193,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2713,7 +2206,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2725,7 +2219,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2737,7 +2232,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2749,7 +2245,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2761,7 +2258,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2780,93 +2278,8 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMSandboxIR",
-					"-lLLVMCodeGenData",
-					"-lLLVMCGData",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2884,92 +2297,8 @@
 					USE_METAL,
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMSandboxIR",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2983,93 +2312,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCGData",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMSandboxIR",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMFrontendAtomic",
-					"-lLLVMObjectYAML",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -3081,94 +2324,9 @@
 				CODE_SIGN_IDENTITY = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				OTHER_LDFLAGS = (
-					"-lnetcdf",
-					"-ld_classic",
-					"-L/Users/m4c/Projects/graph_framework/build/_deps/llvm-build/lib",
-					"-lz",
-					"-lLLVMCoverage",
-					"-lLLVMSupport",
-					"-lLLVMDebugInfoCodeView",
-					"-lLLVMRemarks",
-					"-lLLVMJITLink",
-					"-lLLVMLinker",
-					"-lLLVMTextAPI",
-					"-lLLVMRuntimeDyld",
-					"-lLLVMOrcShared",
-					"-lLLVMOrcDebugging",
-					"-lLLVMOrcTargetProcess",
-					"-lLLVMOrcJIT",
-					"-lLLVMHipStdPar",
-					"-lLLVMAggressiveInstCombine",
-					"-lLLVMVectorize",
-					"-lLLVMAsmParser",
-					"-lLLVMOption",
-					"-lLLVMLTO",
-					"-lLLVMObject",
-					"-lLLVMWindowsDriver",
-					"-lLLVMDemangle",
-					"-lLLVMIRReader",
-					"-lLLVMIRPrinter",
-					"-lLLVMInstCombine",
-					"-lLLVMBinaryFormat",
-					"-lLLVMCoroutines",
-					"-lLLVMBitstreamReader",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMDebugInfoDWARF",
-					"-lLLVMInstrumentation",
-					"-lLLVMCFGuard",
-					"-lLLVMObjCARCOpts",
-					"-lLLVMipo",
-					"-lLLVMGlobalISel",
-					"-lLLVMExecutionEngine",
-					"-lLLVMFrontendDriver",
-					"-lLLVMFrontendHLSL",
-					"-lLLVMFrontendOpenMP",
-					"-lLLVMFrontendOffloading",
-					"-lLLVMSelectionDAG",
-					"-lLLVMProfileData",
-					"-lLLVMAnalysis",
-					"-lLLVMScalarOpts",
-					"-lLLVMCodeGenTypes",
-					"-lLLVMCGData",
-					"-lLLVMCodeGen",
-					"-lLLVMTargetParser",
-					"-lLLVMScalarOpts",
-					"-lLLVMTarget",
-					"-lLLVMTransformUtils",
-					"-lLLVMPasses",
-					"-lLLVMSupport",
-					"-lLLVMMCParser",
-					"-lLLVMMC",
-					"-lLLVMCore",
-					"-lLLVMSandboxIR",
-					"-lLLVMAsmPrinter",
-					"-lLLVMAArch64Utils",
-					"-lLLVMAArch64Info",
-					"-lLLVMAArch64Desc",
-					"-lLLVMAArch64AsmParser",
-					"-lLLVMAArch64CodeGen",
-					"-lLLVMFrontendAtomic",
-					"-lLLVMObjectYAML",
-					"-lclangFrontend",
-					"-lclangBasic",
-					"-lclangEdit",
-					"-lclangLex",
-					"-lclangDriver",
-					"-lclangSerialization",
-					"-lclangAST",
-					"-lclangSema",
-					"-lclangAnalysis",
-					"-lclangASTMatchers",
-					"-lclangSupport",
-					"-lclangParse",
-					"-lclangAPINotes",
-					"-lclangCodeGen",
-					"-rpath",
-					/usr/local/lib,
-				);
+				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -3226,6 +2384,24 @@
 			buildConfigurations = (
 				C74DF45B2AA8BC7300319113 /* Debug */,
 				C74DF45C2AA8BC7300319113 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C78F3D932DC41ACA002E3D94 /* Build configuration list for PBXNativeTarget "random_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C78F3D942DC41ACA002E3D94 /* Debug */,
+				C78F3D952DC41ACA002E3D94 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C78F3DA12DC41B26002E3D94 /* Build configuration list for PBXNativeTarget "graph_korc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C78F3DA22DC41B26002E3D94 /* Debug */,
+				C78F3DA32DC41B26002E3D94 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

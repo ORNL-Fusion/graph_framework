@@ -46,7 +46,8 @@ namespace solver {
         }
 
         work.add_converge_item(inputs, {func*func}, setters, state,
-                               "loss_kernel", tolarance, max_iterations);
+                               "loss_kernel", inputs.back()->size(),
+                               tolarance, max_iterations);
     }
 }
 #endif /* newton_h */

@@ -12,6 +12,7 @@
 
 #include "../graph_framework/vector.hpp"
 #include "../graph_framework/math.hpp"
+#include "../graph_framework/trigonometry.hpp"
 #include "../graph_framework/arithmetic.hpp"
 #include "../graph_framework/piecewise.hpp"
 

@@ -104,6 +104,9 @@ namespace gpu {
         }
 
     public:
+///  Size of random state needed.
+        constexpr static size_t random_state_size = 1024;
+
 ///  Remaining constant memory in bytes.
         int remaining_const_memory;
 
@@ -482,12 +485,27 @@ namespace gpu {
                 std::cout << "    Suggested Block size : " << value << std::endl;
             }
 
-            return [this, function, thread_groups, threads_per_group, buffers] () mutable {
-                check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
-                                                 threads_per_group, 1, 1, 0, stream,
-                                                 buffers.data(), NULL),
-                                  "cuLaunchKernel");
-            };
+            if (state.get()) {
+                buffers.push_back(0);
+                return [this, num_rays, function, thread_groups, threads_per_group, buffers] () mutable {
+                    for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
+                        buffers.back() = i;
+                        check_error_async(cuLaunchKernel(function,
+                                                         1, 1, 1,
+                                                         threads_per_group, 1, 1,
+                                                         0, stream,
+                                                         buffers.data(), NULL),
+                                          "cuLaunchKernel");
+                    }
+                };
+            } else {
+                return [this, function, thread_groups, threads_per_group, buffers] () mutable {
+                    check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
+                                                     threads_per_group, 1, 1, 0, stream,
+                                                     buffers.data(), NULL),
+                                      "cuLaunchKernel");
+                };
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -738,6 +756,9 @@ namespace gpu {
                 source_buffer << "," << std::endl
                               << "    mt_state * __restrict__ "
                               << jit::to_string('s', state.get());
+                              << "," << std::endl
+                              << "    const uint32_t offset"
+                              << std::endl;
             }
 #ifdef USE_CUDA_TEXTURES
             for (auto &[key, value] : textures1d) {
@@ -753,8 +774,22 @@ namespace gpu {
 #endif
             source_buffer << ") {" << std::endl
                           << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
-                          << std::endl
-                          << "    if (index < " << size << ") {" << std::endl;
+                          << std::endl;
+            if (state.get()) {
+#ifdef USE_INPUT_CACHE
+                registers[state.get()] = jit::to_string('r', state.get());
+                source_buffer << "    mt_state &" << registers[state.get()] << " = "
+                              << jit::to_string('s', state.get())
+                              << "[threadIdx.x];"
+#ifdef SHOW_USE_COUNT
+                              << " // used " << usage.at(state.get())
+#endif
+                              << std::endl;
+#else
+                registers[state.get()] = jit::to_string('s', state.get()) + "[threadIdx.x]";
+#endif
+            }
+            source_buffer << "    if (offset + index < " << size << ") {" << std::endl;
 
             for (auto &input : inputs) {
 #ifdef USE_INPUT_CACHE
@@ -772,20 +807,6 @@ namespace gpu {
                 }
 #else
                 registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
-#endif
-            }
-            if (state.get()) {
-#ifdef USE_INPUT_CACHE
-                registers[state.get()] = jit::to_string('r', state.get());
-                source_buffer << "        mt_state &" << registers[state.get()] << " = "
-                              << jit::to_string('s', state.get())
-                              << "[index];"
-#ifdef SHOW_USE_COUNT
-                              << " // used " << usage.at(state.get())
-#endif
-                              << std::endl;
-#else
-                registers[state.get()] = jit::to_string('s', state.get()) + "[index]";
 #endif
             }
         }

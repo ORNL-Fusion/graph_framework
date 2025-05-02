@@ -39,6 +39,9 @@ namespace gpu {
         std::map<std::string, std::vector<MTLMutability>> bufferMutability;
 
     public:
+///  Size of random state needed.
+        constexpr static size_t random_state_size = 1024;
+
 ///  Remaining constant memory in bytes. NOT USED.
         int remaining_const_memory;
 
@@ -226,23 +229,52 @@ namespace gpu {
                 std::cout << "    Total problem size     : " << threads_per_group*thread_groups << std::endl;
             }
 
-            return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
-                command_buffer = [queue commandBuffer];
-                id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
+            if (state.get()) {
+                return [this, num_rays, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
+                    command_buffer = [queue commandBuffer];
+                    for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
+                        id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
+                        
+                        for (size_t j = 0, je = buffers.size() - 1; j < je; j++) {
+                            offsets[j] = i*sizeof(float);
+                        }
 
-                [encoder setComputePipelineState:pipline];
-                [encoder setBuffers:buffers.data()
-                            offsets:offsets.data()
-                          withRange:range];
-                [encoder setTextures:textures.data()
-                           withRange:tex_range];
-
-                [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
-                        threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
-                [encoder endEncoding];
-
-                [command_buffer commit];
-            };
+                        [encoder setComputePipelineState:pipline];
+                        [encoder setBuffers:buffers.data()
+                                    offsets:offsets.data()
+                                  withRange:range];
+                        [encoder setBytes:&i
+                                   length:sizeof(uint32_t)
+                                  atIndex:buffers.size()];
+                        [encoder setTextures:textures.data()
+                                   withRange:tex_range];
+                        
+                        [encoder dispatchThreadgroups:MTLSizeMake(1, 1, 1)
+                                threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
+                        [encoder endEncoding];
+                    }
+                    
+                    [command_buffer commit];
+                };
+            } else {
+                return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
+                    command_buffer = [queue commandBuffer];
+                    id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
+                    
+                    [encoder setComputePipelineState:pipline];
+                    [encoder setBuffers:buffers.data()
+                                offsets:offsets.data()
+                              withRange:range];
+                    [encoder setTextures:textures.data()
+                               withRange:tex_range];
+                    
+                    [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
+                            threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
+                    [encoder endEncoding];
+                    
+                    [command_buffer commit];
+                };
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -464,6 +496,9 @@ namespace gpu {
                 source_buffer << "    device mt_state *"
                               << jit::to_string('s', state.get())
                               << " [[buffer(" << inputs.size() + outputs.size() << ")]],"
+                              << std::endl
+                              << "    constant uint32_t &offset [[buffer("
+                              << inputs.size() + outputs.size() + 1 << ")]],"
                               << std::endl;
             }
             size_t index = 0;
@@ -479,10 +514,17 @@ namespace gpu {
                               << " [[texture(" << index++ << ")]],"
                               << std::endl;
             }
+            if (state.get()) {
+                source_buffer << "    uint thread_index [[thread_index_in_threadgroup]],"
+                              << std::endl;
+            }
+            source_buffer << "    uint index [[thread_position_in_grid]]) {" << std::endl
+                          << "    if (";
+            if (state.get()) {
+                source_buffer << "offset + ";
+            }
+            source_buffer << "index < "  << size << ") {" << std::endl;
 
-            source_buffer << "    uint index [[thread_position_in_grid]]) {" << std::endl;
-            source_buffer << "    if (index < " << size << ") {" << std::endl;
-            
             for (auto &input : inputs) {
 #ifdef USE_INPUT_CACHE
                 if (usage.at(input.get())) {
@@ -504,15 +546,15 @@ namespace gpu {
             if (state.get()) {
 #ifdef USE_INPUT_CACHE
                 registers[state.get()] = jit::to_string('r', state.get());
-                source_buffer << "        device mt_state &" << registers[state.get()] << " = "
-                              << jit::to_string('s', state.get())
-                              << "[index];"
+                source_buffer << "        device mt_state &" << registers[state.get()]
+                              << " = " << jit::to_string('s', state.get())
+                              << "[thread_index];"
 #ifdef SHOW_USE_COUNT
                               << " // used " << usage.at(input.get())
 #endif
                               << std::endl;
 #else
-                registers[state.get()] = jit::to_string('s', state.get()) + "[index]";
+                registers[state.get()] = jit::to_string('s', state.get()) + "[thread_index]";
 #endif
             }
         }

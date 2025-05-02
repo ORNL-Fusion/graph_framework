@@ -41,14 +41,15 @@ T autocorrelation(const std::vector<T> &sequence,
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, size_t N> void run_test() {
-    auto state = graph::random_state<T> (N, 0);
+    auto state = graph::random_state<T> (jit::context<T>::random_state_size, 0);
     auto random = graph::random<T> (graph::random_state_cast(state));
     const T max = 1.0;
     const T min = -1.0;
     auto random_real = (max - min)/graph::random_scale<T> ()*random + min;
 
     workflow::manager<T> work(0);
-    work.add_item({}, {random_real}, {}, graph::random_state_cast(state), "step");
+    work.add_item({}, {random_real}, {}, graph::random_state_cast(state),
+                  "step", N);
     work.compile();
     work.run();
 
