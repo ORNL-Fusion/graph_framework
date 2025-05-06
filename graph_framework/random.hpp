@@ -28,9 +28,16 @@ namespace graph {
 //------------------------------------------------------------------------------
         struct mt_state {
 ///  State array.
+//#ifdef USE_CUDA
+//            uint32_t array[624];
+//#else
             std::array<uint32_t, 624> array;
+//#endif
 ///  State index.
             uint16_t index;
+#ifdef USE_CUDA
+            uint16_t padding[3];
+#endif
         };
 
 //------------------------------------------------------------------------------
@@ -96,8 +103,15 @@ namespace graph {
                                       int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
                 stream << "struct mt_state {"               << std::endl
+//#ifdef USE_CUDA
+//                       << "    uint32_t array[624];"        << std::endl
+//#else
                        << "    array<uint32_t, 624> array;" << std::endl
+//#endif
                        << "    uint16_t index;"             << std::endl
+#ifdef USE_CUDA
+                       << "    uint16_t padding[3];"        << std::endl
+#endif
                        << "};"                              << std::endl;
 #ifdef SHOW_USE_COUNT
             } else {
@@ -229,7 +243,11 @@ namespace graph {
         mt_state initalize_state(const uint32_t seed) {
             mt_state state;
             state.array[0] = seed;
+#ifdef USE_CUDA
+            for (uint16_t i = 1; i < 624; i++) {
+#else
             for (uint16_t i = 1, ie = state.array.size(); i < ie; i++) {
+#endif
                 state.array[i] = 1812433253U*(state.array[i - 1]^(state.array[i - 1] >> 30)) + i;
             }
             state.index = 0;
@@ -388,17 +406,17 @@ namespace graph {
                        << "    if (x & 0x00000001U) {"                        << std::endl
                        << "        xA ^= 0x9908b0dfU;"                        << std::endl
                        << "    }"                                             << std::endl
-                       << "    j = (k - 227) % 624;"                          << std::endl
+                       << "    j = (k + 397) % 624;"                          << std::endl
                        << "    x = state.array[j]^xA;"                        << std::endl
                        << "    state.array[k] = x;"                           << std::endl
                        << "    state.index = (k + 1) % 624;"                  << std::endl
                        << "    uint32_t y = x^(x >> 11);"                     << std::endl
                        << "    y = y^((y << 7) & 0x9d2c5680U);"               << std::endl
-                       << "    y = y^((y << 15) & 0xefc60000U);"                      << std::endl
+                       << "    y = y^((y << 15) & 0xefc60000U);"              << std::endl
                        << "    return static_cast<";
                 jit::add_type<T> (stream);
-                stream << "> (y^(y >> 18));"                                          << std::endl
-                       << "}"                                                         << std::endl;
+                stream << "> (y^(y >> 18));"                                  << std::endl
+                       << "}"                                                 << std::endl;
 #ifdef SHOW_USE_COUNT
             } else {
                 ++usage[this];

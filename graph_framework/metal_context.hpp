@@ -234,7 +234,7 @@ namespace gpu {
                     command_buffer = [queue commandBuffer];
                     for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
                         id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
-                        
+
                         for (size_t j = 0, je = buffers.size() - 1; j < je; j++) {
                             offsets[j] = i*sizeof(float);
                         }
@@ -248,30 +248,30 @@ namespace gpu {
                                   atIndex:buffers.size()];
                         [encoder setTextures:textures.data()
                                    withRange:tex_range];
-                        
+
                         [encoder dispatchThreadgroups:MTLSizeMake(1, 1, 1)
                                 threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                         [encoder endEncoding];
                     }
-                    
+
                     [command_buffer commit];
                 };
             } else {
                 return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
                     command_buffer = [queue commandBuffer];
                     id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
-                    
+
                     [encoder setComputePipelineState:pipline];
                     [encoder setBuffers:buffers.data()
                                 offsets:offsets.data()
                               withRange:range];
                     [encoder setTextures:textures.data()
                                withRange:tex_range];
-                    
+
                     [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                             threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                     [encoder endEncoding];
-                    
+
                     [command_buffer commit];
                 };
             }
@@ -303,9 +303,9 @@ namespace gpu {
 
             id<MTLBuffer> result = [device newBufferWithLength:sizeof(float)
                                                        options:MTLResourceStorageModeManaged];
-            
+
             id<MTLBuffer> buffer = kernel_arguments[argument.get()];
-            
+
             NSUInteger threads_per_group = max_state.maxTotalThreadsPerThreadgroup;
             NSUInteger thread_width = max_state.threadExecutionWidth;
             if (jit::verbose) {
@@ -565,6 +565,7 @@ namespace gpu {
 ///  @param[in,out] source_buffer Source buffer stream.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
 ///  @param[in]     setters       Map outputs back to input values.
+///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
 ///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
@@ -572,6 +573,7 @@ namespace gpu {
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<float, SAFE_MATH> &outputs,
                                    graph::map_nodes<float, SAFE_MATH> &setters,
+                                   graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
                                    jit::register_map &indices,
                                    const jit::register_usage &usage) {
@@ -588,7 +590,7 @@ namespace gpu {
                 }
                 source_buffer << registers[a.get()] << ";" << std::endl;
             }
-            
+
             for (auto &out : outputs) {
                 graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
                                                                       registers,
@@ -602,7 +604,7 @@ namespace gpu {
                 }
                 source_buffer << registers[a.get()] << ";" << std::endl;
             }
-    
+
             source_buffer << "    }" << std::endl << "}" << std::endl;
         }
 

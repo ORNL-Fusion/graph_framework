@@ -158,8 +158,8 @@ namespace jit {
             }
 
             gpu_context.create_kernel_postfix(source_buffer, outputs,
-                                              setters, registers, indices,
-                                              usage);
+                                              setters, state,
+                                              registers, indices, usage);
 
 //  Delete the registers so that they can be used again in other kernels.
             std::vector<void *> removed_elements;

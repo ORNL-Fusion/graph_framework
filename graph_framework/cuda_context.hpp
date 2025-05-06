@@ -85,6 +85,8 @@ namespace gpu {
 #endif
 ///  Result buffer.
         CUdeviceptr result_buffer;
+///  Offset buffer.
+        CUdeviceptr offset_buffer;
 ///  Cuda stream.
         CUstream stream;
 
@@ -133,7 +135,7 @@ namespace gpu {
 ///
 ///  @param[in] index Concurrent index.
 //------------------------------------------------------------------------------
-        cuda_context(const size_t index) : result_buffer(0), module(0) {
+        cuda_context(const size_t index) : result_buffer(0), module(0), offset_buffer(0) {
             check_error(cuDeviceGet(&device, index), "cuDeviceGet");
             check_error(cuDevicePrimaryCtxRetain(&context, device), "cuDevicePrimaryCtxRetain");
             check_error(cuCtxSetCurrent(context), "cuCtxSetCurrent");
@@ -171,6 +173,10 @@ namespace gpu {
             if (result_buffer) {
                 check_error(cuMemFree(result_buffer), "cuMemFree");
                 result_buffer = 0;
+            }
+            if (offset_buffer) {
+                check_error(cuMemFree(offset_buffer), "cuMemFree");
+                offset_buffer = 0;
             }
 
             check_error(cuStreamDestroy(stream), "cuStreamDestroy");
@@ -345,6 +351,7 @@ namespace gpu {
                 buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
             }
 
+            const size_t num_buffers = buffers.size();
             if (state.get()) {
                 if (!kernel_arguments.contains(state.get())) {
                     kernel_arguments.try_emplace(state.get());
@@ -352,12 +359,14 @@ namespace gpu {
                                                   state->get_size_bytes(),
                                                   CU_MEM_ATTACH_GLOBAL),
                                 "cuMemAllocManaged");
+                    check_error(cuMemAlloc(&offset_buffer, sizeof(uint32_t)), "cuMemAlloc");
                     check_error(cuMemcpyHtoD(kernel_arguments[state.get()],
                                              state->data(),
                                              state->get_size_bytes()),
                                 "cuMemcpyHtoD");
                 }
                 buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[state.get()]));
+                buffers.push_back(reinterpret_cast<void *> (&offset_buffer));
             }
 
 #ifdef USE_CUDA_TEXTURES
@@ -486,10 +495,11 @@ namespace gpu {
             }
 
             if (state.get()) {
-                buffers.push_back(0);
-                return [this, num_rays, function, thread_groups, threads_per_group, buffers] () mutable {
+                return [this, num_rays, function, threads_per_group, buffers] () mutable {
                     for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
-                        buffers.back() = i;
+                        check_error_async(cuStreamWriteValue32(stream, offset_buffer, i,
+                                                               CU_STREAM_WRITE_VALUE_DEFAULT),
+                                          "cuStreamWriteValue32");
                         check_error_async(cuLaunchKernel(function,
                                                          1, 1, 1,
                                                          threads_per_group, 1, 1,
@@ -669,10 +679,8 @@ namespace gpu {
                               << "    return __hiloint2double(p.y, p.x);"
                               << std::endl
                               << "}" << std::endl;
-            }
-#else
-            }
 #endif
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -755,9 +763,9 @@ namespace gpu {
             if (state.get()) {
                 source_buffer << "," << std::endl
                               << "    mt_state * __restrict__ "
-                              << jit::to_string('s', state.get());
+                              << jit::to_string('s', state.get())
                               << "," << std::endl
-                              << "    const uint32_t offset"
+                              << "    const uint32_t * __restrict__ offset"
                               << std::endl;
             }
 #ifdef USE_CUDA_TEXTURES
@@ -789,7 +797,12 @@ namespace gpu {
                 registers[state.get()] = jit::to_string('s', state.get()) + "[threadIdx.x]";
 #endif
             }
-            source_buffer << "    if (offset + index < " << size << ") {" << std::endl;
+            source_buffer << "    if (";
+            if (state.get()) {
+                source_buffer << "offset[0] + ";
+            }
+            source_buffer << "index < " << size << ") {" << std::endl;
+
 
             for (auto &input : inputs) {
 #ifdef USE_INPUT_CACHE
@@ -799,7 +812,11 @@ namespace gpu {
                     jit::add_type<T> (source_buffer);
                     source_buffer << " " << registers[input.get()] << " = "
                                   << jit::to_string('v', input.get())
-                                  << "[index]; // " << input->get_symbol()
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset[0] + ";
+                    }
+                    source_buffer << "index]; // " << input->get_symbol()
 #ifdef SHOW_USE_COUNT
                                   << " used " << usage.at(input.get())
 #endif
@@ -817,6 +834,7 @@ namespace gpu {
 ///  @param[in,out] source_buffer Source buffer stream.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
 ///  @param[in]     setters       Map outputs back to input values.
+///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
 ///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
@@ -824,6 +842,7 @@ namespace gpu {
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
+                                   graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
                                    jit::register_map &indices,
                                    const jit::register_usage &usage) {
@@ -833,7 +852,11 @@ namespace gpu {
                                                                   indices,
                                                                   usage);
                 source_buffer << "        " << jit::to_string('v',  in.get())
-                              << "[index] = ";
+                              << "[";
+                if (state.get()) {
+                    source_buffer << "offset[0] + ";
+                }
+                source_buffer << "index] = ";
                 if constexpr (SAFE_MATH) {
                     if constexpr (jit::is_complex<T> ()) {
                         jit::add_type<T> (source_buffer);
@@ -860,7 +883,11 @@ namespace gpu {
                                                                   indices,
                                                                   usage);
                 source_buffer << "        " << jit::to_string('o',  out.get())
-                              << "[index] = ";
+                              << "[";
+                if (state.get()) {
+                    source_buffer << "offset[0] + ";
+                }
+                source_buffer << "index] = ";
                 if constexpr (SAFE_MATH) {
                     if constexpr (jit::is_complex<T> ()) {
                         jit::add_type<T> (source_buffer);
