@@ -573,7 +573,7 @@ namespace gpu {
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<float, SAFE_MATH> &outputs,
                                    graph::map_nodes<float, SAFE_MATH> &setters,
-                                   graph::shared_random_state<T, SAFE_MATH> state,
+                                   graph::shared_random_state<float, SAFE_MATH> state,
                                    jit::register_map &registers,
                                    jit::register_map &indices,
                                    const jit::register_usage &usage) {
