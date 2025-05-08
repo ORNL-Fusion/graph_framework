@@ -35,7 +35,7 @@
 #include "llvm/TargetParser/Host.h"
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 
-#include "node.hpp"
+#include "random.hpp"
 
 #ifndef NDEBUG
 //------------------------------------------------------------------------------
@@ -497,6 +497,7 @@ namespace gpu {
 ///  @param[in,out] source_buffer Source buffer stream.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
 ///  @param[in]     setters       Map outputs back to input values.
+///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
 ///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
@@ -504,6 +505,7 @@ namespace gpu {
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
+                                   graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
                                    jit::register_map &indices,
                                    const jit::register_usage &usage) {
