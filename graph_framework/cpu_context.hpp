@@ -35,7 +35,7 @@
 #include "llvm/TargetParser/Host.h"
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 
-#include "node.hpp"
+#include "random.hpp"
 
 #ifndef NDEBUG
 //------------------------------------------------------------------------------
