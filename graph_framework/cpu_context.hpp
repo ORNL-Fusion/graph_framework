@@ -178,16 +178,16 @@ namespace gpu {
             invocation->getPreprocessorOpts().addRemappedFile(filename.c_str(),
                                                               buffer.release());
 
-            clang::CompilerInstance clang;
-            clang.setInvocation(invocation);
+            clang::CompilerInstance clang(invocation);
             std::shared_ptr<llvm::vfs::FileSystem> VFS =
                 std::make_shared<llvm::vfs::InMemoryFileSystem> ();
             clang.createDiagnostics(*VFS.get());
-
-            const auto target_options = std::make_shared<clang::TargetOptions> ();
-            target_options->Triple = llvm::sys::getProcessTriple();
+                                                  
+            clang::TargetOptions target_options;
+            target_options.Triple = llvm::sys::getProcessTriple();
             auto *target_info = clang::TargetInfo::CreateTargetInfo(diagnostic_engine,
                                                                     target_options);
+                                                                                                                         
             clang.setTarget(target_info);
 
             clang::EmitLLVMOnlyAction action;
