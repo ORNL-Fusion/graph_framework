@@ -1,187 +1,230 @@
+//------------------------------------------------------------------------------
+//  xkorc.cpp  –  Full-orbit Boris integrator (dimensionless, E = 0)
+//
+//  Reads from  init_particles.nc
+//      • x, y, z , ux, uy, uz                (dimensionless)
+//      • dt               (dimensionless time-step)
+//      • NSTEPS, DUMP_EVERY                  (run control)
+//
+//  Evolves {x,y,z,ux,uy,uz} with the Boris pusher.
+//  NEW: one dedicated writer thread per worker to handle NetCDF output.
+//------------------------------------------------------------------------------
+
+#include <cmath>
+#include <iostream>
+#include <sstream>
+#include <thread>
+#include <vector>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <algorithm>
+#include <cassert>
+#include <netcdf.h>
+
 #include "../graph_framework/equilibrium.hpp"
 #include "../graph_framework/timing.hpp"
+#include "../graph_framework/output.hpp"
 
-//------------------------------------------------------------------------------
-///  @brief Run Korc
-///
-///  @tparam T Base type.
-//------------------------------------------------------------------------------
+static inline void check_nc(int status)
+{
+    if (status != NC_NOERR) {
+        std::cerr << "netCDF error: " << nc_strerror(status) << '\n';
+        std::exit(EXIT_FAILURE);
+    }
+}
+
 template<jit::float_scalar T>
-void run_korc() {
+void run_korc()
+{
     const timeing::measure_diagnostic t_total("Total Time");
-    
-    const size_t num_particles = 1000000;
-    std::cout << "Num particles " << num_particles << std::endl;
-    std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T>::max_concurrency()),
-                                                       static_cast<unsigned int> (num_particles)),
-                                              static_cast<unsigned int> (1)));
-    
-    const size_t batch = num_particles/threads.size();
-    const size_t extra = num_particles%threads.size();
-    
-    for (size_t i = 0, ie = threads.size(); i < ie; i++) {
-        threads[i] = std::thread([num_particles, batch, extra] (const size_t thread_number) -> void {
-            const size_t local_num_particles = batch + (extra > thread_number ? 1 : 0);
-            
-            const timeing::measure_diagnostic t_setup("Setup Time");
-            
-            auto eq = equilibrium::make_efit<T> (EFIT_FILE);
-            //auto eq = equilibrium::make_slab_density<T> ();
-            auto b0 = eq->get_characteristic_field(thread_number);
-            const T q = 1.602176634E-19;
-            const T me = 9.1093837139E-31;
-            const T c = 299792458.0;
-            
-            auto gryo_period = me/(q*b0);
-            std::cout << "gryo_period " << gryo_period->evaluate().at(0) << std::endl;
-            auto larmor_radius = c*gryo_period;
-            std::cout << "larmor_radius " << larmor_radius->evaluate().at(0) << std::endl;
-            
-            std::cout << "Local num particles " << local_num_particles << std::endl;
-            
-            auto ux = graph::variable<T> (local_num_particles, "u_{x}");
-            auto uy = graph::variable<T> (local_num_particles, "u_{y}");
-            auto uz = graph::variable<T> (local_num_particles, "u_{z}");
-            
-            ux->set(0.0);
-            uy->set(0.99);
-            uz->set(0.1);
-            
-            auto x = graph::variable<T> (local_num_particles, "x");
-            auto y = graph::variable<T> (local_num_particles, "y");
-            auto z = graph::variable<T> (local_num_particles, "z");
-            auto pos = graph::vector(x, y, z);
-            
-            x->set(1.7);
-            y->set(0.0);
-            z->set(0.0);
-            
-            auto u_vec = graph::vector(ux, uy, uz);
-            
-            auto gamma = graph::variable<T> (local_num_particles, "\\gamma");
-            
-            auto dt = graph::constant<T> (0.5);
-            
-            auto gamma_init = 1.0/graph::sqrt(1.0 - u_vec->dot(u_vec));
-            
-            auto u_init = gamma_init*u_vec;
-            
+
+    // ──────────────────────────────────────────────────────────────
+    // 1.  READ INITIAL DATA & RUN CONTROL
+    // ──────────────────────────────────────────────────────────────
+    int ncid;
+    check_nc( nc_open("init_particles.nc", NC_NOWRITE, &ncid) );
+
+    int dim_id;
+    check_nc( nc_inq_dimid(ncid, "num_particles", &dim_id) );
+    size_t Np = 0;
+    check_nc( nc_inq_dimlen(ncid, dim_id,          &Np   ) );
+    std::cout << "Num particles: " << Np << '\n';
+
+    std::vector<double> h_x (Np), h_y (Np), h_z (Np),
+                        h_ux(Np), h_uy(Np), h_uz(Np);
+
+    auto get_vec=[&](const char* n, std::vector<double>& v){
+        int vid; check_nc( nc_inq_varid(ncid, n, &vid) );
+        check_nc( nc_get_var_double(ncid, vid, v.data()) );
+    };
+    get_vec("x" ,h_x ); get_vec("y" ,h_y ); get_vec("z" ,h_z );
+    get_vec("ux",h_ux); get_vec("uy",h_uy); get_vec("uz",h_uz);
+
+    long long h_NSTEPS=0, h_DUMP=0;
+    double    dt_val=0.0;
+
+    int vid;
+    check_nc( nc_inq_varid(ncid,"NSTEPS",     &vid) );
+    check_nc( nc_get_var_longlong(ncid,vid,&h_NSTEPS) );
+    check_nc( nc_inq_varid(ncid,"DUMP_EVERY", &vid) );
+    check_nc( nc_get_var_longlong(ncid,vid,&h_DUMP)   );
+    check_nc( nc_inq_varid(ncid,"dt",         &vid) );
+    check_nc( nc_get_var_double  (ncid,vid,&dt_val)  );
+
+    check_nc( nc_close(ncid) );
+
+    const std::size_t NSTEPS     = static_cast<std::size_t>(h_NSTEPS);
+    const std::size_t DUMP_EVERY = static_cast<std::size_t>(h_DUMP  );
+
+    // ──────────────────────────────────────────────────────────────
+    // 2.  CREATE GRAPH VARIABLES
+    // ──────────────────────────────────────────────────────────────
+    auto x  = graph::variable<T,false>(Np,"x");
+    auto y  = graph::variable<T,false>(Np,"y");
+    auto z  = graph::variable<T,false>(Np,"z");
+    auto ux = graph::variable<T,false>(Np,"u_x");
+    auto uy = graph::variable<T,false>(Np,"u_y");
+    auto uz = graph::variable<T,false>(Np,"u_z");
+
+    for(size_t i=0;i<Np;++i){
+        x->set(i,h_x [i]); y->set(i,h_y [i]); z->set(i,h_z [i]);
+        ux->set(i,h_ux[i]); uy->set(i,h_uy[i]); uz->set(i,h_uz[i]);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // 3.  THREAD LAYOUT
+    // ──────────────────────────────────────────────────────────────
+    unsigned n_thr = std::max(1u,
+        std::min<unsigned>(jit::context<T>::max_concurrency(), static_cast<unsigned>(Np)));
+    std::vector<std::thread> workers(n_thr);
+
+    const size_t batch = Np / n_thr, extra = Np % n_thr;
+
+    for(unsigned tid=0; tid<n_thr; ++tid)
+    {
+        workers[tid] = std::thread([=]() mutable
+        {
+            const size_t Nloc = batch + (extra>tid ? 1 : 0);
+            const timeing::measure_diagnostic t_setup("Setup T"+std::to_string(tid));
+
+            /* constants */
+            auto dt   = graph::constant<T,false>(static_cast<T>(dt_val));
+            auto half = graph::constant<T,false>(0.5);
+            auto one  = graph::constant<T,false>(1.0);
+            auto two  = graph::constant<T,false>(2.0);
+
+            /* geometry */
+            auto eq  = equilibrium::make_efit<T>(EFIT_FILE);
+            auto b0  = eq->get_characteristic_field(tid);
+            std::cout<<"Thread "<<tid<<" B0: "<<b0->evaluate().at(0)<<'\n';
+
+            /* vector wrappers */
+            auto pos   = graph::vector(x ,y ,z );
+            auto u_vec = graph::vector(ux,uy,uz);
+
             auto b_vec = eq->get_magnetic_field(pos->get_x(),
                                                 pos->get_y(),
-                                                pos->get_z())/b0;
-            
-            workflow::manager<T> work(thread_number);
-            work.add_preitem({
-                graph::variable_cast(ux),
-                graph::variable_cast(uy),
-                graph::variable_cast(uz),
-                graph::variable_cast(gamma)
-            }, {}, {
-                {u_init->get_x(), graph::variable_cast(ux)},
-                {u_init->get_y(), graph::variable_cast(uy)},
-                {u_init->get_z(), graph::variable_cast(uz)},
-                {gamma_init, graph::variable_cast(gamma)}
-            }, "initalize_gamma");
-            
-            auto u_prime = u_vec - dt*u_vec->cross(b_vec)/(2.0*gamma);
-            
-            auto tau = -0.5*dt*b_vec;
-            auto tau_sq = tau->dot(tau);
-            auto speed_sq = u_prime->dot(u_prime);
-            auto sigma = 1.0 + speed_sq - tau_sq;
-            auto ustar = u_prime->dot(tau);
-            
-            auto gamma_next = graph::sqrt(0.5*(sigma + graph::sqrt(sigma*sigma + 4.0*(tau_sq + ustar*ustar))));
-            auto t = tau/gamma_next;
-            
-            auto s = 1.0 + t->dot(t);
-            auto u_prime_dot_t = u_prime->dot(t);
-            
-            auto u_next = (u_prime + u_prime_dot_t*t + u_prime->cross(t))/s;
-            
-            auto pos_next = pos + larmor_radius*dt*u_next/gamma_next;
-            
-            work.add_item({
-                graph::variable_cast(x),
-                graph::variable_cast(y),
-                graph::variable_cast(z),
-                graph::variable_cast(ux),
-                graph::variable_cast(uy),
-                graph::variable_cast(uz),
-                graph::variable_cast(gamma)
-            }, {}, {
-                {pos_next->get_x(), graph::variable_cast(x)},
-                {pos_next->get_y(), graph::variable_cast(y)},
-                {pos_next->get_z(), graph::variable_cast(z)},
-                {u_next->get_x(), graph::variable_cast(ux)},
-                {u_next->get_y(), graph::variable_cast(uy)},
-                {u_next->get_z(), graph::variable_cast(uz)},
-                {gamma_next, graph::variable_cast(gamma)}
-            }, "step");
-            
-            work.compile();
-            
-            std::ostringstream stream;
-            stream << "korc_" << thread_number << ".nc";
-            
-            output::result_file file(stream.str(), local_num_particles);
-            output::data_set<T> dataset(file);
-            
-            dataset.create_variable(file, "x",     x,     work.get_context());
-            dataset.create_variable(file, "y",     y,     work.get_context());
-            dataset.create_variable(file, "z",     z,     work.get_context());
-            dataset.create_variable(file, "ux",    ux,    work.get_context());
-            dataset.create_variable(file, "uy",    uy,    work.get_context());
-            dataset.create_variable(file, "uz",    uz,    work.get_context());
-            dataset.create_variable(file, "gamma", gamma, work.get_context());
-            
-            file.end_define_mode();
-            std::thread sync([]{});
-            
-            t_setup.print();
-            
-            const timeing::measure_diagnostic t_run("Run Time");
-            work.pre_run();
-            for (size_t i = 0; i < 1000000; i++) {
-/*                sync.join();
-                work.wait();
-                sync = std::thread([&file, &dataset] () -> void {
-                    dataset.write(file);
-                });*/
-                
-                work.run();
-            }
-            work.wait();
+                                                pos->get_z());
 
-            sync.join();
-            dataset.write(file);
-            work.wait();
-            
-            t_run.print();
-        }, i);
+            /* Boris pusher algebra (symbolic) */
+            auto t_vec   = dt * half * b_vec;
+            auto t_sq    = t_vec->dot(t_vec);
+            auto s_vec   = (two * t_vec) / (one + t_sq);
+            auto u_prime = u_vec;
+            auto u_tilde = u_prime + u_prime->cross(t_vec);
+            auto u_next  = u_prime + u_tilde->cross(s_vec);
+            auto pos_next= pos + dt * u_next;
+
+            workflow::manager<T,false> w(tid);
+            w.add_item({graph::variable_cast(x ),
+                        graph::variable_cast(y ),
+                        graph::variable_cast(z ),
+                        graph::variable_cast(ux),
+                        graph::variable_cast(uy),
+                        graph::variable_cast(uz)},
+                       {},
+                       {
+                           {pos_next->get_x(), graph::variable_cast(x )},
+                           {pos_next->get_y(), graph::variable_cast(y )},
+                           {pos_next->get_z(), graph::variable_cast(z )},
+                           {u_next->get_x(),   graph::variable_cast(ux)},
+                           {u_next->get_y(),   graph::variable_cast(uy)},
+                           {u_next->get_z(),   graph::variable_cast(uz)}
+                       },
+                       "boris");
+            w.compile();
+
+            /* set up output file */
+            std::ostringstream fn; fn<<"korc_"<<tid<<".nc";
+            output::result_file of(fn.str(), Nloc);
+            output::data_set<T> ds(of);
+            ds.template create_variable<false>(of,"x",  x,  w.get_context());
+            ds.template create_variable<false>(of,"y",  y,  w.get_context());
+            ds.template create_variable<false>(of,"z",  z,  w.get_context());
+            ds.template create_variable<false>(of,"ux", ux, w.get_context());
+            ds.template create_variable<false>(of,"uy", uy, w.get_context());
+            ds.template create_variable<false>(of,"uz", uz, w.get_context());
+            of.end_define_mode();
+
+            /* ------------- one persistent writer thread ------------- */
+            std::queue<size_t> q;
+            std::mutex mtx;
+            std::condition_variable cv;
+            bool finish=false;
+
+            std::thread writer([&](){
+                std::unique_lock<std::mutex> lk(mtx);
+                while(true){
+                    cv.wait(lk,[&](){ return finish || !q.empty(); });
+                    while(!q.empty()){
+                        q.pop();
+                        lk.unlock();
+                        ds.write(of);      // I/O outside lock
+                        lk.lock();
+                    }
+                    if(finish) break;
+                }
+            });
+
+            t_setup.print();
+            const timeing::measure_diagnostic t_run("Run T"+std::to_string(tid));
+            w.pre_run();
+
+            // MAIN LOOP
+            for(size_t s=0; s<NSTEPS; ++s)
+            {
+                w.wait();
+
+                if(s % DUMP_EVERY == 0){
+                    { std::lock_guard<std::mutex> lg(mtx); q.push(s); }
+                    cv.notify_one();
+                }
+                w.run();
+            }
+            w.wait();
+
+            // final dump + shutdown
+            {
+                std::lock_guard<std::mutex> lg(mtx);
+                q.push(NSTEPS);
+                finish=true;
+            }
+            cv.notify_one();
+            writer.join();
+        });
     }
-    
-    for (std::thread &t : threads) {
-        t.join();
-    }
-    
-    std::cout << std::endl << "Timing:" << std::endl;
+    for(auto& th: workers) th.join();
+
+    std::cout << "\nTiming:\n";
     t_total.print();
 }
 
-//------------------------------------------------------------------------------
-///  @brief Main program of the driver.
-///
-///  @param[in] argc Number of commandline arguments.
-///  @param[in] argv Array of commandline arguments.
-//------------------------------------------------------------------------------
-int main(int argc, const char * argv[]) {
+int main(int argc, const char* argv[])
+{
     START_GPU
-    (void)argc;
-    (void)argv;
-
-    run_korc<double> ();
-//    run_korc<float> ();
-
+    (void)argc; (void)argv;
+    run_korc<double>();
     END_GPU
+    return 0;
 }
