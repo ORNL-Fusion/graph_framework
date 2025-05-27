@@ -163,7 +163,7 @@ namespace gpu {
                 }
             }
 
-            auto diagnostic_options = clang::DiagnosticOptions();
+            clang::DiagnosticOptions diagnostic_options;
             auto diagnostic_printer = std::make_unique<clang::TextDiagnosticPrinter> (llvm::errs(),
                                                                                       diagnostic_options);
 
