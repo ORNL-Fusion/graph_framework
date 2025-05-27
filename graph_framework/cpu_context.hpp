@@ -163,9 +163,9 @@ namespace gpu {
                 }
             }
 
-            auto diagnostic_options = llvm::makeIntrusiveRefCnt<clang::DiagnosticOptions> ();
+            auto diagnostic_options = clang::DiagnosticOptions();
             auto diagnostic_printer = std::make_unique<clang::TextDiagnosticPrinter> (llvm::errs(),
-                                                                                      diagnostic_options.get());
+                                                                                      diagnostic_options);
 
             auto diagnostic_ids = llvm::makeIntrusiveRefCnt<clang::DiagnosticIDs> ();
             clang::DiagnosticsEngine diagnostic_engine(diagnostic_ids,
