@@ -470,7 +470,7 @@ void test_cold_plasma_cutoffs() {
     kx->set(1, static_cast<T> (0.0));
     t->set(0, static_cast<T> (0.0));
     t->set(1, static_cast<T> (0.0));
-    if constexpr (jit::is_complex<T> ()) {
+    if constexpr (jit::complex_scalar<T>) {
         solve.init(x, 2.8E-29);
     } else {
         solve.init(x, 5.0E-30);
@@ -486,7 +486,7 @@ void test_cold_plasma_cutoffs() {
 //  Solve for X-Mode and O-Mode wave numbers.
     kx->set(0, static_cast<T> (500.0));  // O-Mode
     kx->set(1, static_cast<T> (1500.0)); // X-Mode
-    if constexpr (jit::is_complex<T> ()) {
+    if constexpr (jit::complex_scalar<T>) {
         solve.init(kx, 2.2E-30);
     } else {
         solve.init(kx);

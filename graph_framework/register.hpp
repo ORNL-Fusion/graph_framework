@@ -32,71 +32,18 @@ namespace jit {
     template<typename T>
     concept scalar = float_scalar<T> || std::integral<T>;
 
+///  float base concept.
+    template<typename T>
+    concept float_base = std::same_as<T, float> ||
+                         std::same_as<T, std::complex<float>>;
+
+///  Double base concept.
+    template<typename T>
+    concept double_base = std::same_as<T, double> ||
+                          std::same_as<T, std::complex<double>>;
+
 ///  Verbose output.
     static bool verbose = USE_VERBOSE;
-
-//------------------------------------------------------------------------------
-///  @brief Test if a type is complex.
-///
-///  @tparam BASE Base type.
-///  @tparam T    Type to check against.
-///
-///  @returns A constant expression true or false type.
-//------------------------------------------------------------------------------
-    template<float_scalar BASE, std::floating_point T>
-    constexpr bool is_complex() {
-        return std::is_same<BASE, std::complex<T>>::value;
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Test if the base type is float.
-///
-///  @tparam BASE Base type.
-///  @tparam T    Type to check against.
-///
-///  @returns A constant expression true or false type.
-//------------------------------------------------------------------------------
-    template<float_scalar BASE, std::floating_point T>
-    constexpr bool is_base() {
-        return is_complex<BASE, T> () || std::is_same<BASE, T>::value;
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Test if the base type is float.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @returns A constant expression true or false type.
-//------------------------------------------------------------------------------
-    template<float_scalar T>
-    constexpr bool is_float() {
-        return is_base<T, float> ();
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Test if the base type is double.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @returns A constant expression true or false type.
-//------------------------------------------------------------------------------
-    template<float_scalar T>
-    constexpr bool is_double() {
-        return is_base<T, double> ();
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Test if a type is complex.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @returns A constant expression true or false type.
-//------------------------------------------------------------------------------
-    template<float_scalar T>
-    constexpr bool is_complex() {
-        return is_complex<T, float> () ||
-               is_complex<T, double> ();
-    }
 
 //------------------------------------------------------------------------------
 ///  @brief Convert a base type to a string.
@@ -107,9 +54,9 @@ namespace jit {
 //------------------------------------------------------------------------------
     template<float_scalar T>
     std::string type_to_string() {
-        if constexpr (is_float<T> ()) {
+        if constexpr (float_base<T>) {
             return "float";
-        } else if constexpr (is_double<T> ()) {
+        } else {
             return "double";
         }
     }
@@ -133,7 +80,7 @@ namespace jit {
     template<float_scalar T>
     constexpr bool use_metal() {
 #if USE_METAL
-        return is_float<T>() && !is_complex<T> ();
+        return float_base<T> && !complex_scalar<T>;
 #else
         return false;
 #endif
@@ -195,7 +142,7 @@ namespace jit {
 //------------------------------------------------------------------------------
     template<float_scalar T>
     std::string get_type_string() {
-        if constexpr (is_complex<T> ()) {
+        if constexpr (complex_scalar<T>) {
             if constexpr (use_cuda()) {
                 return "cuda::std::complex<" + type_to_string<T> () + ">";
             } else {
@@ -227,10 +174,26 @@ namespace jit {
 //------------------------------------------------------------------------------
     template<float_scalar T>
     constexpr int max_digits10() {
-        if constexpr (is_float<T> ()) {
+        if constexpr (float_base<T>) {
             return std::numeric_limits<float>::max_digits10;
         } else {
             return std::numeric_limits<double>::max_digits10;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief The maximum value for a base type.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @returns The maximum number of digits needed.
+//------------------------------------------------------------------------------
+    template<float_scalar T>
+    constexpr int max_base() {
+        if constexpr (float_base<T>) {
+            return std::numeric_limits<float>::max();
+        } else {
+            return std::numeric_limits<double>::max();
         }
     }
 
@@ -252,7 +215,7 @@ namespace jit {
             end = std::to_chars(buffer.begin(),
                                 buffer.end(),
                                 value, 16).ptr;
-        } else if constexpr (is_complex<T> ()) {
+        } else if constexpr (complex_scalar<T>) {
             return format_to_string(std::real(value)) + "," +
                    format_to_string(std::imag(value));
         } else {
@@ -314,7 +277,7 @@ namespace jit {
 ///  @param[in] right Right hand side.
 //------------------------------------------------------------------------------
         bool operator() (const T &left, const T &right) const {
-            if constexpr (is_complex<T> ()) {
+            if constexpr (complex_scalar<T>) {
                 return std::abs(left) < std::abs(right);
             } else {
                 return left < right;

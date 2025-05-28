@@ -387,16 +387,16 @@ namespace gpu {
                     texture_desc.addressMode[0] = CU_TR_ADDRESS_MODE_BORDER;
                     texture_desc.addressMode[1] = CU_TR_ADDRESS_MODE_BORDER;
                     texture_desc.addressMode[2] = CU_TR_ADDRESS_MODE_BORDER;
-                    if constexpr (jit::is_float<T> ()) {
+                    if constexpr (jit::float_base<T>) {
                         array_desc.Format = CU_AD_FORMAT_FLOAT;
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             array_desc.NumChannels = 2;
                         } else {
                             array_desc.NumChannels = 1;
                         }
                     } else {
                         array_desc.Format = CU_AD_FORMAT_UNSIGNED_INT32;
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             array_desc.NumChannels = 4;
                         } else {
                             array_desc.NumChannels = 2;
@@ -433,16 +433,16 @@ namespace gpu {
                     texture_desc.addressMode[1] = CU_TR_ADDRESS_MODE_BORDER;
                     texture_desc.addressMode[2] = CU_TR_ADDRESS_MODE_BORDER;
                     const size_t total = size[0]*size[1];
-                    if constexpr (jit::is_float<T> ()) {
+                    if constexpr (jit::float_base<T>) {
                         array_desc.Format = CU_AD_FORMAT_FLOAT;
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             array_desc.NumChannels = 2;
                         } else {
                             array_desc.NumChannels = 1;
                         }
                     } else {
                         array_desc.Format = CU_AD_FORMAT_UNSIGNED_INT32;
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             array_desc.NumChannels = 4;
                         } else {
                             array_desc.NumChannels = 2;
@@ -582,7 +582,7 @@ namespace gpu {
             wait();
             for (auto &out : nodes) {
                 const T temp = reinterpret_cast<T *> (kernel_arguments[out.get()])[index];
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     std::cout << std::real(temp) << " " << std::imag(temp) << " ";
                 } else {
                     std::cout << temp << " ";
@@ -651,13 +651,13 @@ namespace gpu {
                           << "        return _buffer[index];"                << std::endl
                           << "    }"                                         << std::endl
                           << "};"                                            << std::endl;
-            if constexpr (jit::is_complex<T> ()) {
+            if constexpr (jit::complex_scalar<T>) {
                 source_buffer << "#define CUDA_DEVICE_CODE"         << std::endl
                               << "#define M_PI " << M_PI            << std::endl
                               << "#include <cuda/std/complex>"      << std::endl
                               << "#include <special_functions.hpp>" << std::endl;
 #ifdef USE_CUDA_TEXTURES
-                if constexpr (jit::is_float<T> ()) {
+                if constexpr (jit::float_base<T>) {
                     source_buffer << "static __inline__ __device__ complex<float> to_cmp_float(float2 p) {"
                                   << std::endl
                                   << "    return ";
@@ -673,7 +673,7 @@ namespace gpu {
                                   << std::endl
                                   << "}" << std::endl;
                 }
-            } else if constexpr (jit::is_double<T> ()) {
+            } else if constexpr (jit::double_base<T>) {
                 source_buffer << "static __inline__ __device__ double to_double(uint2 p) {"
                               << std::endl
                               << "    return __hiloint2double(p.y, p.x);"
@@ -858,7 +858,7 @@ namespace gpu {
                 }
                 source_buffer << "index] = ";
                 if constexpr (SAFE_MATH) {
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (source_buffer);
                         source_buffer << " (";
                         source_buffer << "isnan(real(" << registers[a.get()]
@@ -889,7 +889,7 @@ namespace gpu {
                 }
                 source_buffer << "index] = ";
                 if constexpr (SAFE_MATH) {
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (source_buffer);
                         source_buffer << " (";
                         source_buffer << "isnan(real(" << registers[a.get()]
@@ -932,13 +932,13 @@ namespace gpu {
             source_buffer << "    const unsigned int k = threadIdx.x%32;" << std::endl;
             source_buffer << "    if (i < " << size << ") {" << std::endl;
             source_buffer << "        " << jit::type_to_string<T> () << " sub_max = ";
-            if constexpr (jit::is_complex<T> ()) {
+            if constexpr (jit::complex_scalar<T>) {
                 source_buffer << "abs(input[i]);" << std::endl;
             } else {
                 source_buffer << "input[i];" << std::endl;
             }
             source_buffer << "        for (size_t index = i + 1024; index < " << size <<"; index += 1024) {" << std::endl;
-            if constexpr (jit::is_complex<T> ()) {
+            if constexpr (jit::complex_scalar<T>) {
                 source_buffer << "            sub_max = max(sub_max, abs(input[index]));" << std::endl;
             } else {
                 source_buffer << "            sub_max = max(sub_max, input[index]);" << std::endl;

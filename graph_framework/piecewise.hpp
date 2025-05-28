@@ -32,19 +32,19 @@ void compile_index(std::ostringstream &stream,
     stream << "min(max(("
            << type
            << ")";
-    if constexpr (jit::is_complex<T> ()) {
+    if constexpr (jit::complex_scalar<T>) {
         stream << "real(";
     }
     stream << "((" << register_name << " - ";
-    if constexpr (jit::is_complex<T> ()) {
+    if constexpr (jit::complex_scalar<T>) {
         stream << jit::get_type_string<T> ();
     }
     stream << offset << ")/";
-    if constexpr (jit::is_complex<T> ()) {
+    if constexpr (jit::complex_scalar<T>) {
         stream << jit::get_type_string<T> ();
     }
     stream << scale << ")";
-    if constexpr (jit::is_complex<T> ()) {
+    if constexpr (jit::complex_scalar<T>) {
         stream << ")";
     }
     stream << ",(" << type << ")0),("
@@ -252,13 +252,13 @@ void compile_index(std::ostringstream &stream,
                         stream << "const ";
                         jit::add_type<T> (stream);
                         stream << " " << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] << "[] = {";
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (stream);
                         }
                         stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0];
                         for (size_t i = 1; i < length; i++) {
                             stream << ", ";
-                            if constexpr (jit::is_complex<T> ()) {
+                            if constexpr (jit::complex_scalar<T>) {
                                 jit::add_type<T> (stream);
                             }
                             stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i];
@@ -340,14 +340,18 @@ void compile_index(std::ostringstream &stream,
                 stream << " " << registers[this] << " = ";
 #ifdef USE_CUDA_TEXTURES
                 if constexpr (jit::use_cuda()) {
-                    if constexpr (jit::is_float<T> () && !jit::is_complex<T> ()) {
-                        stream << "tex1D<float> (";
-                    } else if constexpr (jit::is_double<T> () && !jit::is_complex<T> ()) {
-                        stream << "to_double(tex1D<uint2> (";
-                    } else if constexpr (jit::is_float<T> ()) {
-                        stream << "to_cmp_float(tex1D<float2> (";
+                    if constexpr (float_base<T>) {
+                        if constexpr (complex_scalar<T>) {
+                            stream << "to_cmp_float(tex1D<float2> (";
+                        } else {
+                            stream << "tex1D<float> (";
+                        }
                     } else {
-                        stream << "to_cmp_double(tex1D<uint4> (";
+                        if constexpr (complex_scalar<T>) {
+                            stream << "to_cmp_double(tex1D<uint4> (";
+                        } else {
+                            stream << "to_double(tex1D<uint2> (";
+                        }
                     }
                 }
 #endif
@@ -373,7 +377,7 @@ void compile_index(std::ostringstream &stream,
                     compile_index<T> (stream, registers[a.get()], length,
                                       scale, offset);
 #endif
-                    if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
+                    if constexpr (jit::complex_scalar<T> || jit::double_base<T>) {
                         stream << ")";
                     }
                     stream << ")";
@@ -885,13 +889,13 @@ void compile_index(std::ostringstream &stream,
                         stream << "const ";
                         jit::add_type<T> (stream);
                         stream << " " << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] << "[] = {";
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (stream);
                         }
                         stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][0];
                         for (size_t i = 1; i < length; i++) {
                             stream << ", ";
-                            if constexpr (jit::is_complex<T> ()) {
+                            if constexpr (jit::complex_scalar<T>) {
                                 jit::add_type<T> (stream);
                             }
                             stream << leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i];
@@ -1022,14 +1026,18 @@ void compile_index(std::ostringstream &stream,
                 stream << " " << registers[this] << " = ";
 #ifdef USE_CUDA_TEXTURES
                 if constexpr (jit::use_cuda()) {
-                    if constexpr (jit::is_float<T> () && !jit::is_complex<T> ()) {
-                        stream << "tex2D<float> (";
-                    } else if constexpr (jit::is_double<T> () && !jit::is_complex<T> ()) {
-                        stream << "to_double(tex2D<uint2> (";
-                    } else if constexpr (jit::is_float<T> ()) {
-                        stream << "to_cmp_float(tex2D<float2> (";
+                    if constexpr (float_base<T>) {
+                        if constexpr (complex_scalar<T>) {
+                            stream << "to_cmp_float(tex1D<float2> (";
+                        } else {
+                            stream << "tex1D<float> (";
+                        }
                     } else {
-                        stream << "to_cmp_double(tex2D<uint4> (";
+                        if constexpr (complex_scalar<T>) {
+                            stream << "to_cmp_double(tex1D<uint4> (";
+                        } else {
+                            stream << "to_double(tex1D<uint2> (";
+                        }
                     }
                 }
 #endif
@@ -1068,7 +1076,7 @@ void compile_index(std::ostringstream &stream,
                     compile_index<T> (stream, registers[x.get()], num_rows,
                                       x_scale, x_offset);
 #endif
-                    if constexpr (jit::is_complex<T> () || jit::is_double<T> ()) {
+                    if constexpr (jit::complex_scalar<T> || jit::double_base<T>) {
                         stream << ")";
                     }
                     stream << ")";

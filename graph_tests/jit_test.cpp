@@ -24,7 +24,7 @@
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> 
 void check(const T test, const T tolarance) {
-    if constexpr (jit::is_complex<T> ()) {
+    if constexpr (jit::complex_scalar<T>) {
         assert(std::real(test) <= std::real(tolarance) &&
                "Real GPU and CPU values differ.");
         assert(std::imag(test) <= std::imag(tolarance) &&
@@ -394,7 +394,7 @@ void run_dispersion_tests() {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 1.4E10);
     } else if constexpr (jit::use_metal<T> ()) {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 5.0E9);
-    } else if constexpr (jit::is_complex<T> ()){
+    } else if constexpr (jit::complex_scalar<T>){
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 1.5E11);
     } else {
         run_dispersion_test<dispersion::cold_plasma<T>> (slab_eq, 5.1E10);
