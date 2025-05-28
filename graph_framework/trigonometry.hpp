@@ -704,7 +704,7 @@ namespace graph {
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     stream << " " << registers[this] << " = atan("
                            << registers[r.get()] << "/"
                            << registers[l.get()];
@@ -831,7 +831,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar L, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> atan(const L l,
-                                  shared_leaf<T, SAFE_MATH> r) {
+                                   shared_leaf<T, SAFE_MATH> r) {
         return atan(constant<T, SAFE_MATH> (static_cast<T> (l)), r);
     }
 
@@ -847,7 +847,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> atan(shared_leaf<T, SAFE_MATH> l,
-                                  const R r) {
+                                   const R r) {
         return atan(l, constant<T, SAFE_MATH> (static_cast<T> (r)));
     }
 

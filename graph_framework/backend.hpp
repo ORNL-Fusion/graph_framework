@@ -255,9 +255,8 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Take erfi.
 //------------------------------------------------------------------------------
-        template<jit::float_scalar D=T>
-        typename std::enable_if<jit::is_complex<D> (), void>::type erfi() {
-            for (D &d : memory) {
+        void erfi() requires(jit::complex_scalar<T>) {
+            for (T &d : memory) {
                 d = special::erfi(d);
             }
         }
@@ -278,7 +277,7 @@ namespace backend {
 //------------------------------------------------------------------------------
         bool is_normal() const {
             for (const T &x : memory) {
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     if (std::isnan(std::real(x)) || std::isinf(std::real(x)) ||
                         std::isnan(std::imag(x)) || std::isinf(std::imag(x))) {
                         return false;
@@ -597,7 +596,7 @@ namespace backend {
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_colmns; j++) {
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             memory[i*num_colmns + j] = std::atan(x[i]/memory[i*num_colmns + j]);
                         } else {
                             memory[i*num_colmns + j] = std::atan2(x[i], memory[i*num_colmns + j]);
@@ -613,7 +612,7 @@ namespace backend {
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_colmns; j++) {
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             m[i*num_colmns + j] = std::atan(x[i*num_colmns + j]/memory[i]);
                         } else {
                             m[i*num_colmns + j] = std::atan2(x[i*num_colmns + j], memory[i]);
@@ -641,7 +640,7 @@ namespace backend {
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_colmns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             memory[i*num_colmns + j] = std::atan(x[j]/memory[i*num_colmns + j]);
                         } else {
                             memory[i*num_colmns + j] = std::atan2(x[j], memory[i*num_colmns + j]);
@@ -657,7 +656,7 @@ namespace backend {
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_colmns; j++) {
-                        if constexpr (jit::is_complex<T> ()) {
+                        if constexpr (jit::complex_scalar<T>) {
                             m[i*num_colmns + j] = std::atan(x[i*num_colmns + j]/memory[j]);
                         } else {
                             m[i*num_colmns + j] = std::atan2(x[i*num_colmns + j], memory[j]);
@@ -918,7 +917,7 @@ namespace backend {
     inline buffer<T> fma(buffer<T> &a,
                          buffer<T> &b,
                          buffer<T> &c) {
-        constexpr bool use_fma = !jit::is_complex<T> () &&
+        constexpr bool use_fma = !jit::complex_scalar<T> &&
 #ifdef FP_FAST_FMA
                                  true;
 #else
@@ -1100,7 +1099,7 @@ namespace backend {
         if (y.size() == 1) {
             const T right = y.at(0);
             for (size_t i = 0, ie = x.size(); i < ie; i++) {
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     x[i] = std::atan(right/x[i]);
                 } else {
                     x[i] = std::atan2(right, x[i]);
@@ -1110,7 +1109,7 @@ namespace backend {
         } else if (x.size() == 1) {
             const T left = x.at(0);
             for (size_t i = 0, ie = y.size(); i < ie; i++) {
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     y[i] = std::atan(y[i]/left);
                 } else {
                     y[i] = std::atan2(y[i], left);
@@ -1122,7 +1121,7 @@ namespace backend {
         assert(x.size() == y.size() &&
                "Left and right sizes are incompatable.");
         for (size_t i = 0, ie = x.size(); i < ie; i++) {
-            if constexpr (jit::is_complex<T> ()) {
+            if constexpr (jit::complex_scalar<T>) {
                 x[i] = std::atan(y[i]/x[i]);
             } else {
                 x[i] = std::atan2(y[i], x[i]);

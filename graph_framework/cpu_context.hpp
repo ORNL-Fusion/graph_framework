@@ -311,7 +311,7 @@ namespace gpu {
 
             return [run, begin, end] () mutable {
                 run();
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     return *std::max_element(begin, end,
                                              [] (const T a, const T b) {
                         return std::abs(a) < std::abs(b);
@@ -346,7 +346,7 @@ namespace gpu {
                            const graph::output_nodes<T, SAFE_MATH> &nodes) {
             for (auto &out : nodes) {
                 const T temp = kernel_arguments[out.get()][index];
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     std::cout << std::real(temp) << " " << std::imag(temp) << " ";
                 } else {
                     std::cout << temp << " ";
@@ -401,7 +401,7 @@ namespace gpu {
         void create_header(std::ostringstream &source_buffer) {
             source_buffer << "#include <map>" << std::endl
                           << "#include <array>" << std::endl;
-            if (jit::is_complex<T> ()) {
+            if (jit::complex_scalar<T>) {
                 source_buffer << "#include <complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
             } else {
@@ -517,7 +517,7 @@ namespace gpu {
                 source_buffer << "        " << jit::to_string('v', in.get());
                 source_buffer << "[i] = ";
                 if constexpr (SAFE_MATH) {
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (source_buffer);
                         source_buffer << " (";
                         source_buffer << "isnan(real(" << registers[a.get()]
@@ -543,7 +543,7 @@ namespace gpu {
                 source_buffer << "        " << jit::to_string('o', out.get());
                 source_buffer << "[i] = ";
                 if constexpr (SAFE_MATH) {
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (source_buffer);
                         source_buffer << " (";
                         source_buffer << "isnan(real(" << registers[a.get()]

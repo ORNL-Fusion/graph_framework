@@ -465,13 +465,13 @@ namespace graph {
                 const T temp = this->evaluate().at(0);
 
                 stream << " " << registers[this] << " = ";
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     jit::add_type<T> (stream);
                 }
                 stream << temp;
                 this->endline(stream, usage);
 #else
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     registers[this] = jit::get_type_string<T> () + "("
                                     + jit::format_to_string(this->evaluate().at(0))
                                     + ")";

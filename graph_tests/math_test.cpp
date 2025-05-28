@@ -584,7 +584,7 @@ template<jit::float_scalar T> void run_tests() {
     test_exp<T> ();
     test_pow<T> ();
     test_log<T> ();
-    if constexpr (jit::is_complex<T> ()) {
+    if constexpr (jit::complex_scalar<T>) {
         test_erfi<T> ();
     }
 }

@@ -171,9 +171,9 @@ namespace output {
 ///  Data sizes.
         std::array<size_t, 3> count;
 ///  Get the ray dimension size.
-        const size_t ray_dim_size = 1 + jit::is_complex<T> ();
+        static constexpr size_t ray_dim_size = 1 + jit::complex_scalar<T>;
 ///  The NetCDF type.
-        const nc_type type = jit::is_float<T> () ? NC_FLOAT : NC_DOUBLE;
+        static constexpr nc_type type = jit::float_base<T> ? NC_FLOAT : NC_DOUBLE;
 
 //------------------------------------------------------------------------------
 ///  @brief Struct to map variables to a gpu buffer.
@@ -213,7 +213,7 @@ namespace output {
 //------------------------------------------------------------------------------
         data_set(const result_file &result) {
             sync.lock();
-            if constexpr (jit::is_complex<T> ()) {
+            if constexpr (jit::complex_scalar<T>) {
                 if (NC_NOERR != nc_inq_dimid(result.get_ncid(),
                                              "ray_dim_cplx",
                                              &ray_dim)) {
@@ -367,8 +367,8 @@ namespace output {
 
             for (variable &var : variables) {
                 sync.lock();
-                if constexpr (jit::is_float<T> ()) {
-                    if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::float_base<T>) {
+                    if constexpr (jit::complex_scalar<T>) {
                         check_error(nc_put_vara_float(result.get_ncid(),
                                                       var.id,
                                                       start.data(),
@@ -382,7 +382,7 @@ namespace output {
                                                       var.buffer));
                     }
                 } else {
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         check_error(nc_put_vara_double(result.get_ncid(),
                                                        var.id,
                                                        start.data(),
@@ -428,8 +428,8 @@ namespace output {
                 };
 
                 sync.lock();
-                if constexpr (jit::is_float<T> ()) {
-                    if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::float_base<T>) {
+                    if constexpr (jit::complex_scalar<T>) {
                         check_error(nc_get_varm_float(result.get_ncid(),
                                                       ref.id,
                                                       ref_start.data(),
@@ -447,7 +447,7 @@ namespace output {
                                                       ref.buffer));
                     }
                 } else {
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         check_error(nc_get_varm_double(result.get_ncid(),
                                                        ref.id,
                                                        ref_start.data(),

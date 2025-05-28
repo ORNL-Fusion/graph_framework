@@ -893,7 +893,6 @@ namespace graph {
 //  Idenity reductions.
             auto l = constant_cast(this->left);
             if (this->left->is_match(this->right)) {
-                auto l = constant_cast(this->left);
                 if (l.get() && l->is(0)) {
                     return this->left;
                 }
@@ -2502,21 +2501,21 @@ namespace graph {
                 stream << " " << registers[this] << " = ";
                 if constexpr (SAFE_MATH) {
                     stream << "(" << registers[l.get()] << " == ";
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (stream);
                         stream << "(0, 0)";
                     } else {
                         stream << "0";
                     }
                     stream << " || " << registers[r.get()] << " == ";
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (stream);
                         stream << "(0, 0)";
                     } else {
                         stream << "0";
                     }
                     stream << ") ? ";
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (stream);
                         stream << "(0, 0)";
                     } else {
@@ -3494,14 +3493,14 @@ namespace graph {
                 stream << " " << registers[this] << " = ";
                 if constexpr (SAFE_MATH) {
                     stream << registers[l.get()] << " == ";
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (stream);
                         stream << "(0, 0)";
                     } else {
                         stream << "0";
                     }
                     stream << " ? ";
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (stream);
                         stream << "(0, 0)";
                     } else {
@@ -5069,14 +5068,14 @@ namespace graph {
                 stream << " " << registers[this] << " = ";
                 if constexpr (SAFE_MATH) {
                     stream << "(" << registers[l.get()] << " == ";
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (stream);
                         stream << "(0, 0)";
                     } else {
                         stream << "0";
                     }
                     stream << " || " << registers[m.get()] << " == ";
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (stream);
                         stream << "(0, 0)";
                     } else {
@@ -5084,7 +5083,7 @@ namespace graph {
                     }
                     stream << ") ? " << registers[r.get()] << " : ";
                 }
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::complex_scalar<T>) {
                     stream << registers[l.get()] << "*"
                            << registers[m.get()] << " + "
                            << registers[r.get()];

@@ -440,11 +440,11 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " " << registers[this] << " = ";
                 if constexpr (SAFE_MATH) {
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         stream << "real(";
                     }
                     stream << registers[a.get()];
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         stream << ")";
                     }
                     stream << " < 709.8 ? ";
@@ -452,16 +452,12 @@ namespace graph {
                 stream << "exp("  << registers[a.get()] << ")";
                 if constexpr (SAFE_MATH) {
                     stream << " : ";
-                    if constexpr (jit::is_complex<T> ()) {
+                    if constexpr (jit::complex_scalar<T>) {
                         jit::add_type<T> (stream);
                         stream << "(";
                     }
-                    if constexpr (jit::is_float<T> ()) {
-                        stream << std::numeric_limits<float>::max();
-                    } else {
-                        stream << std::numeric_limits<double>::max();
-                    }
-                    if constexpr (jit::is_complex<T> ()) {
+                    stream << jit::max_base<T> ();
+                    if constexpr (jit::complex_scalar<T>) {
                         stream << ")";
                     }
                 }
