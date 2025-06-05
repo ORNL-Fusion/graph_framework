@@ -266,7 +266,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 # MCJIT isn't adding the compiler-rt library so explicitly add it. This is only
 # shown to happen on macOS but may affect Linux as well.
     find_library (MACOS_LIB_RT "clang_rt.osx"
-                  PATHS /Applications/Xcode*.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/*/lib/darwin
+                  PATHS /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/*/lib/darwin
                   REQUIRED
     )
 endif ()
