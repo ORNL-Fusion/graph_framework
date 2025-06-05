@@ -1,0 +1,64 @@
+name: Continuous Integration Test
+on:
+    workflow_dispatch:
+    push:
+jobs:
+    ci_test:
+        strategy:
+            matrix:
+                os: [macos-latest, ubuntu-latest]
+        runs-on: ${{matrix.os}}
+        steps:
+            - name: CPU Info Mac
+              if: ${{matrix.os == 'macos-latest'}}
+              run: |
+                sysctl -n machdep.cpu.brand_string
+                sysctl -n machdep.cpu.features
+                (echo "Number of Cores:"; sysctl -n machdep.cpu.core_count) |tr '\n' '\t' && echo ''
+            - name: CPU Info Linux
+              if: ${{matrix.os == 'ubuntu-latest'}}
+              run: awk '{if ($0=="") exit; print $0}' /proc/cpuinfo
+            - name: Clone Repo
+              shell: bash
+              working-directory: ${{runner.workspace}}
+              run: |
+                git clone https://github.com/ORNL-Fusion/graph_framework.git ${{runner.workspace}}/graph_framework
+                cd ${{runner.workspace}}/graph_framework
+                git checkout ${{github.ref_name}}
+            - name: Create build directory.
+              working-directory: ${{runner.workspace}}/graph_framework
+              run: cmake -E make_directory build
+            - name: Install Libraries Mac
+              if: ${{matrix.os == 'macos-latest'}}
+              shell: bash
+              run: |
+                brew install netcdf
+            - name: Install Libraries Linux
+              if: ${{matrix.os == 'ubuntu-latest'}}
+              shell: bash
+              run: |
+                sudo apt update
+                sudo apt-get install libnetcdf-dev
+            - name: Configure CMake Mac
+              if: ${{matrix.os == 'macos-latest'}}
+              shell: bash
+              working-directory: ${{runner.workspace}}/graph_framework/build
+              run: cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DUSE_METAL=ON ${{runner.workspace}}/graph_framework
+            - name: Configure CMake Linux
+              if: ${{matrix.os == 'ubuntu-latest'}}
+              shell: bash
+              working-directory: ${{runner.workspace}}/graph_framework/build
+              run: cmake ${{runner.workspace}}/graph_framework
+            - name: Build
+              shell: bash
+              working-directory: ${{runner.workspace}}/graph_framework/build
+              run: make -j3 VERBOSE=1
+            - name: Test
+              shell: bash
+              working-directory: ${{runner.workspace}}/graph_framework/build
+              run: make test ARGS=-j3
+            - name: Show Log
+              if: failure()
+              shell: bash
+              working-directory: ${{runner.workspace}}/graph_framework/build/Testing/Temporary
+              run: cat LastTest.log
