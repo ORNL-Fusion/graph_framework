@@ -43,7 +43,7 @@ jobs:
               if: ${{matrix.os == 'macos-latest'}}
               shell: bash
               working-directory: ${{runner.workspace}}/graph_framework/build
-              run: cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DUSE_METAL=ON ${{runner.workspace}}/graph_framework
+              run: cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_OBJCXX_COMPILER=clang++ -DUSE_METAL=ON ${{runner.workspace}}/graph_framework
             - name: Configure CMake Linux
               if: ${{matrix.os == 'ubuntu-latest'}}
               shell: bash
