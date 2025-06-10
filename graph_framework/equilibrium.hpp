@@ -1163,15 +1163,13 @@ namespace equilibrium {
                 
                 auto phi = graph::atan(x, y);
 
+                auto f0 = graph::piecewise_1D(fpol_c0, psi_cache, dpsi, psimin);
+                auto f1 = graph::piecewise_1D(fpol_c1, psi_cache, dpsi, psimin);
+                auto f2 = graph::piecewise_1D(fpol_c2, psi_cache, dpsi, psimin);
+                auto f3 = graph::piecewise_1D(fpol_c3, psi_cache, dpsi, psimin);
+                auto bp = build_1D_spline({f0,f1,f2,f3},psi_cache, dpsi, psimin) / r;
+
                 auto br = psi_cache->df(z)/r;
-
-                auto b0_temp = graph::piecewise_1D(fpol_c0, r, dr, rmin);
-                auto b1_temp = graph::piecewise_1D(fpol_c1, r, dr, rmin);
-                auto b2_temp = graph::piecewise_1D(fpol_c2, r, dr, rmin);
-                auto b3_temp = graph::piecewise_1D(fpol_c3, r, dr, rmin);
-                
-                auto bp = build_1D_spline({b0_temp, b1_temp, b2_temp, b3_temp}, r, dr, rmin)/r;
-
                 auto bz = -psi_cache->df(r)/r;
 
                 auto cos = graph::cos(phi);
