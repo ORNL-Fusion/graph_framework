@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.21)
 
-project (rays CXX)
+project (graph_framework CXX)
 
 #-------------------------------------------------------------------------------
 #  Build Options
@@ -12,6 +12,7 @@ option (USE_CONSTANT_CACHE "Cache the value of constantants in kernel registers.
 option (SHOW_USE_COUNT "Add a comment showing the use count in kernel sources." OFF)
 option (USE_INDEX_CACHE "Cache index values instead of computing them every time." OFF)
 option (USE_VERBOSE "Verbose jit option." OFF)
+option (BUILD_C_BINDING "Build C interface" OFF)
 
 #-------------------------------------------------------------------------------
 #  Set the cmake module path.
@@ -313,6 +314,9 @@ endif ()
 #-------------------------------------------------------------------------------
 
 add_subdirectory (graph_framework)
+if (${BUILD_C_BINDING})
+    add_subdirectory (graph_c_binding)
+endif ()
 
 #-------------------------------------------------------------------------------
 #  Setup testing
@@ -338,7 +342,7 @@ macro (add_tool_target target)
 
     target_link_libraries (${target}
                            PUBLIC
-                           rays
+                           graph_framework
     )
 endmacro ()
 

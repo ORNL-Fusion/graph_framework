@@ -1,7 +1,7 @@
 find_package (NetCDF MODULE REQUIRED)
 
-add_library (rays INTERFACE)
-target_compile_features (rays
+add_library (graph_framework INTERFACE)
+target_compile_features (graph_framework
                          INTERFACE
                          cxx_std_20
 )
@@ -14,7 +14,7 @@ execute_process (COMMAND ${Python_EXECUTABLE} get_includes.py --compiler=${CMAKE
                  OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-target_compile_definitions (rays
+target_compile_definitions (graph_framework
                             INTERFACE
                             $<$<PLATFORM_ID:Darwin>:CXX_ARGS="-I${CMAKE_CURRENT_SOURCE_DIR}${jit_include_paths} -fgnuc-version=4.2.1 -std=gnu++2a">
                             $<$<PLATFORM_ID:Linux>:CXX_ARGS="-I${CMAKE_CURRENT_SOURCE_DIR}${jit_include_paths} -std=gnu++2a -fno-use-cxa-atexit">
@@ -28,11 +28,11 @@ target_compile_definitions (rays
                             $<IF:$<BOOL:${USE_VERBOSE}>,USE_VERBOSE=true,USE_VERBOSE=false>
 )
 
-target_include_directories (rays
+target_include_directories (graph_framework
                             INTERFACE
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-target_link_libraries (rays
+target_link_libraries (graph_framework
                        INTERFACE
                        sanitizer
                        gpu_lib
@@ -41,7 +41,7 @@ target_link_libraries (rays
                        $<$<PLATFORM_ID:Linux>:pthread>
                        llvm_dep
 )
-target_precompile_headers (rays
+target_precompile_headers (graph_framework
                            INTERFACE
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/arithmetic.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/backend.hpp>>
