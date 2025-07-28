@@ -29,8 +29,6 @@ namespace gpu {
         std::map<graph::leaf_node<float, SAFE_MATH> *, id<MTLBuffer>> kernel_arguments;
 ///  Textures.
         std::map<void *, id<MTLTexture>> texture_arguments;
-///  Max Buffer.
-        id<MTLBuffer> result;
 ///  Metal command buffer.
         id<MTLCommandBuffer> command_buffer;
 ///  Metal library.
@@ -144,14 +142,14 @@ namespace gpu {
                     backend::buffer<float> buffer = input->evaluate();
                     kernel_arguments[input.get()] = [device newBufferWithBytes:buffer.data()
                                                                         length:buffer.size()*buffer_element_size
-                                                                       options:MTLResourceStorageModeManaged];
+                                                                       options:MTLResourceStorageModeShared];
                 }
                 buffers.push_back(kernel_arguments[input.get()]);
             }
             for (graph::shared_leaf<float, SAFE_MATH> &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
                     kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
-                                                                         options:MTLResourceStorageModeManaged];
+                                                                         options:MTLResourceStorageModeShared];
                 }
                 buffers.push_back(kernel_arguments[output.get()]);
             }
@@ -160,7 +158,7 @@ namespace gpu {
                     kernel_arguments[state.get()] = [device newBufferWithBytes:state->data()
                                                                         length:state->get_size_bytes()
                                                                        options:MTLResourceCPUCacheModeWriteCombined |
-                                                                               MTLResourceStorageModeManaged        |
+                                                                               MTLResourceStorageModeShared         |
                                                                                MTLResourceHazardTrackingModeUntracked];
                 }
                 buffers.push_back(kernel_arguments[state.get()]);
@@ -302,7 +300,7 @@ namespace gpu {
             }
 
             id<MTLBuffer> result = [device newBufferWithLength:sizeof(float)
-                                                       options:MTLResourceStorageModeManaged];
+                                                       options:MTLResourceStorageModeShared];
 
             id<MTLBuffer> buffer = kernel_arguments[argument.get()];
 
@@ -329,14 +327,10 @@ namespace gpu {
                         threadsPerThreadgroup:MTLSizeMake(1024, 1, 1)];
                 [encoder endEncoding];
 
-                id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
-                [blit synchronizeResource:result];
-                [blit endEncoding];
-
                 [command_buffer commit];
                 [command_buffer waitUntilCompleted];
 
-                return static_cast<float *> ([result contents])[0];
+                return static_cast<float *> (result.contents)[0];
             };
         }
 
@@ -355,11 +349,6 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void wait() {
             command_buffer = [queue commandBuffer];
-            id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
-            for (const auto &[key, value] : kernel_arguments) {
-                [blit synchronizeResource:value];
-            }
-            [blit endEncoding];
 
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
@@ -416,16 +405,13 @@ namespace gpu {
         void copy_to_host(graph::shared_leaf<float, SAFE_MATH> node,
                           float *destination) {
             command_buffer = [queue commandBuffer];
-            id<MTLBlitCommandEncoder> blit = [command_buffer blitCommandEncoder];
-            [blit synchronizeResource:kernel_arguments[node.get()]];
-            [blit endEncoding];
 
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
 
             memcpy(destination,
-                   [kernel_arguments[node.get()] contents],
-                   [kernel_arguments[node.get()] length]);
+                   kernel_arguments[node.get()].contents,
+                   kernel_arguments[node.get()].length);
         }
 
 //------------------------------------------------------------------------------
@@ -618,7 +604,7 @@ namespace gpu {
                               const size_t size) {
             source_buffer << std::endl;
             source_buffer << "kernel void max_reduction(" << std::endl;
-            source_buffer << "    device float *input [[buffer(0)]]," << std::endl;
+            source_buffer << "    constant float *input [[buffer(0)]]," << std::endl;
             source_buffer << "    device float *result [[buffer(1)]]," << std::endl;
             source_buffer << "    uint i [[thread_position_in_grid]]," << std::endl;
             source_buffer << "    uint j [[simdgroup_index_in_threadgroup]]," << std::endl;

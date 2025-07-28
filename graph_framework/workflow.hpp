@@ -136,9 +136,9 @@ namespace workflow {
             T max_residule = max_kernel();
             T last_max = std::numeric_limits<T>::max();
             T off_last_max = std::numeric_limits<T>::max();
-            while (std::abs(max_residule) > std::abs(tolarance)                 &&
-                   std::abs(last_max - max_residule) > std::abs(tolarance)      &&
-                   std::abs(off_last_max - max_residule) > std::abs(tolarance)  &&
+            while (std::abs(max_residule) > std::abs(tolarance)                &&
+                   std::abs(last_max - max_residule) > std::abs(tolarance)     &&
+                   std::abs(off_last_max - max_residule) > std::abs(tolarance) &&
                    iterations++ < max_iterations) {
                 last_max = max_residule;
                 if (!(iterations%2)) {
