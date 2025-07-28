@@ -968,14 +968,17 @@ void compile_index(std::ostringstream &stream,
                 const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                 const size_t num_rows = length/num_columns;
 
+                shared_leaf<T, SAFE_MATH> x = this->left->compile(stream,
+                                                                  registers,
+                                                                  indices,
+                                                                  usage);
+                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream,
+                                                                   registers,
+                                                                   indices,
+                                                                   usage);
+
 #ifdef USE_INDEX_CACHE
-                if (indices.find(this->left.get()) == indices.end()) {
-#endif
-                    shared_leaf<T, SAFE_MATH> x = this->left->compile(stream,
-                                                                      registers,
-                                                                      indices,
-                                                                      usage);
-#ifdef USE_INDEX_CACHE
+                if (indices.find(x.get()) == indices.end()) {
                     indices[x.get()] = jit::to_string('i', x.get());
                     stream << "        const "
                            << jit::smallest_int_type<T> (num_rows) << " "
@@ -984,13 +987,7 @@ void compile_index(std::ostringstream &stream,
                                       x_scale, x_offset);
                     x->endline(stream, usage);
                 }
-                if (indices.find(this->right.get()) == indices.end()) {
-#endif
-                    shared_leaf<T, SAFE_MATH> y = this->right->compile(stream,
-                                                                       registers,
-                                                                       indices,
-                                                                       usage);
-#ifdef USE_INDEX_CACHE
+                if (indices.find(y.get()) == indices.end()) {
                     indices[y.get()] = jit::to_string('i', y.get());
                     stream << "        const "
                            << jit::smallest_int_type<T> (num_columns) << " "
@@ -1012,9 +1009,9 @@ void compile_index(std::ostringstream &stream,
                         stream << "        const "
                                << jit::smallest_int_type<T> (length) << " "
                                << indices[temp.get()] << " = "
-                               << indices[this->left.get()]
+                               << indices[x.get()]
                                << "*" << num_columns << " + "
-                               << indices[this->right.get()]
+                               << indices[y.get()]
                                << ";" << std::endl;
                     }
                 }
@@ -1048,9 +1045,9 @@ void compile_index(std::ostringstream &stream,
                            << jit::smallest_int_type<T> (std::max(num_rows,
                                                                   num_columns))
                            << "2("
-                           << indices[this->right.get()]
+                           << indices[y.get()]
                            << ","
-                           << indices[this->left.get()]
+                           << indices[x.get()]
                            << ")).r";
 #else
                     stream << ".read(uint2(";
@@ -1065,9 +1062,9 @@ void compile_index(std::ostringstream &stream,
                 } else if constexpr (jit::use_cuda()) {
 #ifdef USE_INDEX_CACHE
                     stream << ", "
-                           << indices[this->right.get()]
+                           << indices[y.get()]
                            << ", "
-                           << indices[this->left.get()];
+                           << indices[x.get()];
 #else
                     stream << ", ";
                     compile_index<T> (stream, registers[y.get()], num_columns,
