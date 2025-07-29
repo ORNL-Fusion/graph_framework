@@ -6,6 +6,9 @@
 #ifndef graph_c_binding_h
 #define graph_c_binding_h
 
+#include <stddef.h>
+#include <stdint.h>
+
 extern "C" {
 ///  Graph node type for C interface.
     typedef void * graph_node;
@@ -43,9 +46,9 @@ extern "C" {
 //------------------------------------------------------------------------------
 ///  @brief Destroy C context.
 ///
-///  @param[inout] The c context to delete.
+///  @param[in,out] c The c context to delete.
 //------------------------------------------------------------------------------
-    void graph_destroy_node_flt(graph_c_context *c);
+    void graph_destroy_node(graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Create variable node.
@@ -273,24 +276,6 @@ extern "C" {
                                          const size_t source_size);
 
 //------------------------------------------------------------------------------
-///  @brief Create 1D piecewise node with complex arguments.
-///
-///  @param[in] c           The graph C context.
-///  @param[in] arg         The left opperand.
-///  @param[in] scale       Scale factor argument.
-///  @param[in] offset      Offset factor argument.
-///  @param[in] source      Source buffer to fill elements.
-///  @param[in] source_size Number of elements in the source buffer.
-///  @returns A 1D piecewise node.
-//------------------------------------------------------------------------------
-    graph_node graph_create_piecewise_1D_c(graph_c_context *c,
-                                           graph_node arg,
-                                           const std::complex<double> scale,
-                                           const std::complex<double> offset,
-                                           const void *source,
-                                           const size_t source_size) ;
-
-//------------------------------------------------------------------------------
 ///  @brief Create 2D piecewise node.
 ///
 ///  @param[in] c           The graph C context.
@@ -315,32 +300,6 @@ extern "C" {
                                          const double y_offset,
                                          const void *source,
                                          const size_t source_size);
-
-//------------------------------------------------------------------------------
-///  @brief Create 2D piecewise node with complex arguments.
-///
-///  @param[in] c           The graph C context.
-///  @param[in] num_cols    Number of columns.
-///  @param[in] x_arg       The left opperand.
-///  @param[in] x_scale     Scale factor argument.
-///  @param[in] x_offset    Offset factor argument.
-///  @param[in] y_arg       The left opperand.
-///  @param[in] y_scale     Scale factor argument.
-///  @param[in] y_offset    Offset factor argument.
-///  @param[in] source      Source buffer to fill elements.
-///  @param[in] source_size Number of elements in the source buffer.
-///  @returns A 2D piecewise node.
-//------------------------------------------------------------------------------
-    graph_node graph_create_piecewise_2D_c(graph_c_context *c,
-                                           const size_t num_cols,
-                                           graph_node x_arg,
-                                           const std::complex<double> x_scale,
-                                           const std::complex<double> x_offset,
-                                           graph_node y_arg,
-                                           const std::complex<double> y_scale,
-                                           const std::complex<double> y_offset,
-                                           const void *source,
-                                           const size_t source_size);
 
 //------------------------------------------------------------------------------
 ///  @brief Create 2D piecewise node with complex arguments.

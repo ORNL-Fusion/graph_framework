@@ -344,6 +344,10 @@ macro (add_tool_target target)
                            PUBLIC
                            graph_framework
     )
+
+    if (${USE_PCH} AND ${BUILD_C_BINDING})
+        target_precompile_headers (${target} REUSE_FROM graph_c)
+    endif ()
 endmacro ()
 
 add_subdirectory (graph_driver)
@@ -362,7 +366,11 @@ macro (add_test_target target)
     )
 
     if (${USE_PCH})
-        target_precompile_headers (${target} REUSE_FROM xrays)
+        if (${BUILD_C_BINDING})
+            target_precompile_headers (${target} REUSE_FROM graph_c)
+        else ()
+            target_precompile_headers (${target} REUSE_FROM xrays)
+        endif ()
     endif ()
 endmacro ()
 

@@ -5,7 +5,13 @@
 
 #include "graph_c_binding.h"
 
+#include "../graph_framework/register.hpp"
 #include "../graph_framework/node.hpp"
+#include "../graph_framework/workflow.hpp"
+#include "../graph_framework/arithmetic.hpp"
+#include "../graph_framework/math.hpp"
+#include "../graph_framework/trigonometry.hpp"
+#include "../graph_framework/piecewise.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief C context with specific type.
@@ -76,9 +82,9 @@ extern "C" {
 //------------------------------------------------------------------------------
 ///  @brief Destroy C context.
 ///
-///  @param[inout] The c context to delete.
+///  @param[in,out] c The c context to delete.
 //------------------------------------------------------------------------------
-    void graph_destroy_node_flt(graph_c_context *c) {
+    void graph_destroy_node(graph_c_context *c) {
         delete c;
     }
 
@@ -1531,69 +1537,6 @@ extern "C" {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Create 1D piecewise node with complex arguments.
-///
-///  @param[in] c           The graph C context.
-///  @param[in] arg         The left opperand.
-///  @param[in] scale       Scale factor argument.
-///  @param[in] offset      Offset factor argument.
-///  @param[in] source      Source buffer to fill elements.
-///  @param[in] source_size Number of elements in the source buffer.
-///  @returns A 1D piecewise node.
-//------------------------------------------------------------------------------
-    graph_node graph_create_piecewise_1D_c(graph_c_context *c,
-                                           graph_node arg,
-                                           const std::complex<double> scale,
-                                           const std::complex<double> offset,
-                                           const void *source,
-                                           const size_t source_size) {
-        switch (c->type) {
-            case COMPLEX_FLOAT:
-                if (c->safe_math) {
-                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
-                    backend::buffer<std::complex<float>> buffer(source_size);
-                    std::memcpy(buffer.data(), source, sizeof(std::complex<float>)*source_size);
-                    auto temp = graph::piecewise_1D(buffer, d->nodes[arg],
-                                                    static_cast<std::complex<float>> (scale),
-                                                    static_cast<std::complex<float>> (offset));
-                    d->nodes[temp.get()] = temp;
-                    return temp.get();
-                } else {
-                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
-                    backend::buffer<std::complex<float>> buffer(source_size);
-                    std::memcpy(buffer.data(), source, sizeof(std::complex<float>)*source_size);
-                    auto temp = graph::piecewise_1D(buffer, d->nodes[arg],
-                                                    static_cast<std::complex<float>> (scale),
-                                                    static_cast<std::complex<float>> (offset));
-                    d->nodes[temp.get()] = temp;
-                    return temp.get();
-                }
-
-            case COMPLEX_DOUBLE:
-                if (c->safe_math) {
-                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
-                    backend::buffer<std::complex<double>> buffer(source_size);
-                    std::memcpy(buffer.data(), source, sizeof(std::complex<double>)*source_size);
-                    auto temp = graph::piecewise_1D(buffer, d->nodes[arg], scale, offset);
-                    d->nodes[temp.get()] = temp;
-                    return temp.get();
-                } else {
-                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
-                    backend::buffer<std::complex<double>> buffer(source_size);
-                    std::memcpy(buffer.data(), source, sizeof(std::complex<double>)*source_size);
-                    auto temp = graph::piecewise_1D(buffer, d->nodes[arg], scale, offset);
-                    d->nodes[temp.get()] = temp;
-                    return temp.get();
-                }
-
-            case FLOAT:
-            case DOUBLE:
-                std::cerr << "Error: Context is non-complex." << std::endl;
-                exit(1);
-        }
-    }
-
-//------------------------------------------------------------------------------
 ///  @brief Create 2D piecewise node.
 ///
 ///  @param[in] c           The graph C context.
@@ -1726,89 +1669,6 @@ extern "C" {
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
-        }
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Create 2D piecewise node with complex arguments.
-///
-///  @param[in] c           The graph C context.
-///  @param[in] num_cols    Number of columns.
-///  @param[in] x_arg       The left opperand.
-///  @param[in] x_scale     Scale factor argument.
-///  @param[in] x_offset    Offset factor argument.
-///  @param[in] y_arg       The left opperand.
-///  @param[in] y_scale     Scale factor argument.
-///  @param[in] y_offset    Offset factor argument.
-///  @param[in] source      Source buffer to fill elements.
-///  @param[in] source_size Number of elements in the source buffer.
-///  @returns A 2D piecewise node.
-//------------------------------------------------------------------------------
-    graph_node graph_create_piecewise_2D_c(graph_c_context *c,
-                                           const size_t num_cols,
-                                           graph_node x_arg,
-                                           const std::complex<double> x_scale,
-                                           const std::complex<double> x_offset,
-                                           graph_node y_arg,
-                                           const std::complex<double> y_scale,
-                                           const std::complex<double> y_offset,
-                                           const void *source,
-                                           const size_t source_size) {
-        switch (c->type) {
-            case COMPLEX_FLOAT:
-                if (c->safe_math) {
-                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
-                    backend::buffer<std::complex<float>> buffer(source_size);
-                    std::memcpy(buffer.data(), source, sizeof(std::complex<float>)*source_size);
-                    auto temp = graph::piecewise_2D(buffer, num_cols,
-                                                    d->nodes[x_arg],
-                                                    static_cast<std::complex<float>> (x_scale),
-                                                    static_cast<std::complex<float>> (x_offset),
-                                                    d->nodes[y_arg],
-                                                    static_cast<std::complex<float>> (y_scale),
-                                                    static_cast<std::complex<float>> (y_offset));
-                    d->nodes[temp.get()] = temp;
-                    return temp.get();
-                } else {
-                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
-                    backend::buffer<std::complex<float>> buffer(source_size);
-                    std::memcpy(buffer.data(), source, sizeof(std::complex<float>)*source_size);
-                    auto temp = graph::piecewise_2D(buffer, num_cols,
-                                                    d->nodes[x_arg],
-                                                    static_cast<std::complex<float>> (x_scale),
-                                                    static_cast<std::complex<float>> (x_offset),
-                                                    d->nodes[y_arg],
-                                                    static_cast<std::complex<float>> (y_scale),
-                                                    static_cast<std::complex<float>> (y_offset));
-                    d->nodes[temp.get()] = temp;
-                    return temp.get();
-                }
-
-            case COMPLEX_DOUBLE:
-                if (c->safe_math) {
-                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
-                    backend::buffer<std::complex<double>> buffer(source_size);
-                    std::memcpy(buffer.data(), source, sizeof(std::complex<double>)*source_size);
-                    auto temp = graph::piecewise_2D(buffer, num_cols,
-                                                    d->nodes[x_arg], x_scale, x_offset,
-                                                    d->nodes[y_arg], y_scale, y_offset);
-                    d->nodes[temp.get()] = temp;
-                    return temp.get();
-                } else {
-                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
-                    backend::buffer<std::complex<double>> buffer(source_size);
-                    std::memcpy(buffer.data(), source, sizeof(std::complex<double>)*source_size);
-                    auto temp = graph::piecewise_2D(buffer, num_cols,
-                                                    d->nodes[x_arg], x_scale, x_offset,
-                                                    d->nodes[y_arg], y_scale, y_offset);
-                    d->nodes[temp.get()] = temp;
-                    return temp.get();
-                }
-
-            case FLOAT:
-            case DOUBLE:
-                std::cerr << "Error: Context is non-complex." << std::endl;
-                exit(1);
         }
     }
 
