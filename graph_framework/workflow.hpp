@@ -229,7 +229,7 @@ namespace workflow {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Add a workflow item.
+///  @brief Add a converge item.
 ///
 ///  @param[in] in       Input variables.
 ///  @param[in] out      Output nodes.
@@ -237,7 +237,7 @@ namespace workflow {
 ///  @param[in] state    Random state node.
 ///  @param[in] name     Name of the workitem.
 ///  @param[in] size     Size of the workitem.
-///  @param[in] tol      Tolarance to solve the dispersion function to.
+///  @param[in] tol      Tolarance to converge the function to.
 ///  @param[in] max_iter Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
         void add_converge_item(graph::input_nodes<T, SAFE_MATH> in,
@@ -297,8 +297,8 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
-///  @param[in] node        Not to copy buffer to.
-///  @param[in] destination Device side buffer to copy to.
+///  @param[in] node        Node to copy buffer to.
+///  @param[in] destination Host side buffer to copy from.
 //------------------------------------------------------------------------------
         void copy_to_device(graph::shared_leaf<T, SAFE_MATH> &node,
                             T *destination) {
@@ -330,7 +330,7 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Check the value.
 ///
-///  @param[in] index Ray index to check value for.
+///  @param[in] index Particle index to check value for.
 ///  @param[in] node  Node to check the value for.
 ///  @returns The value at the index.
 //------------------------------------------------------------------------------
