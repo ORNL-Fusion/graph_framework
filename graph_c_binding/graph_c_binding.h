@@ -8,8 +8,22 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
+#ifdef USE_METAL
+#define START_GPU @autoreleasepool {
+#define END_GPU }
+#else
+#define START_GPU
+#define END_GPU
+#endif
+
+#ifdef __cplusplus
 extern "C" {
+#define STRUCT_TAG
+#else
+#define STRUCT_TAG struct
+#endif
 ///  Graph node type for C interface.
     typedef void * graph_node;
 
@@ -40,15 +54,15 @@ extern "C" {
 ///  @param[in] use_safe_math Control is safe math is used.
 ///  @returns A contructed C context.
 //------------------------------------------------------------------------------
-    graph_c_context *graph_construct_context(const enum graph_type type,
-                                             const bool use_safe_math);
+    STRUCT_TAG graph_c_context *graph_construct_context(const enum graph_type type,
+                                                        const bool use_safe_math);
 
 //------------------------------------------------------------------------------
 ///  @brief Destroy C context.
 ///
 ///  @param[in,out] c The c context to delete.
 //------------------------------------------------------------------------------
-    void graph_destroy_node(graph_c_context *c);
+    void graph_destroy_context(STRUCT_TAG graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Create variable node.
@@ -58,9 +72,9 @@ extern "C" {
 ///  @param[in] symbol Symbol of the variable used in equations.
 ///  @returns The created variable.
 //------------------------------------------------------------------------------
-    graph_node graph_create_variable(graph_c_context *c,
-                                     const size_t size,
-                                     const char *symbol);
+    graph_node graph_variable(STRUCT_TAG graph_c_context *c,
+                              const size_t size,
+                              const char *symbol);
 
 //------------------------------------------------------------------------------
 ///  @brief Create constant node.
@@ -69,8 +83,8 @@ extern "C" {
 ///  @param[in] value The value to create the constant.
 ///  @returns The created constant.
 //------------------------------------------------------------------------------
-    graph_node graph_create_constant(graph_c_context *c,
-                                     const double value);
+    graph_node graph_constant(STRUCT_TAG graph_c_context *c,
+                              const double value);
 
 //------------------------------------------------------------------------------
 ///  @brief Set a variable value.
@@ -79,7 +93,7 @@ extern "C" {
 ///  @param[in] var    The variable to set.
 ///  @param[in] source The source pointer.
 //------------------------------------------------------------------------------
-    void graph_set_variable(graph_c_context *c,
+    void graph_set_variable(STRUCT_TAG graph_c_context *c,
                             graph_node var,
                             const void *source);
 
@@ -91,9 +105,9 @@ extern "C" {
 ///  @param[in] img_value  The imaginary component.
 ///  @returns The complex constant.
 //------------------------------------------------------------------------------
-    graph_node graph_create_constant_c(graph_c_context *c,
-                                       const double real_value,
-                                       const double img_value);
+    graph_node graph_constant_c(STRUCT_TAG graph_c_context *c,
+                                const double real_value,
+                                const double img_value);
 
 //------------------------------------------------------------------------------
 ///  @brief Create a pseudo variable.
@@ -102,8 +116,8 @@ extern "C" {
 ///  @param[in] var The variable to set.
 ///  @returns THe pseudo variable.
 //------------------------------------------------------------------------------
-    graph_node graph_create_pseudo_variable(graph_c_context *c,
-                                            graph_node var);
+    graph_node graph_pseudo_variable(STRUCT_TAG graph_c_context *c,
+                                     graph_node var);
 
 //------------------------------------------------------------------------------
 ///  @brief Remove pseudo.
@@ -112,7 +126,7 @@ extern "C" {
 ///  @param[in] var The variable to set.
 ///  @returns The graph with pseudo variables removed.
 //------------------------------------------------------------------------------
-    graph_node graph_remove_pseudo(graph_c_context *c,
+    graph_node graph_remove_pseudo(STRUCT_TAG graph_c_context *c,
                                    graph_node var);
 
 //------------------------------------------------------------------------------
@@ -123,9 +137,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns left + right
 //------------------------------------------------------------------------------
-    graph_node graph_create_add(graph_c_context *c,
-                                graph_node left,
-                                graph_node right);
+    graph_node graph_add(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right);
 
 //------------------------------------------------------------------------------
 ///  @brief Create Substract node.
@@ -135,9 +149,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns left - right
 //------------------------------------------------------------------------------
-    graph_node graph_create_sub(graph_c_context *c,
-                                graph_node left,
-                                graph_node right);
+    graph_node graph_sub(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right);
 
 //------------------------------------------------------------------------------
 ///  @brief Create Multiply node.
@@ -147,9 +161,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns left*right
 //------------------------------------------------------------------------------
-    graph_node graph_create_mul(graph_c_context *c,
-                                graph_node left,
-                                graph_node right);
+    graph_node graph_mul(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right);
 
 //------------------------------------------------------------------------------
 ///  @brief Create Divide node.
@@ -159,9 +173,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns left/right
 //------------------------------------------------------------------------------
-    graph_node graph_create_div(graph_c_context *c,
-                                graph_node left,
-                                graph_node right);
+    graph_node graph_div(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right);
 
 //------------------------------------------------------------------------------
 ///  @brief Create Sqrt node.
@@ -170,8 +184,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns sqrt(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_sqrt(graph_c_context *c,
-                                 graph_node arg);
+    graph_node graph_sqrt(STRUCT_TAG graph_c_context *c,
+                          graph_node arg);
 
 //------------------------------------------------------------------------------
 ///  @brief Create exp node.
@@ -180,8 +194,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns exp(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_exp(graph_c_context *c,
-                                graph_node arg);
+    graph_node graph_exp(STRUCT_TAG graph_c_context *c,
+                         graph_node arg);
 
 //------------------------------------------------------------------------------
 ///  @brief Create log node.
@@ -190,8 +204,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns log(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_log(graph_c_context *c,
-                                graph_node arg);
+    graph_node graph_log(STRUCT_TAG graph_c_context *c,
+                         graph_node arg);
 
 //------------------------------------------------------------------------------
 ///  @brief Create imaginary error function node.
@@ -200,8 +214,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns erfi(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_erfi(graph_c_context *c,
-                                 graph_node arg);
+    graph_node graph_erfi(STRUCT_TAG graph_c_context *c,
+                          graph_node arg);
 
 //------------------------------------------------------------------------------
 ///  @brief Create sine node.
@@ -210,8 +224,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns sin(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_sin(graph_c_context *c,
-                                graph_node arg);
+    graph_node graph_sin(STRUCT_TAG graph_c_context *c,
+                         graph_node arg);
 
 //------------------------------------------------------------------------------
 ///  @brief Create cosine node.
@@ -220,8 +234,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns sin(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_cos(graph_c_context *c,
-                                graph_node arg);
+    graph_node graph_cos(STRUCT_TAG graph_c_context *c,
+                         graph_node arg);
 
 //------------------------------------------------------------------------------
 ///  @brief Create arctangent node.
@@ -231,9 +245,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns atan(left, right)
 //------------------------------------------------------------------------------
-    graph_node graph_create_atan(graph_c_context *c,
-                                 graph_node left,
-                                 graph_node right);
+    graph_node graph_atan(STRUCT_TAG graph_c_context *c,
+                          graph_node left,
+                          graph_node right);
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a random state node.
@@ -243,9 +257,9 @@ extern "C" {
 ///  @param[in] seed Intial random seed.
 ///  @returns A random state node.
 //------------------------------------------------------------------------------
-    graph_node graph_create_random_state(graph_c_context *c,
-                                         const size_t size,
-                                         const uint32_t seed);
+    graph_node graph_random_state(STRUCT_TAG graph_c_context *c,
+                                  const size_t size,
+                                  const uint32_t seed);
 
 //------------------------------------------------------------------------------
 ///  @brief Create random node.
@@ -254,8 +268,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns random(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_random(graph_c_context *c,
-                                   graph_node arg);
+    graph_node graph_random(STRUCT_TAG graph_c_context *c,
+                            graph_node arg);
 
 //------------------------------------------------------------------------------
 ///  @brief Create 1D piecewise node.
@@ -268,12 +282,12 @@ extern "C" {
 ///  @param[in] source_size Number of elements in the source buffer.
 ///  @returns A 1D piecewise node.
 //------------------------------------------------------------------------------
-    graph_node graph_create_piecewise_1D(graph_c_context *c,
-                                         graph_node arg,
-                                         const double scale,
-                                         const double offset,
-                                         const void *source,
-                                         const size_t source_size);
+    graph_node graph_piecewise_1D(STRUCT_TAG graph_c_context *c,
+                                  graph_node arg,
+                                  const double scale,
+                                  const double offset,
+                                  const void *source,
+                                  const size_t source_size);
 
 //------------------------------------------------------------------------------
 ///  @brief Create 2D piecewise node.
@@ -290,16 +304,16 @@ extern "C" {
 ///  @param[in] source_size Number of elements in the source buffer.
 ///  @returns A 2D piecewise node.
 //------------------------------------------------------------------------------
-    graph_node graph_create_piecewise_2D(graph_c_context *c,
-                                         const size_t num_cols,
-                                         graph_node x_arg,
-                                         const double x_scale,
-                                         const double x_offset,
-                                         graph_node y_arg,
-                                         const double y_scale,
-                                         const double y_offset,
-                                         const void *source,
-                                         const size_t source_size);
+    graph_node graph_piecewise_2D(STRUCT_TAG graph_c_context *c,
+                                  const size_t num_cols,
+                                  graph_node x_arg,
+                                  const double x_scale,
+                                  const double x_offset,
+                                  graph_node y_arg,
+                                  const double y_scale,
+                                  const double y_offset,
+                                  const void *source,
+                                  const size_t source_size);
 
 //------------------------------------------------------------------------------
 ///  @brief Create 2D piecewise node with complex arguments.
@@ -307,7 +321,7 @@ extern "C" {
 ///  @param[in] c The graph C context.
 ///  @returns The number of concurrent devices.
 //------------------------------------------------------------------------------
-    size_t graph_get_max_concurrency(graph_c_context *c);
+    size_t graph_get_max_concurrency(STRUCT_TAG graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Choose the device number.
@@ -315,7 +329,7 @@ extern "C" {
 ///  @param[in] c   The graph C context.
 ///  @param[in] num The device number.
 //------------------------------------------------------------------------------
-    void graph_set_device_number(graph_c_context *c,
+    void graph_set_device_number(STRUCT_TAG graph_c_context *c,
                                  const size_t num);
 
 //------------------------------------------------------------------------------
@@ -333,7 +347,7 @@ extern "C" {
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
 //------------------------------------------------------------------------------
-    void graph_add_pre_item(graph_c_context *c,
+    void graph_add_pre_item(STRUCT_TAG graph_c_context *c,
                             graph_node *inputs, size_t num_inputs,
                             graph_node *outputs, size_t num_outputs,
                             graph_node *map_inputs,
@@ -357,7 +371,7 @@ extern "C" {
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
 //------------------------------------------------------------------------------
-    void graph_add_item(graph_c_context *c,
+    void graph_add_item(STRUCT_TAG graph_c_context *c,
                         graph_node *inputs, size_t num_inputs,
                         graph_node *outputs, size_t num_outputs,
                         graph_node *map_inputs,
@@ -383,7 +397,7 @@ extern "C" {
 ///  @param[in] tol          Tolarance to converge the function to.
 ///  @param[in] max_iter     Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
-    void graph_add_converge_item(graph_c_context *c,
+    void graph_add_converge_item(STRUCT_TAG graph_c_context *c,
                                  graph_node *inputs, size_t num_inputs,
                                  graph_node *outputs, size_t num_outputs,
                                  graph_node *map_inputs,
@@ -399,28 +413,28 @@ extern "C" {
 ///
 ///  @param[in] c The graph C context.
 //------------------------------------------------------------------------------
-    void graph_compile(graph_c_context *c);
+    void graph_compile(STRUCT_TAG graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Run pre work items.
 ///
 ///  @param[in] c The graph C context.
 //------------------------------------------------------------------------------
-    void graph_pre_run(graph_c_context *c);
+    void graph_pre_run(STRUCT_TAG graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Run work items.
 ///
 ///  @param[in] c The graph C context.
 //------------------------------------------------------------------------------
-    void graph_run(graph_c_context *c);
+    void graph_run(STRUCT_TAG graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Wait for work items to complete.
 ///
 ///  @param[in] c The graph C context.
 //------------------------------------------------------------------------------
-    void graph_wait(graph_c_context *c);
+    void graph_wait(STRUCT_TAG graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Copy data to a device buffer.
@@ -429,7 +443,7 @@ extern "C" {
 ///  @param[in] node   Node to copy to.
 ///  @param[in] source Source to copy from.
 //------------------------------------------------------------------------------
-    void graph_copy_to_device(graph_c_context *c,
+    void graph_copy_to_device(STRUCT_TAG graph_c_context *c,
                               graph_node node,
                               void *source);
 
@@ -440,7 +454,7 @@ extern "C" {
 ///  @param[in] node        Node to copy from.
 ///  @param[in] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-    void graph_copy_to_host(graph_c_context *c,
+    void graph_copy_to_host(STRUCT_TAG graph_c_context *c,
                             graph_node node,
                             void *destination);
 
@@ -452,10 +466,23 @@ extern "C" {
 ///  @param[in] nodes     Nodes to print.
 ///  @param[in] num_nodes Number of nodes.
 //------------------------------------------------------------------------------
-    void graph_print(graph_c_context *c,
+    void graph_print(STRUCT_TAG graph_c_context *c,
                      const size_t index,
                      graph_node *nodes,
                      const size_t num_nodes);
+
+//------------------------------------------------------------------------------
+///  @brief Take derivative ∂f∂x.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] fnode The function expression to take the derivative of.
+///  @param[in] xnode The expression to take the derivative with respect to.
+//------------------------------------------------------------------------------
+    graph_node graph_df(STRUCT_TAG graph_c_context *c,
+                        graph_node fnode,
+                        graph_node xnode);
+#ifdef __cplusplus
 }
+#endif
 
 #endif /* graph_c_binding_h */

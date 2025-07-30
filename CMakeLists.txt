@@ -313,8 +313,16 @@ endif ()
 #  Setup targets
 #-------------------------------------------------------------------------------
 
+if (${USE_METAL})
+    enable_language (OBJCXX)
+endif ()
+    
 add_subdirectory (graph_framework)
 if (${BUILD_C_BINDING})
+    enable_language (C)
+    if (${USE_METAL})
+        enable_language (OBJC)
+    endif ()
     add_subdirectory (graph_c_binding)
 endif ()
 
@@ -326,18 +334,26 @@ enable_testing ()
 #-------------------------------------------------------------------------------
 #  Tool setup
 #-------------------------------------------------------------------------------
-macro (add_tool_target target)
+macro (add_tool_target target lang)
     add_executable (${target})
     target_sources (${target}
                     PRIVATE
-                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp>
+                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}>
     )
 
     if (${USE_METAL})
-        set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp
-                                     PROPERTIES
-                                     LANGUAGE OBJCXX
-        )
+        if (${lang} STREQUAL "cpp")
+            set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+                                         PROPERTIES
+                                         LANGUAGE OBJCXX
+            )
+        else ()
+            set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+                                         PROPERTIES
+                                         LANGUAGE OBJC
+                                         SKIP_PRECOMPILE_HEADERS ON
+            )
+        endif ()
     endif ()
 
     target_link_libraries (${target}
@@ -358,8 +374,8 @@ add_subdirectory (graph_korc)
 #-------------------------------------------------------------------------------
 #  Define macro function to register tests.
 #-------------------------------------------------------------------------------
-macro (add_test_target target)
-    add_tool_target (${target})
+macro (add_test_target target lang)
+    add_tool_target (${target} ${lang})
 
     add_test (NAME ${target}
               COMMAND ${target}

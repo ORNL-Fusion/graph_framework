@@ -36,7 +36,7 @@ void test_constant() {
     auto dzero = zero->df(zero);
     auto dzero_cast = graph::constant_cast(dzero);
     assert(dzero_cast.get() && "Expected a constant type for derivative.");
-    assert(dzero_cast->is(0.0) && "Constant value expeced zero.");
+    assert(dzero_cast->is(1.0) && "Constant value expeced one.");
     zero->set(static_cast<T> (1.0));
     assert(zero_cast->is(0.0) && "Constant value expeced zero.");
 

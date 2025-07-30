@@ -84,7 +84,7 @@ extern "C" {
 ///
 ///  @param[in,out] c The c context to delete.
 //------------------------------------------------------------------------------
-    void graph_destroy_node(graph_c_context *c) {
+    void graph_destroy_context(graph_c_context *c) {
         delete c;
     }
 
@@ -96,9 +96,9 @@ extern "C" {
 ///  @param[in] symbol Symbol of the variable used in equations.
 ///  @returns The created variable.
 //------------------------------------------------------------------------------
-    graph_node graph_create_variable(graph_c_context *c,
-                                     const size_t size,
-                                     const char *symbol) {
+    graph_node graph_variable(STRUCT_TAG graph_c_context *c,
+                              const size_t size,
+                              const char *symbol) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -161,8 +161,8 @@ extern "C" {
 ///  @param[in] value The value to create the constant.
 ///  @returns The created constant.
 //------------------------------------------------------------------------------
-    graph_node graph_create_constant(graph_c_context *c,
-                                     const double value) {
+    graph_node graph_constant(STRUCT_TAG graph_c_context *c,
+                              const double value) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -193,12 +193,12 @@ extern "C" {
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
-                    auto temp = graph::constant<std::complex<float>, true> (value);
+                    auto temp = graph::constant<std::complex<float>, true> (std::complex<float> (value));
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
-                    auto temp = graph::constant<std::complex<float>> (value);
+                    auto temp = graph::constant<std::complex<float>> (std::complex<float> (value));
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
@@ -206,12 +206,12 @@ extern "C" {
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
-                    auto temp = graph::constant<std::complex<double>, true> (value);
+                    auto temp = graph::constant<std::complex<double>, true> (std::complex<double> (value));
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
-                    auto temp = graph::constant<std::complex<double>> (value);
+                    auto temp = graph::constant<std::complex<double>> (std::complex<double> (value));
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
@@ -225,7 +225,7 @@ extern "C" {
 ///  @param[in] var    The variable to set.
 ///  @param[in] source The source pointer.
 //------------------------------------------------------------------------------
-    void graph_set_variable(graph_c_context *c,
+    void graph_set_variable(STRUCT_TAG graph_c_context *c,
                             graph_node var,
                             const void *source) {
         switch (c->type) {
@@ -234,7 +234,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
                     auto temp = graph::variable_cast(d->nodes[var]);
                     if (temp.get()) {
-                        std::memcpy(temp->data(), var, sizeof(float)*temp->size());
+                        std::memcpy(temp->data(), source, sizeof(float)*temp->size());
                     } else {
                         std::cerr << "Node is not a variable.";
                     }
@@ -242,7 +242,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
                     auto temp = graph::variable_cast(d->nodes[var]);
                     if (temp.get()) {
-                        std::memcpy(temp->data(), var, sizeof(float)*temp->size());
+                        std::memcpy(temp->data(), source, sizeof(float)*temp->size());
                     } else {
                         std::cerr << "Node is not a variable.";
                     }
@@ -254,7 +254,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
                     auto temp = graph::variable_cast(d->nodes[var]);
                     if (temp.get()) {
-                        std::memcpy(temp->data(), var, sizeof(double)*temp->size());
+                        std::memcpy(temp->data(), source, sizeof(double)*temp->size());
                     } else {
                         std::cerr << "Node is not a variable.";
                     }
@@ -262,7 +262,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
                     auto temp = graph::variable_cast(d->nodes[var]);
                     if (temp.get()) {
-                        std::memcpy(temp->data(), var, sizeof(double)*temp->size());
+                        std::memcpy(temp->data(), source, sizeof(double)*temp->size());
                     } else {
                         std::cerr << "Node is not a variable.";
                     }
@@ -274,7 +274,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
                     auto temp = graph::variable_cast(d->nodes[var]);
                     if (temp.get()) {
-                        std::memcpy(temp->data(), var, sizeof(std::complex<float>)*temp->size());
+                        std::memcpy(temp->data(), source, sizeof(std::complex<float>)*temp->size());
                     } else {
                         std::cerr << "Node is not a variable.";
                     }
@@ -282,7 +282,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
                     auto temp = graph::variable_cast(d->nodes[var]);
                     if (temp.get()) {
-                        std::memcpy(temp->data(), var, sizeof(std::complex<float>)*temp->size());
+                        std::memcpy(temp->data(), source, sizeof(std::complex<float>)*temp->size());
                     } else {
                         std::cerr << "Node is not a variable.";
                     }
@@ -294,7 +294,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
                     auto temp = graph::variable_cast(d->nodes[var]);
                     if (temp.get()) {
-                        std::memcpy(temp->data(), var, sizeof(std::complex<double>)*temp->size());
+                        std::memcpy(temp->data(), source, sizeof(std::complex<double>)*temp->size());
                     } else {
                         std::cerr << "Node is not a variable.";
                     }
@@ -302,7 +302,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
                     auto temp = graph::variable_cast(d->nodes[var]);
                     if (temp.get()) {
-                        std::memcpy(temp->data(), var, sizeof(std::complex<double>)*temp->size());
+                        std::memcpy(temp->data(), source, sizeof(std::complex<double>)*temp->size());
                     } else {
                         std::cerr << "Node is not a variable.";
                     }
@@ -319,9 +319,9 @@ extern "C" {
 ///  @param[in] img_value  The imaginary component.
 ///  @returns The complex constant.
 //------------------------------------------------------------------------------
-    graph_node graph_create_constant_c(graph_c_context *c,
-                                       const double real_value,
-                                       const double img_value) {
+    graph_node graph_constant_c(STRUCT_TAG graph_c_context *c,
+                                const double real_value,
+                                const double img_value) {
         switch (c->type) {
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -363,8 +363,8 @@ extern "C" {
 ///  @param[in] var The variable to set.
 ///  @returns THe pseudo variable.
 //------------------------------------------------------------------------------
-    graph_node graph_create_pseudo_variable(graph_c_context *c,
-                                            graph_node var) {
+    graph_node graph_pseudo_variable(STRUCT_TAG graph_c_context *c,
+                                     graph_node var) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -427,7 +427,7 @@ extern "C" {
 ///  @param[in] var The variable to set.
 ///  @returns The graph with pseudo variables removed.
 //------------------------------------------------------------------------------
-    graph_node graph_remove_pseudo(graph_c_context *c,
+    graph_node graph_remove_pseudo(STRUCT_TAG graph_c_context *c,
                                    graph_node var) {
         switch (c->type) {
             case FLOAT:
@@ -495,9 +495,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns left + right
 //------------------------------------------------------------------------------
-    graph_node graph_create_add(graph_c_context *c,
-                                graph_node left,
-                                graph_node right) {
+    graph_node graph_add(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -561,9 +561,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns left - right
 //------------------------------------------------------------------------------
-    graph_node graph_create_sub(graph_c_context *c,
-                                graph_node left,
-                                graph_node right) {
+    graph_node graph_sub(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -627,9 +627,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns left*right
 //------------------------------------------------------------------------------
-    graph_node graph_create_mul(graph_c_context *c,
-                                graph_node left,
-                                graph_node right) {
+    graph_node graph_mul(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -693,9 +693,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns left/right
 //------------------------------------------------------------------------------
-    graph_node graph_create_div(graph_c_context *c,
-                                graph_node left,
-                                graph_node right) {
+    graph_node graph_div(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -761,8 +761,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns sqrt(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_sqrt(graph_c_context *c,
-                                 graph_node arg) {
+    graph_node graph_sqrt(STRUCT_TAG graph_c_context *c,
+                          graph_node arg) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -825,8 +825,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns exp(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_exp(graph_c_context *c,
-                                graph_node arg) {
+    graph_node graph_exp(STRUCT_TAG graph_c_context *c,
+                         graph_node arg) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -889,8 +889,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns log(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_log(graph_c_context *c,
-                                graph_node arg) {
+    graph_node graph_log(STRUCT_TAG graph_c_context *c,
+                         graph_node arg) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -954,9 +954,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns pow(left, right)
 //------------------------------------------------------------------------------
-    graph_node graph_create_pow(graph_c_context *c,
-                                graph_node left,
-                                graph_node right) {
+    graph_node graph_pow(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -1019,8 +1019,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns erfi(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_erfi(graph_c_context *c,
-                                 graph_node arg) {
+    graph_node graph_erfi(STRUCT_TAG graph_c_context *c,
+                          graph_node arg) {
         switch (c->type) {
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -1065,8 +1065,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns sin(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_sin(graph_c_context *c,
-                                graph_node arg) {
+    graph_node graph_sin(STRUCT_TAG graph_c_context *c,
+                         graph_node arg) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -1129,8 +1129,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns sin(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_cos(graph_c_context *c,
-                                graph_node arg) {
+    graph_node graph_cos(STRUCT_TAG graph_c_context *c,
+                         graph_node arg) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -1194,9 +1194,9 @@ extern "C" {
 ///  @param[in] right The right opperand.
 ///  @returns atan(left, right)
 //------------------------------------------------------------------------------
-    graph_node graph_create_atan(graph_c_context *c,
-                                 graph_node left,
-                                 graph_node right) {
+    graph_node graph_atan(STRUCT_TAG graph_c_context *c,
+                          graph_node left,
+                          graph_node right) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -1263,9 +1263,9 @@ extern "C" {
 ///  @param[in] seed Intial random seed.
 ///  @returns A random state node.
 //------------------------------------------------------------------------------
-    graph_node graph_create_random_state(graph_c_context *c,
-                                         const size_t size,
-                                         const uint32_t seed) {
+    graph_node graph_random_state(STRUCT_TAG graph_c_context *c,
+                                  const size_t size,
+                                  const uint32_t seed) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -1328,8 +1328,8 @@ extern "C" {
 ///  @param[in] arg The left opperand.
 ///  @returns random(arg)
 //------------------------------------------------------------------------------
-    graph_node graph_create_random(graph_c_context *c,
-                                   graph_node arg) {
+    graph_node graph_random(STRUCT_TAG graph_c_context *c,
+                            graph_node arg) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -1447,12 +1447,12 @@ extern "C" {
 ///  @param[in] source_size Number of elements in the source buffer.
 ///  @returns A 1D piecewise node.
 //------------------------------------------------------------------------------
-    graph_node graph_create_piecewise_1D(graph_c_context *c,
-                                         graph_node arg,
-                                         const double scale,
-                                         const double offset,
-                                         const void *source,
-                                         const size_t source_size) {
+    graph_node graph_piecewise_1D(STRUCT_TAG graph_c_context *c,
+                                  graph_node arg,
+                                  const double scale,
+                                  const double offset,
+                                  const void *source,
+                                  const size_t source_size) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -1551,16 +1551,16 @@ extern "C" {
 ///  @param[in] source_size Number of elements in the source buffer.
 ///  @returns A 2D piecewise node.
 //------------------------------------------------------------------------------
-    graph_node graph_create_piecewise_2D(graph_c_context *c,
-                                         const size_t num_cols,
-                                         graph_node x_arg,
-                                         const double x_scale,
-                                         const double x_offset,
-                                         graph_node y_arg,
-                                         const double y_scale,
-                                         const double y_offset,
-                                         const void *source,
-                                         const size_t source_size) {
+    graph_node graph_piecewise_2D(STRUCT_TAG graph_c_context *c,
+                                  const size_t num_cols,
+                                  graph_node x_arg,
+                                  const double x_scale,
+                                  const double x_offset,
+                                  graph_node y_arg,
+                                  const double y_scale,
+                                  const double y_offset,
+                                  const void *source,
+                                  const size_t source_size) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
@@ -1722,7 +1722,7 @@ extern "C" {
 ///  @param[in] c   The graph C context.
 ///  @param[in] num The device number.
 //------------------------------------------------------------------------------
-    void graph_set_device_number(graph_c_context *c,
+    void graph_set_device_number(STRUCT_TAG graph_c_context *c,
                                  const size_t num) {
         switch (c->type) {
             case FLOAT:
@@ -1778,7 +1778,7 @@ extern "C" {
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
 //------------------------------------------------------------------------------
-    void graph_add_pre_item(graph_c_context *c,
+    void graph_add_pre_item(STRUCT_TAG graph_c_context *c,
                             graph_node *inputs, size_t num_inputs,
                             graph_node *outputs, size_t num_outputs,
                             graph_node *map_inputs,
@@ -1863,6 +1863,7 @@ extern "C" {
                         d->work.add_preitem(in, out, map, NULL, name, size);
                     }
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -1940,6 +1941,7 @@ extern "C" {
                         d->work.add_preitem(in, out, map, NULL, name, size);
                     }
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -2017,6 +2019,7 @@ extern "C" {
                         d->work.add_preitem(in, out, map, NULL, name, size);
                     }
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -2094,6 +2097,7 @@ extern "C" {
                         d->work.add_preitem(in, out, map, NULL, name, size);
                     }
                 }
+                break;
         }
     }
 
@@ -2112,7 +2116,7 @@ extern "C" {
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
 //------------------------------------------------------------------------------
-    void graph_add_item(graph_c_context *c,
+    void graph_add_item(STRUCT_TAG graph_c_context *c,
                         graph_node *inputs, size_t num_inputs,
                         graph_node *outputs, size_t num_outputs,
                         graph_node *map_inputs,
@@ -2197,6 +2201,7 @@ extern "C" {
                         d->work.add_item(in, out, map, NULL, name, size);
                     }
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -2274,6 +2279,7 @@ extern "C" {
                         d->work.add_item(in, out, map, NULL, name, size);
                     }
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -2351,6 +2357,7 @@ extern "C" {
                         d->work.add_item(in, out, map, NULL, name, size);
                     }
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -2428,6 +2435,7 @@ extern "C" {
                         d->work.add_item(in, out, map, NULL, name, size);
                     }
                 }
+                break;
         }
     }
 
@@ -2448,7 +2456,7 @@ extern "C" {
 ///  @param[in] tol          Tolarance to converge the function to.
 ///  @param[in] max_iter     Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
-    void graph_add_converge_item(graph_c_context *c,
+    void graph_add_converge_item(STRUCT_TAG graph_c_context *c,
                                  graph_node *inputs, size_t num_inputs,
                                  graph_node *outputs, size_t num_outputs,
                                  graph_node *map_inputs,
@@ -2539,6 +2547,7 @@ extern "C" {
                                                   size, tol, max_iter);
                     }
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -2620,6 +2629,7 @@ extern "C" {
                                                   size, tol, max_iter);
                     }
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -2701,6 +2711,7 @@ extern "C" {
                                                   size, tol, max_iter);
                     }
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -2782,6 +2793,7 @@ extern "C" {
                                                   size, tol, max_iter);
                     }
                 }
+                break;
         }
     }
 
@@ -2800,6 +2812,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
                     d->work.compile();
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -2809,6 +2822,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
                     d->work.compile();
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -2818,6 +2832,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
                     d->work.compile();
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -2827,6 +2842,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
                     d->work.compile();
                 }
+                break;
         }
     }
 
@@ -2845,6 +2861,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
                     d->work.pre_run();
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -2854,6 +2871,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
                     d->work.pre_run();
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -2863,6 +2881,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
                     d->work.pre_run();
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -2872,6 +2891,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
                     d->work.pre_run();
                 }
+                break;
         }
     }
 
@@ -2890,6 +2910,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
                     d->work.run();
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -2899,6 +2920,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
                     d->work.run();
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -2908,6 +2930,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
                     d->work.run();
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -2917,6 +2940,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
                     d->work.run();
                 }
+                break;
         }
     }
 
@@ -2930,38 +2954,42 @@ extern "C" {
             case FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
-                    d->work.run();
+                    d->work.wait();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
-                    d->work.run();
+                    d->work.wait();
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
-                    d->work.run();
+                    d->work.wait();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
-                    d->work.run();
+                    d->work.wait();
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
-                    d->work.run();
+                    d->work.wait();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
-                    d->work.run();
+                    d->work.wait();
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
-                    d->work.run();
+                    d->work.wait();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
-                    d->work.run();
+                    d->work.wait();
                 }
+                break;
         }
     }
 
@@ -2972,7 +3000,7 @@ extern "C" {
 ///  @param[in] node   Node to copy to.
 ///  @param[in] source Source to copy from.
 //------------------------------------------------------------------------------
-    void graph_copy_to_device(graph_c_context *c,
+    void graph_copy_to_device(STRUCT_TAG graph_c_context *c,
                               graph_node node,
                               void *source) {
         switch (c->type) {
@@ -2984,6 +3012,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
                     d->work.copy_to_device(d->nodes[node], static_cast<float *> (source));
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -2993,6 +3022,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
                     d->work.copy_to_device(d->nodes[node], static_cast<double *> (source));
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -3002,6 +3032,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
                     d->work.copy_to_device(d->nodes[node], static_cast<std::complex<float> *> (source));
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -3011,6 +3042,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
                     d->work.copy_to_device(d->nodes[node], static_cast<std::complex<double> *> (source));
                 }
+                break;
         }
     }
 
@@ -3021,7 +3053,7 @@ extern "C" {
 ///  @param[in] node        Node to copy from.
 ///  @param[in] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
-    void graph_copy_to_host(graph_c_context *c,
+    void graph_copy_to_host(STRUCT_TAG graph_c_context *c,
                             graph_node node,
                             void *destination) {
         switch (c->type) {
@@ -3033,6 +3065,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
                     d->work.copy_to_host(d->nodes[node], static_cast<float *> (destination));
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -3042,6 +3075,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
                     d->work.copy_to_host(d->nodes[node], static_cast<double *> (destination));
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -3051,6 +3085,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
                     d->work.copy_to_host(d->nodes[node], static_cast<std::complex<float> *> (destination));
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -3060,6 +3095,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
                     d->work.copy_to_host(d->nodes[node], static_cast<std::complex<double> *> (destination));
                 }
+                break;
         }
     }
 
@@ -3071,7 +3107,7 @@ extern "C" {
 ///  @param[in] nodes     Nodes to print.
 ///  @param[in] num_nodes Number of nodes.
 //------------------------------------------------------------------------------
-    void graph_print(graph_c_context *c,
+    void graph_print(STRUCT_TAG graph_c_context *c,
                      const size_t index,
                      graph_node *nodes,
                      const size_t num_nodes) {
@@ -3092,6 +3128,7 @@ extern "C" {
                     }
                     d->work.print(index, out);
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -3109,6 +3146,7 @@ extern "C" {
                     }
                     d->work.print(index, out);
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -3126,6 +3164,7 @@ extern "C" {
                     }
                     d->work.print(index, out);
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -3142,6 +3181,72 @@ extern "C" {
                         out.push_back(d->nodes[nodes[i]]);
                     }
                     d->work.print(index, out);
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Take derivative ∂f∂x.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] fnode The function expression to take the derivative of.
+///  @param[in] xnode The expression to take the derivative with respect to.
+//------------------------------------------------------------------------------
+    graph_node graph_df(STRUCT_TAG graph_c_context *c,
+                        graph_node fnode,
+                        graph_node xnode) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto dfdx = d->nodes[fnode]->df(d->nodes[xnode]);
+                    d->nodes[dfdx.get()] = dfdx;
+                    return dfdx.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto dfdx = d->nodes[fnode]->df(d->nodes[xnode]);
+                    d->nodes[dfdx.get()] = dfdx;
+                    return dfdx.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto dfdx = d->nodes[fnode]->df(d->nodes[xnode]);
+                    d->nodes[dfdx.get()] = dfdx;
+                    return dfdx.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto dfdx = d->nodes[fnode]->df(d->nodes[xnode]);
+                    d->nodes[dfdx.get()] = dfdx;
+                    return dfdx.get();
+                }
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    auto dfdx = d->nodes[fnode]->df(d->nodes[xnode]);
+                    d->nodes[dfdx.get()] = dfdx;
+                    return dfdx.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    auto dfdx = d->nodes[fnode]->df(d->nodes[xnode]);
+                    d->nodes[dfdx.get()] = dfdx;
+                    return dfdx.get();
+                }
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    auto dfdx = d->nodes[fnode]->df(d->nodes[xnode]);
+                    d->nodes[dfdx.get()] = dfdx;
+                    return dfdx.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    auto dfdx = d->nodes[fnode]->df(d->nodes[xnode]);
+                    d->nodes[dfdx.get()] = dfdx;
+                    return dfdx.get();
                 }
         }
     }

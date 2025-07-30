@@ -16,4 +16,7 @@ set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/graph_c_binding.cpp
                              PROPERTIES
                              LANGUAGE OBJCXX
 )
-
+target_compile_features (graph_c
+                         PUBLIC
+                         c_std_17
+)

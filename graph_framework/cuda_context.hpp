@@ -8,6 +8,7 @@
 #ifndef cuda_context_h
 #define cuda_context_h
 
+#include <unordered_set>
 #include <array>
 #include <cstring>
 
@@ -337,8 +338,8 @@ namespace gpu {
                                              &backend[0],
                                              backend.size()*sizeof(T)),
                                 "cuMemcpyHtoD");
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
                 }
-                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
             }
             for (auto &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
@@ -347,8 +348,8 @@ namespace gpu {
                                                   num_rays*sizeof(T),
                                                   CU_MEM_ATTACH_GLOBAL),
                                 "cuMemAllocManaged");
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
                 }
-                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
             }
 
             const size_t num_buffers = buffers.size();
@@ -713,6 +714,7 @@ namespace gpu {
             source_buffer << "extern \"C\" __global__ void "
                           << name << "(" << std::endl;
 
+            std::unordered_set<void *> used_args;
             if (inputs.size()) {
                 source_buffer << "    ";
                 if (is_constant[0]) {
@@ -721,22 +723,26 @@ namespace gpu {
                 jit::add_type<T> (source_buffer);
                 source_buffer << " * __restrict__ "
                               << jit::to_string('v', inputs[0].get());
+                sed_args.insert(inputs[0].get());
             }
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
-                source_buffer << ", // " << inputs[i - 1]->get_symbol()
+                if (!used_args.contains(inputs[i].get())) {
+                    source_buffer << ", // " << inputs[i - 1]->get_symbol()
 #ifndef USE_INPUT_CACHE
 #ifdef SHOW_USE_COUNT
-                              << " used " << usage.at(inputs[i - 1].get())
+                                  << " used " << usage.at(inputs[i - 1].get())
 #endif
 #endif
-                              << std::endl;
-                source_buffer << "    ";
-                if (is_constant[i]) {
-                    source_buffer << "const ";
+                                  << std::endl;
+                    source_buffer << "    ";
+                    if (is_constant[i]) {
+                        source_buffer << "const ";
+                    }
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " * __restrict__ "
+                                  << jit::to_string('v', inputs[i].get());
+                    used_args.insert(inputs[i].get());
                 }
-                jit::add_type<T> (source_buffer);
-                source_buffer << " * __restrict__ "
-                              << jit::to_string('v', inputs[i].get());
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
                 if (i == 0) {
@@ -755,10 +761,13 @@ namespace gpu {
                     source_buffer << "," << std::endl;
                 }
 
-                source_buffer << "    ";
-                jit::add_type<T> (source_buffer);
-                source_buffer << " *  __restrict__ "
-                              << jit::to_string('o', outputs[i].get());
+                if (!used_args.contains(outputs[i].get())) {
+                    source_buffer << "    ";
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " *  __restrict__ "
+                                  << jit::to_string('o', outputs[i].get());
+                    used_args.insert(outputs[i].get());
+                }
             }
             if (state.get()) {
                 source_buffer << "," << std::endl
@@ -846,65 +855,80 @@ namespace gpu {
                                    jit::register_map &registers,
                                    jit::register_map &indices,
                                    const jit::register_usage &usage) {
+            std::unordered_set<void *> out_registers;
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                  registers,
-                                                                  indices,
-                                                                  usage);
-                source_buffer << "        " << jit::to_string('v',  in.get())
-                              << "[";
-                if (state.get()) {
-                    source_buffer << "offset[0] + ";
-                }
-                source_buffer << "index] = ";
-                if constexpr (SAFE_MATH) {
-                    if constexpr (jit::complex_scalar<T>) {
-                        jit::add_type<T> (source_buffer);
-                        source_buffer << " (";
-                        source_buffer << "isnan(real(" << registers[a.get()]
-                                      << ")) ? 0.0 : real(" << registers[a.get()]
-                                      << "), ";
-                        source_buffer << "isnan(imag(" << registers[a.get()]
-                                      << ")) ? 0.0 : imag(" << registers[a.get()]
-                                      << "));" << std::endl;
-                    } else {
-                        source_buffer << "isnan(" << registers[a.get()]
-                                      << ") ? 0.0 : " << registers[a.get()]
-                                      << ";" << std::endl;
+                if (!out->is_match(in) &&
+                    !out_registers.contains(out.get())) {
+                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
+                                                                      registers,
+                                                                      indices,
+                                                                      usage);
+                    source_buffer << "        "
+                                  << jit::to_string('v',  in.get())
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset[0] + ";
                     }
-                } else {
-                    source_buffer << registers[a.get()] << ";" << std::endl;
+                    source_buffer << "index] = ";
+                    if constexpr (SAFE_MATH) {
+                        if constexpr (jit::complex_scalar<T>) {
+                            jit::add_type<T> (source_buffer);
+                            source_buffer << " (";
+                            source_buffer << "isnan(real(" << registers[a.get()]
+                                          << ")) ? 0.0 : real("
+                                          << registers[a.get()]
+                                          << "), ";
+                            source_buffer << "isnan(imag(" << registers[a.get()]
+                                          << ")) ? 0.0 : imag("
+                                          << registers[a.get()]
+                                          << "));" << std::endl;
+                        } else {
+                            source_buffer << "isnan(" << registers[a.get()]
+                                          << ") ? 0.0 : " << registers[a.get()]
+                                          << ";" << std::endl;
+                        }
+                    } else {
+                        source_buffer << registers[a.get()] << ";" << std::endl;
+                    }
+                    out_registers.insert(out.get());
                 }
             }
 
             for (auto &out : outputs) {
-                graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                  registers,
-                                                                  indices,
-                                                                  usage);
-                source_buffer << "        " << jit::to_string('o',  out.get())
-                              << "[";
-                if (state.get()) {
-                    source_buffer << "offset[0] + ";
-                }
-                source_buffer << "index] = ";
-                if constexpr (SAFE_MATH) {
-                    if constexpr (jit::complex_scalar<T>) {
-                        jit::add_type<T> (source_buffer);
-                        source_buffer << " (";
-                        source_buffer << "isnan(real(" << registers[a.get()]
-                                      << ")) ? 0.0 : real(" << registers[a.get()]
-                                      << "), ";
-                        source_buffer << "isnan(imag(" << registers[a.get()]
-                                      << ")) ? 0.0 : imag(" << registers[a.get()]
-                                      << "));" << std::endl;
-                    } else {
-                        source_buffer << "isnan(" << registers[a.get()]
-                                      << ") ? 0.0 : " << registers[a.get()]
-                                      << ";" << std::endl;
+                if (!graph::variable_cast(out).get() &&
+                    !out_registers.contains(out.get())) {
+                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
+                                                                      registers,
+                                                                      indices,
+                                                                      usage);
+                    source_buffer << "        "
+                                  << jit::to_string('o',  out.get())
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset[0] + ";
                     }
-                } else {
-                    source_buffer << registers[a.get()] << ";" << std::endl;
+                    source_buffer << "index] = ";
+                    if constexpr (SAFE_MATH) {
+                        if constexpr (jit::complex_scalar<T>) {
+                            jit::add_type<T> (source_buffer);
+                            source_buffer << " (";
+                            source_buffer << "isnan(real(" << registers[a.get()]
+                                          << ")) ? 0.0 : real("
+                                          << registers[a.get()]
+                                          << "), ";
+                            source_buffer << "isnan(imag(" << registers[a.get()]
+                                          << ")) ? 0.0 : imag("
+                                          << registers[a.get()]
+                                          << "));" << std::endl;
+                        } else {
+                            source_buffer << "isnan(" << registers[a.get()]
+                                          << ") ? 0.0 : " << registers[a.get()]
+                                          << ";" << std::endl;
+                        }
+                    } else {
+                        source_buffer << registers[a.get()] << ";" << std::endl;
+                    }
+                    out_registers.insert(out.get());
                 }
             }
 

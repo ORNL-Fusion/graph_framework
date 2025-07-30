@@ -440,7 +440,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
-            return zero<T, SAFE_MATH> ();
+            return this->is_match(x) ? one<T, SAFE_MATH> () : zero<T, SAFE_MATH> ();
         }
 
 //------------------------------------------------------------------------------
@@ -1474,7 +1474,7 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
-            return constant<T, SAFE_MATH> (static_cast<T> (this == x.get()));
+            return constant<T, SAFE_MATH> (static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------
