@@ -203,7 +203,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
-            return zero<T, SAFE_MATH> ();
+            return constant<T, SAFE_MATH> (static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------
@@ -838,7 +838,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
-            return zero<T, SAFE_MATH> ();
+            return constant<T, SAFE_MATH> (static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------

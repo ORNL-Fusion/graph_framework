@@ -12,7 +12,8 @@ option (USE_CONSTANT_CACHE "Cache the value of constantants in kernel registers.
 option (SHOW_USE_COUNT "Add a comment showing the use count in kernel sources." OFF)
 option (USE_INDEX_CACHE "Cache index values instead of computing them every time." OFF)
 option (USE_VERBOSE "Verbose jit option." OFF)
-option (BUILD_C_BINDING "Build C interface" OFF)
+option (BUILD_C_BINDING "Build C interface." OFF)
+option (BUILD_Fortran_BINDING "Build Fortran interface." OFF)
 
 #-------------------------------------------------------------------------------
 #  Set the cmake module path.
@@ -41,6 +42,9 @@ if (${APPLE})
 
     if (${USE_METAL})
         enable_language (OBJCXX)
+        if (${BUILD_C_BINDING})
+            enable_language (OBJC)
+        endif ()
 
         add_library (metal_lib INTERFACE)
         target_link_libraries (metal_lib
@@ -55,7 +59,8 @@ if (${APPLE})
         )
         target_compile_options (metal_lib
                                 INTERFACE
-                                -fobjc-arc
+                                $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>
+                                $<$<COMPILE_LANGUAGE:OBJC>:-fobjc-arc>
         )
     endif ()
 else ()
@@ -312,18 +317,20 @@ endif ()
 #-------------------------------------------------------------------------------
 #  Setup targets
 #-------------------------------------------------------------------------------
-
-if (${USE_METAL})
-    enable_language (OBJCXX)
-endif ()
-    
 add_subdirectory (graph_framework)
+
+if (${BUILD_Fortran_BINDING})
+    set (BUILD_C_BINDING ON CACHE STRING "Build C interface." FORCE)
+endif ()
+
 if (${BUILD_C_BINDING})
     enable_language (C)
-    if (${USE_METAL})
-        enable_language (OBJC)
-    endif ()
     add_subdirectory (graph_c_binding)
+endif ()
+
+if (${BUILD_Fortran_BINDING})
+    enable_language (Fortran)
+    add_subdirectory (graph_fortran_binding)
 endif ()
 
 #-------------------------------------------------------------------------------
@@ -347,7 +354,7 @@ macro (add_tool_target target lang)
                                          PROPERTIES
                                          LANGUAGE OBJCXX
             )
-        else ()
+        elseif (${lang} STREQUAL "c")
             set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
                                          PROPERTIES
                                          LANGUAGE OBJC

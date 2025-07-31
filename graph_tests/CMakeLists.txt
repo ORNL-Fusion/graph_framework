@@ -13,6 +13,7 @@ add_test_target (erfi_test cpp)
 add_test_target (efit_test cpp)
 add_test_target (random_test cpp)
 add_test_target (c_binding_test c)
+add_test_target (f_binding_test f90)
 
 target_compile_definitions (erfi_test
                             PRIVATE
@@ -27,4 +28,8 @@ target_compile_definitions (efit_test
 target_link_libraries (c_binding_test
                        PRIVATE
                        graph_c
+)
+target_link_libraries (f_binding_test
+                       PRIVATE
+                       graph_f
 )
