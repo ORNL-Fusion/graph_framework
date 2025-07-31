@@ -1256,6 +1256,44 @@ extern "C" {
 //  Random
 //******************************************************************************
 //------------------------------------------------------------------------------
+///  @brief Get random size.
+///
+///  @param[in] c The graph C context.
+///  @return The random size.
+//------------------------------------------------------------------------------
+    size_t graph_random_size(STRUCT_TAG graph_c_context *c) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    return jit::context<float, true>::random_state_size;
+                } else {
+                    return jit::context<float>::random_state_size;
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    return jit::context<double, true>::random_state_size;
+                } else {
+                    return jit::context<double>::random_state_size;
+                }
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    return jit::context<std::complex<float>, true>::random_state_size;
+                } else {
+                    return jit::context<std::complex<float>>::random_state_size;
+                }
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    return jit::context<std::complex<double>, true>::random_state_size;
+                } else {
+                    return jit::context<std::complex<double>>::random_state_size;
+                }
+        }
+    }
+
+//------------------------------------------------------------------------------
 ///  @brief Construct a random state node.
 ///
 ///  @param[in] c    The graph C context.
@@ -1733,6 +1771,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
                     d->work = workflow::manager<float> (num);
                 }
+                break;
 
             case DOUBLE:
                 if (c->safe_math) {
@@ -1742,6 +1781,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
                     d->work = workflow::manager<double> (num);
                 }
+                break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
@@ -1751,6 +1791,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
                     d->work = workflow::manager<std::complex<float>> (num);
                 }
+                break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
@@ -1760,6 +1801,7 @@ extern "C" {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
                     d->work = workflow::manager<std::complex<double>> (num);
                 }
+                break;
         }
     }
 

@@ -208,6 +208,18 @@ extern "C" {
                          graph_node arg);
 
 //------------------------------------------------------------------------------
+///  @brief Create Pow node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left opperand.
+///  @param[in] right The right opperand.
+///  @returns pow(left, right)
+//------------------------------------------------------------------------------
+    graph_node graph_pow(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right);
+
+//------------------------------------------------------------------------------
 ///  @brief Create imaginary error function node.
 ///
 ///  @param[in] c   The graph C context.
@@ -248,6 +260,14 @@ extern "C" {
     graph_node graph_atan(STRUCT_TAG graph_c_context *c,
                           graph_node left,
                           graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Get random size.
+///
+///  @param[in] c The graph C context.
+///  @return The random size.
+//------------------------------------------------------------------------------
+    size_t graph_random_size(STRUCT_TAG graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a random state node.
