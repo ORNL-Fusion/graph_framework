@@ -98,9 +98,7 @@ void run_tests(const enum graph_type type,
         }
     }
 
-    graph_node state = graph_random_state(c_context,
-                                          graph_random_size(c_context),
-                                          0);
+    graph_node state = graph_random_state(c_context, 0);
     graph_node rand = graph_random(c_context, state);
 
     const size_t max_device = graph_get_max_concurrency(c_context) - 1;

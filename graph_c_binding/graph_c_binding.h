@@ -114,7 +114,7 @@ extern "C" {
 ///
 ///  @param[in] c   The graph C context.
 ///  @param[in] var The variable to set.
-///  @returns THe pseudo variable.
+///  @returns The pseudo variable.
 //------------------------------------------------------------------------------
     graph_node graph_pseudo_variable(STRUCT_TAG graph_c_context *c,
                                      graph_node var);
@@ -123,14 +123,14 @@ extern "C" {
 ///  @brief Remove pseudo.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] var The variable to set.
+///  @param[in] var The graph to remove pseudo variables.
 ///  @returns The graph with pseudo variables removed.
 //------------------------------------------------------------------------------
     graph_node graph_remove_pseudo(STRUCT_TAG graph_c_context *c,
                                    graph_node var);
 
 //------------------------------------------------------------------------------
-///  @brief Remove pseudo.
+///  @brief Create Addition node.
 ///
 ///  @param[in] c     The graph C context.
 ///  @param[in] left  The left opperand.
@@ -181,7 +181,7 @@ extern "C" {
 ///  @brief Create Sqrt node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The function argument.
 ///  @returns sqrt(arg)
 //------------------------------------------------------------------------------
     graph_node graph_sqrt(STRUCT_TAG graph_c_context *c,
@@ -191,7 +191,7 @@ extern "C" {
 ///  @brief Create exp node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The function argument.
 ///  @returns exp(arg)
 //------------------------------------------------------------------------------
     graph_node graph_exp(STRUCT_TAG graph_c_context *c,
@@ -201,7 +201,7 @@ extern "C" {
 ///  @brief Create log node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The function argument.
 ///  @returns log(arg)
 //------------------------------------------------------------------------------
     graph_node graph_log(STRUCT_TAG graph_c_context *c,
@@ -223,7 +223,7 @@ extern "C" {
 ///  @brief Create imaginary error function node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The function argument.
 ///  @returns erfi(arg)
 //------------------------------------------------------------------------------
     graph_node graph_erfi(STRUCT_TAG graph_c_context *c,
@@ -233,7 +233,7 @@ extern "C" {
 ///  @brief Create sine node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The function argument.
 ///  @returns sin(arg)
 //------------------------------------------------------------------------------
     graph_node graph_sin(STRUCT_TAG graph_c_context *c,
@@ -243,7 +243,7 @@ extern "C" {
 ///  @brief Create cosine node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The function argument.
 ///  @returns sin(arg)
 //------------------------------------------------------------------------------
     graph_node graph_cos(STRUCT_TAG graph_c_context *c,
@@ -262,40 +262,30 @@ extern "C" {
                           graph_node right);
 
 //------------------------------------------------------------------------------
-///  @brief Get random size.
-///
-///  @param[in] c The graph C context.
-///  @return The random size.
-//------------------------------------------------------------------------------
-    size_t graph_random_size(STRUCT_TAG graph_c_context *c);
-
-//------------------------------------------------------------------------------
 ///  @brief Construct a random state node.
 ///
 ///  @param[in] c    The graph C context.
-///  @param[in] size Number of random states.
 ///  @param[in] seed Intial random seed.
 ///  @returns A random state node.
 //------------------------------------------------------------------------------
     graph_node graph_random_state(STRUCT_TAG graph_c_context *c,
-                                  const size_t size,
                                   const uint32_t seed);
 
 //------------------------------------------------------------------------------
 ///  @brief Create random node.
 ///
-///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
-///  @returns random(arg)
+///  @param[in] c     The graph C context.
+///  @param[in] state A random state node.
+///  @returns random(state)
 //------------------------------------------------------------------------------
     graph_node graph_random(STRUCT_TAG graph_c_context *c,
-                            graph_node arg);
+                            graph_node state);
 
 //------------------------------------------------------------------------------
 ///  @brief Create 1D piecewise node.
 ///
 ///  @param[in] c           The graph C context.
-///  @param[in] arg         The left opperand.
+///  @param[in] arg         The function argument.
 ///  @param[in] scale       Scale factor argument.
 ///  @param[in] offset      Offset factor argument.
 ///  @param[in] source      Source buffer to fill elements.
@@ -314,12 +304,12 @@ extern "C" {
 ///
 ///  @param[in] c           The graph C context.
 ///  @param[in] num_cols    Number of columns.
-///  @param[in] x_arg       The left opperand.
-///  @param[in] x_scale     Scale factor argument.
-///  @param[in] x_offset    Offset factor argument.
-///  @param[in] y_arg       The left opperand.
-///  @param[in] y_scale     Scale factor argument.
-///  @param[in] y_offset    Offset factor argument.
+///  @param[in] x_arg       The function x argument.
+///  @param[in] x_scale     Scale factor x argument.
+///  @param[in] x_offset    Offset factor x argument.
+///  @param[in] y_arg       The function y argument.
+///  @param[in] y_scale     Scale factor y argument.
+///  @param[in] y_offset    Offset factor y argument.
 ///  @param[in] source      Source buffer to fill elements.
 ///  @param[in] source_size Number of elements in the source buffer.
 ///  @returns A 2D piecewise node.

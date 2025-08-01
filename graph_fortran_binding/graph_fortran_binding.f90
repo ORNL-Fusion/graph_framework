@@ -12,18 +12,6 @@
 
       IMPLICIT NONE
 
-!*******************************************************************************
-!  PARAMETERS
-!*******************************************************************************
-!>  Float type.
-    INTEGER(C_INT8_T), PARAMETER :: FLOAT_T = 0
-!>  Double type.
-    INTEGER(C_INT8_T), PARAMETER :: DOUBLE_T = 1
-!>  Complex Float type.
-    INTEGER(C_INT8_T), PARAMETER :: COMPLEX_FLOAT_T = 2
-!>  Complex Double type.
-    INTEGER(C_INT8_T), PARAMETER :: COMPLEX_DOUBLE_T = 3
-
 !-------------------------------------------------------------------------------
 !>  @brief Class object for the binding.
 !-------------------------------------------------------------------------------
@@ -34,7 +22,52 @@
          TYPE(C_PTR) :: c_context
       CONTAINS
          FINAL :: graph_destruct
+         PROCEDURE :: variable => graph_context_variable
+         PROCEDURE :: constant_real => graph_context_constant_real
+         PROCEDURE :: constant_complex => graph_context_constant_complex
+         GENERIC   :: constant => constant_real, constant_complex
+         PROCEDURE :: set_variable_float => graph_context_set_variable_float
+         PROCEDURE :: set_variable_double => graph_context_set_variable_double
+         PROCEDURE :: set_variable_cfloat => graph_context_set_variable_cfloat
+         PROCEDURE :: set_variable_cdouble => graph_context_set_variable_cdouble
+         GENERIC   :: set_variable => set_variable_float,                      &
+                                      set_variable_double,                     &
+                                      set_variable_cfloat,                     &
+                                      set_variable_cdouble
+         PROCEDURE :: pseudo_variable => graph_context_pseudo_variable
+         PROCEDURE :: remove_pseudo => graph_context_remove_pseudo
+         PROCEDURE :: add => graph_context_add
+         PROCEDURE :: sub => graph_context_sub
+         PROCEDURE :: mul => graph_context_mul
+         PROCEDURE :: div => graph_context_div
+         PROCEDURE :: sqrt => graph_context_sqrt
+         PROCEDURE :: exp => graph_context_exp
+         PROCEDURE :: log => graph_context_log
+         PROCEDURE :: pow => graph_context_pow
+         PROCEDURE :: erfi => graph_context_erfi
+         PROCEDURE :: sin => graph_context_sin
+         PROCEDURE :: cos => graph_context_cos
+         PROCEDURE :: atan => graph_context_atan
+         PROCEDURE :: random_state => graph_context_random_state
+         PROCEDURE :: random => graph_context_random
+         PROCEDURE :: piecewise_1D_float => graph_context_piecewise_1D_float
+         PROCEDURE :: piecewise_1D_double => graph_context_piecewise_1D_double
+         GENERIC   :: piecewise_1D => piecewise_1D_float,                      &
+                                      piecewise_1D_double
       END TYPE
+
+!*******************************************************************************
+!  ENUMERATED TYPES
+!*******************************************************************************
+!-------------------------------------------------------------------------------
+!>  @brief
+!-------------------------------------------------------------------------------
+      ENUM, BIND(C)
+         ENUMERATOR :: FLOAT_T
+         ENUMERATOR :: DOUBLE_T
+         ENUMERATOR :: COMPLEX_FLOAT_T
+         ENUMERATOR :: COMPLEX_DOUBLE_T
+      END ENUM
 
 !*******************************************************************************
 !  INTERFACE BLOCKS
@@ -105,8 +138,8 @@
          BIND(C, NAME='graph_construct_context')
          USE, INTRINSIC :: ISO_C_BINDING
          IMPLICIT NONE
-         INTEGER(C_INT8_T), VALUE :: c_type
-         LOGICAL(C_BOOL), VALUE    :: use_safe_math
+         INTEGER(C_INT), VALUE  :: c_type
+         LOGICAL(C_BOOL), VALUE :: use_safe_math
          END FUNCTION
 
 !-------------------------------------------------------------------------------
@@ -120,6 +153,419 @@
          IMPLICIT NONE
          TYPE(C_PTR), VALUE :: c
          END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Create a variable node.
+!>
+!>  @param[in,out] c      The c context.
+!>  @param[in]     size   Size of the data buffer.
+!>  @param[in]     symbol Symbol of the variable used in equations.
+!>  @returns The created variable.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_variable(c, size, symbol)                  &
+         BIND(C, NAME='graph_variable')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                   :: c
+         INTEGER(C_LONG), VALUE               :: size
+         CHARACTER(kind=C_CHAR), DIMENSION(*) :: symbol
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create a constant node.
+!>
+!>  @param[in,out] c     The c context.
+!>  @param[in]     value Value of the constant.
+!>  @returns The created constant.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_constant(c, value)                         &
+         BIND(C, NAME='graph_constant')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE    :: c
+         REAL(C_DOUBLE), VALUE :: value
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Set a variable float value.
+!>
+!>  @param[in,out] c     The c context.
+!>  @param[in]     var   Variable to set.
+!>  @param[in]     value The buffer to the variable with.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_set_variable_float(c, var, value)                    &
+         BIND(C, NAME='graph_set_variable')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                      :: c
+         TYPE(C_PTR), VALUE                      :: var
+         REAL(C_FLOAT), DIMENSION(:), INTENT(IN) :: value
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Set a variable double value.
+!>
+!>  @param[in,out] c     The c context.
+!>  @param[in]     var   Variable to set.
+!>  @param[in]     value The buffer to the variable with.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_set_variable_double(c, var, value)                    &
+         BIND(C, NAME='graph_set_variable')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                       :: c
+         TYPE(C_PTR), VALUE                       :: var
+         REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: value
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Set a variable complex float value.
+!>
+!>  @param[in,out] c     The c context.
+!>  @param[in]     var   Variable to set.
+!>  @param[in]     value The buffer to the variable with.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_set_variable_cfloat(c, var, value)                   &
+         BIND(C, NAME='graph_set_variable')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                      :: c
+         TYPE(C_PTR), VALUE                      :: var
+         COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(IN) :: value
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Set a variable double value.
+!>
+!>  @param[in,out] c     The c context.
+!>  @param[in]     var   Variable to set.
+!>  @param[in]     value The buffer to the variable with.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_set_variable_cdouble(c, var, value)                  &
+         BIND(C, NAME='graph_set_variable')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                                  :: c
+         TYPE(C_PTR), VALUE                                  :: var
+         COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(IN) :: value
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Create a constant node with complex values.
+!>
+!>  @param[in] c          The graph C context.
+!>  @param[in] real_value The real component.
+!>  @param[in] img_value  The imaginary component.
+!>  @returns The complex constant.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_constant_c(c, real_value, img_value)       &
+         BIND(C, NAME='graph_constant_c')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE    :: c
+         REAL(C_DOUBLE), VALUE :: real_value
+         REAL(C_DOUBLE), VALUE :: img_value
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create a pseudo variable node.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] var The variable to set.
+!>  @returns The pseudo variable.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_pseudo_variable(c, var)                    &
+         BIND(C, NAME='graph_pseudo_variable')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: var
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Remove pseudo.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] var The graph to remove pseudo variables.
+!>  @returns The graph with pseudo variables removed.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_remove_pseudo(c, var)                      &
+         BIND(C, NAME='graph_remove_pseudo')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: var
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Addition node.
+!>
+!>  @param[in] c     The graph C context.
+!>  @param[in] left  The left opperand.
+!>  @param[in] right The right opperand.
+!>  @returns left + right
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_add(c, left, right)                        &
+         BIND(C, NAME='graph_add')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: left
+         TYPE(C_PTR), VALUE :: right
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Substract node.
+!>
+!>  @param[in] c     The graph C context.
+!>  @param[in] left  The left opperand.
+!>  @param[in] right The right opperand.
+!>  @returns left - right
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_sub(c, left, right)                        &
+         BIND(C, NAME='graph_sub')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: left
+         TYPE(C_PTR), VALUE :: right
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Multiply node.
+!>
+!>  @param[in] c     The graph C context.
+!>  @param[in] left  The left opperand.
+!>  @param[in] right The right opperand.
+!>  @returns left*right
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_mul(c, left, right)                        &
+         BIND(C, NAME='graph_mul')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: left
+         TYPE(C_PTR), VALUE :: right
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Divide node.
+!>
+!>  @param[in] c     The graph C context.
+!>  @param[in] left  The left opperand.
+!>  @param[in] right The right opperand.
+!>  @returns left/right
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_div(c, left, right)                        &
+         BIND(C, NAME='graph_div')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: left
+         TYPE(C_PTR), VALUE :: right
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Sqrt node.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] arg The function argument.
+!>  @returns sqrt(arg)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_sqrt(c, arg)                               &
+         BIND(C, NAME='graph_sqrt')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: arg
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Exp node.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] arg The function argument.
+!>  @returns exp(arg)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_exp(c, arg)                               &
+         BIND(C, NAME='graph_exp')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: arg
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Log node.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] arg The function argument.
+!>  @returns log(arg)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_log(c, arg)                               &
+         BIND(C, NAME='graph_log')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: arg
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create pow node.
+!>
+!>  @param[in] c     The graph C context.
+!>  @param[in] left  The left opperand.
+!>  @param[in] right The right opperand.
+!>  @returns pow(left, right)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_pow(c, left, right)                        &
+         BIND(C, NAME='graph_pow')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: left
+         TYPE(C_PTR), VALUE :: right
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Erfi node.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] arg The function argument.
+!>  @returns erfi(arg)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_erfi(c, arg)                               &
+         BIND(C, NAME='graph_erfi')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: arg
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Sine node.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] arg The function argument.
+!>  @returns sin(arg)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_sin(c, arg)                                &
+         BIND(C, NAME='graph_sin')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: arg
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Cosine node.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] arg The function argument.
+!>  @returns cos(arg)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_cos(c, arg)                                &
+         BIND(C, NAME='graph_cos')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: arg
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create atan node.
+!>
+!>  @param[in] c     The graph C context.
+!>  @param[in] left  The left opperand.
+!>  @param[in] right The right opperand.
+!>  @returns pow(left, right)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_atan(c, left, right)                       &
+         BIND(C, NAME='graph_atan')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: left
+         TYPE(C_PTR), VALUE :: right
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Construct a random state node.
+!>
+!>  @param[in] c    The graph C context.
+!>  @param[in] seed Intial random seed.
+!>  @returns A random state node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_random_state(c, seed)                      &
+         BIND(C, NAME='graph_random_state')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE        :: c
+         INTEGER(C_INT32_T), VALUE :: seed
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Random node.
+!>
+!>  @param[in] c     The graph C context.
+!>  @param[in] state A random state node.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_random(c, state)                           &
+         BIND(C, NAME='graph_random')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: state
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D piecewise node with float buffer.
+!>
+!>  @param[in] c           The graph C context.
+!>  @param[in] arg         The left opperand.
+!>  @param[in] scale       Scale factor argument.
+!>  @param[in] offset      Offset factor argument.
+!>  @param[in] source      Source buffer to fill elements.
+!>  @param[in] source_size Number of elements in the source buffer.
+!>  @returns A 1D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_piecewise_1D_float(c, arg, scale, offset,  &
+                                                       source, source_size)    &
+         BIND(C, NAME='graph_piecewise_1D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                      :: c
+         TYPE(C_PTR), VALUE                      :: arg
+         REAL(C_DOUBLE), VALUE                   :: scale
+         REAL(C_DOUBLE), VALUE                   :: offset
+         REAL(C_FLOAT), DIMENSION(:), INTENT(IN) :: source
+         INTEGER(C_LONG), VALUE                  :: source_size
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D piecewise node with double buffer.
+!>
+!>  @param[in] c           The graph C context.
+!>  @param[in] arg         The left opperand.
+!>  @param[in] scale       Scale factor argument.
+!>  @param[in] offset      Offset factor argument.
+!>  @param[in] source      Source buffer to fill elements.
+!>  @param[in] source_size Number of elements in the source buffer.
+!>  @returns A 1D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_piecewise_1D_double(c, arg, scale, offset, &
+                                                        source, source_size)   &
+         BIND(C, NAME='graph_piecewise_1D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                       :: c
+         TYPE(C_PTR), VALUE                       :: arg
+         REAL(C_DOUBLE), VALUE                    :: scale
+         REAL(C_DOUBLE), VALUE                    :: offset
+         REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: source
+         INTEGER(C_LONG), VALUE                   :: source_size
+         END FUNCTION
 
       END INTERFACE
 
@@ -141,8 +587,8 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      CLASS (graph_context), POINTER :: graph_construct_float
-      LOGICAL(C_BOOL), INTENT(IN)    :: use_safe_math
+      CLASS(graph_context), POINTER :: graph_construct_float
+      LOGICAL(C_BOOL), INTENT(IN)   :: use_safe_math
 
 !  Start of executable code.
       ALLOCATE(graph_construct_float)
@@ -165,8 +611,8 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      CLASS (graph_context), POINTER :: graph_construct_double
-      LOGICAL(C_BOOL), INTENT(IN)    :: use_safe_math
+      CLASS(graph_context), POINTER :: graph_construct_double
+      LOGICAL(C_BOOL), INTENT(IN)   :: use_safe_math
 
 !  Start of executable code.
       ALLOCATE(graph_construct_double)
@@ -189,8 +635,8 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      CLASS (graph_context), POINTER :: graph_construct_complex_float
-      LOGICAL(C_BOOL), INTENT(IN)    :: use_safe_math
+      CLASS(graph_context), POINTER :: graph_construct_complex_float
+      LOGICAL(C_BOOL), INTENT(IN)   :: use_safe_math
 
 !  Start of executable code.
       ALLOCATE(graph_construct_complex_float)
@@ -213,8 +659,8 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      CLASS (graph_context), POINTER :: graph_construct_complex_double
-      LOGICAL(C_BOOL), INTENT(IN)    :: use_safe_math
+      CLASS(graph_context), POINTER :: graph_construct_complex_double
+      LOGICAL(C_BOOL), INTENT(IN)   :: use_safe_math
 
 !  Start of executable code.
       ALLOCATE(graph_construct_complex_double)
@@ -225,26 +671,601 @@
       END FUNCTION
 
 !*******************************************************************************
-! DESTRUCTION SUBROUTINES
+!  DESTRUCTION SUBROUTINES
 !*******************************************************************************
 !-------------------------------------------------------------------------------
 !>  @brief Deconstruct a @ref graph_context object.
 !>
 !>  Deallocate memory and unitialize a @ref graph_context object.
 !>
-!>  @param[input] this A @ref graph_context instance.
+!>  @param[in,out] this A @ref graph_context instance.
 !-------------------------------------------------------------------------------
       SUBROUTINE graph_destruct(this)
 
       IMPLICIT NONE
 
 !  Declare Arguments
-      TYPE (graph_context), INTENT(INOUT) :: this
+      TYPE(graph_context), INTENT(INOUT) :: this
 
 !  Start of executable.
       CALL objc_autoreleasePoolPop(this%arp_context)
       CALL graph_destroy_context(this%c_context)
 
       END SUBROUTINE
+
+!*******************************************************************************
+!  Basic Nodes
+!*******************************************************************************
+!-------------------------------------------------------------------------------
+!>  @brief Create variable node.
+!>
+!>  @param[in,out] this   @ref graph_context instance.
+!>  @param[in]     size   Size of the data buffer.
+!>  @param[in]     symbol Symbol of the variable.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_variable(this, size, symbol)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                              :: graph_context_variable
+      CLASS(graph_context), INTENT(INOUT)      :: this
+      INTEGER(C_LONG), INTENT(IN)              :: size
+      CHARACTER(kind=C_CHAR,len=*), INTENT(IN) :: symbol
+
+!  Start of executable.
+      graph_context_variable = graph_variable(this%c_context, size, symbol)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create variable node.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     value Size of the data buffer.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_constant_real(this, value)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_constant_real
+      CLASS(graph_context), INTENT(INOUT) :: this
+      REAL(C_DOUBLE), INTENT(IN)          :: value
+
+!  Start of executable.
+      graph_context_constant_real = graph_constant(this%c_context, value)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Set the value of a variable float types.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     var   The variable to set
+!>  @param[in]     value THe value to set.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_set_variable_float(this, var, value)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(INOUT)     :: this
+      TYPE(C_PTR), INTENT(IN)                 :: var
+      REAL(C_FLOAT), DIMENSION(:), INTENT(IN) :: value
+
+!  Start of executable.
+      CALL graph_set_variable_float(this%c_context, var, value)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Set the value of a variable double types.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     var   The variable to set
+!>  @param[in]     value THe value to set.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_set_variable_double(this, var, value)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(INOUT)      :: this
+      TYPE(C_PTR), INTENT(IN)                  :: var
+      REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: value
+
+!  Start of executable.
+      CALL graph_set_variable_double(this%c_context, var, value)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Set the value of a variable complex float types.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     var   The variable to set
+!>  @param[in]     value THe value to set.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_set_variable_cfloat(this, var, value)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(INOUT)                :: this
+      TYPE(C_PTR), INTENT(IN)                            :: var
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(IN) :: value
+
+!  Start of executable.
+      CALL graph_set_variable_cfloat(this%c_context, var, value)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Set the value of a variable complex double types.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     var   The variable to set
+!>  @param[in]     value THe value to set.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_set_variable_cdouble(this, var, value)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(INOUT)                 :: this
+      TYPE(C_PTR), INTENT(IN)                             :: var
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(IN) :: value
+
+!  Start of executable.
+      CALL graph_set_variable_cdouble(this%c_context, var, value)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Create variable node.
+!>
+!>  @param[in,out] this       @ref graph_context instance.
+!>  @param[in]     real_value The real component.
+!>  @param[in]     img_value  The imaginary component.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_constant_complex(this, real_value, img_value)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_constant_complex
+      CLASS(graph_context), INTENT(INOUT) :: this
+      REAL(C_DOUBLE), INTENT(IN)          :: real_value
+      REAL(C_DOUBLE), INTENT(IN)          :: img_value
+
+!  Start of executable.
+      graph_context_constant_complex = graph_constant_c(this%c_context,        &
+                                                        real_value, img_value)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create variable node.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     var  The variable to set.
+!>  @returns The pseudo variable.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_pseudo_variable(this, var)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_pseudo_variable
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: var
+
+!  Start of executable.
+      graph_context_pseudo_variable = graph_pseudo_variable(this%c_context, var)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Remove pseudo.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     var  The graph to remove pseudo variables.
+!>  @returns The graph with pseudo variables removed.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_remove_pseudo(this, var)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_remove_pseudo
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: var
+
+!  Start of executable.
+      graph_context_remove_pseudo = graph_remove_pseudo(this%c_context, var)
+
+      END FUNCTION
+
+!*******************************************************************************
+!  Arithmetic Nodes
+!*******************************************************************************
+!-------------------------------------------------------------------------------
+!>  @brief Create Addition node.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     left  The graph to remove pseudo variables.
+!>  @param[in]     right The graph to remove pseudo variables.
+!>  @returns left + right
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_add(this, left, right)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_add
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: left
+      TYPE(C_PTR), INTENT(IN)             :: right
+
+!  Start of executable.
+      graph_context_add = graph_add(this%c_context, left, right)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Subtract node.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     left  The graph to remove pseudo variables.
+!>  @param[in]     right The graph to remove pseudo variables.
+!>  @returns left - right
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_sub(this, left, right)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_sub
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: left
+      TYPE(C_PTR), INTENT(IN)             :: right
+
+!  Start of executable.
+      graph_context_sub = graph_sub(this%c_context, left, right)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Multiply node.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     left  The graph to remove pseudo variables.
+!>  @param[in]     right The graph to remove pseudo variables.
+!>  @returns left*right
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_mul(this, left, right)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_mul
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: left
+      TYPE(C_PTR), INTENT(IN)             :: right
+
+!  Start of executable.
+      graph_context_mul = graph_mul(this%c_context, left, right)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Divide node.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     left  The graph to remove pseudo variables.
+!>  @param[in]     right The graph to remove pseudo variables.
+!>  @returns left/right
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_div(this, left, right)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_div
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: left
+      TYPE(C_PTR), INTENT(IN)             :: right
+
+!  Start of executable.
+      graph_context_div = graph_div(this%c_context, left, right)
+
+      END FUNCTION
+
+!*******************************************************************************
+!  Math Nodes
+!*******************************************************************************
+!-------------------------------------------------------------------------------
+!>  @brief Create Sqrt node.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     arg  The function argument.
+!>  @returns sqrt(arg)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_sqrt(this, arg)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_sqrt
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: arg
+
+!  Start of executable.
+      graph_context_sqrt = graph_sqrt(this%c_context, arg)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Exp node.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     arg  The function argument.
+!>  @returns exp(arg)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_exp(this, arg)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_exp
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: arg
+
+!  Start of executable.
+      graph_context_exp = graph_exp(this%c_context, arg)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Log node.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     arg  The function argument.
+!>  @returns log(arg)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_log(this, arg)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_log
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: arg
+
+!  Start of executable.
+      graph_context_log = graph_log(this%c_context, arg)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Pow node.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     left  The graph to remove pseudo variables.
+!>  @param[in]     right The graph to remove pseudo variables.
+!>  @returns pow(left, right)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_pow(this, left, right)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_pow
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: left
+      TYPE(C_PTR), INTENT(IN)             :: right
+
+!  Start of executable.
+      graph_context_pow = graph_pow(this%c_context, left, right)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create erfi node.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     arg  The function argument.
+!>  @returns erfi(arg)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_erfi(this, arg)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_erfi
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: arg
+
+!  Start of executable.
+      graph_context_erfi = graph_erfi(this%c_context, arg)
+
+      END FUNCTION
+
+!*******************************************************************************
+!  Trigonometry Nodes
+!*******************************************************************************
+!-------------------------------------------------------------------------------
+!>  @brief Create Sine node.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     arg  The function argument.
+!>  @returns sin(arg)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_sin(this, arg)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_sin
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: arg
+
+!  Start of executable.
+      graph_context_sin = graph_sin(this%c_context, arg)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create Cosine node.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     arg  The function argument.
+!>  @returns cos(arg)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_cos(this, arg)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_cos
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: arg
+
+!  Start of executable.
+      graph_context_cos = graph_cos(this%c_context, arg)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create atan node.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     left  The graph to remove pseudo variables.
+!>  @param[in]     right The graph to remove pseudo variables.
+!>  @returns atan(left, right)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_atan(this, left, right)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_atan
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: left
+      TYPE(C_PTR), INTENT(IN)             :: right
+
+!  Start of executable.
+      graph_context_atan = graph_atan(this%c_context, left, right)
+
+      END FUNCTION
+
+!*******************************************************************************
+!  Random Nodes
+!*******************************************************************************
+!-------------------------------------------------------------------------------
+!>  @brief Get random size.
+!>
+!>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     seed Intial random seed.
+!>  @returns The random size.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_random_state(this, seed)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_random_state
+      CLASS(graph_context), INTENT(INOUT) :: this
+      INTEGER(C_INT32_T), INTENT(IN)      :: seed
+
+!  Start of executable.
+      graph_context_random_state = graph_random_state(this%c_context, seed)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create random node.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     state A random state node.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_random(this, state)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_random
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: state
+
+!  Start of executable.
+      graph_context_random = graph_random(this%c_context, state)
+
+      END FUNCTION
+
+!*******************************************************************************
+!  Piecewise Nodes
+!*******************************************************************************
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D piecewise node with float buffer.
+!>
+!>  @param[in,out] this   @ref graph_context instance.
+!>  @param[in]     arg    The function argument.
+!>  @param[in]     scale  Scale factor argument.
+!>  @param[in]     offset Offset factor argument.
+!>  @param[in]     source Source buffer to fill elements.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_piecewise_1D_float(this, arg, scale, offset,      &
+                                                source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_piecewise_1D_float
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: arg
+      REAL(C_DOUBLE)                      :: scale
+      REAL(C_DOUBLE)                      :: offset
+      REAL(C_FLOAT), DIMENSION(:)         :: source
+
+!  Start of executable.
+      graph_context_piecewise_1D_float =                                       &
+         graph_piecewise_1D_float(this%c_context, arg, scale, offset,          &
+                                  source, INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D piecewise node with float buffer.
+!>
+!>  @param[in,out] this   @ref graph_context instance.
+!>  @param[in]     arg    The function argument.
+!>  @param[in]     scale  Scale factor argument.
+!>  @param[in]     offset Offset factor argument.
+!>  @param[in]     source Source buffer to fill elements.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_piecewise_1D_double(this, arg, scale, offset,     &
+                                                 source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                          :: graph_context_piecewise_1D_double
+      CLASS(graph_context), INTENT(INOUT)  :: this
+      TYPE(C_PTR), INTENT(IN)              :: arg
+      REAL(C_DOUBLE)                       :: scale
+      REAL(C_DOUBLE)                       :: offset
+      REAL(C_DOUBLE), DIMENSION(:)         :: source
+
+!  Start of executable.
+      graph_context_piecewise_1D_double =                                      &
+         graph_piecewise_1D_double(this%c_context, arg, scale, offset,         &
+                                   source, INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
 
       END MODULE

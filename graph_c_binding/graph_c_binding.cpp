@@ -1256,64 +1256,26 @@ extern "C" {
 //  Random
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Get random size.
-///
-///  @param[in] c The graph C context.
-///  @return The random size.
-//------------------------------------------------------------------------------
-    size_t graph_random_size(STRUCT_TAG graph_c_context *c) {
-        switch (c->type) {
-            case FLOAT:
-                if (c->safe_math) {
-                    return jit::context<float, true>::random_state_size;
-                } else {
-                    return jit::context<float>::random_state_size;
-                }
-
-            case DOUBLE:
-                if (c->safe_math) {
-                    return jit::context<double, true>::random_state_size;
-                } else {
-                    return jit::context<double>::random_state_size;
-                }
-
-            case COMPLEX_FLOAT:
-                if (c->safe_math) {
-                    return jit::context<std::complex<float>, true>::random_state_size;
-                } else {
-                    return jit::context<std::complex<float>>::random_state_size;
-                }
-
-            case COMPLEX_DOUBLE:
-                if (c->safe_math) {
-                    return jit::context<std::complex<double>, true>::random_state_size;
-                } else {
-                    return jit::context<std::complex<double>>::random_state_size;
-                }
-        }
-    }
-
-//------------------------------------------------------------------------------
 ///  @brief Construct a random state node.
 ///
 ///  @param[in] c    The graph C context.
-///  @param[in] size Number of random states.
 ///  @param[in] seed Intial random seed.
 ///  @returns A random state node.
 //------------------------------------------------------------------------------
     graph_node graph_random_state(STRUCT_TAG graph_c_context *c,
-                                  const size_t size,
                                   const uint32_t seed) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
-                    auto temp = graph::random_state<float, true> (size, seed);
+                    auto temp = graph::random_state<float, true> (jit::context<float, true>::random_state_size,
+                                                                  seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
-                    auto temp = graph::random_state<float> (size, seed);
+                    auto temp = graph::random_state<float> (jit::context<float>::random_state_size,
+                                                            seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
@@ -1321,12 +1283,14 @@ extern "C" {
             case DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
-                    auto temp = graph::random_state<double, true> (size, seed);
+                    auto temp = graph::random_state<double, true> (jit::context<double, true>::random_state_size,
+                                                                   seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
-                    auto temp = graph::random_state<double> (size, seed);
+                    auto temp = graph::random_state<double> (jit::context<double>::random_state_size,
+                                                             seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
@@ -1334,12 +1298,13 @@ extern "C" {
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
-                    auto temp = graph::random_state<std::complex<float>, true> (size, seed);
+                    auto temp = graph::random_state<std::complex<float>, true> (jit::context<std::complex<float>, true>::random_state_size,
+                                                                                seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
-                    auto temp = graph::random_state<std::complex<float>> (size, seed);
+                    auto temp = graph::random_state<std::complex<float>> (jit::context<std::complex<float>>::random_state_size, seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
@@ -1347,12 +1312,13 @@ extern "C" {
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
-                    auto temp = graph::random_state<std::complex<double>, true> (size, seed);
+                    auto temp = graph::random_state<std::complex<double>, true> (jit::context<std::complex<double>, true>::random_state_size,
+                                                                                 seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
-                    auto temp = graph::random_state<std::complex<double>> (size, seed);
+                    auto temp = graph::random_state<std::complex<double>> (jit::context<std::complex<double>>::random_state_size, seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
@@ -1363,8 +1329,8 @@ extern "C" {
 ///  @brief Create random node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
-///  @returns random(arg)
+///  @param[in] arg A random state node.
+///  @returns random(state)
 //------------------------------------------------------------------------------
     graph_node graph_random(STRUCT_TAG graph_c_context *c,
                             graph_node arg) {
@@ -1478,7 +1444,7 @@ extern "C" {
 ///  @brief Create 1D piecewise node.
 ///
 ///  @param[in] c           The graph C context.
-///  @param[in] arg         The left opperand.
+///  @param[in] arg         The function argument.
 ///  @param[in] scale       Scale factor argument.
 ///  @param[in] offset      Offset factor argument.
 ///  @param[in] source      Source buffer to fill elements.
@@ -1579,12 +1545,12 @@ extern "C" {
 ///
 ///  @param[in] c           The graph C context.
 ///  @param[in] num_cols    Number of columns.
-///  @param[in] x_arg       The left opperand.
-///  @param[in] x_scale     Scale factor argument.
-///  @param[in] x_offset    Offset factor argument.
-///  @param[in] y_arg       The left opperand.
-///  @param[in] y_scale     Scale factor argument.
-///  @param[in] y_offset    Offset factor argument.
+///  @param[in] x_arg       The function x argument.
+///  @param[in] x_scale     Scale factor x argument.
+///  @param[in] x_offset    Offset factor x argument.
+///  @param[in] y_arg       The function y argument.
+///  @param[in] y_scale     Scale factor y argument.
+///  @param[in] y_offset    Offset factor y argument.
 ///  @param[in] source      Source buffer to fill elements.
 ///  @param[in] source_size Number of elements in the source buffer.
 ///  @returns A 2D piecewise node.

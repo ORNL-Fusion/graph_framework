@@ -12,8 +12,6 @@ add_test_target (piecewise_test cpp)
 add_test_target (erfi_test cpp)
 add_test_target (efit_test cpp)
 add_test_target (random_test cpp)
-add_test_target (c_binding_test c)
-add_test_target (f_binding_test f90)
 
 target_compile_definitions (erfi_test
                             PRIVATE
@@ -25,11 +23,18 @@ target_compile_definitions (efit_test
                             EFIT_GOLD_FILE="${CMAKE_CURRENT_SOURCE_DIR}/efit_gold.nc"
 )
 
-target_link_libraries (c_binding_test
-                       PRIVATE
-                       graph_c
-)
-target_link_libraries (f_binding_test
-                       PRIVATE
-                       graph_f
-)
+if (${BUILD_C_BINDING})
+    add_test_target (c_binding_test c)
+    target_link_libraries (c_binding_test
+                           PRIVATE
+                           graph_c
+    )
+endif ()
+
+if (${BUILD_Fortran_BINDING})
+    add_test_target (f_binding_test f90)
+    target_link_libraries (f_binding_test
+                           PRIVATE
+                           graph_f
+    )
+endif ()
