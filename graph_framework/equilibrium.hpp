@@ -157,6 +157,17 @@ namespace equilibrium {
                            graph::shared_leaf<T, SAFE_MATH> y,
                            graph::shared_leaf<T, SAFE_MATH> z) = 0;
 
+//--------------------------------------------------------------------------
+///  @brief Get the electric field (default: zero — override if needed).
+//--------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_electric_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) {
+            auto zero = graph::zero<T, SAFE_MATH>();
+            return graph::vector(zero, zero, zero);
+        }
+
 //------------------------------------------------------------------------------
 ///  @brief Get the characteristic field.
 ///
@@ -986,6 +997,14 @@ namespace equilibrium {
 ///  Pressure scale factor.
         graph::shared_leaf<T, SAFE_MATH> pres_scale;
 
+
+// Electric‑potential (Φ) spline coefficients and scale  ───────────────
+        const backend::buffer<T> epsi_c0;
+        const backend::buffer<T> epsi_c1;
+        const backend::buffer<T> epsi_c2;
+        const backend::buffer<T> epsi_c3;
+        graph::shared_leaf<T, SAFE_MATH> epsi_scale;
+
 ///  Minimum R.
         const T rmin;
 ///  R grid spacing.
@@ -1060,6 +1079,9 @@ namespace equilibrium {
 
 ///  Cached magnetic field vector.
         graph::shared_vector<T, SAFE_MATH> b_cache;
+
+///  Cached electric field vector.
+        graph::shared_vector<T, SAFE_MATH> e_cache;
 
 ///  Cached magnetic flux.
         graph::shared_leaf<T, SAFE_MATH> psi_cache;
@@ -1149,7 +1171,7 @@ namespace equilibrium {
 
                 te_cache = te_scale*build_1D_spline({t0_temp, t1_temp, t2_temp, t3_temp}, psi_cache, dpsi, psimin);
 
-                auto p0_temp = graph::piecewise_1D(pres_c0, psi_cache, dpsi, psimin) - psimin;
+                auto p0_temp = graph::piecewise_1D(pres_c0, psi_cache, dpsi, psimin);
                 auto p1_temp = graph::piecewise_1D(pres_c1, psi_cache, dpsi, psimin);
                 auto p2_temp = graph::piecewise_1D(pres_c2, psi_cache, dpsi, psimin);
                 auto p3_temp = graph::piecewise_1D(pres_c3, psi_cache, dpsi, psimin);
@@ -1161,23 +1183,47 @@ namespace equilibrium {
                 ni_cache = te_cache;
                 ti_cache = (pressure - ne_cache*te_cache*q)/(ni_cache*q);
                 
-                auto phi = graph::atan(x, y);
-
+                // Calculate the F(psi) function [T m]
                 auto f0 = graph::piecewise_1D(fpol_c0, psi_cache, dpsi, psimin);
                 auto f1 = graph::piecewise_1D(fpol_c1, psi_cache, dpsi, psimin);
                 auto f2 = graph::piecewise_1D(fpol_c2, psi_cache, dpsi, psimin);
                 auto f3 = graph::piecewise_1D(fpol_c3, psi_cache, dpsi, psimin);
+                // Toroidal magnetic field [T]
                 auto bp = build_1D_spline({f0,f1,f2,f3},psi_cache, dpsi, psimin) / r;
-
+                // Poloidal magnetic field (B_R and B_Z) [T]
                 auto br = psi_cache->df(z)/r;
                 auto bz = -psi_cache->df(r)/r;
-
-                auto cos = graph::cos(phi);
-                auto sin = graph::sin(phi);
-                
-                b_cache = graph::vector(br*cos - bp*sin,
-                                        br*sin + bp*cos,
+                // Angle in the poloidal plane [rad]
+                auto phi = graph::atan(x, y);
+                auto cphi = graph::cos(phi);
+                auto sphi = graph::sin(phi);
+                // Magnetic field vector [T]
+                b_cache = graph::vector(br*cphi - bp*sphi,
+                                        br*sphi + bp*cphi,
                                         bz);
+
+                // ─────────────────────────  Electric field  ─────────────────────────
+                // 1‑D spline for dΦ/dψ  [ V · Wb⁻¹ ]
+                auto e0 = graph::piecewise_1D(epsi_c0, psi_cache, dpsi, psimin);
+                auto e1 = graph::piecewise_1D(epsi_c1, psi_cache, dpsi, psimin);
+                auto e2 = graph::piecewise_1D(epsi_c2, psi_cache, dpsi, psimin);
+                auto e3 = graph::piecewise_1D(epsi_c3, psi_cache, dpsi, psimin);
+                auto dphi_dpsi = epsi_scale *
+                                 build_1D_spline({e0,e1,e2,e3},
+                                                 psi_cache, dpsi, psimin);
+
+                // ∇ψ components
+                auto dpsi_dr = psi_cache->df(r);
+                auto dpsi_dz = psi_cache->df(z);
+
+                // Cylindrical → Cartesian
+                auto Er = -dphi_dpsi * dpsi_dr;   // E = −∇Φ
+                auto Ez = -dphi_dpsi * dpsi_dz;
+                auto Ex = Er*cphi;
+                auto Ey = Er*sphi;
+
+                // Cache the result
+                e_cache = graph::vector(Ex,Ey,Ez);
             }
         }
 
@@ -1230,6 +1276,11 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
         efit(const T psimin,
              const T dpsi,
+             const backend::buffer<T> epsi_c0,
+             const backend::buffer<T> epsi_c1,
+             const backend::buffer<T> epsi_c2,
+             const backend::buffer<T> epsi_c3,
+             graph::shared_leaf<T, SAFE_MATH> epsi_scale,             
              const backend::buffer<T> te_c0,
              const backend::buffer<T> te_c1,
              const backend::buffer<T> te_c2,
@@ -1275,7 +1326,10 @@ namespace equilibrium {
         te_c0(te_c0), te_c1(te_c1), te_c2(te_c2), te_c3(te_c3), te_scale(te_scale),
         ne_c0(te_c0), ne_c1(te_c1), ne_c2(ne_c2), ne_c3(ne_c3), ne_scale(ne_scale),
         pres_c0(pres_c0), pres_c1(pres_c1), pres_c2(pres_c2), pres_c3(pres_c3),
-        pres_scale(pres_scale), rmin(rmin), dr(dr), zmin(zmin), dz(dz),
+        pres_scale(pres_scale), 
+        epsi_c0(epsi_c0), epsi_c1(epsi_c1), epsi_c2(epsi_c2), epsi_c3(epsi_c3),
+        epsi_scale(epsi_scale), 
+        rmin(rmin), dr(dr), zmin(zmin), dz(dz),
         fpol_c0(fpol_c0), fpol_c1(fpol_c1), fpol_c2(fpol_c2), fpol_c3(fpol_c3),
         c00(c00), c01(c01), c02(c02), c03(c03),
         c10(c10), c11(c11), c12(c12), c13(c13),
@@ -1371,6 +1425,14 @@ namespace equilibrium {
             return b_cache;
         }
 
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_electric_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) {
+            set_cache(x, y, z);
+            return e_cache;
+        }
+
 //------------------------------------------------------------------------------
 ///  @brief Get the characteristic field.
 ///
@@ -1464,6 +1526,11 @@ namespace equilibrium {
         double te_scale_value;
         nc_inq_varid(ncid, "te_scale", &varid);
         nc_get_var(ncid, varid, &te_scale_value);
+
+        double epsi_scale_value;
+        nc_inq_varid(ncid, "epsi_scale", &varid);
+        nc_get_var(ncid, varid, &epsi_scale_value);
+
 
 //  Load 1D quantities.
         int dimid;
@@ -1586,7 +1653,21 @@ namespace equilibrium {
         nc_get_var(ncid, varid, ne_c2_buffer.data());
         nc_inq_varid(ncid, "ne_c3", &varid);
         nc_get_var(ncid, varid, ne_c3_buffer.data());
-                    
+
+        std::vector<double> epsi_c0_buffer(numr);
+        std::vector<double> epsi_c1_buffer(numr);
+        std::vector<double> epsi_c2_buffer(numr);
+        std::vector<double> epsi_c3_buffer(numr);
+
+        nc_inq_varid(ncid, "epsi_c0", &varid);
+        nc_get_var(ncid, varid, epsi_c0_buffer.data());
+        nc_inq_varid(ncid, "epsi_c1", &varid);
+        nc_get_var(ncid, varid, epsi_c1_buffer.data());
+        nc_inq_varid(ncid, "epsi_c2", &varid);
+        nc_get_var(ncid, varid, epsi_c2_buffer.data());
+        nc_inq_varid(ncid, "epsi_c3", &varid);
+        nc_get_var(ncid, varid, epsi_c3_buffer.data());
+
         nc_close(ncid);
         sync.unlock();
 
@@ -1599,6 +1680,7 @@ namespace equilibrium {
         auto pres_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (pres_scale_value));
         auto ne_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (ne_scale_value));
         auto te_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (te_scale_value));
+        const auto epsi_scale = graph::constant<T, SAFE_MATH> (static_cast<T> (epsi_scale_value));
 
         const auto fpol_c0 = backend::buffer(std::vector<T> (fpol_c0_buffer.begin(), fpol_c0_buffer.end()));
         const auto fpol_c1 = backend::buffer(std::vector<T> (fpol_c1_buffer.begin(), fpol_c1_buffer.end()));
@@ -1637,7 +1719,13 @@ namespace equilibrium {
         const auto ne_c2 = backend::buffer(std::vector<T> (ne_c2_buffer.begin(), ne_c2_buffer.end()));
         const auto ne_c3 = backend::buffer(std::vector<T> (ne_c3_buffer.begin(), ne_c3_buffer.end()));
 
+        const auto epsi_c0 = backend::buffer(std::vector<T> (epsi_c0_buffer.begin(), epsi_c0_buffer.end()));
+        const auto epsi_c1 = backend::buffer(std::vector<T> (epsi_c1_buffer.begin(), epsi_c1_buffer.end()));
+        const auto epsi_c2 = backend::buffer(std::vector<T> (epsi_c2_buffer.begin(), epsi_c2_buffer.end()));
+        const auto epsi_c3 = backend::buffer(std::vector<T> (epsi_c3_buffer.begin(), epsi_c3_buffer.end()));
+
         return std::make_shared<efit<T, SAFE_MATH>> (psimin, dpsi,
+                                                     epsi_c0, epsi_c1, epsi_c2, epsi_c3, epsi_scale,
                                                      te_c0, te_c1, te_c2, te_c3, te_scale,
                                                      ne_c0, ne_c1, ne_c2, ne_c3, ne_scale,
                                                      pres_c0, pres_c1, pres_c2, pres_c3, pres_scale,

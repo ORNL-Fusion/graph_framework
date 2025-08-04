@@ -1,13 +1,14 @@
 //------------------------------------------------------------------------------
-//  xkorc.cpp  –  Full-orbit Boris integrator (dimensionless, E = 0)
+//  xkorc.cpp  –  Full-orbit Boris integrator (SI units)
 //
 //  Reads from  init_particles.nc
-//      • x, y, z , ux, uy, uz                (dimensionless)
-//      • dt               (dimensionless time-step)
-//      • NSTEPS, DUMP_EVERY                  (run control)
+//      • x, y, z , ux, uy, uz          (m and m/s)
+//      • dt                            (s)
+//      • NSTEPS, DUMP_EVERY            (run control)
+//      • particle_mass, particle_charge (kg and C)
 //
-//  Evolves {x,y,z,ux,uy,uz} with the Boris pusher.
-//  NEW: one dedicated writer thread per worker to handle NetCDF output.
+//  Evolves {x,y,z,ux,uy,uz} with the Boris pusher including electric field.
+//
 //------------------------------------------------------------------------------
 
 #include <cmath>
@@ -39,16 +40,14 @@ void run_korc()
 {
     const timeing::measure_diagnostic t_total("Total Time");
 
-    // ──────────────────────────────────────────────────────────────
-    // 1.  READ INITIAL DATA & RUN CONTROL
-    // ──────────────────────────────────────────────────────────────
+    // ─────────────────────────────────── 1. READ INITIAL DATA ────────────────
     int ncid;
     check_nc( nc_open("init_particles.nc", NC_NOWRITE, &ncid) );
 
     int dim_id;
     check_nc( nc_inq_dimid(ncid, "num_particles", &dim_id) );
     size_t Np = 0;
-    check_nc( nc_inq_dimlen(ncid, dim_id,          &Np   ) );
+    check_nc( nc_inq_dimlen(ncid, dim_id, &Np) );
     std::cout << "Num particles: " << Np << '\n';
 
     std::vector<double> h_x (Np), h_y (Np), h_z (Np),
@@ -63,23 +62,29 @@ void run_korc()
 
     long long h_NSTEPS=0, h_DUMP=0;
     double    dt_val=0.0;
+    double    m_val = 1.0;      // defaults protect against missing attributes
+    double    q_val = 1.0;
 
     int vid;
     check_nc( nc_inq_varid(ncid,"NSTEPS",     &vid) );
     check_nc( nc_get_var_longlong(ncid,vid,&h_NSTEPS) );
     check_nc( nc_inq_varid(ncid,"DUMP_EVERY", &vid) );
-    check_nc( nc_get_var_longlong(ncid,vid,&h_DUMP)   );
+    check_nc( nc_get_var_longlong(ncid,vid,&h_DUMP) );
     check_nc( nc_inq_varid(ncid,"dt",         &vid) );
     check_nc( nc_get_var_double  (ncid,vid,&dt_val)  );
+
+    if (nc_inq_varid(ncid,"particle_mass",&vid)==NC_NOERR)
+        check_nc( nc_get_var_double(ncid,vid,&m_val) );
+    if (nc_inq_varid(ncid,"particle_charge",&vid)==NC_NOERR)
+        check_nc( nc_get_var_double(ncid,vid,&q_val) );
 
     check_nc( nc_close(ncid) );
 
     const std::size_t NSTEPS     = static_cast<std::size_t>(h_NSTEPS);
     const std::size_t DUMP_EVERY = static_cast<std::size_t>(h_DUMP  );
+    const double q_over_m_val    = q_val / m_val;
 
-    // ──────────────────────────────────────────────────────────────
-    // 2.  CREATE GRAPH VARIABLES
-    // ──────────────────────────────────────────────────────────────
+    // ─────────────────────────────────── 2. CREATE GRAPH VARS ────────────────
     auto x  = graph::variable<T,false>(Np,"x");
     auto y  = graph::variable<T,false>(Np,"y");
     auto z  = graph::variable<T,false>(Np,"z");
@@ -92,9 +97,7 @@ void run_korc()
         ux->set(i,h_ux[i]); uy->set(i,h_uy[i]); uz->set(i,h_uz[i]);
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // 3.  THREAD LAYOUT
-    // ──────────────────────────────────────────────────────────────
+    // ─────────────────────────────────── 3. THREAD LAYOUT ────────────────────
     unsigned n_thr = std::max(1u,
         std::min<unsigned>(jit::context<T>::max_concurrency(), static_cast<unsigned>(Np)));
     std::vector<std::thread> workers(n_thr);
@@ -113,29 +116,35 @@ void run_korc()
             auto half = graph::constant<T,false>(0.5);
             auto one  = graph::constant<T,false>(1.0);
             auto two  = graph::constant<T,false>(2.0);
+            auto qom  = graph::constant<T,false>(static_cast<T>(q_over_m_val));
+            auto dt_half = dt * half;                    // dt/2
+            auto coeff   = dt_half * qom;                // (dt/2)*(q/m)
 
             /* geometry */
             auto eq  = equilibrium::make_efit<T>(EFIT_FILE);
-            auto b0  = eq->get_characteristic_field(tid);
-            std::cout<<"Thread "<<tid<<" B0: "<<b0->evaluate().at(0)<<'\n';
 
             /* vector wrappers */
             auto pos   = graph::vector(x ,y ,z );
             auto u_vec = graph::vector(ux,uy,uz);
 
-            auto b_vec = eq->get_magnetic_field(pos->get_x(),
-                                                pos->get_y(),
-                                                pos->get_z());
+            /* fields */
+            auto b_vec = eq->get_magnetic_field(
+                            pos->get_x(), pos->get_y(), pos->get_z());
+            auto e_vec = eq->get_electric_field(
+                            pos->get_x(), pos->get_y(), pos->get_z());
 
-            /* Boris pusher algebra (symbolic) */
-            auto t_vec   = dt * half * b_vec;
-            auto t_sq    = t_vec->dot(t_vec);
-            auto s_vec   = (two * t_vec) / (one + t_sq);
-            auto u_prime = u_vec;
-            auto u_tilde = u_prime + u_prime->cross(t_vec);
-            auto u_next  = u_prime + u_tilde->cross(s_vec);
-            auto pos_next= pos + dt * u_next;
+            /* ── Boris pusher with E ─────────────────────────────────────── */
+            auto u_minus  = u_vec  + coeff * e_vec;          // first E-kick
+            auto t_vec    = coeff * b_vec;                   // t = (qB/m)*(dt/2)
+            auto t_sq     = t_vec->dot(t_vec);
+            auto s_vec    = (two * t_vec) / (one + t_sq);    // s = 2t/(1+|t|²)
+            auto u_prime  = u_minus + u_minus->cross(t_vec);
+            auto u_plus   = u_minus + u_prime->cross(s_vec); // after B rotation
+            auto u_next   = u_plus  + coeff * e_vec;         // second E-kick
 
+            auto pos_next = pos + dt * u_next;               // advance position
+
+            /* workflow manager */
             workflow::manager<T,false> w(tid);
             w.add_item({graph::variable_cast(x ),
                         graph::variable_cast(y ),
@@ -152,10 +161,10 @@ void run_korc()
                            {u_next->get_y(),   graph::variable_cast(uy)},
                            {u_next->get_z(),   graph::variable_cast(uz)}
                        },
-                       "boris");
+                       "boris_EB");
             w.compile();
 
-            /* set up output file */
+            /* output file */
             std::ostringstream fn; fn<<"korc_"<<tid<<".nc";
             output::result_file of(fn.str(), Nloc);
             output::data_set<T> ds(of);
@@ -167,7 +176,7 @@ void run_korc()
             ds.template create_variable<false>(of,"uz", uz, w.get_context());
             of.end_define_mode();
 
-            /* ------------- one persistent writer thread ------------- */
+            /* writer thread */
             std::queue<size_t> q;
             std::mutex mtx;
             std::condition_variable cv;
@@ -180,7 +189,7 @@ void run_korc()
                     while(!q.empty()){
                         q.pop();
                         lk.unlock();
-                        ds.write(of);      // I/O outside lock
+                        ds.write(of);         // I/O outside lock
                         lk.lock();
                     }
                     if(finish) break;
@@ -191,7 +200,7 @@ void run_korc()
             const timeing::measure_diagnostic t_run("Run T"+std::to_string(tid));
             w.pre_run();
 
-            // MAIN LOOP
+            // ── MAIN LOOP ──────────────────────────────────────────────────
             for(size_t s=0; s<NSTEPS; ++s)
             {
                 w.wait();
@@ -220,6 +229,7 @@ void run_korc()
     t_total.print();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 int main(int argc, const char* argv[])
 {
     START_GPU
