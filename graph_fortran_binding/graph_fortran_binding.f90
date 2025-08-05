@@ -67,6 +67,8 @@
                                       piecewise_2D_double,                     &
                                       piecewise_2D_cfloat,                     &
                                       piecewise_2D_cdouble
+         PROCEDURE :: get_max_concurrency => graph_context_get_max_concurrency
+         PROCEDURE :: set_device_number => graph_context_set_device_number
       END TYPE
 
 !*******************************************************************************
@@ -772,6 +774,33 @@
          COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:,:), INTENT(IN) :: source
          INTEGER(C_LONG), VALUE                                :: source_size
          END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Get the maximum number of concurrent devices.
+!>
+!>  @param[in] c The graph C context.
+!>  @returns The number of devices.
+!-------------------------------------------------------------------------------
+         INTEGER(C_LONG) FUNCTION graph_get_max_concurrency(c)                 &
+         BIND(C, NAME='graph_get_max_concurrency')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Choose the device number.
+!>
+!>  @param[in] c   The graph C context.
+!>  @param[in] num The device number.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_set_device_number(c, num)                            &
+         BIND(C, NAME='graph_set_device_number')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE     :: c
+         INTEGER(C_LONG), VALUE :: num
+         END SUBROUTINE
 
       END INTERFACE
 
@@ -1697,5 +1726,47 @@
                                     source, INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
+
+!*******************************************************************************
+!  JIT
+!*******************************************************************************
+!-------------------------------------------------------------------------------
+!>  @brief Get the maximum number of concurrent devices.
+!>
+!>  @param[in] this @ref graph_context instance.
+!>  @returns The number of devices.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_get_max_concurrency(this)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      INTEGER(C_LONG)                     :: graph_context_get_max_concurrency
+      CLASS(graph_context), INTENT(IN) :: this
+
+!  Start of executable.
+      graph_context_get_max_concurrency =                                      &
+         graph_get_max_concurrency(this%c_context)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Choose the device number.
+!>
+!>  @param[in,out] c   The graph C context.
+!>  @param[in]     num The device number.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_set_device_number(this, num)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(INOUT) :: this
+      INTEGER(C_LONG), INTENT(IN)         :: num
+
+!  Start of executable.
+      CALL graph_set_device_number(this%c_context, num)
+
+      END SUBROUTINE
 
       END MODULE

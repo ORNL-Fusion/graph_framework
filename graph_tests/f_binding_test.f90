@@ -138,6 +138,8 @@
       p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
+      CALL graph%set_device_number(graph%get_max_concurrency() - 1)
+
       DEALLOCATE(graph)
 
       END SUBROUTINE
@@ -228,6 +230,8 @@
                          SHAPE(buffer2D))
       p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+
+      CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       DEALLOCATE(graph)
 
@@ -324,6 +328,8 @@
       p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
+      CALL graph%set_device_number(graph%get_max_concurrency() - 1)
+
       DEALLOCATE(graph)
 
       END SUBROUTINE
@@ -418,6 +424,8 @@
                          /), SHAPE(buffer2D))
       p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+
+      CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       DEALLOCATE(graph)
 
