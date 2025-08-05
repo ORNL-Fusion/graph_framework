@@ -52,8 +52,21 @@
          PROCEDURE :: random => graph_context_random
          PROCEDURE :: piecewise_1D_float => graph_context_piecewise_1D_float
          PROCEDURE :: piecewise_1D_double => graph_context_piecewise_1D_double
+         PROCEDURE :: piecewise_1D_cfloat => graph_context_piecewise_1D_cfloat
+         PROCEDURE :: piecewise_1D_cdouble =>                                  &
+                         graph_context_piecewise_1D_cdouble
          GENERIC   :: piecewise_1D => piecewise_1D_float,                      &
-                                      piecewise_1D_double
+                                      piecewise_1D_double,                     &
+                                      piecewise_1D_cfloat,                     &
+                                      piecewise_1D_cdouble
+         PROCEDURE :: piecewise_2D_float => graph_context_piecewise_2D_float
+         PROCEDURE :: piecewise_2D_double => graph_context_piecewise_2D_double
+         PROCEDURE :: piecewise_2D_cfloat => graph_context_piecewise_2D_cfloat
+         PROCEDURE :: piecewise_2D_cdouble => graph_context_piecewise_2D_cdouble
+         GENERIC   :: piecewise_2D => piecewise_2D_float,                      &
+                                      piecewise_2D_double,                     &
+                                      piecewise_2D_cfloat,                     &
+                                      piecewise_2D_cdouble
       END TYPE
 
 !*******************************************************************************
@@ -565,6 +578,199 @@
          REAL(C_DOUBLE), VALUE                    :: offset
          REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: source
          INTEGER(C_LONG), VALUE                   :: source_size
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D piecewise node with complex float buffer.
+!>
+!>  @param[in] c           The graph C context.
+!>  @param[in] arg         The left opperand.
+!>  @param[in] scale       Scale factor argument.
+!>  @param[in] offset      Offset factor argument.
+!>  @param[in] source      Source buffer to fill elements.
+!>  @param[in] source_size Number of elements in the source buffer.
+!>  @returns A 1D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_piecewise_1D_cfloat(c, arg, scale, offset, &
+                                                        source, source_size)   &
+         BIND(C, NAME='graph_piecewise_1D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                                 :: c
+         TYPE(C_PTR), VALUE                                 :: arg
+         REAL(C_DOUBLE), VALUE                              :: scale
+         REAL(C_DOUBLE), VALUE                              :: offset
+         COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(IN) :: source
+         INTEGER(C_LONG), VALUE                             :: source_size
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D piecewise node with complex double buffer.
+!>
+!>  @param[in] c           The graph C context.
+!>  @param[in] arg         The left opperand.
+!>  @param[in] scale       Scale factor argument.
+!>  @param[in] offset      Offset factor argument.
+!>  @param[in] source      Source buffer to fill elements.
+!>  @param[in] source_size Number of elements in the source buffer.
+!>  @returns A 1D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_piecewise_1D_cdouble(c, arg, scale,        &
+                                                         offset, source,       &
+                                                         source_size)          &
+         BIND(C, NAME='graph_piecewise_1D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                                  :: c
+         TYPE(C_PTR), VALUE                                  :: arg
+         REAL(C_DOUBLE), VALUE                               :: scale
+         REAL(C_DOUBLE), VALUE                               :: offset
+         COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(IN) :: source
+         INTEGER(C_LONG), VALUE                              :: source_size
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D piecewise node with float buffer.
+!>
+!>  @param[in] c           The graph C context.
+!>  @param[in] num_cols    Number of columns.
+!>  @param[in] x_arg       The function x argument.
+!>  @param[in] x_scale     Scale factor x argument.
+!>  @param[in] x_offset    Offset factor x argument.
+!>  @param[in] y_arg       The function y argument.
+!>  @param[in] y_scale     Scale factor y argument.
+!>  @param[in] y_offset    Offset factor y argument.
+!>  @param[in] source      Source buffer to fill elements.
+!>  @param[in] source_size Number of elements in the source buffer.
+!>  @returns A 2D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_piecewise_2D_float(c, num_cols,            &
+                                                       x_arg, x_scale,         &
+                                                       x_offset,               &
+                                                       y_arg, y_scale,         &
+                                                       y_offset,               &
+                                                       source, source_size)    &
+         BIND(C, NAME='graph_piecewise_2D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                        :: c
+         INTEGER(C_LONG), VALUE                    :: num_cols
+         TYPE(C_PTR), VALUE                        :: x_arg
+         REAL(C_DOUBLE), VALUE                     :: x_scale
+         REAL(C_DOUBLE), VALUE                     :: x_offset
+         TYPE(C_PTR), VALUE                        :: y_arg
+         REAL(C_DOUBLE), VALUE                     :: y_scale
+         REAL(C_DOUBLE), VALUE                     :: y_offset
+         REAL(C_FLOAT), DIMENSION(:,:), INTENT(IN) :: source
+         INTEGER(C_LONG), VALUE                    :: source_size
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D piecewise node with double buffer.
+!>
+!>  @param[in] c           The graph C context.
+!>  @param[in] num_cols    Number of columns.
+!>  @param[in] x_arg       The function x argument.
+!>  @param[in] x_scale     Scale factor x argument.
+!>  @param[in] x_offset    Offset factor x argument.
+!>  @param[in] y_arg       The function y argument.
+!>  @param[in] y_scale     Scale factor y argument.
+!>  @param[in] y_offset    Offset factor y argument.
+!>  @param[in] source      Source buffer to fill elements.
+!>  @param[in] source_size Number of elements in the source buffer.
+!>  @returns A 2D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_piecewise_2D_double(c, num_cols,           &
+                                                        x_arg, x_scale,        &
+                                                        x_offset,              &
+                                                        y_arg, y_scale,        &
+                                                        y_offset,              &
+                                                        source, source_size)   &
+         BIND(C, NAME='graph_piecewise_2D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                         :: c
+         INTEGER(C_LONG), VALUE                     :: num_cols
+         TYPE(C_PTR), VALUE                         :: x_arg
+         REAL(C_DOUBLE), VALUE                      :: x_scale
+         REAL(C_DOUBLE), VALUE                      :: x_offset
+         TYPE(C_PTR), VALUE                         :: y_arg
+         REAL(C_DOUBLE), VALUE                      :: y_scale
+         REAL(C_DOUBLE), VALUE                      :: y_offset
+         REAL(C_DOUBLE), DIMENSION(:,:), INTENT(IN) :: source
+         INTEGER(C_LONG), VALUE                     :: source_size
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D piecewise node with complex float buffer.
+!>
+!>  @param[in] c           The graph C context.
+!>  @param[in] num_cols    Number of columns.
+!>  @param[in] x_arg       The function x argument.
+!>  @param[in] x_scale     Scale factor x argument.
+!>  @param[in] x_offset    Offset factor x argument.
+!>  @param[in] y_arg       The function y argument.
+!>  @param[in] y_scale     Scale factor y argument.
+!>  @param[in] y_offset    Offset factor y argument.
+!>  @param[in] source      Source buffer to fill elements.
+!>  @param[in] source_size Number of elements in the source buffer.
+!>  @returns A 2D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_piecewise_2D_cfloat(c, num_cols,           &
+                                                        x_arg, x_scale,        &
+                                                        x_offset,              &
+                                                        y_arg, y_scale,        &
+                                                        y_offset,              &
+                                                        source, source_size)   &
+         BIND(C, NAME='graph_piecewise_2D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                                   :: c
+         INTEGER(C_LONG), VALUE                               :: num_cols
+         TYPE(C_PTR), VALUE                                   :: x_arg
+         REAL(C_DOUBLE), VALUE                                :: x_scale
+         REAL(C_DOUBLE), VALUE                                :: x_offset
+         TYPE(C_PTR), VALUE                                   :: y_arg
+         REAL(C_DOUBLE), VALUE                                :: y_scale
+         REAL(C_DOUBLE), VALUE                                :: y_offset
+         COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:,:), INTENT(IN) :: source
+         INTEGER(C_LONG), VALUE                               :: source_size
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D piecewise node with complex double buffer.
+!>
+!>  @param[in] c           The graph C context.
+!>  @param[in] num_cols    Number of columns.
+!>  @param[in] x_arg       The function x argument.
+!>  @param[in] x_scale     Scale factor x argument.
+!>  @param[in] x_offset    Offset factor x argument.
+!>  @param[in] y_arg       The function y argument.
+!>  @param[in] y_scale     Scale factor y argument.
+!>  @param[in] y_offset    Offset factor y argument.
+!>  @param[in] source      Source buffer to fill elements.
+!>  @param[in] source_size Number of elements in the source buffer.
+!>  @returns A 2D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_piecewise_2D_cdouble(c, num_cols,          &
+                                                         x_arg, x_scale,       &
+                                                         x_offset,             &
+                                                         y_arg, y_scale,       &
+                                                         y_offset,             &
+                                                         source, source_size)  &
+         BIND(C, NAME='graph_piecewise_2D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                                    :: c
+         INTEGER(C_LONG), VALUE                                :: num_cols
+         TYPE(C_PTR), VALUE                                    :: x_arg
+         REAL(C_DOUBLE), VALUE                                 :: x_scale
+         REAL(C_DOUBLE), VALUE                                 :: x_offset
+         TYPE(C_PTR), VALUE                                    :: y_arg
+         REAL(C_DOUBLE), VALUE                                 :: y_scale
+         REAL(C_DOUBLE), VALUE                                 :: y_offset
+         COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:,:), INTENT(IN) :: source
+         INTEGER(C_LONG), VALUE                                :: source_size
          END FUNCTION
 
       END INTERFACE
@@ -1239,7 +1445,7 @@
       END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create 1D piecewise node with float buffer.
+!>  @brief Create 1D piecewise node with double buffer.
 !>
 !>  @param[in,out] this   @ref graph_context instance.
 !>  @param[in]     arg    The function argument.
@@ -1265,6 +1471,230 @@
       graph_context_piecewise_1D_double =                                      &
          graph_piecewise_1D_double(this%c_context, arg, scale, offset,         &
                                    source, INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D piecewise node with complex float buffer.
+!>
+!>  @param[in,out] this   @ref graph_context instance.
+!>  @param[in]     arg    The function argument.
+!>  @param[in]     scale  Scale factor argument.
+!>  @param[in]     offset Offset factor argument.
+!>  @param[in]     source Source buffer to fill elements.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_piecewise_1D_cfloat(this, arg, scale, offset,     &
+                                                 source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR) :: graph_context_piecewise_1D_cfloat
+      CLASS(graph_context), INTENT(INOUT)    :: this
+      TYPE(C_PTR), INTENT(IN)                :: arg
+      REAL(C_DOUBLE)                         :: scale
+      REAL(C_DOUBLE)                         :: offset
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:) :: source
+
+!  Start of executable.
+      graph_context_piecewise_1D_cfloat =                                      &
+         graph_piecewise_1D_cfloat(this%c_context, arg, scale, offset,         &
+                                   source, INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D piecewise node with complex double buffer.
+!>
+!>  @param[in,out] this   @ref graph_context instance.
+!>  @param[in]     arg    The function argument.
+!>  @param[in]     scale  Scale factor argument.
+!>  @param[in]     offset Offset factor argument.
+!>  @param[in]     source Source buffer to fill elements.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_piecewise_1D_cdouble(this, arg, scale, offset,    &
+                                                  source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR) :: graph_context_piecewise_1D_cdouble
+      CLASS(graph_context), INTENT(INOUT)     :: this
+      TYPE(C_PTR), INTENT(IN)                 :: arg
+      REAL(C_DOUBLE)                          :: scale
+      REAL(C_DOUBLE)                          :: offset
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:) :: source
+
+!  Start of executable.
+      graph_context_piecewise_1D_cdouble =                                     &
+         graph_piecewise_1D_cdouble(this%c_context, arg, scale, offset,        &
+                                    source, INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D piecewise node with float buffer.
+!>
+!>  @param[in,out] this     @ref graph_context instance.
+!>  @param[in]     x_arg    The function x argument.
+!>  @param[in]     x_scale  Scale factor for x argument.
+!>  @param[in]     x_offset Offset factor for x argument.
+!>  @param[in]     y_arg    The function y argument.
+!>  @param[in]     y_scale  Scale factor for y argument.
+!>  @param[in]     y_offset Offset factor for y argument.
+!>  @param[in]     source   Source buffer to fill elements.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_piecewise_2D_float(this,                          &
+                                                x_arg, x_scale, x_offset,      &
+                                                y_arg, y_scale, y_offset,      &
+                                                source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR) :: graph_context_piecewise_2D_float
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: x_arg
+      REAL(C_DOUBLE)                      :: x_scale
+      REAL(C_DOUBLE)                      :: x_offset
+      TYPE(C_PTR), INTENT(IN)             :: y_arg
+      REAL(C_DOUBLE)                      :: y_scale
+      REAL(C_DOUBLE)                      :: y_offset
+      REAL(C_FLOAT), DIMENSION(:,:)       :: source
+
+!  Start of executable.
+      graph_context_piecewise_2D_float =                                       &
+         graph_piecewise_2D_float(this%c_context,                              &
+                                  INT(SIZE(source, 1), KIND=C_LONG),           &
+                                  x_arg, x_scale, x_offset,                    &
+                                  y_arg, y_scale, y_offset,                    &
+                                  source, INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D piecewise node with double buffer.
+!>
+!>  @param[in,out] this     @ref graph_context instance.
+!>  @param[in]     x_arg    The function x argument.
+!>  @param[in]     x_scale  Scale factor for x argument.
+!>  @param[in]     x_offset Offset factor for x argument.
+!>  @param[in]     y_arg    The function y argument.
+!>  @param[in]     y_scale  Scale factor for y argument.
+!>  @param[in]     y_offset Offset factor for y argument.
+!>  @param[in]     source   Source buffer to fill elements.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_piecewise_2D_double(this,                         &
+                                                 x_arg, x_scale, x_offset,     &
+                                                 y_arg, y_scale, y_offset,     &
+                                                 source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR) :: graph_context_piecewise_2D_double
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: x_arg
+      REAL(C_DOUBLE)                      :: x_scale
+      REAL(C_DOUBLE)                      :: x_offset
+      TYPE(C_PTR), INTENT(IN)             :: y_arg
+      REAL(C_DOUBLE)                      :: y_scale
+      REAL(C_DOUBLE)                      :: y_offset
+      REAL(C_DOUBLE), DIMENSION(:,:)      :: source
+
+!  Start of executable.
+      graph_context_piecewise_2D_double =                                      &
+         graph_piecewise_2D_double(this%c_context,                             &
+                                   INT(SIZE(source, 1), KIND=C_LONG),          &
+                                   x_arg, x_scale, x_offset,                   &
+                                   y_arg, y_scale, y_offset,                   &
+                                   source, INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D piecewise node with complex float buffer.
+!>
+!>  @param[in,out] this     @ref graph_context instance.
+!>  @param[in]     x_arg    The function x argument.
+!>  @param[in]     x_scale  Scale factor for x argument.
+!>  @param[in]     x_offset Offset factor for x argument.
+!>  @param[in]     y_arg    The function y argument.
+!>  @param[in]     y_scale  Scale factor for y argument.
+!>  @param[in]     y_offset Offset factor for y argument.
+!>  @param[in]     source   Source buffer to fill elements.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_piecewise_2D_cfloat(this,                         &
+                                                 x_arg, x_scale, x_offset,     &
+                                                 y_arg, y_scale, y_offset,     &
+                                                 source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR) :: graph_context_piecewise_2D_cfloat
+      CLASS(graph_context), INTENT(INOUT)      :: this
+      TYPE(C_PTR), INTENT(IN)                  :: x_arg
+      REAL(C_DOUBLE)                           :: x_scale
+      REAL(C_DOUBLE)                           :: x_offset
+      TYPE(C_PTR), INTENT(IN)                  :: y_arg
+      REAL(C_DOUBLE)                           :: y_scale
+      REAL(C_DOUBLE)                           :: y_offset
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:,:) :: source
+
+!  Start of executable.
+      graph_context_piecewise_2D_cfloat =                                      &
+         graph_piecewise_2D_cfloat(this%c_context,                             &
+                                   INT(SIZE(source, 1), KIND=C_LONG),          &
+                                   x_arg, x_scale, x_offset,                   &
+                                   y_arg, y_scale, y_offset,                   &
+                                   source, INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D piecewise node with complex double buffer.
+!>
+!>  @param[in,out] this     @ref graph_context instance.
+!>  @param[in]     x_arg    The function x argument.
+!>  @param[in]     x_scale  Scale factor for x argument.
+!>  @param[in]     x_offset Offset factor for x argument.
+!>  @param[in]     y_arg    The function y argument.
+!>  @param[in]     y_scale  Scale factor for y argument.
+!>  @param[in]     y_offset Offset factor for y argument.
+!>  @param[in]     source   Source buffer to fill elements.
+!>  @returns random(state)
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_piecewise_2D_cdouble(this,                        &
+                                                  x_arg, x_scale, x_offset,    &
+                                                  y_arg, y_scale, y_offset,    &
+                                                  source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR) :: graph_context_piecewise_2D_cdouble
+      CLASS(graph_context), INTENT(INOUT)       :: this
+      TYPE(C_PTR), INTENT(IN)                   :: x_arg
+      REAL(C_DOUBLE)                            :: x_scale
+      REAL(C_DOUBLE)                            :: x_offset
+      TYPE(C_PTR), INTENT(IN)                   :: y_arg
+      REAL(C_DOUBLE)                            :: y_scale
+      REAL(C_DOUBLE)                            :: y_offset
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:,:) :: source
+
+!  Start of executable.
+      graph_context_piecewise_2D_cdouble =                                     &
+         graph_piecewise_2D_cdouble(this%c_context,                            &
+                                    INT(SIZE(source, 1), KIND=C_LONG),         &
+                                    x_arg, x_scale, x_offset,                  &
+                                    y_arg, y_scale, y_offset,                  &
+                                    source, INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 

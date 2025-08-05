@@ -82,6 +82,9 @@
       REAL(C_FLOAT), DIMENSION(3)   :: buffer1D
       TYPE(C_PTR)                   :: p1
       TYPE(C_PTR)                   :: i
+      REAL(C_FLOAT), DIMENSION(3,3) :: buffer2D
+      TYPE(C_PTR)                   :: p2
+      TYPE(C_PTR)                   :: j
 
 !  Start of executable code.
       graph => graph_float_context(use_safe_math)
@@ -129,6 +132,12 @@
       buffer1D = (/ 2.0, 4.0, 6.0 /)
       p1 = graph%piecewise_1D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer1D)
 
+      j = graph%variable(1_C_LONG, 'j' // C_NULL_CHAR)
+      buffer2D = RESHAPE((/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 /),    &
+                         SHAPE(buffer2D))
+      p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
+                              j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+
       DEALLOCATE(graph)
 
       END SUBROUTINE
@@ -147,23 +156,26 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      LOGICAL(C_BOOL), INTENT(IN)   :: use_safe_math
+      LOGICAL(C_BOOL), INTENT(IN)    :: use_safe_math
 
 !  Local variables.
-      CLASS(graph_context), POINTER :: graph
-      TYPE(C_PTR)                   :: x
-      TYPE(C_PTR)                   :: m
-      TYPE(C_PTR)                   :: b
-      REAL(C_DOUBLE), DIMENSION(1)  :: value
-      TYPE(C_PTR)                   :: px
-      TYPE(C_PTR)                   :: y
-      TYPE(C_PTR)                   :: one
-      TYPE(C_PTR)                   :: zero
-      INTEGER(C_LONG)               :: size
-      TYPE(C_PTR)                   :: rand
-      REAL(C_DOUBLE), DIMENSION(3)  :: buffer1D
-      TYPE(C_PTR)                   :: p1
-      TYPE(C_PTR)                   :: i
+      CLASS(graph_context), POINTER  :: graph
+      TYPE(C_PTR)                    :: x
+      TYPE(C_PTR)                    :: m
+      TYPE(C_PTR)                    :: b
+      REAL(C_DOUBLE), DIMENSION(1)   :: value
+      TYPE(C_PTR)                    :: px
+      TYPE(C_PTR)                    :: y
+      TYPE(C_PTR)                    :: one
+      TYPE(C_PTR)                    :: zero
+      INTEGER(C_LONG)                :: size
+      TYPE(C_PTR)                    :: rand
+      REAL(C_DOUBLE), DIMENSION(3)   :: buffer1D
+      TYPE(C_PTR)                    :: p1
+      TYPE(C_PTR)                    :: i
+      REAL(C_DOUBLE), DIMENSION(3,3) :: buffer2D
+      TYPE(C_PTR)                    :: p2
+      TYPE(C_PTR)                    :: j
 
 !  Start of executable code.
       graph => graph_double_context(use_safe_math)
@@ -211,6 +223,12 @@
       buffer1D = (/ 2.0, 4.0, 6.0 /)
       p1 = graph%piecewise_1D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer1D)
 
+      j = graph%variable(1_C_LONG, 'j' // C_NULL_CHAR)
+      buffer2D = RESHAPE((/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 /),    &
+                         SHAPE(buffer2D))
+      p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
+                              j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+
       DEALLOCATE(graph)
 
       END SUBROUTINE
@@ -229,20 +247,26 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      LOGICAL(C_BOOL), INTENT(IN)            :: use_safe_math
+      LOGICAL(C_BOOL), INTENT(IN)              :: use_safe_math
 
 !  Local variables.
-      CLASS(graph_context), POINTER          :: graph
-      TYPE(C_PTR)                            :: x
-      TYPE(C_PTR)                            :: m
-      TYPE(C_PTR)                            :: b
-      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(1) :: value
-      TYPE(C_PTR)                            :: px
-      TYPE(C_PTR)                            :: y
-      TYPE(C_PTR)                            :: one
-      TYPE(C_PTR)                            :: zero
-      INTEGER(C_LONG)                        :: size
-      TYPE(C_PTR)                            :: rand
+      CLASS(graph_context), POINTER            :: graph
+      TYPE(C_PTR)                              :: x
+      TYPE(C_PTR)                              :: m
+      TYPE(C_PTR)                              :: b
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(1)   :: value
+      TYPE(C_PTR)                              :: px
+      TYPE(C_PTR)                              :: y
+      TYPE(C_PTR)                              :: one
+      TYPE(C_PTR)                              :: zero
+      INTEGER(C_LONG)                          :: size
+      TYPE(C_PTR)                              :: rand
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(3)   :: buffer1D
+      TYPE(C_PTR)                              :: p1
+      TYPE(C_PTR)                              :: i
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(3,3) :: buffer2D
+      TYPE(C_PTR)                              :: p2
+      TYPE(C_PTR)                              :: j
 
 !  Start of executable code.
       graph => graph_complex_float_context(use_safe_math)
@@ -288,6 +312,18 @@
 
       rand = graph%random(graph%random_state(0))
 
+      i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
+      buffer1D = (/ CMPLX(2.0, 0.0), CMPLX(4.0, 0.0), CMPLX(6.0, 0.0) /)
+      p1 = graph%piecewise_1D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer1D)
+
+      j = graph%variable(1_C_LONG, 'j' // C_NULL_CHAR)
+      buffer2D = RESHAPE((/ CMPLX(1.0, 0.0), CMPLX(2.0, 0.0), CMPLX(3.0, 0.0), &
+                            CMPLX(4.0, 0.0), CMPLX(5.0, 0.0), CMPLX(6.0, 0.0), &
+                            CMPLX(7.0, 0.0), CMPLX(8.0, 0.0), CMPLX(9.0, 0.0)  &
+                         /), SHAPE(buffer2D))
+      p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
+                              j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+
       DEALLOCATE(graph)
 
       END SUBROUTINE
@@ -306,20 +342,26 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      LOGICAL(C_BOOL), INTENT(IN)             :: use_safe_math
+      LOGICAL(C_BOOL), INTENT(IN)               :: use_safe_math
 
 !  Local variables.
-      CLASS(graph_context), POINTER           :: graph
-      TYPE(C_PTR)                             :: x
-      TYPE(C_PTR)                             :: m
-      TYPE(C_PTR)                             :: b
-      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(1) :: value
-      TYPE(C_PTR)                             :: px
-      TYPE(C_PTR)                             :: y
-      TYPE(C_PTR)                             :: one
-      TYPE(C_PTR)                             :: zero
-      INTEGER(C_LONG)                         :: size
-      TYPE(C_PTR)                             :: rand
+      CLASS(graph_context), POINTER             :: graph
+      TYPE(C_PTR)                               :: x
+      TYPE(C_PTR)                               :: m
+      TYPE(C_PTR)                               :: b
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(1)   :: value
+      TYPE(C_PTR)                               :: px
+      TYPE(C_PTR)                               :: y
+      TYPE(C_PTR)                               :: one
+      TYPE(C_PTR)                               :: zero
+      INTEGER(C_LONG)                           :: size
+      TYPE(C_PTR)                               :: rand
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(3)   :: buffer1D
+      TYPE(C_PTR)                               :: p1
+      TYPE(C_PTR)                               :: i
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(3,3) :: buffer2D
+      TYPE(C_PTR)                               :: p2
+      TYPE(C_PTR)                               :: j
 
 !  Start of executable code.
       graph => graph_complex_double_context(use_safe_math)
@@ -364,6 +406,18 @@
                   'Expected atan(one, zero) = zero.')
 
       rand = graph%random(graph%random_state(0))
+
+      i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
+      buffer1D = (/ CMPLX(2.0, 0.0), CMPLX(4.0, 0.0), CMPLX(6.0, 0.0) /)
+      p1 = graph%piecewise_1D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer1D)
+
+      j = graph%variable(1_C_LONG, 'j' // C_NULL_CHAR)
+      buffer2D = RESHAPE((/ CMPLX(1.0, 0.0), CMPLX(2.0, 0.0), CMPLX(3.0, 0.0), &
+                            CMPLX(4.0, 0.0), CMPLX(5.0, 0.0), CMPLX(6.0, 0.0), &
+                            CMPLX(7.0, 0.0), CMPLX(8.0, 0.0), CMPLX(9.0, 0.0)  &
+                         /), SHAPE(buffer2D))
+      p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
+                              j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       DEALLOCATE(graph)
 
