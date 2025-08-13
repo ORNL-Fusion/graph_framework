@@ -68,23 +68,24 @@
       LOGICAL(C_BOOL), INTENT(IN)   :: use_safe_math
 
 !  Local variables.
-      CLASS(graph_context), POINTER :: graph
-      TYPE(C_PTR)                   :: x
-      TYPE(C_PTR)                   :: m
-      TYPE(C_PTR)                   :: b
-      REAL(C_FLOAT), DIMENSION(1)   :: value
-      TYPE(C_PTR)                   :: px
-      TYPE(C_PTR)                   :: y
-      TYPE(C_PTR)                   :: one
-      TYPE(C_PTR)                   :: zero
-      INTEGER(C_LONG)               :: size
-      TYPE(C_PTR)                   :: rand
-      REAL(C_FLOAT), DIMENSION(3)   :: buffer1D
-      TYPE(C_PTR)                   :: p1
-      TYPE(C_PTR)                   :: i
-      REAL(C_FLOAT), DIMENSION(3,3) :: buffer2D
-      TYPE(C_PTR)                   :: p2
-      TYPE(C_PTR)                   :: j
+      CLASS(graph_context), POINTER                  :: graph
+      TYPE(C_PTR)                                    :: x
+      TYPE(C_PTR)                                    :: m
+      TYPE(C_PTR)                                    :: b
+      REAL(C_FLOAT), DIMENSION(1)                    :: value
+      TYPE(C_PTR)                                    :: px
+      TYPE(C_PTR)                                    :: y
+      TYPE(C_PTR)                                    :: one
+      TYPE(C_PTR)                                    :: zero
+      INTEGER(C_LONG)                                :: size
+      TYPE(C_PTR)                                    :: rand
+      TYPE(C_PTR)                                    :: state
+      REAL(C_FLOAT), DIMENSION(3)                    :: buffer1D
+      TYPE(C_PTR)                                    :: p1
+      TYPE(C_PTR)                                    :: i
+      REAL(C_FLOAT), DIMENSION(3,3)                  :: buffer2D
+      TYPE(C_PTR)                                    :: p2
+      TYPE(C_PTR)                                    :: j
 
 !  Start of executable code.
       graph => graph_float_context(use_safe_math)
@@ -97,9 +98,9 @@
       CALL graph%set_variable(x, value)
 
       px = graph%pseudo_variable(x)
-      CALL assert(TRANSFER(px, 0) .ne. TRANSFER(x, 0),                         &
+      CALL assert(graph_ptr(px) .ne. graph_ptr(x),                             &
                   'Expected different nodes.')
-      CALL assert(TRANSFER(graph%remove_pseudo(px), 0) .eq. TRANSFER(x, 0),    &
+      CALL assert(graph_ptr(graph%remove_pseudo(px)) .eq. graph_ptr(x),        &
                   'Remove pseudo failed.')
 
       y = graph%add(graph%mul(m, x), b)
@@ -107,26 +108,27 @@
       one = graph%constant(1.0_C_DOUBLE)
       zero = graph%constant(0.0_C_DOUBLE)
 
-      CALL assert(TRANSFER(graph%sub(one, one), 0) .eq. TRANSFER(zero, 0),     &
+      CALL assert(graph_ptr(graph%sub(one, one)) .eq. graph_ptr(zero),         &
                   'Expected 1 - 1 = 0.')
-      CALL assert(TRANSFER(graph%div(one, one), 0) .eq. TRANSFER(one, 0),      &
+      CALL assert(graph_ptr(graph%div(one, one)) .eq. graph_ptr(one),          &
                   'Expected 1/1 = 1.')
-      CALL assert(TRANSFER(graph%sqrt(one), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%sqrt(one)) .eq. graph_ptr(one),              &
                   'Expected sqrt(1) = 1.')
-      CALL assert(TRANSFER(graph%exp(zero), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%exp(zero)) .eq. graph_ptr(one),              &
                   'Expected exp(0) = 1.')
-      CALL assert(TRANSFER(graph%log(one), 0) .eq. TRANSFER(zero, 0),          &
+      CALL assert(graph_ptr(graph%log(one)) .eq. graph_ptr(zero),              &
                   'Expected log(1) = 0.')
-      CALL assert(TRANSFER(graph%pow(one, zero), 0) .eq. TRANSFER(one, 0),     &
-                  'Expected pow(1, 0) = 1.')
-      CALL assert(TRANSFER(graph%sin(zero), 0) .eq. TRANSFER(zero, 0),         &
+      CALL assert(graph_ptr(graph%pow(one, zero)) .eq. graph_ptr(one),         &
+                  'Expected pow(1,0) = 1.')
+      CALL assert(graph_ptr(graph%sin(zero)) .eq. graph_ptr(zero),             &
                   'Expected sin(0) = 0.')
-      CALL assert(TRANSFER(graph%cos(zero), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%cos(zero)) .eq. graph_ptr(one),              &
                   'Expected cos(0) = 1.')
-      CALL assert(TRANSFER(graph%atan(one, zero), 0) .eq. TRANSFER(zero, 0),   &
+      CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      rand = graph%random(graph%random_state(0))
+      state = graph%random_state(0)
+      rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
       buffer1D = (/ 2.0, 4.0, 6.0 /)
@@ -139,6 +141,11 @@
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
+
+      CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
+                              graph_null_array, graph_null_array, state,       &
+                              'c_binding_pre_kernel' // C_NULL_CHAR,           &
+                              1_C_LONG)
 
       DEALLOCATE(graph)
 
@@ -172,6 +179,7 @@
       TYPE(C_PTR)                    :: zero
       INTEGER(C_LONG)                :: size
       TYPE(C_PTR)                    :: rand
+      TYPE(C_PTR)                    :: state
       REAL(C_DOUBLE), DIMENSION(3)   :: buffer1D
       TYPE(C_PTR)                    :: p1
       TYPE(C_PTR)                    :: i
@@ -190,9 +198,9 @@
       CALL graph%set_variable(x, value)
 
       px = graph%pseudo_variable(x)
-      CALL assert(TRANSFER(px, 0) .ne. TRANSFER(x, 0),                         &
+      CALL assert(graph_ptr(px) .ne. graph_ptr(x),                             &
                   'Expected different nodes.')
-      CALL assert(TRANSFER(graph%remove_pseudo(px), 0) .eq. TRANSFER(x, 0),    &
+      CALL assert(graph_ptr(graph%remove_pseudo(px)) .eq. graph_ptr(x),        &
                   'Remove pseudo failed.')
 
       y = graph%add(graph%mul(m, x), b)
@@ -200,26 +208,27 @@
       one = graph%constant(1.0_C_DOUBLE)
       zero = graph%constant(0.0_C_DOUBLE)
 
-      CALL assert(TRANSFER(graph%sub(one, one), 0) .eq. TRANSFER(zero, 0),     &
+      CALL assert(graph_ptr(graph%sub(one, one)) .eq. graph_ptr(zero),         &
                   'Expected 1 - 1 = 0.')
-      CALL assert(TRANSFER(graph%div(one, one), 0) .eq. TRANSFER(one, 0),      &
+      CALL assert(graph_ptr(graph%div(one, one)) .eq. graph_ptr(one),          &
                   'Expected 1/1 = 1.')
-      CALL assert(TRANSFER(graph%sqrt(one), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%sqrt(one)) .eq. graph_ptr(one),              &
                   'Expected sqrt(1) = 1.')
-      CALL assert(TRANSFER(graph%exp(zero), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%exp(zero)) .eq. graph_ptr(one),              &
                   'Expected exp(0) = 1.')
-      CALL assert(TRANSFER(graph%log(one), 0) .eq. TRANSFER(zero, 0),          &
+      CALL assert(graph_ptr(graph%log(one)) .eq. graph_ptr(zero),              &
                   'Expected log(1) = 0.')
-      CALL assert(TRANSFER(graph%pow(one, zero), 0) .eq. TRANSFER(one, 0),     &
+      CALL assert(graph_ptr(graph%pow(one, zero)) .eq. graph_ptr(one),         &
                   'Expected pow(1, 0) = 1.')
-      CALL assert(TRANSFER(graph%sin(zero), 0) .eq. TRANSFER(zero, 0),         &
+      CALL assert(graph_ptr(graph%sin(zero)) .eq. graph_ptr(zero),             &
                   'Expected sin(0) = 0.')
-      CALL assert(TRANSFER(graph%cos(zero), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%cos(zero)) .eq. graph_ptr(one),              &
                   'Expected cos(0) = 1.')
-      CALL assert(TRANSFER(graph%atan(one, zero), 0) .eq. TRANSFER(zero, 0),   &
+      CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      rand = graph%random(graph%random_state(0))
+      state = graph%random_state(0)
+      rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
       buffer1D = (/ 2.0, 4.0, 6.0 /)
@@ -232,6 +241,11 @@
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
+
+      CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
+                              graph_null_array, graph_null_array, state,       &
+                              'c_binding_pre_kernel' // C_NULL_CHAR,           &
+                              1_C_LONG)
 
       DEALLOCATE(graph)
 
@@ -265,6 +279,7 @@
       TYPE(C_PTR)                              :: zero
       INTEGER(C_LONG)                          :: size
       TYPE(C_PTR)                              :: rand
+      TYPE(C_PTR)                              :: state
       COMPLEX(C_FLOAT_COMPLEX), DIMENSION(3)   :: buffer1D
       TYPE(C_PTR)                              :: p1
       TYPE(C_PTR)                              :: i
@@ -283,9 +298,9 @@
       CALL graph%set_variable(x, value)
 
       px = graph%pseudo_variable(x)
-      CALL assert(TRANSFER(px, 0) .ne. TRANSFER(x, 0),                         &
+      CALL assert(graph_ptr(px) .ne. graph_ptr(x),                             &
                   'Expected different nodes.')
-      CALL assert(TRANSFER(graph%remove_pseudo(px), 0) .eq. TRANSFER(x, 0),    &
+      CALL assert(graph_ptr(graph%remove_pseudo(px)) .eq. graph_ptr(x),        &
                   'Remove pseudo failed.')
 
       y = graph%add(graph%mul(m, x), b)
@@ -293,28 +308,29 @@
       one = graph%constant(1.0_C_DOUBLE)
       zero = graph%constant(0.0_C_DOUBLE)
 
-      CALL assert(TRANSFER(graph%sub(one, one), 0) .eq. TRANSFER(zero, 0),     &
+      CALL assert(graph_ptr(graph%sub(one, one)) .eq. graph_ptr(zero),         &
                   'Expected 1 - 1 = 0.')
-      CALL assert(TRANSFER(graph%div(one, one), 0) .eq. TRANSFER(one, 0),      &
+      CALL assert(graph_ptr(graph%div(one, one)) .eq. graph_ptr(one),          &
                   'Expected 1/1 = 1.')
-      CALL assert(TRANSFER(graph%sqrt(one), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%sqrt(one)) .eq. graph_ptr(one),              &
                   'Expected sqrt(1) = 1.')
-      CALL assert(TRANSFER(graph%exp(zero), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%exp(zero)) .eq. graph_ptr(one),              &
                   'Expected exp(0) = 1.')
-      CALL assert(TRANSFER(graph%log(one), 0) .eq. TRANSFER(zero, 0),          &
+      CALL assert(graph_ptr(graph%log(one)) .eq. graph_ptr(zero),              &
                   'Expected log(1) = 0.')
-      CALL assert(TRANSFER(graph%pow(one, zero), 0) .eq. TRANSFER(one, 0),     &
-                  'Expected pow(1, 0) = 1.')
-      CALL assert(TRANSFER(graph%erfi(zero), 0) .eq. TRANSFER(zero, 0),        &
+      CALL assert(graph_ptr(graph%pow(one, zero)) .eq. graph_ptr(one),         &
+                  'Expected pow(1,0) = 1.')
+      CALL assert(graph_ptr(graph%erfi(zero)) .eq. graph_ptr(zero),            &
                   'Expected erfi(0) = 0.')
-      CALL assert(TRANSFER(graph%sin(zero), 0) .eq. TRANSFER(zero, 0),         &
+      CALL assert(graph_ptr(graph%sin(zero)) .eq. graph_ptr(zero),             &
                   'Expected sin(0) = 0.')
-      CALL assert(TRANSFER(graph%cos(zero), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%cos(zero)) .eq. graph_ptr(one),              &
                   'Expected cos(0) = 1.')
-      CALL assert(TRANSFER(graph%atan(one, zero), 0) .eq. TRANSFER(zero, 0),   &
+      CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      rand = graph%random(graph%random_state(0))
+      state = graph%random_state(0)
+      rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
       buffer1D = (/ CMPLX(2.0, 0.0), CMPLX(4.0, 0.0), CMPLX(6.0, 0.0) /)
@@ -329,6 +345,11 @@
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
+
+      CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
+                              graph_null_array, graph_null_array, state,       &
+                              'c_binding_pre_kernel' // C_NULL_CHAR,           &
+                              1_C_LONG)
 
       DEALLOCATE(graph)
 
@@ -362,6 +383,7 @@
       TYPE(C_PTR)                               :: zero
       INTEGER(C_LONG)                           :: size
       TYPE(C_PTR)                               :: rand
+      TYPE(C_PTR)                               :: state
       COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(3)   :: buffer1D
       TYPE(C_PTR)                               :: p1
       TYPE(C_PTR)                               :: i
@@ -380,9 +402,9 @@
       CALL graph%set_variable(x, value)
 
       px = graph%pseudo_variable(x)
-      CALL assert(TRANSFER(px, 0) .ne. TRANSFER(x, 0),                         &
+      CALL assert(graph_ptr(px) .ne. graph_ptr(x),                             &
                   'Expected different nodes.')
-      CALL assert(TRANSFER(graph%remove_pseudo(px), 0) .eq. TRANSFER(x, 0),    &
+      CALL assert(graph_ptr(graph%remove_pseudo(px)) .eq. graph_ptr(x),        &
                   'Remove pseudo failed.')
 
       y = graph%add(graph%mul(m, x), b)
@@ -390,28 +412,29 @@
       one = graph%constant(1.0_C_DOUBLE)
       zero = graph%constant(0.0_C_DOUBLE)
 
-      CALL assert(TRANSFER(graph%sub(one, one), 0) .eq. TRANSFER(zero, 0),     &
+      CALL assert(graph_ptr(graph%sub(one, one)) .eq. graph_ptr(zero),         &
                   'Expected 1 - 1 = 0.')
-      CALL assert(TRANSFER(graph%div(one, one), 0) .eq. TRANSFER(one, 0),      &
+      CALL assert(graph_ptr(graph%div(one, one)) .eq. graph_ptr(one),          &
                   'Expected 1/1 = 1.')
-      CALL assert(TRANSFER(graph%sqrt(one), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%sqrt(one)) .eq. graph_ptr(one),              &
                   'Expected sqrt(1) = 1.')
-      CALL assert(TRANSFER(graph%exp(zero), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%exp(zero)) .eq. graph_ptr(one),              &
                   'Expected exp(0) = 1.')
-      CALL assert(TRANSFER(graph%log(one), 0) .eq. TRANSFER(zero, 0),          &
+      CALL assert(graph_ptr(graph%log(one)) .eq. graph_ptr(zero),              &
                   'Expected log(1) = 0.')
-      CALL assert(TRANSFER(graph%pow(one, zero), 0) .eq. TRANSFER(one, 0),     &
-                  'Expected pow(1, 0) = 1.')
-      CALL assert(TRANSFER(graph%erfi(zero), 0) .eq. TRANSFER(zero, 0),        &
+      CALL assert(graph_ptr(graph%pow(one, zero)) .eq. graph_ptr(one),         &
+                  'Expected pow(1,0) = 1.')
+      CALL assert(graph_ptr(graph%erfi(zero)) .eq. graph_ptr(zero),            &
                   'Expected erfi(0) = 0.')
-      CALL assert(TRANSFER(graph%sin(zero), 0) .eq. TRANSFER(zero, 0),         &
+      CALL assert(graph_ptr(graph%sin(zero)) .eq. graph_ptr(zero),             &
                   'Expected sin(0) = 0.')
-      CALL assert(TRANSFER(graph%cos(zero), 0) .eq. TRANSFER(one, 0),          &
+      CALL assert(graph_ptr(graph%cos(zero)) .eq. graph_ptr(one),              &
                   'Expected cos(0) = 1.')
-      CALL assert(TRANSFER(graph%atan(one, zero), 0) .eq. TRANSFER(zero, 0),   &
+      CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      rand = graph%random(graph%random_state(0))
+      state = graph%random_state(0)
+      rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
       buffer1D = (/ CMPLX(2.0, 0.0), CMPLX(4.0, 0.0), CMPLX(6.0, 0.0) /)
@@ -426,6 +449,11 @@
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
+
+      CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
+                              graph_null_array, graph_null_array, state,       &
+                              'c_binding_pre_kernel' // C_NULL_CHAR,           &
+                              1_C_LONG)
 
       DEALLOCATE(graph)
 
