@@ -68,24 +68,32 @@
       LOGICAL(C_BOOL), INTENT(IN)   :: use_safe_math
 
 !  Local variables.
-      CLASS(graph_context), POINTER                  :: graph
-      TYPE(C_PTR)                                    :: x
-      TYPE(C_PTR)                                    :: m
-      TYPE(C_PTR)                                    :: b
-      REAL(C_FLOAT), DIMENSION(1)                    :: value
-      TYPE(C_PTR)                                    :: px
-      TYPE(C_PTR)                                    :: y
-      TYPE(C_PTR)                                    :: one
-      TYPE(C_PTR)                                    :: zero
-      INTEGER(C_LONG)                                :: size
-      TYPE(C_PTR)                                    :: rand
-      TYPE(C_PTR)                                    :: state
-      REAL(C_FLOAT), DIMENSION(3)                    :: buffer1D
-      TYPE(C_PTR)                                    :: p1
-      TYPE(C_PTR)                                    :: i
-      REAL(C_FLOAT), DIMENSION(3,3)                  :: buffer2D
-      TYPE(C_PTR)                                    :: p2
-      TYPE(C_PTR)                                    :: j
+      CLASS(graph_context), POINTER :: graph
+      TYPE(C_PTR)                   :: x
+      TYPE(C_PTR)                   :: m
+      TYPE(C_PTR)                   :: b
+      REAL(C_FLOAT), DIMENSION(1)   :: value
+      TYPE(C_PTR)                   :: px
+      TYPE(C_PTR)                   :: y
+      TYPE(C_PTR)                   :: dydx
+      TYPE(C_PTR)                   :: dydm
+      TYPE(C_PTR)                   :: dydb
+      TYPE(C_PTR)                   :: dydy
+      TYPE(C_PTR)                   :: one
+      TYPE(C_PTR)                   :: zero
+      INTEGER(C_LONG)               :: size
+      TYPE(C_PTR)                   :: rand
+      TYPE(C_PTR)                   :: state
+      REAL(C_FLOAT), DIMENSION(3)   :: buffer1D
+      TYPE(C_PTR)                   :: p1
+      TYPE(C_PTR)                   :: i
+      REAL(C_FLOAT), DIMENSION(3,3) :: buffer2D
+      TYPE(C_PTR)                   :: p2
+      TYPE(C_PTR)                   :: j
+      TYPE(C_PTR)                   :: z
+      TYPE(C_PTR)                   :: root
+      TYPE(C_PTR)                   :: root2
+      TYPE(C_PTR)                   :: dz
 
 !  Start of executable code.
       graph => graph_float_context(use_safe_math)
@@ -104,6 +112,11 @@
                   'Remove pseudo failed.')
 
       y = graph%add(graph%mul(m, x), b)
+
+      dydx = graph%df(y, x);
+      dydm = graph%df(y, m);
+      dydb = graph%df(y, b);
+      dydy = graph%df(y, y);
 
       one = graph%constant(1.0_C_DOUBLE)
       zero = graph%constant(0.0_C_DOUBLE)
@@ -140,12 +153,34 @@
       p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
+      z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
+      root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
+                       graph%pow(z, graph%constant(2.0_C_DOUBLE)))
+      root2 = graph%mul(root, root)
+      dz = graph%sub(z, graph%div(root, graph%df(root, z)))
+
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
                               graph_null_array, graph_null_array, state,       &
-                              'c_binding_pre_kernel' // C_NULL_CHAR,           &
+                              'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
+      CALL graph%add_item((/ graph_ptr(x) /), (/                               &
+         graph_ptr(y),                                                         &
+         graph_ptr(dydx),                                                      &
+         graph_ptr(dydm),                                                      &
+         graph_ptr(dydb),                                                      &
+         graph_ptr(dydy)                                                       &
+      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      'f_binding' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_item((/ graph_ptr(i), graph_ptr(j) /),                    &
+                          (/ graph_ptr(p1), graph_ptr(p2) /),                  &
+                          graph_null_array, graph_null_array, C_NULL_PTR,      &
+                          'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
+                                   (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
+                                   C_NULL_PTR, "f_binding_converge", 1_C_LONG, &
+                                   1.0E-30_C_DOUBLE, 1000_C_LONG)
 
       DEALLOCATE(graph)
 
@@ -175,6 +210,10 @@
       REAL(C_DOUBLE), DIMENSION(1)   :: value
       TYPE(C_PTR)                    :: px
       TYPE(C_PTR)                    :: y
+      TYPE(C_PTR)                    :: dydx
+      TYPE(C_PTR)                    :: dydm
+      TYPE(C_PTR)                    :: dydb
+      TYPE(C_PTR)                    :: dydy
       TYPE(C_PTR)                    :: one
       TYPE(C_PTR)                    :: zero
       INTEGER(C_LONG)                :: size
@@ -186,6 +225,10 @@
       REAL(C_DOUBLE), DIMENSION(3,3) :: buffer2D
       TYPE(C_PTR)                    :: p2
       TYPE(C_PTR)                    :: j
+      TYPE(C_PTR)                    :: z
+      TYPE(C_PTR)                    :: root
+      TYPE(C_PTR)                    :: root2
+      TYPE(C_PTR)                    :: dz
 
 !  Start of executable code.
       graph => graph_double_context(use_safe_math)
@@ -204,6 +247,11 @@
                   'Remove pseudo failed.')
 
       y = graph%add(graph%mul(m, x), b)
+
+      dydx = graph%df(y, x);
+      dydm = graph%df(y, m);
+      dydb = graph%df(y, b);
+      dydy = graph%df(y, y);
 
       one = graph%constant(1.0_C_DOUBLE)
       zero = graph%constant(0.0_C_DOUBLE)
@@ -240,12 +288,34 @@
       p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
+      z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
+      root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
+                 graph%pow(z, graph%constant(2.0_C_DOUBLE)))
+      root2 = graph%mul(root, root)
+      dz = graph%sub(z, graph%div(root, graph%df(root, z)))
+
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
                               graph_null_array, graph_null_array, state,       &
-                              'c_binding_pre_kernel' // C_NULL_CHAR,           &
+                              'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
+      CALL graph%add_item((/ graph_ptr(x) /), (/                               &
+         graph_ptr(y),                                                         &
+         graph_ptr(dydx),                                                      &
+         graph_ptr(dydm),                                                      &
+         graph_ptr(dydb),                                                      &
+         graph_ptr(dydy)                                                       &
+      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      'f_binding' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_item((/ graph_ptr(i), graph_ptr(j) /),                    &
+                          (/ graph_ptr(p1), graph_ptr(p2) /),                  &
+                          graph_null_array, graph_null_array, C_NULL_PTR,      &
+                          'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
+                                   (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
+                                   C_NULL_PTR, "f_binding_converge", 1_C_LONG, &
+                                   1.0E-30_C_DOUBLE, 1000_C_LONG)
 
       DEALLOCATE(graph)
 
@@ -275,6 +345,10 @@
       COMPLEX(C_FLOAT_COMPLEX), DIMENSION(1)   :: value
       TYPE(C_PTR)                              :: px
       TYPE(C_PTR)                              :: y
+      TYPE(C_PTR)                              :: dydx
+      TYPE(C_PTR)                              :: dydm
+      TYPE(C_PTR)                              :: dydb
+      TYPE(C_PTR)                              :: dydy
       TYPE(C_PTR)                              :: one
       TYPE(C_PTR)                              :: zero
       INTEGER(C_LONG)                          :: size
@@ -286,6 +360,10 @@
       COMPLEX(C_FLOAT_COMPLEX), DIMENSION(3,3) :: buffer2D
       TYPE(C_PTR)                              :: p2
       TYPE(C_PTR)                              :: j
+      TYPE(C_PTR)                              :: z
+      TYPE(C_PTR)                              :: root
+      TYPE(C_PTR)                              :: root2
+      TYPE(C_PTR)                              :: dz
 
 !  Start of executable code.
       graph => graph_complex_float_context(use_safe_math)
@@ -304,6 +382,11 @@
                   'Remove pseudo failed.')
 
       y = graph%add(graph%mul(m, x), b)
+
+      dydx = graph%df(y, x);
+      dydm = graph%df(y, m);
+      dydb = graph%df(y, b);
+      dydy = graph%df(y, y);
 
       one = graph%constant(1.0_C_DOUBLE)
       zero = graph%constant(0.0_C_DOUBLE)
@@ -344,12 +427,34 @@
       p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
+      z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
+      root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
+                       graph%pow(z, graph%constant(2.0_C_DOUBLE)))
+      root2 = graph%mul(root, root)
+      dz = graph%sub(z, graph%div(root, graph%df(root, z)))
+
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
                               graph_null_array, graph_null_array, state,       &
                               'c_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
+      CALL graph%add_item((/ graph_ptr(x) /), (/                               &
+         graph_ptr(y),                                                         &
+         graph_ptr(dydx),                                                      &
+         graph_ptr(dydm),                                                      &
+         graph_ptr(dydb),                                                      &
+         graph_ptr(dydy)                                                       &
+      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      'f_binding' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_item((/ graph_ptr(i), graph_ptr(j) /),                    &
+                          (/ graph_ptr(p1), graph_ptr(p2) /),                  &
+                          graph_null_array, graph_null_array, C_NULL_PTR,      &
+                          'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
+                                   (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
+                                   C_NULL_PTR, "f_binding_converge", 1_C_LONG, &
+                                   1.0E-30_C_DOUBLE, 1000_C_LONG)
 
       DEALLOCATE(graph)
 
@@ -379,6 +484,10 @@
       COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(1)   :: value
       TYPE(C_PTR)                               :: px
       TYPE(C_PTR)                               :: y
+      TYPE(C_PTR)                               :: dydx
+      TYPE(C_PTR)                               :: dydm
+      TYPE(C_PTR)                               :: dydb
+      TYPE(C_PTR)                               :: dydy
       TYPE(C_PTR)                               :: one
       TYPE(C_PTR)                               :: zero
       INTEGER(C_LONG)                           :: size
@@ -390,6 +499,10 @@
       COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(3,3) :: buffer2D
       TYPE(C_PTR)                               :: p2
       TYPE(C_PTR)                               :: j
+      TYPE(C_PTR)                               :: z
+      TYPE(C_PTR)                               :: root
+      TYPE(C_PTR)                               :: root2
+      TYPE(C_PTR)                               :: dz
 
 !  Start of executable code.
       graph => graph_complex_double_context(use_safe_math)
@@ -408,6 +521,11 @@
                   'Remove pseudo failed.')
 
       y = graph%add(graph%mul(m, x), b)
+
+      dydx = graph%df(y, x);
+      dydm = graph%df(y, m);
+      dydb = graph%df(y, b);
+      dydy = graph%df(y, y);
 
       one = graph%constant(1.0_C_DOUBLE)
       zero = graph%constant(0.0_C_DOUBLE)
@@ -448,12 +566,34 @@
       p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
                               j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
+      z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
+      root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
+                       graph%pow(z, graph%constant(2.0_C_DOUBLE)))
+      root2 = graph%mul(root, root)
+      dz = graph%sub(z, graph%div(root, graph%df(root, z)))
+
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
                               graph_null_array, graph_null_array, state,       &
-                              'c_binding_pre_kernel' // C_NULL_CHAR,           &
+                              'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
+      CALL graph%add_item((/ graph_ptr(x) /), (/                               &
+         graph_ptr(y),                                                         &
+         graph_ptr(dydx),                                                      &
+         graph_ptr(dydm),                                                      &
+         graph_ptr(dydb),                                                      &
+         graph_ptr(dydy)                                                       &
+      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      'f_binding' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_item((/ graph_ptr(i), graph_ptr(j) /),                    &
+                          (/ graph_ptr(p1), graph_ptr(p2) /),                  &
+                          graph_null_array, graph_null_array, C_NULL_PTR,      &
+                          'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
+                                   (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
+                                   C_NULL_PTR, "f_binding_converge", 1_C_LONG, &
+                                   1.0E-30_C_DOUBLE, 1000_C_LONG)
 
       DEALLOCATE(graph)
 

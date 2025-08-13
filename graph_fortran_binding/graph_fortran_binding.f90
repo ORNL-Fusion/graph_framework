@@ -74,6 +74,9 @@
          PROCEDURE :: get_max_concurrency => graph_context_get_max_concurrency
          PROCEDURE :: set_device_number => graph_context_set_device_number
          PROCEDURE :: add_pre_item => graph_context_add_pre_item
+         PROCEDURE :: add_item => graph_context_add_item
+         PROCEDURE :: add_converge_item => graph_context_add_converge_item
+         PROCEDURE :: df => graph_context_df
       END TYPE
 
 !*******************************************************************************
@@ -841,6 +844,96 @@
          CHARACTER(kind=C_CHAR), DIMENSION(*) :: name
          INTEGER(C_LONG), VALUE               :: num_particles
          END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Add workflow item.
+!>
+!>  @param[in] c             The graph C context.
+!>  @param[in] inputs        Array of input nodes.
+!>  @param[in] num_inputs    Number of inputs.
+!>  @param[in] outputs       Array of output nodes.
+!>  @param[in] num_outputs   Number of outputs.
+!>  @param[in] map_inputs    Array of map input nodes.
+!>  @param[in] map_outputs   Array of map output nodes.
+!>  @param[in] num_maps      Number of maps.
+!>  @param[in] random_state  Optional random state, can be NULL if not used.
+!>  @param[in] name          Name for the kernel.
+!>  @param[in] num_particles Number of elements to operate on.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_add_item(c, inputs, num_inputs,                      &
+                                   outputs, num_outputs,                       &
+                                   map_inputs, map_outputs, num_maps,          &
+                                   random_state, name, num_particles)          &
+         BIND(C, NAME='graph_add_item')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                   :: c
+         INTEGER(C_INTPTR_T), VALUE           :: inputs
+         INTEGER(C_LONG), VALUE               :: num_inputs
+         INTEGER(C_INTPTR_T), VALUE           :: outputs
+         INTEGER(C_LONG), VALUE               :: num_outputs
+         INTEGER(C_INTPTR_T), VALUE           :: map_inputs
+         INTEGER(C_INTPTR_T), VALUE           :: map_outputs
+         INTEGER(C_LONG), VALUE               :: num_maps
+         TYPE(C_PTR), VALUE                   :: random_state
+         CHARACTER(kind=C_CHAR), DIMENSION(*) :: name
+         INTEGER(C_LONG), VALUE               :: num_particles
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Add workflow converge item.
+!>
+!>  @param[in] c             The graph C context.
+!>  @param[in] inputs        Array of input nodes.
+!>  @param[in] num_inputs    Number of inputs.
+!>  @param[in] outputs       Array of output nodes.
+!>  @param[in] num_outputs   Number of outputs.
+!>  @param[in] map_inputs    Array of map input nodes.
+!>  @param[in] map_outputs   Array of map output nodes.
+!>  @param[in] num_maps      Number of maps.
+!>  @param[in] random_state  Optional random state, can be NULL if not used.
+!>  @param[in] name          Name for the kernel.
+!>  @param[in] num_particles Number of elements to operate on.
+!>  @param[in] tol           Tolarance to converge the function to.
+!>  @param[in] max_iter      Maximum number of iterations before giving up.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_add_converge_item(c, inputs, num_inputs,             &
+                                            outputs, num_outputs,              &
+                                            map_inputs, map_outputs, num_maps, &
+                                            random_state, name, num_particles, &
+                                            tol, max_iter)                     &
+         BIND(C, NAME='graph_add_converge_item')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE                   :: c
+         INTEGER(C_INTPTR_T), VALUE           :: inputs
+         INTEGER(C_LONG), VALUE               :: num_inputs
+         INTEGER(C_INTPTR_T), VALUE           :: outputs
+         INTEGER(C_LONG), VALUE               :: num_outputs
+         INTEGER(C_INTPTR_T), VALUE           :: map_inputs
+         INTEGER(C_INTPTR_T), VALUE           :: map_outputs
+         INTEGER(C_LONG), VALUE               :: num_maps
+         TYPE(C_PTR), VALUE                   :: random_state
+         CHARACTER(kind=C_CHAR), DIMENSION(*) :: name
+         INTEGER(C_LONG), VALUE               :: num_particles
+         REAL(C_DOUBLE), VALUE                :: tol
+         INTEGER(C_LONG), VALUE               :: max_iter
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Take derivative ∂f∂x.
+!>
+!>  @param[in] c     The graph C context.
+!>  @param[in] fnode The function expression to take the derivative of.
+!>  @param[in] xnode The expression to take the derivative with respect to.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_df(c, fnode, xnode)                        &
+         BIND(C, NAME='graph_df')
+         USE, INTRINSIC :: ISO_C_BINDING
+         TYPE(C_PTR), VALUE :: c
+         TYPE(C_PTR), VALUE :: fnode
+         TYPE(C_PTR), VALUE :: xnode
+         END FUNCTION
 
       END INTERFACE
 
@@ -1867,5 +1960,108 @@
                               random_state, name, num_particles)
 
       END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Add workflow item.
+!>
+!>  @param[in,out] this          @ref graph_context instance.
+!>  @param[in]     inputs        Array of input nodes.
+!>  @param[in]     outputs       Array of output nodes.
+!>  @param[in]     map_inputs    Array of map input nodes.
+!>  @param[in]     map_outputs   Array of map output nodes.
+!>  @param[in]     random_state  Optional random state, can be NULL if not used.
+!>  @param[in]     name          Name for the kernel.
+!>  @param[in]     num_particles Number of elements to operate on.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_add_item(this, inputs, outputs,                 &
+                                        map_inputs, map_outputs,               &
+                                        random_state, name, num_particles)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(INOUT)           :: this
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: inputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: outputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_inputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_outputs
+      TYPE(C_PTR), INTENT(IN)                       :: random_state
+      CHARACTER(kind=C_CHAR,len=*), INTENT(IN)      :: name
+      INTEGER(C_LONG), INTENT(IN)                   :: num_particles
+
+!  Start of executable.
+      CALL graph_add_item(this%c_context,                                      &
+                          LOC(inputs), INT(SIZE(inputs), KIND=C_LONG),         &
+                          LOC(outputs), INT(SIZE(outputs), KIND=C_LONG),       &
+                          LOC(map_inputs), LOC(map_outputs),                   &
+                          INT(SIZE(map_inputs), KIND=C_LONG),                  &
+                          random_state, name, num_particles)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Add workflow converge item.
+!>
+!>  @param[in,out] this          @ref graph_context instance.
+!>  @param[in]     inputs        Array of input nodes.
+!>  @param[in]     outputs       Array of output nodes.
+!>  @param[in]     map_inputs    Array of map input nodes.
+!>  @param[in]     map_outputs   Array of map output nodes.
+!>  @param[in]     random_state  Optional random state, can be NULL if not used.
+!>  @param[in]     name          Name for the kernel.
+!>  @param[in]     num_particles Number of elements to operate on.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_add_converge_item(this, inputs, outputs,        &
+                                                 map_inputs, map_outputs,      &
+                                                 random_state, name,           &
+                                                 num_particles, tol, max_iter)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(INOUT)           :: this
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: inputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: outputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_inputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_outputs
+      TYPE(C_PTR), INTENT(IN)                       :: random_state
+      CHARACTER(kind=C_CHAR,len=*), INTENT(IN)      :: name
+      INTEGER(C_LONG), INTENT(IN)                   :: num_particles
+      REAL(C_DOUBLE), VALUE                         :: tol
+      INTEGER(C_LONG), VALUE                        :: max_iter
+
+!  Start of executable.
+      CALL graph_add_converge_item(this%c_context, LOC(inputs),                &
+                                   INT(SIZE(inputs), KIND=C_LONG),             &
+                                   LOC(outputs),                               &
+                                   INT(SIZE(outputs), KIND=C_LONG),            &
+                                   LOC(map_inputs), LOC(map_outputs),          &
+                                   INT(SIZE(map_inputs), KIND=C_LONG),         &
+                                   random_state, name, num_particles,          &
+                                   tol, max_iter)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Take derivative ∂f∂x.
+!>
+!>  @param[in,out] this  @ref graph_context instance.
+!>  @param[in]     fnode The function expression to take the derivative of.
+!>  @param[in]     xnode The expression to take the derivative with respect to.
+!-------------------------------------------------------------------------------
+         FUNCTION graph_context_df(this, fnode, xnode)
+
+         IMPLICIT NONE
+
+!  Declare Arguments
+         TYPE(C_PTR)                         :: graph_context_df
+         CLASS(graph_context), INTENT(INOUT) :: this
+         TYPE(C_PTR), INTENT(IN)             :: fnode
+         TYPE(C_PTR), INTENT(IN)             :: xnode
+
+!  Start of executable.
+         graph_context_df = graph_df(this%c_context, fnode, xnode)
+
+         END FUNCTION
 
       END MODULE
