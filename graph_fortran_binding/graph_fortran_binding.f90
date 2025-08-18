@@ -20,8 +20,10 @@
 !>  @brief Class object for the binding.
 !-------------------------------------------------------------------------------
       TYPE :: graph_context
+#ifdef USE_METAL
 !>  The auto release pool context.
          TYPE(C_PTR) :: arp_context
+#endif
 !>  The graph c context.
          TYPE(C_PTR) :: c_context
       CONTAINS
@@ -77,6 +79,30 @@
          PROCEDURE :: add_item => graph_context_add_item
          PROCEDURE :: add_converge_item => graph_context_add_converge_item
          PROCEDURE :: df => graph_context_df
+         PROCEDURE :: compile => graph_context_compile
+         PROCEDURE :: pre_run => graph_context_pre_run
+         PROCEDURE :: run => graph_context_run
+         PROCEDURE :: wait => graph_context_wait
+         PROCEDURE :: copy_to_device_float => graph_context_copy_to_device_float
+         PROCEDURE :: copy_to_device_double =>                                 &
+                         graph_context_copy_to_device_double
+         PROCEDURE :: copy_to_device_cfloat =>                                 &
+                         graph_context_copy_to_device_cfloat
+         PROCEDURE :: copy_to_device_cdouble =>                                &
+                         graph_context_copy_to_device_cdouble
+         GENERIC   :: copy_to_device => copy_to_device_float,                  &
+                                        copy_to_device_double,                 &
+                                        copy_to_device_cfloat,                 &
+                                        copy_to_device_cdouble
+         PROCEDURE :: copy_to_host_float => graph_context_copy_to_host_float
+         PROCEDURE :: copy_to_host_double => graph_context_copy_to_host_double
+         PROCEDURE :: copy_to_host_cfloat => graph_context_copy_to_host_cfloat
+         PROCEDURE :: copy_to_host_cdouble => graph_context_copy_to_host_cdouble
+         GENERIC   :: copy_to_host => copy_to_host_float,                      &
+                                      copy_to_host_double,                     &
+                                      copy_to_host_cfloat,                     &
+                                      copy_to_host_cdouble
+         PROCEDURE :: print => graph_context_print
       END TYPE
 
 !*******************************************************************************
@@ -210,67 +236,19 @@
          END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Set a variable float value.
+!>  @brief Set a variable value.
 !>
 !>  @param[in,out] c     The c context.
 !>  @param[in]     var   Variable to set.
 !>  @param[in]     value The buffer to the variable with.
 !-------------------------------------------------------------------------------
-         SUBROUTINE graph_set_variable_float(c, var, value)                    &
+         SUBROUTINE graph_set_variable(c, var, value)                          &
          BIND(C, NAME='graph_set_variable')
          USE, INTRINSIC :: ISO_C_BINDING
          IMPLICIT NONE
-         TYPE(C_PTR), VALUE                      :: c
-         TYPE(C_PTR), VALUE                      :: var
-         REAL(C_FLOAT), DIMENSION(:), INTENT(IN) :: value
-         END SUBROUTINE
-
-!-------------------------------------------------------------------------------
-!>  @brief Set a variable double value.
-!>
-!>  @param[in,out] c     The c context.
-!>  @param[in]     var   Variable to set.
-!>  @param[in]     value The buffer to the variable with.
-!-------------------------------------------------------------------------------
-         SUBROUTINE graph_set_variable_double(c, var, value)                    &
-         BIND(C, NAME='graph_set_variable')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                       :: c
-         TYPE(C_PTR), VALUE                       :: var
-         REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: value
-         END SUBROUTINE
-
-!-------------------------------------------------------------------------------
-!>  @brief Set a variable complex float value.
-!>
-!>  @param[in,out] c     The c context.
-!>  @param[in]     var   Variable to set.
-!>  @param[in]     value The buffer to the variable with.
-!-------------------------------------------------------------------------------
-         SUBROUTINE graph_set_variable_cfloat(c, var, value)                   &
-         BIND(C, NAME='graph_set_variable')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                      :: c
-         TYPE(C_PTR), VALUE                      :: var
-         COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(IN) :: value
-         END SUBROUTINE
-
-!-------------------------------------------------------------------------------
-!>  @brief Set a variable double value.
-!>
-!>  @param[in,out] c     The c context.
-!>  @param[in]     var   Variable to set.
-!>  @param[in]     value The buffer to the variable with.
-!-------------------------------------------------------------------------------
-         SUBROUTINE graph_set_variable_cdouble(c, var, value)                  &
-         BIND(C, NAME='graph_set_variable')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                                  :: c
-         TYPE(C_PTR), VALUE                                  :: var
-         COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(IN) :: value
+         TYPE(C_PTR), VALUE         :: c
+         TYPE(C_PTR), VALUE         :: var
+         INTEGER(C_INTPTR_T), VALUE :: value
          END SUBROUTINE
 
 !-------------------------------------------------------------------------------
@@ -543,78 +521,6 @@
          END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create 1D piecewise node with float buffer.
-!>
-!>  @param[in] c           The graph C context.
-!>  @param[in] arg         The left opperand.
-!>  @param[in] scale       Scale factor argument.
-!>  @param[in] offset      Offset factor argument.
-!>  @param[in] source      Source buffer to fill elements.
-!>  @param[in] source_size Number of elements in the source buffer.
-!>  @returns A 1D piecewise node.
-!-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_piecewise_1D_float(c, arg, scale, offset,  &
-                                                       source, source_size)    &
-         BIND(C, NAME='graph_piecewise_1D')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                      :: c
-         TYPE(C_PTR), VALUE                      :: arg
-         REAL(C_DOUBLE), VALUE                   :: scale
-         REAL(C_DOUBLE), VALUE                   :: offset
-         REAL(C_FLOAT), DIMENSION(:), INTENT(IN) :: source
-         INTEGER(C_LONG), VALUE                  :: source_size
-         END FUNCTION
-
-!-------------------------------------------------------------------------------
-!>  @brief Create 1D piecewise node with double buffer.
-!>
-!>  @param[in] c           The graph C context.
-!>  @param[in] arg         The left opperand.
-!>  @param[in] scale       Scale factor argument.
-!>  @param[in] offset      Offset factor argument.
-!>  @param[in] source      Source buffer to fill elements.
-!>  @param[in] source_size Number of elements in the source buffer.
-!>  @returns A 1D piecewise node.
-!-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_piecewise_1D_double(c, arg, scale, offset, &
-                                                        source, source_size)   &
-         BIND(C, NAME='graph_piecewise_1D')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                       :: c
-         TYPE(C_PTR), VALUE                       :: arg
-         REAL(C_DOUBLE), VALUE                    :: scale
-         REAL(C_DOUBLE), VALUE                    :: offset
-         REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: source
-         INTEGER(C_LONG), VALUE                   :: source_size
-         END FUNCTION
-
-!-------------------------------------------------------------------------------
-!>  @brief Create 1D piecewise node with complex float buffer.
-!>
-!>  @param[in] c           The graph C context.
-!>  @param[in] arg         The left opperand.
-!>  @param[in] scale       Scale factor argument.
-!>  @param[in] offset      Offset factor argument.
-!>  @param[in] source      Source buffer to fill elements.
-!>  @param[in] source_size Number of elements in the source buffer.
-!>  @returns A 1D piecewise node.
-!-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_piecewise_1D_cfloat(c, arg, scale, offset, &
-                                                        source, source_size)   &
-         BIND(C, NAME='graph_piecewise_1D')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                                 :: c
-         TYPE(C_PTR), VALUE                                 :: arg
-         REAL(C_DOUBLE), VALUE                              :: scale
-         REAL(C_DOUBLE), VALUE                              :: offset
-         COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(IN) :: source
-         INTEGER(C_LONG), VALUE                             :: source_size
-         END FUNCTION
-
-!-------------------------------------------------------------------------------
 !>  @brief Create 1D piecewise node with complex double buffer.
 !>
 !>  @param[in] c           The graph C context.
@@ -625,22 +531,21 @@
 !>  @param[in] source_size Number of elements in the source buffer.
 !>  @returns A 1D piecewise node.
 !-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_piecewise_1D_cdouble(c, arg, scale,        &
-                                                         offset, source,       &
-                                                         source_size)          &
+         TYPE(C_PTR) FUNCTION graph_piecewise_1D(c, arg, scale, offset,        &
+                                                 source, source_size)          &
          BIND(C, NAME='graph_piecewise_1D')
          USE, INTRINSIC :: ISO_C_BINDING
          IMPLICIT NONE
-         TYPE(C_PTR), VALUE                                  :: c
-         TYPE(C_PTR), VALUE                                  :: arg
-         REAL(C_DOUBLE), VALUE                               :: scale
-         REAL(C_DOUBLE), VALUE                               :: offset
-         COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(IN) :: source
-         INTEGER(C_LONG), VALUE                              :: source_size
+         TYPE(C_PTR), VALUE         :: c
+         TYPE(C_PTR), VALUE         :: arg
+         REAL(C_DOUBLE), VALUE      :: scale
+         REAL(C_DOUBLE), VALUE      :: offset
+         INTEGER(C_INTPTR_T), VALUE :: source
+         INTEGER(C_LONG), VALUE     :: source_size
          END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create 2D piecewise node with float buffer.
+!>  @brief Create 2D piecewise node.
 !>
 !>  @param[in] c           The graph C context.
 !>  @param[in] num_cols    Number of columns.
@@ -654,133 +559,23 @@
 !>  @param[in] source_size Number of elements in the source buffer.
 !>  @returns A 2D piecewise node.
 !-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_piecewise_2D_float(c, num_cols,            &
-                                                       x_arg, x_scale,         &
-                                                       x_offset,               &
-                                                       y_arg, y_scale,         &
-                                                       y_offset,               &
-                                                       source, source_size)    &
+         TYPE(C_PTR) FUNCTION graph_piecewise_2D(c, num_cols,                  &
+                                                 x_arg, x_scale, x_offset,     &
+                                                 y_arg, y_scale, y_offset,     &
+                                                 source, source_size)          &
          BIND(C, NAME='graph_piecewise_2D')
          USE, INTRINSIC :: ISO_C_BINDING
          IMPLICIT NONE
-         TYPE(C_PTR), VALUE                        :: c
-         INTEGER(C_LONG), VALUE                    :: num_cols
-         TYPE(C_PTR), VALUE                        :: x_arg
-         REAL(C_DOUBLE), VALUE                     :: x_scale
-         REAL(C_DOUBLE), VALUE                     :: x_offset
-         TYPE(C_PTR), VALUE                        :: y_arg
-         REAL(C_DOUBLE), VALUE                     :: y_scale
-         REAL(C_DOUBLE), VALUE                     :: y_offset
-         REAL(C_FLOAT), DIMENSION(:,:), INTENT(IN) :: source
-         INTEGER(C_LONG), VALUE                    :: source_size
-         END FUNCTION
-
-!-------------------------------------------------------------------------------
-!>  @brief Create 2D piecewise node with double buffer.
-!>
-!>  @param[in] c           The graph C context.
-!>  @param[in] num_cols    Number of columns.
-!>  @param[in] x_arg       The function x argument.
-!>  @param[in] x_scale     Scale factor x argument.
-!>  @param[in] x_offset    Offset factor x argument.
-!>  @param[in] y_arg       The function y argument.
-!>  @param[in] y_scale     Scale factor y argument.
-!>  @param[in] y_offset    Offset factor y argument.
-!>  @param[in] source      Source buffer to fill elements.
-!>  @param[in] source_size Number of elements in the source buffer.
-!>  @returns A 2D piecewise node.
-!-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_piecewise_2D_double(c, num_cols,           &
-                                                        x_arg, x_scale,        &
-                                                        x_offset,              &
-                                                        y_arg, y_scale,        &
-                                                        y_offset,              &
-                                                        source, source_size)   &
-         BIND(C, NAME='graph_piecewise_2D')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                         :: c
-         INTEGER(C_LONG), VALUE                     :: num_cols
-         TYPE(C_PTR), VALUE                         :: x_arg
-         REAL(C_DOUBLE), VALUE                      :: x_scale
-         REAL(C_DOUBLE), VALUE                      :: x_offset
-         TYPE(C_PTR), VALUE                         :: y_arg
-         REAL(C_DOUBLE), VALUE                      :: y_scale
-         REAL(C_DOUBLE), VALUE                      :: y_offset
-         REAL(C_DOUBLE), DIMENSION(:,:), INTENT(IN) :: source
-         INTEGER(C_LONG), VALUE                     :: source_size
-         END FUNCTION
-
-!-------------------------------------------------------------------------------
-!>  @brief Create 2D piecewise node with complex float buffer.
-!>
-!>  @param[in] c           The graph C context.
-!>  @param[in] num_cols    Number of columns.
-!>  @param[in] x_arg       The function x argument.
-!>  @param[in] x_scale     Scale factor x argument.
-!>  @param[in] x_offset    Offset factor x argument.
-!>  @param[in] y_arg       The function y argument.
-!>  @param[in] y_scale     Scale factor y argument.
-!>  @param[in] y_offset    Offset factor y argument.
-!>  @param[in] source      Source buffer to fill elements.
-!>  @param[in] source_size Number of elements in the source buffer.
-!>  @returns A 2D piecewise node.
-!-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_piecewise_2D_cfloat(c, num_cols,           &
-                                                        x_arg, x_scale,        &
-                                                        x_offset,              &
-                                                        y_arg, y_scale,        &
-                                                        y_offset,              &
-                                                        source, source_size)   &
-         BIND(C, NAME='graph_piecewise_2D')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                                   :: c
-         INTEGER(C_LONG), VALUE                               :: num_cols
-         TYPE(C_PTR), VALUE                                   :: x_arg
-         REAL(C_DOUBLE), VALUE                                :: x_scale
-         REAL(C_DOUBLE), VALUE                                :: x_offset
-         TYPE(C_PTR), VALUE                                   :: y_arg
-         REAL(C_DOUBLE), VALUE                                :: y_scale
-         REAL(C_DOUBLE), VALUE                                :: y_offset
-         COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:,:), INTENT(IN) :: source
-         INTEGER(C_LONG), VALUE                               :: source_size
-         END FUNCTION
-
-!-------------------------------------------------------------------------------
-!>  @brief Create 2D piecewise node with complex double buffer.
-!>
-!>  @param[in] c           The graph C context.
-!>  @param[in] num_cols    Number of columns.
-!>  @param[in] x_arg       The function x argument.
-!>  @param[in] x_scale     Scale factor x argument.
-!>  @param[in] x_offset    Offset factor x argument.
-!>  @param[in] y_arg       The function y argument.
-!>  @param[in] y_scale     Scale factor y argument.
-!>  @param[in] y_offset    Offset factor y argument.
-!>  @param[in] source      Source buffer to fill elements.
-!>  @param[in] source_size Number of elements in the source buffer.
-!>  @returns A 2D piecewise node.
-!-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_piecewise_2D_cdouble(c, num_cols,          &
-                                                         x_arg, x_scale,       &
-                                                         x_offset,             &
-                                                         y_arg, y_scale,       &
-                                                         y_offset,             &
-                                                         source, source_size)  &
-         BIND(C, NAME='graph_piecewise_2D')
-         USE, INTRINSIC :: ISO_C_BINDING
-         IMPLICIT NONE
-         TYPE(C_PTR), VALUE                                    :: c
-         INTEGER(C_LONG), VALUE                                :: num_cols
-         TYPE(C_PTR), VALUE                                    :: x_arg
-         REAL(C_DOUBLE), VALUE                                 :: x_scale
-         REAL(C_DOUBLE), VALUE                                 :: x_offset
-         TYPE(C_PTR), VALUE                                    :: y_arg
-         REAL(C_DOUBLE), VALUE                                 :: y_scale
-         REAL(C_DOUBLE), VALUE                                 :: y_offset
-         COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:,:), INTENT(IN) :: source
-         INTEGER(C_LONG), VALUE                                :: source_size
+         TYPE(C_PTR), VALUE         :: c
+         INTEGER(C_LONG), VALUE     :: num_cols
+         TYPE(C_PTR), VALUE         :: x_arg
+         REAL(C_DOUBLE), VALUE      :: x_scale
+         REAL(C_DOUBLE), VALUE      :: x_offset
+         TYPE(C_PTR), VALUE         :: y_arg
+         REAL(C_DOUBLE), VALUE      :: y_scale
+         REAL(C_DOUBLE), VALUE      :: y_offset
+         INTEGER(C_INTPTR_T), VALUE :: source
+         INTEGER(C_LONG), VALUE     :: source_size
          END FUNCTION
 
 !-------------------------------------------------------------------------------
@@ -921,6 +716,54 @@
          END SUBROUTINE
 
 !-------------------------------------------------------------------------------
+!>  @brief Compile the work items.
+!>
+!>  @param[in] c The graph C context.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_compile(c)                                           &
+         BIND(C, NAME='graph_compile')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Run pre work items.
+!>
+!>  @param[in] c The graph C context.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_pre_run(c)                                           &
+         BIND(C, NAME='graph_pre_run')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Run work items.
+!>
+!>  @param[in] c The graph C context.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_run(c)                                               &
+         BIND(C, NAME='graph_run')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Wait for work items to complete.
+!>
+!>  @param[in] c The graph C context.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_wait(c)                                              &
+         BIND(C, NAME='graph_wait')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE :: c
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
 !>  @brief Take derivative ∂f∂x.
 !>
 !>  @param[in] c     The graph C context.
@@ -934,6 +777,56 @@
          TYPE(C_PTR), VALUE :: fnode
          TYPE(C_PTR), VALUE :: xnode
          END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy data to a device buffer.
+!>
+!>  @param[in] c      The c context.
+!>  @param[in] node   Node to copy to.
+!>  @param[in] source Source to copy from.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_copy_to_device(c, node, source)                      &
+         BIND(C, NAME='graph_copy_to_device')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE     :: c
+         TYPE(C_PTR), VALUE     :: node
+         INTEGER(C_LONG), VALUE :: source
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy data to a host buffer.
+!>
+!>  @param[in]     c           The graph C context.
+!>  @param[in]     node        Node to copy from.
+!>  @param[in,out] destination Host side buffer to copy to.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_copy_to_host(c, node, destination)                   &
+         BIND(C, NAME='graph_copy_to_host')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE     :: c
+         TYPE(C_PTR), VALUE     :: node
+         INTEGER(C_LONG), VALUE :: destination
+         END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Print a value from nodes.
+!>
+!>  @param[in] c         The graph C context.
+!>  @param[in] index     Particle index to print.
+!>  @param[in] nodes     Nodes to print.
+!>  @param[in] num_nodes Number of nodes.
+!-------------------------------------------------------------------------------
+         SUBROUTINE graph_print(c, index, nodes, num_nodes)                    &
+         BIND(C, NAME='graph_print')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE         :: c
+         INTEGER(C_LONG), VALUE     :: index
+         INTEGER(C_INTPTR_T), VALUE :: nodes
+         INTEGER(C_LONG), VALUE     :: num_nodes
+         END SUBROUTINE
 
       END INTERFACE
 
@@ -981,7 +874,9 @@
 
 !  Start of executable code.
       ALLOCATE(graph_construct_float)
+#ifdef USE_METAL
       graph_construct_float%arp_context = objc_autoreleasePoolPush()
+#endif
       graph_construct_float%c_context =                                        &
          graph_construct_context(FLOAT_T, use_safe_math)
 
@@ -1005,7 +900,9 @@
 
 !  Start of executable code.
       ALLOCATE(graph_construct_double)
+#ifdef USE_METAL
       graph_construct_double%arp_context = objc_autoreleasePoolPush()
+#endif
       graph_construct_double%c_context =                                       &
          graph_construct_context(DOUBLE_T, use_safe_math)
 
@@ -1029,7 +926,9 @@
 
 !  Start of executable code.
       ALLOCATE(graph_construct_complex_float)
+#ifdef USE_METAL
       graph_construct_complex_float%arp_context = objc_autoreleasePoolPush()
+#endif
       graph_construct_complex_float%c_context =                                &
          graph_construct_context(COMPLEX_FLOAT_T, use_safe_math)
 
@@ -1053,7 +952,9 @@
 
 !  Start of executable code.
       ALLOCATE(graph_construct_complex_double)
+#ifdef USE_METAL
       graph_construct_complex_double%arp_context = objc_autoreleasePoolPush()
+#endif
       graph_construct_complex_double%c_context =                               &
          graph_construct_context(COMPLEX_DOUBLE_T, use_safe_math)
 
@@ -1077,7 +978,9 @@
       TYPE(graph_context), INTENT(INOUT) :: this
 
 !  Start of executable.
+#ifdef USE_METAL
       CALL objc_autoreleasePoolPop(this%arp_context)
+#endif
       CALL graph_destroy_context(this%c_context)
 
       END SUBROUTINE
@@ -1144,7 +1047,7 @@
       REAL(C_FLOAT), DIMENSION(:), INTENT(IN) :: value
 
 !  Start of executable.
-      CALL graph_set_variable_float(this%c_context, var, value)
+      CALL graph_set_variable(this%c_context, var, LOC(value))
 
       END SUBROUTINE
 
@@ -1165,7 +1068,7 @@
       REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: value
 
 !  Start of executable.
-      CALL graph_set_variable_double(this%c_context, var, value)
+      CALL graph_set_variable(this%c_context, var, LOC(value))
 
       END SUBROUTINE
 
@@ -1186,7 +1089,7 @@
       COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(IN) :: value
 
 !  Start of executable.
-      CALL graph_set_variable_cfloat(this%c_context, var, value)
+      CALL graph_set_variable(this%c_context, var, LOC(value))
 
       END SUBROUTINE
 
@@ -1207,7 +1110,7 @@
       COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(IN) :: value
 
 !  Start of executable.
-      CALL graph_set_variable_cdouble(this%c_context, var, value)
+      CALL graph_set_variable(this%c_context, var, LOC(value))
 
       END SUBROUTINE
 
@@ -1622,8 +1525,8 @@
 
 !  Start of executable.
       graph_context_piecewise_1D_float =                                       &
-         graph_piecewise_1D_float(this%c_context, arg, scale, offset,          &
-                                  source, INT(SIZE(source), KIND=C_LONG))
+         graph_piecewise_1D(this%c_context, arg, scale, offset, LOC(source),   &
+                            INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 
@@ -1652,8 +1555,8 @@
 
 !  Start of executable.
       graph_context_piecewise_1D_double =                                      &
-         graph_piecewise_1D_double(this%c_context, arg, scale, offset,         &
-                                   source, INT(SIZE(source), KIND=C_LONG))
+         graph_piecewise_1D(this%c_context, arg, scale, offset, LOC(source),   &
+                            INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 
@@ -1682,8 +1585,8 @@
 
 !  Start of executable.
       graph_context_piecewise_1D_cfloat =                                      &
-         graph_piecewise_1D_cfloat(this%c_context, arg, scale, offset,         &
-                                   source, INT(SIZE(source), KIND=C_LONG))
+         graph_piecewise_1D(this%c_context, arg, scale, offset, LOC(source),   &
+                            INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 
@@ -1712,8 +1615,8 @@
 
 !  Start of executable.
       graph_context_piecewise_1D_cdouble =                                     &
-         graph_piecewise_1D_cdouble(this%c_context, arg, scale, offset,        &
-                                    source, INT(SIZE(source), KIND=C_LONG))
+         graph_piecewise_1D(this%c_context, arg, scale, offset, LOC(source),   &
+                            INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 
@@ -1750,11 +1653,11 @@
 
 !  Start of executable.
       graph_context_piecewise_2D_float =                                       &
-         graph_piecewise_2D_float(this%c_context,                              &
-                                  INT(SIZE(source, 1), KIND=C_LONG),           &
-                                  x_arg, x_scale, x_offset,                    &
-                                  y_arg, y_scale, y_offset,                    &
-                                  source, INT(SIZE(source), KIND=C_LONG))
+         graph_piecewise_2D(this%c_context,                                    &
+                            INT(SIZE(source, 1), KIND=C_LONG),                 &
+                            x_arg, x_scale, x_offset,                          &
+                            y_arg, y_scale, y_offset,                          &
+                            LOC(source), INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 
@@ -1791,11 +1694,11 @@
 
 !  Start of executable.
       graph_context_piecewise_2D_double =                                      &
-         graph_piecewise_2D_double(this%c_context,                             &
-                                   INT(SIZE(source, 1), KIND=C_LONG),          &
-                                   x_arg, x_scale, x_offset,                   &
-                                   y_arg, y_scale, y_offset,                   &
-                                   source, INT(SIZE(source), KIND=C_LONG))
+         graph_piecewise_2D(this%c_context,                                    &
+                            INT(SIZE(source, 1), KIND=C_LONG),                 &
+                            x_arg, x_scale, x_offset,                          &
+                            y_arg, y_scale, y_offset,                          &
+                            LOC(source), INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 
@@ -1832,11 +1735,11 @@
 
 !  Start of executable.
       graph_context_piecewise_2D_cfloat =                                      &
-         graph_piecewise_2D_cfloat(this%c_context,                             &
-                                   INT(SIZE(source, 1), KIND=C_LONG),          &
-                                   x_arg, x_scale, x_offset,                   &
-                                   y_arg, y_scale, y_offset,                   &
-                                   source, INT(SIZE(source), KIND=C_LONG))
+         graph_piecewise_2D(this%c_context,                                    &
+                            INT(SIZE(source, 1), KIND=C_LONG),                 &
+                            x_arg, x_scale, x_offset,                          &
+                            y_arg, y_scale, y_offset,                          &
+                            LOC(source), INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 
@@ -1873,11 +1776,11 @@
 
 !  Start of executable.
       graph_context_piecewise_2D_cdouble =                                     &
-         graph_piecewise_2D_cdouble(this%c_context,                            &
-                                    INT(SIZE(source, 1), KIND=C_LONG),         &
-                                    x_arg, x_scale, x_offset,                  &
-                                    y_arg, y_scale, y_offset,                  &
-                                    source, INT(SIZE(source), KIND=C_LONG))
+         graph_piecewise_2D(this%c_context,                                    &
+                            INT(SIZE(source, 1), KIND=C_LONG),                 &
+                            x_arg, x_scale, x_offset,                          &
+                            y_arg, y_scale, y_offset,                          &
+                            LOC(source), INT(SIZE(source), KIND=C_LONG))
 
       END FUNCTION
 
@@ -2043,25 +1946,283 @@
       END SUBROUTINE
 
 !-------------------------------------------------------------------------------
+!>  @brief Compile the work items.
+!>
+!>  @param[in] this  @ref graph_context instance.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_compile(this)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN) :: this
+
+!  Start of executable.
+      CALL graph_compile(this%c_context)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Run pre work items.
+!>
+!>  @param[in] this  @ref graph_context instance.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_pre_run(this)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN) :: this
+
+!  Start of executable.
+      CALL graph_pre_run(this%c_context)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Run work items.
+!>
+!>  @param[in] this  @ref graph_context instance.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_run(this)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN) :: this
+
+!  Start of executable.
+      CALL graph_run(this%c_context)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Wait for work items to complete.
+!>
+!>  @param[in] this  @ref graph_context instance.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_wait(this)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN) :: this
+
+!  Start of executable.
+      CALL graph_wait(this%c_context)
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
 !>  @brief Take derivative ∂f∂x.
 !>
 !>  @param[in,out] this  @ref graph_context instance.
 !>  @param[in]     fnode The function expression to take the derivative of.
 !>  @param[in]     xnode The expression to take the derivative with respect to.
 !-------------------------------------------------------------------------------
-         FUNCTION graph_context_df(this, fnode, xnode)
+      FUNCTION graph_context_df(this, fnode, xnode)
 
-         IMPLICIT NONE
+      IMPLICIT NONE
 
 !  Declare Arguments
-         TYPE(C_PTR)                         :: graph_context_df
-         CLASS(graph_context), INTENT(INOUT) :: this
-         TYPE(C_PTR), INTENT(IN)             :: fnode
-         TYPE(C_PTR), INTENT(IN)             :: xnode
+      TYPE(C_PTR)                         :: graph_context_df
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: fnode
+      TYPE(C_PTR), INTENT(IN)             :: xnode
 
 !  Start of executable.
-         graph_context_df = graph_df(this%c_context, fnode, xnode)
+      graph_context_df = graph_df(this%c_context, fnode, xnode)
 
-         END FUNCTION
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy float data to a device buffer.
+!>
+!>  @param[in] this   @ref graph_context instance.
+!>  @param[in] node   Node to copy to.
+!>  @param[in] source Source to copy from.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_copy_to_device_float(this, node, source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)        :: this
+      TYPE(C_PTR), INTENT(IN)                 :: node
+      REAL(C_FLOAT), DIMENSION(:), INTENT(IN) :: source
+
+!  Start of executable.
+      CALL graph_copy_to_device(this%c_context, node, LOC(source))
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy double data to a device buffer.
+!>
+!>  @param[in] this   @ref graph_context instance.
+!>  @param[in] node   Node to copy to.
+!>  @param[in] source Source to copy from.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_copy_to_device_double(this, node, source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)         :: this
+      TYPE(C_PTR), INTENT(IN)                  :: node
+      REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: source
+
+!  Start of executable.
+      CALL graph_copy_to_device(this%c_context, node, LOC(source))
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy complex float data to a device buffer.
+!>
+!>  @param[in] this   @ref graph_context instance.
+!>  @param[in] node   Node to copy to.
+!>  @param[in] source Source to copy from.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_copy_to_device_cfloat(this, node, source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)                   :: this
+      TYPE(C_PTR), INTENT(IN)                            :: node
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(IN) :: source
+
+!  Start of executable.
+      CALL graph_copy_to_device(this%c_context, node, LOC(source))
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy complex double data to a device buffer.
+!>
+!>  @param[in] this   @ref graph_context instance.
+!>  @param[in] node   Node to copy to.
+!>  @param[in] source Source to copy from.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_copy_to_device_cdouble(this, node, source)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)                    :: this
+      TYPE(C_PTR), INTENT(IN)                             :: node
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(IN) :: source
+
+!  Start of executable.
+      CALL graph_copy_to_device(this%c_context, node, LOC(source))
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy data to a host float buffer.
+!>
+!>  @param[in]     this        @ref graph_context instance.
+!>  @param[in]     node        Node to copy from.
+!>  @param[in,out] destination Host side buffer to copy to.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_copy_to_host_float(this, node, destination)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)           :: this
+      TYPE(C_PTR), VALUE                         :: node
+      REAL(C_FLOAT), DIMENSION(:), INTENT(INOUT) :: destination
+
+!  Start of executable.
+      CALL graph_copy_to_host(this%c_context, node, LOC(destination))
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy data to a host double buffer.
+!>
+!>  @param[in]     c           The graph C context.
+!>  @param[in]     node        Node to copy from.
+!>  @param[in,out] destination Host side buffer to copy to.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_copy_to_host_double(this, node, destination)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)            :: this
+      TYPE(C_PTR), VALUE                          :: node
+      REAL(C_DOUBLE), DIMENSION(:), INTENT(INOUT) :: destination
+
+!  Start of executable.
+      CALL graph_copy_to_host(this%c_context, node, LOC(destination))
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy data to a host complex float buffer.
+!>
+!>  @param[in]     c           The graph C context.
+!>  @param[in]     node        Node to copy from.
+!>  @param[in,out] destination Host side buffer to copy to.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_copy_to_host_cfloat(this, node, destination)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)                      :: this
+      TYPE(C_PTR), VALUE                                    :: node
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(INOUT) :: destination
+
+!  Start of executable.
+      CALL graph_copy_to_host(this%c_context, node, LOC(destination))
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Copy data to a host complex double buffer.
+!>
+!>  @param[in]     c           The graph C context.
+!>  @param[in]     node        Node to copy from.
+!>  @param[in,out] destination Host side buffer to copy to.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_copy_to_host_cdouble(this, node, destination)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)                       :: this
+      TYPE(C_PTR), VALUE                                     :: node
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(INOUT) :: destination
+
+!  Start of executable.
+      CALL graph_copy_to_host(this%c_context, node, LOC(destination))
+
+      END SUBROUTINE
+
+!-------------------------------------------------------------------------------
+!>  @brief Print a value from nodes.
+!>
+!>  @param[in] c         The graph C context.
+!>  @param[in] index     Particle index to print.
+!>  @param[in] nodes     Nodes to print.
+!-------------------------------------------------------------------------------
+      SUBROUTINE graph_context_print(this, index, nodes)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      CLASS(graph_context), INTENT(IN)              :: this
+      INTEGER(C_LONG), INTENT(IN)                   :: index
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: nodes
+
+!  Start of executable.
+      CALL graph_print(this%c_context, index, LOC(nodes),                      &
+                       INT(SIZE(nodes), KIND=C_LONG))
+
+      END SUBROUTINE
 
       END MODULE

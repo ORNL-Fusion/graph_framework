@@ -12,10 +12,12 @@ target_sources (graph_c
                 PRIVATE
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/graph_c_binding.cpp>
 )
-set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/graph_c_binding.cpp
-                             PROPERTIES
-                             LANGUAGE OBJCXX
-)
+if (${USE_METAL})
+    set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/graph_c_binding.cpp
+                                 PROPERTIES
+                                 LANGUAGE OBJCXX
+    )
+endif ()
 target_compile_features (graph_c
                          PUBLIC
                          c_std_17

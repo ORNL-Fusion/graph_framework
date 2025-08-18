@@ -358,9 +358,14 @@ macro (add_tool_target target lang)
             set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
                                          PROPERTIES
                                          LANGUAGE OBJC
-                                         SKIP_PRECOMPILE_HEADERS ON
             )
         endif ()
+    endif ()
+    if (${lang} STREQUAL "c")
+        set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+                                     PROPERTIES
+                                     SKIP_PRECOMPILE_HEADERS ON
+        )
     endif ()
 
     target_link_libraries (${target}

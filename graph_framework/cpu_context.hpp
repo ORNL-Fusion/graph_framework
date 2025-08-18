@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <thread>
+#include <unordered_set>
 
 //  Clang headers will define IBAction and IBOutlet these so undefine them here.
 #undef IBAction

@@ -419,7 +419,7 @@ extern "C" {
                                  const size_t max_iter);
 
 //------------------------------------------------------------------------------
-///  @brief Compile the work items
+///  @brief Compile the work items.
 ///
 ///  @param[in] c The graph C context.
 //------------------------------------------------------------------------------
@@ -469,7 +469,7 @@ extern "C" {
                             void *destination);
 
 //------------------------------------------------------------------------------
-///  @brief Copy data to a host buffer.
+///  @brief Print a value from nodes.
 ///
 ///  @param[in] c         The graph C context.
 ///  @param[in] index     Particle index to print.

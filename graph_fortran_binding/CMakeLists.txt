@@ -8,6 +8,10 @@ target_link_libraries (graph_f
                        PUBLIC
                        graph_c
 )
+target_compile_options (graph_f
+                        PUBLIC
+                        $<$<COMPILE_LANGUAGE:Fortran>:-cpp>
+)
 target_sources (graph_f
                 PRIVATE
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/graph_fortran_binding.f90>

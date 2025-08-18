@@ -144,14 +144,18 @@
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
+      value(1) = 1.5
+      CALL graph%set_variable(i, value)
       buffer1D = (/ 2.0, 4.0, 6.0 /)
       p1 = graph%piecewise_1D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer1D)
 
       j = graph%variable(1_C_LONG, 'j' // C_NULL_CHAR)
+      value(1) = 2.5
+      CALL graph%set_variable(j, value)
       buffer2D = RESHAPE((/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 /),    &
                          SHAPE(buffer2D))
-      p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
-                              j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+      p2 = graph%piecewise_2D(j, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
+                              i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
       root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
@@ -179,8 +183,42 @@
                           'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR, "f_binding_converge", 1_C_LONG, &
-                                   1.0E-30_C_DOUBLE, 1000_C_LONG)
+                                   C_NULL_PTR,                                 &
+                                   'f_binding_converge' // C_NULL_CHAR,        &
+                                   1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
+      CALL graph%compile()
+      value(1) = 10.0
+      CALL graph%copy_to_device(z, value)
+      CALL graph%pre_run()
+      CALL graph%run()
+      CALL graph%wait()
+      CALL graph%print(0_C_LONG, (/ graph_ptr(z), graph_ptr(y) /))
+
+      CALL graph%copy_to_host(y, value)
+      CALL assert(value(1) .eq. 0.5_C_FLOAT*2.0_C_FLOAT + 0.2_C_FLOAT,         &
+                  'Value of y does not match.')
+      CALL graph%copy_to_host(dydx, value)
+      CALL assert(value(1) .eq. 0.5_C_FLOAT, 'Value of dydx does not match.')
+      CALL graph%copy_to_host(dydm, value)
+      CALL assert(value(1) .eq. 2.0_C_FLOAT, 'Value of dydm does not match.')
+      CALL graph%copy_to_host(dydb, value)
+      CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of dydb does not match.')
+      CALL graph%copy_to_host(dydy, value)
+      CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of dydy does not match.')
+      CALL graph%copy_to_host(rand, value)
+      IF (use_safe_math) THEN
+         CALL assert(value(1) .eq. 2546248192.0_C_FLOAT,                       &
+                     'Value of rand does not match.')
+      ELSE
+         CALL assert(value(1) .eq. 2357136128.0_C_FLOAT,                       &
+                     'Value of rand does not match.')
+      END IF
+      CALL graph%copy_to_host(z, value)
+      CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of root does not match.')
+      CALL graph%copy_to_host(p1, value)
+      CALL assert(value(1) .eq. 4.0_C_FLOAT, 'Value of p1 does not match.')
+      CALL graph%copy_to_host(p2, value)
+      CALL assert(value(1) .eq. 8.0_C_FLOAT, 'Value of p2 does not match.')
 
       DEALLOCATE(graph)
 
@@ -279,14 +317,18 @@
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
+      value(1) = 1.5
+      CALL graph%set_variable(i, value)
       buffer1D = (/ 2.0, 4.0, 6.0 /)
       p1 = graph%piecewise_1D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer1D)
 
       j = graph%variable(1_C_LONG, 'j' // C_NULL_CHAR)
+      value(1) = 2.5
+      CALL graph%set_variable(j, value)
       buffer2D = RESHAPE((/ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 /),    &
                          SHAPE(buffer2D))
-      p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
-                              j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+      p2 = graph%piecewise_2D(j, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
+                              i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
       root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
@@ -314,8 +356,42 @@
                           'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR, "f_binding_converge", 1_C_LONG, &
-                                   1.0E-30_C_DOUBLE, 1000_C_LONG)
+                                   C_NULL_PTR,                                 &
+                                   'f_binding_converge' // C_NULL_CHAR,        &
+                                   1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
+      CALL graph%compile()
+      value(1) = 10.0
+      CALL graph%copy_to_device(z, value)
+      CALL graph%pre_run()
+      CALL graph%run()
+      CALL graph%wait()
+      CALL graph%print(0_C_LONG, (/ graph_ptr(z), graph_ptr(y) /))
+
+      CALL graph%copy_to_host(y, value)
+      CALL assert(value(1) .eq. 0.5_C_DOUBLE*2.0_C_DOUBLE + 0.2_C_DOUBLE,      &
+                  'Value of y does not match.')
+      CALL graph%copy_to_host(dydx, value)
+      CALL assert(value(1) .eq. 0.5_C_DOUBLE, 'Value of dydx does not match.')
+      CALL graph%copy_to_host(dydm, value)
+      CALL assert(value(1) .eq. 2.0_C_DOUBLE, 'Value of dydm does not match.')
+      CALL graph%copy_to_host(dydb, value)
+      CALL assert(value(1) .eq. 1.0_C_DOUBLE, 'Value of dydb does not match.')
+      CALL graph%copy_to_host(dydy, value)
+      CALL assert(value(1) .eq. 1.0_C_DOUBLE, 'Value of dydy does not match.')
+      CALL graph%copy_to_host(rand, value)
+      IF (use_safe_math) THEN
+         CALL assert(value(1) .eq. 2546248239.0_C_DOUBLE,                      &
+                     'Value of rand does not match.')
+      ELSE
+         CALL assert(value(1) .eq. 2357136044.0_C_DOUBLE,                      &
+                     'Value of rand does not match.')
+      END IF
+      CALL graph%copy_to_host(z, value)
+      CALL assert(value(1) .eq. 1.0_C_DOUBLE, 'Value of root does not match.')
+      CALL graph%copy_to_host(p1, value)
+      CALL assert(value(1) .eq. 4.0_C_DOUBLE, 'Value of p1 does not match.')
+      CALL graph%copy_to_host(p2, value)
+      CALL assert(value(1) .eq. 8.0_C_DOUBLE, 'Value of p2 does not match.')
 
       DEALLOCATE(graph)
 
@@ -416,16 +492,20 @@
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
+      value(1) = 1.5
+      CALL graph%set_variable(i, value)
       buffer1D = (/ CMPLX(2.0, 0.0), CMPLX(4.0, 0.0), CMPLX(6.0, 0.0) /)
       p1 = graph%piecewise_1D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer1D)
 
       j = graph%variable(1_C_LONG, 'j' // C_NULL_CHAR)
+      value(1) = 2.5
+      CALL graph%set_variable(j, value)
       buffer2D = RESHAPE((/ CMPLX(1.0, 0.0), CMPLX(2.0, 0.0), CMPLX(3.0, 0.0), &
                             CMPLX(4.0, 0.0), CMPLX(5.0, 0.0), CMPLX(6.0, 0.0), &
                             CMPLX(7.0, 0.0), CMPLX(8.0, 0.0), CMPLX(9.0, 0.0)  &
                          /), SHAPE(buffer2D))
-      p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
-                              j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+      p2 = graph%piecewise_2D(j, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
+                              i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
       root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
@@ -453,8 +533,49 @@
                           'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR, "f_binding_converge", 1_C_LONG, &
-                                   1.0E-30_C_DOUBLE, 1000_C_LONG)
+                                   C_NULL_PTR,                                 &
+                                   'f_binding_converge' // C_NULL_CHAR,        &
+                                   1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
+      CALL graph%compile()
+      value(1) = 10.0
+      CALL graph%copy_to_device(z, value)
+      CALL graph%pre_run()
+      CALL graph%run()
+      CALL graph%wait()
+      CALL graph%print(0_C_LONG, (/ graph_ptr(z), graph_ptr(y) /))
+
+      CALL graph%copy_to_host(y, value)
+      CALL assert(REAL(value(1)) .eq. 0.5_C_FLOAT*2.0_C_FLOAT + 0.2_C_FLOAT,   &
+                  'Value of y does not match.')
+      CALL graph%copy_to_host(dydx, value)
+      CALL assert(REAL(value(1)) .eq. 0.5_C_FLOAT,                             &
+                  'Value of dydx does not match.')
+      CALL graph%copy_to_host(dydm, value)
+      CALL assert(REAL(value(1)) .eq. 2.0_C_FLOAT,                             &
+                  'Value of dydm does not match.')
+      CALL graph%copy_to_host(dydb, value)
+      CALL assert(REAL(value(1)) .eq. 1.0_C_FLOAT,                             &
+                  'Value of dydb does not match.')
+      CALL graph%copy_to_host(dydy, value)
+      CALL assert(REAL(value(1)) .eq. 1.0_C_FLOAT,                             &
+                  'Value of dydy does not match.')
+      CALL graph%copy_to_host(rand, value)
+      IF (use_safe_math) THEN
+         CALL assert(REAL(value(1)) .eq. 2546248192.0_C_FLOAT,                 &
+                     'Value of rand does not match.')
+      ELSE
+         CALL assert(REAL(value(1)) .eq. 2357136128.0_C_FLOAT,                 &
+                     'Value of rand does not match.')
+      END IF
+      CALL graph%copy_to_host(z, value)
+      CALL assert(REAL(value(1)) .eq. 1.0_C_FLOAT,                             &
+                  'Value of root does not match.')
+      CALL graph%copy_to_host(p1, value)
+      CALL assert(REAL(value(1)) .eq. 4.0_C_FLOAT,                             &
+                  'Value of p1 does not match.')
+      CALL graph%copy_to_host(p2, value)
+      CALL assert(REAL(value(1)) .eq. 8.0_C_FLOAT,                             &
+                  'Value of p2 does not match.')
 
       DEALLOCATE(graph)
 
@@ -555,16 +676,31 @@
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
-      buffer1D = (/ CMPLX(2.0, 0.0), CMPLX(4.0, 0.0), CMPLX(6.0, 0.0) /)
+      value(1) = 1.5
+      CALL graph%set_variable(i, value)
+      buffer1D = (/                                                            &
+         CMPLX(2.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(4.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(6.0, 0.0, KIND=C_DOUBLE)                                        &
+      /)
       p1 = graph%piecewise_1D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer1D)
 
       j = graph%variable(1_C_LONG, 'j' // C_NULL_CHAR)
-      buffer2D = RESHAPE((/ CMPLX(1.0, 0.0), CMPLX(2.0, 0.0), CMPLX(3.0, 0.0), &
-                            CMPLX(4.0, 0.0), CMPLX(5.0, 0.0), CMPLX(6.0, 0.0), &
-                            CMPLX(7.0, 0.0), CMPLX(8.0, 0.0), CMPLX(9.0, 0.0)  &
-                         /), SHAPE(buffer2D))
-      p2 = graph%piecewise_2D(i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
-                              j, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
+      value(1) = 2.5
+      CALL graph%set_variable(j, value)
+      buffer2D = RESHAPE((/                                                    &
+         CMPLX(1.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(2.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(3.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(4.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(5.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(6.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(7.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(8.0, 0.0, KIND=C_DOUBLE),                                       &
+         CMPLX(9.0, 0.0, KIND=C_DOUBLE)                                        &
+      /), SHAPE(buffer2D))
+      p2 = graph%piecewise_2D(j, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                   &
+                              i, 1.0_C_DOUBLE, 0.0_C_DOUBLE, buffer2D)
 
       z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
       root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
@@ -592,8 +728,50 @@
                           'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR, "f_binding_converge", 1_C_LONG, &
-                                   1.0E-30_C_DOUBLE, 1000_C_LONG)
+                                   C_NULL_PTR,                                 &
+                                   'f_binding_converge' // C_NULL_CHAR,        &
+                                   1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
+      CALL graph%compile()
+      value(1) = 10.0
+      CALL graph%copy_to_device(z, value)
+      CALL graph%pre_run()
+      CALL graph%run()
+      CALL graph%wait()
+      CALL graph%print(0_C_LONG, (/ graph_ptr(z), graph_ptr(y) /))
+
+      CALL graph%copy_to_host(y, value)
+      CALL assert(DBLE(value(1)) .eq. 0.5_C_DOUBLE*2.0_C_DOUBLE +              &
+                                      0.2_C_DOUBLE,                            &
+                  'Value of y does not match.')
+      CALL graph%copy_to_host(dydx, value)
+      CALL assert(DBLE(value(1)) .eq. 0.5_C_DOUBLE,                            &
+                  'Value of dydx does not match.')
+      CALL graph%copy_to_host(dydm, value)
+      CALL assert(DBLE(value(1)) .eq. 2.0_C_DOUBLE,                            &
+                  'Value of dydm does not match.')
+      CALL graph%copy_to_host(dydb, value)
+      CALL assert(DBLE(value(1)) .eq. 1.0_C_DOUBLE,                            &
+                  'Value of dydb does not match.')
+      CALL graph%copy_to_host(dydy, value)
+      CALL assert(DBLE(value(1)) .eq. 1.0_C_DOUBLE,                            &
+                  'Value of dydy does not match.')
+      CALL graph%copy_to_host(rand, value)
+      IF (use_safe_math) THEN
+         CALL assert(DBLE(value(1)) .eq. 2546248239.0_C_DOUBLE,                &
+                     'Value of rand does not match.')
+      ELSE
+         CALL assert(DBLE(value(1)) .eq. 2357136044.0_C_DOUBLE,                &
+                     'Value of rand does not match.')
+      END IF
+      CALL graph%copy_to_host(z, value)
+      CALL assert(DBLE(value(1)) .eq. 1.0_C_DOUBLE,                            &
+                  'Value of root does not match.')
+      CALL graph%copy_to_host(p1, value)
+      CALL assert(DBLE(value(1)) .eq. 4.0_C_DOUBLE,                            &
+                  'Value of p1 does not match.')
+      CALL graph%copy_to_host(p2, value)
+      CALL assert(DBLE(value(1)) .eq. 8.0_C_DOUBLE,                            &
+                  'Value of p2 does not match.')
 
       DEALLOCATE(graph)
 

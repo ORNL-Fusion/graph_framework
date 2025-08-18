@@ -3108,7 +3108,7 @@ extern "C" {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Copy data to a host buffer.
+///  @brief Print a value from nodes.
 ///
 ///  @param[in] c         The graph C context.
 ///  @param[in] index     Particle index to print.

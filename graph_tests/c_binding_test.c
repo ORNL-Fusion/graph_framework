@@ -110,32 +110,6 @@ void run_tests(const enum graph_type type,
     graph_node *map_outputs = NULL;
 
     graph_node z = graph_variable(c_context, 1, "z");
-    switch (c_context->type) {
-        case FLOAT: {
-            float value = 10.0;
-            graph_set_variable(c_context, z, &value);
-            break;
-        }
-
-        case DOUBLE: {
-            double value = 10.0;
-            graph_set_variable(c_context, z, &value);
-            break;
-        }
-
-        case COMPLEX_FLOAT: {
-            float complex value = CMPLXF(10.0, 0.0);
-            graph_set_variable(c_context, z, &value);
-            break;
-        }
-
-        case COMPLEX_DOUBLE: {
-            double complex value = CMPLX(10.0, 0.0);
-            graph_set_variable(c_context, z, &value);
-            break;
-        }
-    }
-
     graph_node root = graph_sub(c_context,
                                 graph_pow(c_context, z,
                                           graph_constant(c_context, 3.0)),
@@ -231,9 +205,37 @@ void run_tests(const enum graph_type type,
                             NULL, "c_binding_converge", 1,
                             1.0E-30, 1000);
     graph_compile(c_context);
+    switch (c_context->type) {
+        case FLOAT: {
+            float value = 10.0;
+            graph_copy_to_device(c_context, z, &value);
+            break;
+        }
+
+        case DOUBLE: {
+            double value = 10.0;
+            graph_copy_to_device(c_context, z, &value);
+            break;
+        }
+
+        case COMPLEX_FLOAT: {
+            float complex value = CMPLXF(10.0, 0.0);
+            graph_copy_to_device(c_context, z, &value);
+            break;
+        }
+
+        case COMPLEX_DOUBLE: {
+            double complex value = CMPLX(10.0, 0.0);
+            graph_copy_to_device(c_context, z, &value);
+            break;
+        }
+    }
     graph_pre_run(c_context);
     graph_run(c_context);
     graph_wait(c_context);
+    inputs2[0] = z;
+    inputs2[1] = y;
+    graph_print(c_context, 0, inputs2, 2);
 
     switch (c_context->type) {
         case FLOAT: {
@@ -339,8 +341,8 @@ void run_tests(const enum graph_type type,
                 assert(creal(value[5]) == 2357136044.0 && "Value of rand does not match.");
             }
             assert(creal(value[6]) == 1.0 && "Value of root does not match.");
-            assert(creal(value[7]) == 4.0f && "Value of p1 does not match.");
-            assert(creal(value[8]) == 8.0f && "Value of p2 does not match.");
+            assert(creal(value[7]) == 4.0 && "Value of p1 does not match.");
+            assert(creal(value[8]) == 8.0 && "Value of p2 does not match.");
             break;
         }
     }
