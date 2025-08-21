@@ -19,7 +19,7 @@ namespace graph {
 ///  @param[in,out] stream        String buffer stream.
 ///  @param[in]     register_name Reister for the argument.
 ///  @param[in]     length        Dimension length of argument.
-///  @param[in]     scale        Argument scale factor.
+///  @param[in]     scale         Argument scale factor.
 ///  @param[in]     offset        Argument offset factor.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
@@ -203,7 +203,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
-            return zero<T, SAFE_MATH> ();
+            return constant<T, SAFE_MATH> (static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------
@@ -553,8 +553,10 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
 ///
-///  @param[in] d Data to initalize the piecewise constant.
-///  @param[in] x Argument.
+///  @param[in] d      Data to initalize the piecewise constant.
+///  @param[in] x      Argument.
+///  @param[in] scale  Argument scale factor.
+///  @param[in] offset Argument offset factor.
 ///  @returns A reduced piecewise\_1D node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -836,7 +838,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
-            return zero<T, SAFE_MATH> ();
+            return constant<T, SAFE_MATH> (static_cast<T> (this->is_match(x)));
         }
 
 //------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.21)
 
-project (rays CXX)
+project (graph_framework CXX)
 
 #-------------------------------------------------------------------------------
 #  Build Options
@@ -12,6 +12,8 @@ option (USE_CONSTANT_CACHE "Cache the value of constantants in kernel registers.
 option (SHOW_USE_COUNT "Add a comment showing the use count in kernel sources." OFF)
 option (USE_INDEX_CACHE "Cache index values instead of computing them every time." OFF)
 option (USE_VERBOSE "Verbose jit option." OFF)
+option (BUILD_C_BINDING "Build C interface." OFF)
+option (BUILD_Fortran_BINDING "Build Fortran interface." OFF)
 
 #-------------------------------------------------------------------------------
 #  Set the cmake module path.
@@ -40,6 +42,9 @@ if (${APPLE})
 
     if (${USE_METAL})
         enable_language (OBJCXX)
+        if (${BUILD_C_BINDING})
+            enable_language (OBJC)
+        endif ()
 
         add_library (metal_lib INTERFACE)
         target_link_libraries (metal_lib
@@ -54,7 +59,8 @@ if (${APPLE})
         )
         target_compile_options (metal_lib
                                 INTERFACE
-                                -fobjc-arc
+                                $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>
+                                $<$<COMPILE_LANGUAGE:OBJC>:-fobjc-arc>
         )
     endif ()
 else ()
@@ -311,8 +317,21 @@ endif ()
 #-------------------------------------------------------------------------------
 #  Setup targets
 #-------------------------------------------------------------------------------
-
 add_subdirectory (graph_framework)
+
+if (${BUILD_Fortran_BINDING})
+    set (BUILD_C_BINDING ON CACHE STRING "Build C interface." FORCE)
+endif ()
+
+if (${BUILD_C_BINDING})
+    enable_language (C)
+    add_subdirectory (graph_c_binding)
+endif ()
+
+if (${BUILD_Fortran_BINDING})
+    enable_language (Fortran)
+    add_subdirectory (graph_fortran_binding)
+endif ()
 
 #-------------------------------------------------------------------------------
 #  Setup testing
@@ -322,24 +341,41 @@ enable_testing ()
 #-------------------------------------------------------------------------------
 #  Tool setup
 #-------------------------------------------------------------------------------
-macro (add_tool_target target)
+macro (add_tool_target target lang)
     add_executable (${target})
     target_sources (${target}
                     PRIVATE
-                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp>
+                    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}>
     )
 
     if (${USE_METAL})
-        set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp
+        if (${lang} STREQUAL "cpp")
+            set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+                                         PROPERTIES
+                                         LANGUAGE OBJCXX
+            )
+        elseif (${lang} STREQUAL "c")
+            set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+                                         PROPERTIES
+                                         LANGUAGE OBJC
+            )
+        endif ()
+    endif ()
+    if (${lang} STREQUAL "c")
+        set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
                                      PROPERTIES
-                                     LANGUAGE OBJCXX
+                                     SKIP_PRECOMPILE_HEADERS ON
         )
     endif ()
 
     target_link_libraries (${target}
                            PUBLIC
-                           rays
+                           graph_framework
     )
+
+    if (${USE_PCH} AND ${BUILD_C_BINDING})
+        target_precompile_headers (${target} REUSE_FROM graph_c)
+    endif ()
 endmacro ()
 
 add_subdirectory (graph_driver)
@@ -350,15 +386,19 @@ add_subdirectory (graph_korc)
 #-------------------------------------------------------------------------------
 #  Define macro function to register tests.
 #-------------------------------------------------------------------------------
-macro (add_test_target target)
-    add_tool_target (${target})
+macro (add_test_target target lang)
+    add_tool_target (${target} ${lang})
 
     add_test (NAME ${target}
               COMMAND ${target}
     )
 
     if (${USE_PCH})
-        target_precompile_headers (${target} REUSE_FROM xrays)
+        if (${BUILD_C_BINDING})
+            target_precompile_headers (${target} REUSE_FROM graph_c)
+        else ()
+            target_precompile_headers (${target} REUSE_FROM xrays)
+        endif ()
     endif ()
 endmacro ()
 

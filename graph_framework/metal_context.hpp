@@ -8,6 +8,8 @@
 #ifndef metal_context_h
 #define metal_context_h
 
+#include <unordered_set>
+
 #import <Metal/Metal.h>
 
 #include "random.hpp"
@@ -143,15 +145,15 @@ namespace gpu {
                     kernel_arguments[input.get()] = [device newBufferWithBytes:buffer.data()
                                                                         length:buffer.size()*buffer_element_size
                                                                        options:MTLResourceStorageModeShared];
+                    buffers.push_back(kernel_arguments[input.get()]);
                 }
-                buffers.push_back(kernel_arguments[input.get()]);
             }
             for (graph::shared_leaf<float, SAFE_MATH> &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
                     kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
                                                                          options:MTLResourceStorageModeShared];
+                    buffers.push_back(kernel_arguments[output.get()]);
                 }
-                buffers.push_back(kernel_arguments[output.get()]);
             }
             if (state.get()) {
                 if (!kernel_arguments.contains(state.get())) {
@@ -456,35 +458,43 @@ namespace gpu {
 
             bufferMutability[name] = std::vector<MTLMutability> ();
 
+            size_t buffer_count = 0;
+            std::unordered_set<void *> used_args;
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                bufferMutability[name].push_back(is_constant[i] ? MTLMutabilityMutable : MTLMutabilityImmutable);
-                source_buffer << "    " << (is_constant[i] ? "constant" : "device")
-                              << " float *"
-                              << jit::to_string('v', inputs[i].get())
-                              << " [[buffer(" << i << ")]], // "
-                              << inputs[i]->get_symbol()
+                if (!used_args.contains(inputs[i].get())) {
+                    bufferMutability[name].push_back(is_constant[i] ? MTLMutabilityMutable : MTLMutabilityImmutable);
+                    source_buffer << "    " << (is_constant[i] ? "constant" : "device")
+                                  << " float *"
+                                  << jit::to_string('v', inputs[i].get())
+                                  << " [[buffer(" << buffer_count++ << ")]], // "
+                                  << inputs[i]->get_symbol()
 #ifndef USE_INPUT_CACHE
 #ifdef SHOW_USE_COUNT
-                              << " used " << usage.at(inputs[i].get())
+                                  << " used " << usage.at(inputs[i].get())
 #endif
 #endif
-                              << std::endl;
+                                  << std::endl;
+                    used_args.insert(inputs[i].get());
+                }
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                bufferMutability[name].push_back(MTLMutabilityMutable);
-                source_buffer << "    device float *"
-                              << jit::to_string('o', outputs[i].get())
-                              << " [[buffer(" << i + inputs.size() << ")]],"
-                              << std::endl;
+                if (!used_args.contains(outputs[i].get())) {
+                    bufferMutability[name].push_back(MTLMutabilityMutable);
+                    source_buffer << "    device float *"
+                                  << jit::to_string('o', outputs[i].get())
+                                  << " [[buffer(" << buffer_count++ << ")]],"
+                                  << std::endl;
+                    used_args.insert(outputs[i].get());
+                }
             }
             if (state.get()) {
                 bufferMutability[name].push_back(MTLMutabilityMutable);
                 source_buffer << "    device mt_state *"
                               << jit::to_string('s', state.get())
-                              << " [[buffer(" << inputs.size() + outputs.size() << ")]],"
+                              << " [[buffer(" << buffer_count++ << ")]],"
                               << std::endl
                               << "    constant uint32_t &offset [[buffer("
-                              << inputs.size() + outputs.size() + 1 << ")]],"
+                              << buffer_count++ << ")]],"
                               << std::endl;
             }
             size_t index = 0;
@@ -563,32 +573,42 @@ namespace gpu {
                                    jit::register_map &registers,
                                    jit::register_map &indices,
                                    const jit::register_usage &usage) {
+            std::unordered_set<void *> out_registers;
             for (auto &[out, in] : setters) {
-                graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer, 
-                                                                      registers,
-                                                                      indices,
-                                                                      usage);
-                source_buffer << "        " << jit::to_string('v',  in.get())
-                              << "[index] = ";
-                if constexpr (SAFE_MATH) {
-                    source_buffer << "isnan(" << registers[a.get()]
-                                  << ") ? 0.0 : ";
+                if (!out->is_match(in) &&
+                    !out_registers.contains(out.get())) {
+                    graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
+                                                                          registers,
+                                                                          indices,
+                                                                          usage);
+                    source_buffer << "        "
+                                  << jit::to_string('v',  in.get())
+                                  << "[index] = ";
+                    if constexpr (SAFE_MATH) {
+                        source_buffer << "isnan(" << registers[a.get()]
+                                      << ") ? 0.0 : ";
+                    }
+                    source_buffer << registers[a.get()] << ";" << std::endl;
+                    out_registers.insert(out.get());
                 }
-                source_buffer << registers[a.get()] << ";" << std::endl;
             }
 
             for (auto &out : outputs) {
-                graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      indices,
-                                                                      usage);
-                source_buffer << "        " << jit::to_string('o',  out.get())
-                              << "[index] = "; 
-                if constexpr (SAFE_MATH) {
-                    source_buffer << "isnan(" << registers[a.get()]
-                                  << ") ? 0.0 : ";
+                if (!graph::variable_cast(out).get() &&
+                    !out_registers.contains(out.get())) {
+                    graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
+                                                                          registers,
+                                                                          indices,
+                                                                          usage);
+                    source_buffer << "        " << jit::to_string('o',  out.get())
+                                  << "[index] = ";
+                    if constexpr (SAFE_MATH) {
+                        source_buffer << "isnan(" << registers[a.get()]
+                                      << ") ? 0.0 : ";
+                    }
+                    source_buffer << registers[a.get()] << ";" << std::endl;
+                    out_registers.insert(out.get());
                 }
-                source_buffer << registers[a.get()] << ";" << std::endl;
             }
 
             source_buffer << "    }" << std::endl << "}" << std::endl;

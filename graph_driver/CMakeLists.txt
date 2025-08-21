@@ -1,4 +1,4 @@
-add_tool_target (xrays)
+add_tool_target (xrays cpp)
 
 add_test (
     NAME xrays_test

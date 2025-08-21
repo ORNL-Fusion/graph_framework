@@ -1,5 +1,5 @@
-add_tool_target (xplayground)
+add_tool_target (xplayground cpp)
 
-if (${USE_PCH})
-    target_precompile_headers (xplayground REUSE_FROM xrays)
+if (${USE_PCH} AND NOT ${BUILD_C_BINDING})
+    target_precompile_headers (xrays_bench REUSE_FROM xrays)
 endif ()
