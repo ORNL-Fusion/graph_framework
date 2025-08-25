@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file commandline\_parser.hpp
+///  @file commandline_parser.hpp
 ///  @brief Parsing routines for the command line.
 //------------------------------------------------------------------------------
 

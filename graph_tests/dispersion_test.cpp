@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file dispersion\_test.cpp
+///  @file dispersion_test.cpp
 ///  @brief Tests for math nodes.
 //------------------------------------------------------------------------------
 
@@ -17,9 +17,10 @@
 ///
 ///  @tparam DISPERSION Class of dispersion function to use.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
-///  @param[in] omega   Ray frequency.
-///  @param[in] k_guess Inital guess for the wave number.
+///  @param[in]     tolarance Tolarance to solver the dispersion function to.
+///  @param[in]     omega     Ray frequency.
+///  @param[in]     k_guess   Inital guess for the wave number.
+///  @param[in,out] eq        The equilibrium.
 //------------------------------------------------------------------------------
 template<dispersion::function DISPERSION>
 void test_solve(const typename DISPERSION::base tolarance,

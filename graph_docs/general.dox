@@ -1,0 +1,30 @@
+/*!
+ * @page general_concepts General Concepts
+ * @tableofcontents
+ * @section introduction Introduction
+ * This page documents general concepts of the graph_framework.
+ *
+ * @section general_concepts_definitions Definitions.
+ * * <b>leaf_node</b>            A leaf on the graph.
+ * * <b>graph</b>                A data stucture connecting leaf nodes.
+ * * <b>reduce</b>               A tranformation of the graph to remove leaf_nodes.
+ * * <b>auto differentiation</b> A tranformation of the graph build derivatives.
+ * * <b>compiler</b>             A tool for translating from one language to another.
+ * * <b>JIT</b>                  Just-in-time compile.
+ * * <b>kernel</b>               A code function that runs on a batch of data.
+ * * <b>pre_item</b>             A kernel to run before running the main kernels.
+ * * <b>work_iten</b>            A instance of kernel.
+ * * <b>converge_item</b>        A kernel that is run until a convergence test is met.
+ * * <b>workflow</b>             A series of work items.
+ * * <b>backend</b>              The device the kernel is run on.
+ *
+ * @section general_concepts_graph Graph
+ * The graph_framework operates by building tree structure of math operations.
+ * In tree form it is easy to traverse nodes in the graph. Take the example of
+ * equation of line.
+ * @f{equation}{y=mx + b@f}
+ * This equation consists of five leaf nodes. The ends of the tree are clasified
+ * as either variables @f$x@f$ or constants @f$m,b@f$. These leaf_nodes are
+ * connected by leaf nodes for multiply and additon operations. The ouptut
+ * @f$ y@f$ represents the entire graph of operations.
+ */

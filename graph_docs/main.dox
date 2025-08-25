@@ -1,0 +1,28 @@
+/*!
+ * @mainpage
+ * @tableofcontents
+ * @section introduction Introduction
+ * The <a href="https://github.com/ORNL-Fusion/graph_framework">graph_framework</a>
+ * is a domain specific compiler for translating physics
+ * equations to optimized code that run a on a GPUs and CPUs. The domain
+ * specific aspect limits this to classes of problems where the same physics is
+ * applied to a ensemble. Eamples include RF Ray tracing, particle pushing, and
+ * field line following. In stead of
+ *
+ * Documentation is divided into three parts.
+ * * User documentation for the tools.
+ * * Framework user guides.
+ * * Frameowork developer guides.
+ *
+ * @section tools User guides for tools.
+ *
+ * @section framework_user Framework user guides.
+ * * @ref build_system "Compiling the framework."
+ * * @ref general_concepts "General concepts."
+ * * Tutorial
+ *
+ * @section framework_developer Framework developer quides.
+ * * @ref build_system "Build system."
+ * * Code structure
+ * * Adding new operations tutorial.
+ */

@@ -533,7 +533,9 @@ void trace_ray(const commandline::parser &cl,
 ///
 ///  @tparam ABSORPTION_MODEL Absoption model to use.
 ///
+///  @param[in] cl        Parsed commandline.
 ///  @param[in] kamp      Wave number amplitude.
+///  @param[in] omega     Wave frequency.
 ///  @param[in] kx        Wave number in x direction.
 ///  @param[in] ky        Wave number in y direction.
 ///  @param[in] kz        Wave number in z direction.

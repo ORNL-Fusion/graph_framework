@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
 ##  @file get_includes.py
-##  @brief Post processes result files.
+##  Get the needed include flags from the system compiler.
 #-------------------------------------------------------------------------------
 import argparse
 import subprocess
@@ -8,7 +8,7 @@ import subprocess
 #-------------------------------------------------------------------------------
 ##  @brief Parse the output to get the include directories.
 ##
-##  @param params[in] args Command line arguments.
+##  @param[in] args Command line arguments.
 #-------------------------------------------------------------------------------
 def main(**args):
     output = subprocess.run([args['compiler'], '-Wp,-v', '-x', 'c++', '/dev/null', '-fsyntax-only'],
@@ -41,6 +41,7 @@ def main(**args):
 ##  * --compiler Compiler command.
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
+##  Argument parser object for command line arguments.
     command_line_parser = argparse.ArgumentParser()
 
     command_line_parser.add_argument('-c',
@@ -51,6 +52,7 @@ if __name__ == '__main__':
                                      help='Compiler command.',
                                      metavar='COMPILER')
 
+##  The parsed command line arguments.
     args = vars(command_line_parser.parse_args())
 
 #  Remove empty arguments

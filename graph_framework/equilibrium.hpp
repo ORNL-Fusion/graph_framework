@@ -162,7 +162,7 @@ namespace equilibrium {
 ///
 ///  The characteristic field is equilibrium dependent.
 ///
-///  @params[in] device_number Device to use.
+///  @param[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -376,7 +376,7 @@ namespace equilibrium {
 ///
 ///  To avoid divide by zeros use the value of 1.
 ///
-///  @params[in] device_number Device to use.
+///  @param[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -500,7 +500,7 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
-///  @params[in] device_number Device to use.
+///  @param[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -629,7 +629,7 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
-///  @params[in] device_number Device to use.
+///  @param[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -757,7 +757,7 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
-///  @params[in] device_number Device to use.
+///  @param[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -883,7 +883,7 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
-///  @params[in] device_number Device to use.
+///  @param[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -1378,7 +1378,7 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
-///  @params[in] device_number Device to use.
+///  @param[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
@@ -2151,7 +2151,7 @@ namespace equilibrium {
 ///
 ///  Use the value at the y intercept.
 ///
-///  @params[in] device_number Device to use.
+///  @param[in] device_number Device to use.
 ///  @returns The characteristic field.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>

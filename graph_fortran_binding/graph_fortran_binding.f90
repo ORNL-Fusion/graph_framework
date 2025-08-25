@@ -994,6 +994,7 @@
 !>  @param[in,out] this   @ref graph_context instance.
 !>  @param[in]     size   Size of the data buffer.
 !>  @param[in]     symbol Symbol of the variable.
+!>  @returns A variable node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_variable(this, size, symbol)
 
@@ -1011,10 +1012,11 @@
       END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create variable node.
+!>  @brief Create a constant node.
 !>
 !>  @param[in,out] this  @ref graph_context instance.
 !>  @param[in]     value Size of the data buffer.
+!>  @returns A constant node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_constant_real(this, value)
 
@@ -1115,11 +1117,12 @@
       END SUBROUTINE
 
 !-------------------------------------------------------------------------------
-!>  @brief Create variable node.
+!>  @brief Create constant node with complex values.
 !>
 !>  @param[in,out] this       @ref graph_context instance.
 !>  @param[in]     real_value The real component.
 !>  @param[in]     img_value  The imaginary component.
+!>  @returns A constant node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_constant_complex(this, real_value, img_value)
 
@@ -1138,7 +1141,7 @@
       END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create variable node.
+!>  @brief Create pseudo variable node.
 !>
 !>  @param[in,out] this @ref graph_context instance.
 !>  @param[in]     var  The variable to set.
@@ -1913,6 +1916,8 @@
 !>  @param[in]     random_state  Optional random state, can be NULL if not used.
 !>  @param[in]     name          Name for the kernel.
 !>  @param[in]     num_particles Number of elements to operate on.
+!>  @param[in]     tol           Maximum tolarance to converge to.
+!>  @param[in]     max_iter      Maximum number of iterations for convergence.
 !-------------------------------------------------------------------------------
       SUBROUTINE graph_context_add_converge_item(this, inputs, outputs,        &
                                                  map_inputs, map_outputs,      &

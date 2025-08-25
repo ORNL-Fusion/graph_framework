@@ -836,9 +836,9 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class branch_node : public leaf_node<T, SAFE_MATH> {
     protected:
-//  Left branch of the tree.
+///  Left branch of the tree.
         shared_leaf<T, SAFE_MATH> left;
-//  Right branch of the tree.
+///  Right branch of the tree.
         shared_leaf<T, SAFE_MATH> right;
 
     public:
@@ -960,7 +960,7 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class triple_node : public branch_node<T, SAFE_MATH> {
     protected:
-//  Middle branch of the tree.
+///  Middle branch of the tree.
         shared_leaf<T, SAFE_MATH> middle;
 
     public:

@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
-##  @file fix_NaN.py
-##  @brief Post processes result files.
+##  @file bin.py
+##  Post processes result files.
 #-------------------------------------------------------------------------------
 
 import netCDF4
@@ -13,7 +13,7 @@ import tensorflow
 ##  Removes NaN's and noise spikes in the results. Also computes the power
 ##  absorption and bins the power into a 2D grid.
 ##
-##  @param params[in] args Command line arguments.
+##  @param[in] args Command line arguments.
 #-------------------------------------------------------------------------------
 def main(**args):
     with netCDF4.Dataset('{}/bins.nc'.format(args['directory']), 'w') as bin_ref:

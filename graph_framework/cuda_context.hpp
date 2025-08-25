@@ -17,8 +17,8 @@
 
 #include "random.hpp"
 
+///  Maximum number of registers to use.
 #define MAX_REG 128
-#define MAX_CONSTANT_MEMORY
 
 namespace gpu {
 //------------------------------------------------------------------------------

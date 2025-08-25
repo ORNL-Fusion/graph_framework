@@ -36,7 +36,7 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a sine\_node node.
+///  @brief Construct a sine_node node.
 ///
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
@@ -561,7 +561,7 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a arctan\_node node.
+///  @brief Construct a arctan_node node.
 ///
 ///  @param[in] x Argument.
 ///  @param[in] y Argument.

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file special\_functions.hpp
+///  @file special_functions.hpp
 ///  @brief Implimentations for special functions.
 ///
 ///  Special functions are adapted from http://ab-initio.mit.edu/Faddeeva
@@ -13,6 +13,7 @@
 
 using namespace cuda::std;
 
+///  Type alias for cuda complex types.
 template<typename T>
 using complex_type = complex<T>;
 
@@ -26,6 +27,7 @@ using complex_type = complex<T>;
 
 using namespace std;
 
+///  Type alias for complex types.
 #if __cplusplus >= 202002L
 template<std::floating_point T>
 #else

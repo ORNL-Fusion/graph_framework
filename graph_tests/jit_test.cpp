@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file jit\_test.cpp
+///  @file jit_test.cpp
 ///  @brief Tests for the jit code.
 //------------------------------------------------------------------------------
 
@@ -329,7 +329,8 @@ template<jit::float_scalar T> void run_math_tests() {
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 ///
-///  @param[in] eq Equilibrium for the dispersion function.
+///  @param[in,out] eq        Equilibrium for the dispersion function.
+///  @param[in]     tolarance The test tolarance for check results to.
 //------------------------------------------------------------------------------
 template<dispersion::function DISPERSION_FUNCTION>
 void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,

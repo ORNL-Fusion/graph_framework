@@ -10,6 +10,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+//------------------------------------------------------------------------------
+///  @def START_GPU
+///  Starts a Cocoa auto release pool when using the metal backend. No opt
+///  otherwise.
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+///  @def END_GPU
+///  Ends a Cocoa auto release pool when using the metal backend. No opt
+///  otherwise.
+//------------------------------------------------------------------------------
 #ifdef USE_METAL
 #define START_GPU @autoreleasepool {
 #define END_GPU }
@@ -18,6 +28,10 @@
 #define END_GPU
 #endif
 
+//------------------------------------------------------------------------------
+///  @def STRUCT_TAG
+///  C++ mode needs to tag a graph_c_context as a struct.
+//------------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
 #define STRUCT_TAG

@@ -32,6 +32,7 @@ namespace graph {
 ///  State index.
             uint16_t index;
 #ifdef USE_CUDA
+///  Pading to aline the size of the struct for Cuda backends.
             uint16_t padding[3];
 #endif
         };
@@ -39,6 +40,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
 ///
+///  @param[in] size Number of random states.
 ///  @param[in] seed Inital random seed.
 //------------------------------------------------------------------------------
         random_state_node(const size_t size,

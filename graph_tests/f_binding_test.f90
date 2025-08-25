@@ -54,7 +54,6 @@
 !-------------------------------------------------------------------------------
 !>  @brief Run float tests.
 !>
-!>  @param[in] c_type        Base type of the calculation.
 !>  @param[in] use_safe_math Use safe math.
 !-------------------------------------------------------------------------------
       SUBROUTINE run_test_float(use_safe_math)
@@ -227,7 +226,6 @@
 !-------------------------------------------------------------------------------
 !>  @brief Run double tests.
 !>
-!>  @param[in] c_type        Base type of the calculation.
 !>  @param[in] use_safe_math Use safe math.
 !-------------------------------------------------------------------------------
       SUBROUTINE run_test_double(use_safe_math)
@@ -400,7 +398,6 @@
 !-------------------------------------------------------------------------------
 !>  @brief Run complex float tests.
 !>
-!>  @param[in] c_type        Base type of the calculation.
 !>  @param[in] use_safe_math Use safe math.
 !-------------------------------------------------------------------------------
       SUBROUTINE run_test_complex_float(use_safe_math)
@@ -584,7 +581,6 @@
 !-------------------------------------------------------------------------------
 !>  @brief Run double tests.
 !>
-!>  @param[in] c_type        Base type of the calculation.
 !>  @param[in] use_safe_math Use safe math.
 !-------------------------------------------------------------------------------
       SUBROUTINE run_test_complex_double(use_safe_math)

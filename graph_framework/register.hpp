@@ -227,17 +227,18 @@ namespace jit {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Convert a leaf\_node pointer to a string.
+///  @brief Convert a @ref graph::leaf_node pointer to a string.
 ///
-///  This converts the point value into a string of format t\_######. Where t is
+///  This converts the point value into a string of format t######. Where t is
 ///  of type
 ///  -# v Variable
 ///  -# r Register
+///  -# i Input
 ///
 ///  @tparam NODE Node class type.
 ///
 ///  @param[in] prefix  Type prefix for the name.
-///  @param[in] pointer Address of the @ref{leaf_node}.
+///  @param[in] pointer Address of the @ref graph::leaf_node.
 ///  @returns The pointer value as a string.
 //------------------------------------------------------------------------------
     template<class NODE>

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file tming.hpp
+///  @file timing.hpp
 ///  @brief Routines to time the ray execution.
 //------------------------------------------------------------------------------
 
@@ -60,6 +60,9 @@ namespace timeing {
         }
     };
 
+//------------------------------------------------------------------------------
+///  @brief A timing object that averages over multiple threads.
+//------------------------------------------------------------------------------
     class measure_diagnostic_threaded {
     private:
 ///  Discription of what is being timed.

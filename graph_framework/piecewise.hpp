@@ -548,7 +548,7 @@ void compile_index(std::ostringstream &stream,
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise\_1D convience function.
+///  @brief Define piecewise_1D convience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
@@ -557,7 +557,7 @@ void compile_index(std::ostringstream &stream,
 ///  @param[in] x      Argument.
 ///  @param[in] scale  Argument scale factor.
 ///  @param[in] offset Argument offset factor.
-///  @returns A reduced piecewise\_1D node.
+///  @returns A reduced piecewise_1D node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> piecewise_1D(const backend::buffer<T> &d,
@@ -1262,7 +1262,7 @@ void compile_index(std::ostringstream &stream,
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise\_2D convience function.
+///  @brief Define piecewise_2D convience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.

@@ -384,7 +384,7 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Print out the latex expression for the x\_next.
+///  @brief Print out the latex expression for the x_next.
 //------------------------------------------------------------------------------
         void print_x_next() {
             x_next->to_latex();
@@ -392,7 +392,7 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Print out the latex expression for the y\_next.
+///  @brief Print out the latex expression for the y_next.
 //------------------------------------------------------------------------------
         void print_y_next() {
             y_next->to_latex();
@@ -400,7 +400,7 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Print out the latex expression for the z\_next.
+///  @brief Print out the latex expression for the z_next.
 //------------------------------------------------------------------------------
         void print_z_next() {
             z_next->to_latex();
@@ -408,7 +408,7 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Print out the latex expression for the kx\_next.
+///  @brief Print out the latex expression for the kx_next.
 //------------------------------------------------------------------------------
         void print_kx_next() {
             kx_next->to_latex();
@@ -416,7 +416,7 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Print out the latex expression for the ky\_next.
+///  @brief Print out the latex expression for the ky_next.
 //------------------------------------------------------------------------------
         void print_ky_next() {
             ky_next->to_latex();
@@ -424,7 +424,7 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Print out the latex expression for the kz\_next.
+///  @brief Print out the latex expression for the kz_next.
 //------------------------------------------------------------------------------
         void print_kz_next() {
             kz_next->to_latex();

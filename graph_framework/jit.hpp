@@ -19,6 +19,16 @@
 #endif
 #include "cpu_context.hpp"
 
+//------------------------------------------------------------------------------
+///  @def START_GPU
+///  Starts a Cocoa auto release pool when using the metal backend. No opt
+///  otherwise.
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+///  @def END_GPU
+///  Ends a Cocoa auto release pool when using the metal backend. No opt
+///  otherwise.
+//------------------------------------------------------------------------------
 #ifdef USE_METAL
 #define START_GPU @autoreleasepool {
 #define END_GPU }
@@ -310,7 +320,7 @@ namespace jit {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Get buffer frim the gpu\_context.
+///  @brief Get buffer from the gpu_context.
 ///
 ///  @param[in] node Node to get the gpu buffer for.
 //------------------------------------------------------------------------------
