@@ -723,7 +723,7 @@ namespace gpu {
                 jit::add_type<T> (source_buffer);
                 source_buffer << " * __restrict__ "
                               << jit::to_string('v', inputs[0].get());
-                sed_args.insert(inputs[0].get());
+                used_args.insert(inputs[0].get());
             }
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
                 if (!used_args.contains(inputs[i].get())) {
