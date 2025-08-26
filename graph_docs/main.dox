@@ -7,21 +7,27 @@
  * equations to optimized code that run a on a GPUs and CPUs. The domain
  * specific aspect limits this to classes of problems where the same physics is
  * applied to a ensemble. Eamples include RF Ray tracing, particle pushing, and
- * field line following. In stead of
+ * field line following.
  *
- * Documentation is divided into three parts.
- * * User documentation for the tools.
- * * Framework user guides.
- * * Frameowork developer guides.
+ * @subsection purpose Purpose
+ *
  *
  * @section tools User guides for tools.
+ * @subsection rf_ray_tracing RF Ray tracing
+ * This section covers user guides to run the RF Ray traceing code. To run this
+ * code, a use selects an equilibrium, a wave distribution function, a solver
+ * method, intial ray conditions, and a power obsorption model.
+ *
+ * * @ref equilibrum_models
+ * * @ref dispersion_function
+ * * @ref xrays_commandline
  *
  * @section framework_user Framework user guides.
  * * @ref build_system "Compiling the framework."
  * * @ref general_concepts "General concepts."
- * * Tutorial
+ * * @ref tutorial "Tutorial"
  *
- * @section framework_developer Framework developer quides.
+ * @section framework_developer Framework developer guides.
  * * @ref build_system "Build system."
  * * Code structure
  * * Adding new operations tutorial.

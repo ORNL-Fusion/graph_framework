@@ -21,7 +21,7 @@ namespace absorption {
 ///  @brief Base class for absoption models.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, bool SAFE_MATH=true>
     class method {
@@ -43,7 +43,7 @@ namespace absorption {
 ///  @brief Class interface for the root finder.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, bool SAFE_MATH=true>
     class root_finder : public method<T, SAFE_MATH> {
@@ -232,7 +232,7 @@ namespace absorption {
 ///  @brief Class interface weak damping approximation.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, bool SAFE_MATH=true>
     class weak_damping : public method<T, SAFE_MATH> {

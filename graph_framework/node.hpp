@@ -24,7 +24,7 @@ namespace graph {
 ///  @brief Class representing a node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class leaf_node : public std::enable_shared_from_this<leaf_node<T, SAFE_MATH>> {
@@ -339,7 +339,7 @@ namespace graph {
 ///  @brief Create a null leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A null leaf.
 //------------------------------------------------------------------------------
@@ -384,7 +384,7 @@ namespace graph {
 ///  @brief Class representing data that cannot change.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class constant_node final : public leaf_node<T, SAFE_MATH> {
@@ -606,7 +606,7 @@ namespace graph {
 ///  @brief Construct a constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d Array buffer.
 ///  @returns A reduced constant node.
@@ -635,7 +635,7 @@ namespace graph {
 ///  @brief Construct a constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
@@ -650,7 +650,7 @@ namespace graph {
 ///  @brief Create a zero constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A zero constant.
 //------------------------------------------------------------------------------
@@ -663,7 +663,7 @@ namespace graph {
 ///  @brief Create a one constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
@@ -676,7 +676,7 @@ namespace graph {
 ///  @brief Create a one constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
@@ -697,7 +697,7 @@ namespace graph {
 ///  @brief Cast to a constant node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -714,7 +714,7 @@ namespace graph {
 ///  @brief Class representing a straight node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
@@ -828,7 +828,7 @@ namespace graph {
 ///  @brief Class representing a branch node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
@@ -952,7 +952,7 @@ namespace graph {
 ///  @brief Class representing a triple branch node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
@@ -1052,7 +1052,7 @@ namespace graph {
 ///  @brief Class representing data that can change.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class variable_node final : public leaf_node<T, SAFE_MATH> {
@@ -1339,7 +1339,7 @@ namespace graph {
 ///  @brief Construct a variable.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] s      Size of the data buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
@@ -1354,7 +1354,7 @@ namespace graph {
 ///  @brief Construct a variable.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] s      Size of he data buffer.
 ///  @param[in] d      Scalar data to initalize.
@@ -1370,7 +1370,7 @@ namespace graph {
 ///  @brief Construct a variable.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d      Array buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
@@ -1385,7 +1385,7 @@ namespace graph {
 ///  @brief Construct a variable.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d      Array buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
@@ -1411,7 +1411,7 @@ namespace graph {
 ///  @brief Cast to a variable node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -1432,7 +1432,7 @@ namespace graph {
 ///  something that is not itself.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class pseudo_variable_node final : public straight_node<T, SAFE_MATH> {
@@ -1577,7 +1577,7 @@ namespace graph {
 ///  @brief Define pseudo variable convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced pseudo variable node.
@@ -1595,7 +1595,7 @@ namespace graph {
 ///  @brief Cast to a pseudo variable node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.

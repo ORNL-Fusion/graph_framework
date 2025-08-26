@@ -4,6 +4,154 @@
 ///
 ///  Defined the interfaces to access plasma equilibrium.
 //------------------------------------------------------------------------------
+///  @page equilibrum_models Equilibrium Models
+///  @tableofcontents
+///
+///  @section equilibrum_models_intro Introduction
+///  This page documents the types and formatting of the equilibrium models.
+///  xrays currently supports two equilibrium models.
+///  * EFIT Are 2D axisymetric equilibria relevant to tokamak devices.
+///  * VMEC Are 3D nested flux surface equulibria relevant for stellarator devices.
+///  This documentation assumes the user has some familiarity with EFIT or VMEC
+///  and focuses instead how quanties from these are formatted.
+///
+///  @section equilibrum_splines Spline Formatting
+///  The equilibrium models used in this section make use of Cubic and Bicubic
+///  splines.
+///
+///  @subsection equilibrum_splines_1D Cubic Splines
+///  Cubic splines are 1D interpolation functions that consisting of 4 coeffient
+///  arrays. They take the form of
+///  @f{equation}{y\left(x\right)=C_{0} + C_{1}x + C_{2}x^2 + C_{3}x^2@f}
+///  where @f$x@f$ is a normalized radial index. Cubic splines coefficients can
+///  be calculated using
+///  <a href="https://mathworld.wolfram.com/CubicSpline.html">Linear Solvers</a>
+///  However, to avoid needing account for index offsets, index offsets are pre
+///  computed into the spline coefficents.
+///  @f{equation}{C'^{i}_{0}=C^{i}_{0} - C^{i}_{1}i + C^{i}_{2}i^2 - C^{i}_{3}i^3@f}
+///  @f{equation}{C'^{i}_{1}=C^{i}_{1} -2C^{i}_{2}i + 3C^{i}_{3}i^2@f}
+///  @f{equation}{C'^{i}_{2}=C^{i}_{2} - 3C^{i}_{3}i@f}
+///  @f{equation}{C'^{i}_{3}=C^{i}_{3}@f}
+///  Where @f$i@f$ is the index of the coeffient array. This allows to normalize
+///  the spline argument @f$x@f$ so that it can both index the array and
+///  evaluate the spline.
+///  @f{equation}{x = \frac{x_{real} - x_{min}}{dx}@f}
+///  Rounding down the value of @f$x@f$ gives the correct coefficient index.
+///
+///  @subsection equilibrum_splines_2D Bicubic Splines
+///  Bicubic Splines are computed in a simular way instead they consist of a
+///  total of 16 coeffients. These represent 4 spline functions in one
+///  dimension which interpolate 4 coeffient values for the other dimension.
+///  Like the 1D splines, 2D spline coeffients are normalized to the spline
+///  arguments can be used as normalized indices.
+///  @f{equation}{C'^{ij}_{00}=C^{ij}_{00}-C^{ij}_{01}j+C^{ij}_{02}j^{2}-C^{ij}_{03}j^{3}-C^{ij}_{10}i+C^{ij}_{11}ij-C^{ij}_{12}ij^{2}+C^{ij}_{13}ij^{3}+C^{ij}_{20}i^{2}-C^{ij}_{21}i^{2}j+C^{ij}_{22}i^{2}j^{2}-C^{ij}_{23}i^{2}j^{3}-C^{ij}_{30}i^{3}+C^{ij}_{31}i^{3}j-C^{ij}_{32}i^{3}j^{2}+C^{ij}_{33}i^{3}j^{3}j@f}
+///  @f{equation}{C'^{ij}_{01}=C^{ij}_{01}-2C^{ij}_{02}j+3C^{ij}_{03}j^{2}-C^{ij}_{11}i+2C^{ij}_{12}ij-3C^{ij}_{13}ij^{2}+C^{ij}_{21}i^{2}-2C^{ij}_{22}i^{2}j+3C^{ij}_{23}i^{2}j^{2}-C^{ij}_{31}i^{3}+2C^{ij}_{32}i^{3}j-3C^{ij}_{33}i^{3}j^{2}@f}
+///  @f{equation}{C'^{ij}_{02}=C^{ij}_{02}-3C^{ij}_{03}j-C^{ij}_{12}i+3C^{ij}_{13}ij+C^{22}i^{2}-3C^{ij}_{23}i^{2}j-C^{ij}_{32}i^{3}+3C^{ij}i^{3}j @f}
+///  @f{equation}{C'^{ij}_{03}=C^{ij}_{03}-C^{ij}_{13}i+C^{ij}_{23}i^{2}-C^{ij}_{33}i^{3}@f}
+///  @f{equation}{C'^{ij}_{10}=C^{ij}_{10}-2C^{ij}_{11}j+C^{ij}_{12}j^{2}-C^{ij}_{13}j^{3}-2C^{ij}_{20}i+2C^{ij}_{21}ij-2C^{ij}_{22}ij^{2}+2C^{ij}_{23}ij^{3}j+3C^{ij}_{30}i^{2}-3C^{ij}_{31}i^{2}j+3C^{ij}_{32}i^{2}j^{2}-3C^{ij}_{33}i^{2}j^{3}@f}
+///  @f{equation}{C'^{ij}_{11}=C^{ij}_{11}-2C^{ij}_{12}j+3C^{ij}_{13}j^{2}-2C^{ij}_{21}i+4C^{ij}_{22}ij-6C^{ij}_{23}ij^{2}+3C^{ij}_{31}i^{2}-6C^{ij}_{32}i^{2}j+9C^{ij}_{33}i^{2}j^{2}@f}
+///  @f{equation}{C'^{ij}_{12}=C^{ij}_{12}-C^{ij}_{13}j-2C^{ij}_{22}i+6C^{ij}_{23}ij+3C^{ij}_{32}j-9C^{ij}_{33}i^{2}j @f}
+///  @f{equation}{C'^{ij}_{13}=C^{ij}_{13}-2C^{ij}_{23}i+3C^{ij}_{33}i^{2}@f}
+///  @f{equation}{C'^{ij}_{20}=C^{ij}_{20}-C^{ij}_{21}j+C^{ij}_{22}ij^{2}-C^{ij}_{23}j^{3}-3C^{30}i+3C^{ij}_{31}ij-3C^{ij}_{32}ij^{2}+3C^{ij}_{33}ij^{3}@f}
+///  @f{equation}{C'^{ij}_{21}=C^{ij}_{21}-2C^{ij}_{22}j+3C^{ij}_{23}j^{2}-3C^{ij}_{31}i+6C^{32}ij-9C^{ij}_{33}ij^{2}@f}
+///  @f{equation}{C'^{ij}_{22}=C^{ij}_{22}-3C^{ij}_{23}j-3C^{ij}_{32}i+9C^{ij}_{33}ij @f}
+///  @f{equation}{C'^{ij}_{23}=C^{ij}_{23}-3C^{ij}_{33}i @f}
+///  @f{equation}{C'^{ij}_{30}=C^{ij}_{30}-C^{ij}_{31}j+C^{ij}_{32}j^{2}-C^{ij}_{33}j^{3}@f}
+///  @f{equation}{C'^{ij}_{31}=C^{ij}_{31}-2C^{ij}_{32}j+3C^{ij}_{32}j^{2}@f}
+///  @f{equation}{C'^{ij}_{32}=C^{ij}_{32}-3C^{ij}_{33}j @f}
+///  @f{equation}{C'^{ij}_{33}=C^{ij}_{33} @f}
+///  Bicubic splines are computed by
+///  @f{equation}{f\left(x,y\right)=\left(\begin{array}{cccc}1 & x & x^{2} & x^{3}\end{array}\right)\cdot\left(\left(\begin{array}{cccc}C_{00}&C_{01}&C_{02}&C_{03}\\C_{10}&C_{11}&C_{12}&C_{13}\\C_{20}&C_{21}&C_{22}&C_{23}\\C_{30}&C_{31}&C_{32}&C_{33}\end{array}\right)\cdot\left(\begin{array}{c}1\\y\\y^{2}\\y^{3}\end{array}\right)\right)@f}
+///  Like the 1D splines @f$x@f$ and @f$y@f$ are normalized.
+///  @f{equation}{x = \frac{x_{real} - x_{min}}{dx}@f}
+///  @f{equation}{y = \frac{y_{real} - y_{min}}{dy}@f}
+///
+///  @section equilibrum_efit EFIT
+///  @image{} html Efit.png "Cross section of poloidal flux surfaces."
+///  EFIT is an equilibium that comes from a solution of the
+///  <a href="https://en.wikipedia.org/wiki/Grad–Shafranov_equation">Grad–Shafranov equation</a>.
+///  The solution gives us a map of the poloidal flux @f$\psi@f$ on 2D grid and
+///  a 1D flux function @f$f_{pol}@f$. 1D profiles of electrion density
+///  @f$n_{e}\left(\psi\right)@f$, electron temperature
+///  @f$t_{e}\left(\psi\right)@f$, and pressure @f$p\left(\psi\right)@f$ are
+///  mapped as functions of the normalized flux.
+///
+///  @subsection equilibrum_efit_format EFIT file format
+///  Quantities are loaded into the ray tracer via a netcdf file. EFIT NetCDF
+///  files must contain the following quantities. Spline quanities have a common
+///  format of <i>name</i>_c<i>i</i> or <i>name</i>_c<i>ij</i>.
+///  <table>
+///  <caption id="equilibrum_efit_format_data">Efit netcdf file quantities</caption>
+///  <tr><th colspan="3">Dimensions
+///  <tr><th colspan="2">Name                                   <th>Discription
+///  <tr><td colspan="2"><tt>numr</tt>                          <td>Size of radial grid.
+///  <tr><td colspan="2"><tt>numz</tt>                          <td>Size of vertical grid.
+///  <tr><td colspan="2"><tt>numpsi</tt>                        <td>Size of arrays for @f$\psi@f$ mapped quantities.
+///  <tr><th colspan="3">Scalar Qantities
+///  <tr><td colspan="2"><tt>dpsi</tt>                          <td>Step size of the @f$\psi@f$ grid.
+///  <tr><td colspan="2"><tt>dr</tt>                            <td>Step size of the radial grid.
+///  <tr><td colspan="2"><tt>dz</tt>                            <td>Step size of the vertial grid.
+///  <tr><td colspan="2"><tt>ne_scale</tt>                      <td>Scale of the @f$n_{e}@f$ profile.
+///  <tr><td colspan="2"><tt>pres_scale</tt>                    <td>Scale of the pressure profile.
+///  <tr><td colspan="2"><tt>psibry</tt>                        <td>Value of @f$\psi@f$ at the boundary.
+///  <tr><td colspan="2"><tt>psimin</tt>                        <td>Minimum @f$\psi@f$ value.
+///  <tr><td colspan="2"><tt>rmin</tt>                          <td>Minimum radial value.
+///  <tr><td colspan="2"><tt>te_scale</tt>                      <td>Scale of the electron temperature profile.
+///  <tr><td colspan="2"><tt>zmin</tt>                          <td>Minimum vertial value.
+///  <tr><th colspan="3">1D Qantities
+///  <tr><th>Name<th>Size                                       <th>Discription
+///  <tr><td><tt>fpol_c<i>i</i></tt>    <td><tt>numpsi</tt>     <td>Flux function profile coefficents
+///  <tr><td><tt>ne_c<i>i</i></tt>      <td><tt>numpsi</tt>     <td>@f$n_{e}@f$ profile coefficents.
+///  <tr><td><tt>pressure_c<i>i</i></tt><td><tt>numpsi</tt>     <td>Pressure profile coefficents.
+///  <tr><td><tt>te_c<i>i</i></tt>      <td><tt>numpsi</tt>     <td>@f$t_{e}@f$ profile coefficents.
+///  <tr><th colspan="3">2D Qantities
+///  <tr><th>Name<th>Size                                       <th>Discription
+///  <tr><td><tt>psi_c<i>ij</i></tt>    <td><tt>(numr,numz)</tt><td>@f$t_{e}@f$ profile coefficents.
+///  </table>
+///
+///  @section equilibrum_vmec VMEC
+///  @image{} html vmec.png "Cross section of 3D flux surfaces."
+///  VMEC is an equilibium that comes from
+///  <a href="https://doi.org/10.1063/1.864116">minimizing mhd energy</a>.
+///  The solution gives us set of Fourier coefficents on a discrete radial grid.
+///  1D profiles of electrion density
+///  @f$n_{e}\left(\psi\right)@f$, electron temperature
+///  @f$t_{e}\left(\psi\right)@f$, and pressure @f$p\left(\psi\right)@f$ are
+///  mapped as functions of the normalized flux.
+///
+///  @subsection equilibrum_vmec_format VMEC file format
+///  Quantities are loaded into the ray tracer via a netcdf file. VMEC NetCDF
+///  files must contain the following quantities. Spline quanities have a common
+///  format of <i>name</i>_c<i>i</i>. All radial quantities are splined accross
+///  the magnetic axis to the opposite end. That is quantities extend from
+///  @f$-s\rightarrow s @f$. Splines of fourier coeffients are one dimensional
+///  splines stored in a 2D array. Radial quantities are store as a full or half
+///  grid value.
+///  <table>
+///  <caption id="equilibrum_vmec_format_data">VMEC netcdf file quantities</caption>
+///  <tr><th colspan="3">Dimensions
+///  <tr><th colspan="2">Name                                    <th>Discription
+///  <tr><td colspan="2"><tt>numsf</tt>                          <td>Size of full radial grid.
+///  <tr><td colspan="2"><tt>numsh</tt>                          <td>Size of half radial grid.
+///  <tr><td colspan="2"><tt>nummn</tt>                          <td>Number of Fourier modes.
+///  <tr><th colspan="3">Scalar Qantities
+///  <tr><td colspan="2"><tt>dphi</tt>                           <td>Step size toroidal flux.
+///  <tr><td colspan="2"><tt>ds</tt>                             <td>Step size normalized toroidal flux.
+///  <tr><td colspan="2"><tt>signj</tt>                          <td>Sign of the Jacobian.
+///  <tr><td colspan="2"><tt>sminf</tt>                          <td>Minimum @f$s @f$ on the full grid.
+///  <tr><td colspan="2"><tt>sminh</tt>                          <td>Minimum @f$s @f$ on the half grid.
+///  <tr><th colspan="3">1D Qantities
+///  <tr><th>Name<th>Size                                        <th>Discription
+///  <tr><td><tt>chi_c<i>i</i></tt>    <td><tt>numsf</tt>        <td>Poloidal flux profile.
+///  <tr><td><tt>xm</tt>               <td><tt>nummn</tt>        <td>Poloidal modes.
+///  <tr><td><tt>xn</tt>               <td><tt>nummn</tt>        <td>Toroidal modes.
+///  <tr><th colspan="3">2D Qantities
+///  <tr><th>Name<th>Size                                        <th>Discription
+///  <tr><td><tt>lmns_c<i>i</i></tt>   <td><tt>(numsh,nummn)</tt><td>@f$\lambda @f$ fourier coefficents.
+///  <tr><td><tt>rmnc_c<i>i</i></tt>   <td><tt>(numsf,nummn)</tt><td>@f$r @f$ fourier coefficents.
+///  <tr><td><tt>zmns_c<i>i</i></tt>   <td><tt>(numsf,nummn)</tt><td>@f$z @f$ fourier coefficents.
+///  </table>
+//------------------------------------------------------------------------------
 
 #ifndef equilibrium_h
 #define equilibrium_h
@@ -30,7 +178,7 @@ namespace equilibrium {
 ///  @brief Class representing a generic equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class generic {
@@ -276,7 +424,7 @@ namespace equilibrium {
 ///  @brief Uniform density with no magnetic field equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class no_magnetic_field : public generic<T, SAFE_MATH> {
@@ -389,7 +537,7 @@ namespace equilibrium {
 ///  @brief Convenience function to build a no magnetic field equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A constructed no magnetic field equilibrium.
 //------------------------------------------------------------------------------
@@ -405,7 +553,7 @@ namespace equilibrium {
 ///  @brief Uniform density with varying magnetic field equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class slab : public generic<T, SAFE_MATH> {
@@ -513,7 +661,7 @@ namespace equilibrium {
 ///  @brief Convenience function to build a slab equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A constructed slab equilibrium.
 //------------------------------------------------------------------------------
@@ -529,7 +677,7 @@ namespace equilibrium {
 ///  @brief Vary density with uniform magnetic field equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class slab_density : public generic<T, SAFE_MATH> {
@@ -642,7 +790,7 @@ namespace equilibrium {
 ///  @brief Convenience function to build a slab density equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A constructed slab density equilibrium.
 //------------------------------------------------------------------------------
@@ -658,7 +806,7 @@ namespace equilibrium {
 ///  @brief Vary density with uniform magnetic field equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class slab_field : public generic<T, SAFE_MATH> {
@@ -770,7 +918,7 @@ namespace equilibrium {
 ///  @brief Convenience function to build a slab density equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A constructed slab density equilibrium.
 //------------------------------------------------------------------------------
@@ -785,7 +933,7 @@ namespace equilibrium {
 ///  @brief Guassian density with uniform magnetic field equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class guassian_density : public generic<T, SAFE_MATH> {
@@ -896,7 +1044,7 @@ namespace equilibrium {
 ///  @brief Convenience function to build a guassian density equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A constructed guassian density equilibrium.
 //------------------------------------------------------------------------------
@@ -909,7 +1057,7 @@ namespace equilibrium {
 ///  @brief Build a 1D spline.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] c      Array of spline coeffiecents.
 ///  @param[in] x      Spline argument.
@@ -936,11 +1084,11 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief 2D EFIT equilibrium.
 ///
-///  This takes a BiCublic spline representation of the psi and cubic splines for
-///  ne, te, p, and fpol.
+///  This takes a BiCublic spline representation of the psi and cubic splines
+///  for ne, te, p, and fpol.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class efit final : public generic<T, SAFE_MATH> {
@@ -1419,7 +1567,7 @@ namespace equilibrium {
 ///  @brief Convenience function to build an EFIT equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] spline_file File name of contains the spline functions.
 ///  @returns A constructed EFIT equilibrium.
@@ -1662,7 +1810,7 @@ namespace equilibrium {
 ///  This takes a Cublic spline interpolations of the vmec quantities.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class vmec final : public generic<T, SAFE_MATH> {
@@ -2216,7 +2364,7 @@ namespace equilibrium {
 ///  @brief Convenience function to build an VMEC equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] spline_file File name of contains the spline functions.
 ///  @returns A constructed VMEC equilibrium.

@@ -18,7 +18,7 @@ namespace graph {
 ///  @brief Class representing a random_state_node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class random_state_node final : public leaf_node<T, SAFE_MATH> {
@@ -249,7 +249,7 @@ namespace graph {
 ///  @brief Define random_state convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] size Number of random states.
 ///  @param[in] seed Inital random seed.
@@ -285,7 +285,7 @@ namespace graph {
 ///  @brief Cast to a random_state node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -302,7 +302,7 @@ namespace graph {
 ///  @brief Class representing a random_node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class random_node final : public straight_node<T, SAFE_MATH> {
@@ -506,7 +506,7 @@ namespace graph {
 ///  @brief Define random convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] state Random state node.
 ///  @returns A reduced random node.
@@ -540,7 +540,7 @@ namespace graph {
 ///  @brief Cast to a random node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -554,7 +554,7 @@ namespace graph {
 ///  @brief Create a random_scale constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A random_scale constant.
 //------------------------------------------------------------------------------

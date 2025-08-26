@@ -248,7 +248,7 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Create a variable.
 ///
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] result  A result file reference.
 ///  @param[in] name    Name of the variable.
@@ -274,7 +274,7 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Load reference.
 ///
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] result  A result file reference.
 ///  @param[in] name    Name of the variable.
@@ -310,7 +310,7 @@ namespace output {
 //------------------------------------------------------------------------------
 ///  @brief Load imaginary reference.
 ///
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] result  A result file reference.
 ///  @param[in] name    Name of the variable.

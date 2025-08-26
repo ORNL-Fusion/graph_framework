@@ -7,10 +7,6 @@
  * This page details the <a href="http://www.cmake.org">cmake</a> based build
  * system.
  *
- * Documentation if divided into two parts.
- * * User documention.
- * * Developer documentation.
- *
  * @section build_system_user User Guide
  * The following section is for users of framework.
  *

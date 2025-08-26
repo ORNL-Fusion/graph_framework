@@ -20,7 +20,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class sqrt_node final : public straight_node<T, SAFE_MATH> {
@@ -270,7 +270,7 @@ namespace graph {
 ///  @brief Define sqrt convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced sqrt node.
@@ -304,7 +304,7 @@ namespace graph {
 ///  @brief Cast to a sqrt node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -323,7 +323,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class exp_node final : public straight_node<T, SAFE_MATH> {
@@ -535,7 +535,7 @@ namespace graph {
 ///  @brief Define exp convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced exp node.
@@ -569,7 +569,7 @@ namespace graph {
 ///  @brief Cast to a exp node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -586,7 +586,7 @@ namespace graph {
 ///  @brief A log node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
@@ -778,7 +778,7 @@ namespace graph {
 ///  @brief Define log convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced log node.
@@ -811,7 +811,7 @@ namespace graph {
 ///  @brief Cast to a exp node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -830,7 +830,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class pow_node final : public branch_node<T, SAFE_MATH> {
@@ -1343,7 +1343,7 @@ namespace graph {
 ///  @brief Build power node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -1375,7 +1375,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -1391,7 +1391,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam R         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -1424,7 +1424,7 @@ namespace graph {
 ///  @brief An imaginary error function node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  Note use templates here to defer this so it can use the operator functions.
 //------------------------------------------------------------------------------
@@ -1611,7 +1611,7 @@ namespace graph {
 ///  @brief Define erfi convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced exp node.
@@ -1645,7 +1645,7 @@ namespace graph {
 ///  @brief Cast to a exp node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.

@@ -17,7 +17,7 @@ namespace solver {
 ///  This uses newtons methods to solver for D(x) = 0.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in,out] work           Workflow manager.
 ///  @param[in]     vars           The unknowns to solver for.
