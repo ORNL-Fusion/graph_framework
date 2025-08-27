@@ -50,6 +50,7 @@ int main(int argc, const char * argv[]) {
  * <a href="https://www.cppreference.com/w/cpp/concepts.html">Concept</a> for
  * valid types of floating point types allowed by the framework.
  *
+ * <hr>
  * @section tutorial_basic Basic Nodes
  * The graph_framework is built around applying the same equations to a large
  * ensemble. Ensembles are defined from variables. All variables need to have
@@ -98,6 +99,7 @@ void run_tutorial() {
  * impicit constant was defined for <tt>b</tt>. Node in the implicit case, the
  * actual node for <tt>b</tt> is not created until we use it in an expression.
  *
+ * <hr>
  * @section tutorial_expression Basic Expressions
  * Finally lets create our equation of a line @f$y=mx+b@f$ and generate the
  * @f$\LaTeX@f$ expression for it.
@@ -152,6 +154,7 @@ auto dydb = y->df(m*x);
  @endcode
  * The respective results will be @f$x@f$, @f$1@f$, and @f$0@f$ respectively.
  *
+ * <hr>
  * @section tutorial_workflow Making workflow.
  * In this section we will build workflow from these nodes we created. For
  * simplicity we will decrease the number of elements in variable so we can set
@@ -301,6 +304,7 @@ for (size_t i = 0; i < 10; i++) {
 1.0001
  @endcode
  *
+ * <hr>
  * @section tutorial_workflow_newton Newtons Method.
  * In this tutorial we are going to show how we can put all these concepts
  * together to impliment a newtons method. Newtons method if defined as

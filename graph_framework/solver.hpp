@@ -2,9 +2,79 @@
 ///  @file solver.hpp
 ///  @brief Base class for a ode solvers.
 ///
-///  Defines a ode solver.
+///  Defines an ode solver.
 //------------------------------------------------------------------------------
-
+//------------------------------------------------------------------------------
+///  @page solvers Solvers
+///  @brief A discription of the integation methods for solving the ray equations.
+///  @tableofcontents
+///
+///  @section solvers_intro Introduction
+///  This page documents the types of dispersion functions available. These
+///  solver integrate the
+///  @ref dispersion_function_wave_propagation "wave propagation equations" to
+///  solve for the ray trajectory. Each solver builds an expressions for the
+///  updates for @f$\vec{x}@f$ and @f$\vec{k}@f$. These expressions are used to
+///  build @ref general_concepts_compile_maps "map" kernels that can be iterated
+///  to integrate the ray equations. Available integrators are:
+///
+///  <hr>
+///  @subsection solvers_split_simplextic Split Simplextic
+///  This solver only works when the system is separable. The conditions for
+///  separability are
+///  @f$\frac{\partial\frac{\partial D}{\partial\vec{k}}}{\partial\vec{k}}\equiv 0 @f$
+///  and
+///  @f$\frac{\partial\frac{\partial D}{\partial\vec{x}}}{\partial\vec{x}}\equiv 0 @f$
+///  If the equations are separable, the solver proceeds as
+///  @f{equation}{\vec{x}_{h}=\vec{x}+\frac{dt}{2}\frac{\partial\vec{x}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
+///  Where @f$\frac{\partial\vec{x}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f$
+///  represents the equation of motion evaluated at the current @f$\vec{x}@f$
+///  and @f$\vec{k}@f$. Using the half step @f$\vec{x}_{h}@f$ we can update
+///  @f$\vec{k}@f$.
+///  @f{equation}{\vec{k}_{next}=k+dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x}_{h},\vec{k},\omega\right)@f}
+///  Then we can take the remaining half step to update @f$\vec{x}@f$.
+///  @f{equation}{\vec{x}_{next}=\vec{x}_{h}+\frac{dt}{2}\frac{\partial\vec{x}}{\partial t}\left(\vec{x}_{h},\vec{k}_{next},\omega\right)@f}
+///
+///  <hr>
+///  @subsection solvers_rk2 2nd Order Runge Kutta
+///  This solver integates coupled differential equations using the Runge Kutta
+///  to second order.
+///  It starts by computing a substep for @f$\vec{x}@f$ and @f$\vec{k}@f$.
+///  @f{equation}{\vec{x}_{1}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
+///  @f{equation}{\vec{k}_{1}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
+///  That substep is used to compute a second substep.
+///  @f{equation}{\vec{x}_{2}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x} + \vec{x}_{1},\vec{k} + \vec{k}_{1},\omega\right)@f}
+///  @f{equation}{\vec{k}_{2}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x} + \vec{x}_{1},\vec{k} + \vec{k}_{1},\omega\right)@f}
+///  These substeps are combined into a single step update.
+///  @f{equation}{\vec{x}_{next}=\vec{x}+\frac{\vec{x}_{1}+\vec{x}_{2}}{2}@f}
+///  @f{equation}{\vec{k}_{next}=\vec{k}+\frac{\vec{k}_{1}+\vec{k}_{2}}{2}@f}
+///
+///  <hr>
+///  @subsection solvers_rk4 4th Order Runge Kutta
+///  This solver integates coupled differential equations using the Runge Kutta
+///  to fouth order. Like the second order Runge Kutta, this solver computes 4
+///  substeps.
+///  @f{equation}{\vec{x}_{1}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
+///  @f{equation}{\vec{k}_{1}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
+///  @f{equation}{\vec{x}_{2}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x} + \frac{\vec{x}_{1}}{2},\vec{k} + \frac{\vec{k}_{1}}{2},\omega\right)@f}
+///  @f{equation}{\vec{k}_{2}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x} + \frac{\vec{x}_{1}}{2},\vec{k} + \frac{\vec{k}_{1}}{2},\omega\right)@f}
+///  @f{equation}{\vec{x}_{3}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x} + \frac{\vec{x}_{2}}{2},\vec{k} + \frac{\vec{k}_{2}}{2},\omega\right)@f}
+///  @f{equation}{\vec{k}_{3}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x} + \frac{\vec{x}_{2}}{2},\vec{k} + \frac{\vec{k}_{2}}{2},\omega\right)@f}
+///  @f{equation}{\vec{x}_{4}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x} + \vec{x}_{3},\vec{k} + \vec{k}_{3},\omega\right)@f}
+///  @f{equation}{\vec{k}_{4}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x} + \vec{x}_{3},\vec{k} + \vec{k}_{3},\omega\right)@f}
+///  These substeps are combined into a single step update.
+///  @f{equation}{\vec{x}_{next}=\vec{x}+\frac{\vec{x}_{1}+2\left(\vec{x}_{2}+\vec{x}_{3}\right)+\vec{x}_{4}}{6}@f}
+///  @f{equation}{\vec{k}_{next}=\vec{k}+\frac{\vec{k}_{1}+2\left(\vec{k}_{2}+\vec{x}_{3}\right)+\vec{x}_{4}}{6}@f}
+///
+///  <hr>
+///  @subsection solvers_adaptive_rk4 Adaptive 4th Order Runge Kutta
+///  This method is an extension of the 4th Order Runge Kutta which adapts the
+///  step size to solutions error. We define a loss function
+///  @f{equation}{f_{loss}\left(dt,\lambda\right)=\frac{1}{dt}-\lambda D^{2}@f}
+///  We use a newton method to solve for @f$dt @f$ and @f$\lambda @f$ which
+///  minimize @f$f_{loss}@f$. The new @f$dt @f$ is then used in a standard 4th
+///  Order Runge Kutta iteration.
+//------------------------------------------------------------------------------
 #ifndef solver_h
 #define solver_h
 

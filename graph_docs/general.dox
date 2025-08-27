@@ -5,29 +5,35 @@
  * @section general_concepts_introduction Introduction
  * This page documents general concepts of the graph_framework.
  *
- * @section general_concepts_definitions Definitions.
- * * <b>node</b>                 A leaf or branch on the graph tree.
- * * <b>graph</b>                A data stucture connecting leaf nodes.
- * * <b>reduce</b>               A tranformation of the graph to remove leaf_nodes.
- * * <b>auto differentiation</b> A tranformation of the graph build derivatives.
- * * <b>compiler</b>             A tool for translating from one language to another.
- * * <b>JIT</b>                  Just-in-time compile.
- * * <b>kernel</b>               A code function that runs on a batch of data.
- * * <b>pre_item</b>             A kernel to run before running the main kernels.
- * * <b>work_iten</b>            A instance of kernel.
- * * <b>converge_item</b>        A kernel that is run until a convergence test is met.
- * * <b>workflow</b>             A series of work items.
- * * <b>backend</b>              The device the kernel is run on.
- * * <b>recursion</b>            See definition of recursion.
- * * <b>safe math</b>            Run time checks to avoid off normal conditions.
- * * <b>API</b>                  Application programming interface.
- * * <b>Host</b>                 The place where kernels are launched from.
- * * <b>Device</b>               The device side where kernels are run.
+ * @section general_concepts_definitions Definitions
+ * <table>
+ * <caption id="general_concepts_glossery">Glossery of terms</caption>
+ * <tr><th>Concept                    <th>Definition
+ * <tr><td><b>node</b>                <td>A leaf or branch on the graph tree.
+ * <tr><td><b>graph</b>               <td>A data stucture connecting leaf nodes.
+ * <tr><td><b>reduce</b>              <td>A tranformation of the graph to remove leaf_nodes.
+ * <tr><td><b>auto differentiation</b><td>A tranformation of the graph build derivatives.
+ * <tr><td><b>compiler</b>            <td>A tool for translating from one language to another.
+ * <tr><td><b>JIT</b>                 <td>Just-in-time compile.
+ * <tr><td><b>kernel</b>              <td>A code function that runs on a batch of data.
+ * <tr><td><b>pre_item</b>            <td>A kernel to run before running the main kernels.
+ * <tr><td><b>work_iten</b>           <td>A instance of kernel.
+ * <tr><td><b>converge_item</b>       <td>A kernel that is run until a convergence test is met.
+ * <tr><td><b>workflow</b>            <td>A series of work items.
+ * <tr><td><b>backend</b>             <td>The device the kernel is run on.
+ * <tr><td><b>recursion</b>           <td>See definition of recursion.
+ * <tr><td><b>safe math</b>           <td>Run time checks to avoid off normal conditions.
+ * <tr><td><b>API</b>                 <td>Application programming interface.
+ * <tr><td><b>Host</b>                <td>The place where kernels are launched from.
+ * <tr><td><b>Device</b>              <td>The device side where kernels are run.
+ * </table>
  *
+ * <hr>
  * @section general_concepts_graph Graph
  * The graph_framework operates by building tree structure of math operations.
- * In tree form it is easy to traverse nodes in the graph. Take the example of
- * equation of a line.
+ * For an example of building expression structures see the
+ * @ref tutorial_expression "basic expressions tutroial". In tree form it is
+ * easy to traverse nodes in the graph. Take the example of equation of a line.
  * @f{equation}{y=mx + b@f}
  * This equation consists of five leaf nodes. The ends of the tree are clasified
  * as either variables @f$x@f$ or constants @f$m,b@f$. These leaf_nodes are
@@ -45,14 +51,16 @@
  * Evaluation is repeated until every node in the graph is evaluated.
  * @image{} html line_graph_eval_final.png ""
  *
+ * <hr>
  * @section general_concepts_diff Auto Differentiation
  * From the previous @ref general_concepts_graph "section", it was shown how
  * graph can be evaluated. This same evaluation can be applied to build
- * graphs of a function derivative. Lets say that we want to take the derivative
- * of @f$\frac{\partial y}{\partial x}@f$. This is achieved by evaluating the
- * until bottom left most leaf_node is reached. Then a new graph is build
- * starting with @f$\frac{\partial m}{\partial x}=0@f$. Applying the first half
- * of the chain rule we build a new graph for @f$0x@f$
+ * graphs of a function derivative. For an example of taking derivatives see the
+ * @ref tutorial_derivatives "auto differentiation tutroial". Lets say that we
+ * want to take the derivative of @f$\frac{\partial y}{\partial x}@f$. This is
+ * achieved by evaluating the until bottom left most leaf_node is reached. Then
+ * a new graph is build starting with @f$\frac{\partial m}{\partial x}=0@f$.
+ * Applying the first half of the chain rule we build a new graph for @f$0x@f$
  * @image{} html line_graph_dydf1.png ""
  * Then we take the derivative of the right operand and apply the second half
  * of the chain rule to build a new graph for @f$0x=0@f$.
@@ -60,6 +68,7 @@
  * Evaluation is repeated recursively until the full graph has been evaluated.
  * @image{} html line_graph_dydf_final.png ""
  *
+ * <hr>
  * @section general_concepts_reduction Reduction
  * The final expression for @f$\frac{\partial y}{\partial x}@f$ contains many
  * unnecessary nodes in the graph. Instead of building full graphs, we can
@@ -71,8 +80,11 @@
  * @image{} html line_graph_reduce_final.png ""
  * By reducing graphs as they are build, we can eliminate nodes one by one.
  *
+ * <hr>
  * @section general_concepts_compile Compile
  * Once graph expressions are build, they can be compiled to a compute kernel.
+ * For an example of compiling expression trees into kernels see the
+ * @ref tutorial_workflow "workflow tutroial".
  * Using the same recursive evaluation, we can visit each node of a graph and
  * and create a line of kernel source code. There are three important parts for
  * creating kernels, inputs, outputs, and maps. These three concepts define
@@ -101,10 +113,12 @@
  * @f$y + \frac{\partial f}{\partial x}@f$
  * can be mapped to update @f$y@f$.
  *
+ * <hr>
  * @section general_concepts_workflow Workflows
  * Sequences of kernels are evaluated in workflow. A workflow is defined from
  * workitems which wrap a kernel call.
  *
+ * <hr>
  * @section general_concepts_safe_math Safe Math
  * There are some conditions where mathematically, a graph should evaluate to
  * normal number. However, when evaluted suing floating point precison, can lead

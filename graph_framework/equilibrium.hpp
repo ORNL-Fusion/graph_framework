@@ -20,6 +20,7 @@
 ///  The equilibrium models used in this section make use of Cubic and Bicubic
 ///  splines.
 ///
+///  <hr>
 ///  @subsection equilibrum_splines_1D Cubic Splines
 ///  Cubic splines are 1D interpolation functions that consisting of 4 coeffient
 ///  arrays. They take the form of
@@ -39,6 +40,7 @@
 ///  @f{equation}{x = \frac{x_{real} - x_{min}}{dx}@f}
 ///  Rounding down the value of @f$x@f$ gives the correct coefficient index.
 ///
+///  <hr>
 ///  @subsection equilibrum_splines_2D Bicubic Splines
 ///  Bicubic Splines are computed in a simular way instead they consist of a
 ///  total of 16 coeffients. These represent 4 spline functions in one
@@ -67,6 +69,7 @@
 ///  @f{equation}{x = \frac{x_{real} - x_{min}}{dx}@f}
 ///  @f{equation}{y = \frac{y_{real} - y_{min}}{dy}@f}
 ///
+///  <hr>
 ///  @section equilibrum_efit EFIT
 ///  @image{} html Efit.png "Cross section of poloidal flux surfaces."
 ///  EFIT is an equilibium that comes from a solution of the
@@ -110,6 +113,7 @@
 ///  <tr><td><tt>psi_c<i>ij</i></tt>    <td><tt>(numr,numz)</tt><td>@f$t_{e}@f$ profile coefficents.
 ///  </table>
 ///
+///  <hr>
 ///  @section equilibrum_vmec VMEC
 ///  @image{} html vmec.png "Cross section of 3D flux surfaces."
 ///  VMEC is an equilibium that comes from
@@ -142,16 +146,63 @@
 ///  <tr><td colspan="2"><tt>sminf</tt>                          <td>Minimum @f$s @f$ on the full grid.
 ///  <tr><td colspan="2"><tt>sminh</tt>                          <td>Minimum @f$s @f$ on the half grid.
 ///  <tr><th colspan="3">1D Qantities
-///  <tr><th>Name<th>Size                                        <th>Discription
+///  <tr><th>Name                      <th>Size                  <th>Discription
 ///  <tr><td><tt>chi_c<i>i</i></tt>    <td><tt>numsf</tt>        <td>Poloidal flux profile.
 ///  <tr><td><tt>xm</tt>               <td><tt>nummn</tt>        <td>Poloidal modes.
 ///  <tr><td><tt>xn</tt>               <td><tt>nummn</tt>        <td>Toroidal modes.
 ///  <tr><th colspan="3">2D Qantities
-///  <tr><th>Name<th>Size                                        <th>Discription
+///  <tr><th>Name                      <th>Size                  <th>Discription
 ///  <tr><td><tt>lmns_c<i>i</i></tt>   <td><tt>(numsh,nummn)</tt><td>@f$\lambda @f$ fourier coefficents.
 ///  <tr><td><tt>rmnc_c<i>i</i></tt>   <td><tt>(numsf,nummn)</tt><td>@f$r @f$ fourier coefficents.
 ///  <tr><td><tt>zmns_c<i>i</i></tt>   <td><tt>(numsf,nummn)</tt><td>@f$z @f$ fourier coefficents.
 ///  </table>
+///
+///  <hr>
+///  @section equilibrum_devel Developing new equilibrium models
+///  This section is intended for code developer and outlines how to create new
+///  equilibrium models. All equilibrium model use the same
+///  @ref equilibrium::generic interface. New equilibrium models can be created
+///  from a subclass of @ref equilibrium::generic or any other existing
+///  equilibrium class and overloading class methods.
+///  @code
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  class new_equilibrium final : public generic<T, SAFE_MATH> {
+///     ...
+///  };
+///  @endcode
+///
+///  When a new equilibrium is
+///  subclassed from @ref equilibrium::generic implimentations must be provided
+///  for the following pure virtual methods.
+///  * @ref equilibrium::generic::get_characteristic_field
+///  * @ref equilibrium::generic::get_electron_density
+///  * @ref equilibrium::generic::get_electron_temperature
+///  * @ref equilibrium::generic::get_ion_density
+///  * @ref equilibrium::generic::get_ion_temperature
+///  * @ref equilibrium::generic::get_magnetic_field
+///
+///  @note @ref equilibrium::generic::get_characteristic_field is only used by
+///  the normalized boris method for particle pushing for most cases this can
+///  simply return 1.
+///
+///  For the remaining methods, or any other methods one wishes to override, the
+///  arguments provide expressions the input position of the ray. The methods
+///  return are expressions for the quantity at hand.
+///
+///  @subsection equilibrum_devel_coordinate Noncartesian Coordinates
+///  While these methods take an @f$x,y,z @f$ as the argument names, there is
+///  no reason these need to be assumed to be cartesian coordinates. For
+///  instance the @ref equilibrum_vmec treats @f$x,y,z\rightarrow s,u,v @f$ as
+///  flux coordinates. In flux coordinate the coordinate system is no longer
+///  normalized nor orthogonal. So that other parts of the code can treat
+///  @f$\vec{k}@f$ correctly there are methods to return the covariant basis
+///  vectors @f$\vec{e}_{s},\vec{e}_{u},\vec{e}_{v}@f$.
+///  * @ref equilibrium::generic::get_esup1
+///  * @ref equilibrium::generic::get_esup2
+///  * @ref equilibrium::generic::get_esup3
+///
+///  By default, @ref equilibrium::generic return basis vectors for a cartesian
+///  system @f$\vec{e}_{1}=\hat{x},\vec{e}_{2}=\hat{y},\vec{e}_{3}=\hat{z}@f$.
 //------------------------------------------------------------------------------
 
 #ifndef equilibrium_h

@@ -4,7 +4,56 @@
 ///
 ///  Defines functions for computing power absorbtion.
 //------------------------------------------------------------------------------
-
+//------------------------------------------------------------------------------
+///  @page absorption_model Absoption Models
+///  @brief A discription of the models for power absorption.
+///  @tableofcontents
+///
+///  @section absorption_model_intro Introduction
+///  This page documents the types of dispersion functions available. Tracing
+///  the ray is only the first step in the process. Along that ray power is
+///  deposited into the plasma. For tracing the ray we assumed the wave number
+///  was always real. However now we need to figure out what the imaginary
+///  component is.
+///
+///  <hr>
+///  @subsection absorption_model_hot Hot Plasma Disperison Function
+///  To do this we know assume a hot plasma dispersion function.
+///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=i\sigma\Gamma_{0}+\Gamma_{1}+\vec{n}_{\perp}\cdot\vec{n}_{\perp}\frac{P\omega}{\omega_{ce}}\left(1+\zeta Z\left(\zeta\right)\right)\left(\Gamma_{2} + \Gamma_{5}F\right)\equiv 0 @f}
+///  Where
+///  @f{equation}{\Gamma_{0}=\vec{n}_{\perp}\cdot\vec{n}_{\perp}\left(\vec{n}\cdot\vec{n}-2\left(1-2q\right)\right)+\left(1-P\right)\left(2\left(1-2q\right)-\left(\vec{n}\cdot\vec{n}+n_{||}^{2}\right)\right)@f}
+///  @f{equation}{\Gamma_{1}=\vec{n}_{\perp}\cdot\vec{n}_{\perp}\left(\left(1-q\right)\vec{n}\cdot\vec{n}-(1-2q)\right)+\left(1-P\right)\left(\vec{n}\cdot\vec{n}n^{2}_{||} - \left(1-q\right)\left(\vec{n}\cdot\vec{n}+n^{2}_{||}\right)+\left(1-2q\right)\right)@f}
+///  @f{equation}{\Gamma_{2}=\left(\vec{n}\cdot\vec{n}-\left(1-2q\right)\right)+\frac{P\omega}{4\omega_{ce}n^{2}_{||}}\left(\left(\vec{n}\cdot\vec{n} + n^{2}_{||}\right)-2\left(1-2q\right)\right)@f}
+///  @f{equation}{\Gamma_{5}=\vec{n}\cdot\vec{n}n^{2}_{||}-\left(1-q\right)\left(\vec{n}\cdot\vec{n}+n^{2}_{||}\right)+\left(1-2q\right)@f}
+///  @f{equation}{i\sigma=\frac{PZ\left(\zeta\right)}{2n_{||}v_{e}}@f}
+///  @f{equation}{\zeta=\frac{1-\frac{\omega_{ce}}{\omega}}{n_{||}\frac{v_{e}}{c}}@f}
+///  @f{equation}{F=\frac{v_{e}\left(1+\zeta Z\left(\zeta\right)\right)\omega}{2n_{||}\omega_{ce}}@f}
+///  @f{equation}{P=\frac{\omega^{2}_{pe}}{\omega^{2}}@f}
+///  @f{equation}{q=\frac{P}{2\left(1+\frac{\omega_{ce}}{\omega}\right)}@f}
+///  @f{equation}{v_{e}=\sqrt{2n_{e}\frac{t_{e}}{m_{e}}}@f}
+///  @f{equation}{Z\left(\zeta\right)=-\sqrt{\pi}e^{-\zeta^{s}}\left(efri\left(\zeta\right)-i\right)@f}
+///  Where @f$efri\left(\zeta\right)@f$ is the imaginary error function.
+///
+///  @subsubsection absorption_model_hotexpand Expansion Terms
+///  The hot plasma dispersion function can be split to a hot plasma term and a
+///  cold plasma term.
+///  @f{equation}{D_{c}\left(\vec{x},\vec{k},\omega\right)=-\frac{P}{2}\left(1+\frac{\omega_{ce}}{\omega}\Gamma_{0}+\left(1-\frac{\omega^{2}_{ce}}{\omega^{2}}\Gamma_{1}\right)\right)@f}
+///  Then the hot plasma term is
+///  @f{equation}{D_{h}\left(\vec{x},\vec{k},\omega\right)=-\left(1+\frac{\omega_{ce}}{\omega}\right)n_{||}\frac{v_{e}}{c}\left(\Gamma_{1}+\Gamma_{2}+\frac{\vec{n}_{\perp}\cdot\vec{n}_{\perp}}{2n^{2}_{||}}\frac{\omega^{2}}{\omega^{2}_{ce}}\frac{v_{e}}{c}\zeta\Gamma_{5}\right)\left(\frac{1}{Z\left(\zeta\right)}+\zeta\right)@f}
+///
+///  <hr>
+///  @section absorption_model_root Root Find
+///  One way to solve for the imaginary component is to locate the root of the
+///  hot plasma dispersion function using the cold plasma solution as an intial
+///  quess. We start by redefining @f$\vec{k}=k_{amp}\hat{k}@f$ now we can solve
+///  for the complex value of @f$k_{amp}@f$ using a
+///  @ref solver::newton "Newton method".
+///
+///  <hr>
+///  @section absorption_model_damping Weak Damping
+///  Using the cold and hot expansion
+///  @f{equation}{k_{amp}=\sqrt{\vec{k}\cdot\vec{k}}-\frac{D_{h}}{\hat{k}\cdot\frac{\partial D_{c}}{\partial \vec{k}}}@f}
+//------------------------------------------------------------------------------
 #ifndef absorption_h
 #define absorption_h
 

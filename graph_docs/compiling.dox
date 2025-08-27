@@ -7,6 +7,7 @@
  * This page details the <a href="http://www.cmake.org">cmake</a> based build
  * system.
  *
+ * <hr>
  * @section build_system_user User Guide
  * The following section is for users of framework.
  *
@@ -68,14 +69,22 @@
  * are various options for configuing LLVM and can be ignored. The important
  * options are listed below.
  *
- * * <tt>CMAKE_BUILD_TYPE</tt> Switch between <tt>Release</tt>, <tt>Debug</tt>, <tt>MinSizeRel</tt>, <tt>RelWithDebInfo</tt>
- * * <tt>USE_VERBOSE</tt> Show verbose information about compute kernels.
- * * <tt>BUILD_C_BINDING</tt> Generate the C langauge interface.
- * * <tt>BUILD_Fortran_BINDING</tt> Generate the Fortran language interface.
- * * <tt>USE_METAL</tt> Enable the <a href="https://developer.apple.com/metal/">Metal</a> backend (macOS only).
- * * <tt>USE_CUDA</tt> Enable the <a href="https://developer.nvidia.com/cuda-zone">Cuda</a> backend (Linux only).
- * * <tt>USE_HIP</tt> Enable the <a href="https://www.amd.com/en/products/software/rocm.html">Hip</a> backend (Linux only, Hip branch).
- * * <tt>USE_SSH</tt> Use ssh for git instead of html.
+ * <table>
+ * <caption id="build_system_user_cmake_opts">Build options for users.</caption>
+ * <tr><th>Option                        <th>Discrption
+ * <tr><td><tt>CMAKE_BUILD_TYPE</tt>     <td>Switch between
+ *                                           * <tt>Release</tt>
+ *                                           * <tt>Debug</tt>
+ *                                           * <tt>MinSizeRel</tt>
+ *                                           * <tt>RelWithDebInfo</tt>
+ * <tr><td><tt>USE_VERBOSE</tt>          <td>Show verbose information about compute kernels.
+ * <tr><td><tt>BUILD_C_BINDING</tt>      <td>Generate the C langauge interface.
+ * <tr><td><tt>BUILD_Fortran_BINDING</tt><td>Generate the Fortran language interface.
+ * <tr><td><tt>USE_METAL</tt>            <td>Enable the <a href="https://developer.apple.com/metal/">Metal</a> backend (macOS only).
+ * <tr><td><tt>USE_CUDA</tt>             <td>Enable the <a href="https://developer.nvidia.com/cuda-zone">Cuda</a> backend (Linux only).
+ * <tr><td><tt>USE_HIP</tt>              <td>Enable the <a href="https://www.amd.com/en/products/software/rocm.html">Hip</a> backend (Linux only, Hip branch).
+ * <tr><td><tt>USE_SSH</tt>              <td>Use ssh for git instead of html.
+ * </table>
  *
  * <b>NOTE:</b>macOS uses will need to change the default option for
  * <tt>CMAKE_CXX_COMPILER</tt> to <tt>clang++</tt>. This is due to the way the
@@ -127,6 +136,7 @@
  * Like the parallel build the <tt>-j<i>num_processes</i></tt> option determines
  * number of parallel instances to run.
  *
+ * <hr>
  * @section build_system_dev Developer Guide
  * This section covers information for developers of the framework itself.
  *
@@ -194,16 +204,21 @@
  * that can be enabled.
  *
  * @subsubsection build_system_dev_options Build system Options
- * * <tt>USE_PCH</tt> Use precomiled headers during computation. Most users should keep this on.
- * * <tt>SAVE_KERNEL_SOURCE</tt> Option to dump the generated compute kernel source code to disk.
- * * <tt>USE_INPUT_CACHE</tt> Option to cache registers for the kernel arguments.
- * * <tt>USE_CONSTANT_CACHE</tt> Option to use registers to cache constant values otherwise constanst are inlined.
- * * <tt>SHOW_USE_COUNT</tt> Generates information on the number of times a register is used.
- * * <tt>USE_INDEX_CACHE</tt> Option to use registers to cache array indicies.
- * * <tt>SANITIZE_ADDRESS</tt> Use address sanitizer debugging option.
- * * <tt>SANITIZE_LEAK</tt> Use leak sanitizer debugging option.
- * * <tt>SANITIZE_MEMORY</tt> Use memory sanitizer debugging option.
- * * <tt>SANITIZE_THREAD</tt> Use thread sanitizer debugging option.
- * * <tt>SANITIZE_UNDEFINED</tt> Use undefined sanitizer debugging option.
- * * <tt>SANITIZE_FLOAT-DIVIDE-BY-ZERO</tt> Use float-divide-by-zero sanitizer debugging option.
+ * <table>
+ * <caption id="build_system_user_cmake_dev_opts">Build options for developers.</caption>
+ * <tr><th>Option                                <th>Discrption
+ * <tr><td><tt>USE_PCH</tt>                      <td>Use precomiled headers during computation. Most users should keep this on.
+ * <tr><td><tt>SAVE_KERNEL_SOURCE</tt>           <td>Option to dump the generated compute kernel source code to disk.
+ * <tr><td><tt>USE_INPUT_CACHE</tt>              <td>Option to cache registers for the kernel arguments.
+ * <tr><td><tt>USE_CONSTANT_CACHE</tt>           <td>Option to use registers to cache constant values otherwise constanst are inlined.
+ * <tr><td><tt>SHOW_USE_COUNT</tt>               <td>Generates information on the number of times a register is used.
+ * <tr><td><tt>USE_INDEX_CACHE</tt>              <td>Option to use registers to cache array indicies.
+ * <tr><th colspan="2">Sanitizer Flags
+ * <tr><td><tt>SANITIZE_ADDRESS</tt>             <td>Use address sanitizer debugging option.
+ * <tr><td><tt>SANITIZE_LEAK</tt>                <td>Use leak sanitizer debugging option.
+ * <tr><td><tt>SANITIZE_MEMORY</tt>              <td>Use memory sanitizer debugging option.
+ * <tr><td><tt>SANITIZE_THREAD</tt>              <td>Use thread sanitizer debugging option.
+ * <tr><td><tt>SANITIZE_UNDEFINED</tt>           <td>Use undefined sanitizer debugging option.
+ * <tr><td><tt>SANITIZE_FLOAT-DIVIDE-BY-ZERO</tt><td>Use float-divide-by-zero sanitizer debugging option.
+ * </table>
  */

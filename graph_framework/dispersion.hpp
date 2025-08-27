@@ -10,10 +10,10 @@
 ///  @tableofcontents
 ///
 ///  @section dispersion_function_intro Introduction
-///  This page documents the types of dispersion functions available. As an
-///  a ray moves through the plasma it must remain a solution of these
-///  functions. For a fixed wave frequency @f$\omega @f$, the dispersion
-///  function dictates how the wave number @f$\vec{k}@f$ and ray trajectory
+///  This page documents the types of dispersion functions available. As a ray
+///  moves through the plasma it must remain a solution of these functions. For
+///  a fixed wave frequency @f$\omega @f$, the dispersion function dictates how
+///  the wave number @f$\vec{k}@f$ and ray trajectory
 ///  @f$\vec{x}@f$ interact.
 ///  <table>
 ///  <caption id="dispersion_function_symbol">Symbol definitions</caption>
@@ -29,6 +29,8 @@
 ///  <tr><td>@f$\omega_{pe}@f$ <td>@f$s^{-1}@f$     <td>Electron Plasma Frequency @f$\omega_{pe}=\frac{n_{e}q^{2}}{\epsilon_{0}m_{e}c}@f$
 ///  <tr><td>@f$\omega_{ce}@f$ <td>@f$s^{-1}@f$     <td>Electron Cyclotron Frequency @f$\omega_{ce}=\frac{q\left|\vec{B}\right|}{m_{e}}@f$
 ///  <tr><td>@f$\omega_{h}@f$  <td>@f$s^{-1}@f$     <td>Upper Hybrid Frequency @f$\omega_{h}^{s}=\omega_{pe}^{2}+\omega_{ce}^{2}@f$
+///  <tr><td>@f$\omega_{r}@f$  <td>@f$s^{-1}@f$     <td>Right cutoff Frequency @f$\omega_{r}=\frac{1}{2}\left(\omega_{ce}+\sqrt{\omega^{2}_{ce}+4\omega_{pe}^{2}}\right)@f$
+///  <tr><td>@f$\omega_{l}@f$  <td>@f$s^{-1}@f$     <td>Left cutoff Frequency @f$\omega_{r}=\frac{1}{2}\left(-\omega_{ce}+\sqrt{\omega^{2}_{ce}+4\omega_{pe}^{2}}\right)@f$
 ///  <tr><td>@f$v_{th}@f$      <td>@f$\frac{m}{s}@f$<td>Thermal velocity @f$v_{th}=\sqrt{\frac{k_{B}t_{e}}{m_{e}}}@f$
 ///  <tr><td>@f$\vec{n}@f$     <td>@f$1 @f$         <td>@f$n=\frac{\vec{k}c}{\omega}@f$
 ///  </table>
@@ -47,6 +49,13 @@
 ///  <tr><td>@f$v_{g}=\frac{\partial\omega}{\partial k}@f$<td>@f$\frac{m}{s}@f$<td>@f$v'_{g}=\frac{\partial\omega'}{\partial k}@f$<td>@f$1 @f$     <td>Group velocity
 ///  </table>
 ///
+///  @section dispersion_function_wave_propagation Wave propagation
+///  From any dispersion function, the wave propagation equations are obtained
+///  from derivatives of the dispersion relation.
+///  @f{equation}{\frac{\partial\vec{x}}{\partial {t}}=-\frac{\frac{\partial D}{\partial\vec{k}}}{\frac{\partial D}{\partial\omega}}@f}
+///  @f{equation}{\frac{\partial\vec{k}}{\partial {t}}=\frac{\frac{\partial D}{\partial\vec{x}}}{\frac{\partial D}{\partial\omega}}@f}
+///  RF waves are traced by integrating this system of equations.
+///
 ///  @section dispersion_function_avail Available Dispersion Functions
 ///  The following dispersion functions are available in xrays.
 ///
@@ -55,6 +64,7 @@
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\frac{\vec{k}\cdot\vec{k}}{\omega^{2}}-1\equiv 0 @f}
 ///  It has no resonances or cutoffs.
 ///
+///  <hr>
 ///  @subsection dispersion_function_bohm_gross Bohm Gross
 ///  This dispersion function now accounts for how occilations in the plasma
 ///  propagate.
@@ -62,7 +72,8 @@
 ///  It has no resonances or cutoffs. But @f$v_{g}@f$ can never exceed @f$v_{th}@f$.
 ///  @image{} html bohm-gross.png ""
 ///
-///  @subsection dispersion_function_ordinary_wave Ordinary Wave
+///  <hr>
+///  @subsection dispersion_function_o_wave Ordinary Wave
 ///  This disperison function represents a wave with a
 ///  @f$\vec{E}_{1}||\vec{B}_{0}@f$. That means the electric field occilates
 ///  parallel to the magnetic field.
@@ -70,19 +81,33 @@
 ///  This wave is cut off below @f$\omega_{pe}@f$.
 ///  @image{} html O-Mode.png ""
 ///
-///  @subsection dispersion_function_extra_ordinary_wave Extra Ordinary Wave
-///  This disperison function represents a wave in a vaccume.
+///  <hr>
+///  @subsection dispersion_function_x_wave Extra Ordinary Wave
+///  This dispersion relation encapsulates wave physics in a cold plasma medium.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=1-\frac{\omega_{pe}^2}{\omega^{2}}\frac{\omega^{2}-\omega_{pe}^2}{\omega^{2}-\omega_{h}^2}-\vec{n}_{\perp}\cdot\vec{n}_{\perp}\equiv 0 @f}
 ///  This mode has 
-///  It has no resonances or cutoffs.
+///  This wave has two branches. One branch is cannot not progagate below the
+///  @f$\omega_{r}@f$ cutoff. The other branch cannot not progagate below the
+///  @f$\omega_{l}@f$ cutoff. As the wave approches the upper hybrid fequency,
+///  wave propagation stops as the wave number approces
+///  @f$\left|\vec{k}\right|\rightarrow\infty @f$.
 ///  @image{} html X-Mode.png ""
 ///
+///  <hr>
 ///  @subsection dispersion_function_cold_plasma Cold Plasma
 ///  This disperison function represents a wave in a vaccume.
-///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\equiv 0 @f}
-///  It has no resonances or cutoffs.
+///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=det\left(\vec{\epsilon}+\vec{n}\vec{n}-\vec{n}\cdot\vec{n}\vec{I}\right)\equiv 0 @f}
+///  The quantity @f$\epsilon @f$ is the diaelectric tensor. Using Onsager
+///  symmetries, this tensor is defined as
+///  @f{equation}{\vec{\epsilon}=\left(\begin{array}{ccc}\epsilon_{11}&\epsilon_{12}&0\\-\epsilon_{12}&\epsilon_{11}&0\\0&0&\epsilon_{33}\end{array}\right)@f}
+///  where
+///  @f{equation}{\epsilon_{11}=1-\sum_{s}\frac{\frac{\omega^{2}_{p}}{\omega^{2}}}{1-\frac{\Omega^{2}_{c}}{\omega^{2}}}@f}
+///  @f{equation}{\epsilon_{12}=-i\sum_{s}\frac{\frac{\Omega_{c}}{\omega}\frac{\omega^{2}_{p}}{\omega^{2}}}{1-\frac{\Omega^{2}_{c}}{\omega^{2}}}@f}
+///  @f{equation}{\epsilon_{33}=1-\sum_{s}\frac{\omega^{2}_{p}}{\omega^{2}}@f}
+///  Note here we are including the plasma frequency for ions aswell. This
+///  dispersion function is effectively a super position of the O-Mode and
+///  X-Mode dispersion functions and as such has the same cutoffs and resonaces.
 ///  @image{} html ColdPlasma.png ""
-///
 //------------------------------------------------------------------------------
 
 #ifndef dispersion_h
