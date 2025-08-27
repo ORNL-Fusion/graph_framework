@@ -794,6 +794,7 @@ void bin_power(const commandline::parser &cl,
 
 //------------------------------------------------------------------------------
 ///  @page xrays_commandline xrays Command Line Arguments
+///  @brief Command Line Arguments for the xrays RF Ray tracing code.
 ///  @tableofcontents
 ///
 ///  @section xrays_commandline_intro Introduction

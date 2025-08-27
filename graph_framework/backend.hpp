@@ -15,6 +15,7 @@
 #include "special_functions.hpp"
 #include "register.hpp"
 
+///  Name space for backend buffers.
 namespace backend {
 //******************************************************************************
 //  Data buffer.

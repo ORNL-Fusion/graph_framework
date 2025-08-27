@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 ///  @page dispersion_function Dispersion Functions
+///  @brief Dispersion function documentation for the xrays RF Ray tracing code.
 ///  @tableofcontents
 ///
 ///  @section dispersion_function_intro Introduction
@@ -27,7 +28,7 @@
 ///  <tr><td>@f$k_{B}@f$       <td>@f$\frac{J}{K}@f$<td>Boltzmann constant
 ///  <tr><td>@f$\omega_{pe}@f$ <td>@f$s^{-1}@f$     <td>Electron Plasma Frequency @f$\omega_{pe}=\frac{n_{e}q^{2}}{\epsilon_{0}m_{e}c}@f$
 ///  <tr><td>@f$\omega_{ce}@f$ <td>@f$s^{-1}@f$     <td>Electron Cyclotron Frequency @f$\omega_{ce}=\frac{q\left|\vec{B}\right|}{m_{e}}@f$
-///  <tr><td>@f$\omega_{h}     <td>@f$s^{-1}@f$     <td>Upper Hybrid Frequency @f$\omega_{h}^{s}=\omega_{pe}^{2}+\omega_{ce}^{2}@f$
+///  <tr><td>@f$\omega_{h}@f$  <td>@f$s^{-1}@f$     <td>Upper Hybrid Frequency @f$\omega_{h}^{s}=\omega_{pe}^{2}+\omega_{ce}^{2}@f$
 ///  <tr><td>@f$v_{th}@f$      <td>@f$\frac{m}{s}@f$<td>Thermal velocity @f$v_{th}=\sqrt{\frac{k_{B}t_{e}}{m_{e}}}@f$
 ///  <tr><td>@f$\vec{n}@f$     <td>@f$1 @f$         <td>@f$n=\frac{\vec{k}c}{\omega}@f$
 ///  </table>
@@ -59,6 +60,7 @@
 ///  propagate.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\omega_{pe}+\frac{3}{2}\vec{k}\cdot\vec{k}v^{2}_{th}-\omega^{2}\equiv 0 @f}
 ///  It has no resonances or cutoffs. But @f$v_{g}@f$ can never exceed @f$v_{th}@f$.
+///  @image{} html bohm-gross.png ""
 ///
 ///  @subsection dispersion_function_ordinary_wave Ordinary Wave
 ///  This disperison function represents a wave with a
@@ -66,17 +68,20 @@
 ///  parallel to the magnetic field.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=1-\frac{\omega^{2}_{pe}}{\omega^{2}}-\vec{n}_{\perp}\cdot\vec{n}_{\perp}\equiv 0 @f}
 ///  This wave is cut off below @f$\omega_{pe}@f$.
+///  @image{} html O-Mode.png ""
 ///
 ///  @subsection dispersion_function_extra_ordinary_wave Extra Ordinary Wave
 ///  This disperison function represents a wave in a vaccume.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=1-\frac{\omega_{pe}^2}{\omega^{2}}\frac{\omega^{2}-\omega_{pe}^2}{\omega^{2}-\omega_{h}^2}-\vec{n}_{\perp}\cdot\vec{n}_{\perp}\equiv 0 @f}
 ///  This mode has 
 ///  It has no resonances or cutoffs.
+///  @image{} html X-Mode.png ""
 ///
 ///  @subsection dispersion_function_cold_plasma Cold Plasma
 ///  This disperison function represents a wave in a vaccume.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\equiv 0 @f}
 ///  It has no resonances or cutoffs.
+///  @image{} html ColdPlasma.png ""
 ///
 //------------------------------------------------------------------------------
 
@@ -86,6 +91,7 @@
 #include "newton.hpp"
 #include "equilibrium.hpp"
 
+/// Name space for dispersion functions.
 namespace dispersion {
 //******************************************************************************
 //  Z Function interface.

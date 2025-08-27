@@ -13,6 +13,7 @@
 #include "dispersion.hpp"
 #include "output.hpp"
 
+///  Name space for solvers.
 namespace solver {
 //******************************************************************************
 //  Solver interface.

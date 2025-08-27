@@ -1,5 +1,6 @@
 /*!
  * @page tutorial Tutorial
+ * @brief Hands on tutorial for building expressions and running workflow.
  * @tableofcontents
  * @section tutorial_introduction Introduction
  * In this tutorial we will put the basic @ref general_concepts of the
@@ -116,7 +117,7 @@ void run_tutorial() {
     std::cout << std::endl;
 }
  @endcode
- * Running this will generate the output <tt>\left(0.4 x+0.6\right)</tt> which
+ * Running this will generate the output <tt>\\left(0.4 x+0.6\\right)</tt> which
  * renders to @f$\left(0.4 x+0.6\right)@f$.
  *
  * @subsection tutorial_derivatives Auto Differentiation
@@ -191,7 +192,7 @@ work.add_item({
  * @f$\frac{\partial y}{\partial x}@f$. The third and forth arguments are blank
  * because there are no maps and we are not using random numbers. The last
  * argument needs to match the dimensions of the inputs. Inputs need to be cast
- * from generic @ref graph::leaf_nodes to the specific
+ * from generic @ref graph::leaf_node to the specific
  * @ref graph::variable_node.
  *
  * To evaluate the kernel, we need to first compile it. Then set the values for
@@ -300,7 +301,7 @@ for (size_t i = 0; i < 10; i++) {
 1.0001
  @endcode
  *
- * @section tutorial_workflow_iter Newtons Method.
+ * @section tutorial_workflow_newton Newtons Method.
  * In this tutorial we are going to show how we can put all these concepts
  * together to impliment a newtons method. Newtons method if defined as
  * @f{equation}{x = x - \frac{f\left(x\right)}{\frac{\partial}{\partial x}f\left(x\right)}@f}

@@ -10,6 +10,7 @@
 
 #include "jit.hpp"
 
+///  Name space for workflows.
 namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a workitem.

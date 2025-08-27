@@ -37,6 +37,7 @@ using complex_type = std::complex<T>;
 
 #endif
 
+///  Name space for special functions.
 namespace special {
 
 ///  I constant.

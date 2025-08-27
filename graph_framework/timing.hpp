@@ -10,6 +10,7 @@
 #include <mutex>
 #include <map>
 
+///  Name space for timers.
 namespace timeing {
 //------------------------------------------------------------------------------
 ///  @brief A timing object.

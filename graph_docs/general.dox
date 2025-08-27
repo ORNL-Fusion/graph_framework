@@ -1,5 +1,6 @@
 /*!
  * @page general_concepts General Concepts
+ * @brief Overview of basic concepts of the graph_framework.
  * @tableofcontents
  * @section general_concepts_introduction Introduction
  * This page documents general concepts of the graph_framework.

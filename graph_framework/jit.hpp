@@ -37,6 +37,7 @@
 #define END_GPU
 #endif
 
+///  Name space for JIT functions.
 namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Class for JIT compile of the GPU kernels.

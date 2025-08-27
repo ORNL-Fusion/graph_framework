@@ -13,6 +13,7 @@
 #include "newton.hpp"
 #include "output.hpp"
 
+/// Namespace for power absorption models.
 namespace absorption {
 //******************************************************************************
 //  Base class

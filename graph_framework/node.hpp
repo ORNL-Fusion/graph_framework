@@ -16,6 +16,7 @@
 
 #include "backend.hpp"
 
+/// Name space for graph nodes.
 namespace graph {
 //******************************************************************************
 //  Base leaf node.

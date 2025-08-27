@@ -14,6 +14,7 @@
 
 #include "random.hpp"
 
+///  Name space for GPU backends.
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a metal gpu context.

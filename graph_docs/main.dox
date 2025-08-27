@@ -10,9 +10,16 @@
  * field line following.
  *
  * @subsection purpose Purpose
+ * The purpose of this framework is to enable domain scientists to write code
+ * that can run on any GPU and interface them with legacy codes.
  *
+ * This framework enables:
+ * * Portability to Nvidia, AMD, and Apple GPUs and CPUs.
+ * * Abstract physcis from the compute.
+ * * Enable Auto Differentiation.
+ * * Enable easy embedding in C, C++, and Fortran codes.
  *
- * @section tools User guides for tools.
+ * @section tools User guides for tools
  * @subsection rf_ray_tracing RF Ray tracing
  * This section covers user guides to run the RF Ray traceing code. To run this
  * code, a use selects an equilibrium, a wave distribution function, a solver
@@ -22,12 +29,12 @@
  * * @ref dispersion_function
  * * @ref xrays_commandline
  *
- * @section framework_user Framework user guides.
+ * @section framework_user Framework user guides
  * * @ref build_system "Compiling the framework."
  * * @ref general_concepts "General concepts."
  * * @ref tutorial "Tutorial"
  *
- * @section framework_developer Framework developer guides.
+ * @section framework_developer Framework developer guides
  * * @ref build_system "Build system."
  * * Code structure
  * * Adding new operations tutorial.

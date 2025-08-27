@@ -5,6 +5,7 @@
 ///  Defined the interfaces to access plasma equilibrium.
 //------------------------------------------------------------------------------
 ///  @page equilibrum_models Equilibrium Models
+///  @brief Documentation for formatting equilibrium files.
 ///  @tableofcontents
 ///
 ///  @section equilibrum_models_intro Introduction
@@ -167,6 +168,7 @@
 #include "arithmetic.hpp"
 #include "newton.hpp"
 
+///  Name space for equilibrium models.
 namespace equilibrium {
 ///  Lock to syncronize netcdf accross threads.
     static std::mutex sync;

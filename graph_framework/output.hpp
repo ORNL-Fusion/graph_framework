@@ -12,6 +12,7 @@
 
 #include "jit.hpp"
 
+///  Name space for output files.
 namespace output {
 ///  Lock to syncronize netcdf accross threads.
     static std::mutex sync;
