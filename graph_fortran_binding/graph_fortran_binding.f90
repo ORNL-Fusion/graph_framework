@@ -7,6 +7,84 @@
 !
 !> Module contains subroutines for calling this from fortran.
 !-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!>  @page graph_fortran_binding Embedding in Fortran code
+!>  @brief Documentation for linking into Fortran code base.
+!>  @tableofcontents
+!>
+!>  @section graph_fortran_binding_into Introduction
+!>  This section assumes the reader is already familar with developing Fortran
+!>  codes. The simplist method is to create a C callable function like the
+!>  @ref graph_c_binding_into "C binding exmaple". Then create a fortran
+!>  interface for it.
+!>  @code
+!>  INTERFACE
+!>     SUBROUTINE Fortran_Callable BIND(C, NAME='c_callable_function')
+!>     USE, INTRINSIC :: ISO_C_BINDING
+!>     IMPLICIT NONE
+!>     END SUBROUTINE
+!>  END INTERFACE
+!>  @endcode
+!>  This subroutine can be called like any other Fortran subroutine.
+!>  @code
+!>  CALL Fortran_Callable
+!>  @endcode
+!>
+!>  <hr>
+!>  @section graph_fortran_binding_interface Fortran Binding Interface
+!>  An alternative is to use the
+!>  @ref graph_fortran "Fortran Language interface". The Fortran binding
+!>  interface can be enabled as one of the <tt>cmake</tt>
+!>  @ref build_system_user_options "conifgure options". As an example, we will
+!>  convert the @ref tutorial_workflow "making workflows" turorial to use the
+!>  Fortran language bindings.
+!>  @code
+!>  SUBROUTINE fortran_binding
+!>  USE graph_fortran
+!>  USE, INTRINSIC :: ISO_C_BINDING
+!>
+!>  IMPLICIT NONE
+!>
+!>  CLASS(graph_context), POINTER :: graph
+!>  TYPE(C_PTR)                   :: x
+!>  TYPE(C_PTR)                   :: m
+!>  TYPE(C_PTR)                   :: b
+!>  TYPE(C_PTR)                   :: y
+!>  TYPE(C_PTR)                   :: dydx
+!>
+!>  LOGICAL(C_BOOL), PARAMETER :: use_safe_math = .false.
+!>
+!>  graph => graph_double_context(use_safe_math);
+!>
+!>  x = graph%variable(1_C_LONG, 'x' // C_NULL_CHAR)
+!>  m = graph%constant(0.4_C_DOUBLE)
+!>  b = graph%constant(0.6_C_DOUBLE)
+!>
+!>  y = graph%add(graph%mul(m, x), b)
+!>  dydx = graph%df(y, x);
+!>
+!>  CALL graph%set_variable(x, (/ 1.0_C_DOUBLE, 2.0_C_DOUBLE, 3.0_C_DOUBLE /))
+!>
+!>  CALL graph%set_device_number(0)
+!>  CALL graph%add_item((/ graph_ptr(x) /),                                    &
+!>                      (/ graph_ptr(y), graph_ptr(dydx) /))                   &
+!>                      graph_null_array, graph_null_array, C_NULL_PTR,        &
+!>                      'my_first_kernel' // C_NULL_CHAR, 3_C_LONG)
+!>  CALL graph%compile
+!>  CALL graph%run
+!>  CALL graph%print(0, (/ graph_ptr(x), graph_ptr(y), graph_ptr(dydx) /))
+!>  CALL graph%print(1, (/ graph_ptr(x), graph_ptr(y), graph_ptr(dydx) /))
+!>  CALL graph%print(2, (/ graph_ptr(x), graph_ptr(y), graph_ptr(dydx) /))
+!>
+!>  DEALLOCATE(graph)
+!>  END SUBROUTINE
+!>  @endcode
+!>
+!>  @note Graphs need to use the @ref graph_fortran::graph_ptr function to get
+!>  the pointer address of node.
+!>  @note The @ref graph_fortran::graph_null_array allows set arrays of nodes to
+!>  null.
+!-------------------------------------------------------------------------------
       MODULE graph_fortran
       USE, INTRINSIC :: ISO_C_BINDING
 
@@ -14,7 +92,6 @@
 
 !>  A null array for empty
       INTEGER(C_INTPTR_T), DIMENSION(0) :: graph_null_array
-!>  A
 
 !-------------------------------------------------------------------------------
 !>  @brief Class object for the binding.

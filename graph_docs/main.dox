@@ -39,10 +39,19 @@
  * * @ref build_system "Compiling the framework."
  * * @ref general_concepts "General concepts."
  * * @ref tutorial "Tutorial"
+ * * @ref graph_c_binding
+ * * @ref graph_fortran_binding
  *
  * <hr>
  * @section framework_developer Framework developer guides
- * * @ref build_system "Build system."
- * * Code structure
- * * Adding new operations tutorial.
+ * * @ref build_system
+ * * @ref code_structure
+ * * @ref new_operations_tutorial
+ *
+ * @subsection framework_developer_tools Developer guide for RF Ray Tracing
+ * * @ref code_structure_xrays "Code Structure"
+ * * @ref equilibrum_devel
+ * * @ref dispersion_function_devel
+ * * @ref solvers_devel
+ * * @ref absorption_model_devel
  */

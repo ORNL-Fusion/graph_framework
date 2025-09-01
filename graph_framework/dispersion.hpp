@@ -108,6 +108,23 @@
 ///  dispersion function is effectively a super position of the O-Mode and
 ///  X-Mode dispersion functions and as such has the same cutoffs and resonaces.
 ///  @image{} html ColdPlasma.png ""
+///
+///  <hr>
+///  @section dispersion_function_devel Developing new dispersion functions
+///  This section is intended for code developers and outlines how to create new
+///  equilibrium models. New equilibrium models can be created from a subclass
+///  of @ref dispersion::dispersion_function or any other existing
+///  dispersion_function class and overloading class methods. For convinence the
+///  @ref dispersion::physics class contains several defined physical constants.
+///  @code
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  class new_dispersion final : public dispersion_function<T, SAFE_MATH> {
+///     ...
+///  };
+///  @endcode
+///  When a new dispersion function is subclassed from
+///  @ref dispersion::dispersion_function an implimentation must be provided for
+///  the pure virtual method @ref dispersion::dispersion_function::D.
 //------------------------------------------------------------------------------
 
 #ifndef dispersion_h

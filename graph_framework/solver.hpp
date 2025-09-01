@@ -74,6 +74,30 @@
 ///  We use a newton method to solve for @f$dt @f$ and @f$\lambda @f$ which
 ///  minimize @f$f_{loss}@f$. The new @f$dt @f$ is then used in a standard 4th
 ///  Order Runge Kutta iteration.
+///
+///  <hr>
+///  @section solvers_devel Developing new solvers
+///  This section is intended for code developers and outlines how to create new
+///  solver methods. All solvers use the same @ref solver::solver_interface
+///  interface. New solver models can be created from a subclass of
+///  @ref solver::solver_interface or any other existing equilibrium class and
+///  overloading class methods.
+///  @code
+///  tempate<dispersion::function DISPERSION_FUNCTION>
+///  class new_solver : public solver_interface<DISPERSION_FUNCTION> {
+///     ...
+///  }
+///  @endcode
+///  When a new dispersion function is subclassed from
+///  @ref dispersion::dispersion_function no methods need to be overloaded, In
+///  stead expressions for
+///  * @ref dispersion::dispersion_function::kx_next
+///  * @ref dispersion::dispersion_function::ky_next
+///  * @ref dispersion::dispersion_function::kz_next
+///  * @ref dispersion::dispersion_function::x_next
+///  * @ref dispersion::dispersion_function::y_next
+///  * @ref dispersion::dispersion_function::z_next
+///  * @ref dispersion::dispersion_function::t_next
 //------------------------------------------------------------------------------
 #ifndef solver_h
 #define solver_h

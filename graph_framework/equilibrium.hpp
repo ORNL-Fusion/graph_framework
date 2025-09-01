@@ -87,30 +87,30 @@
 ///  <table>
 ///  <caption id="equilibrum_efit_format_data">Efit netcdf file quantities</caption>
 ///  <tr><th colspan="3">Dimensions
-///  <tr><th colspan="2">Name                                   <th>Discription
-///  <tr><td colspan="2"><tt>numr</tt>                          <td>Size of radial grid.
-///  <tr><td colspan="2"><tt>numz</tt>                          <td>Size of vertical grid.
-///  <tr><td colspan="2"><tt>numpsi</tt>                        <td>Size of arrays for @f$\psi@f$ mapped quantities.
+///  <tr><th colspan="2">Name                                       <th>Discription
+///  <tr><td colspan="2"><tt>numr</tt>                              <td>Size of radial grid.
+///  <tr><td colspan="2"><tt>numz</tt>                              <td>Size of vertical grid.
+///  <tr><td colspan="2"><tt>numpsi</tt>                            <td>Size of arrays for @f$\psi@f$ mapped quantities.
 ///  <tr><th colspan="3">Scalar Qantities
-///  <tr><td colspan="2"><tt>dpsi</tt>                          <td>Step size of the @f$\psi@f$ grid.
-///  <tr><td colspan="2"><tt>dr</tt>                            <td>Step size of the radial grid.
-///  <tr><td colspan="2"><tt>dz</tt>                            <td>Step size of the vertial grid.
-///  <tr><td colspan="2"><tt>ne_scale</tt>                      <td>Scale of the @f$n_{e}@f$ profile.
-///  <tr><td colspan="2"><tt>pres_scale</tt>                    <td>Scale of the pressure profile.
-///  <tr><td colspan="2"><tt>psibry</tt>                        <td>Value of @f$\psi@f$ at the boundary.
-///  <tr><td colspan="2"><tt>psimin</tt>                        <td>Minimum @f$\psi@f$ value.
-///  <tr><td colspan="2"><tt>rmin</tt>                          <td>Minimum radial value.
-///  <tr><td colspan="2"><tt>te_scale</tt>                      <td>Scale of the electron temperature profile.
-///  <tr><td colspan="2"><tt>zmin</tt>                          <td>Minimum vertial value.
+///  <tr><td colspan="2"><tt>dpsi</tt>                              <td>Step size of the @f$\psi@f$ grid.
+///  <tr><td colspan="2"><tt>dr</tt>                                <td>Step size of the radial grid.
+///  <tr><td colspan="2"><tt>dz</tt>                                <td>Step size of the vertial grid.
+///  <tr><td colspan="2"><tt>ne_scale</tt>                          <td>Scale of the @f$n_{e}@f$ profile.
+///  <tr><td colspan="2"><tt>pres_scale</tt>                        <td>Scale of the pressure profile.
+///  <tr><td colspan="2"><tt>psibry</tt>                            <td>Value of @f$\psi@f$ at the boundary.
+///  <tr><td colspan="2"><tt>psimin</tt>                            <td>Minimum @f$\psi@f$ value.
+///  <tr><td colspan="2"><tt>rmin</tt>                              <td>Minimum radial value.
+///  <tr><td colspan="2"><tt>te_scale</tt>                          <td>Scale of the electron temperature profile.
+///  <tr><td colspan="2"><tt>zmin</tt>                              <td>Minimum vertial value.
 ///  <tr><th colspan="3">1D Qantities
-///  <tr><th>Name<th>Size                                       <th>Discription
-///  <tr><td><tt>fpol_c<i>i</i></tt>    <td><tt>numpsi</tt>     <td>Flux function profile coefficents
-///  <tr><td><tt>ne_c<i>i</i></tt>      <td><tt>numpsi</tt>     <td>@f$n_{e}@f$ profile coefficents.
-///  <tr><td><tt>pressure_c<i>i</i></tt><td><tt>numpsi</tt>     <td>Pressure profile coefficents.
-///  <tr><td><tt>te_c<i>i</i></tt>      <td><tt>numpsi</tt>     <td>@f$t_{e}@f$ profile coefficents.
+///  <tr><th>Name<th>Size                                           <th>Discription
+///  <tr><td><tt>fpol_c<i>i</i></tt>        <td><tt>numpsi</tt>     <td>Flux function profile coefficents
+///  <tr><td><tt>ne_c<i>i</i></tt>          <td><tt>numpsi</tt>     <td>@f$n_{e}@f$ profile coefficents.
+///  <tr><td><tt>pressure_c<i>i</i></tt>    <td><tt>numpsi</tt>     <td>Pressure profile coefficents.
+///  <tr><td><tt>te_c<i>i</i></tt>          <td><tt>numpsi</tt>     <td>@f$t_{e}@f$ profile coefficents.
 ///  <tr><th colspan="3">2D Qantities
-///  <tr><th>Name<th>Size                                       <th>Discription
-///  <tr><td><tt>psi_c<i>ij</i></tt>    <td><tt>(numr,numz)</tt><td>@f$t_{e}@f$ profile coefficents.
+///  <tr><th>Name<th>Size                                           <th>Discription
+///  <tr><td><tt>psi_c<i>ij</i></tt>        <td><tt>(numr,numz)</tt><td>@f$t_{e}@f$ profile coefficents.
 ///  </table>
 ///
 ///  <hr>
@@ -159,7 +159,7 @@
 ///
 ///  <hr>
 ///  @section equilibrum_devel Developing new equilibrium models
-///  This section is intended for code developer and outlines how to create new
+///  This section is intended for code developers and outlines how to create new
 ///  equilibrium models. All equilibrium model use the same
 ///  @ref equilibrium::generic interface. New equilibrium models can be created
 ///  from a subclass of @ref equilibrium::generic or any other existing

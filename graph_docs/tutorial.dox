@@ -2,6 +2,7 @@
  * @page tutorial Tutorial
  * @brief Hands on tutorial for building expressions and running workflow.
  * @tableofcontents
+ *
  * @section tutorial_introduction Introduction
  * In this tutorial we will put the basic @ref general_concepts of the
  * graph_into action. This will discuss building trees, generating, and
@@ -155,7 +156,7 @@ auto dydb = y->df(m*x);
  * The respective results will be @f$x@f$, @f$1@f$, and @f$0@f$ respectively.
  *
  * <hr>
- * @section tutorial_workflow Making workflow.
+ * @section tutorial_workflow Making workflows.
  * In this section we will build workflow from these nodes we created. For
  * simplicity we will decrease the number of elements in variable so we can set
  * the values easier. First thing we do is create a @ref workflow::manager.

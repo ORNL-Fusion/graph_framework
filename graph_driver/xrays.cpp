@@ -414,7 +414,7 @@ void trace_ray(const commandline::parser &cl,
                const size_t num_times,
                const size_t sub_steps,
                const size_t num_rays) {
-    const timeing::measure_diagnostic total("Total Ray Time");
+    const timing::measure_diagnostic total("Total Ray Time");
 
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, SAFE_MATH>::max_concurrency()),
                                                        static_cast<unsigned int> (num_rays)),
@@ -600,7 +600,7 @@ void calculate_power(const commandline::parser &cl,
                      const size_t num_times,
                      const size_t sub_steps,
                      const size_t num_rays) {
-    const timeing::measure_diagnostic total("Power Time");
+    const timing::measure_diagnostic total("Power Time");
 
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, SAFE_MATH>::max_concurrency()),
                                                        static_cast<unsigned int> (num_rays)),
@@ -675,7 +675,7 @@ void bin_power(const commandline::parser &cl,
                const size_t num_times,
                const size_t sub_steps,
                const size_t num_rays) {
-    const timeing::measure_diagnostic total("Power Time");
+    const timing::measure_diagnostic total("Power Time");
 
     std::vector<std::thread> threads(std::max(std::min(static_cast<unsigned int> (jit::context<T, SAFE_MATH>::max_concurrency()),
                                                        static_cast<unsigned int> (num_rays)),
@@ -1084,7 +1084,7 @@ int main(int argc, const char * argv[]) {
     START_GPU
     (void)argc;
     (void)argv;
-    const timeing::measure_diagnostic total("Total Time");
+    const timing::measure_diagnostic total("Total Time");
     const commandline::parser cl = parse_commandline(argc, argv);
 
     jit::verbose = cl.is_option_set("verbose");

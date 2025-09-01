@@ -399,6 +399,7 @@
 		C7DC9EE82E39789900524F6F /* libgraph_c.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgraph_c.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7DC9EEF2E397BE600524F6F /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		C7DC9EF12E3A688F00524F6F /* c_binding_test.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; path = c_binding_test.c; sourceTree = "<group>"; };
+		C7DD87D32E664B440058BA66 /* code_structure.dox */ = {isa = PBXFileReference; lastKnownFileType = text; path = code_structure.dox; sourceTree = "<group>"; };
 		C7E134492A3CB3EC0083F6A7 /* output.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = output.hpp; sourceTree = "<group>"; };
 		C7E5643E28A2A16F000F31A2 /* backend_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = backend_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E5644A28A2A1C5000F31A2 /* dispersion_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dispersion_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -619,6 +620,7 @@
 				C75C42922E5CA60B00B0950B /* general.dox */,
 				C75C42932E5CA60B00B0950B /* main.dox */,
 				C75C42952E5CC80B00B0950B /* tutorial.dox */,
+				C7DD87D32E664B440058BA66 /* code_structure.dox */,
 			);
 			path = graph_docs;
 			sourceTree = "<group>";

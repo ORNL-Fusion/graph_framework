@@ -42,15 +42,15 @@ void test_solver(const typename SOLVER::base tolarance,
 
     auto dt_const = graph::constant(static_cast<typename SOLVER::base> (dt));
     SOLVER solve(w, kx, ky, kz, x, y, z, t, dt_const, eq);
-    const timeing::measure_diagnostic solver("init");
+    const timing::measure_diagnostic solver("init");
     auto residule = solve.init(kx, tolarance);
     solver.print();
 
-    const timeing::measure_diagnostic compile("compile");
+    const timing::measure_diagnostic compile("compile");
     solve.compile();
     compile.print();
 
-    const timeing::measure_diagnostic step("step");
+    const timing::measure_diagnostic step("step");
     for (size_t i = 0; i < 5; i++) {
         solve.step();
         assert(std::abs(solve.check_residule(0)) < std::abs(tolarance) &&

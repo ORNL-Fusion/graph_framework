@@ -185,12 +185,12 @@
                                    C_NULL_PTR,                                 &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
-      CALL graph%compile()
+      CALL graph%compile
       value(1) = 10.0
       CALL graph%copy_to_device(z, value)
-      CALL graph%pre_run()
-      CALL graph%run()
-      CALL graph%wait()
+      CALL graph%pre_run
+      CALL graph%run
+      CALL graph%wait
       CALL graph%print(0_C_LONG, (/ graph_ptr(z), graph_ptr(y) /))
 
       CALL graph%copy_to_host(y, value)
@@ -357,12 +357,12 @@
                                    C_NULL_PTR,                                 &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
-      CALL graph%compile()
+      CALL graph%compile
       value(1) = 10.0
       CALL graph%copy_to_device(z, value)
-      CALL graph%pre_run()
-      CALL graph%run()
-      CALL graph%wait()
+      CALL graph%pre_run
+      CALL graph%run
+      CALL graph%wait
       CALL graph%print(0_C_LONG, (/ graph_ptr(z), graph_ptr(y) /))
 
       CALL graph%copy_to_host(y, value)
@@ -533,12 +533,12 @@
                                    C_NULL_PTR,                                 &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
-      CALL graph%compile()
+      CALL graph%compile
       value(1) = 10.0
       CALL graph%copy_to_device(z, value)
-      CALL graph%pre_run()
-      CALL graph%run()
-      CALL graph%wait()
+      CALL graph%pre_run
+      CALL graph%run
+      CALL graph%wait
       CALL graph%print(0_C_LONG, (/ graph_ptr(z), graph_ptr(y) /))
 
       CALL graph%copy_to_host(y, value)
@@ -727,12 +727,12 @@
                                    C_NULL_PTR,                                 &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
-      CALL graph%compile()
+      CALL graph%compile
       value(1) = 10.0
       CALL graph%copy_to_device(z, value)
-      CALL graph%pre_run()
-      CALL graph%run()
-      CALL graph%wait()
+      CALL graph%pre_run
+      CALL graph%run
+      CALL graph%wait
       CALL graph%print(0_C_LONG, (/ graph_ptr(z), graph_ptr(y) /))
 
       CALL graph%copy_to_host(y, value)

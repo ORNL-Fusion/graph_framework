@@ -53,6 +53,40 @@
 ///  @section absorption_model_damping Weak Damping
 ///  Using the cold and hot expansion
 ///  @f{equation}{k_{amp}=\sqrt{\vec{k}\cdot\vec{k}}-\frac{D_{h}}{\hat{k}\cdot\frac{\partial D_{c}}{\partial \vec{k}}}@f}
+///
+///  <hr>
+///  @section absorption_model_devel Developing new absorption models
+///  This section is intended for code developers and outlines how to create new
+///  absorption models. New absorption models can be created from a subclass
+///  of @ref absorption::method or any other existing
+///  absorption class and overloading class methods.
+///  @code
+///  template<jit::complex_scalar T, bool SAFE_MATH=true>
+///  class new_absorption final : public method<T, SAFE_MATH> {
+///      new_absorption(graph::shared_leaf<T, SAFE_MATH> kamp,
+///                     graph::shared_leaf<T, SAFE_MATH> w,
+///                     graph::shared_leaf<T, SAFE_MATH> kx,
+///                     graph::shared_leaf<T, SAFE_MATH> ky,
+///                     graph::shared_leaf<T, SAFE_MATH> kz,
+///                     graph::shared_leaf<T, SAFE_MATH> x,
+///                     graph::shared_leaf<T, SAFE_MATH> y,
+///                     graph::shared_leaf<T, SAFE_MATH> z,
+///                     graph::shared_leaf<T, SAFE_MATH> t,
+///                     equilibrium::shared<T, SAFE_MATH> &eq,
+///                     const std::string &filename="",
+///                     const size_t index=0) {
+///          ...
+///      }
+///
+///      void compile() {
+///          ...
+///      }
+///
+///      void run(const size_t time_index) {
+///          ...
+///      }
+///  };
+///  @endcode
 //------------------------------------------------------------------------------
 #ifndef absorption_h
 #define absorption_h
@@ -80,6 +114,18 @@ namespace absorption {
         typedef T base;
 ///  Retrieve template parameter of safe math.
         static constexpr bool safe_math = SAFE_MATH;
+
+//------------------------------------------------------------------------------
+///  @brief Compile the workitems.
+//------------------------------------------------------------------------------
+        virtual void compile()=0;
+
+//------------------------------------------------------------------------------
+///  @brief Run the workflow.
+///
+///  @param[in] time_index The time index to run the case for.
+//------------------------------------------------------------------------------
+        virtual void run(const size_t time_index)=0;
     };
 
 ///  Solver method concept.

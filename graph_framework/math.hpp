@@ -190,9 +190,9 @@ namespace graph {
             auto x_cast = sqrt_cast(x);
             if (x_cast.get()) {
                 return this->arg->is_match(x_cast->get_arg());
-            } else {
-                return false;
             }
+
+            return false;
         }
 
 //------------------------------------------------------------------------------

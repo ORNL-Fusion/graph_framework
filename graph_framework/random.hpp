@@ -106,7 +106,10 @@ namespace graph {
                        << "    uint16_t padding[3];"        << std::endl
 #endif
                        << "};"                              << std::endl;
+
+                visited.insert(this);
 #ifdef SHOW_USE_COUNT
+                usage[this] = 1;
             } else {
                 ++usage[this];
 #endif
@@ -128,19 +131,6 @@ namespace graph {
                 jit::register_map &indices,
                 const jit::register_usage &usage) {
             return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
-///
-///  @param[in] x Other graph to check if it is a match.
-///  @returns True if the nodes are a match.
-//------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
-            if (this == x.get()) {
-                return true;
-            }
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -375,12 +365,12 @@ namespace graph {
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
                                       int &avail_const_mem) {
-            this->arg->compile_preamble(stream, registers,
-                                        visited, usage,
-                                        textures1d, textures2d,
-                                        avail_const_mem);
-
             if (visited.find(this) == visited.end()) {
+                this->arg->compile_preamble(stream, registers,
+                                            visited, usage,
+                                            textures1d, textures2d,
+                                            avail_const_mem);
+
                 jit::add_type<T> (stream);
                 stream << " random(";
                 if constexpr (jit::use_metal<T> ()) {
@@ -406,7 +396,10 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << "> (y^(y >> 18));"                                  << std::endl
                        << "}"                                                 << std::endl;
+
+                visited.insert(this);
 #ifdef SHOW_USE_COUNT
+                usage[this] = 1;
             } else {
                 ++usage[this];
 #endif
