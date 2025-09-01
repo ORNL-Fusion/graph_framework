@@ -86,7 +86,7 @@
  * <tr><td><tt>USE_SSH</tt>              <td>Use ssh for git instead of html.
  * </table>
  *
- * <b>NOTE:</b>macOS uses will need to change the default option for
+ * @note macOS uses will need to change the default option for
  * <tt>CMAKE_CXX_COMPILER</tt> to <tt>clang++</tt>. This is due to the way the
  * build systems determines default include directories for system libraries.
  * This can be accomplished using the advacned options using the <tt>t</tt>
