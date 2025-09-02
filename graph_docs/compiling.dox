@@ -9,15 +9,18 @@
  *
  * <hr>
  * @section build_system_user User Guide
- * The following section is for users of framework.
+ * The following section is for users of the framework.
  *
  * @subsection build_system_user_dependencies Dependencies
- * The graph_framwork requires three requires external dependencies and one
- * optional dependency. <a href="https://llvm.org">LLVM</a> is another
- * dependency that is used for generating CPU code. However this is
- * automatically obtained via the build system. The graph_frame is written using
- * the C++20 standard. The C interface using C17 and the fortran interface using
- * Fortran 2008.
+ * The graph_framwork requires three external dependencies and one optional
+ * dependency. <a href="https://llvm.org">LLVM</a> is another dependency that is
+ * used for generating CPU code. However this is automatically obtained via the
+ * build system. The graph_frame is written using the
+ * <a href="https://www.cppreference.com/w/cpp/20.html">C++20</a> standard. The
+ * C interface uses
+ * <a href="https://www.cppreference.com/w/cpp/compiler_support/17.html">C17</a>
+ * and the fortran interface uses
+ * <a href="https://fortranwiki.org/fortran/show/Fortran+2008">Fortran 2008</a>.
  *
  * @subsubsection build_system_user_dependencies_required Required
  * * <a href="http://www.cmake.org">cmake</a> version greater than 3.21.
@@ -28,7 +31,7 @@
  * * <a href="https://www.doxygen.nl/index.html">Doxygen</a> for generating this documentation.
  *
  * @subsection build_system_clone Obtaining the code
- * The framework code itself be obtained from the
+ * The framework code itself can be obtained from the
  * <a href="https://github.com/ORNL-Fusion/graph_framework">graph_framework</a>
  * Github repository.
  * @code
@@ -53,7 +56,7 @@
  * Where <tt>../</tt> points to the source directory containing the top
  * level <tt>CMakeLists.txt</tt> file.
  *
- * The recommended method is to use the interatice <tt>ccmake</tt> command
+ * The recommended method is to use the interactive <tt>ccmake</tt> command
  * instead.
  * @code
  ccmake ../
@@ -62,10 +65,10 @@
  * <tt>-D</tt> option.
  *
  * @subsubsection build_system_user_options Build system Options
- * Initally, there will be no options. Along the botton, there are several
- * command. Use the 'c' command to start the configuation process. Once
+ * Initially, there will be no options. Along the botton, there are several
+ * commands. Use the 'c' command to start the configuation process. Once
  * configured several options will apear. During this process cmake is cloning
- * the LLVM repository. So this step may take some time initally. Mode of the
+ * the LLVM repository. So this step may take some time initally. Most of the
  * are various options for configuing LLVM and can be ignored. The important
  * options are listed below.
  *
@@ -78,27 +81,27 @@
  *                                           * <tt>MinSizeRel</tt>
  *                                           * <tt>RelWithDebInfo</tt>
  * <tr><td><tt>USE_VERBOSE</tt>          <td>Show verbose information about compute kernels.
- * <tr><td><tt>BUILD_C_BINDING</tt>      <td>Generate the C langauge interface.
- * <tr><td><tt>BUILD_Fortran_BINDING</tt><td>Generate the Fortran language interface.
+ * <tr><td><tt>BUILD_C_BINDING</tt>      <td>Generate the @ref graph_c_binding.h "C langauge interface".
+ * <tr><td><tt>BUILD_Fortran_BINDING</tt><td>Generate the @ref graph_fortran "Fortran language interface".
  * <tr><td><tt>USE_METAL</tt>            <td>Enable the <a href="https://developer.apple.com/metal/">Metal</a> backend (macOS only).
  * <tr><td><tt>USE_CUDA</tt>             <td>Enable the <a href="https://developer.nvidia.com/cuda-zone">Cuda</a> backend (Linux only).
  * <tr><td><tt>USE_HIP</tt>              <td>Enable the <a href="https://www.amd.com/en/products/software/rocm.html">Hip</a> backend (Linux only, Hip branch).
  * <tr><td><tt>USE_SSH</tt>              <td>Use ssh for git instead of html.
  * </table>
  *
- * @note macOS uses will need to change the default option for
+ * @note macOS users will need to change the default option for
  * <tt>CMAKE_CXX_COMPILER</tt> to <tt>clang++</tt>. This is due to the way the
  * build systems determines default include directories for system libraries.
- * This can be accomplished using the advacned options using the <tt>t</tt>
+ * This can be accomplished using the advacned options accessed from the <tt>t</tt>
  * command or setting this via the command line.
  * @code
  cmake -DCMAKE_CXX_COMPILER=clang++ ../
  @endcode
  *
- * Every time an option is changed, or a new option is available, you need to
- * use the configure <tt>c</tt> command for changes to take affect. Once all
- * options are set, the a generate <tt>g</tt> options will appear. Using this
- * option will build a make file.
+ * Any time an option is changed, or a new option becomes is available, you need
+ * to use the configure <tt>c</tt> command for changes to take affect. Once all
+ * options are set, a generate <tt>g</tt> options will appear. Using this option
+ * will generate the Makefile.
  *
  * @subsubsection build_system_trouble_shooting Trouble Shooting.
  * Some times, cmake will fail to locate the NetCDF library if it is not
@@ -113,28 +116,28 @@
  * @code
  make
  @endcode
- * command. Note that due build system first starts by pulling the latest
- * of LLVM. The build system then has to build LLVM first which can take a
- * while. It is recommended to use a limited parallel build.
+ * command. Note that the build system first starts by pulling the latest
+ * revision of LLVM. The build system then has to build LLVM first which can
+ * take a while. It is recommended to use a limited parallel build.
  * @code
  make -j10
  @endcode
  * The <tt>-j<i>num_processes</i></tt> option determines number of parallel
- * instances to run. The build products will be found in assocated build
- * directories in the <tt>build</tt> directory.
+ * instances to run. The build products will be found in assocated directories
+ * in the <tt>build</tt> directory.
  *
- * A list of individual components which can be build can be identified using
+ * A list of individual components which can be built can be identified using
  * @code
- make -h
+ make help
  @endcode
  *
- * @subsection build_system_test Running unit tests.
+ * @subsection build_system_test Running unit tests
  * Units tests can be run using the command.
  * @code
  make test ARGS=-j10
  @endcode
  * Like the parallel build the <tt>-j<i>num_processes</i></tt> option determines
- * number of parallel instances to run.
+ * the number of parallel instances to run.
  *
  * <hr>
  * @section build_system_dev Developer Guide
@@ -144,7 +147,7 @@
  * The build system defines some macros for defining targets, configuring debug
  * options, and configuing external dependences.
  *
- * @subsubsection build_system_targets Tool targets.
+ * @subsubsection build_system_targets Tool targets
  *
  * <hr>
  * <tt>add_tool_target(target lang)</tt>\n\n
@@ -153,7 +156,7 @@
  *      <tt>[in] <b>target</b></tt> The name of the target.\n
  *      <tt>[in] <b>lang</b></tt>   File extention for the target (c, cpp, f90).\n\n
  * Target assumes there is a source file defined as <tt>target.lang</tt>. For
- * instance a C++ source file named <tt>foo.cpp</tt> is configures as
+ * instance a C++ source file named <tt>foo.cpp</tt> is configured as
  * @code
  add_tool_target(foo cpp)
  @endcode
@@ -176,8 +179,8 @@
  * Register a sanitizer option.\n\n
  * <b>Parameters</b>\n
  *      <tt>[in] <b>name</b></tt> The name of the sanitizer flags.\n\n
- * This add new for using the <tt>SANITIZE_<i>NAME</i></tt> cmake option and
- * add <tt>-fsanitize=<i>name</i></tt> to the command line arguments.
+ * This adds a new cmake option <tt>SANITIZE_<i>NAME</i></tt> to add
+ * <tt>-fsanitize=<i>name</i></tt> to the command line arguments.
  * <hr>
  *
  * @subsubsection build_system_project Register an external project
@@ -203,14 +206,14 @@
  * In addition to the standard build options there are several debugging options
  * that can be enabled.
  *
- * @subsubsection build_system_dev_options Build system Options
+ * @subsubsection build_system_dev_options Build System Options
  * <table>
  * <caption id="build_system_user_cmake_dev_opts">Build options for developers.</caption>
- * <tr><th>Option                                <th>Discrption
- * <tr><td><tt>USE_PCH</tt>                      <td>Use precomiled headers during computation. Most users should keep this on.
+ * <tr><th>Option                                <th>Discription
+ * <tr><td><tt>USE_PCH</tt>                      <td>Use precompiled headers during computation. Most users should keep this on.
  * <tr><td><tt>SAVE_KERNEL_SOURCE</tt>           <td>Option to dump the generated compute kernel source code to disk.
  * <tr><td><tt>USE_INPUT_CACHE</tt>              <td>Option to cache registers for the kernel arguments.
- * <tr><td><tt>USE_CONSTANT_CACHE</tt>           <td>Option to use registers to cache constant values otherwise constanst are inlined.
+ * <tr><td><tt>USE_CONSTANT_CACHE</tt>           <td>Option to use registers to cache constant values otherwise constants are inlined.
  * <tr><td><tt>SHOW_USE_COUNT</tt>               <td>Generates information on the number of times a register is used.
  * <tr><td><tt>USE_INDEX_CACHE</tt>              <td>Option to use registers to cache array indicies.
  * <tr><th colspan="2">Sanitizer Flags

@@ -1,12 +1,6 @@
 !-------------------------------------------------------------------------------
 !>  @file graph_fortran_binding.f90
 !>  @brief Implimentation of the Fortran binding library.
-!
-!  Note separating the Doxygen comment block here so the detailed description is
-!  found in the Module not the file.
-!
-!> Module contains subroutines for calling this from fortran.
-!-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------
 !>  @page graph_fortran_binding Embedding in Fortran code
 !>  @brief Documentation for linking into Fortran code base.
@@ -85,6 +79,7 @@
 !>  @note The @ref graph_fortran::graph_null_array allows set arrays of nodes to
 !>  null.
 !-------------------------------------------------------------------------------
+!> Module contains subroutines for calling this from fortran.
       MODULE graph_fortran
       USE, INTRINSIC :: ISO_C_BINDING
 

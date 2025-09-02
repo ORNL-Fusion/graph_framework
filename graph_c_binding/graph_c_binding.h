@@ -9,7 +9,7 @@
 ///
 ///  @section graph_c_binding_into Introduction
 ///  This section assumes the reader is already familar with developing C codes.
-///  The simplist method to link framework code into a C code is to create a c++
+///  The simplist method to link framework code into a C code is to create a C++
 ///  function with @code extern "C" @endcode First create a header file
 ///  <tt><i>c_callable</i>.h</tt>
 ///  @code
@@ -19,7 +19,7 @@
 ///  @endcode
 ///
 ///  Next create a source file <tt><i>c_callable</i>.c</tt> and add the
-///  framework. This example uses the line
+///  framework. This example uses the equation of a line example from the 
 ///  @ref tutorial_workflow "making workflows" turorial.
 ///  @code
 ///  //  Include the necessary framework headers.

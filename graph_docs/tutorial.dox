@@ -1,12 +1,12 @@
 /*!
  * @page tutorial Tutorial
- * @brief Hands on tutorial for building expressions and running workflow.
+ * @brief Hands on tutorial for building expressions and running workflows.
  * @tableofcontents
  *
  * @section tutorial_introduction Introduction
  * In this tutorial we will put the basic @ref general_concepts of the
- * graph_into action. This will discuss building trees, generating, and
- * executing workflows.
+ * graph_framework into action. This will discuss building trees, generating
+ * kernels, and executing workflows.
  *
  * To accomplish this there is a playground tool in the <tt>graph_framework</tt>
  * directory. This playground is a preconfigured executable target which can be
@@ -27,8 +27,8 @@ int main(int argc, const char * argv[]) {
 }
  @endcode
  * To start, create a template function above main and call that function from
- * main. This will allow to play with different floating point types. For now we
- * will start with a simple floating point type.
+ * main. This will allow us to play with different floating point types. For now
+ * we will start with a simple floating point type.
  * @code
 #include "../graph_framework/jit.hpp"
 
@@ -47,9 +47,10 @@ int main(int argc, const char * argv[]) {
     END_GPU
 }
  @endcode
- * Here @ref jit::float_scalar is a C++20
+ * Here @ref jit::float_scalar is a
+ * <a href="https://www.cppreference.com/w/cpp/20.html">C++20</a>
  * <a href="https://www.cppreference.com/w/cpp/concepts.html">Concept</a> for
- * valid types of floating point types allowed by the framework.
+ * valid floating point types allowed by the framework.
  *
  * <hr>
  * @section tutorial_basic Basic Nodes
@@ -97,7 +98,7 @@ void run_tutorial() {
 }
  @endcode
  * An explicit @ref graph::constant_node is create for <tt>m</tt> while an
- * impicit constant was defined for <tt>b</tt>. Node in the implicit case, the
+ * impicit constant was defined for <tt>b</tt>. Note in the implicit case, the
  * actual node for <tt>b</tt> is not created until we use it in an expression.
  *
  * <hr>
@@ -147,19 +148,19 @@ void run_tutorial() {
 }
  @endcode
  * Here we take derivatives using the @ref graph::leaf_node::df method. We can
- * also take several variation of this.
+ * also take several variations of this.
  * @code
 auto dydm = y->df(m);
 auto dydy = y->df(y);
 auto dydb = y->df(m*x);
  @endcode
- * The respective results will be @f$x@f$, @f$1@f$, and @f$0@f$ respectively.
+ * The results will be @f$x@f$, @f$1@f$, and @f$0@f$ respectively.
  *
  * <hr>
  * @section tutorial_workflow Making workflows.
- * In this section we will build workflow from these nodes we created. For
- * simplicity we will decrease the number of elements in variable so we can set
- * the values easier. First thing we do is create a @ref workflow::manager.
+ * In this section we will build a workflow from these nodes we created. For
+ * simplicity we will decrease the number of elements in the variable so we can
+ * set the values easier. First thing we do is create a @ref workflow::manager.
  * @code
 template<jit::float_scalar T>
 void run_tutorial() {
@@ -270,7 +271,7 @@ work.print(2, {x, y, dydx});
  @endcode
  *
  * @subsection tutorial_workflow_iter Iteration
- * In this section we are going to make use of maps to iterate a variable. I
+ * In this section we are going to make use of maps to iterate a variable. We
  * want to evaluate the value of @f$y@f$ and set it as the new value of @f$x@f$.
  * We do this my modifying call to @ref workflow::manager::add_item to define
  * a map. This generates a kernel where after @f$y@f$ is computed it is stored
@@ -306,11 +307,11 @@ for (size_t i = 0; i < 10; i++) {
  @endcode
  *
  * <hr>
- * @section tutorial_workflow_newton Newtons Method.
+ * @section tutorial_workflow_newton Newton's Method.
  * In this tutorial we are going to show how we can put all these concepts
- * together to impliment a newtons method. Newtons method if defined as
+ * together to implement a newtons method. Newton's method is defined as
  * @f{equation}{x = x - \frac{f\left(x\right)}{\frac{\partial}{\partial x}f\left(x\right)}@f}
- * From the iteration example, it's step update can be handled by a simple map.
+ * From the iteration example, its step update can be handled by a simple map.
  * However we need a measure for convergence. To do that we output the value of
  * @f$f\left(x\right)@f$. Lets setup a test function.
  * @code
@@ -366,7 +367,7 @@ void run_tutorial() {
  @endcode
  *
  * However there are some things that are not optimial here. We are performing
- * a reduction on the host side and transfer the entire array to the host. To
+ * a reduction on the host side and transfering the entire array to the host. To
  * improve this we can use a converge item instead.
  * @code
 // Create a workflow manager.
