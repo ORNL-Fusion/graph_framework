@@ -14,7 +14,7 @@
  * * @ref jit Generic interface for Just-In-Time compiling of the graphs.
  * * @ref backend Host side buffers and operations.
  * * @ref gpu Device drivers for CPU and the GPU.
- * * @ref timeing Routines for timing.
+ * * @ref timing Routines for timing.
  * * @ref output Routines for loading and saving graph to Netcdf files.
  * * @ref commandline Routines for parsing command lines.
  *
