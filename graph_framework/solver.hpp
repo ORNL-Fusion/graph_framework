@@ -88,16 +88,18 @@
 ///     ...
 ///  }
 ///  @endcode
-///  When a new dispersion function is subclassed from
-///  @ref dispersion::dispersion_function no methods need to be overloaded, In
-///  stead expressions for
-///  * @ref dispersion::dispersion_function::kx_next
-///  * @ref dispersion::dispersion_function::ky_next
-///  * @ref dispersion::dispersion_function::kz_next
-///  * @ref dispersion::dispersion_function::x_next
-///  * @ref dispersion::dispersion_function::y_next
-///  * @ref dispersion::dispersion_function::z_next
-///  * @ref dispersion::dispersion_function::t_next
+///  When a new solver method is subclassed from
+///  @ref solver::solver_interface no methods need to be overloaded, Instead
+///  expressions for
+///  * @ref solver::solver_interface::kx_next
+///  * @ref solver::solver_interface::ky_next
+///  * @ref solver::solver_interface::kz_next
+///  * @ref solver::solver_interface::x_next
+///  * @ref solver::solver_interface::y_next
+///  * @ref solver::solver_interface::z_next
+///  * @ref solver::solver_interface::t_next
+///
+///  must be created.
 //------------------------------------------------------------------------------
 #ifndef solver_h
 #define solver_h
