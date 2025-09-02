@@ -69,7 +69,7 @@
 ///  This dispersion function now accounts for how occilations in the plasma
 ///  propagate.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\omega_{pe}+\frac{3}{2}\vec{k}\cdot\vec{k}v^{2}_{th}-\omega^{2}\equiv 0 @f}
-///  It has no resonances or cutoffs. But @f$v_{g}@f$ can never exceed @f$v_{th}@f$.
+///  It has no resonances. Waves cannot propagate below @f$\omega_{pe}@f$ and @f$v_{g}@f$ can never exceed @f$v_{th}@f$.
 ///  @image{} html bohm-gross.png ""
 ///
 ///  <hr>
@@ -83,7 +83,9 @@
 ///
 ///  <hr>
 ///  @subsection dispersion_function_x_wave Extra Ordinary Wave
-///  This dispersion relation encapsulates wave physics in a cold plasma medium.
+///  This disperison function represents a wave with a
+///  @f$\vec{E}_{1}\perp\vec{B}_{0}@f$. That means the electric field occilates
+///  perpendicular to the magnetic field.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=1-\frac{\omega_{pe}^2}{\omega^{2}}\frac{\omega^{2}-\omega_{pe}^2}{\omega^{2}-\omega_{h}^2}-\vec{n}_{\perp}\cdot\vec{n}_{\perp}\equiv 0 @f}
 ///  This mode has 
 ///  This wave has two branches. One branch is cannot not progagate below the
@@ -95,9 +97,9 @@
 ///
 ///  <hr>
 ///  @subsection dispersion_function_cold_plasma Cold Plasma
-///  This disperison function represents a wave in a vaccume.
+///  This disperison function represents a wave in a cold plasma medium.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=det\left(\vec{\epsilon}+\vec{n}\vec{n}-\vec{n}\cdot\vec{n}\vec{I}\right)\equiv 0 @f}
-///  The quantity @f$\epsilon @f$ is the diaelectric tensor. Using Onsager
+///  The quantity @f$\vec{\epsilon}@f$ is the diaelectric tensor. Using Onsager
 ///  symmetries, this tensor is defined as
 ///  @f{equation}{\vec{\epsilon}=\left(\begin{array}{ccc}\epsilon_{11}&\epsilon_{12}&0\\-\epsilon_{12}&\epsilon_{11}&0\\0&0&\epsilon_{33}\end{array}\right)@f}
 ///  where
@@ -112,8 +114,8 @@
 ///  <hr>
 ///  @section dispersion_function_devel Developing new dispersion functions
 ///  This section is intended for code developers and outlines how to create new
-///  equilibrium models. New equilibrium models can be created from a subclass
-///  of @ref dispersion::dispersion_function or any other existing
+///  dispersion functions. New dispersion functions can be created from a
+///  subclass of @ref dispersion::dispersion_function or any other existing
 ///  dispersion_function class and overloading class methods. For convinence the
 ///  @ref dispersion::physics class contains several defined physical constants.
 ///  @code
@@ -125,6 +127,23 @@
 ///  When a new dispersion function is subclassed from
 ///  @ref dispersion::dispersion_function an implimentation must be provided for
 ///  the pure virtual method @ref dispersion::dispersion_function::D.
+///  @code
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  class new_dispersion final : public dispersion_function<T, SAFE_MATH> {
+///  public:
+///      virtual graph::shared_leaf<T, SAFE_MATH> D(graph::shared_leaf<T, SAFE_MATH> w,
+///                                                 graph::shared_leaf<T, SAFE_MATH> kx,
+///                                                 graph::shared_leaf<T, SAFE_MATH> ky,
+///                                                 graph::shared_leaf<T, SAFE_MATH> kz,
+///                                                 graph::shared_leaf<T, SAFE_MATH> x,
+///                                                 graph::shared_leaf<T, SAFE_MATH> y,
+///                                                 graph::shared_leaf<T, SAFE_MATH> z,
+///                                                 graph::shared_leaf<T, SAFE_MATH> t,
+///                                                 equilibrium::shared<T, SAFE_MATH> &eq) {
+///         ...
+///      }
+///  };
+///  @endcode
 //------------------------------------------------------------------------------
 
 #ifndef dispersion_h

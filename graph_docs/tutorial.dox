@@ -8,10 +8,10 @@
  * graph_framework into action. This will discuss building trees, generating
  * kernels, and executing workflows.
  *
- * To accomplish this there is a playground tool in the <tt>graph_framework</tt>
- * directory. This playground is a preconfigured executable target which can be
- * used to test out the API's of this framework. The playground starts with a
- * blank main function.
+ * To accomplish this there is a playground tool in the
+ * <tt>graph_playground</tt> directory. This playground is a preconfigured
+ * executable target which can be used to test out the API's of this framework.
+ * The playground starts with a blank main function.
  * @code
 #include "../graph_framework/jit.hpp"
 
@@ -28,7 +28,7 @@ int main(int argc, const char * argv[]) {
  @endcode
  * To start, create a template function above main and call that function from
  * main. This will allow us to play with different floating point types. For now
- * we will start with a simple floating point type.
+ * we will start with a simple float type.
  * @code
 #include "../graph_framework/jit.hpp"
 
@@ -49,7 +49,7 @@ int main(int argc, const char * argv[]) {
  @endcode
  * Here @ref jit::float_scalar is a
  * <a href="https://www.cppreference.com/w/cpp/20.html">C++20</a>
- * <a href="https://www.cppreference.com/w/cpp/concepts.html">Concept</a> for
+ * <a href="https://www.cppreference.com/w/cpp/concepts.html">Concept</a> of
  * valid floating point types allowed by the framework.
  *
  * <hr>
@@ -65,8 +65,8 @@ void run_tutorial() {
 }
  @endcode
  * Here we are creating a @ref graph::variable_node with the symbol @f$x@f$
- * which holds 1000 elements. The symbol is used to by the @f$\LaTeX@f$ renderer
- * to use as a symbol place holder. Any graph can be rendered to latex by
+ * which holds 1000 elements. The symbol is used by the @f$\LaTeX@f$ renderer
+ * as a symbol place holder. Any graph can be rendered to @f$\LaTeX@f$ by
  * calling the @ref graph::leaf_node::to_latex method.
  * @code
 template<jit::float_scalar T>
@@ -77,7 +77,7 @@ void run_tutorial() {
 }
  @endcode
  * When compiling and running the code, this will print out the @f$\LaTeX@f$
- * code needed to generate the equation. By copy and pasting this into a
+ * code needed to generate the equation. By copy and pasting this into
  * @f$\LaTeX@f$ it produces the symbol @f$x@f$. Note that all nodes of a graph
  * are wrapped in a
  * <a href="https://www.cppreference.com/w/cpp/memory/shared_ptr.html"><tt>std::shared_ptr</tt></a>.
@@ -97,7 +97,7 @@ void run_tutorial() {
     const T b = 0.6;
 }
  @endcode
- * An explicit @ref graph::constant_node is create for <tt>m</tt> while an
+ * An explicit @ref graph::constant_node is created for <tt>m</tt> while an
  * impicit constant was defined for <tt>b</tt>. Note in the implicit case, the
  * actual node for <tt>b</tt> is not created until we use it in an expression.
  *
@@ -154,7 +154,7 @@ auto dydm = y->df(m);
 auto dydy = y->df(y);
 auto dydb = y->df(m*x);
  @endcode
- * The results will be @f$x@f$, @f$1@f$, and @f$0@f$ respectively.
+ * The results will be @f$0.4@f$, @f$x@f$, @f$1@f$, and @f$0@f$ respectively.
  *
  * <hr>
  * @section tutorial_workflow Making workflows.
@@ -263,7 +263,7 @@ work.print(0, {x, y, dydx});
 work.print(1, {x, y, dydx});
 work.print(2, {x, y, dydx});
  @endcode
- * Restore the expected result.
+ * This restores the expected result.
  * @code
 1 1 0.4
 2 1.4 0.4
@@ -309,10 +309,10 @@ for (size_t i = 0; i < 10; i++) {
  * <hr>
  * @section tutorial_workflow_newton Newton's Method.
  * In this tutorial we are going to show how we can put all these concepts
- * together to implement a newtons method. Newton's method is defined as
+ * together to implement a Newton's method. Newton's method is defined as
  * @f{equation}{x = x - \frac{f\left(x\right)}{\frac{\partial}{\partial x}f\left(x\right)}@f}
  * From the iteration example, its step update can be handled by a simple map.
- * However we need a measure for convergence. To do that we output the value of
+ * However, we need a measure for convergence. To do that we output the value of
  * @f$f\left(x\right)@f$. Lets setup a test function.
  * @code
 template<jit::float_scalar T>

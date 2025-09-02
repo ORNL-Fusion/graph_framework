@@ -12,7 +12,8 @@
 ///  This page documents the types and formatting of the equilibrium models.
 ///  xrays currently supports two equilibrium models.
 ///  * EFIT Are 2D axisymetric equilibria relevant to tokamak devices.
-///  * VMEC Are 3D nested flux surface equulibria relevant for stellarator devices.
+///  * VMEC Are 3D nested flux surface equilibria relevant for stellarator devices.
+///
 ///  This documentation assumes the user has some familiarity with EFIT or VMEC
 ///  and focuses instead how quanties from these are formatted.
 ///
@@ -22,7 +23,7 @@
 ///
 ///  <hr>
 ///  @subsection equilibrum_splines_1D Cubic Splines
-///  Cubic splines are 1D interpolation functions that consisting of 4 coeffient
+///  Cubic splines are 1D interpolation functions consisting of 4 coeffient
 ///  arrays. They take the form of
 ///  @f{equation}{y\left(x\right)=C_{0} + C_{1}x + C_{2}x^2 + C_{3}x^2@f}
 ///  where @f$x@f$ is a normalized radial index. Cubic splines coefficients can
@@ -45,7 +46,7 @@
 ///  Bicubic Splines are computed in a simular way instead they consist of a
 ///  total of 16 coeffients. These represent 4 spline functions in one
 ///  dimension which interpolate 4 coeffient values for the other dimension.
-///  Like the 1D splines, 2D spline coeffients are normalized to the spline
+///  Like the 1D splines, 2D spline coeffients are normalized so the spline
 ///  arguments can be used as normalized indices.
 ///  @f{equation}{C'^{ij}_{00}=C^{ij}_{00}-C^{ij}_{01}j+C^{ij}_{02}j^{2}-C^{ij}_{03}j^{3}-C^{ij}_{10}i+C^{ij}_{11}ij-C^{ij}_{12}ij^{2}+C^{ij}_{13}ij^{3}+C^{ij}_{20}i^{2}-C^{ij}_{21}i^{2}j+C^{ij}_{22}i^{2}j^{2}-C^{ij}_{23}i^{2}j^{3}-C^{ij}_{30}i^{3}+C^{ij}_{31}i^{3}j-C^{ij}_{32}i^{3}j^{2}+C^{ij}_{33}i^{3}j^{3}j@f}
 ///  @f{equation}{C'^{ij}_{01}=C^{ij}_{01}-2C^{ij}_{02}j+3C^{ij}_{03}j^{2}-C^{ij}_{11}i+2C^{ij}_{12}ij-3C^{ij}_{13}ij^{2}+C^{ij}_{21}i^{2}-2C^{ij}_{22}i^{2}j+3C^{ij}_{23}i^{2}j^{2}-C^{ij}_{31}i^{3}+2C^{ij}_{32}i^{3}j-3C^{ij}_{33}i^{3}j^{2}@f}
@@ -110,7 +111,7 @@
 ///  <tr><td><tt>te_c<i>i</i></tt>          <td><tt>numpsi</tt>     <td>@f$t_{e}@f$ profile coefficents.
 ///  <tr><th colspan="3">2D Qantities
 ///  <tr><th>Name<th>Size                                           <th>Discription
-///  <tr><td><tt>psi_c<i>ij</i></tt>        <td><tt>(numr,numz)</tt><td>@f$t_{e}@f$ profile coefficents.
+///  <tr><td><tt>psi_c<i>ij</i></tt>        <td><tt>(numr,numz)</tt><td>@f$\psi\left(r,z\right)@f$ coefficents.
 ///  </table>
 ///
 ///  <hr>
@@ -130,8 +131,8 @@
 ///  format of <i>name</i>_c<i>i</i>. All radial quantities are splined accross
 ///  the magnetic axis to the opposite end. That is quantities extend from
 ///  @f$-s\rightarrow s @f$. Splines of fourier coeffients are one dimensional
-///  splines stored in a 2D array. Radial quantities are store as a full or half
-///  grid value.
+///  splines stored in a 2D array. Radial quantities are stored as a full or
+///  half grid value.
 ///  <table>
 ///  <caption id="equilibrum_vmec_format_data">VMEC netcdf file quantities</caption>
 ///  <tr><th colspan="3">Dimensions
@@ -140,8 +141,8 @@
 ///  <tr><td colspan="2"><tt>numsh</tt>                          <td>Size of half radial grid.
 ///  <tr><td colspan="2"><tt>nummn</tt>                          <td>Number of Fourier modes.
 ///  <tr><th colspan="3">Scalar Qantities
-///  <tr><td colspan="2"><tt>dphi</tt>                           <td>Step size toroidal flux.
-///  <tr><td colspan="2"><tt>ds</tt>                             <td>Step size normalized toroidal flux.
+///  <tr><td colspan="2"><tt>dphi</tt>                           <td>Step size of toroidal flux.
+///  <tr><td colspan="2"><tt>ds</tt>                             <td>Step size of normalized toroidal flux.
 ///  <tr><td colspan="2"><tt>signj</tt>                          <td>Sign of the Jacobian.
 ///  <tr><td colspan="2"><tt>sminf</tt>                          <td>Minimum @f$s @f$ on the full grid.
 ///  <tr><td colspan="2"><tt>sminh</tt>                          <td>Minimum @f$s @f$ on the half grid.
@@ -182,12 +183,12 @@
 ///  * @ref equilibrium::generic::get_magnetic_field
 ///
 ///  @note @ref equilibrium::generic::get_characteristic_field is only used by
-///  the normalized boris method for particle pushing for most cases this can
+///  the normalized boris method for particle pushing. For most cases this can
 ///  simply return 1.
 ///
 ///  For the remaining methods, or any other methods one wishes to override, the
-///  arguments provide expressions the input position of the ray. The methods
-///  return are expressions for the quantity at hand.
+///  arguments provide expressions for the input position of the ray. The
+///  methods return are expressions for the quantity at hand.
 ///
 ///  @subsection equilibrum_devel_coordinate Noncartesian Coordinates
 ///  While these methods take an @f$x,y,z @f$ as the argument names, there is

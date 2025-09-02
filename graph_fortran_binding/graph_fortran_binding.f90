@@ -3,13 +3,13 @@
 !>  @brief Implimentation of the Fortran binding library.
 !-------------------------------------------------------------------------------
 !>  @page graph_fortran_binding Embedding in Fortran code
-!>  @brief Documentation for linking into Fortran code base.
+!>  @brief Documentation for linking into a Fortran code base.
 !>  @tableofcontents
 !>
 !>  @section graph_fortran_binding_into Introduction
 !>  This section assumes the reader is already familar with developing Fortran
 !>  codes. The simplist method is to create a C callable function like the
-!>  @ref graph_c_binding_into "C binding exmaple". Then create a fortran
+!>  @ref graph_c_binding_into "C binding exmaple". Then create a Fortran
 !>  interface for it.
 !>  @code
 !>  INTERFACE
@@ -76,8 +76,8 @@
 !>
 !>  @note Graphs need to use the @ref graph_fortran::graph_ptr function to get
 !>  the pointer address of node.
-!>  @note The @ref graph_fortran::graph_null_array allows set arrays of nodes to
-!>  null.
+!>  @note The @ref graph_fortran::graph_null_array allows setting array of nodes
+!>  arguments to null.
 !-------------------------------------------------------------------------------
 !> Module contains subroutines for calling this from fortran.
       MODULE graph_fortran

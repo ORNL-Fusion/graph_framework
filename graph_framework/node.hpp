@@ -6,24 +6,23 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 ///  @page new_operations_tutorial Adding New Operations Tutorial
-///  @brief A discription of the models for power absorption.
+///  @brief A tutorial for creating new operations.
 ///  @tableofcontents
 ///
 ///  @section new_operations_tutorial_intro Introduction
 ///  In most cases, physics problems can be generated from combinations of graph
 ///  nodes. For instance, the @ref graph::tan nodes are built from
-///  @f$\frac{\sin\left(x\right)}{\cos\left(x\right)}@f$.
-///
-///  However, some problems will call for adding new operations. This page
-///  provides a basic example of how to impliment a new operator
-///  @f$foo\left(x\right)@f$ in the graph framework.
+///  @f$\frac{\sin\left(x\right)}{\cos\left(x\right)}@f$. However, some problems
+///  will call for adding new operations. This page provides a basic example of
+///  how to impliment a new operator @f$foo\left(x\right)@f$ in the
+///  graph_framework.
 ///
 ///  <hr>
 ///  @section new_operations_tutorial_node_subclass Node Subclasses
-///  All graph nodes are subclasses of @ref graph::leaf_node or subclasses or
+///  All graph nodes are subclasses of @ref graph::leaf_node or subclasses of
 ///  other nodes. In the case of our @f$foo\left(x\right)@f$ example we can
-///  sublass the @ref graph::straight_node instead. If there are two or three
-///  operands you can subclass
+///  sublass the @ref graph::straight_node since these assume single arguments.
+///  If there are two or three operands you can subclass
 ///  * @ref graph::branch_node
 ///  * @ref graph::triple_node
 ///
@@ -55,11 +54,11 @@
 ///  to generate a hash for the node. This hash will be used later in a factory
 ///  function to exsure nodes only exist once.
 ///
-///  A factor function constructs a node then immedately reduces it. The reduced
-///  node is then checked if it already exists in the
-///  @ref leaf_node::caches::node. If the node is a new node, we add it to the
-///  cache and return it. Otherwise we discard the node and return the cached
-///  node. In it's place.
+///  A factory function constructs a node then immedately reduces it. The
+///  reduced node is then checked if it already exists in the
+///  @ref graph::leaf_node::caches_t::nodes. If the node is a new node, we add
+///  it to the cache and return it. Otherwise we discard the node and return the
+///  cached node in it's place.
 ///  @code
 ///  template<jit::float_scalar T, bool SAFE_MATH=false>
 ///  shared_leaf<T, SAFE_MATH> foo(shared_leaf<T, SAFE_MATH> x) {
@@ -78,8 +77,8 @@
 ///  }
 ///  @endcode
 ///
-///  To aid in introspection we also need a function to case a generic
-///  @ref graph::shared_leaf back to the specifi node tpe. For convience, we
+///  To aid in introspection we also need a function to cast a generic
+///  @ref graph::shared_leaf back to the specific node type. For convience, we
 ///  also define a type alias for shared type.
 ///  @code
 ///  template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -100,14 +99,14 @@
 ///  @subsection new_operations_tutorial_evalute Evaluate
 ///  To start, lets provide a way to
 ///  @ref graph::leaf_node::evaluate "evalute the node". The first step to
-///  evaluate a node is to the nodes argument.
+///  evaluate a node is to evaluate the nodes argument.
 ///  @code
 ///  virtual shared_leaf<T, SAFE_MATH> evaluate() {
 ///      backend::buffer<T> result = this->arg->evaluate();
 ///  }
 ///  @endcode
-///  @ref backend::buffer are quick ways we can evalute the node on the GPU
-///  before needing to generate GPU kernels and is used by the
+///  @ref backend::buffer are quick ways we can evalute the node on the host
+///  before needing to generate device kernels and is used by the
 ///  @ref graph::leaf_node::reduce method to precompute constant values. We can
 ///  extend the @ref backend::buffer class with a new method to evaluate foo or
 ///  you can use the existing operators. In this case lets assume
@@ -123,7 +122,10 @@
 ///  @subsection new_operations_tutorial_is_match Is Match
 ///  This methiod checks if the node matches another node. The first thing to
 ///  check is if the pointers match. Then we can check if the structure of the
-///  graphs match.
+///  graphs match. This is important for the factory function. When checking for
+///  cached nodes, two graphs can be identical but have different pointer
+///  values. Checking the structure of the graphs ensures that we catch
+///  identical graphs.
 ///  @code
 ///  virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
 ///      if (this == x.get()) {
@@ -162,7 +164,7 @@
 ///  @subsection new_operations_tutorial_df df
 ///  Auto differentiation is provided by returning the derivative expression.
 ///  @f$\frac{\partial}{\partial y}foo\left(x\right)=2x\frac{\partial x}{\partial y}@f$.
-///  However, in this frame it is also possible to take a derivative with
+///  However, in this framework it is also possible to take a derivative with
 ///  respect to itself @f$\frac{\partial foo\left(x\right)}{\partial foo\left(x\right)}=1 @f$.
 ///  @code
 ///  virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
@@ -182,9 +184,9 @@
 ///
 ///  <hr>
 ///  @subsection new_operations_tutorial_compile_preamble Compile preamble
-///  The @ref graph::leaf_node::compile_preamble method provides ways that
+///  The @ref graph::leaf_node::compile_preamble method provides ways to include
 ///  header files or define functions. Lets use this method to define a function
-///  that can be called from the kerne.
+///  that can be called from the kernel.
 ///  @code
 ///  virtual void compile_preamble(std::ostringstream &stream,
 ///                                jit::register_map &registers,
@@ -281,7 +283,8 @@
 ///  <hr>
 ///  @subsection new_operations_tutorial_get_power_base Get power base
 ///  Return the base of the power node. This provides information for other
-///  nodes about how this works for reduction methods.
+///  nodes about how this works for reduction methods. In this case the power
+///  base is the function argument.
 ///  @code
 ///  virtual shared_leaf<T, SAFE_MATH> get_power_base() const {
 ///      return this->arg;
@@ -291,7 +294,8 @@
 ///  <hr>
 ///  @subsection new_operations_tutorial_get_power_exponent Get power exponent
 ///  Return the exponent of the power node. This provides information for other
-///  nodes about how this works for reduction methods.
+///  nodes about how this works for reduction methods. In this case, the power
+///  exponent is @f$2 @f$.
 ///  @code
 ///  virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
 ///      return constant<T, SAFE_MATH> (static_cast<T> (2.0));
@@ -301,6 +305,9 @@
 ///  <hr>
 ///  @subsection new_operations_tutorial_remove_pseudo Remove Pseudo
 ///  Return the node with pseduo variables removed.
+///  @ref graph::pseudo_variable_node are used to end derivatives construction
+///  by treating a sub graph as a pseduo variable. Before graphs can be
+///  evaluated, these @ref graph::pseudo_variable_node need to be removed.
 ///  @code
 ///  virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
 ///      if (this->has_pseudo()) {
@@ -312,7 +319,8 @@
 ///
 ///  <hr>
 ///  @subsection new_operations_tutorial_to_vizgraph To Vizgraph
-///  Generates a vizgraph node for visualization.
+///  Generates a <a href="https://graphviz.org">vizgraph</a> node for
+///  visualization.
 ///  @code
 ///  virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
 ///                                                jit::register_map &registers) {

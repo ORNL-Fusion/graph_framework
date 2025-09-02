@@ -928,10 +928,10 @@ void bin_power(const commandline::parser &cl,
 ///  @endcode
 ///  Inital values for @f$k_{y}@f$ and @f$k_{z}@f$ will be sampled from a normal
 ///  distribution fuction. Both of them have a standard deviation of 10.
-///  @f$k_{y}@f$ has a mean of 100 and @f$k_{z}@f$ has zero mean.
-///  @f$k_{x}@f$ uses the default uniform value of 100. However, it
-///  configured to solve for the a @f$k_{x}@f$ which satisfies the dispersion
-///  function given the values of @f$\omega,k_{y},k_{z},\vec{x}@f$.
+///  @f$k_{y}@f$ has a mean of -100 and @f$k_{z}@f$ has zero mean.
+///  @f$k_{x}@f$ uses the default uniform value of -700.0. However, it is
+///  configured to solve for @f$k_{x}@f$ which satisfies the dispersion function
+///  given the values of @f$\omega,k_{y},k_{z},\vec{x}@f$.
 ///
 ///  @subsection xrays_commandline_example_model Ray Models.
 ///  @code
@@ -941,7 +941,7 @@ void bin_power(const commandline::parser &cl,
 ///  initalized from <tt>../graph_tests/efit.nc</tt>.
 ///
 ///  @code
-///  --absorption_model=weak_damping --dispersion=ordinary_wave--solver=rk4
+///  --absorption_model=weak_damping --dispersion=ordinary_wave --solver=rk4
 ///  @endcode
 ///  It uses the @ref dispersion_function_o_wave "o-mode" dispersion function.
 ///  Rays are integrated using a @ref solvers_rk4 integrator. Power absorption

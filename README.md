@@ -1,11 +1,12 @@
 # Quick Start Guide
 
-graph_framework Graph computation framework that supports auto differentiation.
-It is designed to allow domain scientists to create cross platform GPU 
-accelerated code.
+**graph_framework**: A graph computation framework that supports auto 
+differentiation. It is designed to allow domain scientists to create cross 
+platform GPU accelerated code and embed those codes in existing legacy tools.
 
 ## Documentation
-[graph_framework-docs](https://ornl-fusion.github.io/graph_framework-docs) Documentation for the graph_framework.
+[graph_framework-docs](https://ornl-fusion.github.io/graph_framework-docs) 
+Documentation for the graph_framework.
 
 ## Obtaining the Code
 To get started clone this repository using the command.

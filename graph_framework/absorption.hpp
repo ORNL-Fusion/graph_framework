@@ -11,14 +11,14 @@
 ///
 ///  @section absorption_model_intro Introduction
 ///  This page documents the types of dispersion functions available. Tracing
-///  the ray is only the first step in the process. Along that ray power is
+///  the ray is only the first step in the process. Along that, ray power is
 ///  deposited into the plasma. For tracing the ray we assumed the wave number
-///  was always real. However now we need to figure out what the imaginary
+///  was always real. However, now we need to figure out what the imaginary
 ///  component is.
 ///
 ///  <hr>
 ///  @subsection absorption_model_hot Hot Plasma Disperison Function
-///  To do this we know assume a hot plasma dispersion function.
+///  To do this we now assume a hot plasma dispersion function.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=i\sigma\Gamma_{0}+\Gamma_{1}+\vec{n}_{\perp}\cdot\vec{n}_{\perp}\frac{P\omega}{\omega_{ce}}\left(1+\zeta Z\left(\zeta\right)\right)\left(\Gamma_{2} + \Gamma_{5}F\right)\equiv 0 @f}
 ///  Where
 ///  @f{equation}{\Gamma_{0}=\vec{n}_{\perp}\cdot\vec{n}_{\perp}\left(\vec{n}\cdot\vec{n}-2\left(1-2q\right)\right)+\left(1-P\right)\left(2\left(1-2q\right)-\left(\vec{n}\cdot\vec{n}+n_{||}^{2}\right)\right)@f}

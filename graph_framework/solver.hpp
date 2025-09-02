@@ -10,11 +10,11 @@
 ///  @tableofcontents
 ///
 ///  @section solvers_intro Introduction
-///  This page documents the types of dispersion functions available. These
-///  solver integrate the
+///  This page documents the types of solver methods available. These solvers
+///  integrate the
 ///  @ref dispersion_function_wave_propagation "wave propagation equations" to
-///  solve for the ray trajectory. Each solver builds an expressions for the
-///  updates for @f$\vec{x}@f$ and @f$\vec{k}@f$. These expressions are used to
+///  solve for the ray trajectory. Each solver builds expressions for the
+///  updates to @f$\vec{x}@f$ and @f$\vec{k}@f$. These expressions are used to
 ///  build @ref general_concepts_compile_maps "map" kernels that can be iterated
 ///  to integrate the ray equations. Available integrators are:
 ///
@@ -69,7 +69,7 @@
 ///  <hr>
 ///  @subsection solvers_adaptive_rk4 Adaptive 4th Order Runge Kutta
 ///  This method is an extension of the 4th Order Runge Kutta which adapts the
-///  step size to solutions error. We define a loss function
+///  step size to the solutions error. We define a loss function
 ///  @f{equation}{f_{loss}\left(dt,\lambda\right)=\frac{1}{dt}-\lambda D^{2}@f}
 ///  We use a newton method to solve for @f$dt @f$ and @f$\lambda @f$ which
 ///  minimize @f$f_{loss}@f$. The new @f$dt @f$ is then used in a standard 4th
@@ -80,7 +80,7 @@
 ///  This section is intended for code developers and outlines how to create new
 ///  solver methods. All solvers use the same @ref solver::solver_interface
 ///  interface. New solver models can be created from a subclass of
-///  @ref solver::solver_interface or any other existing equilibrium class and
+///  @ref solver::solver_interface or any other existing solver class and
 ///  overloading class methods.
 ///  @code
 ///  tempate<dispersion::function DISPERSION_FUNCTION>
