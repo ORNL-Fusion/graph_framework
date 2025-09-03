@@ -4,7 +4,340 @@
 ///
 ///  Defines a tree of operations that allows automatic differentiation.
 //------------------------------------------------------------------------------
-
+//------------------------------------------------------------------------------
+///  @page new_operations_tutorial Adding New Operations Tutorial
+///  @brief A tutorial for creating new operations.
+///  @tableofcontents
+///
+///  @section new_operations_tutorial_intro Introduction
+///  In most cases, physics problems can be generated from combinations of graph
+///  nodes. For instance, the @ref graph::tan nodes are built from
+///  @f$\frac{\sin\left(x\right)}{\cos\left(x\right)}@f$. However, some problems
+///  will call for adding new operations. This page provides a basic example of
+///  how to impliment a new operator @f$foo\left(x\right)@f$ in the
+///  graph_framework.
+///
+///  <hr>
+///  @section new_operations_tutorial_node_subclass Node Subclasses
+///  All graph nodes are subclasses of @ref graph::leaf_node or subclasses of
+///  other nodes. In the case of our @f$foo\left(x\right)@f$ example we can
+///  sublass the @ref graph::straight_node since these assume single arguments.
+///  If there are two or three operands you can subclass
+///  * @ref graph::branch_node
+///  * @ref graph::triple_node
+///
+///  @note Any existing node can be subclassed but do so with caution.
+///  Subclasses inherent reduction rules which maybe incorrect.
+///
+///  In this case, the @ref graph::straight_node (Along with
+///  @ref graph::branch_node, @ref graph::triple_node) have no reduction
+///  assumputions. For this case since our operation @f$foo\left(x\right)@f$
+///  takes one argument, we will subclass the @ref graph::straight_node.
+///
+///  The basics of subclassing a node, start with a subclass and a constructor.
+///  @code
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  class foo_node : public straight_node {
+///  private:
+///      static std::string to_string(leaf_node<T, SAFE_MATH> *x) {
+///          return "foo(" +
+///                 jit::format_to_string(reinterpret_cast<size_t> (l)) +
+///                 ")";
+///      }
+///
+///  public:
+///      foo_node(shared_leaf<T, SAFE_MATH> x) :
+///      straight_node(x, foo_node::to_string(x.get())) {}
+///  };
+///  @endcode
+///  The static <tt>to_string</tt> method provices an idenifier that can be used
+///  to generate a hash for the node. This hash will be used later in a factory
+///  function to exsure nodes only exist once.
+///
+///  A factory function constructs a node then immedately reduces it. The
+///  reduced node is then checked if it already exists in the
+///  @ref graph::leaf_node::caches_t::nodes. If the node is a new node, we add
+///  it to the cache and return it. Otherwise we discard the node and return the
+///  cached node in it's place.
+///  @code
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  shared_leaf<T, SAFE_MATH> foo(shared_leaf<T, SAFE_MATH> x) {
+///      auto temp = std::make_shared<foo_node<T, SAFE_MATH>> (x)->reduce();
+///  //  Test for hash collisions.
+///      for (size_t i = temp->get_hash();
+///           i < std::numeric_limits<size_t>::max(); i++) {
+///          if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+///              leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+///              leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+///              return temp;
+///          } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+///              return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+///          }
+///      }
+///  }
+///  @endcode
+///
+///  To aid in introspection we also need a function to cast a generic
+///  @ref graph::shared_leaf back to the specific node type. For convience, we
+///  also define a type alias for shared type.
+///  @code
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  using shared_foo = std::shared_ptr<add_node<T, SAFE_MATH>>;
+///
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  shared_foo<T, SAFE_MATH> foo_cast(shared_leaf<T, SAFE_MATH> x) {
+///      return std::dynamic_pointer_cast<add_node<T, SAFE_MATH>> (x);
+///  }
+///  @endcode
+///
+///  <hr>
+///  @section new_operations_tutorial_method Methods overloads
+///  To subclass a @ref graph::leaf_node there are several methods that need to
+///  be provided.
+///
+///  <hr>
+///  @subsection new_operations_tutorial_evalute Evaluate
+///  To start, lets provide a way to
+///  @ref graph::leaf_node::evaluate "evalute the node". The first step to
+///  evaluate a node is to evaluate the nodes argument.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH> evaluate() {
+///      backend::buffer<T> result = this->arg->evaluate();
+///  }
+///  @endcode
+///  @ref backend::buffer are quick ways we can evalute the node on the host
+///  before needing to generate device kernels and is used by the
+///  @ref graph::leaf_node::reduce method to precompute constant values. We can
+///  extend the @ref backend::buffer class with a new method to evaluate foo or
+///  you can use the existing operators. In this case lets assume
+///  @f$foo\left(x\right)=x^{2}@f$.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH> evaluate() {
+///      backend::buffer<T> result = this->arg->evaluate();
+///      return result*result;
+///  }
+///  @endcode
+///
+///  <hr>
+///  @subsection new_operations_tutorial_is_match Is Match
+///  This methiod checks if the node matches another node. The first thing to
+///  check is if the pointers match. Then we can check if the structure of the
+///  graphs match. This is important for the factory function. When checking for
+///  cached nodes, two graphs can be identical but have different pointer
+///  values. Checking the structure of the graphs ensures that we catch
+///  identical graphs.
+///  @code
+///  virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+///      if (this == x.get()) {
+///          return true;
+///      }
+///
+///      auto x_cast = foo_cast(x);
+///      if (x_cast.get()) {
+///          return this->arg->is_match(x_cast->get_arg());
+///      }
+///
+///      return false;
+///  }
+///  @endcode
+///
+///  <hr>
+///  @subsection new_operations_tutorial_reduce Reduce
+///  Lets add a simple reduction method. When the argument @f$x @f$ is a
+///  constant we can reduce this node down to a single constant by pre
+///  evaluating it.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH> reduce() {
+///      if (constant_cast(this->arg).get()) {
+///          return constant<T, SAFE_MATH> (this->evaluate());
+///      }
+///
+///      return this->shared_from_this();
+///  }
+///  @endcode
+///  In this example we first check if the argument can be cast to a constant.
+///  If it was castable, we evalute this node and create a new constant to
+///  return in its place. Otherwise we return the current node unchanged.
+///  @note Other reductions are possible but not shown here.
+///
+///  <hr>
+///  @subsection new_operations_tutorial_df df
+///  Auto differentiation is provided by returning the derivative expression.
+///  @f$\frac{\partial}{\partial y}foo\left(x\right)=2x\frac{\partial x}{\partial y}@f$.
+///  However, in this framework it is also possible to take a derivative with
+///  respect to itself @f$\frac{\partial foo\left(x\right)}{\partial foo\left(x\right)}=1 @f$.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+///      if (this->is_match(x)) {
+///          return one<T, SAFE_MATH> ();
+///      }
+///
+///      const size_t hash = reinterpret_cast<size_t> (x.get());
+///      if (this->df_cache.find(hash) == this->df_cache.end()) {
+///          this->df_cache[hash] = 2.0*this->arg*this->arg->df(x);
+///      }
+///      return this->df_cache[hash];
+///  }
+///  @endcode
+///  Here we made use of the @ref graph::leaf_node::df_cache to avoid needing
+///  to rebuild expressions everytime the same derivative is taken.
+///
+///  <hr>
+///  @subsection new_operations_tutorial_compile_preamble Compile preamble
+///  The @ref graph::leaf_node::compile_preamble method provides ways to include
+///  header files or define functions. Lets use this method to define a function
+///  that can be called from the kernel.
+///  @code
+///  virtual void compile_preamble(std::ostringstream &stream,
+///                                jit::register_map &registers,
+///                                jit::visiter_map &visited,
+///                                jit::register_usage &usage,
+///                                jit::texture1d_list &textures1d,
+///                                jit::texture2d_list &textures2d,
+///                                int &avail_const_mem) {
+///      if (visited.find(this) == visited.end()) {
+///          this->arg->compile_preamble(stream, registers,
+///                                      visited, usage,
+///                                      textures1d, textures2d,
+///                                      avail_const_mem);
+///
+///          jit::add_type<T> (stream);
+///          stream << " foo(const "
+///          jit::add_type<T> (stream);
+///          stream << "x) {"
+///                 << "    return 2*x;"
+///                 << "}";
+///
+///          visited.insert(this);
+///  #ifdef SHOW_USE_COUNT
+///          usage[this] = 1;
+///      } else {
+///          ++usage[this];
+///  #endif
+///      }
+///  }
+///  @endcode
+///  The compile methods generate kernel source code. In this case we created a
+///  function in the preamble to evaluate foo. Since we only want this create
+///  this preamble once, we first check if this node has already been visited.
+///  The @ref build_system_dev_options "build system option"
+///  <tt>SHOW_USE_COUNT</tt> tracks the number of times a node is used in the
+///  kernel. When this option is set we need to increment it's usage count.
+///  @note Most nodes don't require a preamble so this method can be left out.
+///
+///  <hr>
+///  @subsection new_operations_tutorial_compile Compile
+///  The compile method writes a line of source code to the kernel. Here we can
+///  use the function defined in the preamble.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH>
+///  compile(std::ostringstream &stream,
+///          jit::register_map &registers,
+///          jit::register_map &indices,
+///          const jit::register_usage &usage) {
+///      if (registers.find(this) == registers.end()) {
+///          shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
+///                                                           registers,
+///                                                           indices,
+///                                                           usage);
+///
+///          registers[this] = jit::to_string('r', this);
+///          stream << "        const ";
+///          jit::add_type<T> (stream);
+///          stream << " " << registers[this] << " = foo("
+///                 << registers[a.get()] << ")";
+///          this->endline(stream, usage);
+///      }
+///
+///      return this->shared_from_this();
+///  }
+///  @endcode
+///  Kernels are created by assuming infinite registers. In this case, a
+///  register is a temporary variable. To provide a unquie name, the node
+///  pointer value is converted into a string. Since we only want to evaluate
+///  this once, we check if the register has already been created.
+///
+///  <hr>
+///  @subsection new_operations_tutorial_to_latex To Latex
+///  This method returns the code to generate the @f$\LaTeX @f$ expression for
+///  the node.
+///  @code
+///  virtual void to_latex () const {
+///      std::cout << "foo\left(;
+///      this->arg->to_latex();
+///      std::cout << "\right)";
+///  }
+///  @endcode
+///
+///  <hr>
+///  @subsection new_operations_tutorial_is_power_like Is Power Like
+///  This provides information for other nodes about how this works for
+///  reduction methods. In this care we need to set this to true. If this node
+///  did not act like a power, this method can be ignored.
+///  @code
+///  virtual bool is_power_like() const {
+///      return true;
+///  }
+///  @endcode
+///
+///  <hr>
+///  @subsection new_operations_tutorial_get_power_base Get power base
+///  Return the base of the power node. This provides information for other
+///  nodes about how this works for reduction methods. In this case the power
+///  base is the function argument.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH> get_power_base() const {
+///      return this->arg;
+///  }
+///  @endcode
+///
+///  <hr>
+///  @subsection new_operations_tutorial_get_power_exponent Get power exponent
+///  Return the exponent of the power node. This provides information for other
+///  nodes about how this works for reduction methods. In this case, the power
+///  exponent is @f$2 @f$.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+///      return constant<T, SAFE_MATH> (static_cast<T> (2.0));
+///  }
+///  @endcode
+///
+///  <hr>
+///  @subsection new_operations_tutorial_remove_pseudo Remove Pseudo
+///  Return the node with pseduo variables removed.
+///  @ref graph::pseudo_variable_node are used to end derivatives construction
+///  by treating a sub graph as a pseduo variable. Before graphs can be
+///  evaluated, these @ref graph::pseudo_variable_node need to be removed.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
+///      if (this->has_pseudo()) {
+///          return sqrt(this->arg->remove_pseudo());
+///      }
+///      return this->shared_from_this();
+///  }
+///  @endcode
+///
+///  <hr>
+///  @subsection new_operations_tutorial_to_vizgraph To Vizgraph
+///  Generates a <a href="https://graphviz.org">vizgraph</a> node for
+///  visualization.
+///  @code
+///  virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+///                                                jit::register_map &registers) {
+///      if (registers.find(this) == registers.end()) {
+///          const std::string name = jit::to_string('r', this);
+///          registers[this] = name;
+///          stream << "    " << name
+///                 << " [label = \"foo\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+///
+///          auto a = this->arg->to_vizgraph(stream, registers);
+///          stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+///      }
+///
+///      return this->shared_from_this();
+///  }
+///  @endcode
+//------------------------------------------------------------------------------
 #ifndef node_h
 #define node_h
 
@@ -16,6 +349,7 @@
 
 #include "backend.hpp"
 
+/// Name space for graph nodes.
 namespace graph {
 //******************************************************************************
 //  Base leaf node.
@@ -24,7 +358,7 @@ namespace graph {
 ///  @brief Class representing a node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class leaf_node : public std::enable_shared_from_this<leaf_node<T, SAFE_MATH>> {
@@ -133,7 +467,9 @@ namespace graph {
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
 //------------------------------------------------------------------------------
-        virtual bool is_match(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) = 0;
+        virtual bool is_match(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) {
+            return this == x.get();
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Check if the base of the powers match.
@@ -339,7 +675,7 @@ namespace graph {
 ///  @brief Create a null leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A null leaf.
 //------------------------------------------------------------------------------
@@ -384,7 +720,7 @@ namespace graph {
 ///  @brief Class representing data that cannot change.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class constant_node final : public leaf_node<T, SAFE_MATH> {
@@ -606,7 +942,7 @@ namespace graph {
 ///  @brief Construct a constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d Array buffer.
 ///  @returns A reduced constant node.
@@ -635,7 +971,7 @@ namespace graph {
 ///  @brief Construct a constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d Scalar data to initalize.
 ///  @returns A reduced constant node.
@@ -650,7 +986,7 @@ namespace graph {
 ///  @brief Create a zero constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A zero constant.
 //------------------------------------------------------------------------------
@@ -663,7 +999,7 @@ namespace graph {
 ///  @brief Create a one constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
@@ -676,7 +1012,7 @@ namespace graph {
 ///  @brief Create a one constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A one constant.
 //------------------------------------------------------------------------------
@@ -697,7 +1033,7 @@ namespace graph {
 ///  @brief Cast to a constant node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -714,7 +1050,7 @@ namespace graph {
 ///  @brief Class representing a straight node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
@@ -828,7 +1164,7 @@ namespace graph {
 ///  @brief Class representing a branch node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
@@ -836,9 +1172,9 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class branch_node : public leaf_node<T, SAFE_MATH> {
     protected:
-//  Left branch of the tree.
+///  Left branch of the tree.
         shared_leaf<T, SAFE_MATH> left;
-//  Right branch of the tree.
+///  Right branch of the tree.
         shared_leaf<T, SAFE_MATH> right;
 
     public:
@@ -952,7 +1288,7 @@ namespace graph {
 ///  @brief Class representing a triple branch node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  This ensures that the base leaf type has the common type between the two
 ///  template arguments.
@@ -960,7 +1296,7 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class triple_node : public branch_node<T, SAFE_MATH> {
     protected:
-//  Middle branch of the tree.
+///  Middle branch of the tree.
         shared_leaf<T, SAFE_MATH> middle;
 
     public:
@@ -1052,7 +1388,7 @@ namespace graph {
 ///  @brief Class representing data that can change.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class variable_node final : public leaf_node<T, SAFE_MATH> {
@@ -1202,16 +1538,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
-///
-///  @param[in] x Other graph to check if it is a match.
-///  @returns True if the nodes are a match.
-//------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
-            return this == x.get();
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Set the value of variable data.
 ///
 ///  @param[in] d Scalar data to set.
@@ -1339,7 +1665,7 @@ namespace graph {
 ///  @brief Construct a variable.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] s      Size of the data buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
@@ -1354,7 +1680,7 @@ namespace graph {
 ///  @brief Construct a variable.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] s      Size of he data buffer.
 ///  @param[in] d      Scalar data to initalize.
@@ -1370,7 +1696,7 @@ namespace graph {
 ///  @brief Construct a variable.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d      Array buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
@@ -1385,7 +1711,7 @@ namespace graph {
 ///  @brief Construct a variable.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d      Array buffer.
 ///  @param[in] symbol Symbol of the variable used in equations.
@@ -1411,7 +1737,7 @@ namespace graph {
 ///  @brief Cast to a variable node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -1432,7 +1758,7 @@ namespace graph {
 ///  something that is not itself.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class pseudo_variable_node final : public straight_node<T, SAFE_MATH> {
@@ -1475,16 +1801,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
             return constant<T, SAFE_MATH> (static_cast<T> (this->is_match(x)));
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
-///
-///  @param[in] x Other graph to check if it is a match.
-///  @returns True if the nodes are a match.
-//------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
-            return this == x.get();
         }
 
 //------------------------------------------------------------------------------
@@ -1577,7 +1893,7 @@ namespace graph {
 ///  @brief Define pseudo variable convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced pseudo variable node.
@@ -1595,7 +1911,7 @@ namespace graph {
 ///  @brief Cast to a pseudo variable node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.

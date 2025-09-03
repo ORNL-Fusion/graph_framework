@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file tming.hpp
+///  @file timing.hpp
 ///  @brief Routines to time the ray execution.
 //------------------------------------------------------------------------------
 
@@ -10,7 +10,8 @@
 #include <mutex>
 #include <map>
 
-namespace timeing {
+///  Name space for timers.
+namespace timing {
 //------------------------------------------------------------------------------
 ///  @brief A timing object.
 //------------------------------------------------------------------------------
@@ -60,6 +61,9 @@ namespace timeing {
         }
     };
 
+//------------------------------------------------------------------------------
+///  @brief A timing object that averages over multiple threads.
+//------------------------------------------------------------------------------
     class measure_diagnostic_threaded {
     private:
 ///  Discription of what is being timed.

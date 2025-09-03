@@ -17,8 +17,8 @@
 
 #include "random.hpp"
 
+///  Maximum number of registers to use.
 #define MAX_REG 128
-#define MAX_CONSTANT_MEMORY
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ namespace gpu {
 ///  @brief Class representing a cuda gpu context.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class cuda_context {

@@ -14,11 +14,12 @@
 
 #include "random.hpp"
 
+///  Name space for GPU backends.
 namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Class representing a metal gpu context.
 ///
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<bool SAFE_MATH=false>
     class metal_context {
@@ -395,7 +396,6 @@ namespace gpu {
             const size_t size = [kernel_arguments[node.get()] length];
             memcpy([kernel_arguments[node.get()] contents],
                    source, size);
-            [kernel_arguments[node.get()] didModifyRange:NSMakeRange(0, size)];
         }
 
 //------------------------------------------------------------------------------

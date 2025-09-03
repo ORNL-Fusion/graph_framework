@@ -1,0 +1,396 @@
+/*!
+ * @page tutorial Tutorial
+ * @brief Hands on tutorial for building expressions and running workflows.
+ * @tableofcontents
+ *
+ * @section tutorial_introduction Introduction
+ * In this tutorial we will put the basic @ref general_concepts of the
+ * graph_framework into action. This will discuss building trees, generating
+ * kernels, and executing workflows.
+ *
+ * To accomplish this there is a playground tool in the
+ * <tt>graph_playground</tt> directory. This playground is a preconfigured
+ * executable target which can be used to test out the API's of this framework.
+ * The playground starts with a blank main function.
+ * @code
+#include "../graph_framework/jit.hpp"
+
+int main(int argc, const char * argv[]) {
+    START_GPU
+    (void)argc;
+    (void)argv;
+
+//  Insert code here. No code should be commited to this file beyond this
+//  template.
+
+    END_GPU
+}
+ @endcode
+ * To start, create a template function above main and call that function from
+ * main. This will allow us to play with different floating point types. For now
+ * we will start with a simple float type.
+ * @code
+#include "../graph_framework/jit.hpp"
+
+template<jit::float_scalar T>
+void run_tutorial() {
+
+}
+
+int main(int argc, const char * argv[]) {
+    START_GPU
+    (void)argc;
+    (void)argv;
+
+    run_tutorial<float> ();
+
+    END_GPU
+}
+ @endcode
+ * Here @ref jit::float_scalar is a
+ * <a href="https://www.cppreference.com/w/cpp/20.html">C++20</a>
+ * <a href="https://www.cppreference.com/w/cpp/concepts.html">Concept</a> of
+ * valid floating point types allowed by the framework.
+ *
+ * <hr>
+ * @section tutorial_basic Basic Nodes
+ * The graph_framework is built around applying the same equations to a large
+ * ensemble. Ensembles are defined from variables. All variables need to have
+ * same dimensionality. To create a variable we use one of the variable factory
+ * methods. For now we will build it without initalizing it.
+ * @code
+template<jit::float_scalar T>
+void run_tutorial() {
+    auto x = graph::variable<T> (1000, "x");
+}
+ @endcode
+ * Here we are creating a @ref graph::variable_node with the symbol @f$x@f$
+ * which holds 1000 elements. The symbol is used by the @f$\LaTeX@f$ renderer
+ * as a symbol place holder. Any graph can be rendered to @f$\LaTeX@f$ by
+ * calling the @ref graph::leaf_node::to_latex method.
+ * @code
+template<jit::float_scalar T>
+void run_tutorial() {
+    auto x = graph::variable<T> (1000, "x");
+    x->to_latex();
+    std::cout << std::endl;
+}
+ @endcode
+ * When compiling and running the code, this will print out the @f$\LaTeX@f$
+ * code needed to generate the equation. By copy and pasting this into
+ * @f$\LaTeX@f$ it produces the symbol @f$x@f$. Note that all nodes of a graph
+ * are wrapped in a
+ * <a href="https://www.cppreference.com/w/cpp/memory/shared_ptr.html"><tt>std::shared_ptr</tt></a>.
+ * so all method are called using the <tt>-></tt> operator.
+ *
+ * @subsection tutorial_constant Constant Nodes
+ * Next we want to define a constant. There are two method to define constants
+ * explicitly or implicitly.
+ * @code
+template<jit::float_scalar T>
+void run_tutorial() {
+    auto x = graph::variable(1000, "x");
+
+// Define explicit constant.
+    auto m = graph::constant<T> (0.4);
+// Define implicit constant.
+    const T b = 0.6;
+}
+ @endcode
+ * An explicit @ref graph::constant_node is created for <tt>m</tt> while an
+ * impicit constant was defined for <tt>b</tt>. Note in the implicit case, the
+ * actual node for <tt>b</tt> is not created until we use it in an expression.
+ *
+ * <hr>
+ * @section tutorial_expression Basic Expressions
+ * Finally lets create our equation of a line @f$y=mx+b@f$ and generate the
+ * @f$\LaTeX@f$ expression for it.
+ * @code
+template<jit::float_scalar T>
+void run_tutorial() {
+    auto x = graph::variable(1000, "x");
+
+// Define explicit constant.
+    auto m = graph::constant<T> (0.4);
+// Define implicit constant.
+    const T b = 0.6;
+
+//  Equation of a line
+    auto y = m*x + b;
+    y->to_latex();
+    std::cout << std::endl;
+}
+ @endcode
+ * Running this will generate the output <tt>\\left(0.4 x+0.6\\right)</tt> which
+ * renders to @f$\left(0.4 x+0.6\right)@f$.
+ *
+ * @subsection tutorial_derivatives Auto Differentiation
+ * Derivatives of nodes can be taken with respect to any explicit node or graph.
+ * As an example lets take the @f$\frac{\partial y}{\partial x}@f$ and render
+ * the expression to latex.
+ * @code
+template<jit::float_scalar T>
+void run_tutorial() {
+    auto x = graph::variable(1000, "x");
+
+// Define explicit constant.
+    auto m = graph::constant<T> (0.4);
+// Define implicit constant.
+    const T b = 0.6;
+
+// Equation of a line
+    auto y = m*x + b;
+
+// Auto differentiation.
+    auto dydx = y->df(x);
+    dydx->to_latex();
+    std::cout << std::endl;
+}
+ @endcode
+ * Here we take derivatives using the @ref graph::leaf_node::df method. We can
+ * also take several variations of this.
+ * @code
+auto dydm = y->df(m);
+auto dydy = y->df(y);
+auto dydb = y->df(m*x);
+ @endcode
+ * The results will be @f$0.4@f$, @f$x@f$, @f$1@f$, and @f$0@f$ respectively.
+ *
+ * <hr>
+ * @section tutorial_workflow Making workflows.
+ * In this section we will build a workflow from these nodes we created. For
+ * simplicity we will decrease the number of elements in the variable so we can
+ * set the values easier. First thing we do is create a @ref workflow::manager.
+ * @code
+template<jit::float_scalar T>
+void run_tutorial() {
+    auto x = graph::variable(3, "x");
+
+// Define explicit constant.
+    auto m = graph::constant<T> (0.4);
+// Define implicit constant.
+    const T b = 0.6;
+
+// Equation of a line
+    auto y = m*x + b;
+
+// Auto differentiation.
+    auto dydx = y->df(x);
+
+// Create a workflow manager.
+    workflow::manager<T> work(0);
+}
+ @endcode
+ * This creates a workflow for device 0.
+ *
+ * To create a kernal, we add a @ref workflow::work_item using the
+ * @ref workflow::manager::add_item method.
+ * @code
+workflow::manager<T> work(0);
+work.add_item({
+    graph::variable_cast(x)
+}, {
+    y, dydx
+}, {}, NULL, "my_first_kernel", 3);
+ @endcode
+ * Here we have created a kernel which computes the outputs of @f$y@f$ and
+ * @f$\frac{\partial y}{\partial x}@f$. The third and forth arguments are blank
+ * because there are no maps and we are not using random numbers. The last
+ * argument needs to match the dimensions of the inputs. Inputs need to be cast
+ * from generic @ref graph::leaf_node to the specific
+ * @ref graph::variable_node.
+ *
+ * To evaluate the kernel, we need to first compile it. Then set the values for
+ * @f$x@f$ and run the kernel. To see the results we can print the values of the
+ * nodes used.
+ * @code
+x->set({1.0, 2.0, 3.0});
+
+workflow::manager<T> work(0);
+work.add_item({
+    graph::variable_cast(x)
+}, {
+    y, dydx
+}, {}, NULL, "my_first_kernel", 3);
+work.compile();
+
+work.run();
+work.print(0, {x, y, dydx});
+work.print(1, {x, y, dydx});
+work.print(2, {x, y, dydx});
+ @endcode
+ * Running this we get the output
+ * @code
+1 1 0.4
+2 1.4 0.4
+3 1.8 0.4
+ @endcode
+ *
+ * At this point it's important to understand some things that need to be taken
+ * into account when working with devices. Note that we needed to set the value
+ * of @f$x@f$ before we create the kernel since that's when the device buffers
+ * are populated. If we move that to after the kernel is generated.
+ * @code
+workflow::manager<T> work(0);
+work.add_item({
+    graph::variable_cast(x)
+}, {
+    y, dydx
+}, {}, NULL, "my_first_kernel", 3);
+work.compile();
+
+x->set({1.0, 2.0, 3.0});
+
+work.run();
+work.print(0, {x, y, dydx});
+work.print(1, {x, y, dydx});
+work.print(2, {x, y, dydx});
+ @endcode
+ * We get the output
+ * @code
+0 0.6 0.4
+0 0.6 0.4
+0 0.6 0.4
+ @endcode
+ * showing that the device dose not have the updated values. To set values from
+ * the host. You need to explicity copy from a host buffer to a device buffer
+ * using the @ref workflow::manager::copy_to_device method.
+ * @code
+work.copy_to_device(x, std::array<T, 3> ({1.0, 2.0, 3.0}).data());
+
+work.run();
+work.print(0, {x, y, dydx});
+work.print(1, {x, y, dydx});
+work.print(2, {x, y, dydx});
+ @endcode
+ * This restores the expected result.
+ * @code
+1 1 0.4
+2 1.4 0.4
+3 1.8 0.4
+ @endcode
+ *
+ * @subsection tutorial_workflow_iter Iteration
+ * In this section we are going to make use of maps to iterate a variable. We
+ * want to evaluate the value of @f$y@f$ and set it as the new value of @f$x@f$.
+ * We do this my modifying call to @ref workflow::manager::add_item to define
+ * a map. This generates a kernel where after @f$y@f$ is computed it is stored
+ * in the @f$x@f$ buffer.
+ * @code
+x->set({1.0, 2.0, 3.0});
+
+workflow::manager<T> work(0);
+work.add_item({
+    graph::variable_cast(x)
+}, {}, {
+    {y, graph::variable_cast(x)}
+}, NULL, "iteration_kernel", 3);
+work.compile();
+
+for (size_t i = 0; i < 10; i++) {
+    work.run();
+    work.print(1, {x});
+}
+ @endcode
+ * Running this code shows the value of x continously updating.
+  * @code
+1.4
+1.16
+1.064
+1.0256
+1.01024
+1.0041
+1.00164
+1.00066
+1.00026
+1.0001
+ @endcode
+ *
+ * <hr>
+ * @section tutorial_workflow_newton Newton's Method.
+ * In this tutorial we are going to show how we can put all these concepts
+ * together to implement a Newton's method. Newton's method is defined as
+ * @f{equation}{x = x - \frac{f\left(x\right)}{\frac{\partial}{\partial x}f\left(x\right)}@f}
+ * From the iteration example, its step update can be handled by a simple map.
+ * However, we need a measure for convergence. To do that we output the value of
+ * @f$f\left(x\right)@f$. Lets setup a test function.
+ * @code
+template<jit::float_scalar T>
+void run_tutorial() {
+    auto x = graph::variable<T> (3, "x");
+    x->set({1.0, 2.0, 3.0});
+
+// Define an objective function.
+    auto f = 0.2*x*x*x + 0.6*x*x + 0.4*x + 0.5;
+
+//  Define a step update.
+    auto x_new = x - f/f->df(x);
+
+// Create a workflow manager.
+    workflow::manager<T> work(0);
+    work.add_item({
+        graph::variable_cast(x)
+    }, {f}, {
+        {x_new, graph::variable_cast(x)}
+    }, NULL, "newton_kernel", 3);
+    work.compile();
+
+    std::array<T, 3> result;
+    T max;
+    do {
+        work.run();
+        work.copy_to_host(f, result.data());
+        max = 0.0;
+        for (T &r : result) {
+            max = std::max(max, r*r);
+        }
+        std::cout << max << std::endl;
+    } while (max > 1.0E-10);
+    work.print(0, {x});
+    work.print(1, {x});
+    work.print(2, {x});
+}
+ @endcode
+ * Running shows the objective function and all three elements found the same
+ * root.
+ * @code
+156.25
+14.2408
+1.47246
+...
+5.30397e-06
+8.50397e-12
+3.03979e-15
+-2.6006
+-2.6006
+-2.6006
+ @endcode
+ *
+ * However there are some things that are not optimial here. We are performing
+ * a reduction on the host side and transfering the entire array to the host. To
+ * improve this we can use a converge item instead.
+ * @code
+// Create a workflow manager.
+workflow::manager<T> work(0);
+work.add_converge_item({
+    graph::variable_cast(x)
+}, {f*f}, {
+    {x_new, graph::variable_cast(x)}
+}, NULL, "newton_kernel", 3, 1.0E-14);
+work.compile();
+
+work.run();
+work.print(0, {x});
+work.print(1, {x});
+work.print(2, {x});
+}
+ @endcode
+ * We can achieve the same result in a single run call. The advantage here is
+ * the reduction is now performed on the device and only a scalar is copied to
+ * the host to test for convergence.
+ * @code
+-2.6006
+-2.6006
+-2.6006
+ @endcode
+ */

@@ -2,6 +2,111 @@
 ///  @file graph_c_binding.h
 ///  @brief Header file for the c binding library.
 //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+///  @page graph_c_binding Embedding in C code
+///  @brief Documentation for linking into a C code base.
+///  @tableofcontents
+///
+///  @section graph_c_binding_into Introduction
+///  This section assumes the reader is already familar with developing C codes.
+///  The simplist method to link framework code into a C code is to create a C++
+///  function with @code extern "C" @endcode First create a header file
+///  <tt><i>c_callable</i>.h</tt>
+///  @code
+///  extern "C" {
+///      void c_callable_function();
+///  }
+///  @endcode
+///
+///  Next create a source file <tt><i>c_callable</i>.c</tt> and add the
+///  framework. This example uses the equation of a line example from the 
+///  @ref tutorial_workflow "making workflows" turorial.
+///  @code
+///  //  Include the necessary framework headers.
+///
+///  extern "C" {
+///      void c_callable_function() {
+///          auto x = graph::variable(3, "x");
+///
+///  // Define explicit constant.
+///          auto m = graph::constant<T> (0.4);
+///  // Define implicit constant.
+///          const T b = 0.6;
+///
+///  // Equation of a line
+///          auto y = m*x + b;
+///
+///  // Auto differentiation.
+///          auto dydx = y->df(x);
+///
+///          x->set({1.0, 2.0, 3.0});
+///
+///  // Create a workflow manager.
+///          workflow::manager<T> work(0);
+///          work.add_item({
+///              graph::variable_cast(x)
+///          }, {
+///              y, dydx
+///          }, {}, NULL, "my_first_kernel", 3);
+///          work.compile();
+///
+///          work.run();
+///          work.print(0, {x, y, dydx});
+///          work.print(1, {x, y, dydx});
+///          work.print(2, {x, y, dydx});
+///      }
+///  }
+///  @endcode
+///
+///  <hr>
+///  @section graph_c_binding_interface C Binding Interface
+///  An alternative is to use the @ref graph_c_binding.h "C Language interface".
+///  The C binding interface can be enabled as one of the <tt>cmake</tt>
+///  @ref build_system_user_options "conifgure options". As an example, we will
+///  convert the @ref tutorial_workflow "making workflows" turorial to use the
+///  C language bindings.
+///  @code
+///  #include <graph_c_binding.h>
+///
+///  void c_binding() {
+///      const bool use_safe_math = 0;
+///      struct graph_c_context *c_context = graph_construct_context(DOUBLE, use_safe_math);
+///      graph_node x = graph_variable(c_context, 3, "x");
+///
+///      graph_node m = graph_constant(c_context, 0.4);
+///      graph_node b = graph_constant(c_context, 0.6);
+///
+///      graph_node y = graph_add(c_context, graph_mul(c_context, m, x), b);
+///      graph_node dydx = graph_df(c_context, y, x);
+///
+///      double temp[3];
+///      temp[0] = 1.0;
+///      temp[1] = 2.0;
+///      temp[2] = 3.0;
+///      graoh_set_variable(c_context, x, temp);
+///
+///      graph_set_device_number(c_context, 0);
+///      graph_node inputs[1];
+///      inputs[0] = x;
+///      graph_node outputs[2];
+///      outputs[0] = y;
+///      outputs[1] = dydx;
+///      graph_add_item(c_context, inputs, 1, outputs, 2, NULL, NULL, 0, NULL,
+///                     "x", 3);
+///      graph_compile(c_context);
+///      graph_run(c_context);
+///      graph_node inputs2[3];
+///      inputs2[0] = x;
+///      inputs2[1] = y;
+///      inputs2[2] = dydx;
+///      graph_print(c_context, 0, inputs2, 3);
+///      graph_print(c_context, 1, inputs2, 3);
+///      graph_print(c_context, 2, inputs2, 3);
+///
+///      graph_destroy_context(c_context);
+///  }
+///  @endcode
+//------------------------------------------------------------------------------
 
 #ifndef graph_c_binding_h
 #define graph_c_binding_h
@@ -10,6 +115,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+//------------------------------------------------------------------------------
+///  @def START_GPU
+///  Starts a Cocoa auto release pool when using the metal backend. No opt
+///  otherwise.
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+///  @def END_GPU
+///  Ends a Cocoa auto release pool when using the metal backend. No opt
+///  otherwise.
+//------------------------------------------------------------------------------
 #ifdef USE_METAL
 #define START_GPU @autoreleasepool {
 #define END_GPU }
@@ -18,6 +133,10 @@
 #define END_GPU
 #endif
 
+//------------------------------------------------------------------------------
+///  @def STRUCT_TAG
+///  C++ mode needs to tag a graph_c_context as a struct.
+//------------------------------------------------------------------------------
 #ifdef __cplusplus
 extern "C" {
 #define STRUCT_TAG

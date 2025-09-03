@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-///  @file commandline\_parser.hpp
+///  @file commandline_parser.hpp
 ///  @brief Parsing routines for the command line.
 //------------------------------------------------------------------------------
 
@@ -11,6 +11,7 @@
 #include <utility>
 #include <mutex>
 
+/// Name space for the command line parsing.
 namespace commandline {
 ///  Lock to syncronize netcdf accross threads.
     static std::mutex sync;

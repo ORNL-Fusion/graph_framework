@@ -86,7 +86,7 @@ void compile_index(std::ostringstream &stream,
 ///    x_norm' = (x - xmin)/dx                                              (11)
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class piecewise_1D_node final : public straight_node<T, SAFE_MATH> {
@@ -548,16 +548,16 @@ void compile_index(std::ostringstream &stream,
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise\_1D convience function.
+///  @brief Define piecewise_1D convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d      Data to initalize the piecewise constant.
 ///  @param[in] x      Argument.
 ///  @param[in] scale  Argument scale factor.
 ///  @param[in] offset Argument offset factor.
-///  @returns A reduced piecewise\_1D node.
+///  @returns A reduced piecewise_1D node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> piecewise_1D(const backend::buffer<T> &d,
@@ -592,7 +592,7 @@ void compile_index(std::ostringstream &stream,
 ///  @brief Cast to a piecewise 1D node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -644,7 +644,7 @@ void compile_index(std::ostringstream &stream,
 ///    y_norm' = (y - ymin)/dy                                              (21)
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class piecewise_2D_node final : public branch_node<T, SAFE_MATH> {
@@ -1262,10 +1262,10 @@ void compile_index(std::ostringstream &stream,
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise\_2D convience function.
+///  @brief Define piecewise_2D convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] d        Data to initalize the piecewise constant.
 ///  @param[in] n        Number of columns.
@@ -1314,7 +1314,7 @@ void compile_index(std::ostringstream &stream,
 ///  @brief Cast to a piecewise 2D node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.

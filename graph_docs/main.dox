@@ -1,0 +1,56 @@
+/*!
+ * @mainpage
+ * @tableofcontents
+ * @section introduction Introduction
+ * The <a href="https://github.com/ORNL-Fusion/graph_framework">graph_framework</a>
+ * is a domain specific compiler for translating physics equations to optimized
+ * code that runs on GPUs and CPUs. The domain specific aspect limits this to
+ * classes of problems where the same physics is applied to an ensemble. Eamples
+ * include RF Ray tracing, particle pushing, and field line following.
+ *
+ * @subsection purpose Purpose
+ * The purpose of this framework is to enable domain scientists to write code
+ * that can run on any GPU and interface them with legacy codes.
+ *
+ * This framework enables:
+ * * Portability to Nvidia, AMD, and Apple GPUs and CPUs.
+ * * Abstraction of the physics from the compute.
+ * * Enable Auto Differentiation.
+ * * Enable easy embedding in C, C++, and Fortran codes.
+ *
+ * <hr>
+ * @section tools User guides for tools
+ * @subsection rf_ray_tracing RF Ray tracing
+ * This section covers user guides to run the RF Ray tracing code. To run this
+ * code, a user selects an equilibrium, a wave distribution function, a solver
+ * method, intial ray conditions, and a power obsorption model. To run an
+ * example follow the instructions for the @ref xrays_commandline_example.
+ *
+ * * @ref equilibrum_models
+ * * @ref dispersion_function
+ * * @ref solvers
+ * * @ref absorption_model
+ * * @ref xrays_commandline
+ * * @ref xrays_output
+ *
+ * <hr>
+ * @section framework_user Framework user guides
+ * * @ref build_system "Compiling the framework."
+ * * @ref general_concepts "General concepts."
+ * * @ref tutorial "Tutorial"
+ * * @ref graph_c_binding
+ * * @ref graph_fortran_binding
+ *
+ * <hr>
+ * @section framework_developer Framework developer guides
+ * * @ref build_system
+ * * @ref code_structure
+ * * @ref new_operations_tutorial
+ *
+ * @subsection framework_developer_tools Developer guide for RF Ray Tracing
+ * * @ref code_structure_xrays "Code Structure"
+ * * @ref equilibrum_devel
+ * * @ref dispersion_function_devel
+ * * @ref solvers_devel
+ * * @ref absorption_model_devel
+ */

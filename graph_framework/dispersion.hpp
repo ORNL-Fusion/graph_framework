@@ -4,6 +4,147 @@
 ///
 ///  Defines a dispersion function.
 //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+///  @page dispersion_function Dispersion Functions
+///  @brief Dispersion function documentation for the xrays RF Ray tracing code.
+///  @tableofcontents
+///
+///  @section dispersion_function_intro Introduction
+///  This page documents the types of dispersion functions available. As a ray
+///  moves through the plasma it must remain a solution of these functions. For
+///  a fixed wave frequency @f$\omega @f$, the dispersion function dictates how
+///  the wave number @f$\vec{k}@f$ and ray trajectory
+///  @f$\vec{x}@f$ interact.
+///  <table>
+///  <caption id="dispersion_function_symbol">Symbol definitions</caption>
+///  <tr><th>Symbol            <th>Unit             <th>Description
+///  <tr><td>@f$c @f$          <td>@f$\frac{m}{s}@f$<td>Speed of light.
+///  <tr><td>@f$m_{e}@f$       <td>@f$kg @f$        <td>Electron mass
+///  <tr><td>@f$t_{e}@f$       <td>@f$K @f$         <td>Electron temperature
+///  <tr><td>@f$n_{e}@f$       <td>@f$m^{-3}@f$     <td>Electron Denisty
+///  <tr><td>@f$q @f$          <td>@f$C @f$         <td>Fundamental Charge
+///  <tr><td>@f$\vec{B}@f$     <td>@f$T @f$         <td>Magnetic field
+///  <tr><td>@f$\epsilon_{0}@f$<td>@f$\frac{F}{m}@f$<td>Vacuum permittivity
+///  <tr><td>@f$k_{B}@f$       <td>@f$\frac{J}{K}@f$<td>Boltzmann constant
+///  <tr><td>@f$\omega_{pe}@f$ <td>@f$s^{-1}@f$     <td>Electron Plasma Frequency @f$\omega_{pe}=\frac{n_{e}q^{2}}{\epsilon_{0}m_{e}c}@f$
+///  <tr><td>@f$\omega_{ce}@f$ <td>@f$s^{-1}@f$     <td>Electron Cyclotron Frequency @f$\omega_{ce}=\frac{q\left|\vec{B}\right|}{m_{e}}@f$
+///  <tr><td>@f$\omega_{h}@f$  <td>@f$s^{-1}@f$     <td>Upper Hybrid Frequency @f$\omega_{h}^{s}=\omega_{pe}^{2}+\omega_{ce}^{2}@f$
+///  <tr><td>@f$\omega_{r}@f$  <td>@f$s^{-1}@f$     <td>Right cutoff Frequency @f$\omega_{r}=\frac{1}{2}\left(\omega_{ce}+\sqrt{\omega^{2}_{ce}+4\omega_{pe}^{2}}\right)@f$
+///  <tr><td>@f$\omega_{l}@f$  <td>@f$s^{-1}@f$     <td>Left cutoff Frequency @f$\omega_{r}=\frac{1}{2}\left(-\omega_{ce}+\sqrt{\omega^{2}_{ce}+4\omega_{pe}^{2}}\right)@f$
+///  <tr><td>@f$v_{th}@f$      <td>@f$\frac{m}{s}@f$<td>Thermal velocity @f$v_{th}=\sqrt{\frac{k_{B}t_{e}}{m_{e}}}@f$
+///  <tr><td>@f$\vec{n}@f$     <td>@f$1 @f$         <td>@f$n=\frac{\vec{k}c}{\omega}@f$
+///  </table>
+///
+///  @section dispersion_function_normal Normalization
+///  The dispersion functions use normalized quantities for frequncy @f$\omega @f$ and
+///  time @f$t @f$. These are scaled to the speed of light @f$c @f$.
+///  <table>
+///  <caption id="dispersion_function_normal_units">Disperion function units and normalizations</caption>
+///  <tr><th>Symbol                                       <th>Real Unit        <th>Modified                                       <th>Modified Unit<th>Description
+///  <tr><td>@f$\omega @f$                                <td>@f$s^{-1}@f$     <td>@f$\omega'=\frac{\omega}{c}@f$                 <td>@f$m^{-1}@f$ <td>Wave frequency
+///  <tr><td>@f$\vec{k}@f$                                <td>@f$m^{-1}@f$     <td>@f$\vec{k}@f$                                  <td>@f$m^{-1}@f$ <td>Wave number
+///  <tr><td>@f$t @f$                                     <td>@f$s @f$         <td>@f$t'=tc @f$                                   <td>@f$m @f$     <td>Time
+///  <tr><td>@f$\vec{x}@f$                                <td>@f$m @f$         <td>@f$\vec{x}@f$                                  <td>@f$m @f$     <td>Postion
+///  <tr><td>@f$v_{p}=\frac{\omega}{k}@f$                 <td>@f$\frac{m}{s}@f$<td>@f$v'_{p}=\frac{\omega'}{k}@f$                 <td>@f$1 @f$     <td>Phase velocity
+///  <tr><td>@f$v_{g}=\frac{\partial\omega}{\partial k}@f$<td>@f$\frac{m}{s}@f$<td>@f$v'_{g}=\frac{\partial\omega'}{\partial k}@f$<td>@f$1 @f$     <td>Group velocity
+///  </table>
+///
+///  @section dispersion_function_wave_propagation Wave propagation
+///  From any dispersion function, the wave propagation equations are obtained
+///  from derivatives of the dispersion relation.
+///  @f{equation}{\frac{\partial\vec{x}}{\partial {t}}=-\frac{\frac{\partial D}{\partial\vec{k}}}{\frac{\partial D}{\partial\omega}}@f}
+///  @f{equation}{\frac{\partial\vec{k}}{\partial {t}}=\frac{\frac{\partial D}{\partial\vec{x}}}{\frac{\partial D}{\partial\omega}}@f}
+///  RF waves are traced by integrating this system of equations.
+///
+///  @section dispersion_function_avail Available Dispersion Functions
+///  The following dispersion functions are available in xrays.
+///
+///  @subsection dispersion_function_simple Simple
+///  This disperison function represents a wave in a vacuum.
+///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\frac{\vec{k}\cdot\vec{k}}{\omega^{2}}-1\equiv 0 @f}
+///  It has no resonances or cutoffs.
+///
+///  <hr>
+///  @subsection dispersion_function_bohm_gross Bohm Gross
+///  This dispersion function now accounts for how occilations in the plasma
+///  propagate.
+///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\omega_{pe}+\frac{3}{2}\vec{k}\cdot\vec{k}v^{2}_{th}-\omega^{2}\equiv 0 @f}
+///  It has no resonances. Waves cannot propagate below @f$\omega_{pe}@f$ and @f$v_{g}@f$ can never exceed @f$v_{th}@f$.
+///  @image{} html bohm-gross.png ""
+///
+///  <hr>
+///  @subsection dispersion_function_o_wave Ordinary Wave
+///  This disperison function represents a wave with a
+///  @f$\vec{E}_{1}||\vec{B}_{0}@f$. That means the electric field occilates
+///  parallel to the magnetic field.
+///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=1-\frac{\omega^{2}_{pe}}{\omega^{2}}-\vec{n}_{\perp}\cdot\vec{n}_{\perp}\equiv 0 @f}
+///  This wave is cut off below @f$\omega_{pe}@f$.
+///  @image{} html O-Mode.png ""
+///
+///  <hr>
+///  @subsection dispersion_function_x_wave Extra Ordinary Wave
+///  This disperison function represents a wave with a
+///  @f$\vec{E}_{1}\perp\vec{B}_{0}@f$. That means the electric field occilates
+///  perpendicular to the magnetic field.
+///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=1-\frac{\omega_{pe}^2}{\omega^{2}}\frac{\omega^{2}-\omega_{pe}^2}{\omega^{2}-\omega_{h}^2}-\vec{n}_{\perp}\cdot\vec{n}_{\perp}\equiv 0 @f}
+///  This mode has 
+///  This wave has two branches. One branch is cannot not progagate below the
+///  @f$\omega_{r}@f$ cutoff. The other branch cannot not progagate below the
+///  @f$\omega_{l}@f$ cutoff. As the wave approches the upper hybrid fequency,
+///  wave propagation stops as the wave number approces
+///  @f$\left|\vec{k}\right|\rightarrow\infty @f$.
+///  @image{} html X-Mode.png ""
+///
+///  <hr>
+///  @subsection dispersion_function_cold_plasma Cold Plasma
+///  This disperison function represents a wave in a cold plasma medium.
+///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=det\left(\vec{\epsilon}+\vec{n}\vec{n}-\vec{n}\cdot\vec{n}\vec{I}\right)\equiv 0 @f}
+///  The quantity @f$\vec{\epsilon}@f$ is the diaelectric tensor. Using Onsager
+///  symmetries, this tensor is defined as
+///  @f{equation}{\vec{\epsilon}=\left(\begin{array}{ccc}\epsilon_{11}&\epsilon_{12}&0\\-\epsilon_{12}&\epsilon_{11}&0\\0&0&\epsilon_{33}\end{array}\right)@f}
+///  where
+///  @f{equation}{\epsilon_{11}=1-\sum_{s}\frac{\frac{\omega^{2}_{p}}{\omega^{2}}}{1-\frac{\Omega^{2}_{c}}{\omega^{2}}}@f}
+///  @f{equation}{\epsilon_{12}=-i\sum_{s}\frac{\frac{\Omega_{c}}{\omega}\frac{\omega^{2}_{p}}{\omega^{2}}}{1-\frac{\Omega^{2}_{c}}{\omega^{2}}}@f}
+///  @f{equation}{\epsilon_{33}=1-\sum_{s}\frac{\omega^{2}_{p}}{\omega^{2}}@f}
+///  Note here we are including the plasma frequency for ions aswell. This
+///  dispersion function is effectively a super position of the O-Mode and
+///  X-Mode dispersion functions and as such has the same cutoffs and resonaces.
+///  @image{} html ColdPlasma.png ""
+///
+///  <hr>
+///  @section dispersion_function_devel Developing new dispersion functions
+///  This section is intended for code developers and outlines how to create new
+///  dispersion functions. New dispersion functions can be created from a
+///  subclass of @ref dispersion::dispersion_function or any other existing
+///  dispersion_function class and overloading class methods. For convinence the
+///  @ref dispersion::physics class contains several defined physical constants.
+///  @code
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  class new_dispersion final : public dispersion_function<T, SAFE_MATH> {
+///     ...
+///  };
+///  @endcode
+///  When a new dispersion function is subclassed from
+///  @ref dispersion::dispersion_function an implimentation must be provided for
+///  the pure virtual method @ref dispersion::dispersion_function::D.
+///  @code
+///  template<jit::float_scalar T, bool SAFE_MATH=false>
+///  class new_dispersion final : public dispersion_function<T, SAFE_MATH> {
+///  public:
+///      virtual graph::shared_leaf<T, SAFE_MATH> D(graph::shared_leaf<T, SAFE_MATH> w,
+///                                                 graph::shared_leaf<T, SAFE_MATH> kx,
+///                                                 graph::shared_leaf<T, SAFE_MATH> ky,
+///                                                 graph::shared_leaf<T, SAFE_MATH> kz,
+///                                                 graph::shared_leaf<T, SAFE_MATH> x,
+///                                                 graph::shared_leaf<T, SAFE_MATH> y,
+///                                                 graph::shared_leaf<T, SAFE_MATH> z,
+///                                                 graph::shared_leaf<T, SAFE_MATH> t,
+///                                                 equilibrium::shared<T, SAFE_MATH> &eq) {
+///         ...
+///      }
+///  };
+///  @endcode
+//------------------------------------------------------------------------------
 
 #ifndef dispersion_h
 #define dispersion_h
@@ -11,6 +152,7 @@
 #include "newton.hpp"
 #include "equilibrium.hpp"
 
+/// Name space for dispersion functions.
 namespace dispersion {
 //******************************************************************************
 //  Z Function interface.
@@ -19,7 +161,7 @@ namespace dispersion {
 ///  @brief Class interface to build dispersion relation functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class z_function {
@@ -43,7 +185,7 @@ namespace dispersion {
 ///  @brief Class interface to build dispersion relation functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, bool SAFE_MATH=false>
     class z_power_series final : public z_function<T, SAFE_MATH> {
@@ -70,7 +212,7 @@ namespace dispersion {
 ///  @brief Class interface to build dispersion relation functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, bool SAFE_MATH=false>
     class z_erfi final : public z_function<T, SAFE_MATH> {
@@ -99,7 +241,7 @@ namespace dispersion {
 ///  @brief Build plasma fequency expression.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] n       Density.
 ///  @param[in] q       Species charge.
@@ -122,7 +264,7 @@ namespace dispersion {
 ///  @brief Build cyclotron fequency expression.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] q Species charge.
 ///  @param[in] b Magnetic field.
@@ -146,7 +288,7 @@ namespace dispersion {
 ///  @brief Interface for dispersion functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class dispersion_function {
@@ -185,7 +327,7 @@ namespace dispersion {
 ///  @brief Stiff dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class stiff final : public dispersion_function<T, SAFE_MATH> {
@@ -240,7 +382,7 @@ namespace dispersion {
 ///  @brief Simple dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class simple final : public dispersion_function<T, SAFE_MATH> {
@@ -282,7 +424,7 @@ namespace dispersion {
 ///  @brief Physics
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class physics : public dispersion_function<T, SAFE_MATH> {
@@ -304,7 +446,7 @@ namespace dispersion {
 ///  @brief Bohm-Gross dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class bohm_gross final : public physics<T, SAFE_MATH> {
@@ -374,7 +516,7 @@ namespace dispersion {
 ///  @brief Light Wave dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class light_wave final : public physics<T, SAFE_MATH> {
@@ -433,7 +575,7 @@ namespace dispersion {
 ///  @brief Ion wave dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class acoustic_wave final : public physics<T, SAFE_MATH> {
@@ -497,7 +639,7 @@ namespace dispersion {
 ///  @brief Guassian Well dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class guassian_well final : public dispersion_function<T, SAFE_MATH> {
@@ -539,7 +681,7 @@ namespace dispersion {
 ///  @brief Electrostatic ion cyclotron wave dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class ion_cyclotron final : public physics<T, SAFE_MATH> {
@@ -608,7 +750,7 @@ namespace dispersion {
 ///  @brief Ordinary wave dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class ordinary_wave final : public physics<T, SAFE_MATH> {
@@ -667,7 +809,7 @@ namespace dispersion {
 ///  @brief Extra ordinary wave dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class extra_ordinary_wave final : public physics<T, SAFE_MATH> {
@@ -739,7 +881,7 @@ namespace dispersion {
 ///  @brief Cold Plasma Disperison function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class cold_plasma : public physics<T, SAFE_MATH> {
@@ -859,7 +1001,7 @@ namespace dispersion {
 ///  @brief Cold Plasma expansion disperison function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class cold_plasma_expansion : public physics<T, SAFE_MATH> {
@@ -1062,7 +1204,7 @@ namespace dispersion {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam Z         Z function class.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, class Z, bool SAFE_MATH=false>
     class hot_plasma_expansion final : public physics<T, SAFE_MATH> {

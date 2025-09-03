@@ -16,7 +16,7 @@ namespace graph {
 ///  @brief Class to represent vector quantities.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class vector_quantity : public std::enable_shared_from_this<vector_quantity<T, SAFE_MATH>> {
@@ -122,7 +122,7 @@ namespace graph {
 ///  @brief Build a shared vector quantity.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x X vector component.
 ///  @param[in] y Y vector component.
@@ -141,7 +141,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x X vector component.
 ///  @param[in] y Y vector component.
@@ -160,7 +160,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam M         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x X vector component.
 ///  @param[in] y Y vector component.
@@ -179,7 +179,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x X vector component.
 ///  @param[in] y Y vector component.
@@ -199,7 +199,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
 ///  @tparam M         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x X vector component.
 ///  @param[in] y Y vector component.
@@ -220,7 +220,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam M         Float type for the constant.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x X vector component.
 ///  @param[in] y Y vector component.
@@ -241,7 +241,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x X vector component.
 ///  @param[in] y Y vector component.
@@ -260,7 +260,7 @@ namespace graph {
 ///  @brief Build a shared vector quantity.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x X vector component.
 ///  @param[in] y Y vector component.
@@ -280,7 +280,7 @@ namespace graph {
 ///  @brief Addition operator.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left vector.
 ///  @param[in] r Right vector.
@@ -298,7 +298,7 @@ namespace graph {
 ///  @brief Subtraction operator.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left vector.
 ///  @param[in] r Right vector.
@@ -316,7 +316,7 @@ namespace graph {
 ///  @brief Multiplication operator.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] s Scalar term.
 ///  @param[in] v Vector term.
@@ -334,7 +334,7 @@ namespace graph {
 ///  @brief Division operator.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] v Vector numerator.
 ///  @param[in] s Scalar denominator.
@@ -355,7 +355,7 @@ namespace graph {
 ///  @brief Class to represent matrix quantities.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class matrix_quantity : public std::enable_shared_from_this<matrix_quantity<T, SAFE_MATH>> {
@@ -402,7 +402,7 @@ namespace graph {
 ///  @brief Build a shared vector quantity.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] r1 Row 1 matrix component.
 ///  @param[in] r2 Row 2 matrix component.

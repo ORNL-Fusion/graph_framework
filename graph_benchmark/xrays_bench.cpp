@@ -38,10 +38,10 @@ void bench_runner() {
     const size_t batch = NUM_RAYS/threads.size();
     const size_t extra = NUM_RAYS%threads.size();
 
-    timeing::measure_diagnostic_threaded time_setup("Setup Time");
-    timeing::measure_diagnostic_threaded time_init("Init Time");
-    timeing::measure_diagnostic_threaded time_compile("Compile Time");
-    timeing::measure_diagnostic_threaded time_steps("Time Steps");
+    timing::measure_diagnostic_threaded time_setup("Setup Time");
+    timing::measure_diagnostic_threaded time_init("Init Time");
+    timing::measure_diagnostic_threaded time_compile("Compile Time");
+    timing::measure_diagnostic_threaded time_steps("Time Steps");
 
     for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         threads[i] = std::thread([&time_setup, &time_init, &time_compile, &time_steps, batch, extra] (const size_t thread_number) -> void {

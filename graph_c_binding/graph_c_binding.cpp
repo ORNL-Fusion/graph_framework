@@ -1127,7 +1127,7 @@ extern "C" {
 ///
 ///  @param[in] c   The graph C context.
 ///  @param[in] arg The left opperand.
-///  @returns sin(arg)
+///  @returns cos(arg)
 //------------------------------------------------------------------------------
     graph_node graph_cos(STRUCT_TAG graph_c_context *c,
                          graph_node arg) {

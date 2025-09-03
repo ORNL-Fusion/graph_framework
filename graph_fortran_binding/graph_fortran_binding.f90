@@ -1,12 +1,85 @@
 !-------------------------------------------------------------------------------
 !>  @file graph_fortran_binding.f90
 !>  @brief Implimentation of the Fortran binding library.
-!
-!  Note separating the Doxygen comment block here so the detailed description is
-!  found in the Module not the file.
-!
-!> Module contains subroutines for calling this from fortran.
 !-------------------------------------------------------------------------------
+!>  @page graph_fortran_binding Embedding in Fortran code
+!>  @brief Documentation for linking into a Fortran code base.
+!>  @tableofcontents
+!>
+!>  @section graph_fortran_binding_into Introduction
+!>  This section assumes the reader is already familar with developing Fortran
+!>  codes. The simplist method is to create a C callable function like the
+!>  @ref graph_c_binding_into "C binding exmaple". Then create a Fortran
+!>  interface for it.
+!>  @code
+!>  INTERFACE
+!>     SUBROUTINE Fortran_Callable BIND(C, NAME='c_callable_function')
+!>     USE, INTRINSIC :: ISO_C_BINDING
+!>     IMPLICIT NONE
+!>     END SUBROUTINE
+!>  END INTERFACE
+!>  @endcode
+!>  This subroutine can be called like any other Fortran subroutine.
+!>  @code
+!>  CALL Fortran_Callable
+!>  @endcode
+!>
+!>  <hr>
+!>  @section graph_fortran_binding_interface Fortran Binding Interface
+!>  An alternative is to use the
+!>  @ref graph_fortran "Fortran Language interface". The Fortran binding
+!>  interface can be enabled as one of the <tt>cmake</tt>
+!>  @ref build_system_user_options "conifgure options". As an example, we will
+!>  convert the @ref tutorial_workflow "making workflows" turorial to use the
+!>  Fortran language bindings.
+!>  @code
+!>  SUBROUTINE fortran_binding
+!>  USE graph_fortran
+!>  USE, INTRINSIC :: ISO_C_BINDING
+!>
+!>  IMPLICIT NONE
+!>
+!>  CLASS(graph_context), POINTER :: graph
+!>  TYPE(C_PTR)                   :: x
+!>  TYPE(C_PTR)                   :: m
+!>  TYPE(C_PTR)                   :: b
+!>  TYPE(C_PTR)                   :: y
+!>  TYPE(C_PTR)                   :: dydx
+!>
+!>  LOGICAL(C_BOOL), PARAMETER :: use_safe_math = .false.
+!>
+!>  graph => graph_double_context(use_safe_math);
+!>
+!>  x = graph%variable(1_C_LONG, 'x' // C_NULL_CHAR)
+!>  m = graph%constant(0.4_C_DOUBLE)
+!>  b = graph%constant(0.6_C_DOUBLE)
+!>
+!>  y = graph%add(graph%mul(m, x), b)
+!>  dydx = graph%df(y, x);
+!>
+!>  CALL graph%set_variable(x, (/ 1.0_C_DOUBLE, 2.0_C_DOUBLE, 3.0_C_DOUBLE /))
+!>
+!>  CALL graph%set_device_number(0)
+!>  CALL graph%add_item((/ graph_ptr(x) /),                                    &
+!>                      (/ graph_ptr(y), graph_ptr(dydx) /))                   &
+!>                      graph_null_array, graph_null_array, C_NULL_PTR,        &
+!>                      'my_first_kernel' // C_NULL_CHAR, 3_C_LONG)
+!>  CALL graph%compile
+!>  CALL graph%run
+!>  CALL graph%print(0, (/ graph_ptr(x), graph_ptr(y), graph_ptr(dydx) /))
+!>  CALL graph%print(1, (/ graph_ptr(x), graph_ptr(y), graph_ptr(dydx) /))
+!>  CALL graph%print(2, (/ graph_ptr(x), graph_ptr(y), graph_ptr(dydx) /))
+!>
+!>  DEALLOCATE(graph)
+!>  END SUBROUTINE
+!>  @endcode
+!>
+!>  @note Graphs need to use the @ref graph_fortran::graph_ptr function to get
+!>  the pointer address of node.
+!>  @note The @ref graph_fortran::graph_null_array allows setting array of nodes
+!>  arguments to null.
+!-------------------------------------------------------------------------------
+!> Module contains subroutines for calling this from fortran.
       MODULE graph_fortran
       USE, INTRINSIC :: ISO_C_BINDING
 
@@ -14,7 +87,6 @@
 
 !>  A null array for empty
       INTEGER(C_INTPTR_T), DIMENSION(0) :: graph_null_array
-!>  A
 
 !-------------------------------------------------------------------------------
 !>  @brief Class object for the binding.
@@ -994,6 +1066,7 @@
 !>  @param[in,out] this   @ref graph_context instance.
 !>  @param[in]     size   Size of the data buffer.
 !>  @param[in]     symbol Symbol of the variable.
+!>  @returns A variable node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_variable(this, size, symbol)
 
@@ -1011,10 +1084,11 @@
       END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create variable node.
+!>  @brief Create a constant node.
 !>
 !>  @param[in,out] this  @ref graph_context instance.
 !>  @param[in]     value Size of the data buffer.
+!>  @returns A constant node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_constant_real(this, value)
 
@@ -1115,11 +1189,12 @@
       END SUBROUTINE
 
 !-------------------------------------------------------------------------------
-!>  @brief Create variable node.
+!>  @brief Create constant node with complex values.
 !>
 !>  @param[in,out] this       @ref graph_context instance.
 !>  @param[in]     real_value The real component.
 !>  @param[in]     img_value  The imaginary component.
+!>  @returns A constant node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_constant_complex(this, real_value, img_value)
 
@@ -1138,7 +1213,7 @@
       END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create variable node.
+!>  @brief Create pseudo variable node.
 !>
 !>  @param[in,out] this @ref graph_context instance.
 !>  @param[in]     var  The variable to set.
@@ -1913,6 +1988,8 @@
 !>  @param[in]     random_state  Optional random state, can be NULL if not used.
 !>  @param[in]     name          Name for the kernel.
 !>  @param[in]     num_particles Number of elements to operate on.
+!>  @param[in]     tol           Maximum tolarance to converge to.
+!>  @param[in]     max_iter      Maximum number of iterations for convergence.
 !-------------------------------------------------------------------------------
       SUBROUTINE graph_context_add_converge_item(this, inputs, outputs,        &
                                                  map_inputs, map_outputs,      &

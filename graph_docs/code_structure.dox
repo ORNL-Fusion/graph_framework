@@ -1,0 +1,27 @@
+/*!
+ * @page code_structure Code Structure
+ * @brief Architecture of the code base.
+ * @tableofcontents
+ *
+ * @section code_structure_intro Introduction
+ * This topic covers the structure of the framework and the structure of the RF
+ * Ray tracing code <tt>xrays</tt>.
+ *
+ * @section code_structure_framework Framework
+ * The namespaces of the graph framework are:
+ * * @ref graph The operation nodes.
+ * * @ref workflow The routines for executing graphs.
+ * * @ref jit Generic interface for Just-In-Time compiling of the graphs.
+ * * @ref backend Host side buffers and operations.
+ * * @ref gpu Device drivers for CPU and the GPU.
+ * * @ref timing Routines for timing.
+ * * @ref output Routines for loading and saving graph to Netcdf files.
+ * * @ref commandline Routines for parsing command lines.
+ *
+ * @section code_structure_xrays Ray Tracing code
+ * The namespaces of the Ray Tracing code are:
+ * * @ref equilibrium Equilibrium models.
+ * * @ref dispersion Dispersion functions.
+ * * @ref solver PDE integration methods and optimization methods.
+ * * @ref absorption The absorption models.
+ */

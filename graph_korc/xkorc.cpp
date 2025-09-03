@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void run_korc() {
-    const timeing::measure_diagnostic t_total("Total Time");
+    const timing::measure_diagnostic t_total("Total Time");
     
     const size_t num_particles = 1000000;
     std::cout << "Num particles " << num_particles << std::endl;
@@ -24,7 +24,7 @@ void run_korc() {
         threads[i] = std::thread([num_particles, batch, extra] (const size_t thread_number) -> void {
             const size_t local_num_particles = batch + (extra > thread_number ? 1 : 0);
             
-            const timeing::measure_diagnostic t_setup("Setup Time");
+            const timing::measure_diagnostic t_setup("Setup Time");
             
             auto eq = equilibrium::make_efit<T> (EFIT_FILE);
             //auto eq = equilibrium::make_slab_density<T> ();
@@ -141,7 +141,7 @@ void run_korc() {
             
             t_setup.print();
             
-            const timeing::measure_diagnostic t_run("Run Time");
+            const timing::measure_diagnostic t_run("Run Time");
             work.pre_run();
             for (size_t i = 0; i < 1000000; i++) {
 /*                sync.join();

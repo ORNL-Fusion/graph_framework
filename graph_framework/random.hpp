@@ -18,7 +18,7 @@ namespace graph {
 ///  @brief Class representing a random_state_node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class random_state_node final : public leaf_node<T, SAFE_MATH> {
@@ -32,6 +32,7 @@ namespace graph {
 ///  State index.
             uint16_t index;
 #ifdef USE_CUDA
+///  Pading to aline the size of the struct for Cuda backends.
             uint16_t padding[3];
 #endif
         };
@@ -39,6 +40,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
 ///
+///  @param[in] size Number of random states.
 ///  @param[in] seed Inital random seed.
 //------------------------------------------------------------------------------
         random_state_node(const size_t size,
@@ -104,7 +106,10 @@ namespace graph {
                        << "    uint16_t padding[3];"        << std::endl
 #endif
                        << "};"                              << std::endl;
+
+                visited.insert(this);
 #ifdef SHOW_USE_COUNT
+                usage[this] = 1;
             } else {
                 ++usage[this];
 #endif
@@ -126,19 +131,6 @@ namespace graph {
                 jit::register_map &indices,
                 const jit::register_usage &usage) {
             return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
-///
-///  @param[in] x Other graph to check if it is a match.
-///  @returns True if the nodes are a match.
-//------------------------------------------------------------------------------
-        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
-            if (this == x.get()) {
-                return true;
-            }
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -247,7 +239,7 @@ namespace graph {
 ///  @brief Define random_state convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] size Number of random states.
 ///  @param[in] seed Inital random seed.
@@ -283,7 +275,7 @@ namespace graph {
 ///  @brief Cast to a random_state node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -300,7 +292,7 @@ namespace graph {
 ///  @brief Class representing a random_node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class random_node final : public straight_node<T, SAFE_MATH> {
@@ -373,12 +365,12 @@ namespace graph {
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
                                       int &avail_const_mem) {
-            this->arg->compile_preamble(stream, registers,
-                                        visited, usage,
-                                        textures1d, textures2d,
-                                        avail_const_mem);
-
             if (visited.find(this) == visited.end()) {
+                this->arg->compile_preamble(stream, registers,
+                                            visited, usage,
+                                            textures1d, textures2d,
+                                            avail_const_mem);
+
                 jit::add_type<T> (stream);
                 stream << " random(";
                 if constexpr (jit::use_metal<T> ()) {
@@ -404,7 +396,10 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << "> (y^(y >> 18));"                                  << std::endl
                        << "}"                                                 << std::endl;
+
+                visited.insert(this);
 #ifdef SHOW_USE_COUNT
+                usage[this] = 1;
             } else {
                 ++usage[this];
 #endif
@@ -504,7 +499,7 @@ namespace graph {
 ///  @brief Define random convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] state Random state node.
 ///  @returns A reduced random node.
@@ -538,7 +533,7 @@ namespace graph {
 ///  @brief Cast to a random node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -552,7 +547,7 @@ namespace graph {
 ///  @brief Create a random_scale constant.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @returns A random_scale constant.
 //------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ namespace graph {
 ///  @brief Class representing a sine_node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class sine_node final : public straight_node<T, SAFE_MATH> {
@@ -36,7 +36,7 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a sine\_node node.
+///  @brief Construct a sine_node node.
 ///
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
@@ -220,7 +220,7 @@ namespace graph {
 ///  @brief Define sine convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced sin node.
@@ -253,7 +253,7 @@ namespace graph {
 ///  @brief Cast to a sine node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -270,7 +270,7 @@ namespace graph {
 ///  @brief Class representing a cosine_node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class cosine_node final : public straight_node<T, SAFE_MATH> {
@@ -472,7 +472,7 @@ namespace graph {
 ///  @brief Define cosine convience function.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced cos node.
@@ -505,7 +505,7 @@ namespace graph {
 ///  @brief Cast to a cosine node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -524,7 +524,7 @@ namespace graph {
 ///  tan(x) = sin(x)/cos(x)
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Argument.
 ///  @returns A reduced tan node.
@@ -541,7 +541,7 @@ namespace graph {
 ///  @brief Class representing a sine_node leaf.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class arctan_node final : public branch_node<T, SAFE_MATH> {
@@ -561,7 +561,7 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a arctan\_node node.
+///  @brief Construct a arctan_node node.
 ///
 ///  @param[in] x Argument.
 ///  @param[in] y Argument.
@@ -793,7 +793,7 @@ namespace graph {
 ///  @brief Build arctan node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -824,7 +824,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -840,7 +840,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam R         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -859,7 +859,7 @@ namespace graph {
 ///  @brief Cast to a power node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.

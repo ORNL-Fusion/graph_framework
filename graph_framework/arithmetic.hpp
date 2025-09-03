@@ -15,7 +15,7 @@ namespace graph {
 ///  @brief Check if nodes are constant combineable.
 ///
 ///  @tparam T         Base type of the nodes.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] a Opperand A
 ///  @param[in] b Opperand B
@@ -43,7 +43,7 @@ namespace graph {
 ///  @brief Check if the constants are promotable.
 ///
 ///  @tparam T         Base type of the nodes.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] a Opperand A
 ///  @param[in] b Opperand B
@@ -65,7 +65,7 @@ namespace graph {
 ///  @brief Check if the variable is combinable.
 ///
 ///  @tparam T         Base type of the nodes.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] a Opperand A
 ///  @param[in] b Opperand B
@@ -81,7 +81,7 @@ namespace graph {
 ///  @brief Check if the variable is variable is promotable.
 ///
 ///  @tparam T         Base type of the nodes.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] a Opperand A
 ///  @param[in] b Opperand B
@@ -101,7 +101,7 @@ namespace graph {
 ///  @brief Check if the exponent is greater than the other.
 ///
 ///  @tparam T         Base type of the nodes.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] a Opperand A
 ///  @param[in] b Opperand B
@@ -126,7 +126,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class add_node final : public branch_node<T, SAFE_MATH> {
@@ -731,7 +731,7 @@ namespace graph {
 ///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -765,7 +765,7 @@ namespace graph {
 ///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -784,7 +784,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -803,7 +803,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -822,7 +822,7 @@ namespace graph {
 ///  @brief Cast to a add node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -841,7 +841,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class subtract_node final : public branch_node<T, SAFE_MATH> {
@@ -1553,7 +1553,7 @@ namespace graph {
 ///  @brief Build subtract node from two leaves.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -1588,7 +1588,7 @@ namespace graph {
 ///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -1608,7 +1608,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -1628,7 +1628,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -1647,7 +1647,7 @@ namespace graph {
 ///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] a Argument to negate.
 ///  @returns -1.0*a
@@ -1665,7 +1665,7 @@ namespace graph {
 ///  @brief Cast to a subtract node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -1682,7 +1682,7 @@ namespace graph {
 ///  @brief A multiplcation node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class multiply_node final : public branch_node<T, SAFE_MATH> {
@@ -2623,7 +2623,7 @@ namespace graph {
 ///  @brief Build multiply node from two leaves.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -2657,7 +2657,7 @@ namespace graph {
 ///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -2676,7 +2676,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -2695,7 +2695,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -2714,7 +2714,7 @@ namespace graph {
 ///  @brief Cast to a multiply node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -2731,7 +2731,7 @@ namespace graph {
 ///  @brief A division node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class divide_node final : public branch_node<T, SAFE_MATH> {
@@ -3588,7 +3588,7 @@ namespace graph {
 ///  @brief Build divide node from two leaves.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -3622,7 +3622,7 @@ namespace graph {
 ///  classes.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -3641,7 +3641,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -3660,7 +3660,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -3679,7 +3679,7 @@ namespace graph {
 ///  @brief Cast to a divide node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
@@ -3698,7 +3698,7 @@ namespace graph {
 ///  Note use templates here to defer this so it can use the operator functions.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class fma_node final : public triple_node<T, SAFE_MATH> {
@@ -5192,7 +5192,7 @@ namespace graph {
 ///  @brief Build fused multiply add node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] m Middle branch.
@@ -5229,7 +5229,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] m Middle branch.
@@ -5250,7 +5250,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam M         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] m Middle branch.
@@ -5271,7 +5271,7 @@ namespace graph {
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] m Middle branch.
@@ -5293,7 +5293,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
 ///  @tparam M         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] m Middle branch.
@@ -5316,7 +5316,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam M         Float type for the constant.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] m Middle branch.
@@ -5339,7 +5339,7 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam L         Float type for the constant.
 ///  @tparam R         Float type for the constant.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] m Middle branch.
@@ -5361,7 +5361,7 @@ namespace graph {
 ///  @brief Cast to a fma node.
 ///
 ///  @tparam T         Base type of the calculation.
-///  @tparam SAFE_MATH Use safe math operations.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attemped dynamic case.
