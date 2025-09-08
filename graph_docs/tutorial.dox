@@ -151,10 +151,12 @@ void run_tutorial() {
  * also take several variations of this.
  * @code
 auto dydm = y->df(m);
+auto dydb = y->df(b)
 auto dydy = y->df(y);
 auto dydb = y->df(m*x);
  @endcode
- * The results will be @f$0.4@f$, @f$x@f$, @f$1@f$, and @f$0@f$ respectively.
+ * The results will be @f$0.4@f$, @f$x@f$, @f$1@f$, @f$1@f$, and @f$1@f$
+ * respectively.
  *
  * <hr>
  * @section tutorial_workflow Making workflows.
