@@ -1738,6 +1738,139 @@ namespace equilibrium {
     }
 
 //******************************************************************************
+//  Analytic tokamak magnetic field.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Tokamak magnetic field equilibrium with analytic expression.
+///
+///  This model provides only the magnetic field described by
+///
+///  \f[
+///  B_x = -\frac{z B_0 x}{R^2 q(r)} + \frac{R_0 B_0 y}{R^2}, \quad
+///  B_y = -\frac{z B_0 y}{R^2 q(r)} - \frac{R_0 B_0 x}{R^2}, \quad
+///  B_z = \frac{B_0 (R-R_0)}{R q(r)},
+///  \f]
+///
+///  with \f$r = \sqrt{(R-R_0)^2 + z^2}\f$,
+///  \f$R = \sqrt{x^2 + y^2}\f$ and
+///  \f$q(r) = q_0\left(1 + r^2/\lambda^2\right)\f$.
+///  Other equilibrium quantities (densities, temperatures and electric
+///  field) are set to zero.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class tokamak_field : public generic<T, SAFE_MATH> {
+        const T R0, B0, q0, lambda;
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a tokamak magnetic field equilibrium.
+///
+///  @param[in] R0      Major radius (m).
+///  @param[in] B0      Characteristic magnetic field (T).
+///  @param[in] q0      Safety factor on axis.
+///  @param[in] lambda  Characteristic length scale (m).
+//------------------------------------------------------------------------------
+        tokamak_field(T R0_val, T B0_val, T q0_val, T lambda_val) :
+        generic<T, SAFE_MATH> ({3.34449469E-27}, {1}),
+        R0(R0_val), B0(B0_val), q0(q0_val), lambda(lambda_val) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron density (zero for this model).
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_density(graph::shared_leaf<T, SAFE_MATH> x,
+                             graph::shared_leaf<T, SAFE_MATH> y,
+                             graph::shared_leaf<T, SAFE_MATH> z) final {
+            (void)x; (void)y; (void)z;
+            return graph::zero<T, SAFE_MATH>();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion density (zero for this model).
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_density(const size_t index,
+                        graph::shared_leaf<T, SAFE_MATH> x,
+                        graph::shared_leaf<T, SAFE_MATH> y,
+                        graph::shared_leaf<T, SAFE_MATH> z) final {
+            (void)index; (void)x; (void)y; (void)z;
+            return graph::zero<T, SAFE_MATH>();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electron temperature (zero for this model).
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_electron_temperature(graph::shared_leaf<T, SAFE_MATH> x,
+                                 graph::shared_leaf<T, SAFE_MATH> y,
+                                 graph::shared_leaf<T, SAFE_MATH> z) final {
+            (void)x; (void)y; (void)z;
+            return graph::zero<T, SAFE_MATH>();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the ion temperature (zero for this model).
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_ion_temperature(const size_t index,
+                            graph::shared_leaf<T, SAFE_MATH> x,
+                            graph::shared_leaf<T, SAFE_MATH> y,
+                            graph::shared_leaf<T, SAFE_MATH> z) final {
+            (void)index; (void)x; (void)y; (void)z;
+            return graph::zero<T, SAFE_MATH>();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the magnetic field.
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_magnetic_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) final {
+            auto cR0 = graph::constant<T, SAFE_MATH>(R0);
+            auto cB0 = graph::constant<T, SAFE_MATH>(B0);
+            auto cq0 = graph::constant<T, SAFE_MATH>(q0);
+            auto clam = graph::constant<T, SAFE_MATH>(lambda);
+            auto R   = graph::sqrt(x*x + y*y);
+            auto r   = graph::sqrt((R - cR0)*(R - cR0) + z*z);
+            auto q_r = cq0 * (graph::one<T, SAFE_MATH>() + (r*r)/(clam*clam));
+            auto Rsq = R*R;
+            auto Bx  = -(z * cB0 * x) / (Rsq * q_r) + (cR0 * cB0 * y) / Rsq;
+            auto By  = -(z * cB0 * y) / (Rsq * q_r) - (cR0 * cB0 * x) / Rsq;
+            auto Bz  = (cB0 * (R - cR0)) / (R * q_r);
+            return graph::vector(Bx, By, Bz);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the electric field (zero for this model).
+//------------------------------------------------------------------------------
+        virtual graph::shared_vector<T, SAFE_MATH>
+        get_electric_field(graph::shared_leaf<T, SAFE_MATH> x,
+                           graph::shared_leaf<T, SAFE_MATH> y,
+                           graph::shared_leaf<T, SAFE_MATH> z) final {
+            (void)x; (void)y; (void)z;
+            auto zero = graph::zero<T, SAFE_MATH>();
+            return graph::vector(zero, zero, zero);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the characteristic magnetic field strength.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T, SAFE_MATH>
+        get_characteristic_field(const size_t device_number=0) final {
+            (void)device_number;
+            return graph::constant<T, SAFE_MATH>(B0);
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Convenience function to build a tokamak magnetic field equilibrium.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared<T, SAFE_MATH> make_tokamak_field(T R0, T B0, T q0, T lambda) {
+        return std::make_shared<tokamak_field<T, SAFE_MATH>>(R0, B0, q0, lambda);
+    }
+
+//******************************************************************************
 //  3D VMEC equilibrium.
 //******************************************************************************
 //------------------------------------------------------------------------------
