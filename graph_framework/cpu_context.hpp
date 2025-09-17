@@ -183,9 +183,7 @@ namespace gpu {
                                                               buffer.release());
 
             clang::CompilerInstance clang(invocation);
-            std::shared_ptr<llvm::vfs::FileSystem> VFS =
-                std::make_shared<llvm::vfs::InMemoryFileSystem> ();
-            clang.createDiagnostics(*VFS.get());
+            clang.createDiagnostics();
 
             clang::TargetOptions target_options;
             target_options.Triple = llvm::sys::getProcessTriple();
