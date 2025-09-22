@@ -392,6 +392,8 @@
 		C7B676092AA90243005AB34C /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		C7B677D829E45C9500D3ADC6 /* backend.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = backend.hpp; sourceTree = "<group>"; };
 		C7B677DA29E464AE00D3ADC6 /* cpu_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cpu_context.hpp; sourceTree = "<group>"; };
+		C7C2D6682E81C1D90017C272 /* paper.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = paper.md; sourceTree = "<group>"; };
+		C7C2D66A2E81C4B90017C272 /* paper.bib */ = {isa = PBXFileReference; lastKnownFileType = text; path = paper.bib; sourceTree = "<group>"; };
 		C7CEA0042948D02A00F61D09 /* timing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = timing.hpp; sourceTree = "<group>"; };
 		C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cuda_context.hpp; sourceTree = "<group>"; };
 		C7D12D992DBAB31F00925420 /* random.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = random.hpp; sourceTree = "<group>"; };
@@ -656,6 +658,7 @@
 				C736E6B02C9B52CA00AAE3C0 /* graph_playground */,
 				C78F3D892DC122B1002E3D94 /* graph_korc */,
 				C75C42942E5CA60B00B0950B /* graph_docs */,
+				C7C2D6692E81C1D90017C272 /* graph_paper */,
 				C7167B212AC5CE8500E03131 /* utilities */,
 				C717CB8C2A02E361008FBDD8 /* cmake */,
 				C79141A722DA9BF200E0BA0D /* Products */,
@@ -763,6 +766,15 @@
 				C7AE06642E3C285000586BCD /* graph_fortran_binding.f90 */,
 			);
 			path = graph_fortran_binding;
+			sourceTree = "<group>";
+		};
+		C7C2D6692E81C1D90017C272 /* graph_paper */ = {
+			isa = PBXGroup;
+			children = (
+				C7C2D6682E81C1D90017C272 /* paper.md */,
+				C7C2D66A2E81C4B90017C272 /* paper.bib */,
+			);
+			path = graph_paper;
 			sourceTree = "<group>";
 		};
 		C7DC9EE32E39768300524F6F /* graph_c_binding */ = {
