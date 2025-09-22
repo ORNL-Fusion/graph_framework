@@ -1,0 +1,373 @@
+%% This BibTeX bibliography file was created using BibDesk.
+%% https://bibdesk.sourceforge.io/
+
+%% Created for Cianciosa, Mark at 2025-09-22 16:43:49 -0400 
+
+
+%% Saved with string encoding Unicode (UTF-8) 
+
+@book{Thorne,
+	author = {Thorne, Kip S and Blandford, Roger D},
+	publisher = {Princeton University Press},
+	title = {Modern classical physics: optics, fluids, plasmas, elasticity, relativity, and statistical physics},
+	year = {2017}}
+
+@book{Chen,
+	author = {Francis F. Chen},
+	date-added = {2022-07-06 11:17:38 -0400},
+	date-modified = {2022-07-06 11:19:26 -0400},
+	edition = {3rd},
+	publisher = {Springer},
+	title = {Introduction to Plasma Physics and Controlled Fusion},
+	year = {2016}}
+
+@article{McGreivy,
+	abstract = {A new stellarator coil design code is introduced that optimizes the position and winding pack orientation of finite-build coils. The new code, called flexible optimized curves in space using automatic differentiation (AD) and finite build (FOCUSADD), performs gradient-based optimization in a high-dimensional, non-convex space. The derivatives with respect to parameters of finite-build coils are easily and efficiently computed using AD. FOCUSADD parametrizes coil positions in free space using a Fourier series and uses a multi-filament approximation to the coil winding pack. The orientation of the winding pack is parametrized with a Fourier series and can be optimized as well. Optimized finite-build coils for a Wendelstein 7-X (W7-X)-like stellarator are found, and compared with filamentary coil results. The final positions of optimized finite-build W7-X-like coils are shifted, on average, by approximately 2.5 mm relative to optimized filamentary coils. These results suggest that finite-build effects should be accounted for in the optimization of stellarators with low coil tolerances.},
+	author = {N. McGreivy and S.R. Hudson and C. Zhu},
+	doi = {10.1088/1741-4326/abcd76},
+	journal = {Nuclear Fusion},
+	month = {jan},
+	number = {2},
+	pages = {026020},
+	publisher = {{IOP} Publishing},
+	title = {Optimized finite-build stellarator coils using automatic differentiation},
+	url = {https://doi.org/10.1088/1741-4326/abcd76},
+	volume = {61},
+	year = 2021,
+	bdsk-url-1 = {https://doi.org/10.1088/1741-4326/abcd76}}
+
+@article{Reynolds,
+	abstract = {Single-fluid resistive magnetohydrodynamics (MHD) is a fluid description of fusion plasmas which is often used to investigate macroscopic instabilities in tokamaks. In MHD modeling of tokamaks, it is often desirable to compute MHD phenomena to resistive time scales or a combination of resistive-Alfv{\'e}n time scales, which can render explicit time stepping schemes computationally expensive. We present recent advancements in the development of preconditioners for fully nonlinearly implicit simulations of single-fluid resistive tokamak MHD. Our work focuses on simulations using a structured mesh mapped into a toroidal geometry with a shaped poloidal cross-section, and a finite-volume spatial discretization of the partial differential equation model. We discretize the temporal dimension using a fully implicit θ or the backwards differentiation formula method, and solve the resulting nonlinear algebraic system using a standard inexact Newton--Krylov approach, provided by the sundials library. The focus of this paper is on the construction and performance of various preconditioning approaches for accelerating the convergence of the iterative solver algorithms. Effective preconditioners require information about the Jacobian entries; however, analytical formulae for these Jacobian entries may be prohibitive to derive/implement without error. We therefore compute these entries using automatic differentiation with OpenAD. We then investigate a variety of preconditioning formulations inspired by standard solution approaches in modern MHD codes, in order to investigate their utility in a preconditioning context. We first describe the code modifications necessary for the use of the OpenAD tool and sundials solver library. We conclude with numerical results for each of our preconditioning approaches in the context of pellet-injection fueling of tokamak plasmas. Of these, our optimal approach results in a speedup of a factor of 3 compared with non-preconditioned implicit tests, with that performance gap rapidly widening with increasing mesh refinement.},
+	author = {Daniel R Reynolds and Ravi Samtaney and Hilari C Tiedeman},
+	doi = {10.1088/1749-4699/5/1/014003},
+	journal = {Computational Science {\&}amp$\mathsemicolon$ Discovery},
+	month = {jun},
+	number = {1},
+	pages = {014003},
+	publisher = {{IOP} Publishing},
+	title = {A fully implicit Newton{\textendash}Krylov{\textendash}Schwarz method for tokamak magnetohydrodynamics: Jacobian construction and preconditioner formulation},
+	url = {https://doi.org/10.1088/1749-4699/5/1/014003},
+	volume = {5},
+	year = 2012,
+	bdsk-url-1 = {https://doi.org/10.1088/1749-4699/5/1/014003}}
+
+@article{Rodriguez,
+	abstract = {Multi-channel, nonlinear predictions of core temperature and density profiles are performed for the SPARC tokamak (Creely et al 2020 J. Plasma Phys. 86 865860502) accounting for both kinetic neoclassical and fully nonlinear gyro-kinetic turbulent fluxes. A series of flux-tube, nonlinear, electromagnetic simulations using the CGYRO code (Candy et al 2016 J. Comput. Phys. 324 73--93) with six gyrokinetic species are coupled to a nonlinear optimizer using Gaussian process regression techniques. The simultaneous evolution of energy sources, including alpha heat, radiation, and energy exchange, coupled with these high fidelity models and techniques, leads to a converged solution in electron temperature, ion temperature and electron density channels with a minimal number of expensive gyrokinetic simulations without compromising accuracy.},
+	author = {P. Rodriguez-Fernandez and N.T. Howard and J. Candy},
+	doi = {10.1088/1741-4326/ac64b2},
+	journal = {Nuclear Fusion},
+	month = {may},
+	number = {7},
+	pages = {076036},
+	publisher = {{IOP} Publishing},
+	title = {Nonlinear gyrokinetic predictions of {SPARC} burning plasma profiles enabled by surrogate modeling},
+	url = {https://doi.org/10.1088/1741-4326/ac64b2},
+	volume = {62},
+	year = 2022,
+	bdsk-url-1 = {https://doi.org/10.1088/1741-4326/ac64b2}}
+
+@article{Kaltsas,
+	author = {Kaltsas,D. A. and Throumoulopoulos,G. N.},
+	doi = {10.1063/5.0073033},
+	eprint = {https://doi.org/10.1063/5.0073033},
+	journal = {Physics of Plasmas},
+	number = {2},
+	pages = {022506},
+	title = {Neural network tokamak equilibria with incompressible flows},
+	url = {https://doi.org/10.1063/5.0073033},
+	volume = {29},
+	year = {2022},
+	bdsk-url-1 = {https://doi.org/10.1063/5.0073033}}
+
+@misc{Abadi,
+	author = {Mart\'{i}n~Abadi and Ashish~Agarwal and Paul~Barham and Eugene~Brevdo and Zhifeng~Chen and Craig~Citro and Greg~S.~Corrado and Andy~Davis and Jeffrey~Dean and Matthieu~Devin and Sanjay~Ghemawat and Ian~Goodfellow and Andrew~Harp and Geoffrey~Irving and Michael~Isard and Yangqing Jia and Rafal~Jozefowicz and Lukasz~Kaiser and Manjunath~Kudlur and Josh~Levenberg and Dandelion~Man\'{e} and Rajat~Monga and Sherry~Moore and Derek~Murray and Chris~Olah and Mike~Schuster and Jonathon~Shlens and Benoit~Steiner and Ilya~Sutskever and Kunal~Talwar and Paul~Tucker and Vincent~Vanhoucke and Vijay~Vasudevan and Fernanda~Vi\'{e}gas and Oriol~Vinyals and Pete~Warden and Martin~Wattenberg and Martin~Wicke and Yuan~Yu and Xiaoqiang~Zheng},
+	note = {Software available from tensorflow.org},
+	title = {{TensorFlow}: Large-Scale Machine Learning on Heterogeneous Systems},
+	url = {https://www.tensorflow.org/},
+	year = {2015},
+	bdsk-url-1 = {https://www.tensorflow.org/}}
+
+@misc{Aho,
+	author = {Aho, Alfred V and Sethi, Ravi and Ullman, Jeffrey D},
+	publisher = {Addison-Wesley},
+	title = {Compilers: Principles, Tools, and Techniques},
+	year = {1986}}
+
+@article{Backus,
+	author = {Backus, J. W. and Heising, W. P.},
+	doi = {10.1109/PGEC.1964.263818},
+	journal = {IEEE Transactions on Electronic Computers},
+	number = {4},
+	pages = {382-385},
+	title = {Fortran},
+	volume = {EC-13},
+	year = {1964},
+	bdsk-url-1 = {https://doi.org/10.1109/PGEC.1964.263818}}
+
+@article{Yang,
+	author = {Yang, Charlene and Deslippe, Jack},
+	journal = {Bulletin of the American Physical Society},
+	publisher = {APS},
+	title = {Accelerate Science on Perlmutter with NERSC},
+	volume = {65},
+	year = {2020}}
+
+@book{Munshi,
+	author = {Munshi, Aaftab and Gaster, Benedict and Mattson, Timothy G and Ginsburg, Dan},
+	publisher = {Pearson Education},
+	title = {OpenCL programming guide},
+	year = {2011}}
+
+@book{Farber,
+	author = {Farber, Rob},
+	publisher = {Newnes},
+	title = {Parallel programming with OpenACC},
+	year = {2016}}
+
+@article{Schneider,
+	author = {Schneider, David},
+	doi = {10.1109/MSPEC.2022.9676353},
+	journal = {IEEE Spectrum},
+	number = {1},
+	pages = {34-35},
+	title = {The Exascale Era is Upon Us: The Frontier supercomputer may be the first to reach 1,000,000,000,000,000,000 operations per second},
+	volume = {59},
+	year = {2022},
+	bdsk-url-1 = {https://doi.org/10.1109/MSPEC.2022.9676353}}
+
+@article{Hines,
+	author = {Hines, Jonathan},
+	doi = {10.1109/MCSE.2018.021651341},
+	journal = {Computing in Science \& Engineering},
+	number = {2},
+	pages = {78-82},
+	title = {Stepping up to Summit},
+	volume = {20},
+	year = {2018},
+	bdsk-url-1 = {https://doi.org/10.1109/MCSE.2018.021651341}}
+
+@book{Stroustrup,
+	author = {Stroustrup, Bjarne},
+	publisher = {Pearson Education},
+	title = {The C++ programming language},
+	year = {2013}}
+
+@inproceedings{Merrill,
+	author = {Merrill, Jason},
+	booktitle = {Proceedings of the 2003 GCC Summit},
+	pages = {171--180},
+	title = {Generic and gimple: A new tree representation for entire functions},
+	year = {2003}}
+
+@inproceedings{Lattner,
+	author = {Lattner, C. and Adve, V.},
+	booktitle = {International Symposium on Code Generation and Optimization, 2004. CGO 2004.},
+	doi = {10.1109/CGO.2004.1281665},
+	pages = {75-86},
+	title = {LLVM: a compilation framework for lifelong program analysis \& transformation},
+	year = {2004},
+	bdsk-url-1 = {https://doi.org/10.1109/CGO.2004.1281665}}
+
+@article{Ritchie,
+	author = {Ritchie, Dennis M},
+	journal = {ACM Sigplan Notices},
+	number = {3},
+	pages = {201--208},
+	title = {The development of the C language},
+	volume = {28},
+	year = {1993}}
+
+@article{Jaeger,
+	author = {Jaeger,E. F. and Berry,L. A. and D'Azevedo,E. and Batchelor,D. B. and Carter,M. D. and White,K. F. and Weitzner,H.},
+	doi = {10.1063/1.1455001},
+	eprint = {https://doi.org/10.1063/1.1455001},
+	journal = {Physics of Plasmas},
+	number = {5},
+	pages = {1873-1881},
+	title = {Advances in full-wave modeling of radio frequency heated, multidimensional plasmas},
+	url = {https://doi.org/10.1063/1.1455001},
+	volume = {9},
+	year = {2002},
+	bdsk-url-1 = {https://doi.org/10.1063/1.1455001}}
+
+@article{Barrera,
+	abstract = {In this paper a novel use of the heterodyne radiometer in JET is presented. The operation of the diagnostic has been extended to allow simultaneously measurement of the pedestal temperature profile at the inboard and outboard midplane with high spatial and temporal resolution. Access to the inboard midplane region is obtained by measuring ordinary mode electron cyclotron emission (ECE) (no harmonic overlap) using an antenna located on the low-field side of the torus. To assess the potential of the ECE temperature measurements in the inboard pedestal region, a detailed analysis of ECE spectrum will be discussed. The measured electron temperature profiles are presented, including a discussion of the main uncertainties in the analysis. The comparison of inboard and outboard temperature pedestal profiles in a variety of H-mode plasmas shows a reasonable agreement in both shape and magnitude.},
+	author = {L Barrera and E de la Luna and L Figini and M N A Beurskens and M Brix and F Castej{\'{o}}n and P C de Vries and D Farina and M Kempenaars and P Lomas and J Mailloux and I Nunes and E Solano and},
+	doi = {10.1088/0741-3335/52/8/085010},
+	journal = {Plasma Physics and Controlled Fusion},
+	month = {jul},
+	number = {8},
+	pages = {085010},
+	publisher = {{IOP} Publishing},
+	title = {Inboard and outboard electron temperature profile measurements in {JET} using {ECE} diagnostics},
+	url = {https://doi.org/10.1088/0741-3335/52/8/085010},
+	volume = {52},
+	year = {2010},
+	bdsk-url-1 = {https://doi.org/10.1088/0741-3335/52/8/085010}}
+
+@article{Smirnov,
+	author = {Smirnov, AP and Harvey, RW},
+	journal = {CompX Report CompX-2000-01},
+	title = {The GENRAY ray tracing code},
+	year = {2001}}
+
+@article{Lao,
+	abstract = {An efficient method is given to reconstruct the current profile parameters, the plasma shape, and a current profile consistent with the magnetohydrodynamic equilibrium constraint from external magnetic measurements, based on a Picard iteration approach which approximately conserves the measurements. Computational efforts are reduced by parametrizing the current profile linearly in terms of a number of physical parameters. Results of detailed comparative calculations and a sensitivity study are described. Illustrative calculations to reconstruct the current profiles and plasma shapes in ohmically and auxiliarily heated Doublet III plasmas are given which show many interesting features of the current profiles.},
+	author = {Lao, L.L. and St. John, H. and Stambaugh, R.D. and Kellman, A.G. and Pfeiffer, W.},
+	doi = {10.1088/0029-5515/25/11/007},
+	journal = {Nuclear Fusion},
+	month = {nov},
+	number = {11},
+	pages = {1611},
+	title = {Reconstruction of current profile parameters and plasma shapes in tokamaks},
+	url = {https://dx.doi.org/10.1088/0029-5515/25/11/007},
+	volume = {25},
+	year = {1985},
+	bdsk-url-1 = {https://dx.doi.org/10.1088/0029-5515/25/11/007}}
+
+@article{Tamburini,
+	abstract = {Radiation reaction (RR) effects on the acceleration of a thin plasma foil by a superintense laser pulse in the radiation pressure-dominated regime are investigated theoretically. A simple suitable approximation of the Landau--Lifshitz equation for the RR force and a novel leap-frog pusher for its inclusion in particle-in-cell simulations are provided. Simulations for both linear and circular polarization of the laser pulse are performed and compared. It is found that at intensities exceeding 1023 W cm− 2 the RR force strongly affects the dynamics for a linearly polarized laser pulse, reducing the maximum ion energy but also the width of the spectrum. In contrast, no significant effect is found for circularly polarized laser pulses whenever the laser pulse does not break through the foil.},
+	author = {Tamburini, M and Pegoraro, F and Di Piazza, A and Keitel, C H and Macchi, A},
+	doi = {10.1088/1367-2630/12/12/123005},
+	journal = {New Journal of Physics},
+	month = {dec},
+	number = {12},
+	pages = {123005},
+	title = {Radiation reaction effects on radiation pressure acceleration},
+	url = {https://dx.doi.org/10.1088/1367-2630/12/12/123005},
+	volume = {12},
+	year = {2010},
+	bdsk-url-1 = {https://dx.doi.org/10.1088/1367-2630/12/12/123005}}
+
+@article{Carbajal,
+	abstract = { The dynamics of RE (runaway electrons) in fusion plasmas span a wide range of temporal scales, from the fast gyro-motion,    ∼   10   − 11     s, to the observational time scales,    ∼   10   − 2   → 1   s. To cope with this scale separation, RE are usually studied within the bounce-average or the guiding center approximations. Although these approximations have yielded valuable insights, a study with predictive capabilities of RE in fusion plasmas calls for the incorporation of full orbit effects in configuration space in the presence of three-dimensional magnetic fields. We present numerical results on this problem using the Kinetic Orbit Runaway electrons Code that follows relativistic electrons in general electric and magnetic fields under the full Lorentz force, collisions, and radiation losses. At relativistic energies, the main energy loss is due to radiation damping, which we incorporate using the Landau-Lifshitz formulation of the Abraham-Lorentz-Dirac force. The main focus is on full orbit effects on synchrotron radiation. It is shown that even in the absence of magnetic field stochasticty, neglecting orbit dynamics can introduce significant errors in the computation of the total radiated power and the synchrotron spectra. The statistics of collisionless (i.e., full orbit induced) pitch angle dispersion, and its key role played on synchrotron radiation, are studied in detail. Numerical results are also presented on the pitch angle dependence of the spatial confinement of RE and on full orbit effects on the competition of electric field acceleration and radiation damping. Finally, full orbit calculations are used to explore the limitations of gyro-averaging in the relativistic regime. To explore the practical impact of the results, DIII-D and ITER-like parameters are used in the simulations. },
+	author = {Carbajal, L. and del-Castillo-Negrete, D. and Spong, D. and Seal, S. and Baylor, L.},
+	doi = {10.1063/1.4981209},
+	eprint = {https://pubs.aip.org/aip/pop/article-pdf/doi/10.1063/1.4981209/15628825/042512\_1\_online.pdf},
+	issn = {1070-664X},
+	journal = {Physics of Plasmas},
+	month = {04},
+	number = {4},
+	pages = {042512},
+	title = {Space dependent, full orbit effects on runaway electron dynamics in tokamak plasmas},
+	url = {https://doi.org/10.1063/1.4981209},
+	volume = {24},
+	year = {2017},
+	bdsk-url-1 = {https://doi.org/10.1063/1.4981209}}
+
+@article{Beidler,
+	abstract = {New simulations with the Kinetic Orbit Runaway electron (RE) Code (KORC) show RE deconfinement losses to the wall during plasma scrape off are the primary current dissipation mechanism in DIII-D experiments with high-Z impurity injection, and not collisional slowing down. The majority of simulations also exhibit an increase in the RE beam energy due to acceleration by the induced toroidal electric field, even while the RE beam current is decreasing. In this study, KORC integrates RE orbits using the relativistic guiding center equations of motion and incorporates time-sequenced, experimental reconstructions of the magnetic and electric fields and line integrated electron density to construct spatiotemporal models of electron and partially ionized impurity transport in the companion plasma. Comparisons of experimental current evolution and KORC results demonstrate the importance of including Coulomb collisions with partially ionized impurity physics, initial RE energy, pitch angle, and spatial distributions, and spatiotemporal electron and partially ionized impurity transport. This research provides an initial quantification of the efficacy of RE mitigation via injected impurities and identification of the critical role played by loss of confinement due to plasma scrape off on the inner wall as compared to the relatively slow collisional damping.},
+	author = {Beidler, M. T. and del-Castillo-Negrete, D. and Baylor, L. R. and Shiraki, D. and Spong, D. A.},
+	doi = {10.1063/5.0022072},
+	eprint = {https://pubs.aip.org/aip/pop/article-pdf/doi/10.1063/5.0022072/16099916/112507\_1\_online.pdf},
+	issn = {1070-664X},
+	journal = {Physics of Plasmas},
+	month = {11},
+	number = {11},
+	pages = {112507},
+	title = {Spatially dependent modeling and simulation of runaway electron mitigation in DIII-D},
+	url = {https://doi.org/10.1063/5.0022072},
+	volume = {27},
+	year = {2020},
+	bdsk-url-1 = {https://doi.org/10.1063/5.0022072}}
+
+@article{Irvin,
+	author = {Andrew M. Irvin and Ehab Hassan and Sebastian de Pascuale and Mark Cianciosa and Rhea L. Barnett and Livia Casali and},
+	doi = {10.1080/15361055.2025.2476829},
+	eprint = {https://doi.org/10.1080/15361055.2025.2476829},
+	journal = {Fusion Science and Technology},
+	number = {0},
+	pages = {1--15},
+	publisher = {American Nuclear Society},
+	title = {Surrogate Model of Electron Cyclotron Heating and Current Drive in a Compact Advanced Tokamak},
+	url = {https://doi.org/10.1080/15361055.2025.2476829},
+	volume = {0},
+	year = {2025},
+	bdsk-url-1 = {https://doi.org/10.1080/15361055.2025.2476829}}
+
+@article{Hoppe,
+	abstract = {Avoidance of the harmful effects of runaway electrons (REs) in plasma-terminating disruptions is pivotal in the design of safety systems for magnetic fusion devices. Here, we describe a computationally efficient numerical tool, that allows for self-consistent simulations of plasma cooling and associated RE dynamics during disruptions. It solves flux-surface averaged transport equations for the plasma density, temperature and poloidal flux, using a bounce-averaged kinetic equation to self-consistently provide the electron current, heat, density and RE evolution, as well as the electron distribution function. As an example, we consider disruption scenarios with material injection and compare the electron dynamics resolved with different levels of complexity, from fully kinetic to fluid modes.
+    Program summary
+    Program Title: Dream CPC Library link to program files: https://doi.org/10.17632/vs3yvnrzg6.1 Developer's repository link: https://github.com/chalmersplasmatheory/DREAM Licensing provisions: MIT Programming language: C++, Python Nature of problem: Self-consistently simulates the plasma evolution in a tokamak disruption, with specific emphasis on runaway electron dynamics. The runaway electrons can be simulated either as a fluid, fully kinetically, or as a mix of the two. Plasma temperature, current density, electric field, ion density and charge states are all evolved self-consistently, where kinetic non-thermal contributions are captured using an orbit-averaged relativistic electron Fokker-Planck equation, which couples to the plasma evolution. In the typical use case, the electrons are represented by two distinct populations: a cold fluid population and a kinetic superthermal population. Solution method: The system of equations is solved using a standard multidimensional Newton's method. Partial differential equations---most prominently the bounce-averaged Fokker--Planck and current diffusion equations---are discretized using a high-resolution finite volume scheme that preserves density and positivity.},
+	author = {Mathias Hoppe and Ola Embreus and T{\"u}nde F{\"u}l{\"o}p},
+	doi = {https://doi.org/10.1016/j.cpc.2021.108098},
+	issn = {0010-4655},
+	journal = {Computer Physics Communications},
+	keywords = {Runaway electrons, Tokamak disruptions, Fokker-Planck},
+	pages = {108098},
+	title = {DREAM: A fluid-kinetic framework for tokamak disruption runaway electron simulations},
+	url = {https://www.sciencedirect.com/science/article/pii/S0010465521002101},
+	volume = {268},
+	year = {2021},
+	bdsk-url-1 = {https://www.sciencedirect.com/science/article/pii/S0010465521002101},
+	bdsk-url-2 = {https://doi.org/10.1016/j.cpc.2021.108098}}
+
+@article{deGrassie,
+	abstract = {The intrinsic toroidal velocity, Vϕ, in DIII-D (Luxon 2002 Nucl. Fusion 42 614) H-modes is measured to be nonzero in the pedestal region, in the direction of the plasma current, co-Ip. Intrinsic, or spontaneous, velocity is that which arises with no known external momentum injection. This intrinsic velocity is measured to scale roughly linearly with the local ion temperature, Ti, Vϕ ∼ Ti, in the pedestal and in the edge region just inside the pedestal. With either co-Ip, or counter-Ip neutral beam injected torque, the pedestal velocity is accelerated in the direction of the torque; it is not a fixed boundary condition. A simple model of thermal ion orbit loss predicts the sign of Vϕ, a relevant magnitude for Vϕ, and the approximate scaling Vϕ ∼ Ti. This model for a boundary condition on the intrinsic toroidal velocity gives a result of approximate diamagnetic form, Vϕ ∼ εpTi/LBθ, where L is a scale length, Bθ the poloidal magnetic field and εp a small numerical parameter. This model is a local calculation of velocity, an approximation to the inherently nonlocal region of the pedestal where the thermal ion banana width is comparable to the pedestal width. In this model we also assume that the loss cone in velocity space is empty; no collisions are considered. A recent particle simulation of the pedestal region of a DIII-D NBI-driven H-mode discharge that includes collisions indicates that thermal ion orbit loss results in a co-Ip velocity just inside the last closed flux surface (Chang and Ku 2008 Phys. Plasmas 15 062510-1). Thus, we do not expect that nonlocality nor finite collisionality wash out the effect. Inside the pedestal our model shows that thermal ion orbit loss is negligible. In this region of the edge we also measure a similar scaling for the intrinsic velocity several pedestal widths inside the pedestal location, Vϕ ∼ Ti. One mechanism that could maintain the Ti scaling inwards from the pedestal is the model of an inward momentum pinch velocity proportional to the gradient of Ti.},
+	author = {deGrassie, J.S. and Groebner, R.J. and Burrell, K.H. and Solomon, W.M.},
+	doi = {10.1088/0029-5515/49/8/085020},
+	journal = {Nuclear Fusion},
+	month = {jul},
+	number = {8},
+	pages = {085020},
+	title = {Intrinsic toroidal velocity near the edge of DIII-D H-mode plasmas},
+	url = {https://dx.doi.org/10.1088/0029-5515/49/8/085020},
+	volume = {49},
+	year = {2009},
+	bdsk-url-1 = {https://dx.doi.org/10.1088/0029-5515/49/8/085020}}
+
+@misc{Cuda,
+	howpublished = {\url{https://docs.nvidia.com/cuda/}},
+	note = {Accessed: 2025-09-22},
+	title = {Cuda Documentation}}
+
+@misc{Metal,
+	howpublished = {\url{https://developer.apple.com/metal/}},
+	note = {Accessed: 2025-09-22},
+	title = {Metal Documentation}}
+
+@misc{Vulkan,
+	howpublished = {\url{https://docs.vulkan.org/spec/latest/index.html}},
+	note = {Accessed: 2025-09-22},
+	title = {Vulkan Specification}}
+
+@misc{Hip,
+	howpublished = {\url{https://rocm.docs.amd.com/projects/HIP/en/latest/index.html}},
+	note = {Accessed: 2025-09-22},
+	title = {Hip Documentation}}
+
+@misc{OpenMP,
+	howpublished = {\url{https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-6-0.pdf}},
+	note = {Accessed: 2025-09-22},
+	title = {OpenMP Specification}}
+
+@inproceedings{Edwards,
+	author = {Edwards, H. Carter and Sunderland, Daniel and Amsler, Chris and Mish, Sam},
+	booktitle = {2011 IEEE International Conference on Cluster Computing},
+	doi = {10.1109/CLUSTER.2011.47},
+	keywords = {Arrays;Kernel;Programming;Computational modeling;Performance evaluation;Semantics;Instruction sets;Parallel programming;multicore;manycore;GPGPU},
+	pages = {363-370},
+	title = {Multicore/GPGPU Portable Computational Kernels via Multidimensional Arrays},
+	year = {2011},
+	bdsk-url-1 = {https://doi.org/10.1109/CLUSTER.2011.47}}
+
+@software{Bradbury,
+	author = {James Bradbury and Roy Frostig and Peter Hawkins and Matthew James Johnson and Chris Leary and Dougal Maclaurin and George Necula and Adam Paszke and Jake Vander{P}las and Skye Wanderman-{M}ilne and Qiao Zhang},
+	title = {{JAX}: composable transformations of {P}ython+{N}um{P}y programs},
+	url = {http://github.com/jax-ml/jax},
+	version = {0.3.13},
+	year = {2018},
+	bdsk-url-1 = {http://github.com/jax-ml/jax}}
+
+@article{Paszke,
+	author = {Paszke, Adam and Gross, Sam and Chintala, Soumith and Chanan, Gregory and Yang, Edward and DeVito, Zachary and Lin, Zeming and Desmaison, Alban and Antiga, Luca and Lerer, Adam},
+	title = {Automatic differentiation in PyTorch},
+	year = {2017}}
+
+@software{Hannun,
+	author = {Awni Hannun and Jagrit Digani and Angelos Katharopoulos and Ronan Collobert},
+	title = {{MLX}: Efficient and flexible machine learning on Apple silicon},
+	url = {https://github.com/ml-explore},
+	version = {0.0},
+	year = {2023},
+	bdsk-url-1 = {https://github.com/ml-explore}}
