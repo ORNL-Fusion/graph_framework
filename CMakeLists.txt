@@ -57,7 +57,7 @@ if (${APPLE})
         )
     endif ()
 else ()
-    option (USE_CUDA "Enable the cuda backend" OFF)
+    option (USE_CUDA "Enable the cuda backend" ON)
 
     if (${USE_CUDA})
         add_library (cuda_lib INTERFACE)
@@ -140,44 +140,83 @@ endif ()
 include (FetchContent)
 find_package (Git)
 
+# Modified function to handle hard-coded LLVM commit
 function (register_project reg_name dir url default_tag sub_dir)
-    set (BUILD_TAG_${dir} ${default_tag} CACHE STRING "Name of the tag to checkout.")
-
-# Anything after the tag is assumed to be a project setting.
-    foreach (i RANGE 6 ${ARGC} 3)
-        math (EXPR key "${i} - 1" OUTPUT_FORMAT DECIMAL)
-        math (EXPR type "${i} + 1" OUTPUT_FORMAT DECIMAL)
-        set (${ARGV${key}} ${ARGV${i}} CACHE ${ARGV${type}} "" FORCE)
-    endforeach ()
-
-    FetchContent_Declare (
-        ${reg_name}
-        GIT_REPOSITORY ${url}
-        GIT_TAG origin/${BUILD_TAG_${dir}}
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir}
-        SOURCE_SUBDIR ${sub_dir}
-    )
-
-    FetchContent_MakeAvailable (${reg_name})
-
-    if (${GIT_FOUND})
-#  By default cmake clones projects in a headless state. After the repo is
-#  cloned checkout the requested tag so repo is in a working state.
-        execute_process (
-            COMMAND ${GIT_EXECUTABLE} checkout ${BUILD_TAG_${dir}}
-            WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
+    # Special handling for LLVM with hard-coded commit
+    if (${reg_name} STREQUAL "llvm")
+        # Hard-code the specific commit for LLVM
+        set (LLVM_COMMIT "a6494a3bbf0620ec472d44db4e79c4c508618a61")
+        
+        FetchContent_Declare (
+            ${reg_name}
+            GIT_REPOSITORY ${url}
+            GIT_TAG ${LLVM_COMMIT}
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir}
+            SOURCE_SUBDIR ${sub_dir}
         )
-
-#  Add a taraget to pull the latest version before building. Note dependency is
-#  registered in the sub project CMakeList.txt. Not sure how this should handle
-#  multiple targets in a project yet. Name must match the subproject pull_
-#  dependency.
-        add_custom_target (
-            pull_${reg_name}
-            ALL
-            COMMAND ${GIT_EXECUTABLE} pull
-            WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
+        
+        FetchContent_MakeAvailable (${reg_name})
+        
+        if (${GIT_FOUND})
+            # Checkout the specific commit to ensure we're on it
+            execute_process (
+                COMMAND ${GIT_EXECUTABLE} checkout ${LLVM_COMMIT}
+                WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
+            )
+            
+            # Add a target to pull, but for LLVM it will just verify we're on the right commit
+            add_custom_target (
+                pull_${reg_name}
+                ALL
+                COMMAND ${GIT_EXECUTABLE} fetch
+                COMMAND ${GIT_EXECUTABLE} checkout ${LLVM_COMMIT}
+                WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
+            )
+        endif ()
+        
+        # Handle LLVM-specific project settings
+        set (LLVM_TARGETS_TO_BUILD Native CACHE STRING "" FORCE)
+        set (LLVM_ENABLE_PROJECTS clang CACHE STRING "" FORCE)
+    else ()
+        # Original behavior for non-LLVM projects
+        set (BUILD_TAG_${dir} ${default_tag} CACHE STRING "Name of the tag to checkout.")
+        
+        # Anything after the tag is assumed to be a project setting.
+        foreach (i RANGE 6 ${ARGC} 3)
+            math (EXPR key "${i} - 1" OUTPUT_FORMAT DECIMAL)
+            math (EXPR type "${i} + 1" OUTPUT_FORMAT DECIMAL)
+            set (${ARGV${key}} ${ARGV${i}} CACHE ${ARGV${type}} "" FORCE)
+        endforeach ()
+        
+        FetchContent_Declare (
+            ${reg_name}
+            GIT_REPOSITORY ${url}
+            GIT_TAG origin/${BUILD_TAG_${dir}}
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir}
+            SOURCE_SUBDIR ${sub_dir}
         )
+        
+        FetchContent_MakeAvailable (${reg_name})
+        
+        if (${GIT_FOUND})
+            # By default cmake clones projects in a headless state. After the repo is
+            # cloned checkout the requested tag so repo is in a working state.
+            execute_process (
+                COMMAND ${GIT_EXECUTABLE} checkout ${BUILD_TAG_${dir}}
+                WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
+            )
+            
+            # Add a target to pull the latest version before building. Note dependency is
+            # registered in the sub project CMakeList.txt. Not sure how this should handle
+            # multiple targets in a project yet. Name must match the subproject pull_
+            # dependency.
+            add_custom_target (
+                pull_${reg_name}
+                ALL
+                COMMAND ${GIT_EXECUTABLE} pull
+                WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
+            )
+        endif ()
     endif ()
 endfunction ()
 
@@ -200,56 +239,63 @@ FetchContent_GetProperties (
 )
 
 #  Do not build llvm until pull command is finished.
-add_dependencies (gpu-resource-headers pull_llvm)
-add_dependencies (llvm-offload-resource-headers pull_llvm)
-add_dependencies (LLVMDemangle pull_llvm)
-add_dependencies (Remarks_exports pull_llvm)
-add_dependencies (LLVMSupportBlake3 pull_llvm)
-add_dependencies (BugpointPasses_exports pull_llvm)
-add_dependencies (LTO_exports pull_llvm)
-add_dependencies (llvm-PerfectShuffle pull_llvm)
-add_dependencies (SecondLib pull_llvm)
-add_dependencies (DynamicLibraryLib pull_llvm)
-add_dependencies (PipSqueak pull_llvm)
-add_dependencies (obj.LLVMTableGenCommon pull_llvm)
-add_dependencies (llvm_vcsrevision_h pull_llvm)
-add_dependencies (benchmark pull_llvm)
-add_dependencies (benchmark_main pull_llvm)
-add_dependencies (obj.LLVMTableGenBasic pull_llvm)
-add_dependencies (core-resource-headers pull_llvm)
-add_dependencies (mips-resource-headers pull_llvm)
-add_dependencies (utility-resource-headers pull_llvm)
-add_dependencies (ppc-htm-resource-headers pull_llvm)
-add_dependencies (loongarch-resource-headers pull_llvm)
-add_dependencies (systemz-resource-headers pull_llvm)
-add_dependencies (hexagon-resource-headers pull_llvm)
-add_dependencies (webassembly-resource-headers pull_llvm)
-add_dependencies (riscv-resource-headers pull_llvm)
-add_dependencies (hlsl-resource-headers pull_llvm)
-add_dependencies (ve-resource-headers pull_llvm)
-add_dependencies (opencl-resource-headers pull_llvm)
-add_dependencies (llvm-libc-resource-headers pull_llvm)
-add_dependencies (openmp-resource-headers pull_llvm)
-add_dependencies (windows-resource-headers pull_llvm)
-add_dependencies (SampleAnalyzerPlugin_exports pull_llvm)
-add_dependencies (CheckerDependencyHandlingAnalyzerPlugin_exports pull_llvm)
-add_dependencies (CheckerOptionHandlingAnalyzerPlugin_exports pull_llvm)
-add_dependencies (clangAnalysisFlowSensitiveResources pull_llvm)
-add_dependencies (ppc-resource-headers pull_llvm)
-add_dependencies (hmaptool pull_llvm)
+#  Conditionally add dependencies only if targets exist
+macro (add_llvm_dependency target)
+    if (TARGET ${target})
+        add_dependencies (${target} pull_llvm)
+    endif ()
+endmacro ()
+
+add_llvm_dependency (gpu-resource-headers)
+add_llvm_dependency (llvm-offload-resource-headers)
+add_llvm_dependency (LLVMDemangle)
+add_llvm_dependency (Remarks_exports)
+add_llvm_dependency (LLVMSupportBlake3)
+add_llvm_dependency (BugpointPasses_exports)
+add_llvm_dependency (LTO_exports)
+add_llvm_dependency (llvm-PerfectShuffle)
+add_llvm_dependency (SecondLib)
+add_llvm_dependency (DynamicLibraryLib)
+add_llvm_dependency (PipSqueak)
+add_llvm_dependency (obj.LLVMTableGenCommon)
+add_llvm_dependency (llvm_vcsrevision_h)
+add_llvm_dependency (benchmark)
+add_llvm_dependency (benchmark_main)
+add_llvm_dependency (obj.LLVMTableGenBasic)
+add_llvm_dependency (core-resource-headers)
+add_llvm_dependency (mips-resource-headers)
+add_llvm_dependency (utility-resource-headers)
+add_llvm_dependency (ppc-htm-resource-headers)
+add_llvm_dependency (loongarch-resource-headers)
+add_llvm_dependency (systemz-resource-headers)
+add_llvm_dependency (hexagon-resource-headers)
+add_llvm_dependency (webassembly-resource-headers)
+add_llvm_dependency (riscv-resource-headers)
+add_llvm_dependency (hlsl-resource-headers)
+add_llvm_dependency (ve-resource-headers)
+add_llvm_dependency (opencl-resource-headers)
+add_llvm_dependency (llvm-libc-resource-headers)
+add_llvm_dependency (openmp-resource-headers)
+add_llvm_dependency (windows-resource-headers)
+add_llvm_dependency (SampleAnalyzerPlugin_exports)
+add_llvm_dependency (CheckerDependencyHandlingAnalyzerPlugin_exports)
+add_llvm_dependency (CheckerOptionHandlingAnalyzerPlugin_exports)
+add_llvm_dependency (clangAnalysisFlowSensitiveResources)
+add_llvm_dependency (ppc-resource-headers)
+add_llvm_dependency (hmaptool)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_dependencies (libclang_exports pull_llvm)
+    add_llvm_dependency (libclang_exports)
 endif ()
-add_dependencies (hip-resource-headers pull_llvm)
-add_dependencies (scan-view pull_llvm)
-add_dependencies (scan-build pull_llvm)
-add_dependencies (cuda-resource-headers pull_llvm)
-add_dependencies (scan-build-py pull_llvm)
-add_dependencies (x86-resource-headers pull_llvm)
-add_dependencies (obj.clangSupport pull_llvm)
-add_dependencies (arm-common-resource-headers pull_llvm)
-add_dependencies (arm-resource-headers pull_llvm)
-add_dependencies (aarch64-resource-headers pull_llvm)
+add_llvm_dependency (hip-resource-headers)
+add_llvm_dependency (scan-view)
+add_llvm_dependency (scan-build)
+add_llvm_dependency (cuda-resource-headers)
+add_llvm_dependency (scan-build-py)
+add_llvm_dependency (x86-resource-headers)
+add_llvm_dependency (obj.clangSupport)
+add_llvm_dependency (arm-common-resource-headers)
+add_llvm_dependency (arm-resource-headers)
+add_llvm_dependency (aarch64-resource-headers)
 
 add_library (llvm_dep INTERFACE)
 target_include_directories (llvm_dep
@@ -330,6 +376,8 @@ add_subdirectory (graph_driver)
 add_subdirectory (graph_benchmark)
 add_subdirectory (graph_playground)
 add_subdirectory (graph_korc)
+
+
 
 #-------------------------------------------------------------------------------
 #  Define macro function to register tests.

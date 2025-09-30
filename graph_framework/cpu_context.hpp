@@ -160,16 +160,18 @@ namespace gpu {
                 }
             }
 
-            auto diagnostic_options = llvm::makeIntrusiveRefCnt<clang::DiagnosticOptions> ();
-            auto diagnostic_printer = std::make_unique<clang::TextDiagnosticPrinter> (llvm::errs(),
-                                                                                      diagnostic_options.get());
+            // Create diagnostic options as a regular object, not IntrusiveRefCntPtr
+            clang::DiagnosticOptions diagnostic_options;
+            auto diagnostic_printer = std::make_unique<clang::TextDiagnosticPrinter>(
+                llvm::errs(), diagnostic_options);
 
-            auto diagnostic_ids = llvm::makeIntrusiveRefCnt<clang::DiagnosticIDs> ();
-            clang::DiagnosticsEngine diagnostic_engine(diagnostic_ids,
-                                                       diagnostic_options,
-                                                       diagnostic_printer.release());
+            auto diagnostic_ids = llvm::makeIntrusiveRefCnt<clang::DiagnosticIDs>();
+            clang::DiagnosticsEngine diagnostic_engine(
+                diagnostic_ids,
+                diagnostic_options,
+                diagnostic_printer.release());
 
-            auto invocation = std::make_shared<clang::CompilerInvocation> ();
+            auto invocation = std::make_shared<clang::CompilerInvocation>();
             clang::CompilerInvocation::CreateFromArgs(*(invocation.get()), args,
                                                       diagnostic_engine);
 
@@ -180,7 +182,7 @@ namespace gpu {
 
             clang::CompilerInstance clang(invocation);
             std::shared_ptr<llvm::vfs::FileSystem> VFS =
-                std::make_shared<llvm::vfs::InMemoryFileSystem> ();
+                std::make_shared<llvm::vfs::InMemoryFileSystem>();
             clang.createDiagnostics(*VFS.get());
                                                   
             clang::TargetOptions target_options;
@@ -194,7 +196,7 @@ namespace gpu {
             clang.ExecuteAction(action);
 
             auto ir_module = action.takeModule();
-            auto context = std::unique_ptr<llvm::LLVMContext> (action.takeLLVMContext());
+            auto context = std::unique_ptr<llvm::LLVMContext>(action.takeLLVMContext());
 
             auto jit_try = llvm::orc::LLJITBuilder()
 #ifndef NDEBUG
@@ -231,7 +233,7 @@ namespace gpu {
                                                      const jit::texture1d_list &tex1d_list,
                                                      const jit::texture2d_list &tex2d_list) {
             auto entry = std::move(jit->lookup(kernel_name)).get();
-            auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
+            auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)>();
 
             if (!kernel) {
                 std::cerr << "Failed to load function. " << kernel_name
@@ -248,21 +250,21 @@ namespace gpu {
                     memcpy(arg.data(), buffer.data(), buffer.size()*sizeof(T));
                     kernel_arguments[input.get()] = arg;
                 }
-                buffers[reinterpret_cast<size_t> (input.get())] = kernel_arguments[input.get()].data();
+                buffers[reinterpret_cast<size_t>(input.get())] = kernel_arguments[input.get()].data();
             }
             for (auto &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
                     std::vector<T> arg(num_rays);
                     kernel_arguments[output.get()] = arg;
                 }
-                buffers[reinterpret_cast<size_t> (output.get())] = kernel_arguments[output.get()].data();
+                buffers[reinterpret_cast<size_t>(output.get())] = kernel_arguments[output.get()].data();
             }
 
             if (jit::verbose) {
-                std::cout << "  Function pointer: " << reinterpret_cast<size_t> (kernel) << std::endl;
+                std::cout << "  Function pointer: " << reinterpret_cast<size_t>(kernel) << std::endl;
             }
 
-            return [kernel, buffers] () mutable {
+            return [kernel, buffers]() mutable {
                 kernel(buffers);
             };
         }
@@ -278,11 +280,11 @@ namespace gpu {
             auto begin = kernel_arguments[argument.get()].cbegin();
             auto end = kernel_arguments[argument.get()].cend();
 
-            return [run, begin, end] () mutable {
+            return [run, begin, end]() mutable {
                 run();
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::is_complex<T>()) {
                     return *std::max_element(begin, end,
-                                             [] (const T a, const T b) {
+                                             [](const T a, const T b) {
                         return std::abs(a) < std::abs(b);
                     });
                 } else {
@@ -315,7 +317,7 @@ namespace gpu {
                            const graph::output_nodes<T, SAFE_MATH> &nodes) {
             for (auto &out : nodes) {
                 const T temp = kernel_arguments[out.get()][index];
-                if constexpr (jit::is_complex<T> ()) {
+                if constexpr (jit::is_complex<T>()) {
                     std::cout << std::real(temp) << " " << std::imag(temp) << " ";
                 } else {
                     std::cout << temp << " ";
@@ -369,7 +371,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
             source_buffer << "#include <map>" << std::endl;
-            if (jit::is_complex<T> ()) {
+            if (jit::is_complex<T>()) {
                 source_buffer << "#include <complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
             } else {
@@ -406,7 +408,7 @@ namespace gpu {
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
 
             source_buffer << "    map<size_t, ";
-            jit::add_type<T> (source_buffer);
+            jit::add_type<T>(source_buffer);
             source_buffer << " *> &args) {" << std::endl;
 
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
@@ -414,16 +416,16 @@ namespace gpu {
                 if (is_constant[i]) {
                     source_buffer << "const ";
                 }
-                jit::add_type<T> (source_buffer);
+                jit::add_type<T>(source_buffer);
                 source_buffer << " *" << jit::to_string('v', inputs[i].get())
-                              << " = args[" << reinterpret_cast<size_t> (inputs[i].get())
+                              << " = args[" << reinterpret_cast<size_t>(inputs[i].get())
                               << "];" << std::endl;
             }
             for (auto &output : outputs) {
                 source_buffer << "    ";
-                jit::add_type<T> (source_buffer);
+                jit::add_type<T>(source_buffer);
                 source_buffer << " *" << jit::to_string('o', output.get())
-                              << " = args[" << reinterpret_cast<size_t> (output.get()) 
+                              << " = args[" << reinterpret_cast<size_t>(output.get()) 
                               << "];" << std::endl;
             }
 
@@ -432,7 +434,7 @@ namespace gpu {
             for (auto &input : inputs) {
                 registers[input.get()] = jit::to_string('r', input.get());
                 source_buffer << "        const ";
-                jit::add_type<T> (source_buffer);
+                jit::add_type<T>(source_buffer);
                 source_buffer << " " << registers[input.get()]
                               << " = " << jit::to_string('v', input.get())
                               << "[i]; // " << input->get_symbol()
@@ -467,8 +469,8 @@ namespace gpu {
                 source_buffer << "        " << jit::to_string('v', in.get());
                 source_buffer << "[i] = ";
                 if constexpr (SAFE_MATH) {
-                    if constexpr (jit::is_complex<T> ()) {
-                        jit::add_type<T> (source_buffer);
+                    if constexpr (jit::is_complex<T>()) {
+                        jit::add_type<T>(source_buffer);
                         source_buffer << " (";
                         source_buffer << "isnan(real(" << registers[a.get()]
                                       << ")) ? 0.0 : real(" << registers[a.get()]
@@ -493,8 +495,8 @@ namespace gpu {
                 source_buffer << "        " << jit::to_string('o', out.get());
                 source_buffer << "[i] = ";
                 if constexpr (SAFE_MATH) {
-                    if constexpr (jit::is_complex<T> ()) {
-                        jit::add_type<T> (source_buffer);
+                    if constexpr (jit::is_complex<T>()) {
+                        jit::add_type<T>(source_buffer);
                         source_buffer << " (";
                         source_buffer << "isnan(real(" << registers[a.get()]
                                       << ")) ? 0.0 : real(" << registers[a.get()]
