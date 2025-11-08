@@ -2,7 +2,7 @@
 ///  @file xplayground.cpp
 ///  @brief A playground area for testing example programs.
 //------------------------------------------------------------------------------
-#include "../graph_framework/jit.hpp"
+#include "../graph_framework/graph_framework.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Main program of the playground.

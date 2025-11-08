@@ -39,7 +39,7 @@ namespace commandline {
         static std::string_view take_end(const char *string,
                                          const char character) {
             std::string_view view(string);
-            return view.substr(view.find_last_of('/') + 1);
+            return view.substr(view.find_last_of(character) + 1);
         }
 
     public:
@@ -48,9 +48,7 @@ namespace commandline {
 //------------------------------------------------------------------------------
         parser(const char *name) : 
         command(take_end(name, '/')) {
-            options.emplace(std::make_pair("help",
-                                           std::make_pair(false,
-                                                          "Show this help.")));
+            options.try_emplace("help", false, "Show this help.");
         }
 
 //------------------------------------------------------------------------------
@@ -139,7 +137,7 @@ namespace commandline {
             }
 
             if (is_option_set("help")) {
-                show_help(std::string(argv[0]));
+                show_help(command);
             }
         }
 

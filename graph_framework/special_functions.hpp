@@ -519,7 +519,11 @@ namespace special {
 ///
 ///  @returns 1/sqrt(pi)
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     T isqpi() {
         return static_cast<T> (1)/sqrt(static_cast<T> (M_PI));
     }
@@ -1461,20 +1465,24 @@ namespace special {
 ///  @param[in] y imaginary argument.
 ///  @returns erf(x+iy)
 //------------------------------------------------------------------------------
+#if __cplusplus >= 202002L
+    template<std::floating_point T>
+#else
     template<typename T>
+#endif
     complex_type<T> taylor_erfi(const T x, const T y) {
-                    const T x2 = sq(x);
-                    const T y2 = sq(y);
-                    const T expy2 = exp(y2);
-                    return expy2*complex_type<T> (x*(static_cast<T> (1.1283791670955125739) -
-                                                     x2*(static_cast<T> (0.37612638903183752464) +
-                                                         static_cast<T> (0.75225277806367504925)*y2) +
-                                                     x2*x2*(static_cast<T> (0.11283791670955125739) +
-                                                            y2*(static_cast<T> (0.45135166683820502956) +
-                                                                static_cast<T> (0.15045055561273500986)*y2))),
-                                                  (w_im(y) - x2*y*(static_cast<T> (1.1283791670955125739) -
-                                                                   x2*(static_cast<T> (0.56418958354775628695) +
-                                                                       static_cast<T> (0.37612638903183752464)*y2))));
+        const T x2 = sq(x);
+        const T y2 = sq(y);
+        const T expy2 = exp(y2);
+        return expy2*complex_type<T> (x*(static_cast<T> (1.1283791670955125739) -
+                                         x2*(static_cast<T> (0.37612638903183752464) +
+                                             static_cast<T> (0.75225277806367504925)*y2) +
+                                         x2*x2*(static_cast<T> (0.11283791670955125739) +
+                                                y2*(static_cast<T> (0.45135166683820502956) +
+                                                    static_cast<T> (0.15045055561273500986)*y2))),
+                                      (w_im(y) - x2*y*(static_cast<T> (1.1283791670955125739) -
+                                                       x2*(static_cast<T> (0.56418958354775628695) +
+                                                           static_cast<T> (0.37612638903183752464)*y2))));
     }
 
 //------------------------------------------------------------------------------
