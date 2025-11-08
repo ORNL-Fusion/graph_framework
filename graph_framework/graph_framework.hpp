@@ -34,5 +34,8 @@
 #ifdef USE_METAL
 #include "metal_context.hpp"
 #endif
+#ifdef USE_HIP
+#include "hip_context.hpp"
+#endif
 
 #endif /* graph_framework_h */
