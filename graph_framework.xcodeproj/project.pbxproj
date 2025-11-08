@@ -397,6 +397,7 @@
 		C7D12D992DBAB31F00925420 /* random.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = random.hpp; sourceTree = "<group>"; };
 		C7D3C5B02C654AD3008AD8C6 /* efit_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = efit_test.cpp; sourceTree = "<group>"; };
 		C7D453872EBFD05D00A828DB /* graph_framework.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = graph_framework.hpp; sourceTree = "<group>"; };
+		C7D453882EBFDB2300A828DB /* hip_context.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = hip_context.hpp; sourceTree = "<group>"; };
 		C7DC9EE02E39768300524F6F /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		C7DC9EE12E39768300524F6F /* graph_c_binding.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = graph_c_binding.h; sourceTree = "<group>"; };
 		C7DC9EE22E39768300524F6F /* graph_c_binding.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = graph_c_binding.cpp; sourceTree = "<group>"; };
@@ -715,6 +716,7 @@
 				C71342652947D57900672AD4 /* metal_context.hpp */,
 				C7B677DA29E464AE00D3ADC6 /* cpu_context.hpp */,
 				C7CEA0052948EB0F00F61D09 /* cuda_context.hpp */,
+				C7D453882EBFDB2300A828DB /* hip_context.hpp */,
 				C7CEA0042948D02A00F61D09 /* timing.hpp */,
 				C73BBE9629F8669F0027BB7F /* newton.hpp */,
 				C7E134492A3CB3EC0083F6A7 /* output.hpp */,
