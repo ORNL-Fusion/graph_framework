@@ -398,8 +398,9 @@ namespace gpu {
 ///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
-            source_buffer << "#include <map>" << std::endl
-                          << "#include <array>" << std::endl;
+            source_buffer << "#include <map>"     << std::endl
+                          << "#include <array>"   << std::endl
+                          << "#include <cstdint>" << std::endl;
             if (jit::complex_scalar<T>) {
                 source_buffer << "#include <complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;

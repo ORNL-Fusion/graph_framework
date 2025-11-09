@@ -5,8 +5,9 @@ on:
 jobs:
     ci_test:
         strategy:
+            fail-fast: false
             matrix:
-                os: [ubuntu-latest]
+                os: [ubuntu-latest, macos-latest]
         runs-on: ${{matrix.os}}
         steps:
             - name: CPU Info Mac
@@ -49,14 +50,26 @@ jobs:
               shell: bash
               working-directory: ${{runner.workspace}}/graph_framework/build
               run: cmake ${{runner.workspace}}/graph_framework
-            - name: Build
+            - name: Build Mac
+              if: ${{matrix.os == 'macos-latest'}}
               shell: bash
               working-directory: ${{runner.workspace}}/graph_framework/build
               run: make -j3 VERBOSE=1
-            - name: Test
+            - name: Build Linux
+              if: ${{matrix.os == 'ubuntu-latest'}}
+              shell: bash
+              working-directory: ${{runner.workspace}}/graph_framework/build
+              run: make -j2 VERBOSE=1
+            - name: Test Mac
+              if: ${{matrix.os == 'macos-latest'}}
               shell: bash
               working-directory: ${{runner.workspace}}/graph_framework/build
               run: make test ARGS=-j3
+            - name: Test Linux
+              if: ${{matrix.os == 'ubuntu-latest'}}
+              shell: bash
+              working-directory: ${{runner.workspace}}/graph_framework/build
+              run: make test ARGS=-j2
             - name: Show Log
               if: failure()
               shell: bash
