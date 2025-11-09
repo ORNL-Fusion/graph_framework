@@ -4,6 +4,8 @@
 differentiation. It is designed to allow domain scientists to create cross 
 platform GPU accelerated code and embed those codes in existing legacy tools.
 
+[![Continuous Integration Test](https://github.com/ORNL-Fusion/graph_framework/actions/workflows/ci_test.yaml/badge.svg?branch=main)](https://github.com/ORNL-Fusion/graph_framework/actions/workflows/ci_test.yaml)
+
 ## Documentation
 [graph_framework-docs](https://ornl-fusion.github.io/graph_framework-docs) 
 Documentation for the graph_framework.
