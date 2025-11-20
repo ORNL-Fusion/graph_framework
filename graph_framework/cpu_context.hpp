@@ -43,8 +43,7 @@
 ///  @brief This just exposes the functions so the debugger links.
 //------------------------------------------------------------------------------
 LLVM_ATTRIBUTE_USED void linkComponents() {
-    llvm::errs() << (void *)&llvm_orc_registerJITLoaderGDBWrapper
-                 << (void *)&llvm_orc_registerJITLoaderGDBAllocAction;
+    llvm::errs() << (void *)&llvm_orc_registerJITLoaderGDBAllocAction;
 }
 #endif
 

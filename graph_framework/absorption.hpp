@@ -95,6 +95,7 @@
 
 #include "newton.hpp"
 #include "output.hpp"
+#include "dispersion.hpp"
 
 /// Namespace for power absorption models.
 namespace absorption {
