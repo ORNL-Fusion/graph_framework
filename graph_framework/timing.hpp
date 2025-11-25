@@ -121,6 +121,33 @@ namespace timing {
 
             std::cout << "Average " << label << " time : " << total_time_ns.count()/start.size() << " ns"<< std::endl;
         }
+
+//------------------------------------------------------------------------------
+///  @brief Print out the max time.
+//------------------------------------------------------------------------------
+        void print_max() {
+            std::chrono::nanoseconds total_time_ns = static_cast<std::chrono::nanoseconds> (0);
+            for (size_t i = 0, ie = start.size(); i < ie; i++) {
+                const auto duration = end[i] - start[i];
+                total_time_ns = std::max(std::chrono::duration_cast<std::chrono::nanoseconds> (duration), total_time_ns);
+            }
+
+            std::cout << "Max " << label << " time : ";
+            if (total_time_ns.count() < 1000) {
+                std::cout << total_time_ns.count()                 << " ns"  << std::endl;
+            } else if (total_time_ns.count() < 1000000) {
+                std::cout << total_time_ns.count()/1000.0          << " μs"  << std::endl;
+            } else if (total_time_ns.count() < 1000000000) {
+                std::cout << total_time_ns.count()/1000000.0       << " ms"  << std::endl;
+            } else if (total_time_ns.count() < 60000000000) {
+                std::cout << total_time_ns.count()/1000000000.0    << " s"   << std::endl;
+            } else if (total_time_ns.count() < 3600000000000) {
+                std::cout << total_time_ns.count()/60000000000.0   << " min" << std::endl;
+            } else {
+                std::cout << total_time_ns.count()/3600000000000.0 << " h"   << std::endl;
+            }
+            std::cout << std::endl;
+        }
     };
 }
 
