@@ -12,18 +12,18 @@
 
 namespace graph {
 //------------------------------------------------------------------------------
-///  @brief Check if nodes are constant combineable.
+///  @brief Check if nodes are constant combinable.
 ///
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] a Opperand A
-///  @param[in] b Opperand B
+///  @param[in] a Operand A
+///  @param[in] b Operand B
 ///  @returns True if a and b are combinable.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    bool is_constant_combineable(shared_leaf<T, SAFE_MATH> a,
-                                 shared_leaf<T, SAFE_MATH> b) {
+    bool is_constant_combinable(shared_leaf<T, SAFE_MATH> a,
+                                shared_leaf<T, SAFE_MATH> b) {
         if (a->is_constant() && b->is_constant()) {
             auto a1 = piecewise_1D_cast(a);
             auto a2 = piecewise_2D_cast(a);
@@ -45,9 +45,9 @@ namespace graph {
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] a Opperand A
-///  @param[in] b Opperand B
-///  @returns True if a is promoteable over b.
+///  @param[in] a Operand A
+///  @param[in] b Operand B
+///  @returns True if a is promotable over b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     bool is_constant_promotable(shared_leaf<T, SAFE_MATH> a,
@@ -67,13 +67,13 @@ namespace graph {
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] a Opperand A
-///  @param[in] b Opperand B
+///  @param[in] a Operand A
+///  @param[in] b Operand B
 ///  @returns True if a and b are combinable.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    bool is_variable_combineable(shared_leaf<T, SAFE_MATH> a,
-                                 shared_leaf<T, SAFE_MATH> b) {
+    bool is_variable_combinable(shared_leaf<T, SAFE_MATH> a,
+                                shared_leaf<T, SAFE_MATH> b) {
         return a->is_power_base_match(b);
     }
 
@@ -83,8 +83,8 @@ namespace graph {
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] a Opperand A
-///  @param[in] b Opperand B
+///  @param[in] a Operand A
+///  @param[in] b Operand B
 ///  @returns True if a and b are combinable.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -103,8 +103,8 @@ namespace graph {
 ///  @tparam T         Base type of the nodes.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] a Opperand A
-///  @param[in] b Opperand B
+///  @param[in] a Operand A
+///  @param[in] b Operand B
 ///  @returns True if a and b are combinable.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -246,12 +246,12 @@ namespace graph {
                                     pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
             }
 
-//  Idenity reductions.
+//  Identity reductions.
             if (this->left->is_match(this->right)) {
                 return 2.0*this->left;
             }
             
-//  Common factor reduction. If the left and right are both muliply nodes check
+//  Common factor reduction. If the left and right are both multiply nodes check
 //  for a common factor. So you can change a*b + a*c -> a*(b + c).
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
@@ -341,8 +341,8 @@ namespace graph {
 //  common term.
 //  c1*a/b + c2*a/d -> (c1/b + c2/d)*a
                 if (ldlm.get() && rdlm.get()) {
-                    if (is_constant_combineable(ldlm->get_left(),
-                                                rdlm->get_left()) &&
+                    if (is_constant_combinable(ldlm->get_left(),
+                                               rdlm->get_left()) &&
                         !ldlm->get_right()->is_match(rdlm->get_right())) {
                         return (ldlm->get_right()/ld->get_right() +
                                 rdlm->get_left()/ldlm->get_left() *
@@ -637,7 +637,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -825,7 +825,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_add<T, SAFE_MATH> add_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -861,7 +861,7 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Consruct a subtraction node.
+///  @brief Construct a subtraction node.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -890,7 +890,7 @@ namespace graph {
 ///  @returns A reduced subtraction node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
-//  Idenity reductions.
+//  Identity reductions.
             auto l = constant_cast(this->left);
             if (this->left->is_match(this->right)) {
                 if (l.get() && l->is(0)) {
@@ -973,13 +973,13 @@ namespace graph {
 // c1 - (c2 + a) -> c3 + a
             auto la = add_cast(this->left);
             if (la.get()) {
-                if (is_constant_combineable(la->get_left(), this->right)) {
+                if (is_constant_combinable(la->get_left(), this->right)) {
                     return (la->get_left() - this->right) + la->get_right();
                 }
             }
             auto ra = add_cast(this->right);
             if (ra.get()) {
-                if (is_constant_combineable(this->left, ra->get_left())) {
+                if (is_constant_combinable(this->left, ra->get_left())) {
                     return (this->left - ra->get_left()) + ra->get_right();
                 }
             }
@@ -988,10 +988,10 @@ namespace graph {
 // (a - c3) - c2 -> a + c3
             auto ls = subtract_cast(this->left);
             if (ls.get()) {
-                if (is_constant_combineable(ls->get_left(), this->right)) {
+                if (is_constant_combinable(ls->get_left(), this->right)) {
                     return (ls->get_left() - this->right) - ls->get_right();
-                } else if (is_constant_combineable(ls->get_right(),
-                                                   this->right)) {
+                } else if (is_constant_combinable(ls->get_right(),
+                                                  this->right)) {
                     return -(ls->get_right() + this->right) - ls->get_left();
                 }
             }
@@ -999,14 +999,14 @@ namespace graph {
 // c1 - (a - c2) -> c3 - a
             auto rs = subtract_cast(this->right);
             if (rs.get()) {
-                if (is_constant_combineable(this->left, rs->get_left())) {
+                if (is_constant_combinable(this->left, rs->get_left())) {
                     return (this->left - rs->get_left()) - rs->get_right();
-                } else if (is_constant_combineable(this->left, rs->get_right())) {
+                } else if (is_constant_combinable(this->left, rs->get_right())) {
                     return (this->left + rs->get_right()) - rs->get_left();
                 }
             }
 
-//  Common factor reduction. If the left and right are both muliply nodes check
+//  Common factor reduction. If the left and right are both multiply nodes check
 //  for a common factor. So you can change a*b - a*c -> a*(b - c).
             auto lm = multiply_cast(this->left);
             auto rm = multiply_cast(this->right);
@@ -1015,10 +1015,10 @@ namespace graph {
             if (lm.get()) {
                 auto lmra = add_cast(lm->get_right());
                 if (lmra.get()) {
-                    if (is_constant_combineable(lm->get_left(),
-                                                lmra->get_left()) &&
-                        is_constant_combineable(lm->get_left(),
-                                                this->right)) {
+                    if (is_constant_combinable(lm->get_left(),
+                                               lmra->get_left()) &&
+                        is_constant_combinable(lm->get_left(),
+                                               this->right)) {
                         return fma(lm->get_left(),
                                    lmra->get_right(),
                                    lm->get_left()*lmra->get_left() - this->right);
@@ -1027,10 +1027,10 @@ namespace graph {
 //  c1*(c2 - a) - c3 -> c4 - c1*a
                 auto lmrs = subtract_cast(lm->get_right());
                 if (lmrs.get()) {
-                    if (is_constant_combineable(lm->get_left(),
-                                                lmrs->get_left()) &&
-                        is_constant_combineable(lm->get_left(),
-                                                this->right)) {
+                    if (is_constant_combinable(lm->get_left(),
+                                               lmrs->get_left()) &&
+                        is_constant_combinable(lm->get_left(),
+                                               this->right)) {
                         return lm->get_left()*lmrs->get_left() - this->right -
                                lm->get_left()*lmrs->get_right();
                     }
@@ -1255,8 +1255,8 @@ namespace graph {
 //  common term.
 //  c1*a/b - c2*a/d -> (c1/b - c2/d)*a
                 if (ldlm.get() && rdlm.get()) {
-                    if (is_constant_combineable(ldlm->get_left(),
-                                                rdlm->get_left()) &&
+                    if (is_constant_combinable(ldlm->get_left(),
+                                               rdlm->get_left()) &&
                         !ldlm->get_right()->is_match(rdlm->get_right())) {
                         return (ldlm->get_right()/ld->get_right() -
                                 rdlm->get_left()/ldlm->get_left() *
@@ -1467,7 +1467,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -1668,7 +1668,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_subtract<T, SAFE_MATH> subtract_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -1679,7 +1679,7 @@ namespace graph {
 //  Multiply node.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief A multiplcation node.
+///  @brief A multiplication node.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -1688,7 +1688,7 @@ namespace graph {
     class multiply_node final : public branch_node<T, SAFE_MATH> {
     private:
 //------------------------------------------------------------------------------
-///  @brief Try to reduce paterns of constant times nested fma nodes.
+///  @brief Try to reduce patterns of constant times nested fma nodes.
 ///
 ///  c1*fma(...,x,c2) -> fma(...,x,c3)
 ///
@@ -1699,8 +1699,8 @@ namespace graph {
         reduce_nested_fma_times_constant(shared_leaf<T, SAFE_MATH> trial) {
             auto temp = fma_cast(trial);
             if (temp.get()) {
-                if (is_constant_combineable(this->left, temp->get_left()) &&
-                    is_constant_combineable(this->left, temp->get_right())) {
+                if (is_constant_combinable(this->left, temp->get_left()) &&
+                    is_constant_combinable(this->left, temp->get_right())) {
                     return fma(this->left*temp->get_left(),
                                temp->get_middle(),
                                this->left*temp->get_right());
@@ -1731,14 +1731,14 @@ namespace graph {
             auto temp = fma_cast(trial);
             if (temp.get()) {
                 if (add->get_right()->is_match(temp->get_middle())              &&
-                    is_constant_combineable(add->get_left(), temp->get_right())) {
+                    is_constant_combinable(add->get_left(), temp->get_right())) {
                     auto temp2 = expand_nested_fma_times_add2(temp->get_left(),
                                                               temp, add);
                     if (temp2.get()) {
                         return fma(temp2,
                                    add->get_right(),
                                    temp->get_right()*add->get_left());
-                    } else if (is_constant_combineable(add->get_left(), temp->get_left())) {
+                    } else if (is_constant_combinable(add->get_left(), temp->get_left())) {
                         return fma(fma(temp->get_left(),
                                        add->get_right(),
                                        add->get_left()*temp->get_left() + temp->get_right()),
@@ -1769,8 +1769,8 @@ namespace graph {
             assert(temp2.get() && "Assumed a fma node.");
             if (temp.get()) {
                 if (add->get_right()->is_match(temp->get_middle())             &&
-                    is_constant_combineable(add->get_left(), temp->get_left()) &&
-                    is_constant_combineable(add->get_left(), temp->get_right())) {
+                    is_constant_combinable(add->get_left(), temp->get_left()) &&
+                    is_constant_combinable(add->get_left(), temp->get_right())) {
                     
                     return fma(fma(temp->get_left(),
                                    add->get_right(),
@@ -1808,7 +1808,7 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Consruct a multiplcation node.
+///  @brief Construct a multiplication node.
 ///
 ///  @param[in] l Left branch.
 ///  @param[in] r Right branch.
@@ -1818,7 +1818,7 @@ namespace graph {
         branch_node<T, SAFE_MATH> (l, r, multiply_node::to_string(l.get(), r.get())) {}
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate the results of multiplcation.
+///  @brief Evaluate the results of multiplication.
 ///
 ///  result = l*r
 ///
@@ -1828,13 +1828,13 @@ namespace graph {
             backend::buffer<T> l_result = this->left->evaluate();
 
 //  If the left are right are same don't evaluate the right.
-//  NOTE: Do not use is_match here. Remove once power is implimented.
+//  NOTE: Do not use is_match here. Remove once power is implemented.
             if (this->left.get() == this->right.get()) {
                 return l_result*l_result;
             }
 
-//  If all the elements on the left are zero, return the leftside without
-//  revaluating the rightside. Stop this loop early once the first non zero
+//  If all the elements on the left are zero, return the left side without
+//  reevaluating the right side. Stop this loop early once the first non zero
 //  element is encountered.
             if (l_result.is_zero()) {
                 return l_result;
@@ -1845,9 +1845,9 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Reduce an multiplcation node.
+///  @brief Reduce an multiplication node.
 ///
-///  @returns A reduced multiplcation node.
+///  @returns A reduced multiplication node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             auto l = constant_cast(this->left);
@@ -1961,9 +1961,9 @@ namespace graph {
 
 //  (a^c*b)*a^d -> a^(c+d)*b
 //  (b*a^c)*a^d -> a^(c+d)*b
-                if (is_variable_combineable(this->right, lm->get_left())) {
+                if (is_variable_combinable(this->right, lm->get_left())) {
                     return (this->right*lm->get_left())*lm->get_right();
-                } else if (is_variable_combineable(this->right, lm->get_right())) {
+                } else if (is_variable_combinable(this->right, lm->get_right())) {
                     return (this->right*lm->get_right())*lm->get_left();
                 }
 
@@ -1979,8 +1979,8 @@ namespace graph {
                 if (lmrp.get()) {
                     auto lmrplm = multiply_cast(lmrp->get_left());
                     if (lmrplm.get() &&
-                        is_variable_combineable(lmrplm->get_right(),
-                                                this->right)) {
+                        is_variable_combinable(lmrplm->get_right(),
+                                               this->right)) {
                         return (lm->get_left()*pow(lmrplm->get_left(),
                                                    lmrp->get_right()))*pow(this->right->get_power_base(),
                                                                            lmrp->get_right() +
@@ -1993,8 +1993,8 @@ namespace graph {
             if (rm.get()) {
 //  Assume constants are on the left.
 //  c1*(c2*v) -> c3*v
-                if (is_constant_combineable(this->left,
-                                            rm->get_left())) {
+                if (is_constant_combinable(this->left,
+                                           rm->get_left())) {
                     auto temp = this->left*rm->get_left();
                     if (temp->is_normal()) {
                         return temp*rm->get_right();
@@ -2003,9 +2003,9 @@ namespace graph {
 
 //  a*(a*b) -> a^2*b
 //  a*(b*a) -> a^2*b
-                if (is_variable_combineable(this->left, rm->get_left())) {
+                if (is_variable_combinable(this->left, rm->get_left())) {
                     return (this->left*rm->get_left())*rm->get_right();
-                } else if (is_variable_combineable(this->left, rm->get_right())) {
+                } else if (is_variable_combinable(this->left, rm->get_right())) {
                     return (this->left*rm->get_right())*rm->get_left();
                 }
                 
@@ -2052,26 +2052,26 @@ namespace graph {
 //  Factor out common constants c*b*c*d -> c*c*b*d. c*c will get reduced to c on
 //  the second pass.
             if (lm.get() && rm.get()) {
-                if (is_constant_combineable(lm->get_left(),
-                                            rm->get_left())) {
+                if (is_constant_combinable(lm->get_left(),
+                                           rm->get_left())) {
                     auto temp = lm->get_left()*rm->get_left();
                     if (temp->is_normal()) {
                         return temp*(lm->get_right()*rm->get_right());
                     }
-                } else if (is_constant_combineable(lm->get_left(),
-                                                   rm->get_right())) {
+                } else if (is_constant_combinable(lm->get_left(),
+                                                  rm->get_right())) {
                     auto temp = lm->get_left()*rm->get_right();
                     if (temp->is_normal()) {
                         return temp*(lm->get_right()*rm->get_left());
                     }
-                } else if (is_constant_combineable(lm->get_right(),
-                                                   rm->get_left())) {
+                } else if (is_constant_combinable(lm->get_right(),
+                                                  rm->get_left())) {
                     auto temp = lm->get_right()*rm->get_left();
                     if (temp->is_normal()) {
                         return temp*(lm->get_left()*rm->get_right());
                     }
-                } else if (is_constant_combineable(lm->get_right(),
-                                                   rm->get_right())) {
+                } else if (is_constant_combinable(lm->get_right(),
+                                                  rm->get_right())) {
                     auto temp = lm->get_right()*rm->get_right();
                     if (temp->is_normal()) {
                         return temp*(lm->get_left()*rm->get_left());
@@ -2122,7 +2122,7 @@ namespace graph {
             }
 
 //  Power reductions.
-            if (is_variable_combineable(this->left, this->right)) {
+            if (is_variable_combinable(this->left, this->right)) {
                 return pow(this->left->get_power_base(),
                            this->left->get_power_exponent() +
                            this->right->get_power_exponent());
@@ -2192,15 +2192,15 @@ namespace graph {
                 auto lplm = multiply_cast(lp->get_left());
                 auto rplm = multiply_cast(rp->get_left());
                 if (lplm.get()) {
-                    if (is_variable_combineable(lplm->get_right(),
-                                                this->right)) {
+                    if (is_variable_combinable(lplm->get_right(),
+                                               this->right)) {
                         return pow(lplm->get_left()->get_power_base(),
                                    this->left->get_power_exponent())*
                                pow(this->right->get_power_base(),
                                    this->left->get_power_exponent() +
                                    this->right->get_power_exponent());
-                    } else if (is_variable_combineable(lplm->get_left(),
-                                                       this->right)) {
+                    } else if (is_variable_combinable(lplm->get_left(),
+                                                      this->right)) {
                         return pow(lplm->get_right()->get_power_base(),
                                    this->left->get_power_exponent())*
                                pow(this->right->get_power_base(),
@@ -2210,15 +2210,15 @@ namespace graph {
                 }
 
                 if (rplm.get()) {
-                    if (is_variable_combineable(rplm->get_right(),
-                                                this->left)) {
+                    if (is_variable_combinable(rplm->get_right(),
+                                               this->left)) {
                         return pow(rplm->get_left()->get_power_base(),
                                    this->right->get_power_exponent())*
                                pow(this->left->get_power_base(),
                                    this->left->get_power_exponent() +
                                    this->right->get_power_exponent());
-                    } else if (is_variable_combineable(rplm->get_left(),
-                                                       this->left)) {
+                    } else if (is_variable_combinable(rplm->get_left(),
+                                                      this->left)) {
                         return pow(rplm->get_right()->get_power_base(),
                                    this->right->get_power_exponent())*
                                pow(this->left->get_power_base(),
@@ -2231,15 +2231,15 @@ namespace graph {
             auto lpd = divide_cast(this->left->get_power_base());
             if (lpd.get()) {
 //  (a/b)^c*b^d -> a^c*b^(c-d)
-                if (is_variable_combineable(lpd->get_right(),
-                                            this->right)) {
+                if (is_variable_combinable(lpd->get_right(),
+                                           this->right)) {
                     return pow(lpd->get_left(), this->left->get_power_exponent()) *
                            pow(this->right->get_power_base(),
                                this->right->get_power_exponent() -
                                this->left->get_power_exponent()*lpd->get_right()->get_power_exponent());
                 }
 //  (b/a)^c*b^d -> b^(c+d)/a^c
-                if (is_variable_combineable(lpd->get_left(), this->right)) {
+                if (is_variable_combinable(lpd->get_left(), this->right)) {
                     return pow(this->right->get_power_base(),
                                this->right->get_power_exponent() +
                                this->left->get_power_exponent()*lpd->get_left()->get_power_exponent()) /
@@ -2249,16 +2249,16 @@ namespace graph {
             auto rpd = divide_cast(this->right->get_power_base());
             if (rpd.get()) {
 //  b^d*(a/b)^c -> a^c*b^(c-d)
-                if (is_variable_combineable(rpd->get_right(),
-                                            this->left)) {
+                if (is_variable_combinable(rpd->get_right(),
+                                           this->left)) {
                     return pow(rpd->get_left(), this->right->get_power_exponent()) *
                            pow(this->left->get_power_base(),
                                this->left->get_power_exponent() -
                                this->right->get_power_exponent()*rpd->get_right()->get_power_exponent());
                 }
 //  b^d*(b/a)^c -> b^(c+d)/a^c
-                if (is_variable_combineable(rpd->get_left(),
-                                            this->left)) {
+                if (is_variable_combinable(rpd->get_left(),
+                                           this->left)) {
                     return pow(this->right->get_power_base(),
                                this->right->get_power_exponent() +
                                this->right->get_power_exponent()*rpd->get_left()->get_power_exponent()) /
@@ -2532,7 +2532,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -2717,7 +2717,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_multiply<T, SAFE_MATH> multiply_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -2771,8 +2771,8 @@ namespace graph {
         virtual backend::buffer<T> evaluate() {
             backend::buffer<T> l_result = this->left->evaluate();
 
-//  If all the elements on the left are zero, return the leftside without
-//  revaluating the rightside. Stop this loop early once the first non zero
+//  If all the elements on the left are zero, return the left side without
+//  reevaluating the right side. Stop this loop early once the first non zero
 //  element is encountered.
             if (l_result.is_zero()) {
                 return l_result;
@@ -2930,16 +2930,16 @@ namespace graph {
             auto rm = multiply_cast(this->right);
 
             if (lm.get() && rm.get()) {
-                if (is_variable_combineable(lm->get_left(),
-                                            rm->get_left()) ||
-                    is_variable_combineable(lm->get_right(),
-                                            rm->get_right())) {
+                if (is_variable_combinable(lm->get_left(),
+                                           rm->get_left()) ||
+                    is_variable_combinable(lm->get_right(),
+                                           rm->get_right())) {
                     return (lm->get_left()/rm->get_left()) *
                            (lm->get_right()/rm->get_right());
-                } else if (is_variable_combineable(lm->get_left(),
-                                                   rm->get_right()) ||
-                           is_variable_combineable(lm->get_right(),
-                                                   rm->get_left())) {
+                } else if (is_variable_combinable(lm->get_left(),
+                                                  rm->get_right()) ||
+                           is_variable_combinable(lm->get_right(),
+                                                  rm->get_left())) {
                     return (lm->get_left()/rm->get_right()) *
                            (lm->get_right()/rm->get_left());
                 }
@@ -3055,11 +3055,11 @@ namespace graph {
 
 //  (v1^a*v2)/v1^b -> v2*(v1^a/v1^b)
 //  (v2*v1^a)/v1^b -> v2*(v1^a/v1^b)
-                if (is_variable_combineable(lm->get_left(),
-                                            this->right)) {
+                if (is_variable_combinable(lm->get_left(),
+                                           this->right)) {
                     return lm->get_right()*(lm->get_left()/this->right);
-                } else if (is_variable_combineable(lm->get_right(),
-                                                   this->right)) {
+                } else if (is_variable_combinable(lm->get_right(),
+                                                  this->right)) {
                     return lm->get_left()*(lm->get_right()/this->right);
                 }
             }
@@ -3076,8 +3076,8 @@ namespace graph {
             }
 
 //  Power reductions.
-            if (is_variable_combineable(this->left,
-                                        this->right)) {
+            if (is_variable_combinable(this->left,
+                                       this->right)) {
                 return pow(this->left->get_power_base(),
                            this->left->get_power_exponent() -
                            this->right->get_power_exponent());
@@ -3168,22 +3168,22 @@ namespace graph {
                 auto lmrm = multiply_cast(lm->get_right());
                 auto lmlm = multiply_cast(lm->get_left());
                 if (lmrm.get()) {
-                    if (is_variable_combineable(lmrm->get_right(),
-                                                this->right)) {
+                    if (is_variable_combinable(lmrm->get_right(),
+                                               this->right)) {
                         return lm->get_left()*lmrm->get_left() *
                                (lmrm->get_right()/this->right);
-                    } else if (is_variable_combineable(lmrm->get_left(),
-                                                       this->right)) {
+                    } else if (is_variable_combinable(lmrm->get_left(),
+                                                      this->right)) {
                         return lm->get_left()*lmrm->get_right() *
                                (lmrm->get_left()/this->right);
                     }
                 } else if (lmlm.get()) {
-                    if (is_variable_combineable(lmlm->get_right(),
-                                                this->right)) {
+                    if (is_variable_combinable(lmlm->get_right(),
+                                               this->right)) {
                         return lm->get_right()*lmlm->get_left() *
                                (lmlm->get_right()/this->right);
-                    } else if (is_variable_combineable(lmlm->get_left(),
-                                                       this->right)) {
+                    } else if (is_variable_combinable(lmlm->get_left(),
+                                                      this->right)) {
                         return lm->get_right()*lmlm->get_right() *
                                (lmlm->get_left()/this->right);
                     }
@@ -3516,7 +3516,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -3682,7 +3682,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_divide<T, SAFE_MATH> divide_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -3715,9 +3715,9 @@ namespace graph {
         reduce_nested_fma(shared_subtract<T, SAFE_MATH> sub) {
             auto temp = fma_cast(this->left);
             if (temp.get()) {
-                if (is_constant_combineable(sub->get_right(), temp->get_left())  &&
-                    is_constant_combineable(sub->get_right(), temp->get_right()) &&
-                    is_constant_combineable(this->right, temp->get_right())      &&
+                if (is_constant_combinable(sub->get_right(), temp->get_left())  &&
+                    is_constant_combinable(sub->get_right(), temp->get_right()) &&
+                    is_constant_combinable(this->right, temp->get_right())      &&
                     temp->get_middle()->is_match(sub->get_left())) {
                     return fma(fma(temp->get_left(),
                                    sub->get_left(),
@@ -3726,7 +3726,7 @@ namespace graph {
                                this->right - temp->get_right()*sub->get_right());
                 } else {
                     if (temp->get_middle()->is_match(sub->get_left()) &&
-                        is_constant_combineable(sub->get_right(), this->right)) {
+                        is_constant_combinable(sub->get_right(), this->right)) {
                         auto temp2 = temp->reduce_nested_fma(sub);
                         if (temp2.get()) {
                             return fma(temp2,
@@ -3781,8 +3781,8 @@ namespace graph {
             backend::buffer<T> l_result = this->left->evaluate();
             backend::buffer<T> r_result = this->right->evaluate();
 
-//  If all the elements on the left are zero, return the leftside without
-//  revaluating the rightside.
+//  If all the elements on the left are zero, return the left side without
+//  reevaluating the right side.
             if (l_result.is_zero()) {
                 return r_result;
             }
@@ -3822,8 +3822,8 @@ namespace graph {
 
 //  Check if the left and middle are combinable. This will be constant merged in
 //  multiply reduction.
-            if (is_constant_combineable(this->left, this->middle) ||
-                is_variable_combineable(this->left, this->middle)) {
+            if (is_constant_combinable(this->left, this->middle) ||
+                is_variable_combinable(this->left, this->middle)) {
                 return (this->left*this->middle)  + this->right;
             }
 
@@ -3844,8 +3844,8 @@ namespace graph {
 //  fma(c1,c2 + a,c3) -> fma(c4,a,c5)
             auto ma = add_cast(this->middle);
             if (ma.get()) {
-                if (is_constant_combineable(this->left, ma->get_left()) &&
-                    is_constant_combineable(this->left, this->right)) {
+                if (is_constant_combinable(this->left, ma->get_left()) &&
+                    is_constant_combinable(this->left, this->right)) {
                     return fma(this->left,
                                ma->get_right(),
                                fma(this->left, ma->get_left(), this->right));
@@ -3856,12 +3856,12 @@ namespace graph {
 //  fma(c1,a - c2,c3) -> fma(c1,a,c3 - c1*c2)
             auto ms = subtract_cast(this->middle);
             if (ms.get()) {
-                if (is_constant_combineable(this->left, ms->get_left()) &&
-                    is_constant_combineable(this->left, this->right)) {
+                if (is_constant_combinable(this->left, ms->get_left()) &&
+                    is_constant_combinable(this->left, this->right)) {
                     return fma(-this->left, ms->get_right(),
                                this->left*ms->get_left() + this->right);
-                } else if (is_constant_combineable(this->left, ms->get_right()) &&
-                           is_constant_combineable(this->left, this->right)) {
+                } else if (is_constant_combinable(this->left, ms->get_right()) &&
+                           is_constant_combinable(this->left, this->right)) {
                     return fma(this->left, ms->get_left(),
                                this->right - this->left*ms->get_right());
                 }
@@ -3888,7 +3888,7 @@ namespace graph {
                     return this->middle*(this->left + rm->get_left());
                 }
 
-//  Chnage case of
+//  Change case of
 //  fma(a,b,-c1*b) -> a*b - c1*b
                 auto rmlc = constant_cast(rm->get_left());
                 if (rmlc.get() && rmlc->evaluate().is_negative()) {
@@ -3901,8 +3901,8 @@ namespace graph {
 //  fma(a,c1,c2*b) -> c1*fma(c3,b,a)
 //  fma(c1,a,b*c2) -> c1*fma(c3,b,a)
 //  fma(a,c1,b*c2) -> c1*fma(c3,b,a)
-                if (is_constant_combineable(this->left,
-                                            rm->get_left()) &&
+                if (is_constant_combinable(this->left,
+                                           rm->get_left()) &&
                     !this->left->has_constant_zero()) {
                     auto temp = rm->get_left()/this->left;
                     if (temp->is_normal()) {
@@ -3911,8 +3911,8 @@ namespace graph {
                                               this->middle);
                     }
                 }
-                if (is_constant_combineable(this->middle,
-                                            rm->get_left()) &&
+                if (is_constant_combinable(this->middle,
+                                           rm->get_left()) &&
                     !this->middle->has_constant_zero()) {
                     auto temp = rm->get_left()/this->middle;
                     if (temp->is_normal()) {
@@ -3921,8 +3921,8 @@ namespace graph {
                                                 this->left);
                     }
                 }
-                if (is_constant_combineable(this->left,
-                                            rm->get_right()) &&
+                if (is_constant_combinable(this->left,
+                                           rm->get_right()) &&
                     !this->left->has_constant_zero()) {
                     auto temp = rm->get_right()/this->left;
                     if (temp->is_normal()) {
@@ -3931,8 +3931,8 @@ namespace graph {
                                               this->middle);
                     }
                 }
-                if (is_constant_combineable(this->middle,
-                                            rm->get_right()) &&
+                if (is_constant_combinable(this->middle,
+                                           rm->get_right()) &&
                     !this->middle->has_constant_zero()) {
                     auto temp = rm->get_right()/this->middle;
                     if (temp->is_normal()) {
@@ -3982,8 +3982,8 @@ namespace graph {
 //  fma(c1*a,b,d*c2*d) -> c1*(a*b + c2/c1*d)
 //  fma(a*c1,b,d*c2*d) -> c1*(a*b + c2/c1*d)
             if (lm.get() && rm.get()) {
-                if (is_constant_combineable(rm->get_left(),
-                                            lm->get_left()) &&
+                if (is_constant_combinable(rm->get_left(),
+                                           lm->get_left()) &&
                     !lm->get_left()->has_constant_zero()) {
                     auto temp = rm->get_left()/lm->get_left();
                     if (temp->is_normal()){
@@ -3992,8 +3992,8 @@ namespace graph {
                                                   temp*rm->get_right());
                     }
                 }
-                if (is_constant_combineable(rm->get_left(),
-                                            lm->get_right()) &&
+                if (is_constant_combinable(rm->get_left(),
+                                           lm->get_right()) &&
                     !lm->get_right()->has_constant_zero()) {
                     auto temp = rm->get_left()/lm->get_right();
                     if (temp->is_normal()){
@@ -4002,8 +4002,8 @@ namespace graph {
                                                    temp*rm->get_right());
                     }
                 }
-                if (is_constant_combineable(rm->get_right(),
-                                            lm->get_left()) &&
+                if (is_constant_combinable(rm->get_right(),
+                                           lm->get_left()) &&
                     !lm->get_left()->has_constant_zero()) {
                     auto temp = rm->get_right()/lm->get_left();
                     if (temp->is_normal()) {
@@ -4012,8 +4012,8 @@ namespace graph {
                                                   temp*rm->get_left());
                     }
                 }
-                if (is_constant_combineable(rm->get_right(),
-                                            lm->get_right()) &&
+                if (is_constant_combinable(rm->get_right(),
+                                           lm->get_right()) &&
                     !lm->get_right()->has_constant_zero()) {
                     auto temp = rm->get_right()/lm->get_right();
                     if (temp->is_normal()) {
@@ -4037,8 +4037,8 @@ namespace graph {
 // fma(c1,c2*a,b) -> fma(c3,a,b)
 // fma(c1,a*c2,b) -> fma(c3,a,b)
 // fma(a,c1*b,c) -> fma(c1,a*b,c)
-                if (is_constant_combineable(this->left,
-                                            mm->get_left())) {
+                if (is_constant_combinable(this->left,
+                                           mm->get_left())) {
                     auto temp = this->left*mm->get_left();
                     if (temp->is_normal()) {
                         return fma(temp,
@@ -4046,8 +4046,8 @@ namespace graph {
                                    this->right);
                     }
                 }
-                if (is_constant_combineable(this->left,
-                                            mm->get_right())) {
+                if (is_constant_combinable(this->left,
+                                           mm->get_right())) {
                     auto temp = this->left*mm->get_right();
                     if (temp->is_normal()) {
                         return fma(temp,
@@ -4080,8 +4080,8 @@ namespace graph {
 //  fma(a,c1,c2/b) -> c1*(a + c3/b)
             auto rd = divide_cast(this->right);
             if (rd.get()) {
-                if (is_constant_combineable(this->left,
-                                            rd->get_left()) &&
+                if (is_constant_combinable(this->left,
+                                           rd->get_left()) &&
                     !this->left->has_constant_zero()) {
                     auto temp = rd->get_left()/this->left;
                     if (temp->is_normal()) {
@@ -4089,8 +4089,8 @@ namespace graph {
                                            temp/rd->get_right());
                     }
                 }
-                if (is_constant_combineable(this->middle,
-                                            rd->get_left()) &&
+                if (is_constant_combinable(this->middle,
+                                           rd->get_left()) &&
                     !this->middle->has_constant_zero()) {
                     auto temp = rd->get_left()/this->middle;
                     if (temp->is_normal()) {
@@ -4451,7 +4451,7 @@ namespace graph {
                     }
                 }
 
-                if (is_variable_combineable(this->middle, rfma->get_middle())) {
+                if (is_variable_combinable(this->middle, rfma->get_middle())) {
                     if (is_greater_exponent(this->middle, rfma->get_middle())) {
 //  fma(a,x^b,fma(c,x^d,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
                         return fma(rfma->get_middle(),
@@ -4467,7 +4467,7 @@ namespace graph {
                                        this->left),
                                    rfma->get_right());
                     }
-                } else if (is_variable_combineable(this->left, rfma->get_middle())) {
+                } else if (is_variable_combinable(this->left, rfma->get_middle())) {
                     if (is_greater_exponent(this->left, rfma->get_middle())) {
 //  fma(x^b,a,fma(c,x^d,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
                         return fma(rfma->get_middle(),
@@ -4483,7 +4483,7 @@ namespace graph {
                                        this->middle),
                                    rfma->get_right());
                     }
-                } else if (is_variable_combineable(this->middle, rfma->get_left())) {
+                } else if (is_variable_combinable(this->middle, rfma->get_left())) {
                     if (is_greater_exponent(this->middle, rfma->get_left())) {
 //  fma(a,x^b,fma(x^d,c,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
                         return fma(rfma->get_left(),
@@ -4499,7 +4499,7 @@ namespace graph {
                                        this->left),
                                    rfma->get_right());
                     }
-                } else if (is_variable_combineable(this->left, rfma->get_left())) {
+                } else if (is_variable_combinable(this->left, rfma->get_left())) {
                     if (is_greater_exponent(this->left, rfma->get_left())) {
 //  fma(x^b,a,fma(x^d,c,e)) -> fma(x^d,fma(x^(d-b),a,c),e) if b > d
                         return fma(rfma->get_left(),
@@ -4595,9 +4595,9 @@ namespace graph {
                 }
 
 //  fma(2,a^2,a) -> a*fma(2,a,1)
-//  Note this case is handled eailer. fma(2,a,a^2) -> a*fma(2,1,a)
-                if (is_variable_combineable(this->middle,
-                                            this->right)) {
+//  Note this case is handled earlier. fma(2,a,a^2) -> a*fma(2,1,a)
+                if (is_variable_combinable(this->middle,
+                                           this->right)) {
                     auto temp = this->right/this->middle;
                     auto temp_exponent = constant_cast(temp->get_power_exponent());
                     if (temp_exponent.get() && temp_exponent->evaluate().is_negative()) {
@@ -4621,15 +4621,15 @@ namespace graph {
             if (rm.get() && mp.get()) {
                 auto mplm = multiply_cast(mp->get_left());
                 if (mplm.get()) {
-                    if (is_variable_combineable(mplm->get_left(),
-                                                rm->get_left())) {
+                    if (is_variable_combinable(mplm->get_left(),
+                                               rm->get_left())) {
                         auto temp = pow(mplm->get_left(),
                                         mp->get_right());
                         return temp*fma(this->left,
                                         this->middle/temp,
                                         this->right/temp);
-                    } else if (is_variable_combineable(mplm->get_right(),
-                                                       rm->get_left())) {
+                    } else if (is_variable_combinable(mplm->get_right(),
+                                                      rm->get_left())) {
                         auto temp = pow(mplm->get_right(),
                                         mp->get_right());
                         return temp*fma(this->left,
@@ -4642,8 +4642,8 @@ namespace graph {
             if (rfma.get() && mp.get()) {
                 auto mplm = multiply_cast(mp->get_left());
                 if (mplm.get()) {
-                    if (is_variable_combineable(mplm->get_left(),
-                                                rfma->get_left())) {
+                    if (is_variable_combinable(mplm->get_left(),
+                                               rfma->get_left())) {
                         auto temp = pow(mplm->get_left(),
                                         mp->get_right());
                         return fma(temp,
@@ -4651,8 +4651,8 @@ namespace graph {
                                        this->middle/temp,
                                        rfma->get_middle()),
                                    rfma->get_right());
-                    } else if (is_variable_combineable(mplm->get_right(),
-                                                       rfma->get_left())) {
+                    } else if (is_variable_combinable(mplm->get_right(),
+                                                      rfma->get_left())) {
                         auto temp = pow(mplm->get_right(),
                                         mp->get_right());
                         return fma(temp,
@@ -4665,8 +4665,8 @@ namespace graph {
 //  fma(2,(a*b)^2,fma(3,a^2*b,c)) -> a^2*fma(2,b^2,fma(3,b,c))
                     auto rfmamm = multiply_cast(rfma->get_middle());
                     if (rfmamm.get()) {
-                        if (is_variable_combineable(mplm->get_left(),
-                                                    rfmamm->get_left())) {
+                        if (is_variable_combinable(mplm->get_left(),
+                                                   rfmamm->get_left())) {
                             auto temp = pow(mplm->get_left(),
                                             mp->get_right());
                             return temp*fma(this->left,
@@ -5100,7 +5100,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -5364,7 +5364,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_fma<T, SAFE_MATH> fma_cast(shared_leaf<T, SAFE_MATH> x) {

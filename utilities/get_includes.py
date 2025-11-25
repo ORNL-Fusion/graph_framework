@@ -35,7 +35,7 @@ def main(**args):
 ##
 ##    cc -Wp,-v -x c++ /dev/null -fsyntax-only
 ##
-##  to retrive the include paths for the compiler used.
+##  to retrieve the include paths for the compiler used.
 ##
 ##  Defines command line arguments for.
 ##  * --compiler Compiler command.

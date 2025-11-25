@@ -21,9 +21,9 @@
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] tolarance Test tolarance.
+///  @param[in] tolerance Test tolerance.
 //------------------------------------------------------------------------------
-template<std::floating_point T> void test_erfi(const T tolarance) {
+template<std::floating_point T> void test_erfi(const T tolerance) {
     int ncid;
     nc_open(ERFI_FILE, NC_NOWRITE, &ncid);
 
@@ -65,18 +65,18 @@ template<std::floating_point T> void test_erfi(const T tolarance) {
             assert(std::real(gold) == std::real(test) &&
                    "Real parts don't match.");
             if (std::imag(test) != std::imag(gold)) {
-                assert(std::abs(static_cast<T> (1) - std::imag(test)/std::imag(gold)) <= tolarance &&
+                assert(std::abs(static_cast<T> (1) - std::imag(test)/std::imag(gold)) <= tolerance &&
                        "Imaginary parts don't match.");
             }
         } else if (std::isinf(std::imag(gold))) {
             assert(std::imag(gold) == std::imag(test) &&
                    "Imaginary parts don't match.");
             if (std::real(test) != std::real(gold)) {
-                assert(std::abs(static_cast<T> (1) - std::real(test)/std::real(gold)) <= tolarance &&
+                assert(std::abs(static_cast<T> (1) - std::real(test)/std::real(gold)) <= tolerance &&
                        "Real parts don't match.");
             }
         } else if (!std::isinf(std::real(test)) && !std::isinf(std::imag(test))) {
-            assert(std::abs(static_cast<T> (1) - test/gold) <= tolarance &&
+            assert(std::abs(static_cast<T> (1) - test/gold) <= tolerance &&
                    "Results don't match.");
         }
     }

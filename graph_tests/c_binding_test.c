@@ -38,34 +38,34 @@ void run_tests(const enum graph_type type,
 
     graph_node px = graph_pseudo_variable(c_context, x);
     assert(graph_remove_pseudo(c_context, px) == x &&
-           "Expected to recieve x.");
+           "Expected to receive x.");
 
     graph_node one = graph_constant(c_context, 1.0);
     graph_node zero = graph_constant(c_context, 0.0);
     assert(graph_sub(c_context, one, one) == zero &&
-           "Expected to recieve zero.");
+           "Expected to receive zero.");
     assert(graph_div(c_context, one, one) == one &&
-           "Expected to recieve one.");
+           "Expected to receive one.");
     assert(graph_sqrt(c_context, one) == one &&
-           "Expected to recieve one.");
+           "Expected to receive one.");
     assert(graph_exp(c_context, zero) == one &&
-           "Expected to recieve one.");
+           "Expected to receive one.");
     assert(graph_log(c_context, one) == zero &&
-           "Expected to recieve zero.");
+           "Expected to receive zero.");
     assert(graph_pow(c_context, one, one) == one &&
-           "Expected to recieve one.");
+           "Expected to receive one.");
 
     if (type == COMPLEX_FLOAT || type == COMPLEX_DOUBLE) {
         assert(graph_erfi(c_context, zero) == zero &&
-               "Expected to recieve zero.");
+               "Expected to receive zero.");
     }
 
     assert(graph_sin(c_context, zero) == zero &&
-           "Expected to recieve zero.");
+           "Expected to receive zero.");
     assert(graph_cos(c_context, zero) == one &&
-           "Expected to recieve one.");
+           "Expected to receive one.");
     assert(graph_atan(c_context, one, zero) == zero &&
-           "Expected to recieve zero.");
+           "Expected to receive zero.");
 
     graph_node dydx = graph_df(c_context, y, x);
     graph_node dydm = graph_df(c_context, y, m);

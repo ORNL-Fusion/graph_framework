@@ -18,29 +18,29 @@
 #include "../graph_framework/jit.hpp"
 
 //------------------------------------------------------------------------------
-///  @brief Assert when difference is greater than the tolarance.
+///  @brief Assert when difference is greater than the tolerance.
 ///
 ///  Specialize to check for complex numbers since complex has not <= operator.
 ///
 ///  @tparam T Base type of the calculation.
 ///
 ///  @param[in] test      Test value.
-///  @param[in] tolarance Test tolarance.
+///  @param[in] tolerance Test tolerance.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void check(const T test,
-                                         const T tolarance) {
+                                         const T tolerance) {
     if constexpr (jit::complex_scalar<T>) {
-        assert(std::real(test) <= std::real(tolarance) &&
+        assert(std::real(test) <= std::real(tolerance) &&
                "Real GPU and CPU values differ.");
-        assert(std::imag(test) <= std::imag(tolarance) &&
+        assert(std::imag(test) <= std::imag(tolerance) &&
                "Imaginary GPU and CPU values differ.");
     } else {
-        assert(test <= tolarance && "GPU and CPU values differ.");
+        assert(test <= tolerance && "GPU and CPU values differ.");
     }
 }
 
 //------------------------------------------------------------------------------
-///  @brief Compile kernal and check the result of the output.
+///  @brief Compile kernel and check the result of the output.
 ///
 ///  @tparam T Base type of the calculation.
 ///
@@ -48,13 +48,13 @@ template<jit::float_scalar T> void check(const T test,
 ///  @param[in] outputs   Kernel output nodes.
 ///  @param[in] setters   Kernel set nodes.
 ///  @param[in] expected  Expected result.
-///  @param[in] tolarance Check tolarances.
+///  @param[in] tolerance Check tolerances.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
                                            graph::output_nodes<T> outputs,
                                            graph::map_nodes<T> setters,
                                            const T expected,
-                                           const T tolarance) {
+                                           const T tolerance) {
     jit::context<T> source(0);
     source.add_kernel("test_kernel", inputs, outputs, setters,
                       graph::shared_random_state<T> (), inputs.back()->size());
@@ -69,7 +69,7 @@ template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
     source.copy_to_host(outputs.back(), &result);
 
     const T diff = std::abs(result - expected);
-    check(diff, tolarance);
+    check(diff, tolerance);
 }
 
 //------------------------------------------------------------------------------

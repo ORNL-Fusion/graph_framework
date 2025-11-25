@@ -5,8 +5,8 @@
  * The <a href="https://github.com/ORNL-Fusion/graph_framework">graph_framework</a>
  * is a domain specific compiler for translating physics equations to optimized
  * code that runs on GPUs and CPUs. The domain specific aspect limits this to
- * classes of problems where the same physics is applied to an ensemble. Eamples
- * include RF Ray tracing, particle pushing, and field line following.
+ * classes of problems where the same physics is applied to an ensemble.
+ * Examples include RF Ray tracing, particle pushing, and field line following.
  *
  * @subsection purpose Purpose
  * The purpose of this framework is to enable domain scientists to write code
@@ -23,10 +23,10 @@
  * @subsection rf_ray_tracing RF Ray tracing
  * This section covers user guides to run the RF Ray tracing code. To run this
  * code, a user selects an equilibrium, a wave distribution function, a solver
- * method, intial ray conditions, and a power obsorption model. To run an
+ * method, initial ray conditions, and a power absorption model. To run an
  * example follow the instructions for the @ref xrays_commandline_example.
  *
- * * @ref equilibrum_models
+ * * @ref equilibrium_models
  * * @ref dispersion_function
  * * @ref solvers
  * * @ref absorption_model
@@ -49,7 +49,7 @@
  *
  * @subsection framework_developer_tools Developer guide for RF Ray Tracing
  * * @ref code_structure_xrays "Code Structure"
- * * @ref equilibrum_devel
+ * * @ref equilibrium_devel
  * * @ref dispersion_function_devel
  * * @ref solvers_devel
  * * @ref absorption_model_devel

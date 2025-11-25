@@ -58,7 +58,7 @@ void test_sqrt() {
     auto x_cast = graph::multiply_cast(x);
     assert(x_cast.get() && "Expected a multiply node.");
     assert(graph::constant_cast(x_cast->get_left()).get() &&
-           "Expected a constant coefficent.");
+           "Expected a constant coefficient.");
     assert(graph::sqrt_cast(x_cast->get_right()).get() &&
            "Expected sqrt node.");
     
@@ -87,7 +87,7 @@ void test_sqrt() {
     auto cxby_sqrt_cast = graph::multiply_cast(cxby_sqrt);
     assert(cxby_sqrt_cast.get() && "Expected a multiply node.");
     assert(graph::constant_cast(cxby_sqrt_cast->get_left()).get() &&
-           "Expected a constant coefficent.");
+           "Expected a constant coefficient.");
     assert(graph::sqrt_cast(cxby_sqrt_cast->get_right()).get() &&
            "Expected sqrt node.");
 
@@ -97,7 +97,7 @@ void test_sqrt() {
     auto sqpow_cast = graph::pow_cast(sqpow);
     assert(sqpow_cast.get() && "Expected pow node.");
     auto exp_cast = graph::multiply_cast(sqpow_cast->get_right());
-    assert(exp_cast.get() && "Expected a mutliply node.");
+    assert(exp_cast.get() && "Expected a multiply node.");
     auto constant_cast = graph::constant_cast(exp_cast->get_left());
     assert(constant_cast.get() && "Expected constant node on the left.");
     assert(constant_cast->is(0.5) && "Expected a value of 0.5");
@@ -185,7 +185,7 @@ void test_pow() {
     auto powsq_cast = graph::pow_cast(powsq);
     assert(powsq_cast.get() && "Expected pow node.");
     auto exp_cast = graph::multiply_cast(powsq_cast->get_right());
-    assert(exp_cast.get() && "Expected a mutliply node.");
+    assert(exp_cast.get() && "Expected a multiply node.");
     auto constant_cast = graph::constant_cast(exp_cast->get_left());
     assert(constant_cast.get() && "Expected constant node on the left.");
     assert(constant_cast->is(0.5) && "Expected a value of 0.5");
@@ -252,7 +252,7 @@ void test_pow() {
 //  sqrt(a)^a -> a^(b/c) -> a^(c2*b)
     auto pow_sqrt = graph::pow_cast(graph::pow(graph::sqrt(ten), ten));
     assert(graph::multiply_cast(pow_sqrt->get_right()).get() &&
-           "Expected mutliply node.");
+           "Expected multiply node.");
 
 //  Test derivatives.
     auto x2 = graph::pow(ten, 2.0);
@@ -352,7 +352,7 @@ void test_pow() {
     auto pow_combine_cast = graph::divide_cast(pow_combine);
     assert(pow_combine_cast.get() && "Expected a divide node.");
     assert(pow_combine_cast->get_right()->is_match(graph::pow(var_d, 2.0)) &&
-           "Expected d^2 in deniminator.");
+           "Expected d^2 in denominator.");
     assert(pow_combine_cast->get_left()->is_match(graph::pow(var_a,
                                                              2.0*(var_b - 0.5)) *
                                                   var_c*var_c) &&

@@ -88,7 +88,7 @@ namespace graph {
                                     ap2->get_right(), ap2->get_y_scale(), ap2->get_y_offset());
             }
 
-//  Handle casses like sqrt(c*x) where c is constant or cases like
+//  Handle cases like sqrt(c*x) where c is constant or cases like
 //  sqrt((x^a)*y).
             auto am = multiply_cast(this->arg);
             if (am.get()) {
@@ -177,7 +177,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -267,7 +267,7 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define sqrt convience function.
+///  @brief Define sqrt convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -307,7 +307,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_sqrt<T, SAFE_MATH> sqrt_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -469,7 +469,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -532,7 +532,7 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define exp convience function.
+///  @brief Define exp convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -572,7 +572,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_exp<T, SAFE_MATH> exp_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -712,7 +712,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -775,7 +775,7 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define log convience function.
+///  @brief Define log convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -814,7 +814,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic case.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_log<T, SAFE_MATH> log_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -1104,8 +1104,8 @@ namespace graph {
                     }
                 }
 
-                if (is_variable_combineable(ld->get_left(),
-                                            ld->get_right())) {
+                if (is_variable_combinable(ld->get_left(),
+                                           ld->get_right())) {
                     return pow(ld->get_left()->get_power_base(),
                                this->right*(ld->get_left()->get_power_exponent() -
                                             ld->get_right()->get_power_exponent()));
@@ -1114,22 +1114,22 @@ namespace graph {
                 if (ldrm.get()) {
                     auto ldrmlm = multiply_cast(ldrm->get_left());
                     if (ldrmlm.get()) {
-                        if (is_variable_combineable(ldrm->get_right(),
-                                                    ldrmlm->get_right()->get_power_base())) {
+                        if (is_variable_combinable(ldrm->get_right(),
+                                                   ldrmlm->get_right()->get_power_base())) {
                             return pow(ld->get_left()/ldrmlm->get_left(),
                                        this->right) /
                                    pow(ldrm->get_right()*ldrmlm->get_right(),
                                        this->right);
-                        } else if (is_variable_combineable(ldrm->get_right(),
-                                                           ldrmlm->get_left()->get_power_base())) {
+                        } else if (is_variable_combinable(ldrm->get_right(),
+                                                          ldrmlm->get_left()->get_power_base())) {
                             return pow(ld->get_left()/ldrmlm->get_right(),
                                        this->right) /
                                    pow(ldrm->get_right()*ldrmlm->get_left(),
                                        this->right);
-                        } else if (is_variable_combineable(ldrmlm->get_left(),
-                                                           ldrmlm->get_right()->get_power_base()) ||
-                                   is_variable_combineable(ldrmlm->get_right(),
-                                                           ldrmlm->get_left()->get_power_base())) {
+                        } else if (is_variable_combinable(ldrmlm->get_left(),
+                                                          ldrmlm->get_right()->get_power_base()) ||
+                                   is_variable_combinable(ldrmlm->get_right(),
+                                                          ldrmlm->get_left()->get_power_base())) {
                              return pow(ld->get_left()/ldrm->get_right(),
                                         this->right) /
                                     pow(ldrmlm->get_left()*ldrmlm->get_right(),
@@ -1225,7 +1225,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -1410,7 +1410,7 @@ namespace graph {
 ///  @brief Cast to a power node.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_pow<T, SAFE_MATH> pow_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -1545,7 +1545,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -1608,7 +1608,7 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define erfi convience function.
+///  @brief Define erfi convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -1648,7 +1648,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, bool SAFE_MATH=false>
     shared_erfi<T, SAFE_MATH> erfi_cast(shared_leaf<T, SAFE_MATH> x) {

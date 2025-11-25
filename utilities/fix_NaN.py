@@ -61,10 +61,10 @@ def main(**args):
 ##  * --directory Directory to search for the result files.
 ##  * --num_files Number of result files to read.
 ##  * --num_r     Number of radial bin points.
-##  * --min_r     Miniumum radial bin.
+##  * --min_r     Minimum radial bin.
 ##  * --max_r     Maximum radial bin.
 ##  * --num_z     Number of vertical bin points.
-##  * --min_z     Miniumum vertical bin.
+##  * --min_z     Minimum vertical bin.
 ##  * --max_z     Maximum vertical bin.
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -99,7 +99,7 @@ if __name__ == '__main__':
                                      action='store',
                                      required=True,
                                      dest='min_r',
-                                     help='Miniumum radial bin.',
+                                     help='Minimum radial bin.',
                                      type=float,
                                      metavar='MIN_R')
     command_line_parser.add_argument('-mr',
@@ -123,7 +123,7 @@ if __name__ == '__main__':
                                      action='store',
                                      required=True,
                                      dest='min_z',
-                                     help='Miniumum vertical bin.',
+                                     help='Minimum vertical bin.',
                                      type=float,
                                      metavar='MIN_Z')
     command_line_parser.add_argument('-mz',

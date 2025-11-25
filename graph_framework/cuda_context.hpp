@@ -53,14 +53,14 @@ namespace gpu {
     }
 
 //------------------------------------------------------------------------------
-///   @brief Initalize cuda.
+///   @brief Initialize cuda.
 //------------------------------------------------------------------------------
     static CUresult cuda_init() {
         const CUresult result = cuInit(0);
         check_error(result, "cuInit");
         return result;
     }
-///  Initalize Cuda.
+///  Initialize Cuda.
     static const CUresult result = cuda_init();
 
 //------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Device discription.
+///  @brief Device description.
 //------------------------------------------------------------------------------
         static std::string device_type() {
             return "Cuda GPU";

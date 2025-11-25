@@ -19,13 +19,13 @@
 ///
 ///  @tparam SOLVER Class of solver to use.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 ///  @param[in] omega0    Ray frequency.
 ///  @param[in] kx0       Wave number guess.
-///  @param[in] dt        Timestep for the solver.
+///  @param[in] dt        Time step for the solver.
 //------------------------------------------------------------------------------
 template<solver::method SOLVER>
-void test_solver(const typename SOLVER::base tolarance,
+void test_solver(const typename SOLVER::base tolerance,
                  const typename SOLVER::base omega0,
                  const typename SOLVER::base kx0,
                  const typename SOLVER::base dt) {
@@ -38,12 +38,12 @@ void test_solver(const typename SOLVER::base tolarance,
     auto z = graph::variable<typename SOLVER::base> (1, 0.0, "z");
     auto t = graph::variable<typename SOLVER::base> (1, 0.0, "t");
 
-    auto eq = equilibrium::make_guassian_density<typename SOLVER::base> ();
+    auto eq = equilibrium::make_gaussian_density<typename SOLVER::base> ();
 
     auto dt_const = graph::constant(static_cast<typename SOLVER::base> (dt));
     SOLVER solve(w, kx, ky, kz, x, y, z, t, dt_const, eq);
     const timing::measure_diagnostic solver("init");
-    auto residule = solve.init(kx, tolarance);
+    auto residual = solve.init(kx, tolerance);
     solver.print();
 
     const timing::measure_diagnostic compile("compile");
@@ -53,31 +53,31 @@ void test_solver(const typename SOLVER::base tolarance,
     const timing::measure_diagnostic step("step");
     for (size_t i = 0; i < 5; i++) {
         solve.step();
-        assert(std::abs(solve.check_residule(0)) < std::abs(tolarance) &&
-               "Solver failed to retain initial acuracy");
+        assert(std::abs(solve.check_residual(0)) < std::abs(tolerance) &&
+               "Solver failed to retain initial accuracy");
     }
     step.print();
 }
 
 //------------------------------------------------------------------------------
-///  @brief Run tests with a specified disperions Relation.
+///  @brief Run tests with a specified dispersions Relation.
 ///
 ///  @tparam DISPERSION Class of dispersion function to use.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 ///  @param[in] omega0    Ray frequency.
 ///  @param[in] kx0       Wave number guess.
 ///  @param[in] dt        Timestep for the solver.
 //------------------------------------------------------------------------------
 template<typename DISPERSION>
-void run_disperions_tests(const typename DISPERSION::base tolarance,
-                          const typename DISPERSION::base omega0,
-                          const typename DISPERSION::base kx0,
-                          const typename DISPERSION::base dt) {
-    test_solver<solver::rk2<DISPERSION>> (tolarance, omega0, kx0, dt);
+void run_dispersions_tests(const typename DISPERSION::base tolerance,
+                           const typename DISPERSION::base omega0,
+                           const typename DISPERSION::base kx0,
+                           const typename DISPERSION::base dt) {
+    test_solver<solver::rk2<DISPERSION>> (tolerance, omega0, kx0, dt);
     std::cout << "Test completed for rk2 solver." << std::endl;
 
-    test_solver<solver::rk4<DISPERSION>> (tolarance, omega0, kx0, dt);
+    test_solver<solver::rk4<DISPERSION>> (tolerance, omega0, kx0, dt);
     std::cout << "Test completed for rk4 solver." << std::endl;
 }
 
@@ -86,13 +86,13 @@ void run_disperions_tests(const typename DISPERSION::base tolarance,
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
-void run_tests(const T tolarance) {
-    run_disperions_tests<dispersion::simple<T>> (tolarance, 0.5, 0.25, 1.0);
-    run_disperions_tests<dispersion::guassian_well<T>> (tolarance, 0.5, 0.25, 0.00001);
-    run_disperions_tests<dispersion::cold_plasma<T>> (tolarance, 900.0, 1000.0, 0.5/10000.0);
+void run_tests(const T tolerance) {
+    run_dispersions_tests<dispersion::simple<T>> (tolerance, 0.5, 0.25, 1.0);
+    run_dispersions_tests<dispersion::gaussian_well<T>> (tolerance, 0.5, 0.25, 0.00001);
+    run_dispersions_tests<dispersion::cold_plasma<T>> (tolerance, 900.0, 1000.0, 0.5/10000.0);
     std::cout << "Tests completed for ";
     jit::add_type<T> (std::cout);
     std::cout << std::endl;

@@ -13,7 +13,7 @@
 
 /// Name space for the command line parsing.
 namespace commandline {
-///  Lock to syncronize netcdf accross threads.
+///  Lock to synchronize netcdf across threads.
     static std::mutex sync;
 
 //------------------------------------------------------------------------------

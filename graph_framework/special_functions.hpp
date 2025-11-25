@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file special_functions.hpp
-///  @brief Implimentations for special functions.
+///  @brief Implementations for special functions.
 ///
 ///  Special functions are adapted from http://ab-initio.mit.edu/Faddeeva
 //------------------------------------------------------------------------------
@@ -529,7 +529,7 @@ namespace special {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Compute specal case of w(z) = exp(z^2)\*erfz(z).
+///  @brief Compute special case of w(z) = exp(z^2)\*erfz(z).
 ///
 ///  Specialized for imaginary arguments.
 ///

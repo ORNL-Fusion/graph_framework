@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file backend.hpp
-///  @brief Class signature to impliment compute backends.
+///  @brief Class signature to implement compute backends.
 ///
 ///  Defined the function interfaces to access compute resources.
 //------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ namespace backend {
 ///  @brief Construct a buffer backend with a size.
 ///
 ///  @param[in] s Size of he data buffer.
-///  @param[in] d Scalar data to initalize.
+///  @param[in] d Scalar data to initialize.
 //------------------------------------------------------------------------------
         buffer(const size_t s, const T d) :
         memory(s, d) {}
@@ -305,10 +305,10 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
+                    for (size_t j = 0; j < num_columns; j++) {
                         memory[i*num_rows + j] += x[i];
                     }
                 }
@@ -317,11 +317,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        m[i*num_colmns + j] = memory[i] + x[i*num_colmns + j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = memory[i] + x[i*num_columns + j];
                     }
                 }
                 memory = m;
@@ -341,11 +341,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] += x[j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] += x[j];
                     }
                 }
             } else {
@@ -353,11 +353,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        m[i*num_colmns + j] = memory[j] + x[i*num_colmns + j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = memory[j] + x[i*num_columns + j];
                     }
                 }
                 memory = m;
@@ -367,7 +367,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Subtract row operation.
 ///
-///  Sunbtracts m_ij - v_i or v_i - m_ij. This will resize the buffer if it
+///  Subtracts m_ij - v_i or v_i - m_ij. This will resize the buffer if it
 ///  needs to be.
 ///
 ///  @param[in] x The right operand.
@@ -377,11 +377,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] -= x[i];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] -= x[i];
                     }
                 }
             } else {
@@ -389,11 +389,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
+                for (size_t i = 0; i < num_columns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_colmns + j] = memory[i] - x[i*num_colmns + j];
+                        m[i*num_columns + j] = memory[i] - x[i*num_columns + j];
                     }
                 }
                 memory = m;
@@ -403,7 +403,7 @@ namespace backend {
 //------------------------------------------------------------------------------
 ///  @brief Subtract col operation.
 ///
-///  Sunbtracts m_ij - v_j or v_j - m_ij. This will resize the buffer if it
+///  Subtracts m_ij - v_j or v_j - m_ij. This will resize the buffer if it
 ///  needs to be.
 ///
 ///  @param[in] x The other operand.
@@ -413,11 +413,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] -= x[j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] -= x[j];
                     }
                 }
             } else {
@@ -425,11 +425,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        m[i*num_colmns + j] = memory[j] - x[i*num_colmns + j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = memory[j] - x[i*num_columns + j];
                     }
                 }
                 memory = m;
@@ -449,11 +449,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] *= x[i];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] *= x[i];
                     }
                 }
             } else {
@@ -461,11 +461,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        m[i*num_colmns + j] = memory[i]*x[i*num_colmns + j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = memory[i]*x[i*num_columns + j];
                     }
                 }
                 memory = m;
@@ -485,11 +485,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] *= x[j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] *= x[j];
                     }
                 }
             } else {
@@ -497,11 +497,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        m[i*num_colmns + j] = memory[j]*x[i*num_colmns + j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = memory[j]*x[i*num_columns + j];
                     }
                 }
                 memory = m;
@@ -521,11 +521,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] /= x[i];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] /= x[i];
                     }
                 }
             } else {
@@ -533,11 +533,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        m[i*num_colmns + j] = memory[i]/x[i*num_colmns + j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = memory[i]/x[i*num_columns + j];
                     }
                 }
                 memory = m;
@@ -557,11 +557,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] /= x[j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] /= x[j];
                     }
                 }
             } else {
@@ -569,11 +569,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        m[i*num_colmns + j] = memory[j]/x[i*num_colmns + j];
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = memory[j]/x[i*num_columns + j];
                     }
                 }
                 memory = m;
@@ -593,14 +593,14 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
+                    for (size_t j = 0; j < num_columns; j++) {
                         if constexpr (jit::complex_scalar<T>) {
-                            memory[i*num_colmns + j] = std::atan(x[i]/memory[i*num_colmns + j]);
+                            memory[i*num_columns + j] = std::atan(x[i]/memory[i*num_columns + j]);
                         } else {
-                            memory[i*num_colmns + j] = std::atan2(x[i], memory[i*num_colmns + j]);
+                            memory[i*num_columns + j] = std::atan2(x[i], memory[i*num_columns + j]);
                         }
                     }
                 }
@@ -609,14 +609,14 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
+                    for (size_t j = 0; j < num_columns; j++) {
                         if constexpr (jit::complex_scalar<T>) {
-                            m[i*num_colmns + j] = std::atan(x[i*num_colmns + j]/memory[i]);
+                            m[i*num_columns + j] = std::atan(x[i*num_columns + j]/memory[i]);
                         } else {
-                            m[i*num_colmns + j] = std::atan2(x[i*num_colmns + j], memory[i]);
+                            m[i*num_columns + j] = std::atan2(x[i*num_columns + j], memory[i]);
                         }
                     }
                 }
@@ -637,14 +637,14 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_colmns; i++) {
+                for (size_t i = 0; i < num_columns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
                         if constexpr (jit::complex_scalar<T>) {
-                            memory[i*num_colmns + j] = std::atan(x[j]/memory[i*num_colmns + j]);
+                            memory[i*num_columns + j] = std::atan(x[j]/memory[i*num_columns + j]);
                         } else {
-                            memory[i*num_colmns + j] = std::atan2(x[j], memory[i*num_colmns + j]);
+                            memory[i*num_columns + j] = std::atan2(x[j], memory[i*num_columns + j]);
                         }
                     }
                 }
@@ -653,14 +653,14 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
+                    for (size_t j = 0; j < num_columns; j++) {
                         if constexpr (jit::complex_scalar<T>) {
-                            m[i*num_colmns + j] = std::atan(x[i*num_colmns + j]/memory[j]);
+                            m[i*num_columns + j] = std::atan(x[i*num_columns + j]/memory[j]);
                         } else {
-                            m[i*num_colmns + j] = std::atan2(x[i*num_colmns + j], memory[j]);
+                            m[i*num_columns + j] = std::atan2(x[i*num_columns + j], memory[j]);
                         }
                     }
                 }
@@ -681,11 +681,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] = std::pow(memory[i*num_colmns + j], x[i]);
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] = std::pow(memory[i*num_columns + j], x[i]);
                     }
                 }
             } else {
@@ -693,11 +693,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
-                for (size_t i = 0; i < num_colmns; i++) {
+                for (size_t i = 0; i < num_columns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_colmns + j] = std::pow(memory[i], x[i*num_colmns + j]);
+                        m[i*num_columns + j] = std::pow(memory[i], x[i*num_columns + j]);
                     }
                 }
                 memory = m;
@@ -717,11 +717,11 @@ namespace backend {
                 assert(size()%x.size() == 0 &&
                        "Vector operand size is not a multiple of matrix operand size");
 
-                const size_t num_colmns = size()/x.size();
+                const size_t num_columns = size()/x.size();
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        memory[i*num_colmns + j] = std::pow(memory[i*num_colmns + j], x[j]);
+                    for (size_t j = 0; j < num_columns; j++) {
+                        memory[i*num_columns + j] = std::pow(memory[i*num_columns + j], x[j]);
                     }
                 }
             } else {
@@ -729,11 +729,11 @@ namespace backend {
                        "Vector operand size is not a multiple of matrix operand size");
 
                 std::vector<T> m(x.size());
-                const size_t num_colmns = x.size()/size();
+                const size_t num_columns = x.size()/size();
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_colmns; j++) {
-                        m[i*num_colmns + j] = std::pow(memory[j], x[i*num_colmns + j]);
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = std::pow(memory[j], x[i*num_columns + j]);
                     }
                 }
                 memory = m;
@@ -771,7 +771,7 @@ namespace backend {
         }
 
         assert(a.size() == b.size() &&
-               "Left and right sizes are incompatable.");
+               "Left and right sizes are incompatible.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
             a[i] += b.at(i);
         }
@@ -829,7 +829,7 @@ namespace backend {
         }
 
         assert(a.size() == b.size() &&
-               "Left and right sizes are incompatable.");
+               "Left and right sizes are incompatible.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
             a[i] -= b.at(i);
         }
@@ -863,7 +863,7 @@ namespace backend {
         }
 
         assert(a.size() == b.size() &&
-               "Left and right sizes are incompatable.");
+               "Left and right sizes are incompatible.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
             a[i] *= b.at(i);
         }
@@ -897,7 +897,7 @@ namespace backend {
         }
 
         assert(a.size() == b.size() &&
-               "Left and right sizes are incompatable.");
+               "Left and right sizes are incompatible.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
             a[i] /= b.at(i);
         }
@@ -1001,7 +1001,7 @@ namespace backend {
         assert(a.size() == b.size() &&
                b.size() == c.size() &&
                a.size() == c.size() &&
-               "Left, middle and right sizes are incompatable.");
+               "Left, middle and right sizes are incompatible.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
             if constexpr (use_fma) {
                 a[i] = std::fma(a.at(i), b.at(i), c.at(i));
@@ -1078,7 +1078,7 @@ namespace backend {
         }
 
         assert(base.size() == exponent.size() &&
-               "Left and right sizes are incompatable.");
+               "Left and right sizes are incompatible.");
         for (size_t i = 0, ie = base.size(); i < ie; i++) {
             base[i] = std::pow(base.at(i), exponent.at(i));
         }
@@ -1120,7 +1120,7 @@ namespace backend {
         }
 
         assert(x.size() == y.size() &&
-               "Left and right sizes are incompatable.");
+               "Left and right sizes are incompatible.");
         for (size_t i = 0, ie = x.size(); i < ie; i++) {
             if constexpr (jit::complex_scalar<T>) {
                 x[i] = std::atan(y[i]/x[i]);

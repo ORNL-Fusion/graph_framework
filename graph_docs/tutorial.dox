@@ -20,7 +20,7 @@ int main(int argc, const char * argv[]) {
     (void)argc;
     (void)argv;
 
-//  Insert code here. No code should be commited to this file beyond this
+//  Insert code here. No code should be committed to this file beyond this
 //  template.
 
     END_GPU
@@ -57,7 +57,7 @@ int main(int argc, const char * argv[]) {
  * The graph_framework is built around applying the same equations to a large
  * ensemble. Ensembles are defined from variables. All variables need to have
  * same dimensionality. To create a variable we use one of the variable factory
- * methods. For now we will build it without initalizing it.
+ * methods. For now we will build it without initializing it.
  * @code
 template<jit::float_scalar T>
 void run_tutorial() {
@@ -98,7 +98,7 @@ void run_tutorial() {
 }
  @endcode
  * An explicit @ref graph::constant_node is created for <tt>m</tt> while an
- * impicit constant was defined for <tt>b</tt>. Note in the implicit case, the
+ * implicit constant was defined for <tt>b</tt>. Note in the implicit case, the
  * actual node for <tt>b</tt> is not created until we use it in an expression.
  *
  * <hr>
@@ -185,7 +185,7 @@ void run_tutorial() {
  @endcode
  * This creates a workflow for device 0.
  *
- * To create a kernal, we add a @ref workflow::work_item using the
+ * To create a kernel, we add a @ref workflow::work_item using the
  * @ref workflow::manager::add_item method.
  * @code
 workflow::manager<T> work(0);
@@ -255,7 +255,7 @@ work.print(2, {x, y, dydx});
 0 0.6 0.4
  @endcode
  * showing that the device dose not have the updated values. To set values from
- * the host. You need to explicity copy from a host buffer to a device buffer
+ * the host. You need to explicitly copy from a host buffer to a device buffer
  * using the @ref workflow::manager::copy_to_device method.
  * @code
 work.copy_to_device(x, std::array<T, 3> ({1.0, 2.0, 3.0}).data());
@@ -294,7 +294,7 @@ for (size_t i = 0; i < 10; i++) {
     work.print(1, {x});
 }
  @endcode
- * Running this code shows the value of x continously updating.
+ * Running this code shows the value of x continuously updating.
   * @code
 1.4
 1.16
@@ -347,7 +347,7 @@ void run_tutorial() {
             max = std::max(max, r*r);
         }
         std::cout << max << std::endl;
-    } while (max > 1.0E-10);
+    } while (max > 1.0E-14);
     work.print(0, {x});
     work.print(1, {x});
     work.print(2, {x});
@@ -368,9 +368,9 @@ void run_tutorial() {
 -2.6006
  @endcode
  *
- * However there are some things that are not optimial here. We are performing
- * a reduction on the host side and transfering the entire array to the host. To
- * improve this we can use a converge item instead.
+ * However there are some things that are not optimal here. We are performing
+ * a reduction on the host side and transferring the entire array to the host.
+ * To improve this we can use a converge item instead.
  * @code
 // Create a workflow manager.
 workflow::manager<T> work(0);

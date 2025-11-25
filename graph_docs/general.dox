@@ -7,10 +7,10 @@
  *
  * @section general_concepts_definitions Definitions
  * <table>
- * <caption id="general_concepts_glossery">Glossery of terms</caption>
+ * <caption id="general_concepts_glossary">Glossary of terms</caption>
  * <tr><th>Concept                    <th>Definition
  * <tr><td><b>node</b>                <td>A leaf or branch on the graph tree.
- * <tr><td><b>graph</b>               <td>A data stucture connecting nodes.
+ * <tr><td><b>graph</b>               <td>A data structure connecting nodes.
  * <tr><td><b>reduce</b>              <td>A transformation of the graph to remove leaf_nodes.
  * <tr><td><b>auto differentiation</b><td>A transformation of the graph build derivatives.
  * <tr><td><b>compiler</b>            <td>A tool for translating from one language to another.
@@ -32,16 +32,16 @@
  * @section general_concepts_graph Graph
  * The graph_framework operates by building a tree structure of math operations.
  * For an example of building expression structures see the
- * @ref tutorial_expression "basic expressions tutroial". In tree form it is
+ * @ref tutorial_expression "basic expressions tutorial". In tree form it is
  * easy to traverse nodes in the graph. Take the example of equation of a line.
  * @f{equation}{y=mx + b@f}
- * This equation consists of five nodes. The ends of the tree are clasified
+ * This equation consists of five nodes. The ends of the tree are classified
  * as either variables @f$x@f$ or constants @f$m,b@f$. These nodes are connected
  * by nodes for multiply and addition operations. The output @f$y@f$ represents
  * the entire graph of operations.
- * @image{} html line_graph.png "The graph stucture for y = mx + b."
+ * @image{} html line_graph.png "The graph structure for y = mx + b."
  * Evaluation of graphs start from the top most node in this case the @f$+@f$
- * operation. Evaluation of a node is not performed until all subnodes are
+ * operation. Evaluation of a node is not performed until all sub-nodes are
  * evaluated starting with the left operand. Evaluation starts by recursively
  * evaluating the left operands until the last node is reached @f$m@f$.
  * @image{} html line_graph_eval1.png ""
@@ -56,7 +56,7 @@
  * From the previous @ref general_concepts_graph "section", it was shown how
  * graphs can be evaluated. This same evaluation can be applied to build
  * graphs of a function derivative. For an example of taking derivatives see the
- * @ref tutorial_derivatives "auto differentiation tutroial". Lets say that we
+ * @ref tutorial_derivatives "auto differentiation tutorial". Lets say that we
  * want to take the derivative of @f$\frac{\partial y}{\partial x}@f$. This is
  * achieved by evaluating the until bottom left most node is reached. Then a new
  * graph is build starting with @f$\frac{\partial m}{\partial x}=0@f$. Applying
@@ -72,7 +72,7 @@
  * @section general_concepts_reduction Reduction
  * The final expression for @f$\frac{\partial y}{\partial x}@f$ contains many
  * unnecessary nodes in the graph. Instead of building full graphs, we can
- * simplify and eleminate nodes as we build them. For instance, when the
+ * simplify and eliminate nodes as we build them. For instance, when the
  * expression @f$0x@f$ this created can be immediately reduce it  to a single
  * node.
  * @image{} html line_graph_reduce1.png ""
@@ -85,12 +85,12 @@
  * @section general_concepts_compile Compile
  * Once graph expressions are built, they can be compiled to a compute kernel.
  * For an example of compiling expression trees into kernels see the
- * @ref tutorial_workflow "workflow tutroial".
+ * @ref tutorial_workflow "workflow tutorial".
  * Using the same recursive evaluation, we can visit each node of a graph and
  * and create a line of kernel source code. There are three important parts for
  * creating kernels, inputs, outputs, and maps. These three concepts define
  * buffers on the compute device and how they are changed. Compute kernels can
- * be genereted from multiple outputs and maps.
+ * be generated from multiple outputs and maps.
  *
  * @subsection general_concepts_compile_inputs Inputs
  * Inputs are the variable nodes that define the graph inputs. In the line
@@ -102,13 +102,13 @@
  * @subsection general_concepts_compile_outputs Outputs
  * Outputs are the ends of the nodes. These are the values we want to compute.
  * Any node of a graph can be a potential output. For each output a device
- * buffer is generated to store the results of the evalutaion. For nodes that
+ * buffer is generated to store the results of the evaluation. For nodes that
  * are not used as outputs, no buffers need to be created since those results
  * are never stored.
  *
  * @subsection general_concepts_compile_maps Maps
  * Maps enable the results of an output node to be stored in an input node. This
- * is use for a wide varity of steps. For instance take a gradient decent step.
+ * is used for a wide varity of cases. For instance take a gradient decent step.
  * @f{equation}{y = y + \frac{\partial f}{\partial x}@f}
  * In this case the output of the expression
  * @f$y + \frac{\partial f}{\partial x}@f$
@@ -117,13 +117,13 @@
  * <hr>
  * @section general_concepts_workflow Workflows
  * Sequences of kernels are evaluated in workflow. A workflow is defined from
- * workitems which wrap a kernel call.
+ * work items which wrap a kernel call.
  *
  * <hr>
  * @section general_concepts_safe_math Safe Math
  * There are some conditions where mathematically, a graph should evaluate to a
- * normal number. However, when evaluted suing floating point precison, can lead
- * to <tt>Inf</tt> or <tt>NaN</tt>. An example of this the
+ * normal number. However, when evaluated suing floating point precision, can
+ * lead to <tt>Inf</tt> or <tt>NaN</tt>. An example of this the
  * @f$\exp\left(x\right)@f$ function. For large argument values,
  * @f$\exp\left(x\right)@f$ overflows the maximum floating point precision and
  * returns <tt>Inf</tt>. @f$\frac{1}{\exp\left(x\right)}@f$ should evaluate

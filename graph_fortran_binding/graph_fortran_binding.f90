@@ -1,15 +1,15 @@
 !-------------------------------------------------------------------------------
 !>  @file graph_fortran_binding.f90
-!>  @brief Implimentation of the Fortran binding library.
+!>  @brief Implementation of the Fortran binding library.
 !-------------------------------------------------------------------------------
 !>  @page graph_fortran_binding Embedding in Fortran code
 !>  @brief Documentation for linking into a Fortran code base.
 !>  @tableofcontents
 !>
 !>  @section graph_fortran_binding_into Introduction
-!>  This section assumes the reader is already familar with developing Fortran
-!>  codes. The simplist method is to create a C callable function like the
-!>  @ref graph_c_binding_into "C binding exmaple". Then create a Fortran
+!>  This section assumes the reader is already familiar with developing Fortran
+!>  codes. The simplest method is to create a C callable function like the
+!>  @ref graph_c_binding_into "C binding example". Then create a Fortran
 !>  interface for it.
 !>  @code
 !>  INTERFACE
@@ -29,8 +29,8 @@
 !>  An alternative is to use the
 !>  @ref graph_fortran "Fortran Language interface". The Fortran binding
 !>  interface can be enabled as one of the <tt>cmake</tt>
-!>  @ref build_system_user_options "conifgure options". As an example, we will
-!>  convert the @ref tutorial_workflow "making workflows" turorial to use the
+!>  @ref build_system_user_options "configure options". As an example, we will
+!>  convert the @ref tutorial_workflow "making workflows" tutorial to use the
 !>  Fortran language bindings.
 !>  @code
 !>  SUBROUTINE fortran_binding
@@ -374,8 +374,8 @@
 !>  @brief Create Addition node.
 !>
 !>  @param[in] c     The graph C context.
-!>  @param[in] left  The left opperand.
-!>  @param[in] right The right opperand.
+!>  @param[in] left  The left operand.
+!>  @param[in] right The right operand.
 !>  @returns left + right
 !-------------------------------------------------------------------------------
          TYPE(C_PTR) FUNCTION graph_add(c, left, right)                        &
@@ -388,11 +388,11 @@
          END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create Substract node.
+!>  @brief Create Subtract node.
 !>
 !>  @param[in] c     The graph C context.
-!>  @param[in] left  The left opperand.
-!>  @param[in] right The right opperand.
+!>  @param[in] left  The left operand.
+!>  @param[in] right The right operand.
 !>  @returns left - right
 !-------------------------------------------------------------------------------
          TYPE(C_PTR) FUNCTION graph_sub(c, left, right)                        &
@@ -408,8 +408,8 @@
 !>  @brief Create Multiply node.
 !>
 !>  @param[in] c     The graph C context.
-!>  @param[in] left  The left opperand.
-!>  @param[in] right The right opperand.
+!>  @param[in] left  The left operand.
+!>  @param[in] right The right operand.
 !>  @returns left*right
 !-------------------------------------------------------------------------------
          TYPE(C_PTR) FUNCTION graph_mul(c, left, right)                        &
@@ -425,8 +425,8 @@
 !>  @brief Create Divide node.
 !>
 !>  @param[in] c     The graph C context.
-!>  @param[in] left  The left opperand.
-!>  @param[in] right The right opperand.
+!>  @param[in] left  The left operand.
+!>  @param[in] right The right operand.
 !>  @returns left/right
 !-------------------------------------------------------------------------------
          TYPE(C_PTR) FUNCTION graph_div(c, left, right)                        &
@@ -487,8 +487,8 @@
 !>  @brief Create pow node.
 !>
 !>  @param[in] c     The graph C context.
-!>  @param[in] left  The left opperand.
-!>  @param[in] right The right opperand.
+!>  @param[in] left  The left operand.
+!>  @param[in] right The right operand.
 !>  @returns pow(left, right)
 !-------------------------------------------------------------------------------
          TYPE(C_PTR) FUNCTION graph_pow(c, left, right)                        &
@@ -549,8 +549,8 @@
 !>  @brief Create atan node.
 !>
 !>  @param[in] c     The graph C context.
-!>  @param[in] left  The left opperand.
-!>  @param[in] right The right opperand.
+!>  @param[in] left  The left operand.
+!>  @param[in] right The right operand.
 !>  @returns pow(left, right)
 !-------------------------------------------------------------------------------
          TYPE(C_PTR) FUNCTION graph_atan(c, left, right)                       &
@@ -566,7 +566,7 @@
 !>  @brief Construct a random state node.
 !>
 !>  @param[in] c    The graph C context.
-!>  @param[in] seed Intial random seed.
+!>  @param[in] seed Initial random seed.
 !>  @returns A random state node.
 !-------------------------------------------------------------------------------
          TYPE(C_PTR) FUNCTION graph_random_state(c, seed)                      &
@@ -596,7 +596,7 @@
 !>  @brief Create 1D piecewise node with complex double buffer.
 !>
 !>  @param[in] c           The graph C context.
-!>  @param[in] arg         The left opperand.
+!>  @param[in] arg         The left operand.
 !>  @param[in] scale       Scale factor argument.
 !>  @param[in] offset      Offset factor argument.
 !>  @param[in] source      Source buffer to fill elements.
@@ -761,7 +761,7 @@
 !>  @param[in] random_state  Optional random state, can be NULL if not used.
 !>  @param[in] name          Name for the kernel.
 !>  @param[in] num_particles Number of elements to operate on.
-!>  @param[in] tol           Tolarance to converge the function to.
+!>  @param[in] tol           Tolerance to converge the function to.
 !>  @param[in] max_iter      Maximum number of iterations before giving up.
 !-------------------------------------------------------------------------------
          SUBROUTINE graph_add_converge_item(c, inputs, num_inputs,             &
@@ -931,7 +931,7 @@
 !-------------------------------------------------------------------------------
 !>  @brief Construct a @ref graph_context object with float type.
 !>
-!>  Allocate memory for the @ref graph_context and initalize the c context with
+!>  Allocate memory for the @ref graph_context and initialize the c context with
 !>  a double type.
 !>
 !>  @param[in] use_safe_math Optional use safe math.
@@ -957,7 +957,7 @@
 !-------------------------------------------------------------------------------
 !>  @brief Construct a @ref graph_context object with double type.
 !>
-!>  Allocate memory for the @ref graph_context and initalize the c context with
+!>  Allocate memory for the @ref graph_context and initialize the c context with
 !>  a double type.
 !>
 !>  @param[in] use_safe_math Use safe math.
@@ -983,7 +983,7 @@
 !-------------------------------------------------------------------------------
 !>  @brief Construct a @ref graph_context object with complex float type.
 !>
-!>  Allocate memory for the @ref graph_context and initalize the c context with
+!>  Allocate memory for the @ref graph_context and initialize the c context with
 !>  a complex float type.
 !>
 !>  @param[in] use_safe_math Use safe math.
@@ -1009,7 +1009,7 @@
 !-------------------------------------------------------------------------------
 !>  @brief Construct a @ref graph_context object with complex double type.
 !>
-!>  Allocate memory for the @ref graph_context and initalize the c context with
+!>  Allocate memory for the @ref graph_context and initialize the c context with
 !>  a complex double type.
 !>
 !>  @param[in] use_safe_math Use safe math.
@@ -1038,7 +1038,7 @@
 !-------------------------------------------------------------------------------
 !>  @brief Deconstruct a @ref graph_context object.
 !>
-!>  Deallocate memory and unitialize a @ref graph_context object.
+!>  Deallocate memory and initialize a @ref graph_context object.
 !>
 !>  @param[in,out] this A @ref graph_context instance.
 !-------------------------------------------------------------------------------
@@ -1534,7 +1534,7 @@
 !>  @brief Get random size.
 !>
 !>  @param[in,out] this @ref graph_context instance.
-!>  @param[in]     seed Intial random seed.
+!>  @param[in]     seed Initial random seed.
 !>  @returns The random size.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_random_state(this, seed)
@@ -1988,7 +1988,7 @@
 !>  @param[in]     random_state  Optional random state, can be NULL if not used.
 !>  @param[in]     name          Name for the kernel.
 !>  @param[in]     num_particles Number of elements to operate on.
-!>  @param[in]     tol           Maximum tolarance to converge to.
+!>  @param[in]     tol           Maximum tolerance to converge to.
 !>  @param[in]     max_iter      Maximum number of iterations for convergence.
 !-------------------------------------------------------------------------------
       SUBROUTINE graph_context_add_converge_item(this, inputs, outputs,        &

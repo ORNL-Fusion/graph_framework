@@ -6,7 +6,7 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 ///  @page solvers Solvers
-///  @brief A discription of the integation methods for solving the ray equations.
+///  @brief A description of the integration methods for solving the ray equations.
 ///  @tableofcontents
 ///
 ///  @section solvers_intro Introduction
@@ -37,23 +37,23 @@
 ///
 ///  <hr>
 ///  @subsection solvers_rk2 2nd Order Runge Kutta
-///  This solver integates coupled differential equations using the Runge Kutta
+///  This solver integrates coupled differential equations using the Runge Kutta
 ///  to second order.
-///  It starts by computing a substep for @f$\vec{x}@f$ and @f$\vec{k}@f$.
+///  It starts by computing a sub-step for @f$\vec{x}@f$ and @f$\vec{k}@f$.
 ///  @f{equation}{\vec{x}_{1}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
 ///  @f{equation}{\vec{k}_{1}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
-///  That substep is used to compute a second substep.
+///  That sub-step is used to compute a second sub-step.
 ///  @f{equation}{\vec{x}_{2}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x} + \vec{x}_{1},\vec{k} + \vec{k}_{1},\omega\right)@f}
 ///  @f{equation}{\vec{k}_{2}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x} + \vec{x}_{1},\vec{k} + \vec{k}_{1},\omega\right)@f}
-///  These substeps are combined into a single step update.
+///  These sub-steps are combined into a single step update.
 ///  @f{equation}{\vec{x}_{next}=\vec{x}+\frac{\vec{x}_{1}+\vec{x}_{2}}{2}@f}
 ///  @f{equation}{\vec{k}_{next}=\vec{k}+\frac{\vec{k}_{1}+\vec{k}_{2}}{2}@f}
 ///
 ///  <hr>
 ///  @subsection solvers_rk4 4th Order Runge Kutta
-///  This solver integates coupled differential equations using the Runge Kutta
-///  to fouth order. Like the second order Runge Kutta, this solver computes 4
-///  substeps.
+///  This solver integrates coupled differential equations using the Runge Kutta
+///  to fourth order. Like the second order Runge Kutta, this solver computes 4
+///  sub-steps.
 ///  @f{equation}{\vec{x}_{1}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
 ///  @f{equation}{\vec{k}_{1}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x},\vec{k},\omega\right)@f}
 ///  @f{equation}{\vec{x}_{2}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x} + \frac{\vec{x}_{1}}{2},\vec{k} + \frac{\vec{k}_{1}}{2},\omega\right)@f}
@@ -62,7 +62,7 @@
 ///  @f{equation}{\vec{k}_{3}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x} + \frac{\vec{x}_{2}}{2},\vec{k} + \frac{\vec{k}_{2}}{2},\omega\right)@f}
 ///  @f{equation}{\vec{x}_{4}=dt\frac{\partial\vec{x}}{\partial t}\left(\vec{x} + \vec{x}_{3},\vec{k} + \vec{k}_{3},\omega\right)@f}
 ///  @f{equation}{\vec{k}_{4}=dt\frac{\partial\vec{k}}{\partial t}\left(\vec{x} + \vec{x}_{3},\vec{k} + \vec{k}_{3},\omega\right)@f}
-///  These substeps are combined into a single step update.
+///  These sub-steps are combined into a single step update.
 ///  @f{equation}{\vec{x}_{next}=\vec{x}+\frac{\vec{x}_{1}+2\left(\vec{x}_{2}+\vec{x}_{3}\right)+\vec{x}_{4}}{6}@f}
 ///  @f{equation}{\vec{k}_{next}=\vec{k}+\frac{\vec{k}_{1}+2\left(\vec{k}_{2}+\vec{x}_{3}\right)+\vec{x}_{4}}{6}@f}
 ///
@@ -83,7 +83,7 @@
 ///  @ref solver::solver_interface or any other existing solver class and
 ///  overloading class methods.
 ///  @code
-///  tempate<dispersion::function DISPERSION_FUNCTION>
+///  template<dispersion::function DISPERSION_FUNCTION>
 ///  class new_solver : public solver_interface<DISPERSION_FUNCTION> {
 ///     ...
 ///  }
@@ -172,9 +172,9 @@ namespace solver {
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> t_next;
 
-///  Residule.
+///  Residual.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
-                           DISPERSION_FUNCTION::safe_math> residule;
+                           DISPERSION_FUNCTION::safe_math> residual;
 
 ///  Workflow manager.
         workflow::manager<typename DISPERSION_FUNCTION::base,
@@ -192,16 +192,16 @@ namespace solver {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a new solver_interface with inital conditions.
+///  @brief Construct a new solver_interface with initial conditions.
 ///
-///  @param[in] w        Inital w.
-///  @param[in] kx       Inital kx.
-///  @param[in] ky       Inital ky.
-///  @param[in] kz       Inital kz.
-///  @param[in] x        Inital x.
-///  @param[in] y        Inital y.
-///  @param[in] z        Inital z.
-///  @param[in] t        Inital t.
+///  @param[in] w        Initial w.
+///  @param[in] kx       Initial kx.
+///  @param[in] ky       Initial ky.
+///  @param[in] kz       Initial kz.
+///  @param[in] x        Initial x.
+///  @param[in] y        Initial y.
+///  @param[in] z        Initial z.
+///  @param[in] t        Initial t.
 ///  @param[in] eq       The plasma equilibrium.
 ///  @param[in] filename Result filename, empty names will be blank.
 ///  @param[in] num_rays Number of rays to write.
@@ -241,19 +241,19 @@ namespace solver {
         }
         
 //------------------------------------------------------------------------------
-///  @brief Method to initalize the rays.
+///  @brief Method to initialize the rays.
 ///
 ///  @param[in,out] x              Variable reference to update.
-///  @param[in]     tolarance      Tolarance to solve to dispersion function
+///  @param[in]     tolerance      Tolerance to solve to dispersion function
 ///                                 to.
 ///  @param[in]     max_iterations Maximum number of iterations to run.
-///  @returns The residule graph.
+///  @returns The residual graph.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                    DISPERSION_FUNCTION::safe_math>
         init(graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                 DISPERSION_FUNCTION::safe_math> x,
-             const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
+             const typename DISPERSION_FUNCTION::base tolerance = 1.0E-30,
              const size_t max_iterations = 1000) final {
             graph::input_nodes<typename DISPERSION_FUNCTION::base,
                                DISPERSION_FUNCTION::safe_math> inputs {
@@ -267,16 +267,16 @@ namespace solver {
                 graph::variable_cast(this->kz)
             };
 
-            residule = this->D.solve(x, inputs, index,
-                                     tolarance, max_iterations);
+            residual = this->D.solve(x, inputs, index,
+                                     tolerance, max_iterations);
 
-            return residule;
+            return residual;
         }
 
 //------------------------------------------------------------------------------
-///  @brief Method to initalize the rays.
+///  @brief Method to initialize the rays.
 ///
-///  @returns The residule graph.
+///  @returns The residual graph.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                                    DISPERSION_FUNCTION::safe_math> init() final {
@@ -292,9 +292,9 @@ namespace solver {
                     graph::variable_cast(this->kz)
                 };
 
-                residule = this->D.get_residule();
+                residual = this->D.get_residual();
 
-                return residule;
+                return residual;
             }
         
 //------------------------------------------------------------------------------
@@ -315,7 +315,7 @@ namespace solver {
 
             graph::output_nodes<typename DISPERSION_FUNCTION::base,
                                 DISPERSION_FUNCTION::safe_math> outputs = {
-                this->residule
+                this->residual
             };
 
             graph::map_nodes<typename DISPERSION_FUNCTION::base,
@@ -336,7 +336,7 @@ namespace solver {
             work.compile();
 
             dataset.create_variable(file, "time",     this->t, work.get_context());
-            dataset.create_variable(file, "residule", residule, work.get_context());
+            dataset.create_variable(file, "residual", residual, work.get_context());
             dataset.create_variable(file, "w",        this->w, work.get_context());
             dataset.create_variable(file, "x",        this->x, work.get_context());
             dataset.create_variable(file, "y",        this->y, work.get_context());
@@ -349,7 +349,7 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Syncronize results from host to gpu.
+///  @brief Synchronize results from host to gpu.
 //------------------------------------------------------------------------------
         void sync_device() {
             work.copy_to_device(this->t,  graph::variable_cast(this->t)->data());
@@ -363,7 +363,7 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Syncronize results from gpu to host.
+///  @brief Synchronize results from gpu to host.
 //------------------------------------------------------------------------------
         void sync_host() {
             work.copy_to_host(this->t,  graph::variable_cast(this->t)->data());
@@ -384,13 +384,13 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Check the residule.
+///  @brief Check the residual.
 ///
-///  @param[in] index Ray index to check residule for.
-///  @returns The value of the residule at the index.
+///  @param[in] index Ray index to check residual for.
+///  @returns The value of the residual at the index.
 //------------------------------------------------------------------------------
-        typename DISPERSION_FUNCTION::base check_residule(const size_t index) {
-            return work.check_value(index, this->residule);
+        typename DISPERSION_FUNCTION::base check_residual(const size_t index) {
+            return work.check_value(index, this->residual);
         }
 
 //------------------------------------------------------------------------------
@@ -401,7 +401,7 @@ namespace solver {
         void print(const size_t index) {
             work.print(index, {
                 this->t,
-                this->residule,
+                this->residual,
                 this->w,
                 this->x,
                 this->y,
@@ -473,10 +473,10 @@ namespace solver {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Print out the latex expression for the residule.
+///  @brief Print out the latex expression for the residual.
 //------------------------------------------------------------------------------
-        void print_residule() {
-            residule->to_latex();
+        void print_residual() {
+            residual->to_latex();
             std::cout << std::endl;
         }
 
@@ -592,15 +592,15 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @param[in] w        Inital omega.
-///  @param[in] kx       Inital kx.
-///  @param[in] ky       Inital ky.
-///  @param[in] kz       Inital kz.
-///  @param[in] x        Inital x.
-///  @param[in] y        Inital y.
-///  @param[in] z        Inital z.
-///  @param[in] t        Inital t.
-///  @param[in] dt       Inital dt.
+///  @param[in] w        Initial omega.
+///  @param[in] kx       Initial kx.
+///  @param[in] ky       Initial ky.
+///  @param[in] kz       Initial kz.
+///  @param[in] x        Initial x.
+///  @param[in] y        Initial y.
+///  @param[in] z        Initial z.
+///  @param[in] t        Initial t.
+///  @param[in] dt       Initial dt.
 ///  @param[in] eq       Equilibrium object.
 ///  @param[in] filename Result filename, empty names will be blank.
 ///  @param[in] num_rays Number of rays to write.
@@ -760,15 +760,15 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @param[in] w        Inital omega.
-///  @param[in] kx       Inital kx.
-///  @param[in] ky       Inital ky.
-///  @param[in] kz       Inital kz.
-///  @param[in] x        Inital x.
-///  @param[in] y        Inital y.
-///  @param[in] z        Inital z.
-///  @param[in] t        Inital t.
-///  @param[in] dt       Inital dt.
+///  @param[in] w        Initial omega.
+///  @param[in] kx       Initial kx.
+///  @param[in] ky       Initial ky.
+///  @param[in] kz       Initial kz.
+///  @param[in] x        Initial x.
+///  @param[in] y        Initial y.
+///  @param[in] z        Initial z.
+///  @param[in] t        Initial t.
+///  @param[in] dt       Initial dt.
 ///  @param[in] eq       Equilibrium object.
 ///  @param[in] filename Result filename, empty names will be blank.
 ///  @param[in] num_rays Number of rays to write.
@@ -871,7 +871,7 @@ namespace solver {
     };
 
 //******************************************************************************
-//  Adaptive timestep Fourth Order Runge Kutta.
+//  Adaptive time step Fourth Order Runge Kutta.
 //******************************************************************************
 //------------------------------------------------------------------------------
 ///  @brief Adaptive Fourth Order Runge Kutta class.
@@ -881,7 +881,7 @@ namespace solver {
     template<dispersion::function DISPERSION_FUNCTION>
     class adaptive_rk4 : public rk4<DISPERSION_FUNCTION> {
     protected:
-///  Dispersion residule.
+///  Dispersion residual.
         dispersion::dispersion_interface<DISPERSION_FUNCTION> D;
 ///  Time step variable.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
@@ -891,15 +891,15 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a new second order runge kutta solver.
 ///
-///  @param[in] w        Inital omega.
-///  @param[in] kx       Inital kx.
-///  @param[in] ky       Inital ky.
-///  @param[in] kz       Inital kz.
-///  @param[in] x        Inital x.
-///  @param[in] y        Inital y.
-///  @param[in] z        Inital z.
-///  @param[in] t        Inital t.
-///  @param[in] dt       Inital dt.
+///  @param[in] w        Initial omega.
+///  @param[in] kx       Initial kx.
+///  @param[in] ky       Initial ky.
+///  @param[in] kz       Initial kz.
+///  @param[in] x        Initial x.
+///  @param[in] y        Initial y.
+///  @param[in] z        Initial z.
+///  @param[in] t        Initial t.
+///  @param[in] dt       Initial dt.
 ///  @param[in] eq       Equilibrium object.
 ///  @param[in] filename Result filename, empty names will be blank.
 ///  @param[in] num_rays Number of rays to write.
@@ -983,7 +983,7 @@ namespace solver {
 
             graph::output_nodes<typename DISPERSION_FUNCTION::base,
                                 DISPERSION_FUNCTION::safe_math> outputs = {
-                this->residule
+                this->residual
             };
 
             graph::map_nodes<typename DISPERSION_FUNCTION::base,
@@ -1009,7 +1009,7 @@ namespace solver {
 //  Split simplextic integrator
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Predictor corrector that trys to minimize the disperison residule.
+///  @brief Predictor corrector that trys to minimize the dispersion residual.
 ///
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 //------------------------------------------------------------------------------
@@ -1030,15 +1030,15 @@ namespace solver {
 //------------------------------------------------------------------------------
 ///  @brief Construct a split simplextic integrator.
 ///
-///  @param[in] w        Inital omega.
-///  @param[in] kx       Inital kx.
-///  @param[in] ky       Inital ky.
-///  @param[in] kz       Inital kz.
-///  @param[in] x        Inital x.
-///  @param[in] y        Inital y.
-///  @param[in] z        Inital z.
-///  @param[in] t        Inital t.
-///  @param[in] dt       Inital dt.
+///  @param[in] w        Initial omega.
+///  @param[in] kx       Initial kx.
+///  @param[in] ky       Initial ky.
+///  @param[in] kz       Initial kz.
+///  @param[in] x        Initial x.
+///  @param[in] y        Initial y.
+///  @param[in] z        Initial z.
+///  @param[in] t        Initial t.
+///  @param[in] dt       Initial dt.
 ///  @param[in] eq       Equilibrium object.
 ///  @param[in] filename Result filename, empty names will be blank.
 ///  @param[in] num_rays Number of rays to write.
@@ -1070,7 +1070,7 @@ namespace solver {
         solver_interface<DISPERSION_FUNCTION> (w, kx, ky, kz, x, y, z, t, eq,
                                                filename, num_rays, index) {
 
-//  Test if the function is separatable.
+//  Test if the function is separable.
             auto zero = graph::zero<typename DISPERSION_FUNCTION::base> ();
 
             assert(zero->is_match(this->D.get_dkxdt()->df(kx)) &&

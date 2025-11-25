@@ -8,7 +8,7 @@ project (graph_framework CXX)
 option (USE_PCH "Enable the use of precompiled headers" ON)
 option (SAVE_KERNEL_SOURCE "Writes the kernel source code to a file." OFF)
 option (USE_INPUT_CACHE "Cache the values kernel input values." OFF)
-option (USE_CONSTANT_CACHE "Cache the value of constantants in kernel registers." OFF)
+option (USE_CONSTANT_CACHE "Cache the value of constants in kernel registers." OFF)
 option (SHOW_USE_COUNT "Add a comment showing the use count in kernel sources." OFF)
 option (USE_INDEX_CACHE "Cache index values instead of computing them every time." OFF)
 option (USE_VERBOSE "Verbose jit option." OFF)
@@ -175,7 +175,7 @@ function (register_project reg_name dir url default_tag sub_dir)
             WORKING_DIRECTORY ${${reg_name}_SOURCE_DIR}
         )
 
-#  Add a taraget to pull the latest version before building. Note dependency is
+#  Add a target to pull the latest version before building. Note dependency is
 #  registered in the sub project CMakeList.txt. Not sure how this should handle
 #  multiple targets in a project yet. Name must match the subproject pull_
 #  dependency.

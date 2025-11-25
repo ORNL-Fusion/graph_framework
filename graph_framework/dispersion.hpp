@@ -21,7 +21,7 @@
 ///  <tr><td>@f$c @f$          <td>@f$\frac{m}{s}@f$<td>Speed of light.
 ///  <tr><td>@f$m_{e}@f$       <td>@f$kg @f$        <td>Electron mass
 ///  <tr><td>@f$t_{e}@f$       <td>@f$K @f$         <td>Electron temperature
-///  <tr><td>@f$n_{e}@f$       <td>@f$m^{-3}@f$     <td>Electron Denisty
+///  <tr><td>@f$n_{e}@f$       <td>@f$m^{-3}@f$     <td>Electron Density
 ///  <tr><td>@f$q @f$          <td>@f$C @f$         <td>Fundamental Charge
 ///  <tr><td>@f$\vec{B}@f$     <td>@f$T @f$         <td>Magnetic field
 ///  <tr><td>@f$\epsilon_{0}@f$<td>@f$\frac{F}{m}@f$<td>Vacuum permittivity
@@ -36,15 +36,15 @@
 ///  </table>
 ///
 ///  @section dispersion_function_normal Normalization
-///  The dispersion functions use normalized quantities for frequncy @f$\omega @f$ and
+///  The dispersion functions use normalized quantities for frequency @f$\omega @f$ and
 ///  time @f$t @f$. These are scaled to the speed of light @f$c @f$.
 ///  <table>
-///  <caption id="dispersion_function_normal_units">Disperion function units and normalizations</caption>
+///  <caption id="dispersion_function_normal_units">Dispersion function units and normalizations</caption>
 ///  <tr><th>Symbol                                       <th>Real Unit        <th>Modified                                       <th>Modified Unit<th>Description
 ///  <tr><td>@f$\omega @f$                                <td>@f$s^{-1}@f$     <td>@f$\omega'=\frac{\omega}{c}@f$                 <td>@f$m^{-1}@f$ <td>Wave frequency
 ///  <tr><td>@f$\vec{k}@f$                                <td>@f$m^{-1}@f$     <td>@f$\vec{k}@f$                                  <td>@f$m^{-1}@f$ <td>Wave number
 ///  <tr><td>@f$t @f$                                     <td>@f$s @f$         <td>@f$t'=tc @f$                                   <td>@f$m @f$     <td>Time
-///  <tr><td>@f$\vec{x}@f$                                <td>@f$m @f$         <td>@f$\vec{x}@f$                                  <td>@f$m @f$     <td>Postion
+///  <tr><td>@f$\vec{x}@f$                                <td>@f$m @f$         <td>@f$\vec{x}@f$                                  <td>@f$m @f$     <td>Position
 ///  <tr><td>@f$v_{p}=\frac{\omega}{k}@f$                 <td>@f$\frac{m}{s}@f$<td>@f$v'_{p}=\frac{\omega'}{k}@f$                 <td>@f$1 @f$     <td>Phase velocity
 ///  <tr><td>@f$v_{g}=\frac{\partial\omega}{\partial k}@f$<td>@f$\frac{m}{s}@f$<td>@f$v'_{g}=\frac{\partial\omega'}{\partial k}@f$<td>@f$1 @f$     <td>Group velocity
 ///  </table>
@@ -60,13 +60,13 @@
 ///  The following dispersion functions are available in xrays.
 ///
 ///  @subsection dispersion_function_simple Simple
-///  This disperison function represents a wave in a vacuum.
+///  This dispersion function represents a wave in a vacuum.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\frac{\vec{k}\cdot\vec{k}}{\omega^{2}}-1\equiv 0 @f}
 ///  It has no resonances or cutoffs.
 ///
 ///  <hr>
 ///  @subsection dispersion_function_bohm_gross Bohm Gross
-///  This dispersion function now accounts for how occilations in the plasma
+///  This dispersion function now accounts for how occupations in the plasma
 ///  propagate.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=\omega_{pe}+\frac{3}{2}\vec{k}\cdot\vec{k}v^{2}_{th}-\omega^{2}\equiv 0 @f}
 ///  It has no resonances. Waves cannot propagate below @f$\omega_{pe}@f$ and @f$v_{g}@f$ can never exceed @f$v_{th}@f$.
@@ -74,7 +74,7 @@
 ///
 ///  <hr>
 ///  @subsection dispersion_function_o_wave Ordinary Wave
-///  This disperison function represents a wave with a
+///  This dispersion function represents a wave with a
 ///  @f$\vec{E}_{1}||\vec{B}_{0}@f$. That means the electric field occilates
 ///  parallel to the magnetic field.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=1-\frac{\omega^{2}_{pe}}{\omega^{2}}-\vec{n}_{\perp}\cdot\vec{n}_{\perp}\equiv 0 @f}
@@ -83,32 +83,33 @@
 ///
 ///  <hr>
 ///  @subsection dispersion_function_x_wave Extra Ordinary Wave
-///  This disperison function represents a wave with a
+///  This dispersion function represents a wave with a
 ///  @f$\vec{E}_{1}\perp\vec{B}_{0}@f$. That means the electric field occilates
 ///  perpendicular to the magnetic field.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=1-\frac{\omega_{pe}^2}{\omega^{2}}\frac{\omega^{2}-\omega_{pe}^2}{\omega^{2}-\omega_{h}^2}-\vec{n}_{\perp}\cdot\vec{n}_{\perp}\equiv 0 @f}
 ///  This mode has 
-///  This wave has two branches. One branch is cannot not progagate below the
-///  @f$\omega_{r}@f$ cutoff. The other branch cannot not progagate below the
-///  @f$\omega_{l}@f$ cutoff. As the wave approches the upper hybrid fequency,
-///  wave propagation stops as the wave number approces
+///  This wave has two branches. One branch is cannot not propagate below the
+///  @f$\omega_{r}@f$ cutoff. The other branch cannot not propagate below the
+///  @f$\omega_{l}@f$ cutoff. As the wave approaches the upper hybrid frequency,
+///  wave propagation stops as the wave number approaches
 ///  @f$\left|\vec{k}\right|\rightarrow\infty @f$.
 ///  @image{} html X-Mode.png ""
 ///
 ///  <hr>
 ///  @subsection dispersion_function_cold_plasma Cold Plasma
-///  This disperison function represents a wave in a cold plasma medium.
+///  This dispersion function represents a wave in a cold plasma medium.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=det\left(\vec{\epsilon}+\vec{n}\vec{n}-\vec{n}\cdot\vec{n}\vec{I}\right)\equiv 0 @f}
-///  The quantity @f$\vec{\epsilon}@f$ is the diaelectric tensor. Using Onsager
+///  The quantity @f$\vec{\epsilon}@f$ is the dielectric tensor. Using Onsager
 ///  symmetries, this tensor is defined as
 ///  @f{equation}{\vec{\epsilon}=\left(\begin{array}{ccc}\epsilon_{11}&\epsilon_{12}&0\\-\epsilon_{12}&\epsilon_{11}&0\\0&0&\epsilon_{33}\end{array}\right)@f}
 ///  where
 ///  @f{equation}{\epsilon_{11}=1-\sum_{s}\frac{\frac{\omega^{2}_{p}}{\omega^{2}}}{1-\frac{\Omega^{2}_{c}}{\omega^{2}}}@f}
 ///  @f{equation}{\epsilon_{12}=-i\sum_{s}\frac{\frac{\Omega_{c}}{\omega}\frac{\omega^{2}_{p}}{\omega^{2}}}{1-\frac{\Omega^{2}_{c}}{\omega^{2}}}@f}
 ///  @f{equation}{\epsilon_{33}=1-\sum_{s}\frac{\omega^{2}_{p}}{\omega^{2}}@f}
-///  Note here we are including the plasma frequency for ions aswell. This
+///  Note here we are including the plasma frequency for ions as well. This
 ///  dispersion function is effectively a super position of the O-Mode and
-///  X-Mode dispersion functions and as such has the same cutoffs and resonaces.
+///  X-Mode dispersion functions and as such has the same cutoffs and
+///  resonances.
 ///  @image{} html ColdPlasma.png ""
 ///
 ///  <hr>
@@ -116,8 +117,8 @@
 ///  This section is intended for code developers and outlines how to create new
 ///  dispersion functions. New dispersion functions can be created from a
 ///  subclass of @ref dispersion::dispersion_function or any other existing
-///  dispersion_function class and overloading class methods. For convinence the
-///  @ref dispersion::physics class contains several defined physical constants.
+///  dispersion_function class and overloading class methods. For convenience
+///  the @ref dispersion::physics class contains several defined physical constants.
 ///  @code
 ///  template<jit::float_scalar T, bool SAFE_MATH=false>
 ///  class new_dispersion final : public dispersion_function<T, SAFE_MATH> {
@@ -125,7 +126,7 @@
 ///  };
 ///  @endcode
 ///  When a new dispersion function is subclassed from
-///  @ref dispersion::dispersion_function an implimentation must be provided for
+///  @ref dispersion::dispersion_function an implementation must be provided for
 ///  the pure virtual method @ref dispersion::dispersion_function::D.
 ///  @code
 ///  template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -238,30 +239,30 @@ namespace dispersion {
 //  Common physics expressions.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Build plasma fequency expression.
+///  @brief Build plasma frequency expression.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] n       Density.
-///  @param[in] q       Species charge.
-///  @param[in] m       Species mass.
-///  @param[in] c       Speed of light
-///  @param[in] epsion0 Vacuum permitixity.
+///  @param[in] n        Density.
+///  @param[in] q        Species charge.
+///  @param[in] m        Species mass.
+///  @param[in] c        Speed of light
+///  @param[in] epsilon0 Vacuum permittivity.
 ///  @returns The plasma frequency.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     static constexpr graph::shared_leaf<T, SAFE_MATH>
-    build_plasma_fequency(graph::shared_leaf<T, SAFE_MATH> n,
-                          const T q,
-                          const T m,
-                          const T c,
-                          const T epsion0) {
-        return n*q*q/(epsion0*m*c*c);
+    build_plasma_frequency(graph::shared_leaf<T, SAFE_MATH> n,
+                           const T q,
+                           const T m,
+                           const T c,
+                           const T epsilon0) {
+        return n*q*q/(epsilon0*m*c*c);
     }
 
 //------------------------------------------------------------------------------
-///  @brief Build cyclotron fequency expression.
+///  @brief Build cyclotron frequency expression.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -274,10 +275,10 @@ namespace dispersion {
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     static constexpr graph::shared_leaf<T, SAFE_MATH>
-    build_cyclotron_fequency(const T q,
-                             graph::shared_leaf<T, SAFE_MATH> b,
-                             const T m,
-                             const T c) {
+    build_cyclotron_frequency(const T q,
+                              graph::shared_leaf<T, SAFE_MATH> b,
+                              const T m,
+                              const T c) {
         return q*b/(m*c);
     }
 
@@ -340,7 +341,7 @@ namespace dispersion {
 ///
 ///  dx/dt = -1.0E3*(x - Exp(-t)) - Exp(-t)                                  (1)
 ///
-///  We need to figure out a disperison function D(w,k,x) such that
+///  We need to figure out a dispersion function D(w,k,x) such that
 ///
 ///  dx/dt = -(dD/dk)/(dD/dw) = -1.0E3*(x - Exp(-t)) - Exp(-t).              (2)
 ///
@@ -430,8 +431,8 @@ namespace dispersion {
     class physics : public dispersion_function<T, SAFE_MATH> {
     protected:
 //  Define some common constants.
-///  Vacuum permitivity.
-        const T epsion0 = 8.8541878138E-12;
+///  Vacuum permittivity.
+        const T epsilon0 = 8.8541878138E-12;
 ///  Vacuum permeability
         const T mu0 = M_PI*4.0E-7;
 ///  Fundamental charge.
@@ -439,7 +440,7 @@ namespace dispersion {
 ///  Electron mass.
         const T me = 9.1093837015E-31;
 /// Speed of light.
-        const T c = static_cast<T> (1.0)/std::sqrt(epsion0*mu0);
+        const T c = static_cast<T> (1.0)/std::sqrt(epsilon0*mu0);
     };
 
 //------------------------------------------------------------------------------
@@ -481,10 +482,10 @@ namespace dispersion {
 
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+            auto wpe2 = build_plasma_frequency(ne, physics<T, SAFE_MATH>::q,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
             auto te = eq->get_electron_temperature(x, y, z);
 //  2*1.602176634E-19 to convert eV to J.
 
@@ -551,11 +552,11 @@ namespace dispersion {
 
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne,
-                                              physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+            auto wpe2 = build_plasma_frequency(ne,
+                                               physics<T, SAFE_MATH>::q,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
 
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
@@ -636,16 +637,16 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Guassian Well dispersion function.
+///  @brief Gaussian Well dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    class guassian_well final : public dispersion_function<T, SAFE_MATH> {
+    class gaussian_well final : public dispersion_function<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Disperison relation with a non uniform well.
+///  @brief Dispersion relation with a non uniform well.
 ///
 ///  D = npar^2 + nperp^2 - (1 - 0.5*Exp(-x^2/0.1)
 ///
@@ -687,7 +688,7 @@ namespace dispersion {
     class ion_cyclotron final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Disperison relation for the O mode.
+///  @brief Dispersion relation for the O mode.
 ///
 ///  D = ⍵ce^2 + k^2*vs^2 - ⍵^2                                              (1)
 ///
@@ -727,10 +728,10 @@ namespace dispersion {
                         physics<T, SAFE_MATH>::c);
             
             auto b_vec = eq->get_magnetic_field(x, y, z);
-            auto wce = build_cyclotron_fequency(-physics<T, SAFE_MATH>::q,
-                                                b_vec->length(),
-                                                physics<T, SAFE_MATH>::me,
-                                                physics<T, SAFE_MATH>::c);
+            auto wce = build_cyclotron_frequency(-physics<T, SAFE_MATH>::q,
+                                                 b_vec->length(),
+                                                 physics<T, SAFE_MATH>::me,
+                                                 physics<T, SAFE_MATH>::c);
 
 //  Wave numbers.
             auto k = kx*eq->get_esup1(x, y, z)
@@ -756,7 +757,7 @@ namespace dispersion {
     class ordinary_wave final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Disperison relation for the O mode.
+///  @brief Dispersion relation for the O mode.
 ///
 ///  D = 1 - ⍵pe^2/⍵^2 - c^2/⍵^2*(kx^2 + ky^2 + kz^2)                        (1)
 ///
@@ -784,11 +785,11 @@ namespace dispersion {
           equilibrium::shared<T, SAFE_MATH> &eq) {
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne,
-                                              physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+            auto wpe2 = build_plasma_frequency(ne,
+                                               physics<T, SAFE_MATH>::q,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
 
 //  Wave numbers.
             auto n = (kx*eq->get_esup1(x, y, z) +
@@ -815,7 +816,7 @@ namespace dispersion {
     class extra_ordinary_wave final : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Disperison relation for the X-Mode.
+///  @brief Dispersion relation for the X-Mode.
 ///
 ///  D = 1 - ⍵pe^2/⍵^2(⍵^2 - ⍵pe^2)/(⍵^2 - ⍵h^2)
 ///    - c^2/⍵^2*(kx^2 + ky^2 + kz^2)                                        (1)
@@ -848,18 +849,18 @@ namespace dispersion {
           equilibrium::shared<T, SAFE_MATH> &eq) {
 //  Equilibrium quantities.
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne,
-                                              physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+            auto wpe2 = build_plasma_frequency(ne,
+                                               physics<T, SAFE_MATH>::q,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
             
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_len = b_vec->length();
-            auto wec = build_cyclotron_fequency(-physics<T, SAFE_MATH>::q,
-                                                b_len,
-                                                physics<T, SAFE_MATH>::me,
-                                                physics<T, SAFE_MATH>::c);
+            auto wec = build_cyclotron_frequency(-physics<T, SAFE_MATH>::q,
+                                                 b_len,
+                                                 physics<T, SAFE_MATH>::me,
+                                                 physics<T, SAFE_MATH>::c);
             
 //  Wave numbers.
             auto n = (kx*eq->get_esup1(x, y, z) +
@@ -878,7 +879,7 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Cold Plasma Disperison function.
+///  @brief Cold Plasma Dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -887,7 +888,7 @@ namespace dispersion {
     class cold_plasma : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Cold Plasma Disperison function.
+///  @brief Cold Plasma Dispersion function.
 ///
 ///  D = Det[ϵ + nn - n^2I]                                                  (1)
 ///
@@ -936,17 +937,17 @@ namespace dispersion {
 //  Dielectric terms.
 //  Frequencies
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne,
-                                              physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+            auto wpe2 = build_plasma_frequency(ne,
+                                               physics<T, SAFE_MATH>::q,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_len = b_vec->length();
-            auto ec = build_cyclotron_fequency(-physics<T, SAFE_MATH>::q,
-                                               b_len,
-                                               physics<T, SAFE_MATH>::me,
-                                               physics<T, SAFE_MATH>::c);
+            auto ec = build_cyclotron_frequency(-physics<T, SAFE_MATH>::q,
+                                                b_len,
+                                                physics<T, SAFE_MATH>::me,
+                                                physics<T, SAFE_MATH>::c);
 
             auto w2 = w*w;
             auto denome = 1.0 - ec*ec/w2;
@@ -960,11 +961,11 @@ namespace dispersion {
                                * physics<T, SAFE_MATH>::q;
 
                 auto ni = eq->get_ion_density(i, x, y, z);
-                auto wpi2 = build_plasma_fequency(ni, charge, mi,
-                                                  physics<T, SAFE_MATH>::c,
-                                                  physics<T, SAFE_MATH>::epsion0);
-                auto ic = build_cyclotron_fequency(charge, b_len, mi,
-                                                   physics<T, SAFE_MATH>::c);
+                auto wpi2 = build_plasma_frequency(ni, charge, mi,
+                                                   physics<T, SAFE_MATH>::c,
+                                                   physics<T, SAFE_MATH>::epsilon0);
+                auto ic = build_cyclotron_frequency(charge, b_len, mi,
+                                                    physics<T, SAFE_MATH>::c);
 
                 auto denomi = 1.0 - ic*ic/w2;
                 e11 = e11 - (wpi2/w2)/denomi;
@@ -998,7 +999,7 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Cold Plasma expansion disperison function.
+///  @brief Cold Plasma expansion dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -1007,7 +1008,7 @@ namespace dispersion {
     class cold_plasma_expansion : public physics<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Cold Plasma expansion Disperison function.
+///  @brief Cold Plasma expansion Dispersion function.
 ///
 ///  Dc = -P/2(1 + Ωe/⍵)Γ0 + (1 - Ωe^2/⍵^2)Γ1                                (1)
 ///
@@ -1052,16 +1053,16 @@ namespace dispersion {
                     / physics<T, SAFE_MATH>::c;
 
 //  Setup characteristic frequencies.
-            auto ec = build_cyclotron_fequency(physics<T, SAFE_MATH>::q,
-                                               b_len,
+            auto ec = build_cyclotron_frequency(physics<T, SAFE_MATH>::q,
+                                                b_len,
+                                                physics<T, SAFE_MATH>::me,
+                                                physics<T, SAFE_MATH>::c);
+            auto wpe2 = build_plasma_frequency(ne, physics<T, SAFE_MATH>::q,
                                                physics<T, SAFE_MATH>::me,
-                                               physics<T, SAFE_MATH>::c);
-            auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
 
-//  Disperison quantities.
+//  Dispersion quantities.
             auto P = wpe2/(w*w);
             auto q = P/(2.0*(1.0 + ec/w));
 
@@ -1089,7 +1090,7 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Hot Plasma Disperison function.
+///  @brief Hot Plasma Dispersion function.
 //------------------------------------------------------------------------------
     template<jit::complex_scalar T, z_func Z, bool SAFE_MATH=false>
     class hot_plasma final : public physics<T, SAFE_MATH> {
@@ -1099,7 +1100,7 @@ namespace dispersion {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Hot Plasma Disperison function.
+///  @brief Hot Plasma Dispersion function.
 ///
 ///  D = iσΓ0 + Γ1 + n⟂^2P⍵/Ωe(1 + ζZ(ζ))(Γ2 + Γ5F)                          (1)
 ///
@@ -1156,16 +1157,16 @@ namespace dispersion {
                     / physics<T, SAFE_MATH>::c;
 
 //  Setup characteristic frequencies.
-            auto ec = build_cyclotron_fequency(physics<T, SAFE_MATH>::q,
-                                               b_len,
+            auto ec = build_cyclotron_frequency(physics<T, SAFE_MATH>::q,
+                                                b_len,
+                                                physics<T, SAFE_MATH>::me,
+                                                physics<T, SAFE_MATH>::c);
+            auto wpe2 = build_plasma_frequency(ne, physics<T, SAFE_MATH>::q,
                                                physics<T, SAFE_MATH>::me,
-                                               physics<T, SAFE_MATH>::c);
-            auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
 
-//  Disperison quantities.
+//  Dispersion quantities.
             auto P = wpe2/(w*w);
             auto q = P/(2.0*(1.0 + ec/w));
 
@@ -1200,7 +1201,7 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Hot Plasma Expansion Disperison function.
+///  @brief Hot Plasma Expansion Dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam Z         Z function class.
@@ -1268,15 +1269,15 @@ namespace dispersion {
                                   physics<T, SAFE_MATH>::me);
 
 //  Setup characteristic frequencies.
-            auto ec = build_cyclotron_fequency(physics<T, SAFE_MATH>::q, b_len,
+            auto ec = build_cyclotron_frequency(physics<T, SAFE_MATH>::q, b_len,
+                                                physics<T, SAFE_MATH>::me,
+                                                physics<T, SAFE_MATH>::c);
+            auto wpe2 = build_plasma_frequency(ne, physics<T, SAFE_MATH>::q,
                                                physics<T, SAFE_MATH>::me,
-                                               physics<T, SAFE_MATH>::c);
-            auto wpe2 = build_plasma_fequency(ne, physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
     
-//  Disperison quantities.
+//  Dispersion quantities.
             auto P = wpe2/(w*w);
             auto q = P/(2.0*(1.0 + ec/w));
 
@@ -1326,7 +1327,7 @@ namespace dispersion {
     template<function DISPERSION_FUNCTION>
     class dispersion_interface {
     protected:
-///  Disperison function.
+///  Dispersion function.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> D;
 
@@ -1421,11 +1422,11 @@ namespace dispersion {
 ///  @param[in,out] x              The unknown to solver for.
 ///  @param[in]     inputs         Inputs for jit compile.
 ///  @param[in]     index          Concurrent index.
-///  @param[in]     tolarance      Tolarance to solve the dispersion function
-///                                 to.
+///  @param[in]     tolerance      Tolerance to solve the dispersion function
+///                                to.
 ///  @param[in]     max_iterations Maximum number of iterations before giving
-///                                 up.
-///  @returns The residule graph.
+///                                up.
+///  @returns The residual graph.
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math>
@@ -1434,7 +1435,7 @@ namespace dispersion {
               graph::input_nodes<typename DISPERSION_FUNCTION::base,
                                  DISPERSION_FUNCTION::safe_math> inputs,
               const size_t index=0,
-              const typename DISPERSION_FUNCTION::base tolarance = 1.0E-30,
+              const typename DISPERSION_FUNCTION::base tolerance = 1.0E-30,
               const size_t max_iterations = 1000) {
             auto x_var = graph::variable_cast(x);
 
@@ -1444,7 +1445,7 @@ namespace dispersion {
             solver::newton(work, {x}, inputs, this->D,
                            graph::shared_random_state<typename DISPERSION_FUNCTION::base,
                                                       DISPERSION_FUNCTION::safe_math> (),
-                           tolarance, max_iterations);
+                           tolerance, max_iterations);
 
             work.compile();
             work.run();
@@ -1455,18 +1456,18 @@ namespace dispersion {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Get the disperison residule.
+///  @brief Get the dispersion residual.
 ///
 ///  @return D*D
 //------------------------------------------------------------------------------
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math>
-        get_residule() {
+        get_residual() {
             return this->D*this->D;
         }
 
 //------------------------------------------------------------------------------
-///  @brief Get the disperison function.
+///  @brief Get the dispersion function.
 ///
 ///  @return D(x,y,z,kx,ky,kz,w)
 //------------------------------------------------------------------------------

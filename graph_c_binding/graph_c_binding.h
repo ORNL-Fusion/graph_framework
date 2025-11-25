@@ -8,9 +8,10 @@
 ///  @tableofcontents
 ///
 ///  @section graph_c_binding_into Introduction
-///  This section assumes the reader is already familar with developing C codes.
-///  The simplist method to link framework code into a C code is to create a C++
-///  function with @code extern "C" @endcode First create a header file
+///  This section assumes the reader is already familiar with developing C
+///  codes. The simplest method to link framework code into a C code is to
+///  create a C++ function with @code extern "C" @endcode First create a header
+///  file
 ///  <tt><i>c_callable</i>.h</tt>
 ///  @code
 ///  extern "C" {
@@ -20,7 +21,7 @@
 ///
 ///  Next create a source file <tt><i>c_callable</i>.c</tt> and add the
 ///  framework. This example uses the equation of a line example from the 
-///  @ref tutorial_workflow "making workflows" turorial.
+///  @ref tutorial_workflow "making workflows" tutorial.
 ///  @code
 ///  //  Include the necessary framework headers.
 ///
@@ -62,8 +63,8 @@
 ///  @section graph_c_binding_interface C Binding Interface
 ///  An alternative is to use the @ref graph_c_binding.h "C Language interface".
 ///  The C binding interface can be enabled as one of the <tt>cmake</tt>
-///  @ref build_system_user_options "conifgure options". As an example, we will
-///  convert the @ref tutorial_workflow "making workflows" turorial to use the
+///  @ref build_system_user_options "configure options". As an example, we will
+///  convert the @ref tutorial_workflow "making workflows" tutorial to use the
 ///  C language bindings.
 ///  @code
 ///  #include <graph_c_binding.h>
@@ -171,7 +172,7 @@ extern "C" {
 ///
 ///  @param[in] type          Base type.
 ///  @param[in] use_safe_math Control is safe math is used.
-///  @returns A contructed C context.
+///  @returns A constructed C context.
 //------------------------------------------------------------------------------
     STRUCT_TAG graph_c_context *graph_construct_context(const enum graph_type type,
                                                         const bool use_safe_math);
@@ -252,8 +253,8 @@ extern "C" {
 ///  @brief Create Addition node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns left + right
 //------------------------------------------------------------------------------
     graph_node graph_add(STRUCT_TAG graph_c_context *c,
@@ -261,11 +262,11 @@ extern "C" {
                          graph_node right);
 
 //------------------------------------------------------------------------------
-///  @brief Create Substract node.
+///  @brief Create Subtract node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns left - right
 //------------------------------------------------------------------------------
     graph_node graph_sub(STRUCT_TAG graph_c_context *c,
@@ -276,8 +277,8 @@ extern "C" {
 ///  @brief Create Multiply node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns left*right
 //------------------------------------------------------------------------------
     graph_node graph_mul(STRUCT_TAG graph_c_context *c,
@@ -288,8 +289,8 @@ extern "C" {
 ///  @brief Create Divide node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns left/right
 //------------------------------------------------------------------------------
     graph_node graph_div(STRUCT_TAG graph_c_context *c,
@@ -330,8 +331,8 @@ extern "C" {
 ///  @brief Create Pow node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns pow(left, right)
 //------------------------------------------------------------------------------
     graph_node graph_pow(STRUCT_TAG graph_c_context *c,
@@ -372,8 +373,8 @@ extern "C" {
 ///  @brief Create arctangent node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns atan(left, right)
 //------------------------------------------------------------------------------
     graph_node graph_atan(STRUCT_TAG graph_c_context *c,
@@ -384,7 +385,7 @@ extern "C" {
 ///  @brief Construct a random state node.
 ///
 ///  @param[in] c    The graph C context.
-///  @param[in] seed Intial random seed.
+///  @param[in] seed Initial random seed.
 ///  @returns A random state node.
 //------------------------------------------------------------------------------
     graph_node graph_random_state(STRUCT_TAG graph_c_context *c,
@@ -523,7 +524,7 @@ extern "C" {
 ///  @param[in] random_state Optional random state, can be NULL if not used.
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
-///  @param[in] tol          Tolarance to converge the function to.
+///  @param[in] tol          Tolerance to converge the function to.
 ///  @param[in] max_iter     Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
     void graph_add_converge_item(STRUCT_TAG graph_c_context *c,

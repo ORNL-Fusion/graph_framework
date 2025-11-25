@@ -32,7 +32,7 @@ namespace graph {
 ///  State index.
             uint16_t index;
 #ifdef USE_CUDA
-///  Pading to aline the size of the struct for Cuda backends.
+///  Padding to aline the size of the struct for Cuda backends.
             uint16_t padding[3];
 #endif
         };
@@ -41,13 +41,13 @@ namespace graph {
 ///  @brief Construct a constant node from a vector.
 ///
 ///  @param[in] size Number of random states.
-///  @param[in] seed Inital random seed.
+///  @param[in] seed Initial random seed.
 //------------------------------------------------------------------------------
         random_state_node(const size_t size,
                           const uint32_t seed=0) :
         leaf_node<T, SAFE_MATH> (random_state_node::to_string(), 1, false) {
             for (uint32_t i = 0; i < size; i++) {
-                states.push_back(initalize_state(seed + i));
+                states.push_back(initialize_state(seed + i));
             }
         }
 
@@ -160,9 +160,9 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if all the subnodes terminate in variables.
+///  @brief Test if all the sub-nodes terminate in variables.
 ///
-///  @returns True if all the subnodes terminate in variables.
+///  @returns True if all the sub-nodes terminate in variables.
 //------------------------------------------------------------------------------
         virtual bool is_all_variables() const {
             return false;
@@ -218,12 +218,12 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief  Initalize the random states.
+///  @brief  Initialize the random states.
 ///
-///  @param[in] seed Inital random seed.
+///  @param[in] seed Initial random seed.
 ///  @returns A seeded state.
 //------------------------------------------------------------------------------
-        mt_state initalize_state(const uint32_t seed) {
+        mt_state initialize_state(const uint32_t seed) {
             mt_state state;
             state.array[0] = seed;
             for (uint16_t i = 1, ie = state.array.size(); i < ie; i++) {
@@ -236,13 +236,13 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define random_state convience function.
+///  @brief Define random_state convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] size Number of random states.
-///  @param[in] seed Inital random seed.
+///  @param[in] seed Initial random seed.
 ///  @returns A reduced random_state node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -278,7 +278,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_random_state<T, SAFE_MATH> random_state_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -433,12 +433,12 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  Arithmetic and math operations on random number umber distributions have
 ///  the effect of changing the distribution. For instance rand1 + rand2 will
 ///  to a pyramid shaped distribution function. Assume random numbers never
-///  match as a consequnce.
+///  match as a consequence.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -477,9 +477,9 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if all the subnodes terminate in variables.
+///  @brief Test if all the sub-nodes terminate in variables.
 ///
-///  @returns True if all the subnodes terminate in variables.
+///  @returns True if all the sub-nodes terminate in variables.
 //------------------------------------------------------------------------------
         virtual bool is_all_variables() const {
             return false;
@@ -496,7 +496,7 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define random convience function.
+///  @brief Define random convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -536,7 +536,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_random<T, SAFE_MATH> random_cast(shared_leaf<T, SAFE_MATH> x) {
