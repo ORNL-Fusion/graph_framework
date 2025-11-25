@@ -12,7 +12,7 @@
 
 namespace solver {
 //------------------------------------------------------------------------------
-///  @brief Determine the value of vars to minimze the loss function.
+///  @brief Determine the value of vars to minimize the loss function.
 ///
 ///  This uses newtons methods to solver for D(x) = 0.
 ///
@@ -24,7 +24,7 @@ namespace solver {
 ///  @param[in]     inputs         Inputs for jit compile.
 ///  @param[in]     func           Function to find the root of.
 ///  @param[in]     state          Random state node.
-///  @param[in]     tolarance      Tolarance to solve the dispersion function
+///  @param[in]     tolerance      Tolerance to solve the dispersion function
 ///                                to.
 ///  @param[in]     max_iterations Maximum number of iterations before giving
 ///                                up.
@@ -36,7 +36,7 @@ namespace solver {
                 graph::input_nodes<T, SAFE_MATH> inputs,
                 graph::shared_leaf<T, SAFE_MATH> func,
                 graph::shared_random_state<T, SAFE_MATH> state,
-                const T tolarance = 1.0E-30,
+                const T tolerance = 1.0E-30,
                 const size_t max_iterations = 1000,
                 const T step = 1.0) {
         graph::map_nodes<T, SAFE_MATH> setters;
@@ -47,7 +47,7 @@ namespace solver {
 
         work.add_converge_item(inputs, {func*func}, setters, state,
                                "loss_kernel", inputs.back()->size(),
-                               tolarance, max_iterations);
+                               tolerance, max_iterations);
     }
 }
 #endif /* newton_h */

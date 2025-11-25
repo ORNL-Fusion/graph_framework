@@ -114,13 +114,13 @@ def main(**args):
 ##  * --directory Directory to search for the result files.
 ##  * --num_files Number of result files to read.
 ##  * --num_x     Number of bin points in x.
-##  * --min_x     Miniumum x bin.
+##  * --min_x     Minimum x bin.
 ##  * --max_x     Maximum x bin.
 ##  * --num_y     Number of bin points in y.
-##  * --min_y     Miniumum y bin.
+##  * --min_y     Minimum y bin.
 ##  * --max_y     Maximum y bin.
 ##  * --num_z     Number of bin points in z.
-##  * --min_z     Miniumum z bin.
+##  * --min_z     Minimum z bin.
 ##  * --max_z     Maximum z bin.
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -154,7 +154,7 @@ if __name__ == '__main__':
                                      action='store',
                                      required=True,
                                      dest='min_x',
-                                     help='Miniumum x bin.',
+                                     help='Minimum x bin.',
                                      type=float,
                                      metavar='MIN_X')
     command_line_parser.add_argument('-mx',
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                                      action='store',
                                      required=True,
                                      dest='min_y',
-                                     help='Miniumum y bin.',
+                                     help='Minimum y bin.',
                                      type=float,
                                      metavar='MIN_Y')
     command_line_parser.add_argument('-my',
@@ -202,7 +202,7 @@ if __name__ == '__main__':
                                      action='store',
                                      required=True,
                                      dest='min_z',
-                                     help='Miniumum z bin.',
+                                     help='Minimum z bin.',
                                      type=float,
                                      metavar='MIN_Z')
     command_line_parser.add_argument('-mz',

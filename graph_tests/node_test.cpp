@@ -27,32 +27,32 @@ void test_constant() {
     assert(zero_cast.get() && "Expected a constant type.");
     assert(graph::variable_cast(zero).get() == nullptr &&
            "Expected a constant type.");
-    assert(zero_cast->is(0) && "Constant value expeced zero.");
-    assert(!zero_cast->is(1) && "Constant value not expeced one.");
+    assert(zero_cast->is(0) && "Constant value expected zero.");
+    assert(!zero_cast->is(1) && "Constant value not expected one.");
     const backend::buffer<T> zero_result = zero->evaluate();
     assert(zero_result.size() == 1 && "Expected single value.");
     assert(zero_result.at(0) == static_cast<T> (0.0) &&
-           "Constant value evalute expeced zero.");
+           "Constant value evaluate expected zero.");
     auto dzero = zero->df(zero);
     auto dzero_cast = graph::constant_cast(dzero);
     assert(dzero_cast.get() && "Expected a constant type for derivative.");
-    assert(dzero_cast->is(1.0) && "Constant value expeced one.");
+    assert(dzero_cast->is(1.0) && "Constant value expected one.");
     zero->set(static_cast<T> (1.0));
-    assert(zero_cast->is(0.0) && "Constant value expeced zero.");
+    assert(zero_cast->is(0.0) && "Constant value expected zero.");
 
     auto one = graph::one<T> ();
     auto one_cast = graph::constant_cast(one);
     assert(one_cast.get() && "Expected a constant type.");
-    assert(one_cast->is(1.0) && "Constant value expeced zero.");
+    assert(one_cast->is(1.0) && "Constant value expected zero.");
     const backend::buffer<T> one_result = one->evaluate();
     assert(one_result.size() == 1 && "Expected single value.");
     assert(one_result.at(0) == static_cast<T> (1.0) &&
-           "Constant value evalute expeced one.");
+           "Constant value evaluate expected one.");
 
     auto done = one->df(zero);
     auto done_cast = graph::constant_cast(done);
     assert(done_cast.get() && "Expected a constant type for derivative.");
-    assert(done_cast->is(0) && "Constant value expeced zero.");
+    assert(done_cast->is(0) && "Constant value expected zero.");
 
 //  Test is_match
     auto c1 = graph::constant(static_cast<T> (5.0));
@@ -81,18 +81,18 @@ void test_variable() {
     const backend::buffer<T> zero_result = zero->evaluate();
     assert(zero_result.size() == 1 && "Expected single value.");
     assert(zero_result.at(0) == static_cast<T> (0.0) &&
-           "Variable value evalute expeced zero.");
+           "Variable value evaluate expected zero.");
     zero->set(static_cast<T> (1.0));
     const backend::buffer<T> zero_result2 = zero->evaluate();
     assert(zero_result2.size() == 1 && "Expected single value.");
     assert(zero_result2.at(0) == static_cast<T> (1.0) &&
-           "Variable value evalute expeced zero.");
+           "Variable value evaluate expected zero.");
     auto dzero = zero->df(zero);
     assert(graph::constant_cast(dzero).get() && "Expected a constant type.");
     const backend::buffer<T> dzero_result = dzero->evaluate();
     assert(dzero_result.size() == 1 && "Expected single value.");
     assert(dzero_result.at(0) == static_cast<T> (1.0) &&
-           "Constant value evalute expeced one.");
+           "Constant value evaluate expected one.");
 
     auto ones = graph::variable<T> (2, 1, "");
     auto dzerodone = zero->df(ones);
@@ -101,22 +101,22 @@ void test_variable() {
     const backend::buffer<T> dzerodone_result = dzerodone->evaluate();
     assert(dzerodone_result.size() == 1 && "Expected single value.");
     assert(dzerodone_result.at(0) == static_cast<T> (0.0) &&
-           "Constant value evalute expeced zero.");
+           "Constant value evaluate expected zero.");
 
     auto one_two = graph::variable<T> (std::vector<T> ({1.0, 2.0}), "");
     const backend::buffer<T> one_two_result = one_two->evaluate();
     assert(one_two_result.size() == 2 && "Expected two elements in constant");
     assert(one_two_result.at(0) == static_cast<T> (1.0) &&
-           "Expected one for first elememt");
+           "Expected one for first element");
     assert(one_two_result.at(1) == static_cast<T> (2.0) &&
-           "Expected two for second elememt");
+           "Expected two for second element");
     one_two->set(std::vector<T> ({3.0, 4.0}));
     const backend::buffer<T> one_two_result2 = one_two->evaluate();
     assert(one_two_result2.size() == 2 && "Expected two elements in constant");
     assert(one_two_result2.at(0) == static_cast<T> (3.0) &&
-           "Expected three for first elememt");
+           "Expected three for first element");
     assert(one_two_result2.at(1) == static_cast<T> (4.0) &&
-           "Expected four for second elememt");
+           "Expected four for second element");
 
 //  Test is_match
     auto v1 = graph::variable<T> (1, "");

@@ -17,7 +17,7 @@ namespace timing {
 //------------------------------------------------------------------------------
     class measure_diagnostic {
     private:
-///  Discription of what is being timed.
+///  Description of what is being timed.
         const std::string label;
 ///  Starting time of the measure.
         const std::chrono::high_resolution_clock::time_point start;
@@ -28,7 +28,7 @@ namespace timing {
 //------------------------------------------------------------------------------
 ///  @brief Construct a time diagnostic object.
 ///
-///  @param[in] message Discription of what is being timed.
+///  @param[in] message Description of what is being timed.
 //------------------------------------------------------------------------------
         measure_diagnostic(const std::string message = "") :
         label(message), start(std::chrono::high_resolution_clock::now()) {}
@@ -66,22 +66,22 @@ namespace timing {
 //------------------------------------------------------------------------------
     class measure_diagnostic_threaded {
     private:
-///  Discription of what is being timed.
+///  Description of what is being timed.
         const std::string label;
 ///  Starting time of the measure.
         std::map<size_t, std::chrono::high_resolution_clock::time_point> start;
 ///  Starting end of the measure.
         std::map<size_t, std::chrono::high_resolution_clock::time_point> end;
-///  Lock to syncronize accross theads for the start time.
+///  Lock to synchronize across threads for the start time.
         std::mutex sync_start;
-///  Lock to syncronize accross theads for the end time.
+///  Lock to synchronize across threads for the end time.
         std::mutex sync_end;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a time diagnostic object.
 ///
-///  @param[in] message Discription of what is being timed.
+///  @param[in] message Description of what is being timed.
 //------------------------------------------------------------------------------
         measure_diagnostic_threaded(const std::string message = "") :
         label(message) {}

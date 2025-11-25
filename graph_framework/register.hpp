@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file register.hpp
-///  @brief Utilities for writting jit source code.
+///  @brief Utilities for writing jit source code.
 //------------------------------------------------------------------------------
 
 #ifndef register_h
@@ -200,7 +200,8 @@ namespace jit {
 //------------------------------------------------------------------------------
 ///  @brief Convert a value to a string while avoiding locale.
 ///
-///  The standard streams use localizarion that interfers with multiple threads.
+///  The standard streams use localization that interferes with multiple
+///  threads.
 ///
 ///  @tparam T Base type of the calculation.
 ///
@@ -264,7 +265,7 @@ namespace jit {
     typedef std::map<void *, std::array<size_t,2>> texture2d_list;
 
 //------------------------------------------------------------------------------
-///  @brief  Define a custom comparitor class.
+///  @brief  Define a custom comparator class.
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------

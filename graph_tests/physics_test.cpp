@@ -48,7 +48,7 @@ void test_constant() {
     z->set(static_cast<T> (real_dist(engine)));
     t->set(static_cast<T> (0.0));
 
-//  The equilibrum isn't used;
+//  The equilibrium isn't used;
     auto eq = equilibrium::make_slab<T> ();
     auto dt_const = graph::constant(static_cast<T> (1.0));
     solver::rk2<dispersion::simple<T>>
@@ -106,10 +106,10 @@ void test_constant() {
 ///
 ///  @tparam SOLVER Class of solver to use.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<solver::method SOLVER>
-void test_bohm_gross(const typename SOLVER::base tolarance) {
+void test_bohm_gross(const typename SOLVER::base tolerance) {
     auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
     auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
     auto ky = graph::variable<typename SOLVER::base> (1, "k_{y}");
@@ -149,7 +149,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
     auto dt_const = graph::constant(static_cast<typename SOLVER::base> (0.1));
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
     if constexpr (jit::use_cuda()) {
-        solve.init(kx, tolarance);
+        solve.init(kx, tolerance);
     } else {
         solve.init(kx);
     }
@@ -164,7 +164,7 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
                                            + 3.0/2.0*vth2/omega0*k0*time - 1.0;
 
     const auto diff_x = x->evaluate().at(0) - expected_x;
-    assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
+    assert(std::abs(diff_x*diff_x) < std::abs(tolerance) &&
            "Failed to reach expected x.");
 }
 
@@ -203,10 +203,10 @@ void test_bohm_gross(const typename SOLVER::base tolarance) {
 ///
 ///  @tparam SOLVER Class of solver to use.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<solver::method SOLVER>
-void test_light_wave(const typename SOLVER::base tolarance) {
+void test_light_wave(const typename SOLVER::base tolerance) {
     auto omega = graph::variable<typename SOLVER::base> (1, "\\omega");
     auto kx = graph::variable<typename SOLVER::base> (1, "k_{x}");
     auto ky = graph::variable<typename SOLVER::base> (1, "k_{y}");
@@ -243,7 +243,7 @@ void test_light_wave(const typename SOLVER::base tolarance) {
     auto eq = equilibrium::make_no_magnetic_field<typename SOLVER::base> ();
     auto dt_const = graph::constant(static_cast<typename SOLVER::base> (0.1));
     SOLVER solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
-    solve.init(kx, tolarance);
+    solve.init(kx, tolerance);
     solve.compile();
 
     for (size_t i = 0; i < 20; i++) {
@@ -255,7 +255,7 @@ void test_light_wave(const typename SOLVER::base tolarance) {
                                            + k0/omega0*time - 1.0;
 
     const auto diff_x = x->evaluate().at(0) - expected_x;
-    assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
+    assert(std::abs(diff_x*diff_x) < std::abs(tolerance) &&
            "Failed to reach expected x.");
 }
 
@@ -280,10 +280,10 @@ void test_light_wave(const typename SOLVER::base tolarance) {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
-void test_acoustic_wave(const T tolarance) {
+void test_acoustic_wave(const T tolerance) {
     auto omega = graph::variable<T> (1, "\\omega");
     auto kx = graph::variable<T> (1, "k_{x}");
     auto ky = graph::variable<T> (1, "k_{y}");
@@ -320,7 +320,7 @@ void test_acoustic_wave(const T tolarance) {
     auto dt_const = graph::constant(static_cast<T> (0.0001));
     solver::rk4<dispersion::acoustic_wave<T>>
         solve(omega, kx, ky, kz, x, y, z, t, dt_const, eq);
-    solve.init(kx, tolarance);
+    solve.init(kx, tolerance);
     solve.compile();
 
     for (size_t i = 0; i < 20; i++) {
@@ -329,7 +329,7 @@ void test_acoustic_wave(const T tolarance) {
     }
 
     const auto diff_x = x->evaluate().at(0)/t->evaluate().at(0) - vs;
-    assert(std::abs(diff_x*diff_x) < std::abs(tolarance) &&
+    assert(std::abs(diff_x*diff_x) < std::abs(tolerance) &&
            "Ray progated at different speed.");
 }
 
@@ -397,7 +397,7 @@ void test_o_mode_wave() {
 
     const auto diff = x->evaluate().at(0) - x_cut;
     assert(std::abs(diff*diff) < 8.0E-10 &&
-           "Failed to reach expected tolarance.");
+           "Failed to reach expected tolerance.");
 }
 
 //------------------------------------------------------------------------------
@@ -512,13 +512,13 @@ void test_cold_plasma_cutoffs() {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 ///  @param[in] n0        Starting nz value.
 ///  @param[in] x0        Starting x guess.
 ///  @param[in] kx0       Starting kx guess.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
-void test_reflection(const T tolarance,
+void test_reflection(const T tolerance,
                      const T n0,
                      const T x0,
                      const T kx0) {
@@ -544,7 +544,7 @@ void test_reflection(const T tolarance,
         solve(w, kx, ky, kz, x, y, z, t, dt_const, eq);
 
 // Solve for a location where the wave is cut off.
-    solve.init(x, tolarance);
+    solve.init(x, tolerance);
     const T cuttoff_location = x->evaluate().at(0);
 
 //  Set the ray starting point close to the cut off to reduce the number of
@@ -554,7 +554,7 @@ void test_reflection(const T tolarance,
 //  Set an inital guess for kx and solve for the wave number at the new
 //  location.
     kx->set(kx0);
-    solve.init(kx, tolarance);
+    solve.init(kx, tolerance);
     solve.compile();
     solve.sync_host();
 
@@ -622,17 +622,17 @@ template<jit::float_scalar T> void test_efit() {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 //------------------------------------------------------------------------------
-template<jit::float_scalar T> void run_tests(const T tolarance) {
+template<jit::float_scalar T> void run_tests(const T tolerance) {
     test_constant<T> ();
-    test_bohm_gross<solver::rk4<dispersion::bohm_gross<T>>> (tolarance);
-    test_bohm_gross<solver::split_simplextic<dispersion::bohm_gross<T>>> (tolarance);
-    test_light_wave<solver::rk4<dispersion::light_wave<T>>> (tolarance);
-    test_light_wave<solver::split_simplextic<dispersion::light_wave<T>>> (tolarance);
-    test_acoustic_wave<T> (tolarance);
+    test_bohm_gross<solver::rk4<dispersion::bohm_gross<T>>> (tolerance);
+    test_bohm_gross<solver::split_simplextic<dispersion::bohm_gross<T>>> (tolerance);
+    test_light_wave<solver::rk4<dispersion::light_wave<T>>> (tolerance);
+    test_light_wave<solver::split_simplextic<dispersion::light_wave<T>>> (tolerance);
+    test_acoustic_wave<T> (tolerance);
     test_o_mode_wave<T> ();
-    test_reflection<T> (tolarance, 0.7, 0.1, 22.0);
+    test_reflection<T> (tolerance, 0.7, 0.1, 22.0);
     test_cold_plasma_cutoffs<T> ();
     test_efit<T> ();
 }

@@ -17,13 +17,13 @@
 ///
 ///  @tparam DISPERSION Class of dispersion function to use.
 ///
-///  @param[in]     tolarance Tolarance to solver the dispersion function to.
+///  @param[in]     tolerance Tolerance to solver the dispersion function to.
 ///  @param[in]     omega     Ray frequency.
-///  @param[in]     k_guess   Inital guess for the wave number.
+///  @param[in]     k_guess   Initial guess for the wave number.
 ///  @param[in,out] eq        The equilibrium.
 //------------------------------------------------------------------------------
 template<dispersion::function DISPERSION>
-void test_solve(const typename DISPERSION::base tolarance,
+void test_solve(const typename DISPERSION::base tolerance,
                 const typename DISPERSION::base omega,
                 const typename DISPERSION::base k_guess,
                 equilibrium::shared<typename DISPERSION::base> &eq) {
@@ -49,18 +49,18 @@ void test_solve(const typename DISPERSION::base tolarance,
         graph::variable_cast(kz),
         graph::variable_cast(t),
     });
-    D.solve(kx, inputs, 0, tolarance);
+    D.solve(kx, inputs, 0, tolerance);
 
     kx->set(static_cast<typename DISPERSION::base> (0.2));
-    D.solve(ky, inputs, 0, tolarance);
+    D.solve(ky, inputs, 0, tolerance);
 
     ky->set(static_cast<typename DISPERSION::base> (0.25));
     kz->set(k_guess);
-    D.solve(kz, inputs, 0, tolarance);
+    D.solve(kz, inputs, 0, tolerance);
 
     kz->set(static_cast<typename DISPERSION::base> (0.15));
     kx->set(k_guess);
-    D.solve(w, inputs, 0, tolarance);
+    D.solve(w, inputs, 0, tolerance);
 }
 
 //------------------------------------------------------------------------------
@@ -68,17 +68,17 @@ void test_solve(const typename DISPERSION::base tolarance,
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] tolarance Tolarance to solver the dispersion function to.
+///  @param[in] tolerance Tolerance to solver the dispersion function to.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
-void run_tests(const T tolarance) {
-    auto eq_den = equilibrium::make_guassian_density<T> ();
+void run_tests(const T tolerance) {
+    auto eq_den = equilibrium::make_gaussian_density<T> ();
     auto eq_no = equilibrium::make_no_magnetic_field<T> ();
 
-    test_solve<dispersion::simple<T>> (tolarance, 0.5, 1.0, eq_den);
-    test_solve<dispersion::acoustic_wave<T>> (tolarance, 1.0, 600.0, eq_no);
-    test_solve<dispersion::guassian_well<T>> (tolarance, 0.5, 1.0, eq_den);
-    test_solve<dispersion::cold_plasma<T>> (tolarance, 900.0, 1000.0, eq_den);
+    test_solve<dispersion::simple<T>> (tolerance, 0.5, 1.0, eq_den);
+    test_solve<dispersion::acoustic_wave<T>> (tolerance, 1.0, 600.0, eq_no);
+    test_solve<dispersion::gaussian_well<T>> (tolerance, 0.5, 1.0, eq_den);
+    test_solve<dispersion::cold_plasma<T>> (tolerance, 900.0, 1000.0, eq_den);
 }
 
 //------------------------------------------------------------------------------

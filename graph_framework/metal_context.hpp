@@ -36,7 +36,7 @@ namespace gpu {
         id<MTLCommandBuffer> command_buffer;
 ///  Metal library.
         id<MTLLibrary> library;
-///  Buffer mutability discriptor.
+///  Buffer mutability descriptor.
         std::map<std::string, std::vector<MTLMutability>> bufferMutability;
 
     public:
@@ -56,7 +56,7 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Device discription.
+///  @brief Device description.
 //------------------------------------------------------------------------------
         static std::string device_type() {
             return "Metal GPU";
@@ -172,15 +172,15 @@ namespace gpu {
             id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
             for (auto &[data, size] : tex1d_list) {
                 if (!texture_arguments.contains(data)) {
-                    MTLTextureDescriptor *discriptor = [MTLTextureDescriptor new];
-                    discriptor.textureType = MTLTextureType1D;
-                    discriptor.pixelFormat = MTLPixelFormatR32Float;
-                    discriptor.width = size;
-                    discriptor.storageMode = MTLStorageModeManaged;
-                    discriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
-                    discriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
-                    discriptor.usage = MTLTextureUsageShaderRead;
-                    texture_arguments[data] = [device newTextureWithDescriptor:discriptor];
+                    MTLTextureDescriptor *descriptor = [MTLTextureDescriptor new];
+                    descriptor.textureType = MTLTextureType1D;
+                    descriptor.pixelFormat = MTLPixelFormatR32Float;
+                    descriptor.width = size;
+                    descriptor.storageMode = MTLStorageModeManaged;
+                    descriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
+                    descriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
+                    descriptor.usage = MTLTextureUsageShaderRead;
+                    texture_arguments[data] = [device newTextureWithDescriptor:descriptor];
                     [texture_arguments[data] replaceRegion:MTLRegionMake1D(0, size)
                                                mipmapLevel:0
                                                  withBytes:reinterpret_cast<float *> (data)
@@ -192,16 +192,16 @@ namespace gpu {
             }
             for (auto &[data, size] : tex2d_list) {
                 if (!texture_arguments.contains(data)) {
-                    MTLTextureDescriptor *discriptor = [MTLTextureDescriptor new];
-                    discriptor.textureType = MTLTextureType2D;
-                    discriptor.pixelFormat = MTLPixelFormatR32Float;
-                    discriptor.width = size[1];
-                    discriptor.height = size[0];
-                    discriptor.storageMode = MTLStorageModeManaged;
-                    discriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
-                    discriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
-                    discriptor.usage = MTLTextureUsageShaderRead;
-                    texture_arguments[data] = [device newTextureWithDescriptor:discriptor];
+                    MTLTextureDescriptor *descriptor = [MTLTextureDescriptor new];
+                    descriptor.textureType = MTLTextureType2D;
+                    descriptor.pixelFormat = MTLPixelFormatR32Float;
+                    descriptor.width = size[1];
+                    descriptor.height = size[0];
+                    descriptor.storageMode = MTLStorageModeManaged;
+                    descriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
+                    descriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
+                    descriptor.usage = MTLTextureUsageShaderRead;
+                    texture_arguments[data] = [device newTextureWithDescriptor:descriptor];
                     [texture_arguments[data] replaceRegion:MTLRegionMake2D(0, 0, size[1], size[0])
                                                mipmapLevel:0
                                                  withBytes:reinterpret_cast<float *> (data)

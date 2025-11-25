@@ -17,7 +17,7 @@ namespace graph {
 ///  @tparam T Base type of the calculation.
 ///
 ///  @param[in,out] stream        String buffer stream.
-///  @param[in]     register_name Reister for the argument.
+///  @param[in]     register_name Register for the argument.
 ///  @param[in]     length        Dimension length of argument.
 ///  @param[in]     scale         Argument scale factor.
 ///  @param[in]     offset        Argument offset factor.
@@ -57,23 +57,23 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Class representing a 1D piecewise constant.
 ///
-///  This class is used to impliment the coefficent terms of cubic spline
+///  This class is used to implement the coefficient terms of cubic spline
 ///  interpolation. An function is interpolated using
 ///
 ///    y(x) = a_i + b_i*x +c_i*x^2 + d_i*x^3                                 (1)
 ///
-///  The coeffients are defined as
+///  The coefficients are defined as
 ///
 ///    a_i = y_i                                                             (2)
 ///    b_i = D_i                                                             (3)
 ///    c_i = 3*(y_i+1 - y_i) - 2*D_i - D_i+1                                 (4)
 ///    d_i = 2*(y_i - y_i+1) + D_i + D_i+1                                   (5)
 ///
-///  The agument x is assumed to be the normalized argument
+///  The argument x is assumed to be the normalized argument
 ///
 ///    x_norm = (x - xmin)/dx - i                                            (6)
 ///
-///  To avoid tracking the index i which normaizes x to a zero to one interval
+///  To avoid tracking the index i which normalizes x to a zero to one interval
 ///  the coefficients should be normalized to
 ///
 ///    a'_i = a_i - b_i*i + c_i*i^2 - d_i*i^3                                (7)
@@ -155,7 +155,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Construct 1D a piecewise constant node.
 ///
-///  @param[in] d      Data to initalize the piecewise constant.
+///  @param[in] d      Data to initialize the piecewise constant.
 ///  @param[in] x      Argument.
 ///  @param[in] scale  Scale factor for the argument.
 ///  @param[in] offset Offset factor for the argument.
@@ -172,7 +172,7 @@ void compile_index(std::ostringstream &stream,
 ///  @brief Evaluate the results of the piecewise constant.
 ///
 ///  Evaluate functions are only used by the minimization. So this node does not
-///  evaluate the argument. Instead this only returs the data as if it were a
+///  evaluate the argument. Instead this only returns the data as if it were a
 ///  constant.
 ///
 ///  @returns The evaluated value of the node.
@@ -401,9 +401,9 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
-///  The argument of this node can be defered so we need to check if the
+///  The argument of this node can be deferred so we need to check if the
 ///  arguments are null.
 ///
 ///  @param[in] x Other graph to check if it is a match.
@@ -548,12 +548,12 @@ void compile_index(std::ostringstream &stream,
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise_1D convience function.
+///  @brief Define piecewise_1D convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] d      Data to initalize the piecewise constant.
+///  @param[in] d      Data to initialize the piecewise constant.
 ///  @param[in] x      Argument.
 ///  @param[in] scale  Argument scale factor.
 ///  @param[in] offset Argument offset factor.
@@ -595,7 +595,7 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_piecewise_1D<T, SAFE_MATH> piecewise_1D_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -608,17 +608,17 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Class representing a 2D piecewise constant.
 ///
-///  This class is used to impliment the coefficent terms of bicubic spline
+///  This class is used to implement the coefficient terms of bicubic spline
 ///  interpolation. An function is interpolated using
 ///
 ///    z(x,y) = Σ_i,3Σ_j,3 c_ij*x^i*y^j                                      (1)
 ///
-///  The aguments x and y are assumed to be the normalized arguments
+///  The arguments x and y are assumed to be the normalized arguments
 ///
 ///    x_norm = (x - xmin)/dx - i                                            (2)
 ///    y_norm = (y - ymin)/dy - j                                            (3)
 ///
-///  To avoid tracking the indices i and j which normaizes x and y to a zero to
+///  To avoid tracking the indices i and j which normalizes x and y to a zero to
 ///  one interval the coefficients should be normalized to
 ///
 ///    c00'_ij = Σ_k,3Σ_l,3 (-i)^k*(-j)^l*ckl_ij                             (4)
@@ -722,10 +722,10 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Construct 2D a piecewise constant node.
 ///
-///  @param[in] d        Data to initalize the piecewise constant.
+///  @param[in] d        Data to initialize the piecewise constant.
 ///  @param[in] n        Number of columns.
 ///  @param[in] x        X Argument.
-///  @param[in] x_scale  Scale factor for the xargument.
+///  @param[in] x_scale  Scale factor for the argument.
 ///  @param[in] x_offset Offset factor for the x argument.
 ///  @param[in] y        Y Argument.
 ///  @param[in] y_scale  Scale factor for the y argument.
@@ -806,7 +806,7 @@ void compile_index(std::ostringstream &stream,
 ///  @brief Evaluate the results of the piecewise constant.
 ///
 ///  Evaluate functions are only used by the minimization. So this node does not
-///  evaluate the argument. Instead this only returs the data as if it were a
+///  evaluate the argument. Instead this only returns the data as if it were a
 ///  constant.
 ///
 ///  @returns The evaluated value of the node.
@@ -1102,7 +1102,7 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  Assumes both arguments are either set or not set.
 ///
@@ -1262,12 +1262,12 @@ void compile_index(std::ostringstream &stream,
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define piecewise_2D convience function.
+///  @brief Define piecewise_2D convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] d        Data to initalize the piecewise constant.
+///  @param[in] d        Data to initialize the piecewise constant.
 ///  @param[in] n        Number of columns.
 ///  @param[in] x        X argument.
 ///  @param[in] x_scale  Scale for x argument.
@@ -1317,7 +1317,7 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_piecewise_2D<T, SAFE_MATH> piecewise_2D_cast(shared_leaf<T, SAFE_MATH> x) {

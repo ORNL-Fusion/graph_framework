@@ -154,7 +154,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -217,7 +217,7 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define sine convience function.
+///  @brief Define sine convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -256,7 +256,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_sine<T, SAFE_MATH> sin_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -406,7 +406,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -469,7 +469,7 @@ namespace graph {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Define cosine convience function.
+///  @brief Define cosine convenience function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -508,7 +508,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_cosine<T, SAFE_MATH> cos_cast(shared_leaf<T, SAFE_MATH> x) {
@@ -519,7 +519,7 @@ namespace graph {
 //  Tangent node.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Define tangent convience function.
+///  @brief Define tangent convenience function.
 ///
 ///  tan(x) = sin(x)/cos(x)
 ///
@@ -721,7 +721,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Querey if the nodes match.
+///  @brief Query if the nodes match.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -862,7 +862,7 @@ namespace graph {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
 ///  @param[in] x Leaf node to attempt cast.
-///  @returns An attemped dynamic case.
+///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_atan<T, SAFE_MATH> atan_cast(shared_leaf<T, SAFE_MATH> x) {

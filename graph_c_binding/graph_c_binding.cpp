@@ -491,8 +491,8 @@ extern "C" {
 ///  @brief Create add node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns left + right
 //------------------------------------------------------------------------------
     graph_node graph_add(STRUCT_TAG graph_c_context *c,
@@ -557,8 +557,8 @@ extern "C" {
 ///  @brief Create Substract node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns left - right
 //------------------------------------------------------------------------------
     graph_node graph_sub(STRUCT_TAG graph_c_context *c,
@@ -623,8 +623,8 @@ extern "C" {
 ///  @brief Create Multiply node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns left*right
 //------------------------------------------------------------------------------
     graph_node graph_mul(STRUCT_TAG graph_c_context *c,
@@ -689,8 +689,8 @@ extern "C" {
 ///  @brief Create Divide node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns left/right
 //------------------------------------------------------------------------------
     graph_node graph_div(STRUCT_TAG graph_c_context *c,
@@ -758,7 +758,7 @@ extern "C" {
 ///  @brief Create Sqrt node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The left operand.
 ///  @returns sqrt(arg)
 //------------------------------------------------------------------------------
     graph_node graph_sqrt(STRUCT_TAG graph_c_context *c,
@@ -822,7 +822,7 @@ extern "C" {
 ///  @brief Create exp node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The left operand.
 ///  @returns exp(arg)
 //------------------------------------------------------------------------------
     graph_node graph_exp(STRUCT_TAG graph_c_context *c,
@@ -886,7 +886,7 @@ extern "C" {
 ///  @brief Create log node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The left operand.
 ///  @returns log(arg)
 //------------------------------------------------------------------------------
     graph_node graph_log(STRUCT_TAG graph_c_context *c,
@@ -950,8 +950,8 @@ extern "C" {
 ///  @brief Create Pow node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns pow(left, right)
 //------------------------------------------------------------------------------
     graph_node graph_pow(STRUCT_TAG graph_c_context *c,
@@ -1016,7 +1016,7 @@ extern "C" {
 ///  @brief Create imaginary error function node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The left operand.
 ///  @returns erfi(arg)
 //------------------------------------------------------------------------------
     graph_node graph_erfi(STRUCT_TAG graph_c_context *c,
@@ -1062,7 +1062,7 @@ extern "C" {
 ///  @brief Create sine node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The left operand.
 ///  @returns sin(arg)
 //------------------------------------------------------------------------------
     graph_node graph_sin(STRUCT_TAG graph_c_context *c,
@@ -1126,7 +1126,7 @@ extern "C" {
 ///  @brief Create cosine node.
 ///
 ///  @param[in] c   The graph C context.
-///  @param[in] arg The left opperand.
+///  @param[in] arg The left operand.
 ///  @returns cos(arg)
 //------------------------------------------------------------------------------
     graph_node graph_cos(STRUCT_TAG graph_c_context *c,
@@ -1190,8 +1190,8 @@ extern "C" {
 ///  @brief Create arctangent node.
 ///
 ///  @param[in] c     The graph C context.
-///  @param[in] left  The left opperand.
-///  @param[in] right The right opperand.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
 ///  @returns atan(left, right)
 //------------------------------------------------------------------------------
     graph_node graph_atan(STRUCT_TAG graph_c_context *c,
@@ -2461,7 +2461,7 @@ extern "C" {
 ///  @param[in] random_state Optional random state, can be NULL if not used.
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
-///  @param[in] tol          Tolarance to converge the function to.
+///  @param[in] tol          Tolerance to converge the function to.
 ///  @param[in] max_iter     Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
     void graph_add_converge_item(STRUCT_TAG graph_c_context *c,

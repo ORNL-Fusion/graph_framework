@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 ///  @file output.hpp
-///  @brief Impliments output files in a netcdf format.
+///  @brief Implements output files in a netcdf format.
 //------------------------------------------------------------------------------
 
 #ifndef output_h
@@ -14,7 +14,7 @@
 
 ///  Name space for output files.
 namespace output {
-///  Lock to syncronize netcdf accross threads.
+///  Lock to synchronize netcdf across threads.
     static std::mutex sync;
 
 //------------------------------------------------------------------------------

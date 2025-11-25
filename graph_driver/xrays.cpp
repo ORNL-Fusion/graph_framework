@@ -42,7 +42,7 @@ std::normal_distribution<std::complex<T>> set_distribution(const std::complex<T>
 }
 
 //------------------------------------------------------------------------------
-///  @brief Initalize value.
+///  @brief Initialize value.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -149,7 +149,7 @@ void set_xy_variables(const commandline::parser &cl,
 ///  @param[in]     y         Initial position in y direction.
 ///  @param[in]     z         Initial position in z direction.
 ///  @param[in]     t         Initial position in t direction.
-///  @param[in]     dt        Inital dt.
+///  @param[in]     dt        Initial dt.
 ///  @param[in]     eq        Equilibrium object.
 ///  @param[in]     num_steps Equilibrium object.
 ///  @param[in]     sub_steps Equilibrium object.
@@ -218,7 +218,7 @@ void run_solver(const commandline::parser &cl,
         std::cout << std::endl;
         solve.print_dzdt();
         std::cout << std::endl;
-        solve.print_residule();
+        solve.print_residual();
         std::cout << std::endl;
         solve.print_x_next();
         std::cout << std::endl;
@@ -260,7 +260,7 @@ void run_solver(const commandline::parser &cl,
 }
 
 //------------------------------------------------------------------------------
-///  @brief Run Disperison
+///  @brief Run Dispersion
 ///
 ///  @tparam DISPERSION_FUNCTION The dispersion method.
 ///
@@ -273,7 +273,7 @@ void run_solver(const commandline::parser &cl,
 ///  @param[in]     y         Initial position in y direction.
 ///  @param[in]     z         Initial position in z direction.
 ///  @param[in]     t         Initial position in t direction.
-///  @param[in]     dt        Inital dt.
+///  @param[in]     dt        Initial dt.
 ///  @param[in]     eq        Equilibrium object.
 ///  @param[in]     num_steps Equilibrium object.
 ///  @param[in]     sub_steps Equilibrium object.
@@ -364,7 +364,7 @@ void run_dispersion(const commandline::parser &cl,
 }
 
 //------------------------------------------------------------------------------
-///  @brief  Make an equilibrum.
+///  @brief  Make an equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -406,7 +406,7 @@ std::mt19937_64 make_engine(const commandline::parser &cl,
 ///
 ///  @param[in] cl        Parsed commandline.
 ///  @param[in] num_times Total number of time steps.
-///  @param[in] sub_steps Number of substeps to push the rays.
+///  @param[in] sub_steps Number of sub-steps to push the rays.
 ///  @param[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -444,7 +444,7 @@ void trace_ray(const commandline::parser &cl,
 
             t->set(static_cast<T> (0.0));
 
-//  Inital conditions.
+//  Initial conditions.
             set_variable(cl, omega, "w", engine, local_num_rays);
             set_variable(cl, kx, "kx", engine, local_num_rays);
             set_variable(cl, ky, "ky", engine, local_num_rays);
@@ -531,7 +531,7 @@ void trace_ray(const commandline::parser &cl,
 //------------------------------------------------------------------------------
 ///  @brief Run absorption model.
 ///
-///  @tparam ABSORPTION_MODEL Absoption model to use.
+///  @tparam ABSORPTION_MODEL Absorption model to use.
 ///
 ///  @param[in] cl        Parsed commandline.
 ///  @param[in] kamp      Wave number amplitude.
@@ -592,7 +592,7 @@ void run_absorption(const commandline::parser &cl,
 ///
 ///  @param[in] cl        Parsed commandline.
 ///  @param[in] num_times Total number of time steps.
-///  @param[in] sub_steps Number of substeps to push the rays.
+///  @param[in] sub_steps Number of sub-steps to push the rays.
 ///  @param[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -667,7 +667,7 @@ void calculate_power(const commandline::parser &cl,
 ///
 ///  @param[in] cl        Parsed commandline.
 ///  @param[in] num_times Total number of time steps.
-///  @param[in] sub_steps Number of substeps to push the rays.
+///  @param[in] sub_steps Number of sub-steps to push the rays.
 ///  @param[in] num_rays  Number of rays to trace.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, bool SAFE_MATH=false>
@@ -806,7 +806,7 @@ void bin_power(const commandline::parser &cl,
 ///
 ///  @section xrays_commandline_args Command Options
 ///  <table>
-///  <tr><th>Command                           <th>Values                                                  <th>Discription
+///  <tr><th>Command                           <th>Values                                                  <th>Description
 ///  <tr><th colspan="3">General Options
 ///  <tr><td>@code --help @endcode             <td>                                                        <td>Display help text
 ///  <tr><td>@code --verbose @endcode          <td>                                                        <td>Show verbose output about kernel information.
@@ -815,7 +815,7 @@ void bin_power(const commandline::parser &cl,
 ///  <tr><td>@code --seed @endcode             <td>                                                        <td>Use a fixed random seed.
 ///  <tr><th colspan="3">Control Options
 ///  <tr><td>@code --num_times @endcode        <td>Positive Integer                                        <td>Total number of time steps to run.
-///  <tr><td>@code --sub_steps @endcode        <td>Positive Integer                                       <td>Number of steps to run between outputs.
+///  <tr><td>@code --sub_steps @endcode        <td>Positive Integer                                        <td>Number of steps to run between outputs.
 ///  <tr><td>@code --num_rays @endcode         <td>Positive Integer                                        <td>Total number rays to run.
 ///  <tr><td>@code --endtime @endcode          <td>Positive Number                                         <td>Total time to trace the ray to.
 ///  <tr><th colspan="3">Ray Initialization Options
@@ -857,21 +857,21 @@ void bin_power(const commandline::parser &cl,
 ///                                                 * normal                                               <td>Distribution function for ray z position.
 ///  <tr><td>@code --init_z_mean @endcode      <td>Positive Number                                         <td>Mean value for the ray z position distribution function.
 ///  <tr><td>@code --init_z_sigma @endcode     <td>Positive Number                                         <td>Standard deviation of for the ray z position distribution function.
-///  <tr><td>@code --use_cyl_xy @endcode       <td>                                                        <td>Use cylindical coordinates for x and y.
+///  <tr><td>@code --use_cyl_xy @endcode       <td>                                                        <td>Use cylindrical coordinates for x and y.
 ///  <tr><th colspan="3">Ray Tracing Physics Options
 ///  <tr><td>@code --equilibrium @endcode      <td>
-///                                                 * @ref equilibrum_efit "efit"
-///                                                 * @ref equilibrum_vmec "vmec"                          <td>Equilibrium to use.
-///  <tr><td>@code --equilibrium_file @endcode <td>Path to @ref equilibrum_models "equilibrium file"       <td>Equilibrium file path.
+///                                                 * @ref equilibrium_efit "efit"
+///                                                 * @ref equilibrium_vmec "vmec"                         <td>Equilibrium to use.
+///  <tr><td>@code --equilibrium_file @endcode <td>Path to @ref equilibrium_models "equilibrium file"      <td>Equilibrium file path.
 ///  <tr><td>@code --dispersion @endcode       <td>
 ///                                                 * @ref dispersion_function_simple "simple"
 ///                                                 * @ref dispersion_function_bohm_gross "bohm_gross"
 ///                                                 * @ref dispersion_function_o_wave "ordinary_wave"
 ///                                                 * @ref dispersion_function_x_wave "extra_ordinary_wave"
-///                                                 * @ref dispersion_function_cold_plasma "code_plasma"   <td>Wave disperion function to trace rays from.
+///                                                 * @ref dispersion_function_cold_plasma "code_plasma"   <td>Wave dispersion function to trace rays from.
 ///  <tr><td>@code --absorption_model @endcode <td>
 ///                                                 * @ref absorption_model_root "root_find"
-///                                                 * @ref absorption_model_root "weak_damping"            <td>Power absoption model to use.
+///                                                 * @ref absorption_model_root "weak_damping"            <td>Power absorption model to use.
 ///  <tr><td>@code --solver @endcode           <td>
 ///                                                 * @ref solvers_split_simplextic "split_simplextic"
 ///                                                 * @ref solvers_rk2 "rk2"
@@ -907,14 +907,14 @@ void bin_power(const commandline::parser &cl,
 ///  <tr><td>@f$t @f$     <td>2.0        <td>@f$2.0c @f$ @f$s @f$
 ///  </table>
 ///
-///  @subsection xrays_commandline_example_dist Ray intialization.
+///  @subsection xrays_commandline_example_dist Ray initialization.
 ///  @code
 ///  --init_x_mean=2.5 --init_y_dist=normal --init_y_mean=0.0 --init_y_sigma=0.05 --init_z_dist=normal --init_z_mean=0.0 --init_z_sigma=0.05 --use_cyl_xy
 ///  @endcode
-///  Inital values for the position for @f$y @f$ and @f$z @f$ will be sampled
-///  from a normal distribution fuction. Both values have a mean of zero and as
-///  standard devation of 0.05. @f$x @f$ is initalized with a uniform value of
-///  2.5. We also set the command to use cylindical coordinates. So
+///  Initial values for the position for @f$y @f$ and @f$z @f$ will be sampled
+///  from a normal distribution function. Both values have a mean of zero and as
+///  standard deviation of 0.05. @f$x @f$ is initialized with a uniform value of
+///  2.5. We also set the command to use cylindrical coordinates. So
 ///  @f$xyz\rightarrow r\phi z @f$.
 ///
 ///  @code
@@ -926,8 +926,8 @@ void bin_power(const commandline::parser &cl,
 ///  @code
 ///  --init_kx --init_kx_mean=-700.0 --init_ky_dist=normal --init_ky_mean=-100.0 --init_ky_sigma=10.0 --init_kz_dist=normal --init_kz_mean=0.0 --init_kz_sigma=10.0
 ///  @endcode
-///  Inital values for @f$k_{y}@f$ and @f$k_{z}@f$ will be sampled from a normal
-///  distribution fuction. Both of them have a standard deviation of 10.
+///  Initial values for @f$k_{y}@f$ and @f$k_{z}@f$ will be sampled from a normal
+///  distribution function. Both of them have a standard deviation of 10.
 ///  @f$k_{y}@f$ has a mean of -100 and @f$k_{z}@f$ has zero mean.
 ///  @f$k_{x}@f$ uses the default uniform value of -700.0. However, it is
 ///  configured to solve for @f$k_{x}@f$ which satisfies the dispersion function
@@ -937,8 +937,8 @@ void bin_power(const commandline::parser &cl,
 ///  @code
 ///  --equilibrium=efit --equilibrium_file=../graph_tests/efit.nc
 ///  @endcode
-///  We are using a @ref equilibrum_efit "EFIT" equilibirum with values
-///  initalized from <tt>../graph_tests/efit.nc</tt>.
+///  We are using a @ref equilibrium_efit "EFIT" equilibrium with values
+///  initialized from <tt>../graph_tests/efit.nc</tt>.
 ///
 ///  @code
 ///  --absorption_model=weak_damping --dispersion=ordinary_wave --solver=rk4
@@ -967,7 +967,7 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
         "rk4",
         "adaptive_rk4"
     });
-    cl.add_option("dispersion",        true,  "Wave disperion function to trace rays from.", {
+    cl.add_option("dispersion",        true,  "Wave dispersion function to trace rays from.", {
         "simple",
         "bohm_gross",
         "ordinary_wave",
@@ -978,7 +978,7 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
         "efit",
         "vmec"
     });
-    cl.add_option("equilibrium_file",  true,  "File to read the equilibrum from.");
+    cl.add_option("equilibrium_file",  true,  "File to read the equilibrium from.");
     cl.add_option("init_w_dist",       true,  "Distribution function for wave frequency.", {
         "uniform",
         "normal"
@@ -999,7 +999,7 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
     cl.add_option("init_ky",           false, "Solve for initial wave number in the y direction position.");
     cl.add_option("init_ky_mean",      true,  "Mean value for the wave number in they direction distribution function.");
     cl.add_option("init_ky_sigma",     true,  "Standard deviation of for the wave number in the y direction distribution function.");
-    cl.add_option("init_kz_dist",      true,  "Inital kz distribution.", {
+    cl.add_option("init_kz_dist",      true,  "Initial kz distribution.", {
         "uniform",
         "normal"
     });
@@ -1024,8 +1024,8 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
     });
     cl.add_option("init_z_mean",       true,  "Mean value for the ray z position distribution function.");
     cl.add_option("init_z_sigma",      true,  "Standard deviation of for the ray z position distribution function.");
-    cl.add_option("use_cyl_xy",        false, "Use cylindical coordinates for x and y.");
-    cl.add_option("absorption_model",  true,  "Power absoption model to use.", {
+    cl.add_option("use_cyl_xy",        false, "Use cylindrical coordinates for x and y.");
+    cl.add_option("absorption_model",  true,  "Power absorption model to use.", {
         "root_find",
         "weak_damping"
     });
@@ -1054,20 +1054,20 @@ commandline::parser parse_commandline(int argc, const char * argv[]) {
 ///  <table>
 ///  <caption id="xrays_output_format_data">Result file quantities</caption>
 ///  <tr><th colspan="3">Dimensions
-///  <tr><th colspan="2">Name                                          <th>Discription
+///  <tr><th colspan="2">Name                                          <th>Description
 ///  <tr><td colspan="2"><tt>time</tt>                                 <td>Size of time dimension.
 ///  <tr><td colspan="2"><tt>num_rays</tt>                             <td>Local number of rays for the device.
-///  <tr><td colspan="2"><tt>ray_dim</tt>                              <td>Size of the dimension for quanties. (1 Real, 2 Complex)
+///  <tr><td colspan="2"><tt>ray_dim</tt>                              <td>Size of the dimension for quantities. (1 Real, 2 Complex)
 ///  <tr><td colspan="2"><tt>ray_dim_cplx</tt>                         <td>Size of the dimension for complex quantities (Real, Imagine).
-///  <tr><th colspan="3">2D Qantities
-///  <tr><th>Name             <th>Dimensions                           <th>Discription
+///  <tr><th colspan="3">2D Quantities
+///  <tr><th>Name             <th>Dimensions                           <th>Description
 ///  <tr><td><tt>d_power</tt> <td><tt>(time,num_rays,ray_dim)</tt>     <td>Change in power.
 ///  <tr><td><tt>kamp</tt>    <td><tt>(time,num_rays,ray_dim_cplx)</tt><td>@f$\sqrt{\vec{k}\cdot\vec{k}}@f$
 ///  <tr><td><tt>kx</tt>      <td><tt>(time,num_rays,ray_dim)</tt>     <td>Wave number in @f$\hat{x}@f$ direction.
 ///  <tr><td><tt>ky</tt>      <td><tt>(time,num_rays,ray_dim)</tt>     <td>Wave number in @f$\hat{y}@f$ direction.
 ///  <tr><td><tt>kz</tt>      <td><tt>(time,num_rays,ray_dim)</tt>     <td>Wave number in @f$\hat{z}@f$ direction.
 ///  <tr><td><tt>power</tt>   <td><tt>(time,num_rays,ray_dim)</tt>     <td>Wave power.
-///  <tr><td><tt>residule</tt><td><tt>(time,num_rays,ray_dim)</tt>     <td>Dispersion function residule.
+///  <tr><td><tt>residual</tt><td><tt>(time,num_rays,ray_dim)</tt>     <td>Dispersion function residual.
 ///  <tr><td><tt>time</tt>    <td><tt>(time,num_rays,ray_dim)</tt>     <td>Time
 ///  <tr><td><tt>w</tt>       <td><tt>(time,num_rays,ray_dim)</tt>     <td>Wave frequency.
 ///  <tr><td><tt>x</tt>       <td><tt>(time,num_rays,ray_dim)</tt>     <td>Position in @f$\hat{x}@f$ direction.

@@ -14,7 +14,8 @@
 #include <thread>
 #include <unordered_set>
 
-//  Clang headers will define IBAction and IBOutlet these so undefine them here.
+//  Clang headers will define IBAction and IBOutlet these so undefined them
+//  here.
 #undef IBAction
 #undef IBOutlet
 #include "llvm/Support/VirtualFileSystem.h"
@@ -53,7 +54,7 @@ namespace gpu {
 ///
 ///  The exec functions need the arguments split into individual calls. So this
 ///  splits the strings that come from cmake into a char \* vector. Note the
-///  first token will be duplacted in the first two elements.
+///  first token will be duplicated in the first two elements.
 ///
 ///  @param[in] string Input string.
 ///  @returns The string split into an array of arguments.
@@ -106,7 +107,7 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Device discription.
+///  @brief Device description.
 //------------------------------------------------------------------------------
         static std::string device_type() {
             return "CPU";

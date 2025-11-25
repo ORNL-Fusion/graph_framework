@@ -38,22 +38,22 @@ template<jit::float_scalar T> void test_add() {
     auto zero = graph::zero<T> ();
     auto one_plus_zero = one + zero;
     assert(one_plus_zero.get() == one.get() &&
-           "Expected to retrive the left side.");
+           "Expected to retrieve the left side.");
     assert(one_plus_zero->evaluate()[0] == static_cast<T> (1.0) &&
            "Expected the evaluation of one.");
     auto zero_plus_one = zero + one;
     assert(zero_plus_one.get() == one.get() &&
-           "Expected to retrive the right side.");
+           "Expected to retrieve the right side.");
 
-//  Test variable quanities.
+//  Test variable quantities.
 //  Any zero nodes should reduce to the other operand.
     auto variable = graph::variable<T> (1, "");
     auto var_plus_zero = variable + zero;
     assert(var_plus_zero.get() == variable.get() &&
-           "Expected to retrive the left side.");
+           "Expected to retrieve the left side.");
     auto zero_plus_var = zero + variable;
     assert(zero_plus_var.get() == variable.get() &&
-           "Expected to retrive the right side.");
+           "Expected to retrieve the right side.");
 
 //  Variable plus a variable should return an add node.
     auto var_plus_var = variable + variable;
@@ -187,7 +187,7 @@ template<jit::float_scalar T> void test_add() {
 //  c1*a + c2*b -> c1*(a + c3*b)
     auto constant_factor = three*variable + (one + one)*var_b;
     assert(graph::multiply_cast(constant_factor).get() &&
-           "Expected multilpy node.");
+           "Expected multiply node.");
     
 //  Test is_match
     auto match1 = graph::one<T> () + variable;
@@ -233,28 +233,28 @@ template<jit::float_scalar T> void test_add() {
            "Expected add_node in the third slot.");
     
 //  (a/(b*c) + d/(e*c)) -> (a/b + d/e)/c
-    auto muliply_divide_factor = var_a/(var_b*var_c) + var_d/(var_e*var_c);
-    auto muliply_divide_factor_cast = divide_cast(muliply_divide_factor);
-    assert(muliply_divide_factor_cast.get() && "Expected divide node.");
-    assert(muliply_divide_factor_cast->get_right()->is_match(var_c) &&
+    auto multiply_divide_factor = var_a/(var_b*var_c) + var_d/(var_e*var_c);
+    auto multiply_divide_factor_cast = divide_cast(multiply_divide_factor);
+    assert(multiply_divide_factor_cast.get() && "Expected divide node.");
+    assert(multiply_divide_factor_cast->get_right()->is_match(var_c) &&
            "Expected var_c to be factored out.");
 //  (a/(b*c) + d/(c*e)) -> (a/b + d/e)/c
-    auto muliply_divide_factor2 = var_a/(var_b*var_c) + var_d/(var_c*var_e);
-    auto muliply_divide_factor_cast2 = divide_cast(muliply_divide_factor2);
-    assert(muliply_divide_factor_cast2.get() && "Expected divide node.");
-    assert(muliply_divide_factor_cast2->get_right()->is_match(var_c) &&
+    auto multiply_divide_factor2 = var_a/(var_b*var_c) + var_d/(var_c*var_e);
+    auto multiply_divide_factor_cast2 = divide_cast(multiply_divide_factor2);
+    assert(multiply_divide_factor_cast2.get() && "Expected divide node.");
+    assert(multiply_divide_factor_cast2->get_right()->is_match(var_c) &&
            "Expected var_c to be factored out.");
 //  (a/(c*b) + d/(e*c)) -> (a/b + d/e)/c
-    auto muliply_divide_factor3 = var_a/(var_c*var_b) + var_d/(var_e*var_c);
-    auto muliply_divide_factor_cast3 = divide_cast(muliply_divide_factor3);
-    assert(muliply_divide_factor_cast3.get() && "Expected divide node.");
-    assert(muliply_divide_factor_cast3->get_right()->is_match(var_c) &&
+    auto multiply_divide_factor3 = var_a/(var_c*var_b) + var_d/(var_e*var_c);
+    auto multiply_divide_factor_cast3 = divide_cast(multiply_divide_factor3);
+    assert(multiply_divide_factor_cast3.get() && "Expected divide node.");
+    assert(multiply_divide_factor_cast3->get_right()->is_match(var_c) &&
            "Expected var_c to be factored out.");
 //  (a/(c*b) + d/(c*e)) -> (a/b + d/e)/c
-    auto muliply_divide_factor4 = var_a/(var_c*var_b) + var_d/(var_c*var_e);
-    auto muliply_divide_factor_cast4 = divide_cast(muliply_divide_factor4);
-    assert(muliply_divide_factor_cast4.get() && "Expected divide node.");
-    assert(muliply_divide_factor_cast4->get_right()->is_match(var_c) &&
+    auto multiply_divide_factor4 = var_a/(var_c*var_b) + var_d/(var_c*var_e);
+    auto multiply_divide_factor_cast4 = divide_cast(multiply_divide_factor4);
+    assert(multiply_divide_factor_cast4.get() && "Expected divide node.");
+    assert(multiply_divide_factor_cast4->get_right()->is_match(var_c) &&
            "Expected var_c to be factored out.");
 
 //  Test node properties.
@@ -475,7 +475,7 @@ template<jit::float_scalar T> void test_subtract() {
 //  A right side zero node should reduce to left side.
     auto one_minus_zero = one - zero;
     assert(one_minus_zero.get() == one.get() &&
-           "Expected to retrive the left side.");
+           "Expected to retrieve the left side.");
     assert(one_minus_zero->evaluate()[0] == static_cast<T> (1.0) &&
            "Expected a value of 1.");
 
@@ -487,12 +487,12 @@ template<jit::float_scalar T> void test_subtract() {
     assert(zero_minus_one->evaluate()[0] == static_cast<T> (-1.0) &&
            "Expected a value of -1.");
 
-//  Test variable quanities.
+//  Test variable quantities.
 //  Any right side zero nodes should reduce to the other operand.
     auto variable = graph::variable<T> (1, "");
     auto var_minus_zero = variable - zero;
     assert(var_minus_zero.get() == variable.get() &&
-           "Expected to retrive the left side.");
+           "Expected to retrieve the left side.");
 
 //  Any right side zero should reduce to a the a multiply node.
     auto zero_minus_var = zero - variable;
@@ -613,7 +613,7 @@ template<jit::float_scalar T> void test_subtract() {
 //  c1*a - c2*b -> c1*(a - c3*b)
     auto common_factor = 3.0*var_a - 2.0*var_b;
     assert(graph::multiply_cast(common_factor).get() &&
-           "Expected multilpy node.");
+           "Expected multiply node.");
 
 //  (c1 - c2*v) - c3*v -> c1 - c4*v (1 - 3v) - 2v = 1 - 5*v
     auto chained_subtract = (1.0 - 3.0*var_a) - 2.0*var_a;
@@ -788,28 +788,28 @@ template<jit::float_scalar T> void test_subtract() {
            "Expected a multiply node.");
 
 //  (a/(b*c) - d/(e*c)) -> (a/b + d/e)/c
-    auto muliply_divide_factor = var_a/(var_b*var_c) - var_d/(var_e*var_c);
-    auto muliply_divide_factor_cast = divide_cast(muliply_divide_factor);
-    assert(muliply_divide_factor_cast.get() && "Expected divide node.");
-    assert(muliply_divide_factor_cast->get_right()->is_match(var_c) &&
+    auto multiply_divide_factor = var_a/(var_b*var_c) - var_d/(var_e*var_c);
+    auto multiply_divide_factor_cast = divide_cast(multiply_divide_factor);
+    assert(multiply_divide_factor_cast.get() && "Expected divide node.");
+    assert(multiply_divide_factor_cast->get_right()->is_match(var_c) &&
            "Expected var_c to be factored out.");
 //  (a/(b*c) - d/(c*e)) -> (a/b - d/e)/c
-    auto muliply_divide_factor2 = var_a/(var_b*var_c) - var_d/(var_c*var_e);
-    auto muliply_divide_factor_cast2 = divide_cast(muliply_divide_factor2);
-    assert(muliply_divide_factor_cast2.get() && "Expected divide node.");
-    assert(muliply_divide_factor_cast2->get_right()->is_match(var_c) &&
+    auto multiply_divide_factor2 = var_a/(var_b*var_c) - var_d/(var_c*var_e);
+    auto multiply_divide_factor_cast2 = divide_cast(multiply_divide_factor2);
+    assert(multiply_divide_factor_cast2.get() && "Expected divide node.");
+    assert(multiply_divide_factor_cast2->get_right()->is_match(var_c) &&
            "Expected var_c to be factored out.");
 //  (a/(c*b) - d/(e*c)) -> (a/b - d/e)/c
-    auto muliply_divide_factor3 = var_a/(var_c*var_b) - var_d/(var_e*var_c);
-    auto muliply_divide_factor_cast3 = divide_cast(muliply_divide_factor3);
-    assert(muliply_divide_factor_cast3.get() && "Expected divide node.");
-    assert(muliply_divide_factor_cast3->get_right()->is_match(var_c) &&
+    auto multiply_divide_factor3 = var_a/(var_c*var_b) - var_d/(var_e*var_c);
+    auto multiply_divide_factor_cast3 = divide_cast(multiply_divide_factor3);
+    assert(multiply_divide_factor_cast3.get() && "Expected divide node.");
+    assert(multiply_divide_factor_cast3->get_right()->is_match(var_c) &&
            "Expected var_c to be factored out.");
 //  (a/(c*b) - d/(c*e)) -> (a/b - d/e)/c
-    auto muliply_divide_factor4 = var_a/(var_c*var_b) - var_d/(var_c*var_e);
-    auto muliply_divide_factor_cast4 = divide_cast(muliply_divide_factor4);
-    assert(muliply_divide_factor_cast4.get() && "Expected divide node.");
-    assert(muliply_divide_factor_cast4->get_right()->is_match(var_c) &&
+    auto multiply_divide_factor4 = var_a/(var_c*var_b) - var_d/(var_c*var_e);
+    auto multiply_divide_factor_cast4 = divide_cast(multiply_divide_factor4);
+    assert(multiply_divide_factor_cast4.get() && "Expected divide node.");
+    assert(multiply_divide_factor_cast4->get_right()->is_match(var_c) &&
            "Expected var_c to be factored out.");
 
 //  Test common denominators.
@@ -1016,24 +1016,24 @@ template<jit::float_scalar T> void test_multiply() {
     assert(three_times_two_result.at(0) == two_times_three_result.at(0) &&
            "Expected 3*2 == 2*3.");
 
-//  Test variable quanities.
+//  Test variable quantities.
 //  Any zero should reduce back to zero.
     auto variable = graph::variable<T> (1, "");
     assert((variable*zero).get() == zero.get() &&
-           "Expected to retrive the right side.");
+           "Expected to retrieve the right side.");
     assert((zero*variable).get() == zero.get() &&
-           "Expected to retrive the left side.");
+           "Expected to retrieve the left side.");
 //  Any one should reduce to the opposite side.
     assert((variable*one).get() == variable.get() &&
-           "Expected to retrive the left side.");
+           "Expected to retrieve the left side.");
     assert((one*variable).get() == variable.get() &&
-           "Expected to retrive the right side.");
+           "Expected to retrieve the right side.");
     assert((variable*zero)->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected value of zero.");
     assert((variable*zero)->evaluate()[0] == static_cast<T> (0.0) &&
            "Expected value of zero.");
 
-//  Varibale times a non 0 or 1 constant should reduce to a multiply node.
+//  Variable times a non 0 or 1 constant should reduce to a multiply node.
     auto two_times_var = 2.0*variable;
     assert(graph::multiply_cast(two_times_var).get() &&
            "Expected multiply node.");
@@ -1106,9 +1106,9 @@ template<jit::float_scalar T> void test_multiply() {
     auto x3_cast = graph::multiply_cast(x3);
     assert(x3_cast.get() && "Expected a multiply node.");
     assert(graph::constant_cast(x3_cast->get_left()).get() &&
-           "Expected a constant coefficent.");
+           "Expected a constant coefficient.");
     assert(graph::multiply_cast(x3_cast->get_right()).get() &&
-           "Expected a multipy node.");
+           "Expected a multiply node.");
 
 //  Test reduction of common constants x*c1*c2*y = c3*x*y.
     auto x4 = graph::variable<T> (1, "")*2.0;
@@ -1117,9 +1117,9 @@ template<jit::float_scalar T> void test_multiply() {
     auto x6_cast = graph::multiply_cast(x6);
     assert(x6_cast.get() && "Expected a multiply node.");
     assert(graph::constant_cast(x6_cast->get_left()).get() &&
-           "Expected a constant coefficent.");
+           "Expected a constant coefficient.");
     assert(graph::multiply_cast(x6_cast->get_right()).get() &&
-           "Expected multipy node.");
+           "Expected multiply node.");
 
 //  Test reduction of common constants c1*x*y*c2 = c3*x*y.
     auto x7 = 2.0*graph::variable<T> (1, "");
@@ -1128,9 +1128,9 @@ template<jit::float_scalar T> void test_multiply() {
     auto x9_cast = graph::multiply_cast(x9);
     assert(x9_cast.get() && "Expected a multiply node.");
     assert(graph::constant_cast(x9_cast->get_left()).get() &&
-           "Expected a constant coefficent.");
+           "Expected a constant coefficient.");
     assert(graph::multiply_cast(x9_cast->get_right()).get() &&
-           "Expected multipy node.");
+           "Expected multiply node.");
 
 //  Test reduction of common constants x*c1*y*c2 = c3*x*y.
     auto x10 = graph::variable<T> (1, "")*2.0;
@@ -1139,9 +1139,9 @@ template<jit::float_scalar T> void test_multiply() {
     auto x12_cast = graph::multiply_cast(x12);
     assert(x12_cast.get() && "Expected a multiply node.");
     assert(graph::constant_cast(x12_cast->get_left()).get() &&
-           "Expected a constant coefficent.");
+           "Expected a constant coefficient.");
     assert(graph::multiply_cast(x12_cast->get_right()).get() &&
-           "Expected a multipy node.");
+           "Expected a multiply node.");
 
 //  Test gathering of terms.
     auto v1 = graph::variable<T> (1, "v1");
@@ -1334,7 +1334,7 @@ template<jit::float_scalar T> void test_multiply() {
     auto pow_mul_cast = graph::pow_cast(pow_mul);
     assert(pow_mul_cast.get() && "Expected power node.");
     assert(add_cast(pow_mul_cast->get_right()) &&
-           "Expected add node in expoent.");
+           "Expected add node in exponent.");
 
 //  (c*v)*v -> c*v^2
     auto test_var_move = [](graph::shared_leaf<T> x) {
@@ -1895,7 +1895,7 @@ template<jit::float_scalar T> void test_multiply() {
     auto var_d = (3.0 + graph::variable<T> (1, ""));
     auto gather_power2 = (var_a*graph::pow(var_b, var_c))*graph::pow(var_d, var_c);
     auto gather_power2_cast = graph::multiply_cast(gather_power2);
-    assert(gather_power2_cast.get() && "Expected a mutliply node.");
+    assert(gather_power2_cast.get() && "Expected a multiply node.");
     assert(gather_power2_cast->get_left()->is_match(var_a) &&
            "Expected a.");
     assert(gather_power2_cast->get_right()->is_match(graph::pow(var_b*var_d,
@@ -1904,7 +1904,7 @@ template<jit::float_scalar T> void test_multiply() {
 // (a^c*b)*d^c -> b*(a*d)^c
     auto gather_power3 = (graph::pow(var_a, var_c)*var_b)*graph::pow(var_d, var_c);
     auto gather_power3_cast = graph::multiply_cast(gather_power3);
-    assert(gather_power3_cast.get() && "Expected a mutliply node.");
+    assert(gather_power3_cast.get() && "Expected a multiply node.");
     assert(gather_power3_cast->get_left()->is_match(var_b) &&
            "Expected b.");
     assert(gather_power3_cast->get_right()->is_match(graph::pow(var_a*var_d,
@@ -1913,7 +1913,7 @@ template<jit::float_scalar T> void test_multiply() {
 // a^c*(b*d^c) -> b*(a*d)^c
     auto gather_power4 = graph::pow(var_a, var_c)*(var_b*graph::pow(var_d, var_c));
     auto gather_power4_cast = graph::multiply_cast(gather_power4);
-    assert(gather_power4_cast.get() && "Expected a mutliply node.");
+    assert(gather_power4_cast.get() && "Expected a multiply node.");
     assert(gather_power4_cast->get_left()->is_match(var_b) &&
            "Expected b.");
     assert(gather_power4_cast->get_right()->is_match(graph::pow(var_a*var_d,
@@ -1922,7 +1922,7 @@ template<jit::float_scalar T> void test_multiply() {
 // a^c*(b^c*d) -> d*(a*b)^c
     auto gather_power5 = graph::pow(var_a, var_c)*(graph::pow(var_b, var_c)*var_d);
     auto gather_power5_cast = graph::multiply_cast(gather_power5);
-    assert(gather_power5_cast.get() && "Expected a mutliply node.");
+    assert(gather_power5_cast.get() && "Expected a multiply node.");
     assert(gather_power5_cast->get_left()->is_match(var_d) &&
            "Expected d.");
     assert(gather_power5_cast->get_right()->is_match(graph::pow(var_a*var_b,
@@ -1958,7 +1958,7 @@ template<jit::float_scalar T> void test_multiply() {
                                                    12.2),
                                         v1,
                                         12.0)) &&
-           "Exptected (((0.2*x + 3.1)*x + 12.2)*x + 12");
+           "Expected (((0.2*x + 3.1)*x + 12.2)*x + 12");
 
 //  c1*fma(fma(fma(c2,x,c3),x,c4),x,c5) -> fma(fma(fma(c6,x,c7),x,c8),x,c9)
     auto consume = 10.0*(graph::fma(graph::fma(graph::fma(0.2,v1,2.3),v1,3.0),v1,0.1));
@@ -2057,8 +2057,8 @@ template<jit::float_scalar T> void test_divide() {
 
     auto var_divided_var = variable/variable;
     auto var_divided_var_cast = graph::constant_cast(var_divided_var);
-    assert(var_divided_var_cast.get() && "Expeced constant node.");
-    assert(var_divided_var_cast->is(1) && "Expeced one.");
+    assert(var_divided_var_cast.get() && "Expected constant node.");
+    assert(var_divided_var_cast->is(1) && "Expected one.");
 
     auto variable_b = graph::variable<T> (1, 4, "");
     auto var_divided_varb = variable/variable_b;
@@ -2084,7 +2084,7 @@ template<jit::float_scalar T> void test_divide() {
 
     auto varvec_divided_two = varvec/2.0;
     assert(graph::multiply_cast(varvec_divided_two).get() &&
-           "Expect a mutliply node.");
+           "Expect a multiply node.");
     const backend::buffer<T> varvec_divided_two_result = varvec_divided_two->evaluate();
     assert(varvec_divided_two_result.size() == 2 && "Size mismatch in result.");
     assert(varvec_divided_two_result.at(0) == static_cast<T> (1.0) &&
@@ -3177,13 +3177,13 @@ template<jit::float_scalar T> void test_fma() {
 //  fma(a,b,fma(a,b,2)) -> 2*fma(a,b,1)
     auto chained_fma = fma(var_a, var_b, fma(var_a, var_b, two));
     auto chained_fma_cast = multiply_cast(chained_fma);
-    assert(chained_fma_cast.get() && "Expected muliply node.");
+    assert(chained_fma_cast.get() && "Expected multiply node.");
     assert(constant_cast(chained_fma_cast->get_left()) &&
            "Expected constant node.");
 //  fma(a,b,fma(b,a,c)) -> 2*fma(a,b,1)
     auto chained_fma2 = fma(var_a, var_b, fma(var_b, var_a, two));
     auto chained_fma_cast2 = multiply_cast(chained_fma2);
-    assert(chained_fma_cast2.get() && "Expected muliply node.");
+    assert(chained_fma_cast2.get() && "Expected multiply node.");
     assert(constant_cast(chained_fma_cast2->get_left()) &&
            "Expected constant node.");
 
@@ -3214,19 +3214,19 @@ template<jit::float_scalar T> void test_fma() {
 //  fma(a,b/c,b/d) -> b*(a/c + 1/d)
     auto divide_factor = graph::fma(var_a, var_b/var_c, var_b/var_d);
     assert(graph::multiply_cast(divide_factor).get() &&
-           "Expetced a multiply node.");
+           "Expected a multiply node.");
 //  fma(a,c/b,d/b) -> (a*c + d)/b
     auto divide_factor2 = graph::fma(var_a, var_c/var_b, var_d/var_b);
     assert(graph::divide_cast(divide_factor2).get() &&
-           "Expetced a divide node.");
+           "Expected a divide node.");
 //  fma(b/c,a,b/d) -> b*(a/c + 1/d)
     auto divide_factor3 = graph::fma(var_b/var_c, var_a, var_b/var_d);
     assert(graph::multiply_cast(divide_factor3).get() &&
-           "Expetced a multiply node.");
+           "Expected a multiply node.");
 //  fma(c/b,a,d/b) -> (a*c + d)/b
     auto divide_factor4 = graph::fma(var_c/var_b, var_a, var_d/var_b);
     assert(graph::divide_cast(divide_factor4).get() &&
-           "Expetced a divide node.");
+           "Expected a divide node.");
 
 //  Test node properties.
     assert(one_two_three->is_constant() && "Expected a constant.");
@@ -3633,69 +3633,69 @@ template<jit::float_scalar T> void test_fma() {
            "Expected a power node.");
 
 //  fma(2,(ab)^2,a^2b) -> a^2*b*fma(2, b, 1)
-    auto commom_power = graph::fma(2.0, graph::pow(var_a*var_b, 2.0), graph::pow(var_a, 2.0)*var_b);
-    auto commom_power_cast = graph::multiply_cast(commom_power);
-    assert(commom_power_cast.get() && "Expected a multiply node.");
-    assert(commom_power_cast->get_right()->is_match(var_b) &&
-           "Expeced b");
-    assert(commom_power_cast->get_left()->is_match(graph::pow(var_a, 2.0) *
+    auto common_power = graph::fma(2.0, graph::pow(var_a*var_b, 2.0), graph::pow(var_a, 2.0)*var_b);
+    auto common_power_cast = graph::multiply_cast(common_power);
+    assert(common_power_cast.get() && "Expected a multiply node.");
+    assert(common_power_cast->get_right()->is_match(var_b) &&
+           "Expected b");
+    assert(common_power_cast->get_left()->is_match(graph::pow(var_a, 2.0) *
                                                    graph::fma(2.0, var_b, 1.0)) &&
-           "Expeced a^2*fma(2, b, 1)");
+           "Expected a^2*fma(2, b, 1)");
 //  fma(2,(ba)^2,a^2b) -> a^2*b*fma(2, b, 1)
-    auto commom_power2 = graph::fma(2.0, graph::pow(var_b*var_a, 2.0), graph::pow(var_a, 2.0)*var_b);
-    auto commom_power2_cast = graph::multiply_cast(commom_power2);
-    assert(commom_power2_cast.get() && "Expected a multiply node.");
-    assert(commom_power2_cast->get_right()->is_match(var_b) &&
-           "Expced b");
-    assert(commom_power2_cast->get_left()->is_match(graph::pow(var_a, 2.0) *
+    auto common_power2 = graph::fma(2.0, graph::pow(var_b*var_a, 2.0), graph::pow(var_a, 2.0)*var_b);
+    auto common_power2_cast = graph::multiply_cast(common_power2);
+    assert(common_power2_cast.get() && "Expected a multiply node.");
+    assert(common_power2_cast->get_right()->is_match(var_b) &&
+           "Expected b");
+    assert(common_power2_cast->get_left()->is_match(graph::pow(var_a, 2.0) *
                                                     graph::fma(2.0, var_b, 1.0)) &&
-           "Expced a^2*fma(2, b, 1)");
+           "Expected a^2*fma(2, b, 1)");
 //  fma(2,(a*b)^2,fma(a^2,b,c)) -> fma(a^2*b,fma(2,b,1),c)
-    auto commom_power3 = graph::fma(2.0,
+    auto common_power3 = graph::fma(2.0,
                                     graph::pow(var_a*var_b, 2.0),
                                     graph::fma(graph::pow(var_a, 2.0),
                                                var_b,
                                                var_c));
-    auto commom_power3_cast = graph::fma_cast(commom_power3);
-    assert(commom_power3_cast.get() && "Expected a fma node.");
-    assert(commom_power3_cast->get_left()->is_match(graph::pow(var_a, 2.0)) &&
+    auto common_power3_cast = graph::fma_cast(common_power3);
+    assert(common_power3_cast.get() && "Expected a fma node.");
+    assert(common_power3_cast->get_left()->is_match(graph::pow(var_a, 2.0)) &&
            "Expected a^2");
-    assert(commom_power3_cast->get_middle()->is_match(var_b*graph::fma(2.0,
+    assert(common_power3_cast->get_middle()->is_match(var_b*graph::fma(2.0,
                                                                        var_b,
                                                                        1.0)) &&
            "Expected b*fma(2,b,1)");
-    assert(commom_power3_cast->get_right()->is_match(var_c) && "Expected c");
+    assert(common_power3_cast->get_right()->is_match(var_c) && "Expected c");
 //  fma(2,(a*b)^2,fma(a^2,b,c)) -> fma(a^2*b,fma(2,b,1),c)
-    auto commom_power4 = graph::fma(2.0,
+    auto common_power4 = graph::fma(2.0,
                                     graph::pow(var_b*var_a, 2.0),
                                     graph::fma(graph::pow(var_a, 2.0),
                                                var_b,
                                                var_c));
-    auto commom_power4_cast = graph::fma_cast(commom_power4);
-    assert(commom_power4_cast.get() && "Expected a fma node.");
-    assert(commom_power4_cast->get_left()->is_match(graph::pow(var_a, 2.0)) &&
+    auto common_power4_cast = graph::fma_cast(common_power4);
+    assert(common_power4_cast.get() && "Expected a fma node.");
+    assert(common_power4_cast->get_left()->is_match(graph::pow(var_a, 2.0)) &&
            "Expected a^2");
-    assert(commom_power4_cast->get_middle()->is_match(var_b*graph::fma(2.0,
+    assert(common_power4_cast->get_middle()->is_match(var_b*graph::fma(2.0,
                                                                        var_b,
                                                                        1.0)) &&
            "Expected b*fma(2,b,1)");
-    assert(commom_power4_cast->get_right()->is_match(var_c) && "Expected c");
+    assert(common_power4_cast->get_right()->is_match(var_c) && "Expected c");
 
 //  fma(2,a^2,a) -> a*fma(2,a,1)
     auto common_power5 = graph::fma(2.0,var_a*var_a,var_a);
-    auto commom_power5_cast = graph::multiply_cast(common_power5);
-    assert(commom_power5_cast.get() && "Expected a multiply node.");
-    assert(commom_power5_cast->get_left()->is_match(graph::fma(2.0,var_a,1.0)) &&
+    auto common_power5_cast = graph::multiply_cast(common_power5);
+    assert(common_power5_cast.get() && "Expected a multiply node.");
+    assert(common_power5_cast->get_left()->is_match(graph::fma(2.0,var_a,1.0)) &&
            "Expected fma(2,a,1).");
-    assert(commom_power5_cast->get_right()->is_match(var_a) &&
+    assert(common_power5_cast->get_right()->is_match(var_a) &&
            "Expected a.");
 //  fma(2,a,a^2) -> a*(2 + a)
     auto common_power6 = graph::fma(2.0,var_a,var_a*var_a);
-    auto commom_power6_cast = graph::multiply_cast(common_power6);
-    assert(commom_power6_cast.get() && "Expected a multiply node.");
-    assert(commom_power6_cast->get_left()->is_match(2.0 + var_a) &&
+    auto common_power6_cast = graph::multiply_cast(common_power6);
+    assert(common_power6_cast.get() && "Expected a multiply node.");
+    assert(common_power6_cast->get_left()->is_match(2.0 + var_a) &&
            "Expected (2 + a).");
-    assert(commom_power6_cast->get_right()->is_match(var_a) &&
+    assert(common_power6_cast->get_right()->is_match(var_a) &&
            "Expected a.");
 
 //  fma(2,(a*b)^2,fma(3,a^2*b,c)) -> fma(a^2*b,fma(2,b,3),c)

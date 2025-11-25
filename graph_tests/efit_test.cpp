@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 ///  @brief Class interface for gold data.
 ///
-///  @tparam T Base type of teh calculation.
+///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template <jit::float_scalar T>
 class gold_data {
@@ -99,28 +99,28 @@ public:
 ///
 ///  @param[in] test      Test value.
 ///  @param[in] expected  Expected result.
-///  @param[in] tolarance Error tolarance.
+///  @param[in] tolerance Error tolerance.
 ///  @param[in] name      Name of the test.
 //------------------------------------------------------------------------------
 template <jit::float_scalar T>
-void check_error(const T test, const T expected, const T tolarance,
+void check_error(const T test, const T expected, const T tolerance,
                  const char *name) {
     const T diff = test - expected;
     const T error = diff/(diff == 0 ? 1.0 : expected);
-    assert(error*error <= tolarance && name);
+    assert(error*error <= tolerance && name);
 }
 
 //------------------------------------------------------------------------------
 ///  @brief Check error.
 ///
 ///  @param[in] test      Test value.
-///  @param[in] tolarance Error tolarance.
+///  @param[in] tolerance Error tolerance.
 ///  @param[in] name      Name of the test.
 //------------------------------------------------------------------------------
 template <jit::float_scalar T>
-void check_error(const T test, const T tolarance,
+void check_error(const T test, const T tolerance,
                  const char *name) {
-    assert(test*test <= tolarance && name);
+    assert(test*test <= tolerance && name);
 }
 
 //------------------------------------------------------------------------------

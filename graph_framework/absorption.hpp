@@ -2,11 +2,11 @@
 ///  @file absorption.hpp
 ///  @brief Base class for an absorption model.
 ///
-///  Defines functions for computing power absorbtion.
+///  Defines functions for computing power absorption.
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-///  @page absorption_model Absoption Models
-///  @brief A discription of the models for power absorption.
+///  @page absorption_model Absorption Models
+///  @brief A description of the models for power absorption.
 ///  @tableofcontents
 ///
 ///  @section absorption_model_intro Introduction
@@ -17,7 +17,7 @@
 ///  component is.
 ///
 ///  <hr>
-///  @subsection absorption_model_hot Hot Plasma Disperison Function
+///  @subsection absorption_model_hot Hot Plasma Dispersion Function
 ///  To do this we now assume a hot plasma dispersion function.
 ///  @f{equation}{D\left(\vec{x},\vec{k},\omega\right)=i\sigma\Gamma_{0}+\Gamma_{1}+\vec{n}_{\perp}\cdot\vec{n}_{\perp}\frac{P\omega}{\omega_{ce}}\left(1+\zeta Z\left(\zeta\right)\right)\left(\Gamma_{2} + \Gamma_{5}F\right)\equiv 0 @f}
 ///  Where
@@ -44,8 +44,8 @@
 ///  <hr>
 ///  @section absorption_model_root Root Find
 ///  One way to solve for the imaginary component is to locate the root of the
-///  hot plasma dispersion function using the cold plasma solution as an intial
-///  quess. We start by redefining @f$\vec{k}=k_{amp}\hat{k}@f$ now we can solve
+///  hot plasma dispersion function using the cold plasma solution as an initial
+///  guess. We start by redefining @f$\vec{k}=k_{amp}\hat{k}@f$ now we can solve
 ///  for the complex value of @f$k_{amp}@f$ using a
 ///  @ref solver::newton "Newton method".
 ///
@@ -103,7 +103,7 @@ namespace absorption {
 //  Base class
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Base class for absoption models.
+///  @brief Base class for absorption models.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -117,7 +117,7 @@ namespace absorption {
         static constexpr bool safe_math = SAFE_MATH;
 
 //------------------------------------------------------------------------------
-///  @brief Compile the workitems.
+///  @brief Compile the work items.
 //------------------------------------------------------------------------------
         virtual void compile()=0;
 
@@ -165,8 +165,8 @@ namespace absorption {
 ///  t variable.
         graph::shared_leaf<T, SAFE_MATH> t;
 
-///  Residule.
-        graph::shared_leaf<T, SAFE_MATH> residule;
+///  Residual.
+        graph::shared_leaf<T, SAFE_MATH> residual;
 
 ///  Workflow manager.
         workflow::manager<T, SAFE_MATH> work;
@@ -185,15 +185,15 @@ namespace absorption {
 //------------------------------------------------------------------------------
 ///  @brief Constructor for root finding.
 ///
-///  @param[in] kamp     Inital kamp.
-///  @param[in] w        Inital w.
-///  @param[in] kx       Inital kx.
-///  @param[in] ky       Inital ky.
-///  @param[in] kz       Inital kz.
-///  @param[in] x        Inital x.
-///  @param[in] y        Inital y.
-///  @param[in] z        Inital z.
-///  @param[in] t        Inital t.
+///  @param[in] kamp     Initial kamp.
+///  @param[in] w        Initial w.
+///  @param[in] kx       Initial kx.
+///  @param[in] ky       Initial ky.
+///  @param[in] kz       Initial kz.
+///  @param[in] x        Initial x.
+///  @param[in] y        Initial y.
+///  @param[in] z        Initial z.
+///  @param[in] t        Initial t.
 ///  @param[in] eq       The plasma equilibrium.
 ///  @param[in] filename Result filename, empty names will be blank.
 ///  @param[in] index    Concurrent index.
@@ -278,7 +278,7 @@ namespace absorption {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Compile the workitems.
+///  @brief Compile the work items.
 //------------------------------------------------------------------------------
         void compile() {
             work.compile();
@@ -372,15 +372,15 @@ namespace absorption {
 //------------------------------------------------------------------------------
 ///  @brief Constructor for weak damping.
 ///
-///  @param[in] kamp     Inital kamp.
-///  @param[in] w        Inital w.
-///  @param[in] kx       Inital kx.
-///  @param[in] ky       Inital ky.
-///  @param[in] kz       Inital kz.
-///  @param[in] x        Inital x.
-///  @param[in] y        Inital y.
-///  @param[in] z        Inital z.
-///  @param[in] t        Inital t.
+///  @param[in] kamp     Initial kamp.
+///  @param[in] w        Initial w.
+///  @param[in] kx       Initial kx.
+///  @param[in] ky       Initial ky.
+///  @param[in] kz       Initial kz.
+///  @param[in] x        Initial x.
+///  @param[in] y        Initial y.
+///  @param[in] z        Initial z.
+///  @param[in] t        Initial t.
 ///  @param[in] eq       The plasma equilibrium.
 ///  @param[in] filename Result filename, empty names will be blank.
 ///  @param[in] index    Concurrent index.
@@ -445,7 +445,7 @@ namespace absorption {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Compile the workitems.
+///  @brief Compile the work items.
 //------------------------------------------------------------------------------
         void compile() {
             work.compile();

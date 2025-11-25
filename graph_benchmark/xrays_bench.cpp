@@ -14,7 +14,7 @@
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam NUM_TIMES Total number of times steps.
-///  @tparam SUB_STEPS Number of substeps.
+///  @tparam SUB_STEPS Number of sub-steps.
 ///  @tparam NUM_RAYS  Number of rays.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, size_t NUM_TIMES, size_t SUB_STEPS, size_t NUM_RAYS>
@@ -61,7 +61,7 @@ void bench_runner() {
 
             t->set(static_cast<T> (0.0));
 
-//  Inital conditions.
+//  Initial conditions.
             omega->set(static_cast<T> (500.0));
             x->set(static_cast<T> (2.5));
             y->set(static_cast<T> (0.0));

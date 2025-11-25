@@ -1,52 +1,52 @@
 //------------------------------------------------------------------------------
 ///  @file equilibrium.hpp
-///  @brief Class signature to impliment plasma equilibrium.
+///  @brief Class signature to implement plasma equilibrium.
 ///
 ///  Defined the interfaces to access plasma equilibrium.
 //------------------------------------------------------------------------------
-///  @page equilibrum_models Equilibrium Models
+///  @page equilibrium_models Equilibrium Models
 ///  @brief Documentation for formatting equilibrium files.
 ///  @tableofcontents
 ///
-///  @section equilibrum_models_intro Introduction
+///  @section equilibrium_models_intro Introduction
 ///  This page documents the types and formatting of the equilibrium models.
 ///  xrays currently supports two equilibrium models.
-///  * EFIT Are 2D axisymetric equilibria relevant to tokamak devices.
+///  * EFIT Are 2D axisymmetric equilibria relevant to tokamak devices.
 ///  * VMEC Are 3D nested flux surface equilibria relevant for stellarator devices.
 ///
 ///  This documentation assumes the user has some familiarity with EFIT or VMEC
-///  and focuses instead how quanties from these are formatted.
+///  and focuses instead how quantities from these are formatted.
 ///
-///  @section equilibrum_splines Spline Formatting
+///  @section equilibrium_splines Spline Formatting
 ///  The equilibrium models used in this section make use of Cubic and Bicubic
 ///  splines.
 ///
 ///  <hr>
-///  @subsection equilibrum_splines_1D Cubic Splines
-///  Cubic splines are 1D interpolation functions consisting of 4 coeffient
+///  @subsection equilibrium_splines_1D Cubic Splines
+///  Cubic splines are 1D interpolation functions consisting of 4 coefficient
 ///  arrays. They take the form of
 ///  @f{equation}{y\left(x\right)=C_{0} + C_{1}x + C_{2}x^2 + C_{3}x^2@f}
 ///  where @f$x@f$ is a normalized radial index. Cubic splines coefficients can
 ///  be calculated using
 ///  <a href="https://mathworld.wolfram.com/CubicSpline.html">Linear Solvers</a>
 ///  However, to avoid needing account for index offsets, index offsets are pre
-///  computed into the spline coefficents.
+///  computed into the spline coefficients.
 ///  @f{equation}{C'^{i}_{0}=C^{i}_{0} - C^{i}_{1}i + C^{i}_{2}i^2 - C^{i}_{3}i^3@f}
 ///  @f{equation}{C'^{i}_{1}=C^{i}_{1} -2C^{i}_{2}i + 3C^{i}_{3}i^2@f}
 ///  @f{equation}{C'^{i}_{2}=C^{i}_{2} - 3C^{i}_{3}i@f}
 ///  @f{equation}{C'^{i}_{3}=C^{i}_{3}@f}
-///  Where @f$i@f$ is the index of the coeffient array. This allows to normalize
-///  the spline argument @f$x@f$ so that it can both index the array and
-///  evaluate the spline.
+///  Where @f$i@f$ is the index of the coefficient array. This allows to
+///  normalize the spline argument @f$x@f$ so that it can both index the array
+///  and evaluate the spline.
 ///  @f{equation}{x = \frac{x_{real} - x_{min}}{dx}@f}
 ///  Rounding down the value of @f$x@f$ gives the correct coefficient index.
 ///
 ///  <hr>
-///  @subsection equilibrum_splines_2D Bicubic Splines
-///  Bicubic Splines are computed in a simular way instead they consist of a
-///  total of 16 coeffients. These represent 4 spline functions in one
-///  dimension which interpolate 4 coeffient values for the other dimension.
-///  Like the 1D splines, 2D spline coeffients are normalized so the spline
+///  @subsection equilibrium_splines_2D Bicubic Splines
+///  Bicubic Splines are computed in a similar way instead they consist of a
+///  total of 16 coefficients. These represent 4 spline functions in one
+///  dimension which interpolate 4 coefficient values for the other dimension.
+///  Like the 1D splines, 2D spline coefficients are normalized so the spline
 ///  arguments can be used as normalized indices.
 ///  @f{equation}{C'^{ij}_{00}=C^{ij}_{00}-C^{ij}_{01}j+C^{ij}_{02}j^{2}-C^{ij}_{03}j^{3}-C^{ij}_{10}i+C^{ij}_{11}ij-C^{ij}_{12}ij^{2}+C^{ij}_{13}ij^{3}+C^{ij}_{20}i^{2}-C^{ij}_{21}i^{2}j+C^{ij}_{22}i^{2}j^{2}-C^{ij}_{23}i^{2}j^{3}-C^{ij}_{30}i^{3}+C^{ij}_{31}i^{3}j-C^{ij}_{32}i^{3}j^{2}+C^{ij}_{33}i^{3}j^{3}j@f}
 ///  @f{equation}{C'^{ij}_{01}=C^{ij}_{01}-2C^{ij}_{02}j+3C^{ij}_{03}j^{2}-C^{ij}_{11}i+2C^{ij}_{12}ij-3C^{ij}_{13}ij^{2}+C^{ij}_{21}i^{2}-2C^{ij}_{22}i^{2}j+3C^{ij}_{23}i^{2}j^{2}-C^{ij}_{31}i^{3}+2C^{ij}_{32}i^{3}j-3C^{ij}_{33}i^{3}j^{2}@f}
@@ -71,95 +71,95 @@
 ///  @f{equation}{y = \frac{y_{real} - y_{min}}{dy}@f}
 ///
 ///  <hr>
-///  @section equilibrum_efit EFIT
+///  @section equilibrium_efit EFIT
 ///  @image{} html Efit.png "Cross section of poloidal flux surfaces."
-///  EFIT is an equilibium that comes from a solution of the
+///  EFIT is an equilibrium that comes from a solution of the
 ///  <a href="https://en.wikipedia.org/wiki/Grad–Shafranov_equation">Grad–Shafranov equation</a>.
 ///  The solution gives us a map of the poloidal flux @f$\psi@f$ on 2D grid and
-///  a 1D flux function @f$f_{pol}@f$. 1D profiles of electrion density
+///  a 1D flux function @f$f_{pol}@f$. 1D profiles of electron density
 ///  @f$n_{e}\left(\psi\right)@f$, electron temperature
 ///  @f$t_{e}\left(\psi\right)@f$, and pressure @f$p\left(\psi\right)@f$ are
 ///  mapped as functions of the normalized flux.
 ///
-///  @subsection equilibrum_efit_format EFIT file format
+///  @subsection equilibrium_efit_format EFIT file format
 ///  Quantities are loaded into the ray tracer via a netcdf file. EFIT NetCDF
-///  files must contain the following quantities. Spline quanities have a common
-///  format of <i>name</i>_c<i>i</i> or <i>name</i>_c<i>ij</i>.
+///  files must contain the following quantities. Spline quantities have a
+///  common format of <i>name</i>_c<i>i</i> or <i>name</i>_c<i>ij</i>.
 ///  <table>
-///  <caption id="equilibrum_efit_format_data">Efit netcdf file quantities</caption>
+///  <caption id="equilibrium_efit_format_data">Efit netcdf file quantities</caption>
 ///  <tr><th colspan="3">Dimensions
 ///  <tr><th colspan="2">Name                                       <th>Discription
 ///  <tr><td colspan="2"><tt>numr</tt>                              <td>Size of radial grid.
 ///  <tr><td colspan="2"><tt>numz</tt>                              <td>Size of vertical grid.
 ///  <tr><td colspan="2"><tt>numpsi</tt>                            <td>Size of arrays for @f$\psi@f$ mapped quantities.
-///  <tr><th colspan="3">Scalar Qantities
+///  <tr><th colspan="3">Scalar Quantities
 ///  <tr><td colspan="2"><tt>dpsi</tt>                              <td>Step size of the @f$\psi@f$ grid.
 ///  <tr><td colspan="2"><tt>dr</tt>                                <td>Step size of the radial grid.
-///  <tr><td colspan="2"><tt>dz</tt>                                <td>Step size of the vertial grid.
+///  <tr><td colspan="2"><tt>dz</tt>                                <td>Step size of the vertical grid.
 ///  <tr><td colspan="2"><tt>ne_scale</tt>                          <td>Scale of the @f$n_{e}@f$ profile.
 ///  <tr><td colspan="2"><tt>pres_scale</tt>                        <td>Scale of the pressure profile.
 ///  <tr><td colspan="2"><tt>psibry</tt>                            <td>Value of @f$\psi@f$ at the boundary.
 ///  <tr><td colspan="2"><tt>psimin</tt>                            <td>Minimum @f$\psi@f$ value.
 ///  <tr><td colspan="2"><tt>rmin</tt>                              <td>Minimum radial value.
 ///  <tr><td colspan="2"><tt>te_scale</tt>                          <td>Scale of the electron temperature profile.
-///  <tr><td colspan="2"><tt>zmin</tt>                              <td>Minimum vertial value.
-///  <tr><th colspan="3">1D Qantities
-///  <tr><th>Name<th>Size                                           <th>Discription
-///  <tr><td><tt>fpol_c<i>i</i></tt>        <td><tt>numpsi</tt>     <td>Flux function profile coefficents
-///  <tr><td><tt>ne_c<i>i</i></tt>          <td><tt>numpsi</tt>     <td>@f$n_{e}@f$ profile coefficents.
-///  <tr><td><tt>pressure_c<i>i</i></tt>    <td><tt>numpsi</tt>     <td>Pressure profile coefficents.
-///  <tr><td><tt>te_c<i>i</i></tt>          <td><tt>numpsi</tt>     <td>@f$t_{e}@f$ profile coefficents.
-///  <tr><th colspan="3">2D Qantities
-///  <tr><th>Name<th>Size                                           <th>Discription
-///  <tr><td><tt>psi_c<i>ij</i></tt>        <td><tt>(numr,numz)</tt><td>@f$\psi\left(r,z\right)@f$ coefficents.
+///  <tr><td colspan="2"><tt>zmin</tt>                              <td>Minimum vertical value.
+///  <tr><th colspan="3">1D Quantities
+///  <tr><th>Name<th>Size                                           <th>Description
+///  <tr><td><tt>fpol_c<i>i</i></tt>        <td><tt>numpsi</tt>     <td>Flux function profile coefficients
+///  <tr><td><tt>ne_c<i>i</i></tt>          <td><tt>numpsi</tt>     <td>@f$n_{e}@f$ profile coefficients.
+///  <tr><td><tt>pressure_c<i>i</i></tt>    <td><tt>numpsi</tt>     <td>Pressure profile coefficients.
+///  <tr><td><tt>te_c<i>i</i></tt>          <td><tt>numpsi</tt>     <td>@f$t_{e}@f$ profile coefficients.
+///  <tr><th colspan="3">2D Quantities
+///  <tr><th>Name<th>Size                                           <th>Description
+///  <tr><td><tt>psi_c<i>ij</i></tt>        <td><tt>(numr,numz)</tt><td>@f$\psi\left(r,z\right)@f$ coefficients.
 ///  </table>
 ///
 ///  <hr>
-///  @section equilibrum_vmec VMEC
+///  @section equilibrium_vmec VMEC
 ///  @image{} html vmec.png "Cross section of 3D flux surfaces."
-///  VMEC is an equilibium that comes from
+///  VMEC is an equilibrium that comes from
 ///  <a href="https://doi.org/10.1063/1.864116">minimizing mhd energy</a>.
-///  The solution gives us set of Fourier coefficents on a discrete radial grid.
-///  1D profiles of electrion density
+///  The solution gives us set of Fourier coefficients on a discrete radial
+///  grid. 1D profiles of electron density
 ///  @f$n_{e}\left(\psi\right)@f$, electron temperature
 ///  @f$t_{e}\left(\psi\right)@f$, and pressure @f$p\left(\psi\right)@f$ are
 ///  mapped as functions of the normalized flux.
 ///
-///  @subsection equilibrum_vmec_format VMEC file format
+///  @subsection equilibrium_vmec_format VMEC file format
 ///  Quantities are loaded into the ray tracer via a netcdf file. VMEC NetCDF
-///  files must contain the following quantities. Spline quanities have a common
-///  format of <i>name</i>_c<i>i</i>. All radial quantities are splined accross
-///  the magnetic axis to the opposite end. That is quantities extend from
-///  @f$-s\rightarrow s @f$. Splines of fourier coeffients are one dimensional
-///  splines stored in a 2D array. Radial quantities are stored as a full or
-///  half grid value.
+///  files must contain the following quantities. Spline quantities have a
+///  common format of <i>name</i>_c<i>i</i>. All radial quantities are splined
+///  accross the magnetic axis to the opposite end. That is quantities extend
+///  from @f$-s\rightarrow s @f$. Splines of fourier coeffients are one
+///  dimensional splines stored in a 2D array. Radial quantities are stored as a
+///  full or half grid value.
 ///  <table>
-///  <caption id="equilibrum_vmec_format_data">VMEC netcdf file quantities</caption>
+///  <caption id="equilibrium_vmec_format_data">VMEC netcdf file quantities</caption>
 ///  <tr><th colspan="3">Dimensions
-///  <tr><th colspan="2">Name                                    <th>Discription
+///  <tr><th colspan="2">Name                                    <th>Description
 ///  <tr><td colspan="2"><tt>numsf</tt>                          <td>Size of full radial grid.
 ///  <tr><td colspan="2"><tt>numsh</tt>                          <td>Size of half radial grid.
 ///  <tr><td colspan="2"><tt>nummn</tt>                          <td>Number of Fourier modes.
-///  <tr><th colspan="3">Scalar Qantities
+///  <tr><th colspan="3">Scalar Quantities
 ///  <tr><td colspan="2"><tt>dphi</tt>                           <td>Step size of toroidal flux.
 ///  <tr><td colspan="2"><tt>ds</tt>                             <td>Step size of normalized toroidal flux.
 ///  <tr><td colspan="2"><tt>signj</tt>                          <td>Sign of the Jacobian.
 ///  <tr><td colspan="2"><tt>sminf</tt>                          <td>Minimum @f$s @f$ on the full grid.
 ///  <tr><td colspan="2"><tt>sminh</tt>                          <td>Minimum @f$s @f$ on the half grid.
-///  <tr><th colspan="3">1D Qantities
-///  <tr><th>Name                      <th>Size                  <th>Discription
+///  <tr><th colspan="3">1D Quantities
+///  <tr><th>Name                      <th>Size                  <th>Description
 ///  <tr><td><tt>chi_c<i>i</i></tt>    <td><tt>numsf</tt>        <td>Poloidal flux profile.
 ///  <tr><td><tt>xm</tt>               <td><tt>nummn</tt>        <td>Poloidal modes.
 ///  <tr><td><tt>xn</tt>               <td><tt>nummn</tt>        <td>Toroidal modes.
-///  <tr><th colspan="3">2D Qantities
-///  <tr><th>Name                      <th>Size                  <th>Discription
-///  <tr><td><tt>lmns_c<i>i</i></tt>   <td><tt>(numsh,nummn)</tt><td>@f$\lambda @f$ fourier coefficents.
-///  <tr><td><tt>rmnc_c<i>i</i></tt>   <td><tt>(numsf,nummn)</tt><td>@f$r @f$ fourier coefficents.
-///  <tr><td><tt>zmns_c<i>i</i></tt>   <td><tt>(numsf,nummn)</tt><td>@f$z @f$ fourier coefficents.
+///  <tr><th colspan="3">2D Quantities
+///  <tr><th>Name                      <th>Size                  <th>Description
+///  <tr><td><tt>lmns_c<i>i</i></tt>   <td><tt>(numsh,nummn)</tt><td>@f$\lambda @f$ fourier coefficients.
+///  <tr><td><tt>rmnc_c<i>i</i></tt>   <td><tt>(numsf,nummn)</tt><td>@f$r @f$ fourier coefficients.
+///  <tr><td><tt>zmns_c<i>i</i></tt>   <td><tt>(numsf,nummn)</tt><td>@f$z @f$ fourier coefficients.
 ///  </table>
 ///
 ///  <hr>
-///  @section equilibrum_devel Developing new equilibrium models
+///  @section equilibrium_devel Developing new equilibrium models
 ///  This section is intended for code developers and outlines how to create new
 ///  equilibrium models. All equilibrium model use the same
 ///  @ref equilibrium::generic interface. New equilibrium models can be created
@@ -173,7 +173,7 @@
 ///  @endcode
 ///
 ///  When a new equilibrium is
-///  subclassed from @ref equilibrium::generic implimentations must be provided
+///  subclassed from @ref equilibrium::generic implementations must be provided
 ///  for the following pure virtual methods.
 ///  * @ref equilibrium::generic::get_characteristic_field
 ///  * @ref equilibrium::generic::get_electron_density
@@ -190,10 +190,10 @@
 ///  arguments provide expressions for the input position of the ray. The
 ///  methods return are expressions for the quantity at hand.
 ///
-///  @subsection equilibrum_devel_coordinate Noncartesian Coordinates
+///  @subsection equilibrium_devel_coordinate Non-cartesian Coordinates
 ///  While these methods take an @f$x,y,z @f$ as the argument names, there is
 ///  no reason these need to be assumed to be cartesian coordinates. For
-///  instance the @ref equilibrum_vmec treats @f$x,y,z\rightarrow s,u,v @f$ as
+///  instance the @ref equilibrium_vmec treats @f$x,y,z\rightarrow s,u,v @f$ as
 ///  flux coordinates. In flux coordinate the coordinate system is no longer
 ///  normalized nor orthogonal. So that other parts of the code can treat
 ///  @f$\vec{k}@f$ correctly there are methods to return the covariant basis
@@ -222,7 +222,7 @@
 
 ///  Name space for equilibrium models.
 namespace equilibrium {
-///  Lock to syncronize netcdf accross threads.
+///  Lock to synchronize netcdf across threads.
     static std::mutex sync;
 
 //******************************************************************************
@@ -244,7 +244,7 @@ namespace equilibrium {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a generic equilibrum.
+///  @brief Construct a generic equilibrium.
 ///
 ///  @param[in] masses  Vector of ion masses.
 ///  @param[in] charges Vector of ion charges.
@@ -373,7 +373,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the x1 direction.
 ///
-///  @param[in] x1 X1 posiiton.
+///  @param[in] x1 X1 position.
 ///  @param[in] x2 X2 position.
 ///  @param[in] x3 X3 position.
 ///  @returns The contravaraiant basis vector in x1.
@@ -390,7 +390,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the x2 direction.
 ///
-///  @param[in] x1 X1 posiiton.
+///  @param[in] x1 X1 position.
 ///  @param[in] x2 X2 position.
 ///  @param[in] x3 X3 position.
 ///  @returns The contravaraiant basis vector in x2.
@@ -407,7 +407,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the x3 direction.
 ///
-///  @param[in] x1 X1 posiiton.
+///  @param[in] x1 X1 position.
 ///  @param[in] x2 X2 position.
 ///  @param[in] x3 X3 position.
 ///  @returns The contravaraiant basis vector in x3.
@@ -424,7 +424,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the x position.
 ///
-///  @param[in] x1 X1 posiiton.
+///  @param[in] x1 X1 position.
 ///  @param[in] x2 X2 position.
 ///  @param[in] x3 X3 position.
 ///  @returns The x position.
@@ -439,7 +439,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the y position.
 ///
-///  @param[in] x1 X1 posiiton.
+///  @param[in] x1 X1 position.
 ///  @param[in] x2 X2 position.
 ///  @param[in] x3 X3 position.
 ///  @returns The y position.
@@ -454,7 +454,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the z position.
 ///
-///  @param[in] x1 X1 posiiton.
+///  @param[in] x1 X1 position.
 ///  @param[in] x2 X2 position.
 ///  @param[in] x3 X3 position.
 ///  @returns The z position.
@@ -613,7 +613,7 @@ namespace equilibrium {
     class slab : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a guassian density with uniform magnetic field.
+///  @brief Construct a gaussian density with uniform magnetic field.
 //------------------------------------------------------------------------------
         slab() :
         generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
@@ -737,7 +737,7 @@ namespace equilibrium {
     class slab_density : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a guassian density with uniform magnetic field.
+///  @brief Construct a gaussian density with uniform magnetic field.
 //------------------------------------------------------------------------------
         slab_density() :
         generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
@@ -866,7 +866,7 @@ namespace equilibrium {
     class slab_field : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a guassian density with uniform magnetic field.
+///  @brief Construct a gaussian density with uniform magnetic field.
 //------------------------------------------------------------------------------
         slab_field() :
         generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
@@ -981,21 +981,21 @@ namespace equilibrium {
         return std::make_shared<slab_field<T, SAFE_MATH>> ();
     }
 //******************************************************************************
-//  Guassian density with a uniform magnetic field.
+//  Gaussian density with a uniform magnetic field.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Guassian density with uniform magnetic field equilibrium.
+///  @brief Gaussian density with uniform magnetic field equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    class guassian_density : public generic<T, SAFE_MATH> {
+    class gaussian_density : public generic<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a guassian density with uniform magnetic field.
+///  @brief Construct a gaussian density with uniform magnetic field.
 //------------------------------------------------------------------------------
-        guassian_density() :
+        gaussian_density() :
         generic<T, SAFE_MATH> ({3.34449469E-27}, {1}) {}
 
 //------------------------------------------------------------------------------
@@ -1095,16 +1095,16 @@ namespace equilibrium {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Convenience function to build a guassian density equilibrium.
+///  @brief Convenience function to build a gaussian density equilibrium.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @returns A constructed guassian density equilibrium.
+///  @returns A constructed gaussian density equilibrium.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    shared<T, SAFE_MATH> make_guassian_density() {
-        return std::make_shared<guassian_density<T, SAFE_MATH>> ();
+    shared<T, SAFE_MATH> make_gaussian_density() {
+        return std::make_shared<gaussian_density<T, SAFE_MATH>> ();
     }
 
 //------------------------------------------------------------------------------
@@ -1113,7 +1113,7 @@ namespace equilibrium {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] c      Array of spline coeffiecents.
+///  @param[in] c      Array of spline coefficients.
 ///  @param[in] x      Spline argument.
 ///  @param[in] scale  Scale factor for argument.
 ///  @param[in] offset Offset value for argument.
@@ -1395,12 +1395,12 @@ namespace equilibrium {
 ///  @param[in] te_c1      Te c1 spline coefficient.
 ///  @param[in] te_c2      Te c2 spline coefficient.
 ///  @param[in] te_c3      Te c3 spline coefficient.
-///  @param[in] te_scale   Temperatire scale.
+///  @param[in] te_scale   Temperature scale.
 ///  @param[in] ne_c0      Ne c0 spline coefficient.
 ///  @param[in] ne_c1      Ne c1 spline coefficient.
 ///  @param[in] ne_c2      Ne c2 spline coefficient.
 ///  @param[in] ne_c3      Ne c3 spline coefficient.
-///  @param[in] ne_scale   Denisty scale.
+///  @param[in] ne_scale   Density scale.
 ///  @param[in] pres_c0    Pressure c0 spline coefficient.
 ///  @param[in] pres_c1    Pressure c1 spline coefficient.
 ///  @param[in] pres_c2    Pressure c2 spline coefficient.
@@ -1953,7 +1953,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the s direction.
 ///
-///  @param[in] r Radial posirtion.
+///  @param[in] r Radial position.
 ///  @param[in] z Vertical position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
@@ -1976,7 +1976,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the u direction.
 ///
-///  @param[in] r Radial posirtion.
+///  @param[in] r Radial position.
 ///  @param[in] z Vertical position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
@@ -1999,7 +1999,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the covariant basis vectors in the u direction.
 ///
-///  @param[in] r Radial posirtion.
+///  @param[in] r Radial position.
 ///  @param[in] z Vertical position.
 ///  @returns The covariant basis vectors.
 //------------------------------------------------------------------------------
@@ -2146,7 +2146,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the profile function.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @returns The profile function.
 //------------------------------------------------------------------------------
         graph::shared_leaf<T, SAFE_MATH>
@@ -2161,7 +2161,7 @@ namespace equilibrium {
 ///  @param[in] sminh   Minimum s on the half grid.
 ///  @param[in] sminf   Minimum s on the full grid.
 ///  @param[in] ds      Change in s grid.
-///  @param[in] dphi    Change in torodial flux.
+///  @param[in] dphi    Change in toroidal flux.
 ///  @param[in] signj   Sign of the jacobian.
 ///  @param[in] chi_c0  Poloidal flux c0.
 ///  @param[in] chi_c1  Poloidal flux c1.
@@ -2221,7 +2221,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the S direction.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The contravaraiant basis vector in s.
@@ -2237,7 +2237,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the U direction.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The contravaraiant basis vector in u.
@@ -2253,7 +2253,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the contravariant basis vector in the V direction.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The contravaraiant basis vector in v.
@@ -2269,7 +2269,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron density.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The electron density expression.
@@ -2286,7 +2286,7 @@ namespace equilibrium {
 ///  @brief Get the ion density.
 ///
 ///  @param[in] index The species index.
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The ion density expression.
@@ -2302,7 +2302,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the electron temperature.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The electron temperature expression.
@@ -2319,7 +2319,7 @@ namespace equilibrium {
 ///  @brief Get the ion temperature.
 ///
 ///  @param[in] index The species index.
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The ion temperature expression.
@@ -2335,7 +2335,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the magnetic field.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns Magnetic field expression.
@@ -2368,7 +2368,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the x position.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The x position.
@@ -2384,7 +2384,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the y position.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The y position.
@@ -2400,7 +2400,7 @@ namespace equilibrium {
 //------------------------------------------------------------------------------
 ///  @brief Get the z position.
 ///
-///  @param[in] s S posiiton.
+///  @param[in] s S position.
 ///  @param[in] u U position.
 ///  @param[in] v V position.
 ///  @returns The z position.

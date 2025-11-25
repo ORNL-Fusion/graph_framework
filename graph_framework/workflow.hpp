@@ -13,7 +13,7 @@
 ///  Name space for workflows.
 namespace workflow {
 //------------------------------------------------------------------------------
-///  @brief Class representing a workitem.
+///  @brief Class representing a work item.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -42,8 +42,8 @@ namespace workflow {
 ///  @param[in]     out     Output nodes.
 ///  @param[in]     maps    Setter maps.
 ///  @param[in]     state   Random state node.
-///  @param[in]     name    Name of the workitem.
-///  @param[in]     size    Size of the workitem.
+///  @param[in]     name    Name of the work item.
+///  @param[in]     size    Size of the work item.
 ///  @param[in,out] context Jit context.
 //------------------------------------------------------------------------------
         work_item(graph::input_nodes<T, SAFE_MATH> in,
@@ -68,7 +68,7 @@ namespace workflow {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Run the workitem.
+///  @brief Run the work item.
 //------------------------------------------------------------------------------
         virtual void run() {
             kernel();
@@ -76,7 +76,7 @@ namespace workflow {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Class representing a convergence workitem.
+///  @brief Class representing a convergence work item.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -86,8 +86,8 @@ namespace workflow {
     private:
 ///  Kernel function.
         std::function<T(void)> max_kernel;
-///  Convergence tolarance.
-        const T tolarance;
+///  Convergence tolerance.
+        const T tolerance;
 ///  Total number of iterations.
         const size_t max_iterations;
 
@@ -99,10 +99,10 @@ namespace workflow {
 ///  @param[in]     outputs  Output nodes.
 ///  @param[in]     maps     Setter maps.
 ///  @param[in]     state    Random state node.
-///  @param[in]     name     Name of the workitem.
-///  @param[in]     size     Size of the workitem.
+///  @param[in]     name     Name of the work item.
+///  @param[in]     size     Size of the work item.
 ///  @param[in,out] context  Jit context.
-///  @param[in]     tol      Tolarance to solve the dispersion function to.
+///  @param[in]     tol      Tolerance to solve the dispersion function to.
 ///  @param[in]     max_iter Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
         converge_item(graph::input_nodes<T, SAFE_MATH> inputs,
@@ -114,7 +114,7 @@ namespace workflow {
                       const T tol=1.0E-30,
                       const size_t max_iter=1000) :
         work_item<T, SAFE_MATH> (inputs, outputs, maps, state, name, size, context),
-        tolarance(tol), max_iterations(max_iter) {
+        tolerance(tol), max_iterations(max_iter) {
             context.add_max_reduction(size);
         }
 
@@ -134,28 +134,28 @@ namespace workflow {
 //------------------------------------------------------------------------------
         virtual void run() {
             size_t iterations = 0;
-            T max_residule = max_kernel();
+            T max_residual = max_kernel();
             T last_max = std::numeric_limits<T>::max();
             T off_last_max = std::numeric_limits<T>::max();
-            while (std::abs(max_residule) > std::abs(tolarance)                &&
-                   std::abs(last_max - max_residule) > std::abs(tolarance)     &&
-                   std::abs(off_last_max - max_residule) > std::abs(tolarance) &&
+            while (std::abs(max_residual) > std::abs(tolerance)                &&
+                   std::abs(last_max - max_residual) > std::abs(tolerance)     &&
+                   std::abs(off_last_max - max_residual) > std::abs(tolerance) &&
                    iterations++ < max_iterations) {
-                last_max = max_residule;
+                last_max = max_residual;
                 if (!(iterations%2)) {
-                    off_last_max = max_residule;
+                    off_last_max = max_residual;
                 }
-                max_residule = max_kernel();
+                max_residual = max_kernel();
             }
 
-//  In release mode asserts are diaables so write error to standard err. Need to
+//  In release mode asserts are disables so write error to standard err. Need to
 //  flip the comparison operator because we want to assert to trip if false.
             assert(iterations < max_iterations &&
                    "Workitem failed to converge.");
             if (iterations > max_iterations) {
                 std::cerr << "Workitem failed to converge with in given iterations."
                           << std::endl;
-                std::cerr << "Minimum residule reached: " << max_residule
+                std::cerr << "Minimum residual reached: " << max_residual
                           << std::endl;
             }
         }
@@ -172,7 +172,7 @@ namespace workflow {
     private:
 ///  JIT context.
         jit::context<T, SAFE_MATH> context;
-///  List of prework items.
+///  List of pre work items.
         std::vector<std::unique_ptr<work_item<T, SAFE_MATH>>> preitems;
 ///  List of work items.
         std::vector<std::unique_ptr<work_item<T, SAFE_MATH>>> items;
@@ -194,8 +194,8 @@ namespace workflow {
 ///  @param[in] out   Output nodes.
 ///  @param[in] maps  Setter maps.
 ///  @param[in] state Random state node.
-///  @param[in] name  Name of the workitem.
-///  @param[in] size  Size of the workitem.
+///  @param[in] name  Name of the work item.
+///  @param[in] size  Size of the work item.
 //------------------------------------------------------------------------------
         void add_preitem(graph::input_nodes<T, SAFE_MATH> in,
                          graph::output_nodes<T, SAFE_MATH> out,
@@ -215,8 +215,8 @@ namespace workflow {
 ///  @param[in] out   Output nodes.
 ///  @param[in] maps  Setter maps.
 ///  @param[in] state Random state node.
-///  @param[in] name  Name of the workitem.
-///  @param[in] size  Size of the workitem.
+///  @param[in] name  Name of the work item.
+///  @param[in] size  Size of the work item.
 //------------------------------------------------------------------------------
         void add_item(graph::input_nodes<T, SAFE_MATH> in,
                       graph::output_nodes<T, SAFE_MATH> out,
@@ -236,9 +236,9 @@ namespace workflow {
 ///  @param[in] out      Output nodes.
 ///  @param[in] maps     Setter maps.
 ///  @param[in] state    Random state node.
-///  @param[in] name     Name of the workitem.
-///  @param[in] size     Size of the workitem.
-///  @param[in] tol      Tolarance to converge the function to.
+///  @param[in] name     Name of the work item.
+///  @param[in] size     Size of the work item.
+///  @param[in] tol      Tolerance to converge the function to.
 ///  @param[in] max_iter Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
         void add_converge_item(graph::input_nodes<T, SAFE_MATH> in,
@@ -271,7 +271,7 @@ namespace workflow {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Run prework items.
+///  @brief Run pre work items.
 //------------------------------------------------------------------------------
         void pre_run() {
             for (auto &item : preitems) {

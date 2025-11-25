@@ -13,24 +13,24 @@
 #include "../graph_framework/dispersion.hpp"
 
 //------------------------------------------------------------------------------
-///  @brief Assert when difference is greater than the tolarance.
+///  @brief Assert when difference is greater than the tolerance.
 ///
 ///  Specialize to check for complex numbers since complex has not <= operator.
 ///
 ///  @tparam T Base type of the calculation.
 ///
 ///  @param[in] test      Test value.
-///  @param[in] tolarance Test tolarance.
+///  @param[in] tolerance Test tolerance.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> 
-void check(const T test, const T tolarance) {
+void check(const T test, const T tolerance) {
     if constexpr (jit::complex_scalar<T>) {
-        assert(std::real(test) <= std::real(tolarance) &&
+        assert(std::real(test) <= std::real(tolerance) &&
                "Real GPU and CPU values differ.");
-        assert(std::imag(test) <= std::imag(tolarance) &&
+        assert(std::imag(test) <= std::imag(tolerance) &&
                "Imaginary GPU and CPU values differ.");
     } else {
-        assert(test <= tolarance && "GPU and CPU values differ.");
+        assert(test <= tolerance && "GPU and CPU values differ.");
     }
 }
 
@@ -43,14 +43,14 @@ void check(const T test, const T tolarance) {
 ///  @param[in] outputs   Kernel output nodes.
 ///  @param[in] setters   Kernel set nodes.
 ///  @param[in] expected  Expected result.
-///  @param[in] tolarance Check tolarances.
+///  @param[in] tolerance Check tolerances.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void compile(graph::input_nodes<T> inputs,
              graph::output_nodes<T> outputs,
              graph::map_nodes<T> setters,
              const T expected,
-             const T tolarance) {
+             const T tolerance) {
     jit::context<T> source(0);
     source.add_kernel("test_kernel", inputs, outputs, setters,
                       graph::shared_random_state<T> (),
@@ -66,7 +66,7 @@ void compile(graph::input_nodes<T> inputs,
     source.copy_to_host(outputs.back(), &result);
 
     const T diff = std::abs(result - expected);
-    check(diff, tolarance);
+    check(diff, tolerance);
 }
 
 //------------------------------------------------------------------------------
@@ -330,11 +330,11 @@ template<jit::float_scalar T> void run_math_tests() {
 ///  @tparam DISPERSION_FUNCTION Class of dispersion function to use.
 ///
 ///  @param[in,out] eq        Equilibrium for the dispersion function.
-///  @param[in]     tolarance The test tolarance for check results to.
+///  @param[in]     tolerance The test tolerance for check results to.
 //------------------------------------------------------------------------------
 template<dispersion::function DISPERSION_FUNCTION>
 void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base> &eq,
-                         const typename DISPERSION_FUNCTION::base tolarance) {
+                         const typename DISPERSION_FUNCTION::base tolerance) {
 
     auto w = graph::variable<typename DISPERSION_FUNCTION::base> (1, "w");
     auto x = graph::variable<typename DISPERSION_FUNCTION::base> (1, "x");
@@ -355,7 +355,7 @@ void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base>
     t->set(static_cast<typename DISPERSION_FUNCTION::base> (1.0));
 
     dispersion::dispersion_interface<DISPERSION_FUNCTION> D(w, kx, ky, kz, x, y, z, t, eq);
-    auto residule = D.get_d();
+    auto residual = D.get_d();
 
     compile<typename DISPERSION_FUNCTION::base> ({graph::variable_cast(w),
                                                   graph::variable_cast(x),
@@ -365,9 +365,9 @@ void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base>
                                                   graph::variable_cast(ky),
                                                   graph::variable_cast(kz),
                                                   graph::variable_cast(t)},
-                                                 {residule}, {},
-                                                 residule->evaluate().at(0),
-                                                 tolarance);
+                                                 {residual}, {},
+                                                 residual->evaluate().at(0),
+                                                 tolerance);
 }
 
 //------------------------------------------------------------------------------

@@ -15,7 +15,7 @@ int main(int argc, const char * argv[]) {
     (void)argc;
     (void)argv;
 
-//  Insert code here. No code should be commited to this file beyond this
+//  Insert code here. No code should be committed to this file beyond this
 //  template.
 
     END_GPU
