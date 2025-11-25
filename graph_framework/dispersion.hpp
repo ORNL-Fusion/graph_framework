@@ -879,7 +879,7 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Ordinary wave dispersion function.
+///  @brief O or X wave dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use safe math operations.
@@ -937,17 +937,17 @@ namespace dispersion {
 //  Dielectric terms.
 //  Frequencies
             auto ne = eq->get_electron_density(x, y, z);
-            auto wpe2 = build_plasma_fequency(ne,
-                                              physics<T, SAFE_MATH>::q,
-                                              physics<T, SAFE_MATH>::me,
-                                              physics<T, SAFE_MATH>::c,
-                                              physics<T, SAFE_MATH>::epsion0);
+            auto wpe2 = build_plasma_frequency(ne,
+                                               physics<T, SAFE_MATH>::q,
+                                               physics<T, SAFE_MATH>::me,
+                                               physics<T, SAFE_MATH>::c,
+                                               physics<T, SAFE_MATH>::epsilon0);
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_len = b_vec->length();
-            auto ec = build_cyclotron_fequency(-physics<T, SAFE_MATH>::q,
-                                               b_len,
-                                               physics<T, SAFE_MATH>::me,
-                                               physics<T, SAFE_MATH>::c);
+            auto ec = build_cyclotron_frequency(-physics<T, SAFE_MATH>::q,
+                                                b_len,
+                                                physics<T, SAFE_MATH>::me,
+                                                physics<T, SAFE_MATH>::c);
 
             auto w2 = w*w;
             auto denome = 1.0 - ec*ec/w2;
@@ -961,11 +961,11 @@ namespace dispersion {
                                * physics<T, SAFE_MATH>::q;
 
                 auto ni = eq->get_ion_density(i, x, y, z);
-                auto wpi2 = build_plasma_fequency(ni, charge, mi,
-                                                  physics<T, SAFE_MATH>::c,
-                                                  physics<T, SAFE_MATH>::epsion0);
-                auto ic = build_cyclotron_fequency(charge, b_len, mi,
-                                                   physics<T, SAFE_MATH>::c);
+                auto wpi2 = build_plasma_frequency(ni, charge, mi,
+                                                   physics<T, SAFE_MATH>::c,
+                                                   physics<T, SAFE_MATH>::epsilon0);
+                auto ic = build_cyclotron_frequency(charge, b_len, mi,
+                                                    physics<T, SAFE_MATH>::c);
 
                 auto denomi = 1.0 - ic*ic/w2;
                 e11 = e11 - (wpi2/w2)/denomi;
@@ -997,7 +997,7 @@ namespace dispersion {
     };
 
 //------------------------------------------------------------------------------
-///  @brief Cold Plasma Disperison function.
+///  @brief Cold Plasma Dispersion function.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
