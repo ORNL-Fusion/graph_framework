@@ -1,0 +1,166 @@
+/*!
+ * @page use_cases Use Cases
+ * @brief Examples of physics problems created with the graph_framework.
+ * @tableofcontents
+ * @section use_cases_introduction Introduction
+ * There are many problems in fusion energy where the same equation needs to be
+ * applied to a large ensemble. This paper will highlight two examples using the
+ * graph framework. The first is an RF ray tracing problem to determine plasma
+ * heating. The second example is for particle pushing.
+ *
+ * @subsection use_cases_rf RF Ray tracing
+ * Geometric optics is a set of asymptotic approximation methods to solve wave
+ * equations. The physics of the particular wave determines an algebraic
+ * relation between $\omega$ and $\vec{k}$ called a dispersion relation,
+ * @f$D\left(\omega,\vec{k}\right)=0@f$. Since the parameter $t$ does not appear
+ * explicitly in the dispersion relation, the function
+ * @f$\omega\left(\vec{k}\left(t\right),\vec{x}\left(t\right)\right)@f$ is
+ * constant along the ray trajectory
+ * @f{equation}{\frac{\partial\omega}{\partial t}=\frac{\partial\omega}{\partial\vec{x}}\cdot\frac{\partial\vec{x}}{\partial t}+\frac{\partial\omega}{\partial\vec{k}}\cdot\frac{\partial\vec{k}}{\partial t}\equiv 0@f}
+ * by virtue of the ray equations. Since the dispersion relation is satisfied
+ * all along the ray trajectory, the derivatives needed for the ray equations
+ * can be obtained by implicit differentiation
+ * @f{equation}{\frac{\partial D}{\partial\vec{x}}=\frac{\partial D}{\partial\omega}\frac{\partial\omega}{\partial\vec{x}}\Rightarrow\frac{\partial\omega}{\partial\vec{x}}=-\frac{\frac{\partial D}{\partial\vec{x}}}{\frac{\partial D}{\partial\omega}}@f}
+ * @f{equation}{\frac{\partial D}{\partial\vec{k}}=\frac{\partial D}{\partial\omega}\frac{\partial\omega}{\partial\vec{k}}\Rightarrow\frac{\partial\omega}{\partial\vec{k}}=-\frac{\frac{\partial D}{\partial\vec{k}}}{\frac{\partial D}{\partial\omega}}@f}
+ * These equations are integrated to trace the ray.
+ *
+ * A ray tracing problem is build by implementing expressions for the plasma
+ * equilibrium. From the plasma equilibrium a dispersion relation is
+ * constructed. Equations of motion are defined using the auto differentiation.
+ * Expressions for ray update are built for in integrator. These expressions are
+ * JIT compiled into a single kernel call with inputs for @f$\vec{x}@f$,
+ * @f$\vec{k}@f$, @f$t@f$, and @f$\omega@f$ with outputs for the dispersion
+ * residual, and step updates for @f$\vec{x}@f$,
+ * @f$\vec{k}@f$ and @f$t@f$.
+ *
+ * @image html TokamakRays.png "100000 O-Mode rays traced in a realistic tokamak geometry."
+ * @image html StellaratorRays.png "10000 ray trajectories for a stellarator equilibrium using the same dispersion, and integrator method."
+ *
+ * @subsubsection use_cases_rf_correctness Correctness
+ * Here we illustrate the correctness of the code by examining waves described
+ * by relatively simple dispersion relations in plane stratified plasmas, that
+ * is plasma with spatial variation only in the @f$x@f$ direction. In a
+ * spatially varying medium, at a given frequency, there may be regions in which
+ * the solution of the dispersion relation, $\vec{k}$, is real, and the wave
+ * propagates. In other regions @f$\vec{k}@f$ is imaginary and the wave does not
+ * propagate, referred to as evanescent. The boundary between a region of
+ * propagation and evanescence is a surface called a cut-off. It is also
+ * possible that surfaces occur where @f$\vec{k}@f$ diverges to infinity, in
+ * which case the phase velocity component normal to the surface goes to zero.
+ * These are called resonances. Typically, the wave is reflected at a cut-off
+ * and is absorbed or converted to a different type of wave at a resonance.
+ * These critical surfaces, therefore, demark important changes in wave
+ * behavior, and the behavior of rays in their vicinity is an indication of the
+ * correctness of the solution.
+ *
+ * For plasma, the spatial dependence of the dispersion relation comes through
+ * variation of the plasma equilibrium quantities. These include the vector
+ * magnetic field, @f$\vec{B}\left(x\right)@f$, the density of each plasma
+ * particle species, @f$n_{s}\left(x\right)@f$, and the temperature of each
+ * particle species, @f$T_{s}\left(x\right)@f$, where $s$ indicates a
+ * particular species. For the cases presented here a linear gradient along the
+ * @f$x@f$ direction is taken for either the particle density or magnetic field
+ * strength.
+ * @f{equation}{f\left(x\right)=0.1x+1@f}
+ * Unless otherwise noted, the following table lists values for the plasma
+ * conditions.
+ * <table>
+ * <caption id="plasma_condition">Plasma Parameters</caption>
+ * <tr><th>Symbol        <th>Value
+ * <tr><td>@f$m_{i}@f$   <td>@f$3.344\times10^{-27}@f$ kg
+ * <tr><td>@f$n_{e0}@f$  <td>@f$1\times10^{19}@f$ m@f$^{-3}@f$
+ * <tr><td>@f$n_{i0}@f$  <td>@f$n_{e0}@f$
+ * <tr><td>@f$T_{e}@f$   <td>@f$1@f$ keV
+ * <tr><td>@f$T_{i}@f$   <td>@f$T_{e}@f$
+ * <tr><td>@f$\vec{B}@f$ <td>@f$1@f$ T@f$\hat{z}@f$
+ * </table>
+ *
+ * The examples presented employ the @ref dispersion_function_cold_plasma
+ * approximation. This means that the particle thermal speeds are much less than
+ * the wave phase velocity and the magnetic field is sufficiently strong that
+ * the particle gyro-radius is much less than the wavelength. The cold-plasma
+ * approximation greatly simplifies the dispersion relation and is actually
+ * valid for a wide range of wave propagation situations of fusion interest. A
+ * further approximation is made that the wave frequency is so high that only
+ * the electrons respond to the wave fields and the much heavier ions do not
+ * contribute to the wave-induced plasma current.
+ *
+ * Initial conditions for the wave solution are obtained by choosing fixed
+ * values for @f$\omega@f$, @f$\vec{x}@f$, @f$k_{y}@f$, and @f$k_{z}@f$. The
+ * remaining value @f$k_{x}@f$ is solved for using a Newton method to a
+ * tolerance of @f$\left|D\left(\vec{k},\omega\right)\right|<10^{-15}@f$. Since
+ * the dispersion functions are multi-valued, an initial guess for @f$k_{x}@f$
+ * selects among the possible roots.
+ *
+ * To mitigate the effects of floating point round-off errors, terms in the
+ * dispersion relation are combined to reduce the orders of magnitude for
+ * quantities. In plasmas, frequencies and waves typically trend in the
+ * @f$100@f$ GHz range. Folding the speed of light into the frequency,
+ * @f$\omega'=\frac{\omega}{c}@f$, results in quantities of @f$\omega'@f$ on the
+ * order of @f$1000@f$. The consequence is that this modified frequency
+ * @f$\omega'@f$ has units of m@f$^{-1}@f$. The phase,
+ * @f$v_{p}=\frac{\omega}{k}@f$, and group,
+ * @f$v_{g}=\frac{\partial\omega}{\partial k}@f$, velocities are unit less. As a
+ * consequence, time now contains a speed of light term @f$t'=tc@f$ with units
+ * of m. This slows time from values on the order of
+ * @f$1\times10^{-7}@f$ to @f$1@f$. Under this scheme, quantities of interest
+ * for ray tracing, position, @f$\vec{x}@f$, and wave number, @f$\vec{k}@f$,
+ * retain their normal units. The @ref dispersion_function_normal table,
+ * summarizes the changes resulting from these modified units. The following
+ * results are converted back to real units unless otherwise indicated.
+ * @image html ColdPlasma.png "The O-Mode branch can propagate through the quiescent region between the right-hand cutoff, ωr, and the upper hybrid resonance, ωh, that the X-Mode branch cannot but is cut off at the plasma frequency, ωpe. The X-Mode branch can pass the O-Mode's plasma cutoff but is stopped by the left-hand cutoff, ωl."
+ * The figure above shows the dispersion relation for a uniform magnetic field
+ * and density gradient. This dispersion is a superposition of the
+ * @ref dispersion_function_o_wave and @ref dispersion_function_x_wave
+ * dispersion relations. For a given frequency, one branch can cross cutoffs and
+ * resonances, the other cannot.
+ * @image html Cold-Plasma-Result.png "Wave trajectory with frequencies above the right-hand cutoff, ωr, for the cold plasma dispersion relation. The O-Mode branch can pass the right-hand cutoff, ωr, and the upper hybrid resonance, ωh, while X-mode cannot. The bottom plot tracks the resulting dispersion function residual, |D(k,ω)|, of the solver as the rays are traced."
+ * The figure above shows the wave trajectories for two waves above
+ * @f$\omega_{r}@f$. The O-Mode branch can pass @f$\omega_{r}@f$ while the
+ * X-Mode branch is reflected.
+ * @image html Cold-Plasma-Result2.png "Wave trajectory with frequencies between the upper hybrid resonance, ωh, and the left-hand cutoff, ωl, for the cold plasma dispersion relation. The X-Mode branch can pass the plasma frequency cutoff, ωpe, while O-mode cannot. The O-Mode can pass through the upper hybrid resonance, ωh, while the X-Mode branch is absorbed. The bottom plot tracks the resulting dispersion function residual, |D(k,ω)|, of the solver as the rays are traced."
+ * The figure above shows the wave trajectories for two waves between
+ * @f$\omega_{h}@f$ and @f$\omega_{l}@f$. The X-Mode branch can pass
+ * @f$\omega_{pe}@f$ cutoff while the O-Mode branch is reflected. The X-Mode
+ * branch is absorbed in the upper hybrid resonance, @f$\omega_{h}@f$, while the
+ * O-Mode branch can pass through it.
+ *
+ * @subsubsection use_cases_rf_correctness Comparison to GENRAY
+ * <a href="https://compxco.com/genray.html">Genray</a> is an RF-Ray tracing
+ * code written in Fortran which operates in a cylindrical geometry. Toroidal
+ * equilibria can be imported using the
+ * <a href="https://dx.doi.org/10.1088/0029-5515/25/11/007">EFIT</a> EQDSK
+ * format. Derivative information must either be explicitly defined or used a
+ * numerical differentiation. Since Genray does not trace within the vacuum
+ * region care was taken to ensure the two codes started from the same initial
+ * conditions. A single ray was traced in Genray then initial position and wave
+ * number was used to initialize the Graph framework ray tracer. Additionally
+ * the plasma profiles from Genray were matched with expression in the graph framework.
+ * @image html GenrayRays.png "Comparison of ray trajectory using the graph framework vs. the Genray code. Both codes show the same ray trajectory. The graph framework can continue to trace the rays in the vacuum region beyond the last closed flux surface."
+ * The figure above shows the trajectory of rays in the a tokamak cross-section.
+ * Both codes show a nearly identical trajectory with only a slight deviation
+ * towards the end of ray.
+ * @image html GenrayComponents.png "Comparison of x and k along the wave from Genray and the graph framework. Both codes show the same evolution of ray position and wave number as the ray is traced."
+ * The figure above shows the comparison of wave position @f$\vec{x}@f$ and wave
+ * number @f$\vec{k}@f$. Since the two codes use different time steps, these are
+ * plotted with respect to the flux label @f$\psi@f$. Both codes show nearly
+ * identical results with only a small deviation towards the end of the trace.
+ *
+ * @section use_cases_particle_pushing Particle Pushing
+ * In order to achieve good statistics for the evolution of particle
+ * distributions, it's necessary to push large numbers of particles.
+ * Exploiting GPU resources is necessary to achieve the large number of
+ * particles at reasonable run times to enable self consistent fields. An
+ * example is the runaway electron problem.
+ *
+ * During a disruption in a tokamak, electric fields can drive electron beams up
+ * to relativistic speeds. These high energy particles can lose confinement and
+ * damage first wall components. The
+ * <a href="https://dx.doi.org/10.1088/1367-2630/12/12/123005">Boris</a>
+ * leap-frog algorithm can integrate particles while conserving energy and
+ * momentum. The algorithm updates particle position @f$\vec{x}@f$, momentum
+ * @f$\vec{u}@f$, and relativistic @f$\gamma@f$.
+ * @image html ParticleTraces.png "Particle trajectories in a realistic tokamak geometry."
+ * The Figure above shows @f$100@f$ out of @f$10^{5}@f$ particles
+ * trajectories in a realistic tokamak geometry.
+ */
