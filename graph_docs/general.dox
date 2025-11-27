@@ -39,7 +39,7 @@
  * as either variables @f$x@f$ or constants @f$m,b@f$. These nodes are connected
  * by nodes for multiply and addition operations. The output @f$y@f$ represents
  * the entire graph of operations.
- * @image{} html line_graph.png "The graph structure for y = mx + b."
+ * @image{} html line_graph.png "The graph structure for @f$y=mx+b@f$."
  * Evaluation of graphs start from the top most node in this case the @f$+@f$
  * operation. Evaluation of a node is not performed until all sub-nodes are
  * evaluated starting with the left operand. Evaluation starts by recursively

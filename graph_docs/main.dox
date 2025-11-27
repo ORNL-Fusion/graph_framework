@@ -18,6 +18,13 @@
  * * Enable Auto Differentiation.
  * * Enable easy embedding in C, C++, and Fortran codes.
  *
+ * In this documentation we present a graph computation based framework which
+ * compiles physics equations to optimized kernels for execution on multiple GPU
+ * and CPU vendors.
+ * * @ref discription
+ * * @ref use_cases
+ * * @ref code_performance
+ *
  * <hr>
  * @section tools User guides for tools
  * @subsection rf_ray_tracing RF Ray tracing

@@ -344,6 +344,9 @@
 		C723210222DC0D0A006BBF13 /* arithmetic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = arithmetic.hpp; sourceTree = "<group>"; };
 		C72358F52C4027A10084A489 /* commandline_parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = commandline_parser.hpp; sourceTree = "<group>"; };
 		C725CD792840088000D0EDE2 /* physics_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = physics_test.cpp; sourceTree = "<group>"; };
+		C729B8B12ED7521A00A2559D /* discription.dox */ = {isa = PBXFileReference; lastKnownFileType = text; path = discription.dox; sourceTree = "<group>"; };
+		C729B8B22ED7536B00A2559D /* use_cases.dox */ = {isa = PBXFileReference; lastKnownFileType = text; path = use_cases.dox; sourceTree = "<group>"; };
+		C729B8B42ED77CA800A2559D /* code_performance.dox */ = {isa = PBXFileReference; lastKnownFileType = text; path = code_performance.dox; sourceTree = "<group>"; };
 		C736902B2A38AC0E001733B0 /* erfi_test.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = erfi_test.cpp; sourceTree = "<group>"; };
 		C73690312A38C498001733B0 /* erfi_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = erfi_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C736E6A42C9B526500AAE3C0 /* graph_playground */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = graph_playground; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -623,6 +626,9 @@
 				C75C42932E5CA60B00B0950B /* main.dox */,
 				C75C42952E5CC80B00B0950B /* tutorial.dox */,
 				C7DD87D32E664B440058BA66 /* code_structure.dox */,
+				C729B8B12ED7521A00A2559D /* discription.dox */,
+				C729B8B22ED7536B00A2559D /* use_cases.dox */,
+				C729B8B42ED77CA800A2559D /* code_performance.dox */,
 			);
 			path = graph_docs;
 			sourceTree = "<group>";
