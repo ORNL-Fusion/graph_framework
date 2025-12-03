@@ -25,9 +25,9 @@
  *
  * The figure above shows the advantage even a single GPU has over CPU
  * execution. In single precision, the M2's GPU is almost @f$100\times@f$ faster
- * a single CPU core while the a single A100 has a nearly $800\times$ advantage.
- * An interesting thing to note is the M2 Max CPU show no advantage between
- * single and double precision execution.
+ * a single CPU core while the a single A100 has a nearly @f$800\times@f$
+ * advantage. An interesting thing to note is the M2 Max CPU show no advantage
+ * between single and double precision execution.
  *
  * For large problem sizes the framework is expected to show good scaling with
  * number of devices as the problems we are applying are embarrassingly parallel
