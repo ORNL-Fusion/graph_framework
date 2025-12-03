@@ -25,9 +25,9 @@
  *
  * The figure above shows the advantage even a single GPU has over CPU
  * execution. In single precision, the M2's GPU is almost @f$100\times@f$ faster
- * a single CPU core while the a single A100 has a nearly $800\times$ advantage.
- * An interesting thing to note is the M2 Max CPU show no advantage between
- * single and double precision execution.
+ * a single CPU core while the a single A100 has a nearly @f$800\times@f$
+ * advantage. An interesting thing to note is the M2 Max CPU show no advantage
+ * between single and double precision execution.
  *
  * For large problem sizes the framework is expected to show good scaling with
  * number of devices as the problems we are applying are embarrassingly parallel
@@ -47,10 +47,11 @@
  *
  * We compared the graph framework against the MLX framework since it supports
  * Apple GPUs and JAX due to it's popularity. Source codes for this benchmark
- * case is available in the appendix. Figure \ref{fig:compare} shows the through put of
- * pushing $10^{8}$ particles for $10^{3}$ time steps. The graph framework
- * consistently shows the best throughput on both CPUs and GPUs. Note MLX CPU
- * throughput could by improved by splitting the problem to multiple threads.
+ * case is available in the appendix. The figure above shows the throughput of
+ * pushing @f$10^{8}@f$ particles for @f$10^{3}@f$ time steps. The graph
+ * framework consistently shows the best throughput on both CPUs and GPUs. Note
+ * MLX CPU throughput could by improved by splitting the problem to multiple
+ * threads.
  *
  * @subsection code_performance_comparison_codes Source codes for throughput benchmark comparison
  * @subsubsection code_performance_comparison_graph Graph Framework
