@@ -146,7 +146,14 @@ function (register_project reg_name dir url default_tag sub_dir)
     if (${reg_name} STREQUAL "llvm")
         # Hard-code the specific commit for LLVM
         set (LLVM_COMMIT "a6494a3bbf0620ec472d44db4e79c4c508618a61")
-        
+        # Ensure clang is configured and its generated headers (Diagnostic*.inc, etc)
+        # are produced in the LLVM build tree.
+        set (LLVM_ENABLE_PROJECTS clang CACHE STRING "" FORCE)
+        set (LLVM_TOOL_CLANG_BUILD ON CACHE BOOL "" FORCE)
+        set (LLVM_EXTERNAL_CLANG_SOURCE_DIR
+             "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/clang"
+             CACHE PATH "" FORCE)
+
         FetchContent_Declare (
             ${reg_name}
             GIT_REPOSITORY ${url}
@@ -176,7 +183,6 @@ function (register_project reg_name dir url default_tag sub_dir)
         
         # Handle LLVM-specific project settings
         set (LLVM_TARGETS_TO_BUILD Native CACHE STRING "" FORCE)
-        set (LLVM_ENABLE_PROJECTS clang CACHE STRING "" FORCE)
     else ()
         # Original behavior for non-LLVM projects
         set (BUILD_TAG_${dir} ${default_tag} CACHE STRING "Name of the tag to checkout.")
