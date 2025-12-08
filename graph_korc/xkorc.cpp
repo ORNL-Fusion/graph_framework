@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  xkorc.cpp  –  Full-orbit Boris integrator (SI units)
+//  xkorc.cpp  —  Full-orbit Boris integrator (SI units)
 //
 //  Reads from  init_particles.nc
 //      • x, y, z , ux, uy, uz          (m and m/s)
@@ -40,7 +40,7 @@ void run_korc()
 {
     const timeing::measure_diagnostic t_total("Total Time");
 
-    // ─────────────────────────────────── 1. READ INITIAL DATA ────────────────
+    // ─────────────────────────────────── 1. READ INITIAL DATA ─────────────────
     int ncid;
     check_nc( nc_open("init_particles.nc", NC_NOWRITE, &ncid) );
 
@@ -84,7 +84,10 @@ void run_korc()
     const std::size_t DUMP_EVERY = static_cast<std::size_t>(h_DUMP  );
     const double q_over_m_val    = q_val / m_val;
 
-    // ─────────────────────────────────── 2. CREATE GRAPH VARS ────────────────
+    std::cout << "NSTEPS: " << NSTEPS << ", DUMP_EVERY: " << DUMP_EVERY << '\n';
+    std::cout << "dt: " << dt_val << " s, q: " << q_val << " C, m: " << m_val << " kg\n";
+    
+    // ─────────────────────────────────── 2. CREATE GRAPH VARS ─────────────────
     auto x  = graph::variable<T,false>(Np,"x");
     auto y  = graph::variable<T,false>(Np,"y");
     auto z  = graph::variable<T,false>(Np,"z");
@@ -97,139 +100,106 @@ void run_korc()
         ux->set(i,h_ux[i]); uy->set(i,h_uy[i]); uz->set(i,h_uz[i]);
     }
 
-    // ─────────────────────────────────── 3. THREAD LAYOUT ────────────────────
-    unsigned n_thr = std::max(1u,
-        std::min<unsigned>(jit::context<T>::max_concurrency(), static_cast<unsigned>(Np)));
-    std::vector<std::thread> workers(n_thr);
+    // ─────────────────────────────────── 3. SINGLE THREAD MODE ───────────────
+    // For single output file, run single-threaded to avoid synchronization overhead
+    // GPU parallelism happens within the kernel, not across CPU threads
+    
+    
+    const timeing::measure_diagnostic t_setup("Setup");
 
-    const size_t batch = Np / n_thr, extra = Np % n_thr;
+    /* constants */
+    auto dt   = graph::constant<T,false>(static_cast<T>(dt_val));
+    auto half = graph::constant<T,false>(0.5);
+    auto one  = graph::constant<T,false>(1.0);
+    auto two  = graph::constant<T,false>(2.0);
+    auto qom  = graph::constant<T,false>(static_cast<T>(q_over_m_val));
+    auto dt_half = dt * half;                    // dt/2
+    auto coeff   = dt_half * qom;                // (dt/2)*(q/m)
 
-    for(unsigned tid=0; tid<n_thr; ++tid)
+    /* geometry */
+    auto eq  = equilibrium::make_efit<T>(EFIT_FILE);
+
+    /* vector wrappers */
+    auto pos   = graph::vector(x ,y ,z );
+    auto u_vec = graph::vector(ux,uy,uz);
+
+    /* fields */
+    auto b_vec = eq->get_magnetic_field(
+                    pos->get_x(), pos->get_y(), pos->get_z());
+    auto e_vec = eq->get_electric_field(
+                    pos->get_x(), pos->get_y(), pos->get_z());
+
+    /* ── Boris pusher with E ──────────────────────────────────────────── */
+    auto u_minus  = u_vec  + coeff * e_vec;          // first E-kick
+    auto t_vec    = coeff * b_vec;                   // t = (qB/m)*(dt/2)
+    auto t_sq     = t_vec->dot(t_vec);
+    auto s_vec    = (two * t_vec) / (one + t_sq);    // s = 2t/(1+|t|²)
+    auto u_prime  = u_minus + u_minus->cross(t_vec);
+    auto u_plus   = u_minus + u_prime->cross(s_vec); // after B rotation
+    auto u_next   = u_plus  + coeff * e_vec;         // second E-kick
+
+    auto pos_next = pos + dt * u_next;               // advance position
+
+    /* workflow manager - single instance */
+    workflow::manager<T,false> w(0);
+    w.add_item({graph::variable_cast(x ),
+                graph::variable_cast(y ),
+                graph::variable_cast(z ),
+                graph::variable_cast(ux),
+                graph::variable_cast(uy),
+                graph::variable_cast(uz)},
+               {},
+               {
+                   {pos_next->get_x(), graph::variable_cast(x )},
+                   {pos_next->get_y(), graph::variable_cast(y )},
+                   {pos_next->get_z(), graph::variable_cast(z )},
+                   {u_next->get_x(),   graph::variable_cast(ux)},
+                   {u_next->get_y(),   graph::variable_cast(uy)},
+                   {u_next->get_z(),   graph::variable_cast(uz)}
+               },
+               "boris_EB");
+    w.compile();
+
+    /* output file */
+    output::result_file of("korc_0.nc", Np);
+    output::data_set<T> ds(of);
+    ds.template create_variable<false>(of,"x",  x,  w.get_context());
+    ds.template create_variable<false>(of,"y",  y,  w.get_context());
+    ds.template create_variable<false>(of,"z",  z,  w.get_context());
+    ds.template create_variable<false>(of,"ux", ux, w.get_context());
+    ds.template create_variable<false>(of,"uy", uy, w.get_context());
+    ds.template create_variable<false>(of,"uz", uz, w.get_context());
+    of.end_define_mode();
+
+    t_setup.print();
+    const timeing::measure_diagnostic t_run("Run");
+    w.pre_run();
+
+    // Write initial condition
+    w.wait();
+    ds.write(of);
+
+    // ── MAIN LOOP ───────────────────────────────────────────────────────
+    for(size_t s=1; s<=NSTEPS; ++s)
     {
-        workers[tid] = std::thread([=]() mutable
-        {
-            const size_t Nloc = batch + (extra>tid ? 1 : 0);
-            const timeing::measure_diagnostic t_setup("Setup T"+std::to_string(tid));
+        w.run();
+        w.wait();
 
-            /* constants */
-            auto dt   = graph::constant<T,false>(static_cast<T>(dt_val));
-            auto half = graph::constant<T,false>(0.5);
-            auto one  = graph::constant<T,false>(1.0);
-            auto two  = graph::constant<T,false>(2.0);
-            auto qom  = graph::constant<T,false>(static_cast<T>(q_over_m_val));
-            auto dt_half = dt * half;                    // dt/2
-            auto coeff   = dt_half * qom;                // (dt/2)*(q/m)
-
-            /* geometry */
-            auto eq  = equilibrium::make_efit<T>(EFIT_FILE);
-
-            /* vector wrappers */
-            auto pos   = graph::vector(x ,y ,z );
-            auto u_vec = graph::vector(ux,uy,uz);
-
-            /* fields */
-            auto b_vec = eq->get_magnetic_field(
-                            pos->get_x(), pos->get_y(), pos->get_z());
-            auto e_vec = eq->get_electric_field(
-                            pos->get_x(), pos->get_y(), pos->get_z());
-
-            /* ── Boris pusher with E ─────────────────────────────────────── */
-            auto u_minus  = u_vec  + coeff * e_vec;          // first E-kick
-            auto t_vec    = coeff * b_vec;                   // t = (qB/m)*(dt/2)
-            auto t_sq     = t_vec->dot(t_vec);
-            auto s_vec    = (two * t_vec) / (one + t_sq);    // s = 2t/(1+|t|²)
-            auto u_prime  = u_minus + u_minus->cross(t_vec);
-            auto u_plus   = u_minus + u_prime->cross(s_vec); // after B rotation
-            auto u_next   = u_plus  + coeff * e_vec;         // second E-kick
-
-            auto pos_next = pos + dt * u_next;               // advance position
-
-            /* workflow manager */
-            workflow::manager<T,false> w(tid);
-            w.add_item({graph::variable_cast(x ),
-                        graph::variable_cast(y ),
-                        graph::variable_cast(z ),
-                        graph::variable_cast(ux),
-                        graph::variable_cast(uy),
-                        graph::variable_cast(uz)},
-                       {},
-                       {
-                           {pos_next->get_x(), graph::variable_cast(x )},
-                           {pos_next->get_y(), graph::variable_cast(y )},
-                           {pos_next->get_z(), graph::variable_cast(z )},
-                           {u_next->get_x(),   graph::variable_cast(ux)},
-                           {u_next->get_y(),   graph::variable_cast(uy)},
-                           {u_next->get_z(),   graph::variable_cast(uz)}
-                       },
-                       "boris_EB");
-            w.compile();
-
-            /* output file */
-            std::ostringstream fn; fn<<"korc_"<<tid<<".nc";
-            output::result_file of(fn.str(), Nloc);
-            output::data_set<T> ds(of);
-            ds.template create_variable<false>(of,"x",  x,  w.get_context());
-            ds.template create_variable<false>(of,"y",  y,  w.get_context());
-            ds.template create_variable<false>(of,"z",  z,  w.get_context());
-            ds.template create_variable<false>(of,"ux", ux, w.get_context());
-            ds.template create_variable<false>(of,"uy", uy, w.get_context());
-            ds.template create_variable<false>(of,"uz", uz, w.get_context());
-            of.end_define_mode();
-
-            /* writer thread */
-            std::queue<size_t> q;
-            std::mutex mtx;
-            std::condition_variable cv;
-            bool finish=false;
-
-            std::thread writer([&](){
-                std::unique_lock<std::mutex> lk(mtx);
-                while(true){
-                    cv.wait(lk,[&](){ return finish || !q.empty(); });
-                    while(!q.empty()){
-                        q.pop();
-                        lk.unlock();
-                        ds.write(of);         // I/O outside lock
-                        lk.lock();
-                    }
-                    if(finish) break;
-                }
-            });
-
-            t_setup.print();
-            const timeing::measure_diagnostic t_run("Run T"+std::to_string(tid));
-            w.pre_run();
-
-            // ── MAIN LOOP ──────────────────────────────────────────────────
-            for(size_t s=0; s<NSTEPS; ++s)
-            {
-                w.wait();
-
-                if(s % DUMP_EVERY == 0){
-                    { std::lock_guard<std::mutex> lg(mtx); q.push(s); }
-                    cv.notify_one();
-                }
-                w.run();
-            }
-            w.wait();
-
-            // final dump + shutdown
-            {
-                std::lock_guard<std::mutex> lg(mtx);
-                q.push(NSTEPS);
-                finish=true;
-            }
-            cv.notify_one();
-            writer.join();
-        });
+        if(s % DUMP_EVERY == 0 || s == NSTEPS){
+            ds.write(of);
+        }
+        
+        //if(s % 10000 == 0) {
+        //    std::cout << "Step " << s << "/" << NSTEPS << '\n' << std::flush;
+        //}
     }
-    for(auto& th: workers) th.join();
-
+    
+    t_run.print();
     std::cout << "\nTiming:\n";
     t_total.print();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────────
 int main(int argc, const char* argv[])
 {
     START_GPU
