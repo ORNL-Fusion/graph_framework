@@ -322,6 +322,28 @@ template<jit::float_scalar T> void run_math_tests() {
                  graph::variable_cast(v4)},
                 {pow_non_int}, {},
                 pow_non_int->evaluate().at(0), 3.0E-8);
+
+    if constexpr (jit::use_gpu<T> ()) {
+        result = 9.0E-8;
+    } else {
+        result = 0.0;
+    }
+
+    auto sin_node = graph::sin(v1);
+    compile<T> ({graph::variable_cast(v1)},
+                {sin_node}, {},
+                sin_node->evaluate().at(0), 0.0);
+
+    auto cos_node = graph::cos(v1);
+    compile<T> ({graph::variable_cast(v1)},
+                {cos_node}, {},
+                cos_node->evaluate().at(0), result);
+
+    auto atan_node = graph::atan(v1, v2);
+    compile<T> ({
+        graph::variable_cast(v1),
+        graph::variable_cast(v2)
+    }, {atan_node}, {}, atan_node->evaluate().at(0), result);
 }
 
 //------------------------------------------------------------------------------

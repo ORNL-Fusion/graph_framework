@@ -1505,11 +1505,7 @@ namespace special {
         T y = imag(z);
 
         if (y == static_cast<T> (0)) {
-#ifdef CUDA_DEVICE_CODE
             return complex_type<T> (erf(x), y);
-#else
-            return complex_type<T> (std::erf(x), y);
-#endif
         } else if (x == static_cast<T> (0)) {
             const T y2 = sq(y);
             return complex_type<T> (x, y2 > static_cast<T> (720) ? (y > static_cast<T> (0) ?  numeric_limits<T>::max() :
