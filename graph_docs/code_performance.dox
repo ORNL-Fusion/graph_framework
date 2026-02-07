@@ -45,12 +45,16 @@
  * @f{equation}{\frac{\partial\vec{v}}{\partial t} = dt\vec{v}\times\vec{B}@f}
  * @f{equation}{\frac{\partial\vec{x}}{\partial t} = dt\vec{v}@f}
  *
- * We compared the graph framework against the MLX framework since it supports
- * Apple GPUs and JAX due to it's popularity. Source codes for this benchmark
- * case is available in the appendix. Figure \ref{fig:compare} shows the through put of
- * pushing $10^{8}$ particles for $10^{3}$ time steps. The graph framework
- * consistently shows the best throughput on both CPUs and GPUs. Note MLX CPU
- * throughput could by improved by splitting the problem to multiple threads.
+ * We compared the graph framework against the
+ * <a href="https://ml-explore.github.io/mlx/build/html/index.html">MLX</a>
+ * framework since it supports Apple GPUs,
+ * <a href="https://docs.jax.dev/en/latest/">JAX</a> due to it's popularity,
+ * and <a href="https://kokkos.org">Kokkos</a> for its performance
+ * portability. Source codes for this benchmark case is available in the
+ * appendix. Figure \ref{fig:compare} shows the through put of pushing $10^{8}$
+ * particles for $10^{3}$ time steps. The graph framework consistently shows the
+ * best throughput on both CPUs and GPUs. Note MLX CPU throughput could by
+ * improved by splitting the problem to multiple threads.
  *
  * @subsection code_performance_comparison_codes Source codes for throughput benchmark comparison
  * @subsubsection code_performance_comparison_graph Graph Framework
@@ -93,7 +97,7 @@ for (size_t i = 0, ie = threads.size(); i < ie; i++) {
         auto v_next = v + dt*lorentz;
         auto pos_next = pos + dt*v_next;
             
-        workflow::manager<float> work(0);
+        workflow::manager<float> work(thread_number);
         work.add_item({
             graph::variable_cast(x),
             graph::variable_cast(y),
@@ -177,7 +181,7 @@ const auto total_time = end - start;
 def push(x, y, z, vx, vy, vz):
     dt = 0.000001
     vx_next = vx + dt*(vy*1 - vz*0)
-    vy_next = vy + dt*(vz*0 - vy*1)
+    vy_next = vy + dt*(vz*0 - vx*1)
     vz_next = vz + dt*(vx*0 - vy*0)
     return vx_next, vy_next, vz_next,
            x + dt*vx_next, y + dt*vy_next, z + dt*vz_next
@@ -201,6 +205,48 @@ jax.block_until_ready([x, y, z, vx, vy, vz])
 end = time.time()
 
 print(end - start)
+ @endcode
+ *
+ * @subsubsection code_performance_comparison_kokkos Kokkos
+ * @code
+const size_t size = 100000000;
+const size_t steps = 1000;
+
+using ViewVectorType = Kokkos::View<float *, Kokkos::SharedSpace>;
+ViewVectorType x("x", size);
+ViewVectorType y("y", size);
+ViewVectorType z("z", size);
+
+ViewVectorType vx("vx", size);
+ViewVectorType vy("vy", size);
+ViewVectorType vz("vz", size);
+
+Kokkos::parallel_for(size, KOKKOS_LAMBDA(const int64_t index) {
+    vx[index] = 1;
+    vz[index] = 1;
+});
+
+const std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+
+for (size_t i = 0; i < steps; i++) {
+    Kokkos::parallel_for(size, KOKKOS_LAMBDA(const int64_t index) {
+        const float dt = 0.000001;
+        const float vx_next = vx[index] + dt*(vy[index]*1 - vz[index]*0);
+        const float vy_next = vy[index] + dt*(vz[index]*0 - vx[index]*1);
+        const float vz_next = vz[index] + dt*(vx[index]*0 - vy[index]*0);
+        x[index] += dt*vx_next;
+        y[index] += dt*vy_next;
+        z[index] += dt*vz_next;
+        vx[index] = vx_next;
+        vy[index] = vy_next;
+        vz[index] = vz_next;
+    });
+}
+
+Kokkos::fence();
+
+std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+const auto total_time = end - start;
  @endcode
  */
 

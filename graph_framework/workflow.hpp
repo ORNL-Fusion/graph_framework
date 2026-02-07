@@ -183,7 +183,13 @@ namespace workflow {
 //------------------------------------------------------------------------------
 ///  @brief Workflow manager constructor.
 ///
-///  @param[in] index Concurrent index.
+///  For GPU devices, this select the device number to run on. For CPU devices
+///  this parameter is ignored.
+///
+///  @note It is possible to create multiple workflow managers for the same
+///        GPU device and may have performance benefits todo so.
+///
+///  @param[in] index Device index.
 //------------------------------------------------------------------------------
         manager(const size_t index) : context(index), add_reduction(false) {}
 

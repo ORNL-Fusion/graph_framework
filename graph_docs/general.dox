@@ -39,7 +39,7 @@
  * as either variables @f$x@f$ or constants @f$m,b@f$. These nodes are connected
  * by nodes for multiply and addition operations. The output @f$y@f$ represents
  * the entire graph of operations.
- * @image{} html line_graph.png "The graph structure for @f$y=mx+b@f$."
+ * @image{} html line_graph.png "The graph structure for y = mx + b."
  * Evaluation of graphs start from the top most node in this case the @f$+@f$
  * operation. Evaluation of a node is not performed until all sub-nodes are
  * evaluated starting with the left operand. Evaluation starts by recursively
@@ -58,9 +58,10 @@
  * graphs of a function derivative. For an example of taking derivatives see the
  * @ref tutorial_derivatives "auto differentiation tutorial". Lets say that we
  * want to take the derivative of @f$\frac{\partial y}{\partial x}@f$. This is
- * achieved by evaluating the until bottom left most node is reached. Then a new
- * graph is build starting with @f$\frac{\partial m}{\partial x}=0@f$. Applying
- * the first half of the chain rule we build a new graph for @f$0x@f$
+ * achieved by evaluating the graph until the bottom left most node is reached.
+ * Then a new graph is constucted starting with
+ * @f$\frac{\partial m}{\partial x}=0@f$. Applying the first half of the chain
+ * rule we build a new graph for @f$0x@f$
  * @image{} html line_graph_dydf1.png ""
  * Then we take the derivative of the right operand and apply the second half
  * of the chain rule to build a new graph for @f$0x=0@f$.
@@ -73,8 +74,8 @@
  * The final expression for @f$\frac{\partial y}{\partial x}@f$ contains many
  * unnecessary nodes in the graph. Instead of building full graphs, we can
  * simplify and eliminate nodes as we build them. For instance, when the
- * expression @f$0x@f$ this created can be immediately reduce it  to a single
- * node.
+ * expression @f$0\times x@f$ is created, this can be immediately reduced to a
+ * single node @f$0@f$.
  * @image{} html line_graph_reduce1.png ""
  * Applying all possible reductions reduces the final expression to
  * @f$\frac{\partial y}{\partial x}=m@f$.
@@ -109,7 +110,7 @@
  * @subsection general_concepts_compile_maps Maps
  * Maps enable the results of an output node to be stored in an input node. This
  * is used for a wide varity of cases. For instance take a gradient decent step.
- * @f{equation}{y = y + \frac{\partial f}{\partial x}@f}
+ * @f{equation}{y_{i+1} = y_{i} + \frac{\partial f}{\partial x}@f}
  * In this case the output of the expression
  * @f$y + \frac{\partial f}{\partial x}@f$
  * can be mapped to update @f$y@f$.
@@ -122,7 +123,7 @@
  * <hr>
  * @section general_concepts_safe_math Safe Math
  * There are some conditions where mathematically, a graph should evaluate to a
- * normal number. However, when evaluated suing floating point precision, can
+ * normal number. However, when evaluated using floating point precision, can
  * lead to <tt>Inf</tt> or <tt>NaN</tt>. An example of this the
  * @f$\exp\left(x\right)@f$ function. For large argument values,
  * @f$\exp\left(x\right)@f$ overflows the maximum floating point precision and

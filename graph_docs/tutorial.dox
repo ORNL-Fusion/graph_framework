@@ -13,7 +13,7 @@
  * executable target which can be used to test out the API's of this framework.
  * The playground starts with a blank main function.
  * @code
-#include "../graph_framework/jit.hpp"
+#include "graph_framework.hpp"
 
 int main(int argc, const char * argv[]) {
     START_GPU
@@ -30,7 +30,7 @@ int main(int argc, const char * argv[]) {
  * main. This will allow us to play with different floating point types. For now
  * we will start with a simple float type.
  * @code
-#include "../graph_framework/jit.hpp"
+#include "graph_framework.hpp"
 
 template<jit::float_scalar T>
 void run_tutorial() {
@@ -84,16 +84,16 @@ void run_tutorial() {
  * so all method are called using the <tt>-></tt> operator.
  *
  * @subsection tutorial_constant Constant Nodes
- * Next we want to define a constant. There are two method to define constants
+ * Next we want to define a constant. There are two methods to define constants
  * explicitly or implicitly.
  * @code
 template<jit::float_scalar T>
 void run_tutorial() {
     auto x = graph::variable(1000, "x");
 
-// Define explicit constant.
+//  Define explicit constant.
     auto m = graph::constant<T> (0.4);
-// Define implicit constant.
+//  Define implicit constant.
     const T b = 0.6;
 }
  @endcode
@@ -110,9 +110,9 @@ template<jit::float_scalar T>
 void run_tutorial() {
     auto x = graph::variable(1000, "x");
 
-// Define explicit constant.
+//  Define explicit constant.
     auto m = graph::constant<T> (0.4);
-// Define implicit constant.
+//  Define implicit constant.
     const T b = 0.6;
 
 //  Equation of a line
@@ -133,15 +133,15 @@ template<jit::float_scalar T>
 void run_tutorial() {
     auto x = graph::variable(1000, "x");
 
-// Define explicit constant.
+//  Define explicit constant.
     auto m = graph::constant<T> (0.4);
-// Define implicit constant.
+//  Define implicit constant.
     const T b = 0.6;
 
-// Equation of a line
+//  Equation of a line
     auto y = m*x + b;
 
-// Auto differentiation.
+//  Auto differentiation.
     auto dydx = y->df(x);
     dydx->to_latex();
     std::cout << std::endl;
@@ -168,18 +168,18 @@ template<jit::float_scalar T>
 void run_tutorial() {
     auto x = graph::variable(3, "x");
 
-// Define explicit constant.
+//  Define explicit constant.
     auto m = graph::constant<T> (0.4);
-// Define implicit constant.
+//  Define implicit constant.
     const T b = 0.6;
 
-// Equation of a line
+//  Equation of a line
     auto y = m*x + b;
 
-// Auto differentiation.
+//  Auto differentiation.
     auto dydx = y->df(x);
 
-// Create a workflow manager.
+//  Create a workflow manager.
     workflow::manager<T> work(0);
 }
  @endcode
@@ -322,13 +322,13 @@ void run_tutorial() {
     auto x = graph::variable<T> (3, "x");
     x->set({1.0, 2.0, 3.0});
 
-// Define an objective function.
+//  Define an objective function.
     auto f = 0.2*x*x*x + 0.6*x*x + 0.4*x + 0.5;
 
 //  Define a step update.
     auto x_new = x - f/f->df(x);
 
-// Create a workflow manager.
+//  Create a workflow manager.
     workflow::manager<T> work(0);
     work.add_item({
         graph::variable_cast(x)
@@ -372,7 +372,7 @@ void run_tutorial() {
  * a reduction on the host side and transferring the entire array to the host.
  * To improve this we can use a converge item instead.
  * @code
-// Create a workflow manager.
+//  Create a workflow manager.
 workflow::manager<T> work(0);
 work.add_converge_item({
     graph::variable_cast(x)
