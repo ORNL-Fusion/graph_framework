@@ -134,7 +134,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Cuda context constructor.
 ///
-///  @param[in] index Concurrent index.
+///  @param[in] index Device index.
 //------------------------------------------------------------------------------
         cuda_context(const size_t index) : result_buffer(0), module(0), offset_buffer(0) {
             check_error(cuDeviceGet(&device, index), "cuDeviceGet");

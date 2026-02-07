@@ -5,8 +5,8 @@
  * @section discription_introduction Introduction
  * The basic functionality of this framework is to build expression graphs
  * representing mathematical equations. Reduce those graphs to simpler forms.
- * Transform those graph to take derivatives. Just-In-Time (JIT) compile them to
- * available compute device kernels. Then run those kernels in workflow. The
+ * Transform those graphs to take derivatives. Just-In-Time (JIT) compile them
+ * to available compute device kernels. Then run those kernels in workflows. The
  * code is written in using C++23 features. To simplify embedding into legacy
  * codes, there are additional language bindings for C and Fortran.
  *
@@ -48,9 +48,10 @@
  * be reduced to a single constant by calling the evaluate method. Sub-graph
  * expressions are combined, factored out, or moved to enable better reductions
  * on subsequent passes. As new ways of reducing the graph are implemented,
- * current and existing code built using this framework benefit from improved
- * speed. The figure above shows a visualization of the tree data structure for
- * the equation of a line, the derivative, and the subsequent reductions.
+ * current and existing code built using this framework will benefit from
+ * improved speed. The figure above shows a visualization of the tree data
+ * structure for the equation of a line, the derivative, and the subsequent
+ * reductions.
  *
  * @subsubsection discription_graphs_builds Building Graphs
  * As an example building an expression of line @f$y=mx+b@f$ accomplished by
@@ -79,8 +80,8 @@ auto dydmx = y->df(0.5*x);
  * running them in order. One @ref workflow::manager is created for each device
  * or thread. The user is responsible for creating threads. Each kernel is
  * generated through a @ref workflow::work_item. A work item is defined by
- * kernel @ref graph::input_nodes, @ref graph::output_nodes and
- * @ref graph::map_nodes. Map items are used to take the results of kernel and
+ * kernel @ref graph::input_nodes, @ref graph::output_nodes, and
+ * @ref graph::map_nodes. Map items are used to take the results of a kernel and
  * update an input buffer. Using our example of line equation, we can create a
  * workflow to compute @f$y@f$ and @f$\frac{\partial y}{\partial x}@f$.
  * @code
@@ -99,7 +100,7 @@ work.add_item({
  * elements in the inputs. Multiple work items can be created and will be
  * executed in order of creation.
  *
- * Once the work items are defined that can be JIT compiled to a backend device.
+ * Once the work items are defined they can be JIT compiled to a backend device.
  * The graph framework supports back ends for generic CPUs, Apple Metal GPUs,
  * Nvidia Cuda GPUs, and initial HIP support of AMD GPUs. Each back end supplies
  * relevant driver code to build the kernel source, compile the kernel, build

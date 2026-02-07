@@ -311,7 +311,7 @@
 ///  @code
 ///  virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
 ///      if (this->has_pseudo()) {
-///          return sqrt(this->arg->remove_pseudo());
+///          return foo(this->arg->remove_pseudo());
 ///      }
 ///      return this->shared_from_this();
 ///  }

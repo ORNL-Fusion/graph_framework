@@ -65,7 +65,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Construct a metal context.
 ///
-///  @param[in] index Concurrent index.
+///  @param[in] index Device index.
 //------------------------------------------------------------------------------
         metal_context(const size_t index) :
         device([MTLCopyAllDevices() objectAtIndex:index]),

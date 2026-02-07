@@ -116,7 +116,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Construct a cpu context.
 ///
-///  @param[in] index Concurrent index. Not used.
+///  @param[in] index Device index. Not used.
 //------------------------------------------------------------------------------
         cpu_context(const size_t index) {
             llvm::InitializeNativeTarget();

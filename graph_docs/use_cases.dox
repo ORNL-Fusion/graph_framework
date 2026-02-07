@@ -11,9 +11,9 @@
  * @subsection use_cases_rf RF Ray tracing
  * Geometric optics is a set of asymptotic approximation methods to solve wave
  * equations. The physics of the particular wave determines an algebraic
- * relation between $\omega$ and $\vec{k}$ called a dispersion relation,
- * @f$D\left(\omega,\vec{k}\right)=0@f$. Since the parameter $t$ does not appear
- * explicitly in the dispersion relation, the function
+ * relation between @f$\omega@f$ and @f$\vec{k}@f$ called a dispersion relation,
+ * @f$D\left(\omega,\vec{k}\right)=0@f$. Since the parameter @f$t@f$ does not
+ * appear explicitly in the dispersion relation, the function
  * @f$\omega\left(\vec{k}\left(t\right),\vec{x}\left(t\right)\right)@f$ is
  * constant along the ray trajectory
  * @f{equation}{\frac{\partial\omega}{\partial t}=\frac{\partial\omega}{\partial\vec{x}}\cdot\frac{\partial\vec{x}}{\partial t}+\frac{\partial\omega}{\partial\vec{k}}\cdot\frac{\partial\vec{k}}{\partial t}\equiv 0@f}
@@ -41,7 +41,7 @@
  * by relatively simple dispersion relations in plane stratified plasmas, that
  * is plasma with spatial variation only in the @f$x@f$ direction. In a
  * spatially varying medium, at a given frequency, there may be regions in which
- * the solution of the dispersion relation, $\vec{k}$, is real, and the wave
+ * the solution of the dispersion relation, @f$\vec{k}@f$, is real, and the wave
  * propagates. In other regions @f$\vec{k}@f$ is imaginary and the wave does not
  * propagate, referred to as evanescent. The boundary between a region of
  * propagation and evanescence is a surface called a cut-off. It is also
@@ -53,11 +53,11 @@
  * behavior, and the behavior of rays in their vicinity is an indication of the
  * correctness of the solution.
  *
- * For plasma, the spatial dependence of the dispersion relation comes through
+ * For plasmas, the spatial dependence of the dispersion relation comes through
  * variation of the plasma equilibrium quantities. These include the vector
  * magnetic field, @f$\vec{B}\left(x\right)@f$, the density of each plasma
  * particle species, @f$n_{s}\left(x\right)@f$, and the temperature of each
- * particle species, @f$T_{s}\left(x\right)@f$, where $s$ indicates a
+ * particle species, @f$T_{s}\left(x\right)@f$, where @f$s@f$ indicates a
  * particular species. For the cases presented here a linear gradient along the
  * @f$x@f$ direction is taken for either the particle density or magnetic field
  * strength.
