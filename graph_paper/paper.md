@@ -111,7 +111,7 @@ will describe the frameworks design and capabilities. Demonstrate applications
 to problems in radio frequency (RF) heating and particle tracing, and show its 
 performance scaling.
 
-# Background
+# State of the field
 
 | Framework       | Language           | Cuda Support       | Metal Support         | RocM Support       | Auto Differentiation |
 |:---------------:|:------------------:|:------------------:|:---------------------:|:------------------:|:--------------------:|
@@ -171,7 +171,32 @@ what the framework is doing. Additionally cross platform support is often
 unofficial and can be incomplete. Table \ref{frameworks} shows an overview of 
 these frameworks.
 
-# Performance
+# Software design
+The core of this software is built around a graph data structure representing 
+mathematical expressions. In graph form, the expressions can be treated 
+symbolically enabling two critical functions. Algebraic rules can be applied to 
+reduce graphs to simpler forms or chain rules can be applied to transform graphs 
+into expressions for derivatives. 
+
+Since the goal of this framework it not to target machine learning applications,
+it's not necessary to compute gradients of expressions with large numbers of 
+parameters. This symbolic approach was chosen for its simplicity and greater 
+flexibility. In contrast to machine learning frameworks this framework makes no 
+distinction between variables and functions. Derivatives can be taken with 
+respect to any other expression.
+
+After expressions are built, workflows are created. A workflow is defined from 
+one or more workflow items. A workflow item is defined from input nodes, output 
+nodes, and maps between inputs and outputs. For each input and output nodes, 
+device buffers are allocated. Then starting from a given output, device specific 
+kernel source code is created by traversing the graph and adding a line 
+appropriate for the expression. Duplicate expressions are avoided by tracking a 
+list of registers. Kernel sources are JIT compiled using the vender API or using 
+the Low Level Virtual Machine LLVM[@Lattner] for CPUs. A workflow is run by 
+iterating through the workflow items.
+
+# Research impact statement 
+
 To demonstrate the performance of the optimized kernels created using this 
 framework we measured the strong scaling using the the RF ray tracing problem 
 in a realistic tokamak geometry. To to compare against other frameworks we 
@@ -227,7 +252,10 @@ Figure \ref{throughput} shows the throughput of pushing $10^{8}$ particles for
 $10^{3}$ time steps. The `graph_framework` consistently shows the best 
 throughput on both CPUs and GPUs. Note MLX CPU throughput could by improved by 
 splitting the problem to multiple threads.
- 
+
+# AI usage disclosure
+No AI technology was used in the development of this software.
+
 # Acknowledgements
 The authors would like to thank Dr. Yashika Ghai, Dr. Rhea Barnett, and Dr. 
 David Green for their valuable insights when setting up test cases for the 
