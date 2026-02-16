@@ -75,7 +75,7 @@ auto dydmx = y->df(0.5*x);
  @endcode
  * In this case, the result will be @f$\frac{\partial y}{\partial 0.5*x}=1.0@f$
  *
- * @subsection discription_workflows
+ * @subsection discription_workflows Workflows
  * A @ref workflow::manager is responsible for compiling device kernels, and
  * running them in order. One @ref workflow::manager is created for each device
  * or thread. The user is responsible for creating threads. Each kernel is
