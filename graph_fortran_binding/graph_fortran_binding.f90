@@ -145,6 +145,7 @@
                                       piecewise_2D_double,                     &
                                       piecewise_2D_cfloat,                     &
                                       piecewise_2D_cdouble
+         PROCEDURE :: index_1D => graph_context_index_1D
          PROCEDURE :: get_max_concurrency => graph_context_get_max_concurrency
          PROCEDURE :: set_device_number => graph_context_set_device_number
          PROCEDURE :: add_pre_item => graph_context_add_pre_item
@@ -593,7 +594,7 @@
          END FUNCTION
 
 !-------------------------------------------------------------------------------
-!>  @brief Create 1D piecewise node with complex double buffer.
+!>  @brief Create 1D piecewise node.
 !>
 !>  @param[in] c           The graph C context.
 !>  @param[in] arg         The left operand.
@@ -648,6 +649,27 @@
          REAL(C_DOUBLE), VALUE      :: y_offset
          INTEGER(C_INTPTR_T), VALUE :: source
          INTEGER(C_LONG), VALUE     :: source_size
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D index node.
+!>
+!>  @param[in] c        The graph C context.
+!>  @param[in] variable The variable to index.
+!>  @param[in] arg      The left operand.
+!>  @param[in] scale    Scale factor argument.
+!>  @param[in] offset   Offset factor argument.
+!>  @returns A 1D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_index_1D(c, variable, arg, scale, offset)  &
+         BIND(C, NAME='graph_index_1D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE         :: c
+         TYPE(C_PTR), VALUE         :: variable
+         TYPE(C_PTR), VALUE         :: arg
+         REAL(C_DOUBLE), VALUE      :: scale
+         REAL(C_DOUBLE), VALUE      :: offset
          END FUNCTION
 
 !-------------------------------------------------------------------------------
@@ -1583,7 +1605,7 @@
 !>  @param[in]     scale  Scale factor argument.
 !>  @param[in]     offset Offset factor argument.
 !>  @param[in]     source Source buffer to fill elements.
-!>  @returns random(state)
+!>  @returns piecewise_1D node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_piecewise_1D_float(this, arg, scale, offset,      &
                                                 source)
@@ -1613,7 +1635,7 @@
 !>  @param[in]     scale  Scale factor argument.
 !>  @param[in]     offset Offset factor argument.
 !>  @param[in]     source Source buffer to fill elements.
-!>  @returns random(state)
+!>  @returns piecewise_1D node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_piecewise_1D_double(this, arg, scale, offset,     &
                                                  source)
@@ -1643,7 +1665,7 @@
 !>  @param[in]     scale  Scale factor argument.
 !>  @param[in]     offset Offset factor argument.
 !>  @param[in]     source Source buffer to fill elements.
-!>  @returns random(state)
+!>  @returns piecewise_1D node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_piecewise_1D_cfloat(this, arg, scale, offset,     &
                                                  source)
@@ -1673,7 +1695,7 @@
 !>  @param[in]     scale  Scale factor argument.
 !>  @param[in]     offset Offset factor argument.
 !>  @param[in]     source Source buffer to fill elements.
-!>  @returns random(state)
+!>  @returns piecewise_1D node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_piecewise_1D_cdouble(this, arg, scale, offset,    &
                                                   source)
@@ -1706,7 +1728,7 @@
 !>  @param[in]     y_scale  Scale factor for y argument.
 !>  @param[in]     y_offset Offset factor for y argument.
 !>  @param[in]     source   Source buffer to fill elements.
-!>  @returns random(state)
+!>  @returns piecewise_2D node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_piecewise_2D_float(this,                          &
                                                 x_arg, x_scale, x_offset,      &
@@ -1747,7 +1769,7 @@
 !>  @param[in]     y_scale  Scale factor for y argument.
 !>  @param[in]     y_offset Offset factor for y argument.
 !>  @param[in]     source   Source buffer to fill elements.
-!>  @returns random(state)
+!>  @returns piecewise_2D node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_piecewise_2D_double(this,                         &
                                                  x_arg, x_scale, x_offset,     &
@@ -1788,7 +1810,7 @@
 !>  @param[in]     y_scale  Scale factor for y argument.
 !>  @param[in]     y_offset Offset factor for y argument.
 !>  @param[in]     source   Source buffer to fill elements.
-!>  @returns random(state)
+!>  @returns piecewise_2D node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_piecewise_2D_cfloat(this,                         &
                                                  x_arg, x_scale, x_offset,     &
@@ -1829,7 +1851,7 @@
 !>  @param[in]     y_scale  Scale factor for y argument.
 !>  @param[in]     y_offset Offset factor for y argument.
 !>  @param[in]     source   Source buffer to fill elements.
-!>  @returns random(state)
+!>  @returns piecewise_2D node.
 !-------------------------------------------------------------------------------
       FUNCTION graph_context_piecewise_2D_cdouble(this,                        &
                                                   x_arg, x_scale, x_offset,    &
@@ -1856,6 +1878,34 @@
                             x_arg, x_scale, x_offset,                          &
                             y_arg, y_scale, y_offset,                          &
                             LOC(source), INT(SIZE(source), KIND=C_LONG))
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 1D index node with float buffer.
+!>
+!>  @param[in,out] this     @ref graph_context instance.
+!>  @param[in]     variable The variable
+!>  @param[in]     arg      The function argument.
+!>  @param[in]     scale    Scale factor argument.
+!>  @param[in]     offset   Offset factor argument.
+!>  @returns index_1D node.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_index_1D(this, variable, arg, scale, offset)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_index_1D
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: variable
+      TYPE(C_PTR), INTENT(IN)             :: arg
+      REAL(C_DOUBLE)                      :: scale
+      REAL(C_DOUBLE)                      :: offset
+
+!  Start of executable.
+      graph_context_index_1D =                                                 &
+         graph_index_1D(this%c_context, variable, arg, scale, offset)
 
       END FUNCTION
 

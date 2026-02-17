@@ -446,6 +446,22 @@ extern "C" {
                                   const size_t source_size);
 
 //------------------------------------------------------------------------------
+///  @brief Create a 1D index.
+///
+///  @param[in] c           The graph C context.
+///  @param[in] variable    The variable to index.
+///  @param[in] x_arg       The function x argument.
+///  @param[in] x_scale     Scale factor x argument.
+///  @param[in] x_offset    Offset factor x argument.
+///  @returns A 1D index node.
+//------------------------------------------------------------------------------
+    graph_node graph_index_1D(STRUCT_TAG graph_c_context *c,
+                              graph_node variable,
+                              graph_node x_arg,
+                              const double x_scale,
+                              const double x_offset);
+
+//------------------------------------------------------------------------------
 ///  @brief Create 2D piecewise node with complex arguments.
 ///
 ///  @param[in] c The graph C context.

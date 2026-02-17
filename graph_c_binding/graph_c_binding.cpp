@@ -1676,6 +1676,98 @@ extern "C" {
         }
     }
 
+//------------------------------------------------------------------------------
+///  @brief Create a 1D index.
+///
+///  @param[in] c           The graph C context.
+///  @param[in] variable    The variable to index.
+///  @param[in] x_arg       The function x argument.
+///  @param[in] x_scale     Scale factor x argument.
+///  @param[in] x_offset    Offset factor x argument.
+///  @returns A 1D index node.
+//------------------------------------------------------------------------------
+    graph_node graph_index_1D(STRUCT_TAG graph_c_context *c,
+                              graph_node variable,
+                              graph_node x_arg,
+                              const double x_scale,
+                              const double x_offset) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = graph::index_1D(d->nodes[variable],
+                                                d->nodes[x_arg],
+                                                static_cast<float> (x_scale),
+                                                static_cast<float> (x_offset));
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = graph::index_1D(d->nodes[variable],
+                                                d->nodes[x_arg],
+                                                static_cast<float> (x_scale),
+                                                static_cast<float> (x_offset));
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+            
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = graph::index_1D(d->nodes[variable],
+                                                d->nodes[x_arg],
+                                                x_scale, x_offset);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = graph::index_1D(d->nodes[variable],
+                                                d->nodes[x_arg],
+                                                x_scale, x_offset);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    auto temp = graph::index_1D(d->nodes[variable],
+                                                d->nodes[x_arg],
+                                                std::complex<float> (x_scale),
+                                                std::complex<float> (x_offset));
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    auto temp = graph::index_1D(d->nodes[variable],
+                                                d->nodes[x_arg],
+                                                std::complex<float> (x_scale),
+                                                std::complex<float> (x_offset));
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+            
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    auto temp = graph::index_1D(d->nodes[variable],
+                                                d->nodes[x_arg],
+                                                std::complex<double> (x_scale),
+                                                std::complex<double> (x_offset));
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    auto temp = graph::index_1D(d->nodes[variable],
+                                                d->nodes[x_arg],
+                                                std::complex<double> (x_scale),
+                                                std::complex<double> (x_offset));
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+        }
+    }
+
 //******************************************************************************
 //  JIT
 //******************************************************************************

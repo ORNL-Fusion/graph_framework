@@ -293,6 +293,38 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Index row.
+///
+///  @param[in] index       The row index.
+///  @param[in] num_columns The number of coils.
+///  @returns A buffer containing the row.
+//------------------------------------------------------------------------------
+        buffer<T> index_row(const size_t index, const size_t num_columns) {
+            buffer<T> b(num_columns);
+            const size_t num_rows = size()/num_columns;
+            for (size_t j = 0; j < num_columns; j++) {
+                b[j] = memory[index*num_rows + j];
+            }
+            return b;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Index column.
+///
+///  @param[in] index       The row index.
+///  @param[in] num_columns The number of coils.
+///  @returns A buffer containing the row.
+//------------------------------------------------------------------------------
+        buffer<T> index_column(const size_t index, const size_t num_columns) {
+            const size_t num_rows = size()/num_columns;
+            buffer<T> b(num_rows);
+            for (size_t i = 0; i < num_rows; i++) {
+                b[i] = memory[i*num_rows + index];
+            }
+            return b;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Add row operation.
 ///
 ///  Adds m_ij + v_i or v_i + m_ij. This will resize the buffer if it needs to 
