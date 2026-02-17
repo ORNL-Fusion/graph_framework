@@ -313,6 +313,40 @@ template<jit::float_scalar T> void piecewise_2D() {
         static_cast<T> (2.0), static_cast<T> (4.0)
     }), ay, 1.0, 0.0);
 
+    auto cx = graph::constant<T> (static_cast<T> (0.5));
+    auto cy = graph::constant<T> (static_cast<T> (1.5));
+    auto pconst = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0),
+        static_cast<T> (6.0), static_cast<T> (10.0)
+    }), 2, cx, 1.0, 0.0, cy, 1.0, 0.0);
+    auto pc_cast = constant_cast(pconst);
+    assert(pc_cast.get() && "Expected a constant node.");
+    assert(pc_cast->is(4.0) && "Expected a value of 6");
+
+    auto p1const = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0),
+        static_cast<T> (6.0), static_cast<T> (10.0)
+    }), 2, cx, 1.0, 0.0, ay, 1.0, 0.0);
+    auto p1c_cast = piecewise_1D_cast(p1const);
+    assert(p1c_cast.get() && "Expected a piecewise constant.");
+    backend::buffer<T> buffer = p1c_cast->evaluate();
+    assert(buffer[0] == static_cast<T> (2.0) &&
+           "Expected a 2 in the first index.");
+    assert(buffer[1] == static_cast<T> (4.0) &&
+           "Expected a 4 in the second index.");
+
+    auto p2const = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0),
+        static_cast<T> (6.0), static_cast<T> (10.0)
+    }), 2, ax, 1.0, 0.0, cy, 1.0, 0.0);
+    auto p2c_cast = piecewise_1D_cast(p2const);
+    assert(p2c_cast.get() && "Expected a piecewise constant.");
+    buffer = p2c_cast->evaluate();
+    assert(buffer[0] == static_cast<T> (4.0) &&
+           "Expected a 4 in the first index.");
+    assert(buffer[1] == static_cast<T> (10.0) &&
+           "Expected a 10 in the second index.");
+
     assert(graph::constant_cast(p1*0.0).get() &&
            "Expected a constant node.");
 

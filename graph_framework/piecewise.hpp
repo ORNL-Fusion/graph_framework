@@ -191,7 +191,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->arg).get()) {
-                const T arg = (this->evaluate().at(0) + offset)/scale;
+                const T arg = (this->arg->evaluate().at(0) + offset)/scale;
                 const size_t i = std::min(static_cast<size_t> (std::real(arg)),
                                           this->get_size() - 1);
                 return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
@@ -831,6 +831,31 @@ void compile_index(std::ostringstream &stream,
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
+            if (constant_cast(this->left).get() &&
+                constant_cast(this->right).get()) {
+                const T l = (this->left->evaluate().at(0) + x_offset)/x_scale;
+                const T r = (this->right->evaluate().at(0) + y_offset)/y_scale;
+                const size_t i = std::min(static_cast<size_t> (std::real(l)),
+                                          this->get_num_rows() - 1);
+                const size_t j = std::min(static_cast<size_t> (std::real(r)),
+                                          this->get_num_columns() - 1);
+                return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
+            } else if (constant_cast(this->left).get()) {
+                const T l = (this->left->evaluate().at(0) + x_offset)/x_scale;
+                const size_t i = std::min(static_cast<size_t> (std::real(l)),
+                                          this->get_num_rows() - 1);
+                
+                return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
+                                    this->right, y_scale, y_offset);
+            } else if (constant_cast(this->right).get()) {
+                const T r = (this->right->evaluate().at(0) + y_offset)/y_scale;
+                const size_t j = std::min(static_cast<size_t> (std::real(r)),
+                                          this->get_num_columns() - 1);
+                
+                return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
+                                    this->left, x_scale, x_offset);
+            }
+
             if (evaluate().is_same()) {
                 return constant<T, SAFE_MATH> (evaluate().at(0));
             }
