@@ -29,7 +29,7 @@ bibliography: paper.bib
 
 The `graph_framework` is a domain specific compiler which enables domain
 scientists to create optimized kernels that can operate on Graphics Processing 
-Units (GPUs) or central processing unit (CPUs). This framework works by first 
+Units (GPUs) or central processing units (CPUs). This framework works by first 
 building data structures of the operations making up a physics equations. 
 Algebraic simplifications are applied to the graphs to reduce them to simpler 
 forms. Auto differentiation is supported by traversing existing graphs and 
