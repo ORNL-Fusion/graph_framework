@@ -397,7 +397,7 @@ void run_dispersion_test(equilibrium::shared<typename DISPERSION_FUNCTION::base>
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void run_dispersion_tests() {
     auto no_mag_eq = equilibrium::make_no_magnetic_field<T> ();
 

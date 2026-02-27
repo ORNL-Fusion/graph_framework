@@ -146,6 +146,7 @@
                                       piecewise_2D_cfloat,                     &
                                       piecewise_2D_cdouble
          PROCEDURE :: index_1D => graph_context_index_1D
+         PROCEDURE :: index_2D => graph_context_index_2D
          PROCEDURE :: get_max_concurrency => graph_context_get_max_concurrency
          PROCEDURE :: set_device_number => graph_context_set_device_number
          PROCEDURE :: add_pre_item => graph_context_add_pre_item
@@ -665,11 +666,42 @@
          BIND(C, NAME='graph_index_1D')
          USE, INTRINSIC :: ISO_C_BINDING
          IMPLICIT NONE
-         TYPE(C_PTR), VALUE         :: c
-         TYPE(C_PTR), VALUE         :: variable
-         TYPE(C_PTR), VALUE         :: arg
-         REAL(C_DOUBLE), VALUE      :: scale
-         REAL(C_DOUBLE), VALUE      :: offset
+         TYPE(C_PTR), VALUE    :: c
+         TYPE(C_PTR), VALUE    :: variable
+         TYPE(C_PTR), VALUE    :: arg
+         REAL(C_DOUBLE), VALUE :: scale
+         REAL(C_DOUBLE), VALUE :: offset
+         END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D index node.
+!>
+!>  @param[in] c        The graph C context.
+!>  @param[in] variable The variable to index.
+!>  @param[in] num_cols Number of columns.
+!>  @param[in] x_arg    The function x argument.
+!>  @param[in] x_scale  Scale factor x argument.
+!>  @param[in] x_offset Offset factor x argument.
+!>  @param[in] y_arg    The function y argument.
+!>  @param[in] y_scale  Scale factor y argument.
+!>  @param[in] y_offset Offset factor y argument.
+!>  @returns A 2D piecewise node.
+!-------------------------------------------------------------------------------
+         TYPE(C_PTR) FUNCTION graph_index_2D(c, variable, num_cols,            &
+                                             x_arg, x_scale, x_offset,         &
+                                             y_arg, y_scale, y_offset)         &
+         BIND(C, NAME='graph_index_2D')
+         USE, INTRINSIC :: ISO_C_BINDING
+         IMPLICIT NONE
+         TYPE(C_PTR), VALUE     :: c
+         TYPE(C_PTR), VALUE     :: variable
+         INTEGER(C_LONG), VALUE :: num_cols
+         TYPE(C_PTR), VALUE     :: x_arg
+         REAL(C_DOUBLE), VALUE  :: x_scale
+         REAL(C_DOUBLE), VALUE  :: x_offset
+         TYPE(C_PTR), VALUE     :: y_arg
+         REAL(C_DOUBLE), VALUE  :: y_scale
+         REAL(C_DOUBLE), VALUE  :: y_offset
          END FUNCTION
 
 !-------------------------------------------------------------------------------
@@ -1613,12 +1645,12 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      TYPE(C_PTR)                         :: graph_context_piecewise_1D_float
-      CLASS(graph_context), INTENT(INOUT) :: this
-      TYPE(C_PTR), INTENT(IN)             :: arg
-      REAL(C_DOUBLE)                      :: scale
-      REAL(C_DOUBLE)                      :: offset
-      REAL(C_FLOAT), DIMENSION(:)         :: source
+      TYPE(C_PTR) :: graph_context_piecewise_1D_float
+      CLASS(graph_context), INTENT(INOUT)     :: this
+      TYPE(C_PTR), INTENT(IN)                 :: arg
+      REAL(C_DOUBLE), INTENT(IN)              :: scale
+      REAL(C_DOUBLE), INTENT(IN)              :: offset
+      REAL(C_FLOAT), DIMENSION(:), INTENT(IN) :: source
 
 !  Start of executable.
       graph_context_piecewise_1D_float =                                       &
@@ -1643,12 +1675,12 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      TYPE(C_PTR)                          :: graph_context_piecewise_1D_double
-      CLASS(graph_context), INTENT(INOUT)  :: this
-      TYPE(C_PTR), INTENT(IN)              :: arg
-      REAL(C_DOUBLE)                       :: scale
-      REAL(C_DOUBLE)                       :: offset
-      REAL(C_DOUBLE), DIMENSION(:)         :: source
+      TYPE(C_PTR) :: graph_context_piecewise_1D_double
+      CLASS(graph_context), INTENT(INOUT)      :: this
+      TYPE(C_PTR), INTENT(IN)                  :: arg
+      REAL(C_DOUBLE), INTENT(IN)               :: scale
+      REAL(C_DOUBLE), INTENT(IN)               :: offset
+      REAL(C_DOUBLE), DIMENSION(:), INTENT(IN) :: source
 
 !  Start of executable.
       graph_context_piecewise_1D_double =                                      &
@@ -1674,11 +1706,11 @@
 
 !  Declare Arguments
       TYPE(C_PTR) :: graph_context_piecewise_1D_cfloat
-      CLASS(graph_context), INTENT(INOUT)    :: this
-      TYPE(C_PTR), INTENT(IN)                :: arg
-      REAL(C_DOUBLE)                         :: scale
-      REAL(C_DOUBLE)                         :: offset
-      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:) :: source
+      CLASS(graph_context), INTENT(INOUT)                :: this
+      TYPE(C_PTR), INTENT(IN)                            :: arg
+      REAL(C_DOUBLE), INTENT(IN)                         :: scale
+      REAL(C_DOUBLE), INTENT(IN)                         :: offset
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(IN) :: source
 
 !  Start of executable.
       graph_context_piecewise_1D_cfloat =                                      &
@@ -1704,11 +1736,11 @@
 
 !  Declare Arguments
       TYPE(C_PTR) :: graph_context_piecewise_1D_cdouble
-      CLASS(graph_context), INTENT(INOUT)     :: this
-      TYPE(C_PTR), INTENT(IN)                 :: arg
-      REAL(C_DOUBLE)                          :: scale
-      REAL(C_DOUBLE)                          :: offset
-      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:) :: source
+      CLASS(graph_context), INTENT(INOUT)                 :: this
+      TYPE(C_PTR), INTENT(IN)                             :: arg
+      REAL(C_DOUBLE), INTENT(IN)                          :: scale
+      REAL(C_DOUBLE), INTENT(IN)                          :: offset
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(IN) :: source
 
 !  Start of executable.
       graph_context_piecewise_1D_cdouble =                                     &
@@ -1739,14 +1771,14 @@
 
 !  Declare Arguments
       TYPE(C_PTR) :: graph_context_piecewise_2D_float
-      CLASS(graph_context), INTENT(INOUT) :: this
-      TYPE(C_PTR), INTENT(IN)             :: x_arg
-      REAL(C_DOUBLE)                      :: x_scale
-      REAL(C_DOUBLE)                      :: x_offset
-      TYPE(C_PTR), INTENT(IN)             :: y_arg
-      REAL(C_DOUBLE)                      :: y_scale
-      REAL(C_DOUBLE)                      :: y_offset
-      REAL(C_FLOAT), DIMENSION(:,:)       :: source
+      CLASS(graph_context), INTENT(INOUT)       :: this
+      TYPE(C_PTR), INTENT(IN)                   :: x_arg
+      REAL(C_DOUBLE), INTENT(IN)                :: x_scale
+      REAL(C_DOUBLE), INTENT(IN)                :: x_offset
+      TYPE(C_PTR), INTENT(IN)                   :: y_arg
+      REAL(C_DOUBLE), INTENT(IN)                :: y_scale
+      REAL(C_DOUBLE), INTENT(IN)                :: y_offset
+      REAL(C_FLOAT), DIMENSION(:,:), INTENT(IN) :: source
 
 !  Start of executable.
       graph_context_piecewise_2D_float =                                       &
@@ -1780,14 +1812,14 @@
 
 !  Declare Arguments
       TYPE(C_PTR) :: graph_context_piecewise_2D_double
-      CLASS(graph_context), INTENT(INOUT) :: this
-      TYPE(C_PTR), INTENT(IN)             :: x_arg
-      REAL(C_DOUBLE)                      :: x_scale
-      REAL(C_DOUBLE)                      :: x_offset
-      TYPE(C_PTR), INTENT(IN)             :: y_arg
-      REAL(C_DOUBLE)                      :: y_scale
-      REAL(C_DOUBLE)                      :: y_offset
-      REAL(C_DOUBLE), DIMENSION(:,:)      :: source
+      CLASS(graph_context), INTENT(INOUT)        :: this
+      TYPE(C_PTR), INTENT(IN)                    :: x_arg
+      REAL(C_DOUBLE), INTENT(IN)                 :: x_scale
+      REAL(C_DOUBLE), INTENT(IN)                 :: x_offset
+      TYPE(C_PTR), INTENT(IN)                    :: y_arg
+      REAL(C_DOUBLE), INTENT(IN)                 :: y_scale
+      REAL(C_DOUBLE), INTENT(IN)                 :: y_offset
+      REAL(C_DOUBLE), DIMENSION(:,:), INTENT(IN) :: source
 
 !  Start of executable.
       graph_context_piecewise_2D_double =                                      &
@@ -1821,14 +1853,14 @@
 
 !  Declare Arguments
       TYPE(C_PTR) :: graph_context_piecewise_2D_cfloat
-      CLASS(graph_context), INTENT(INOUT)      :: this
-      TYPE(C_PTR), INTENT(IN)                  :: x_arg
-      REAL(C_DOUBLE)                           :: x_scale
-      REAL(C_DOUBLE)                           :: x_offset
-      TYPE(C_PTR), INTENT(IN)                  :: y_arg
-      REAL(C_DOUBLE)                           :: y_scale
-      REAL(C_DOUBLE)                           :: y_offset
-      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:,:) :: source
+      CLASS(graph_context), INTENT(INOUT)                  :: this
+      TYPE(C_PTR), INTENT(IN)                              :: x_arg
+      REAL(C_DOUBLE), INTENT(IN)                           :: x_scale
+      REAL(C_DOUBLE), INTENT(IN)                           :: x_offset
+      TYPE(C_PTR), INTENT(IN)                              :: y_arg
+      REAL(C_DOUBLE), INTENT(IN)                           :: y_scale
+      REAL(C_DOUBLE), INTENT(IN)                           :: y_offset
+      COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:,:), INTENT(IN) :: source
 
 !  Start of executable.
       graph_context_piecewise_2D_cfloat =                                      &
@@ -1862,14 +1894,14 @@
 
 !  Declare Arguments
       TYPE(C_PTR) :: graph_context_piecewise_2D_cdouble
-      CLASS(graph_context), INTENT(INOUT)       :: this
-      TYPE(C_PTR), INTENT(IN)                   :: x_arg
-      REAL(C_DOUBLE)                            :: x_scale
-      REAL(C_DOUBLE)                            :: x_offset
-      TYPE(C_PTR), INTENT(IN)                   :: y_arg
-      REAL(C_DOUBLE)                            :: y_scale
-      REAL(C_DOUBLE)                            :: y_offset
-      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:,:) :: source
+      CLASS(graph_context), INTENT(INOUT)                   :: this
+      TYPE(C_PTR), INTENT(IN)                               :: x_arg
+      REAL(C_DOUBLE), INTENT(IN)                            :: x_scale
+      REAL(C_DOUBLE), INTENT(IN)                            :: x_offset
+      TYPE(C_PTR), INTENT(IN)                               :: y_arg
+      REAL(C_DOUBLE), INTENT(IN)                            :: y_scale
+      REAL(C_DOUBLE), INTENT(IN)                            :: y_offset
+      COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:,:), INTENT(IN) :: source
 
 !  Start of executable.
       graph_context_piecewise_2D_cdouble =                                     &
@@ -1900,12 +1932,51 @@
       CLASS(graph_context), INTENT(INOUT) :: this
       TYPE(C_PTR), INTENT(IN)             :: variable
       TYPE(C_PTR), INTENT(IN)             :: arg
-      REAL(C_DOUBLE)                      :: scale
-      REAL(C_DOUBLE)                      :: offset
+      REAL(C_DOUBLE), INTENT(IN)          :: scale
+      REAL(C_DOUBLE), INTENT(IN)          :: offset
 
 !  Start of executable.
       graph_context_index_1D =                                                 &
          graph_index_1D(this%c_context, variable, arg, scale, offset)
+
+      END FUNCTION
+
+!-------------------------------------------------------------------------------
+!>  @brief Create 2D index node with float buffer.
+!>
+!>  @param[in,out] this     @ref graph_context instance.
+!>  @param[in]     variable The variable
+!>  @param[in]     num_cols Number of columns.
+!>  @param[in]     x_arg    The function x argument.
+!>  @param[in]     x_scale  Scale factor for x argument.
+!>  @param[in]     x_offset Offset factor for x argument.
+!>  @param[in]     y_arg    The function y argument.
+!>  @param[in]     y_scale  Scale factor for y argument.
+!>  @param[in]     y_offset Offset factor for y argument.
+!>  @returns index_1D node.
+!-------------------------------------------------------------------------------
+      FUNCTION graph_context_index_2D(this, variable, num_cols,                &
+                                      x_arg, x_scale, x_offset,                &
+                                      y_arg, y_scale, y_offset)
+
+      IMPLICIT NONE
+
+!  Declare Arguments
+      TYPE(C_PTR)                         :: graph_context_index_2D
+      CLASS(graph_context), INTENT(INOUT) :: this
+      TYPE(C_PTR), INTENT(IN)             :: variable
+      INTEGER(C_LONG), INTENT(IN)         :: num_cols
+      TYPE(C_PTR), INTENT(IN)             :: x_arg
+      REAL(C_DOUBLE), INTENT(IN)          :: x_scale
+      REAL(C_DOUBLE), INTENT(IN)          :: x_offset
+      TYPE(C_PTR), INTENT(IN)             :: y_arg
+      REAL(C_DOUBLE), INTENT(IN)          :: y_scale
+      REAL(C_DOUBLE), INTENT(IN)          :: y_offset
+
+!  Start of executable.
+      graph_context_index_2D =                                                 &
+         graph_index_2D(this%c_context, variable, num_cols,                    &
+                        x_arg, x_scale, x_offset, y_arg, y_scale, y_offset)
 
       END FUNCTION
 
@@ -1923,7 +1994,7 @@
       IMPLICIT NONE
 
 !  Declare Arguments
-      INTEGER(C_LONG)                     :: graph_context_get_max_concurrency
+      INTEGER(C_LONG)                  :: graph_context_get_max_concurrency
       CLASS(graph_context), INTENT(IN) :: this
 
 !  Start of executable.
@@ -2057,8 +2128,8 @@
       TYPE(C_PTR), INTENT(IN)                       :: random_state
       CHARACTER(kind=C_CHAR,len=*), INTENT(IN)      :: name
       INTEGER(C_LONG), INTENT(IN)                   :: num_particles
-      REAL(C_DOUBLE), VALUE                         :: tol
-      INTEGER(C_LONG), VALUE                        :: max_iter
+      REAL(C_DOUBLE), INTENT(IN)                    :: tol
+      INTEGER(C_LONG), INTENT(IN)                   :: max_iter
 
 !  Start of executable.
       CALL graph_add_converge_item(this%c_context, LOC(inputs),                &
@@ -2259,7 +2330,7 @@
 
 !  Declare Arguments
       CLASS(graph_context), INTENT(IN)           :: this
-      TYPE(C_PTR), VALUE                         :: node
+      TYPE(C_PTR), INTENT(IN)                    :: node
       REAL(C_FLOAT), DIMENSION(:), INTENT(INOUT) :: destination
 
 !  Start of executable.
@@ -2280,7 +2351,7 @@
 
 !  Declare Arguments
       CLASS(graph_context), INTENT(IN)            :: this
-      TYPE(C_PTR), VALUE                          :: node
+      TYPE(C_PTR), INTENT(IN)                     :: node
       REAL(C_DOUBLE), DIMENSION(:), INTENT(INOUT) :: destination
 
 !  Start of executable.
@@ -2301,7 +2372,7 @@
 
 !  Declare Arguments
       CLASS(graph_context), INTENT(IN)                      :: this
-      TYPE(C_PTR), VALUE                                    :: node
+      TYPE(C_PTR), INTENT(IN)                               :: node
       COMPLEX(C_FLOAT_COMPLEX), DIMENSION(:), INTENT(INOUT) :: destination
 
 !  Start of executable.
@@ -2322,7 +2393,7 @@
 
 !  Declare Arguments
       CLASS(graph_context), INTENT(IN)                       :: this
-      TYPE(C_PTR), VALUE                                     :: node
+      TYPE(C_PTR), INTENT(IN)                                :: node
       COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), INTENT(INOUT) :: destination
 
 !  Start of executable.

@@ -62,15 +62,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Reduce the random_state_node.
-///
-///  @returns Reduced graph from random_state.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T, SAFE_MATH> reduce() {
-            return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
 ///  @param[in] x The variable to take the derivative to.
@@ -324,15 +315,6 @@ namespace graph {
         virtual backend::buffer<T> evaluate() {
             backend::buffer<T> result;
             return result;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Reduce the random node.
-///
-///  @returns Reduced graph from random.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T, SAFE_MATH> reduce() {
-            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------

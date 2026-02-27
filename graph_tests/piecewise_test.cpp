@@ -751,6 +751,31 @@ template<jit::float_scalar T> void index_1D() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests for 2D index nodes.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+template<jit::float_scalar T> void index_2D() {
+    auto variable = graph::variable<T> (9, "");
+    auto x = graph::variable<T> (1, "");
+    auto y = graph::variable<T> (1, "");
+
+    auto index = graph::index_2D<T> (variable, 3,
+                                     x, 1.0, 0.0,
+                                     y, 1.0, 0.0);
+
+    variable->set({1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+    x->set(static_cast<T> (2.5));
+    y->set(static_cast<T> (0.5));
+
+    compile<T> ({graph::variable_cast(variable),
+                 graph::variable_cast(x),
+                 graph::variable_cast(y)},
+                {index}, {},
+                static_cast<T> (7.0), 0.0);
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 ///
 ///  @tparam T Base type of the calculation.
@@ -759,6 +784,7 @@ template<jit::float_scalar T> void run_tests() {
     piecewise_1D<T> ();
     piecewise_2D<T> ();
     index_1D<T> ();
+    index_2D<T> ();
 }
 
 //------------------------------------------------------------------------------

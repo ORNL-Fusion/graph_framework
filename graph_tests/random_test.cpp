@@ -25,7 +25,7 @@
 ///  @param[in] offset   Offset of the correlation.
 ///  @returns The autocorrelation for a given offset.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 T autocorrelation(const std::vector<T> &sequence,
                   const size_t offset) {
     T result = 0.0;
