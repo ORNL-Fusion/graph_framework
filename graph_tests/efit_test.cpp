@@ -128,7 +128,7 @@ void check_error(const T test, const T tolerance,
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 void run_test() {
     const gold_data<T> gold;
 

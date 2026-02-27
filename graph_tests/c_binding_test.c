@@ -125,6 +125,7 @@ void run_tests(const enum graph_type type,
     graph_node i = graph_variable(c_context, 1, "i");
     graph_node j = graph_variable(c_context, 1, "j");
     graph_node variable = graph_variable(c_context, 3, "var");
+    graph_node variable2 = graph_variable(c_context, 9, "var2");
     switch (c_context->type) {
         case FLOAT: {
             float value1[3] = {2.0, 4.0, 6.0};
@@ -134,6 +135,7 @@ void run_tests(const enum graph_type type,
             graph_set_variable(c_context, i, &value3);
             graph_set_variable(c_context, j, &value4);
             graph_set_variable(c_context, variable, &value1);
+            graph_set_variable(c_context, variable2, &value2);
             p1 = graph_piecewise_1D(c_context, i, 1.0, 0.0, value1, 3);
             p2 = graph_piecewise_2D(c_context, 3, j, 1.0, 0.0, i, 1.0, 0.0, value2, 9);
             break;
@@ -147,6 +149,7 @@ void run_tests(const enum graph_type type,
             graph_set_variable(c_context, i, &value3);
             graph_set_variable(c_context, j, &value4);
             graph_set_variable(c_context, variable, &value1);
+            graph_set_variable(c_context, variable2, &value2);
             p1 = graph_piecewise_1D(c_context, i, 1.0, 0.0, value1, 3);
             p2 = graph_piecewise_2D(c_context, 3, j, 1.0, 0.0, i, 1.0, 0.0, value2, 9);
             break;
@@ -162,6 +165,7 @@ void run_tests(const enum graph_type type,
             graph_set_variable(c_context, i, &value3);
             graph_set_variable(c_context, j, &value4);
             graph_set_variable(c_context, variable, &value1);
+            graph_set_variable(c_context, variable2, &value2);
             p1 = graph_piecewise_1D(c_context, i, 1.0, 0.0, value1, 3);
             p2 = graph_piecewise_2D(c_context, 3, j, 1.0, 0.0, i, 1.0, 0.0, value2, 9);
             break;
@@ -177,15 +181,17 @@ void run_tests(const enum graph_type type,
             graph_set_variable(c_context, i, &value3);
             graph_set_variable(c_context, j, &value4);
             graph_set_variable(c_context, variable, &value1);
+            graph_set_variable(c_context, variable2, &value2);
             p1 = graph_piecewise_1D(c_context, i, 1.0, 0.0, value1, 3);
             p2 = graph_piecewise_2D(c_context, 3, j, 1.0, 0.0, i, 1.0, 0.0, value2, 9);
             break;
         }
     }
     graph_node i1 = graph_index_1D(c_context, variable, i, 1.0, 0.0);
+    graph_node i2 = graph_index_2D(c_context, variable2, 3, i, 1.0, 0.0, j, 1.0, 0.0);
 
-    graph_node inputs2[3] = {i, j, variable};
-    graph_node outputs2[3] = {p1, p2, i1};
+    graph_node inputs2[4] = {i, j, variable, variable2};
+    graph_node outputs2[4] = {p1, p2, i1, i2};
     graph_node *map_inputs2 = NULL;
     graph_node *map_outputs2 = NULL;
 
@@ -201,8 +207,8 @@ void run_tests(const enum graph_type type,
                    map_inputs, map_outputs, 0,
                    NULL, "c_binding", 1);
     graph_add_item(c_context,
-                   inputs2, 3,
-                   outputs2, 3,
+                   inputs2, 4,
+                   outputs2, 4,
                    map_inputs2, map_outputs2, 0,
                    NULL, "c_binding_piecewise", 1);
     graph_add_converge_item(c_context, &z, 1,
@@ -245,7 +251,7 @@ void run_tests(const enum graph_type type,
 
     switch (c_context->type) {
         case FLOAT: {
-            float value[10];
+            float value[11];
             graph_copy_to_host(c_context, y, value);
             graph_copy_to_host(c_context, dydx, value + 1);
             graph_copy_to_host(c_context, dydm, value + 2);
@@ -256,6 +262,7 @@ void run_tests(const enum graph_type type,
             graph_copy_to_host(c_context, p1, value + 7);
             graph_copy_to_host(c_context, p2, value + 8);
             graph_copy_to_host(c_context, i1, value + 9);
+            graph_copy_to_host(c_context, i2, value + 10);
             assert(value[0] == 0.5f*2.0f + 0.2f && "Value of y does not match.");
             assert(value[1] == 0.5f && "Value of dydx does not match.");
             assert(value[2] == 2.0f && "Value of dydm does not match.");
@@ -270,11 +277,12 @@ void run_tests(const enum graph_type type,
             assert(value[7] == 4.0f && "Value of p1 does not match.");
             assert(value[8] == 8.0f && "Value of p2 does not match.");
             assert(value[9] == 4.0f && "Value of i1 does not match.");
+            assert(value[10] == 6.0f && "Value of i2 does not match.");
             break;
         }
 
         case DOUBLE: {
-            double value[10];
+            double value[11];
             graph_copy_to_host(c_context, y, value);
             graph_copy_to_host(c_context, dydx, value + 1);
             graph_copy_to_host(c_context, dydm, value + 2);
@@ -285,6 +293,7 @@ void run_tests(const enum graph_type type,
             graph_copy_to_host(c_context, p1, value + 7);
             graph_copy_to_host(c_context, p2, value + 8);
             graph_copy_to_host(c_context, i1, value + 9);
+            graph_copy_to_host(c_context, i2, value + 10);
             assert(value[0] == 0.5*2.0 + 0.2 && "Value of y does not match.");
             assert(value[1] == 0.5 && "Value of dydx does not match.");
             assert(value[2] == 2.0 && "Value of dydm does not match.");
@@ -299,11 +308,12 @@ void run_tests(const enum graph_type type,
             assert(value[7] == 4.0 && "Value of p1 does not match.");
             assert(value[8] == 8.0 && "Value of p2 does not match.");
             assert(value[9] == 4.0 && "Value of i1 does not match.");
+            assert(value[10] == 6.0 && "Value of i2 does not match.");
             break;
         }
 
         case COMPLEX_FLOAT: {
-            float complex value[10];
+            float complex value[11];
             graph_copy_to_host(c_context, y, value);
             graph_copy_to_host(c_context, dydx, value + 1);
             graph_copy_to_host(c_context, dydm, value + 2);
@@ -314,6 +324,7 @@ void run_tests(const enum graph_type type,
             graph_copy_to_host(c_context, p1, value + 7);
             graph_copy_to_host(c_context, p2, value + 8);
             graph_copy_to_host(c_context, i1, value + 9);
+            graph_copy_to_host(c_context, i2, value + 10);
             assert(crealf(value[0]) == 0.5f*2.0f + 0.2f && "Value of y does not match.");
             assert(crealf(value[1]) == 0.5f && "Value of dydx does not match.");
             assert(crealf(value[2]) == 2.0f && "Value of dydm does not match.");
@@ -327,12 +338,13 @@ void run_tests(const enum graph_type type,
             assert(crealf(value[6]) == 1.0f && "Value of root does not match.");
             assert(crealf(value[7]) == 4.0f && "Value of p1 does not match.");
             assert(crealf(value[8]) == 8.0f && "Value of p2 does not match.");
-            assert(crealf(value[9]) == 4.0f && "Value of p1 does not match.");
+            assert(crealf(value[9]) == 4.0f && "Value of i1 does not match.");
+            assert(crealf(value[10]) == 6.0f && "Value of i2 does not match.");
             break;
         }
 
         case COMPLEX_DOUBLE: {
-            double complex value[10];
+            double complex value[11];
             graph_copy_to_host(c_context, y, value);
             graph_copy_to_host(c_context, dydx, value + 1);
             graph_copy_to_host(c_context, dydm, value + 2);
@@ -343,6 +355,7 @@ void run_tests(const enum graph_type type,
             graph_copy_to_host(c_context, p1, value + 7);
             graph_copy_to_host(c_context, p2, value + 8);
             graph_copy_to_host(c_context, i1, value + 9);
+            graph_copy_to_host(c_context, i2, value + 10);
             assert(creal(value[0]) == 0.5*2.0 + 0.2 && "Value of y does not match.");
             assert(creal(value[1]) == 0.5 && "Value of dydx does not match.");
             assert(creal(value[2]) == 2.0 && "Value of dydm does not match.");
@@ -356,7 +369,8 @@ void run_tests(const enum graph_type type,
             assert(creal(value[6]) == 1.0 && "Value of root does not match.");
             assert(creal(value[7]) == 4.0 && "Value of p1 does not match.");
             assert(creal(value[8]) == 8.0 && "Value of p2 does not match.");
-            assert(creal(value[9]) == 4.0 && "Value of p1 does not match.");
+            assert(creal(value[9]) == 4.0 && "Value of i1 does not match.");
+            assert(creal(value[10]) == 6.0 && "Value of i2 does not match.");
             break;
         }
     }

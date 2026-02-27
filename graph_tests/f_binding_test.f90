@@ -90,7 +90,9 @@
       TYPE(C_PTR)                   :: p2
       TYPE(C_PTR)                   :: j
       TYPE(C_PTR)                   :: variable
+      TYPE(C_PTR)                   :: variable2
       TYPE(C_PTR)                   :: i1
+      TYPE(C_PTR)                   :: i2
       TYPE(C_PTR)                   :: z
       TYPE(C_PTR)                   :: root
       TYPE(C_PTR)                   :: root2
@@ -161,6 +163,13 @@
       variable = graph%variable(3_C_LONG, 'var' // C_NULL_CHAR)
       CALL graph%set_variable(variable, buffer1D)
       i1 = graph%index_1D(variable, i, 1.0_C_DOUBLE, 0.0_C_DOUBLE)
+      variable2 = graph%variable(9_C_LONG, 'var' // C_NULL_CHAR)
+      CALL graph%set_variable(variable2,                                       &
+                              RESHAPE(buffer2D,                                &
+                                      (/ PRODUCT(SHAPE(buffer2D)) /)))
+      i2 = graph%index_2D(variable2, 3_C_LONG,                                 &
+                          i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                       &
+                          j, 1.0_C_DOUBLE, 0.0_C_DOUBLE)
 
       z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
       root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
@@ -182,11 +191,12 @@
          graph_ptr(dydy)                                                       &
       /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
-      CALL graph%add_item((/ graph_ptr(i), graph_ptr(j),                       &
-                             graph_ptr(variable) /),                           &
-                          (/ graph_ptr(p1), graph_ptr(p2), graph_ptr(i1) /),   &
-                          graph_null_array, graph_null_array, C_NULL_PTR,      &
-                          'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_item((/                                                   &
+         graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
+      /), (/                                                                   &
+         graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
+      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
                                    C_NULL_PTR,                                 &
@@ -227,6 +237,8 @@
       CALL assert(value(1) .eq. 8.0_C_FLOAT, 'Value of p2 does not match.')
       CALL graph%copy_to_host(i1, value)
       CALL assert(value(1) .eq. 4.0_C_FLOAT, 'Value of i1 does not match.')
+      CALL graph%copy_to_host(i2, value)
+      CALL assert(value(1) .eq. 6.0_C_FLOAT, 'Value of i2 does not match.')
 
       DEALLOCATE(graph)
 
@@ -271,7 +283,9 @@
       TYPE(C_PTR)                    :: p2
       TYPE(C_PTR)                    :: j
       TYPE(C_PTR)                    :: variable
+      TYPE(C_PTR)                    :: variable2
       TYPE(C_PTR)                    :: i1
+      TYPE(C_PTR)                    :: i2
       TYPE(C_PTR)                    :: z
       TYPE(C_PTR)                    :: root
       TYPE(C_PTR)                    :: root2
@@ -342,6 +356,13 @@
       variable = graph%variable(3_C_LONG, 'var' // C_NULL_CHAR)
       CALL graph%set_variable(variable, buffer1D)
       i1 = graph%index_1D(variable, i, 1.0_C_DOUBLE, 0.0_C_DOUBLE)
+      variable2 = graph%variable(9_C_LONG, 'var' // C_NULL_CHAR)
+      CALL graph%set_variable(variable2,                                       &
+                              RESHAPE(buffer2D,                                &
+                                      (/ PRODUCT(SHAPE(buffer2D)) /)))
+      i2 = graph%index_2D(variable2, 3_C_LONG,                                 &
+                          i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                       &
+                          j, 1.0_C_DOUBLE, 0.0_C_DOUBLE)
 
       z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
       root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
@@ -363,11 +384,12 @@
          graph_ptr(dydy)                                                       &
       /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
-      CALL graph%add_item((/ graph_ptr(i), graph_ptr(j),                       &
-                             graph_ptr(variable) /),                           &
-                          (/ graph_ptr(p1), graph_ptr(p2), graph_ptr(i1) /),   &
-                          graph_null_array, graph_null_array, C_NULL_PTR,      &
-                          'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_item((/                                                   &
+         graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
+      /), (/                                                                   &
+         graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
+      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
                                    C_NULL_PTR,                                 &
@@ -408,6 +430,8 @@
       CALL assert(value(1) .eq. 8.0_C_DOUBLE, 'Value of p2 does not match.')
       CALL graph%copy_to_host(i1, value)
       CALL assert(value(1) .eq. 4.0_C_DOUBLE, 'Value of i1 does not match.')
+      CALL graph%copy_to_host(i2, value)
+      CALL assert(value(1) .eq. 6.0_C_DOUBLE, 'Value of i2 does not match.')
 
       DEALLOCATE(graph)
 
@@ -452,7 +476,9 @@
       TYPE(C_PTR)                              :: p2
       TYPE(C_PTR)                              :: j
       TYPE(C_PTR)                              :: variable
+      TYPE(C_PTR)                              :: variable2
       TYPE(C_PTR)                              :: i1
+      TYPE(C_PTR)                              :: i2
       TYPE(C_PTR)                              :: z
       TYPE(C_PTR)                              :: root
       TYPE(C_PTR)                              :: root2
@@ -527,6 +553,13 @@
       variable = graph%variable(3_C_LONG, 'var' // C_NULL_CHAR)
       CALL graph%set_variable(variable, buffer1D)
       i1 = graph%index_1D(variable, i, 1.0_C_DOUBLE, 0.0_C_DOUBLE)
+      variable2 = graph%variable(9_C_LONG, 'var' // C_NULL_CHAR)
+      CALL graph%set_variable(variable2,                                       &
+                              RESHAPE(buffer2D,                                &
+                                      (/ PRODUCT(SHAPE(buffer2D)) /)))
+      i2 = graph%index_2D(variable2, 3_C_LONG,                                 &
+                          i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                       &
+                          j, 1.0_C_DOUBLE, 0.0_C_DOUBLE)
 
       z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
       root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
@@ -548,11 +581,12 @@
          graph_ptr(dydy)                                                       &
       /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
-      CALL graph%add_item((/ graph_ptr(i), graph_ptr(j),                       &
-                             graph_ptr(variable) /),                           &
-                          (/ graph_ptr(p1), graph_ptr(p2), graph_ptr(i1) /),   &
-                          graph_null_array, graph_null_array, C_NULL_PTR,      &
-                          'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_item((/                                                   &
+         graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
+      /), (/                                                                   &
+         graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
+      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
                                    C_NULL_PTR,                                 &
@@ -601,6 +635,9 @@
       CALL graph%copy_to_host(i1, value)
       CALL assert(REAL(value(1)) .eq. 4.0_C_FLOAT,                             &
                   'Value of i1 does not match.')
+      CALL graph%copy_to_host(i2, value)
+      CALL assert(REAL(value(1)) .eq. 6.0_C_FLOAT,                             &
+                  'Value of i2 does not match.')
 
       DEALLOCATE(graph)
 
@@ -645,7 +682,9 @@
       TYPE(C_PTR)                               :: p2
       TYPE(C_PTR)                               :: j
       TYPE(C_PTR)                               :: variable
+      TYPE(C_PTR)                               :: variable2
       TYPE(C_PTR)                               :: i1
+      TYPE(C_PTR)                               :: i2
       TYPE(C_PTR)                               :: z
       TYPE(C_PTR)                               :: root
       TYPE(C_PTR)                               :: root2
@@ -732,6 +771,13 @@
       variable = graph%variable(3_C_LONG, 'var' // C_NULL_CHAR)
       CALL graph%set_variable(variable, buffer1D)
       i1 = graph%index_1D(variable, i, 1.0_C_DOUBLE, 0.0_C_DOUBLE)
+      variable2 = graph%variable(9_C_LONG, 'var' // C_NULL_CHAR)
+      CALL graph%set_variable(variable2,                                       &
+                              RESHAPE(buffer2D,                                &
+                                      (/ PRODUCT(SHAPE(buffer2D)) /)))
+      i2 = graph%index_2D(variable2, 3_C_LONG,                                 &
+                          i, 1.0_C_DOUBLE, 0.0_C_DOUBLE,                       &
+                          j, 1.0_C_DOUBLE, 0.0_C_DOUBLE)
 
       z = graph%variable(1_C_LONG, 'z' // C_NULL_CHAR)
       root = graph%sub(graph%pow(z, graph%constant(3.0_C_DOUBLE)),             &
@@ -753,11 +799,12 @@
          graph_ptr(dydy)                                                       &
       /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
-      CALL graph%add_item((/ graph_ptr(i), graph_ptr(j),                       &
-                             graph_ptr(variable) /),                           &
-                          (/ graph_ptr(p1), graph_ptr(p2), graph_ptr(i1) /),   &
-                          graph_null_array, graph_null_array, C_NULL_PTR,      &
-                          'c_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
+      CALL graph%add_item((/                                                   &
+         graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
+      /), (/                                                                   &
+         graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
+      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
                                    C_NULL_PTR,                                 &
@@ -807,6 +854,9 @@
       CALL graph%copy_to_host(i1, value)
       CALL assert(DBLE(value(1)) .eq. 4.0_C_DOUBLE,                            &
                   'Value of i1 does not match.')
+      CALL graph%copy_to_host(i2, value)
+      CALL assert(DBLE(value(1)) .eq. 6.0_C_DOUBLE,                            &
+                  'Value of i2 does not match.')
 
       DEALLOCATE(graph)
 

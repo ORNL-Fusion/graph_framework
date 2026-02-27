@@ -1039,7 +1039,6 @@ void compile_index(std::ostringstream &stream,
                              ) {
                     if (indices.find(temp.get()) == indices.end()) {
                         indices[temp.get()] = jit::to_string('i', temp.get());
-                        const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                         stream << "        const "
                                << jit::smallest_int_type<T> (length) << " "
                                << indices[temp.get()] << " = "
@@ -1422,18 +1421,6 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
-///  @brief Reduction method.
-///
-///  If all the values in the data buffer are the same. Reduce to a single
-///  constant.
-///
-///  @returns A reduced representation of the node.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T, SAFE_MATH> reduce() {
-            return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
 ///  @param[in] x The variable to take the derivative to.
@@ -1615,7 +1602,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The size of the buffer.
 //------------------------------------------------------------------------------
         size_t get_size() const {
-            return this->left->size();
+            return variable_cast(this->left)->size();
         }
     };
 
@@ -1636,7 +1623,8 @@ void compile_index(std::ostringstream &stream,
                                        shared_leaf<T, SAFE_MATH> x,
                                        const T scale,
                                        const T offset) {
-        assert(variable_cast(v) && "index_1D requires a variable node for first arg.");
+        assert(variable_cast(v).get() &&
+               "index_1D requires a variable node for first arg.");
         auto temp = std::make_shared<index_1D_node<T, SAFE_MATH>> (v, x,
                                                                    scale,
                                                                    offset)->reduce();
@@ -1657,12 +1645,12 @@ void compile_index(std::ostringstream &stream,
 #endif
     }
 
-///  Convenience type alias for shared piecewise 1D nodes.
+///  Convenience type alias for shared index 1D nodes.
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_index_1D = std::shared_ptr<index_1D_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
-///  @brief Cast to a piecewise 1D node.
+///  @brief Cast to a index 1D node.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -1673,6 +1661,401 @@ void compile_index(std::ostringstream &stream,
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_index_1D<T, SAFE_MATH> index_1D_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<index_1D_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
+//  2D Index node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a 2D index.
+///
+///  This class is used to implement 2D indexes into an array.
+///
+///  Indicies are selected by
+///
+///    x_norm' = (x - xmin)/dx                                               (1)
+///    y_norm' = (y - ymin)/dy                                               (2)
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class index_2D_node final : public triple_node<T, SAFE_MATH> {
+    private:
+///  Scale factor for the x argument.
+        const T x_scale;
+///  Offset factor for the x argument.
+        const T x_offset;
+///  Scale factor for the y argument.
+        const T y_scale;
+///  Offset factor for the y argument.
+        const T y_offset;
+///  Number of columns.
+        const size_t num_columns;
+
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string with the argument.
+///
+///  @param[in] v Value to index.
+///  @param[in] x Argument.
+///  @param[in] y Argument.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(shared_leaf<T, SAFE_MATH> v,
+                                     shared_leaf<T, SAFE_MATH> x,
+                                     shared_leaf<T, SAFE_MATH> y) {
+            return jit::format_to_string(v->get_hash()) + "[" +
+                   jit::format_to_string(x->get_hash()) + "," +
+                   jit::format_to_string(y->get_hash()) + "]";
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a 2D index.
+///
+///  @param[in] var      Node to index.
+///  @param[in] n        Number of columns.
+///  @param[in] x        X Argument.
+///  @param[in] x_scale  Scale factor for the argument.
+///  @param[in] x_offset Offset factor for the x argument.
+///  @param[in] y        Y Argument.
+///  @param[in] y_scale  Scale factor for the y argument.
+///  @param[in] y_offset Offset factor for the y argument.
+//------------------------------------------------------------------------------
+        index_2D_node(shared_leaf<T, SAFE_MATH> var,
+                      const size_t n,
+                      shared_leaf<T, SAFE_MATH> x,
+                      const T x_scale,
+                      const T x_offset,
+                      shared_leaf<T, SAFE_MATH> y,
+                      const T y_scale,
+                      const T y_offset) :
+        triple_node<T, SAFE_MATH> (var, x, y, index_2D_node::to_string(var, x, y)),
+        num_columns(n), x_scale(x_scale), x_offset(x_offset), y_scale(y_scale),
+        y_offset(y_offset) {
+            assert(variable_cast(this->left)->size()%n == 0 &&
+                   "Expected the data buffer to be a multiple of the number of columns.");
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of the piecewise constant.
+///
+///  Evaluate functions are only used by the minimization. So this node does not
+///  evaluate the argument. Instead this only returns the data as if it were a
+///  constant.
+///
+///  @returns The evaluated value of the node.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            return this->left->evaluate();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  @param[in] x The variable to take the derivative to.
+///  @return The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return constant<T, SAFE_MATH> (static_cast<T> (this->is_match(x)));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief the node.
+///
+///  This node first evaluates the value of the argument then chooses the
+///  correct index of the variable.
+///
+///    x' = (x - xmin)/dx                                                    (1)
+///    y' = (y - ymin)/dy                                                    (2)
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in,out] indices   List of defined indices.
+///  @param[in]     usage     List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                jit::register_map &indices,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                const size_t length = variable_cast(this->left)->size();
+                const size_t num_rows = length/num_columns;
+
+                shared_leaf<T, SAFE_MATH> x = this->middle->compile(stream,
+                                                                    registers,
+                                                                    indices,
+                                                                    usage);
+                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream,
+                                                                   registers,
+                                                                   indices,
+                                                                   usage);
+
+#ifdef USE_INDEX_CACHE
+                if (indices.find(x.get()) == indices.end()) {
+                    indices[x.get()] = jit::to_string('i', x.get());
+                    stream << "        const "
+                           << jit::smallest_int_type<T> (num_rows) << " "
+                           << indices[x.get()] << " = ";
+                    compile_index<T> (stream, registers[x.get()], num_rows,
+                                      x_scale, x_offset);
+                    x->endline(stream, usage);
+                }
+                if (indices.find(y.get()) == indices.end()) {
+                    indices[y.get()] = jit::to_string('i', y.get());
+                    stream << "        const "
+                           << jit::smallest_int_type<T> (num_columns) << " "
+                           << indices[y.get()] << " = ";
+                    compile_index<T> (stream, registers[y.get()], num_columns,
+                                      y_scale, y_offset);
+                    y->endline(stream, usage);
+                }
+
+                auto temp = this->middle + this->right;
+                if constexpr (!jit::use_metal<T> () ||
+                              !jit::use_cuda()) {
+                    if (indices.find(temp.get()) == indices.end()) {
+                        indices[temp.get()] = jit::to_string('i', temp.get());
+                        stream << "        const "
+                               << jit::smallest_int_type<T> (length) << " "
+                               << indices[temp.get()] << " = "
+                               << indices[x.get()]
+                               << "*" << num_columns << " + "
+                               << indices[y.get()]
+                               << ";" << std::endl;
+                    }
+                }
+#endif
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                auto var = this->left->compile(stream,
+                                                registers,
+                                                indices,
+                                                usage);
+                stream << " " << registers[this] << " = "
+                       << jit::to_string('v', var.get());
+#ifdef USE_INDEX_CACHE
+                stream << "["
+                       << indices[temp.get()]
+                       << "]";
+#else
+                stream << "[";
+                compile_index<T> (stream, registers[x.get()], num_rows,
+                                  x_scale, x_offset);
+                stream << "*" << num_columns << " + ";
+                compile_index<T> (stream, registers[y.get()], num_columns,
+                                  y_scale, y_offset);
+                stream << "]";
+#endif
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "r\\_" << reinterpret_cast<size_t> (this->left.get())
+                      << "\\left[i\\_"
+                      << reinterpret_cast<size_t> (this->middle.get())
+                      << ",j\\_"
+                      << reinterpret_cast<size_t> (this->right.get())
+                      << "\\right]";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"r_" << reinterpret_cast<size_t> (this->left.get())
+                       << "\", shape = hexagon, style = filled, fillcolor = black, fontcolor = white];" << std::endl;
+
+                auto l = this->left->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[l.get()] << ";" << std::endl;
+                auto m = this->middle->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[m.get()] << ";" << std::endl;
+                auto r = this->right->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[r.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node is a constant.
+///
+///  @returns True if the node is a constant.
+//------------------------------------------------------------------------------
+        virtual bool is_constant() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if the node acts like a power of variable.
+///
+///  @returns True.
+//------------------------------------------------------------------------------
+        virtual bool is_power_like() const {
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Check if the args match.
+///
+///  @param[in] x Node to match.
+///  @returns True if the arguments match.
+//------------------------------------------------------------------------------
+        bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = index_1D_cast(x);
+            return temp.get()                               &&
+                   this->right->is_match(temp->get_right()) &&
+                   (temp->get_size() == this->get_size())   &&
+                   (temp->get_scale() == this->scale)       &&
+                   (temp->get_offset() == this->offset);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x argument scale.
+///
+///  @returns The scale factor for x.
+//------------------------------------------------------------------------------
+        T get_x_scale() const {
+            return x_scale;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x argument offset.
+///
+///  @returns The offset factor for x.
+//------------------------------------------------------------------------------
+        T get_x_offset() const {
+            return x_offset;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get y argument scale.
+///
+///  @returns The scale factor for y.
+//------------------------------------------------------------------------------
+        T get_y_scale() const {
+            return y_scale;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get y argument offset.
+///
+///  @returns The offset factor for x.
+//------------------------------------------------------------------------------
+        T get_y_offset() const {
+            return y_offset;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the size of the buffer.
+///
+///  @returns The size of the buffer.
+//------------------------------------------------------------------------------
+        size_t get_size() const {
+            return variable_cast(this->left)->size();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define index_2D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] v        Variable to index.
+///  @param[in] n        Number of columns.
+///  @param[in] x        X argument.
+///  @param[in] x_scale  Scale for x argument.
+///  @param[in] x_offset Offset for x argument.
+///  @param[in] y        Argument.
+///  @param[in] y_scale  Scale for y argument.
+///  @param[in] y_offset Offset for y argument.
+///  @returns A reduced sqrt node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> index_2D(shared_leaf<T, SAFE_MATH> v,
+                                       const size_t n,
+                                       shared_leaf<T, SAFE_MATH> x,
+                                       const T x_scale,
+                                       const T x_offset,
+                                       shared_leaf<T, SAFE_MATH> y,
+                                       const T y_scale,
+                                       const T y_offset) {
+        assert(variable_cast(v).get() &&
+               "index_2D requires a variable node for first arg.");
+        auto temp = std::make_shared<index_2D_node<T, SAFE_MATH>> (v, n,
+                                                                   x, x_scale, x_offset,
+                                                                   y, y_scale, y_offset)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+///  Convenience type alias for shared index 2D nodes.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using shared_index_2D = std::shared_ptr<index_2D_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a index 2D node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_index_2D<T, SAFE_MATH> index_2D_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<index_2D_node<T, SAFE_MATH>> (x);
     }
 }
 

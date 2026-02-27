@@ -21,7 +21,7 @@
 ///  @param[in] mean  Mean value.
 ///  @param[in] sigma Sigma value.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 std::normal_distribution<T> set_distribution(const T mean,
                                              const T sigma) {
     return std::normal_distribution<T> (mean, sigma);
@@ -35,7 +35,7 @@ std::normal_distribution<T> set_distribution(const T mean,
 ///  @param[in] mean  Mean value.
 ///  @param[in] sigma Sigma value.
 //------------------------------------------------------------------------------
-template<typename T>
+template<jit::float_scalar T>
 std::normal_distribution<std::complex<T>> set_distribution(const std::complex<T> mean,
                                                            const std::complex<T> sigma) {
     return std::normal_distribution<T> (std::real(mean), std::real(sigma));
@@ -53,7 +53,7 @@ std::normal_distribution<std::complex<T>> set_distribution(const std::complex<T>
 ///  @param[in,out] engine   Random engine.
 ///  @param[in]     num_rays Numbers of rays.
 //------------------------------------------------------------------------------
-template<typename T, bool SAFE_MATH>
+template<jit::float_scalar T, bool SAFE_MATH>
 void set_variable(const commandline::parser &cl,
                   graph::shared_leaf<T, SAFE_MATH> var,
                   const std::string &name,
@@ -82,7 +82,7 @@ void set_variable(const commandline::parser &cl,
 ///  @param[in,out] engine   Random engine.
 ///  @param[in]     num_rays Numbers of rays.
 //------------------------------------------------------------------------------
-template<typename T, bool SAFE_MATH>
+template<jit::float_scalar T, bool SAFE_MATH>
 void set_xy_variables(const commandline::parser &cl,
                       graph::shared_leaf<T, SAFE_MATH> x,
                       graph::shared_leaf<T, SAFE_MATH> y,

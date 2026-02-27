@@ -448,18 +448,42 @@ extern "C" {
 //------------------------------------------------------------------------------
 ///  @brief Create a 1D index.
 ///
-///  @param[in] c           The graph C context.
-///  @param[in] variable    The variable to index.
-///  @param[in] x_arg       The function x argument.
-///  @param[in] x_scale     Scale factor x argument.
-///  @param[in] x_offset    Offset factor x argument.
+///  @param[in] c        The graph C context.
+///  @param[in] variable The variable to index.
+///  @param[in] arg      The function argument.
+///  @param[in] scale    Scale factor argument.
+///  @param[in] offset   Offset factor argument.
 ///  @returns A 1D index node.
 //------------------------------------------------------------------------------
     graph_node graph_index_1D(STRUCT_TAG graph_c_context *c,
                               graph_node variable,
+                              graph_node arg,
+                              const double scale,
+                              const double offset);
+
+//------------------------------------------------------------------------------
+///  @brief Create a 2D index.
+///
+///  @param[in] c        The graph C context.
+///  @param[in] variable The variable to index.
+///  @param[in] num_cols Number of columns.
+///  @param[in] x_arg    The function x argument.
+///  @param[in] x_scale  Scale factor x argument.
+///  @param[in] x_offset Offset factor x argument.
+///  @param[in] y_arg    The function y argument.
+///  @param[in] y_scale  Scale factor y argument.
+///  @param[in] y_offset Offset factor y argument.
+///  @returns A 2D index node.
+//------------------------------------------------------------------------------
+    graph_node graph_index_2D(STRUCT_TAG graph_c_context *c,
+                              graph_node variable,
+                              const size_t num_cols,
                               graph_node x_arg,
                               const double x_scale,
-                              const double x_offset);
+                              const double x_offset,
+                              graph_node y_arg,
+                              const double y_scale,
+                              const double y_offset);
 
 //------------------------------------------------------------------------------
 ///  @brief Create 2D piecewise node with complex arguments.

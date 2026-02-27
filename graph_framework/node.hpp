@@ -405,7 +405,9 @@ namespace graph {
 ///
 ///  @returns A reduced representation of the node.
 //------------------------------------------------------------------------------
-        virtual std::shared_ptr<leaf_node> reduce() = 0;
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>> reduce() {
+            return this->shared_from_this();
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
@@ -757,17 +759,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
             return data;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Reduction method.
-///
-///  For basic nodes, there's nothing to reduce.
-///
-///  @returns A reduced representation of the node.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T, SAFE_MATH> reduce() {
-            return this->shared_from_this();
         }
 
 //------------------------------------------------------------------------------
@@ -1471,17 +1462,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Reduction method.
-///
-///  For basic nodes, there's nothing to reduce.
-///
-///  @returns A reduced representation of the node.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T, SAFE_MATH> reduce() {
-            return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
 ///
 ///  @param[in] x The variable to take the derivative to.
@@ -1782,17 +1762,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         pseudo_variable_node(shared_leaf<T, SAFE_MATH> a) :
         straight_node<T, SAFE_MATH> (a, pseudo_variable_node::to_string(a.get())) {}
-
-//------------------------------------------------------------------------------
-///  @brief Reduction method.
-///
-///  For basic nodes, there's nothing to reduce.
-///
-///  @returns A reduced representation of the node.
-//------------------------------------------------------------------------------
-        virtual shared_leaf<T, SAFE_MATH> reduce() {
-            return this->shared_from_this();
-        }
 
 //------------------------------------------------------------------------------
 ///  @brief Transform node to derivative.
