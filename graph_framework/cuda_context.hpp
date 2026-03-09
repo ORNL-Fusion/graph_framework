@@ -324,6 +324,7 @@ namespace gpu {
             check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
 
             std::vector<void *> buffers;
+            std::set<graph::leaf_node<float, SAFE_MATH> *> needed_buffers;
 
             const size_t buffer_element_size = sizeof(T);
             for (auto &input : inputs) {
@@ -339,6 +340,11 @@ namespace gpu {
                                              backend.size()*sizeof(T)),
                                 "cuMemcpyHtoD");
                     buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
+                    needed_buffers.insert(input.get());
+                }
+                if (!needed_buffers.contains(input.get())) {
+                    buffers.push_back(kernel_arguments[input.get()]);
+                    needed_buffers.insert(input.get());
                 }
             }
             for (auto &output : outputs) {
@@ -349,6 +355,11 @@ namespace gpu {
                                                   CU_MEM_ATTACH_GLOBAL),
                                 "cuMemAllocManaged");
                     buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
+                    needed_buffers.insert(output.get());
+                }
+                if (!needed_buffers.contains(output.get())) {
+                    buffers.push_back(kernel_arguments[output.get()]);
+                    needed_buffers.insert(output.get());
                 }
             }
 

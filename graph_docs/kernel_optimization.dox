@@ -1,0 +1,141 @@
+/*!
+ * @page kernel_optimization Kernel Optimization
+ * @brief Notes on optimizing kernel performance.
+ * @tableofcontents
+ * @section kernel_optimization_introduction Introduction
+ * There is a balance kernel run time, compile time, and kernel source code
+ * size. To discuss these issues we can explore a case study for a simple field
+ * solve of a Particle In Cell (PIC) code. The field solve involves computing
+ * the contribution of a every particle to fields. Fields are typically
+ * discretized onto a grid which will have a smaller size compared to the number
+ * of particles.
+ *
+ * @section kernel_optimization_source Source Code
+ * Take the example case.
+ * @code
+template<jit::float_scalar T>
+void field_solve_example() {
+    timing::measure_diagnostic init("Init");
+    const size_t batch = 1;
+    const size_t num_particles = 1000000;
+    auto particle_positions = graph::variable<T> (num_particles, "x");
+
+    const size_t num_grid = 1000;
+    auto grid_value = graph::variable<T> (num_grid, "g");
+    auto particle_index = graph::variable<T> (num_grid, "i");
+    auto gird_position = graph::variable<T> (num_grid, "gx");
+
+    std::vector<T> buffer(1000, static_cast<T> (0.0));
+    grid_value->set(buffer);
+    particle_index->set(buffer);
+
+    for (size_t index = 0; index < num_grid; index++) {
+        buffer[index] = static_cast<T> (2*index)/static_cast<T> (999)
+                      - static_cast<T> (1);
+    }
+    gx->set(buffer);
+    
+    auto indexed_particle = graph::index_1D(particle_positions,
+                                            particle_index,
+                                            static_cast<T> (1),
+                                            static_cast<T> (0));
+    auto next_index = particle_index + static_cast<T> (1.0);
+    auto arg = indexed_particle - gird_position;
+    auto next_grid_value = grid_value
+                         + graph::exp(static_cast<T> (-1)*arg*arg/static_cast<T> (10));
+
+//  Unroll kernel call loop by running multiple iterations in a single kernel
+//  call.
+    for (size_t i = 1; i < batch; i++) {
+        indexed_particle = graph::index_1D(particle_positions,
+                                           particle_index,
+                                           static_cast<T> (1),
+                                           static_cast<T> (0));
+        next_index = next_index + static_cast<T> (1.0);
+        arg = indexed_particle - gird_position;
+        next_grid_value = next_grid_value
+                        + graph::exp(static_cast<T> (-1)*arg*arg/static_cast<T> (10));
+    }
+
+    auto state = graph::random_state<T> (jit::context<T>::random_state_size, 0);
+    auto random = graph::random<T> (graph::random_state_cast(state));
+    const T max = 1.0;
+    const T min = -1.0;
+    auto random_real = (max - min)/graph::random_scale<T> ()*random + min;
+
+    init.print();
+
+    timing::measure_diagnostic compile("compile");
+
+    workflow::manager<T> work(0);
+    work.add_preitem({
+        graph::variable_cast(particle_positions)
+    }, {}, {
+        {random_real, variable_cast(particle_positions)}
+    }, graph::random_state_cast(state), "Initialize_x", num_particles);
+
+    work.add_item({
+        graph::variable_cast(particle_positions),
+        graph::variable_cast(indexed_particle),
+        graph::variable_cast(grid_value),
+        graph::variable_cast(gird_position)
+    }, {}, {
+        {next_index, graph::variable_cast(indexed_particle)},
+        {next_grid_value, graph::variable_cast(grid_value)}
+    }, NULL, "Set_Grid", num_grid);
+
+    work.compile();
+
+    compile.print();
+
+    work.pre_run();
+    timing::measure_diagnostic field_solve("field_solve");
+    for (size_t index = 0, ie = num_particles/batch; index < ie; index++) {
+        work.run();
+    }
+    work.wait();
+    field_solve.print();
+}
+ @endcode
+ *
+ * In this example we build two kernels. The <tt>Initialize_x</tt> kernel set
+ * random values between @f$1@f$ and @f$-1@f$ for particle positions to
+ * represent a particle state after a particle push step. This kernel is applied
+ * over each of the @f$1\times10^{6}@f$ particles.
+ *
+ * The <tt>Set_Grid</tt> kernel mimics a simple field. For a given particle
+ * position @f$x@f$, the contribution to grid point is defined as
+ * @f{equation}{g_{next}=g+e^{-\frac{\left(x\left[i\right]-gx\right)^{2}}{10}}@f}
+ * where @f$i@f$ is the particle index, @f$g@f$ is the current grid value,
+ * @f$gx@f$ is the grid position, and @f$g_{next}@f$ is the updated value. After
+ * each kernel call, the particle index is incremented. This kernel is applied
+ * over each of the @f$1\times10^{3}@f$ gird points.
+ *
+ * @section kernel_optimization_performance Kernel Performance
+ * @image{} html kernel_optimization.png "Wall time scaling comparing compile time and run time for the number of loop unroll iterations."
+ * In this section we focus on the <tt>Set_Grid</tt> kernel and the
+ * <tt>batch</tt>. When <tt>batch = 1</tt>, the kernel only adds the kernel
+ * contribution for a single particle. To compute the full field, we would need
+ * to call this kernel @f$1\times10^{6}@f$. Setting <tt>batch > 1</tt>
+ * allows us to unroll the kernel call loop. This reduces the number of times we
+ * need to call the kernel but comes at the expense of a larger kernel and an
+ * associated compile penalty. If we were to set <tt>batch = 1000000</tt>
+ * then we would fully unroll the loop resulting in only needing to call the
+ * kernel once. However it would come at the expense of the generated kernel
+ * source having over @f$1\times10^{6}@f$ lines of code. In testing, loop
+ * unrolling beyond @f$1\times10^{5}@f$ resulted in a segmentation fault.
+ *
+ * The figure above, shows the scaling of the setup time for the graphs, the
+ * compile time for the kernel and the resulting run time. A benchmark was
+ * performed on a Apple M1 Pro for both float and double precision. Note that
+ * the GPU on the M1 Pro only support single precision. CPU benchmark was
+ * performed on a single core.
+ *
+ * Unrolling the loop up to @f$500@f$ iterations shows a significant reduction
+ * in the GPU kernel run time with a negligible affect on the initialization and
+ * kernel compile time. Beyond @f$1000@f$ iterations, the improvement to kernel
+ * runtime becomes negligible. However, any gaines we made in runtime
+ * improvement is lost due to penalty to kernel compiling. For CPU execution
+ * there is little to no noticeable performance improvement when unrolling
+ * kernel call loops.
+ */

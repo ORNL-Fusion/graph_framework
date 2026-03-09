@@ -47,6 +47,7 @@
  * * @ref tutorial "Tutorial"
  * * @ref graph_c_binding
  * * @ref graph_fortran_binding
+ * * @ref kernel_optimization
  *
  * <hr>
  * @section framework_developer Framework developer guides

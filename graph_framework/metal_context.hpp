@@ -138,6 +138,7 @@ namespace gpu {
             }
 
             std::vector<id<MTLBuffer>> buffers;
+            std::set<graph::leaf_node<float, SAFE_MATH> *> needed_buffers;
 
             const size_t buffer_element_size = sizeof(float);
             for (graph::shared_variable<float, SAFE_MATH> &input : inputs) {
@@ -147,6 +148,11 @@ namespace gpu {
                                                                         length:buffer.size()*buffer_element_size
                                                                        options:MTLResourceStorageModeShared];
                     buffers.push_back(kernel_arguments[input.get()]);
+                    needed_buffers.insert(input.get());
+                }
+                if (!needed_buffers.contains(input.get())) {
+                    buffers.push_back(kernel_arguments[input.get()]);
+                    needed_buffers.insert(input.get());
                 }
             }
             for (graph::shared_leaf<float, SAFE_MATH> &output : outputs) {
@@ -154,6 +160,11 @@ namespace gpu {
                     kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
                                                                          options:MTLResourceStorageModeShared];
                     buffers.push_back(kernel_arguments[output.get()]);
+                    needed_buffers.insert(output.get());
+                }
+                if (!needed_buffers.contains(output.get())) {
+                    buffers.push_back(kernel_arguments[output.get()]);
+                    needed_buffers.insert(output.get());
                 }
             }
             if (state.get()) {
