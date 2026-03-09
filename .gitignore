@@ -1,2 +1,6 @@
 .DS_Store
 build
+LLVM
+graph_framework.xcodeproj/project.xcworkspace/xcuserdata/
+graph_framework.xcodeproj/xcshareddata/xcschemes/graph_playground.xcscheme
+graph_framework.xcodeproj/xcuserdata
