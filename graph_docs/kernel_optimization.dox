@@ -23,7 +23,7 @@ void field_solve_example() {
     const size_t num_grid = 1000;
     auto grid_value = graph::variable<T> (num_grid, "g");
     auto particle_index = graph::variable<T> (num_grid, "i");
-    auto gird_position = graph::variable<T> (num_grid, "gx");
+    auto grid_position = graph::variable<T> (num_grid, "gx");
 
     std::vector<T> buffer(1000, static_cast<T> (0.0));
     grid_value->set(buffer);
@@ -33,14 +33,14 @@ void field_solve_example() {
         buffer[index] = static_cast<T> (2*index)/static_cast<T> (999)
                       - static_cast<T> (1);
     }
-    gx->set(buffer);
+    flow_control->set(buffer);
     
     auto indexed_particle = graph::index_1D(particle_positions,
                                             particle_index,
                                             static_cast<T> (1),
                                             static_cast<T> (0));
     auto next_index = particle_index + static_cast<T> (1.0);
-    auto arg = indexed_particle - gird_position;
+    auto arg = indexed_particle - grid_position;
     auto next_grid_value = grid_value
                          + graph::exp(static_cast<T> (-1)*arg*arg/static_cast<T> (10));
 
@@ -52,7 +52,7 @@ void field_solve_example() {
                                            static_cast<T> (1),
                                            static_cast<T> (0));
         next_index = next_index + static_cast<T> (1.0);
-        arg = indexed_particle - gird_position;
+        arg = indexed_particle - grid_position;
         next_grid_value = next_grid_value
                         + graph::exp(static_cast<T> (-1)*arg*arg/static_cast<T> (10));
     }
@@ -78,7 +78,7 @@ void field_solve_example() {
         graph::variable_cast(particle_positions),
         graph::variable_cast(indexed_particle),
         graph::variable_cast(grid_value),
-        graph::variable_cast(gird_position)
+        graph::variable_cast(grid_position)
     }, {}, {
         {next_index, graph::variable_cast(indexed_particle)},
         {next_grid_value, graph::variable_cast(grid_value)}
