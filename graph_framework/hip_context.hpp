@@ -230,7 +230,8 @@ namespace gpu {
                         "hipModuleGetFunction");
 
             std::vector<void *> buffers;
-
+            std::set<graph::leaf_node<float, SAFE_MATH> *> needed_buffers;
+            
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
                     kernel_arguments.try_emplace(input.get());
@@ -243,8 +244,13 @@ namespace gpu {
                                               &backend[0],
                                               backend.size()*sizeof(T)),
                                 "hipMemcpyHtoD");
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
+                    needed_buffers.insert(input.get());
                 }
-                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
+                if (!needed_buffers.contains(input.get())) {
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
+                    needed_buffers.insert(input.get());
+                }
             }
             for (auto &output : outputs) {
                 if (!kernel_arguments.contains(output.get())) {
@@ -253,8 +259,13 @@ namespace gpu {
                                                  num_rays*sizeof(T), 
                                                  hipMemAttachGlobal), 
                                 "hipMallocManaged");
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
+                    needed_buffers.insert(output.get());
                 }
-       	       	buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
+                if (!needed_buffers.contains(output.get())) {
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
+                    needed_buffers.insert(output.get());
+                }
             }
 
             int gridSize;
