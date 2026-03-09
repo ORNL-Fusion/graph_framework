@@ -33,7 +33,7 @@ void field_solve_example() {
         buffer[index] = static_cast<T> (2*index)/static_cast<T> (999)
                       - static_cast<T> (1);
     }
-    flow_control->set(buffer);
+    grid_position->set(buffer);
     
     auto indexed_particle = graph::index_1D(particle_positions,
                                             particle_index,
