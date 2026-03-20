@@ -520,8 +520,7 @@ namespace gpu {
                                    const jit::register_usage &usage) {
             std::unordered_set<void *> out_registers;
             for (auto &[out, in] : setters) {
-                if (!out->is_match(in) &&
-                    !out_registers.contains(out.get())) {
+                if (!out->is_match(in)) {
                     graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
                                                                       registers,
                                                                       indices,

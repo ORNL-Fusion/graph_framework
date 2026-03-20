@@ -48,7 +48,7 @@ void field_solve_example() {
 //  call.
     for (size_t i = 1; i < batch; i++) {
         indexed_particle = graph::index_1D(particle_positions,
-                                           particle_index,
+                                           next_index,
                                            static_cast<T> (1),
                                            static_cast<T> (0));
         next_index = next_index + static_cast<T> (1.0);
