@@ -930,15 +930,15 @@ namespace dispersion {
 ///
 ///  ωpi is the plasma frequency and ωci is the cyclotron frequency.
 ///
-///  @params[in] w  Omega variable.
-///  @params[in] kx Kx variable.
-///  @params[in] ky Ky variable.
-///  @params[in] kz Kz variable.
-///  @params[in] x  x variable.
-///  @params[in] y  y variable.
-///  @params[in] z  z variable.
-///  @params[in] t  Current time.
-///  @params[in] eq The plasma equilibrium.
+///  @param[in] w  Omega variable.
+///  @param[in] kx Kx variable.
+///  @param[in] ky Ky variable.
+///  @param[in] kz Kz variable.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] t  Current time.
+///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
