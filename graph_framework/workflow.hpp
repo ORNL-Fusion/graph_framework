@@ -76,6 +76,50 @@ namespace workflow {
     };
 
 //------------------------------------------------------------------------------
+///  @brief Run a work item in a fixed iteration loop.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class loop_item final : public work_item<T, SAFE_MATH> {
+///  Iterations.
+        const size_t num_iterations;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a workflow item.
+///
+///  @param[in]     inputs     Input variables.
+///  @param[in]     outputs    Output nodes.
+///  @param[in]     maps       Setter maps.
+///  @param[in]     state      Random state node.
+///  @param[in]     name       Name of the work item.
+///  @param[in]     size       Size of the work item.
+///  @param[in,out] context    Jit context.
+///  @param[in]     iterations Number of iterations to run the loop.
+//------------------------------------------------------------------------------
+        loop_item(graph::input_nodes<T, SAFE_MATH> inputs,
+                  graph::output_nodes<T, SAFE_MATH> outputs,
+                  graph::map_nodes<T, SAFE_MATH> maps,
+                  graph::shared_random_state<T, SAFE_MATH> state,
+                  const std::string name, const size_t size,
+                  jit::context<T, SAFE_MATH> &context,
+                  const size_t iterations) :
+        work_item<T, SAFE_MATH> (inputs, outputs, maps, state, name, size, context),
+        num_iterations(iterations) {}
+
+//------------------------------------------------------------------------------
+///  @brief Run the workitem.
+//------------------------------------------------------------------------------
+        virtual void run() {
+            for (size_t i = 0; i < num_iterations; i++) {
+                work_item<T, SAFE_MATH>::run();
+            }
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Class representing a convergence work item.
 ///
 ///  @tparam T         Base type of the calculation.
@@ -233,6 +277,30 @@ namespace workflow {
                                                                        maps, state,
                                                                        name, size,
                                                                        context));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add a workflow item.
+///
+///  @param[in] in         Input variables.
+///  @param[in] out        Output nodes.
+///  @param[in] maps       Setter maps.
+///  @param[in] state      Random state node.
+///  @param[in] name       Name of the work item.
+///  @param[in] size       Size of the work item.
+///  @param[in] iterations Number of iterations.
+//------------------------------------------------------------------------------
+        void add_loop_item(graph::input_nodes<T, SAFE_MATH> in,
+                           graph::output_nodes<T, SAFE_MATH> out,
+                           graph::map_nodes<T, SAFE_MATH> maps,
+                           graph::shared_random_state<T, SAFE_MATH> state,
+                           const std::string name, const size_t size,
+                           const size_t iterations) {
+            items.push_back(std::make_unique<loop_item<T, SAFE_MATH>> (in, out,
+                                                                       maps, state,
+                                                                       name, size,
+                                                                       context,
+                                                                       iterations));
         }
 
 //------------------------------------------------------------------------------

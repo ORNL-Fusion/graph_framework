@@ -25,7 +25,7 @@
 ///  @subsection equilibrium_splines_1D Cubic Splines
 ///  Cubic splines are 1D interpolation functions consisting of 4 coefficient
 ///  arrays. They take the form of
-///  @f{equation}{y\left(x\right)=C_{0} + C_{1}x + C_{2}x^2 + C_{3}x^2@f}
+///  @f{equation}{y\left(x\right)=C_{0} + C_{1}x + C_{2}x^{2} + C_{3}x^{3}@f}
 ///  where @f$x@f$ is a normalized radial index. Cubic splines coefficients can
 ///  be calculated using
 ///  <a href="https://mathworld.wolfram.com/CubicSpline.html">Linear Solvers</a>
@@ -219,12 +219,10 @@
 #include "math.hpp"
 #include "arithmetic.hpp"
 #include "newton.hpp"
+#include "output.hpp"
 
 ///  Name space for equilibrium models.
 namespace equilibrium {
-///  Lock to synchronize netcdf across threads.
-    static std::mutex sync;
-
 //******************************************************************************
 //  Equilibrium interface
 //******************************************************************************
@@ -1629,7 +1627,7 @@ namespace equilibrium {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_efit(const std::string &spline_file) {
         int ncid;
-        sync.lock();
+        output::sync.lock();
         nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);
 
 //  Load scalar quantities.
@@ -1794,7 +1792,7 @@ namespace equilibrium {
         nc_get_var(ncid, varid, ne_c3_buffer.data());
                     
         nc_close(ncid);
-        sync.unlock();
+        output::sync.unlock();
 
         auto rmin = static_cast<T> (rmin_value);
         auto dr = static_cast<T> (dr_value);
@@ -2426,7 +2424,7 @@ namespace equilibrium {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared<T, SAFE_MATH> make_vmec(const std::string &spline_file) {
         int ncid;
-        sync.lock();
+        output::sync.lock();
         nc_open(spline_file.c_str(), NC_NOWRITE, &ncid);
 
 //  Load scalar quantities.
@@ -2593,7 +2591,7 @@ namespace equilibrium {
         nc_get_var(ncid, varid, xn_buffer.data());
 
         nc_close(ncid);
-        sync.unlock();
+        output::sync.unlock();
 
         auto sminf = static_cast<T> (sminf_value);
         auto sminh = static_cast<T> (sminh_value);

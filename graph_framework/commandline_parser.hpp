@@ -100,7 +100,6 @@ namespace commandline {
                 }
             }
             std::cout << std::endl;
-            sync.unlock();
             exit(0);
         }
 

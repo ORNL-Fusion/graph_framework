@@ -235,8 +235,7 @@ namespace absorption {
                 {graph::zero<T, SAFE_MATH> (), graph::variable_cast(this->kamp)}
             };
 
-            work.add_item(inputs, {}, setters,
-                          graph::shared_random_state<T, SAFE_MATH> (),
+            work.add_item(inputs, {}, setters, NULL,
                           "root_find_init_kernel", inputs.back()->size());
 
             inputs.push_back(graph::variable_cast(this->t));
@@ -265,8 +264,7 @@ namespace absorption {
             setters = {
                 {klen + kamp, graph::variable_cast(this->kamp)}
             };
-            work.add_item(inputs, {}, setters,
-                          graph::shared_random_state<T, SAFE_MATH> (),
+            work.add_item(inputs, {}, setters, NULL,
                           "final_kamp", inputs.back()->size());
         }
 
