@@ -17,8 +17,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Check results of realtime compile.
 ///
-///  @params[in] result Result code of the operation.
-///  @params[in] name   Name of the operation.
+///  @param[in] result Result code of the operation.
+///  @param[in] name   Name of the operation.
 //------------------------------------------------------------------------------
     static void check_hiprtc_error(const hiprtcResult result,
                                    const std::string &name) {
@@ -30,8 +30,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Check results of hip functions.
 ///
-///  @params[in] result Result code of the operation.
-///  @params[in] name   Name of the operation.
+///  @param[in] result Result code of the operation.
+///  @param[in] name   Name of the operation.
 //------------------------------------------------------------------------------
     static void check_error(const hipError_t result,
                             const std::string &name) {
@@ -68,14 +68,16 @@ namespace gpu {
         hipModule_t module;
 ///  Result Buffer.
         hipDeviceptr_t result_buffer;
+///  Result Buffer.
+        hipDeviceptr_t offset_buffer;
 ///  Argument map.
         std::map<graph::leaf_node<T, SAFE_MATH> *, hipDeviceptr_t> kernel_arguments;
 
 //------------------------------------------------------------------------------
 ///  @brief  Check results of async hip functions.
 ///
-///  @params[in] result Result code of the operation.
-///  @params[in] name   Name of the operation.
+///  @param[in] result Result code of the operation.
+///  @param[in] name   Name of the operation.
 //------------------------------------------------------------------------------
         void check_error_async(const hipError_t result,
                                const std::string &name) {
@@ -108,10 +110,10 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Hip context constructor.
 ///
-///  @params[in] index Concurrent index.
+///  @param[in] index Concurrent index.
 //------------------------------------------------------------------------------
         hip_context(const size_t index) :
-        device(index), result_buffer(0), module(0) {
+        device(index), result_buffer(0), module(0), offset_buffer(0) {
             check_error(hipSetDevice(device), "hipSetDevice");
             check_error(hipStreamCreate(&stream), "hipStreamCreate");
         }
@@ -133,6 +135,10 @@ namespace gpu {
                check_error(hipFree(result_buffer), "hipFree");
                result_buffer = 0;
             }
+            if (offset_buffer) {
+                check_error(hipFree(offset_buffer), "hipFree");
+                offset_buffer = 0;
+            }
 
             check_error(hipStreamDestroy(stream), "hipStreamDestroy");
         }
@@ -140,9 +146,9 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Compile the kernels.
 ///
-///  @params[in] kernel_source Source code buffer for the kernel.
-///  @params[in] names         Names of the kernel functions.
-///  @params[in] add_reduction Include the reduction kernel.
+///  @param[in] kernel_source Source code buffer for the kernel.
+///  @param[in] names         Names of the kernel functions.
+///  @param[in] add_reduction Include the reduction kernel.
 //------------------------------------------------------------------------------
         void compile(const std::string kernel_source,
                      std::vector<std::string> names,
@@ -214,16 +220,22 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a kernel calling function.
 ///
-///  @params[in] kernel_name   Name of the kernel for later reference.
-///  @params[in] inputs        Input nodes of the kernel.
-///  @params[in] outputs       Output nodes of the kernel.
-///  @params[in] num_rays      Number of rays to trace.
+///  @param[in] kernel_name Name of the kernel for later reference.
+///  @param[in] inputs      Input nodes of the kernel.
+///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] state       Random states.
+///  @param[in] num_rays    Number of rays to trace.
+///  @param[in] tex1d_list  List of 1D textures.
+///  @param[in] tex2d_list  List of 1D textures.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
-                                                     const size_t num_rays) {
+                                                     graph::shared_random_state<T, SAFE_MATH> state,
+                                                     const size_t num_rays,
+                                                     const jit::texture1d_list &tex1d_list,
+                                                     const jit::texture2d_list &tex2d_list) {
             hipFunction_t function;
             check_error(hipModuleGetFunction(&function, module, 
                                              kernel_name.c_str()), 
@@ -268,6 +280,24 @@ namespace gpu {
                 }
             }
 
+            const size_t num_buffers = buffers.size();
+            if (state.get()) {
+                if (!kernel_arguments.contains(state.get())) {
+                    kernel_arguments.try_emplace(state.get());
+                    check_error(hipMallocManaged(&kernel_arguments[state.get()],
+                                                 state->get_size_bytes(),
+                                                 hipMemAttachGlobal),
+                                "hipMallocManaged");
+                    check_error(hipMallocManaged(&offset_buffer, sizeof(uint32_t)), "hipMallocManaged");
+                    check_error(hipMemcpyHtoD(kernel_arguments[state.get()],
+                                              state->data(),
+                                              state->get_size_bytes()),
+                                "hipMemcpyHtoD");
+                }
+                buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[state.get()]));
+                buffers.push_back(reinterpret_cast<void *> (&offset_buffer));
+            }
+
             int gridSize;
             int blockSize;
             check_error(hipModuleOccupancyMaxPotentialBlockSize(&gridSize, &blockSize,
@@ -283,21 +313,39 @@ namespace gpu {
                 std::cout << "    Number of Blocks : " << numBlocks << std::endl;
             }
 
-            return [this, function, buffers, numBlocks, dimBlock] () mutable {
-                check_error_async(hipModuleLaunchKernel(function, 
-                                                        numBlocks, 1, 1, 
-                                                        dimBlock, 1, 1, 
-                                                        0, stream, 
-                                                        buffers.data(), NULL),
-                                  "hipModuleLaunchKernel");
-            };
+            if (state.get()) {
+                return [this, num_rays, function, buffers, dimBlock] () mutable {
+                    for (unit32_t i = 0; i < num_rays; i += dimBlock) {
+                        for (uint32_t i = 0; i < num_rays; i += dimBlock) {
+                            check_error_async(hipMemsetAsync(offset_buffer, i,
+                                                             sizeof(uint32_t)),
+                                              hipMemcpyDeviceToHost, stream);
+                            check_error_async(hipModuleLaunchKernel(function,
+                                                                    1, 1, 1,
+                                                                    dimBlock, 1, 1,
+                                                                    0, stream,
+                                                                    buffers.data(), NULL),
+                                              "hipModuleLaunchKernel");
+                        }
+                    }
+                };
+            } else {
+                return [this, function, buffers, numBlocks, dimBlock] () mutable {
+                    check_error_async(hipModuleLaunchKernel(function,
+                                                            numBlocks, 1, 1,
+                                                            dimBlock, 1, 1,
+                                                            0, stream,
+                                                            buffers.data(), NULL),
+                                      "hipModuleLaunchKernel");
+                };
+            }
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Create a max compute kernel calling function.
 ///
-///  @params[in] argument Node to reduce.
-///  @params[in] run      Function to run before reduction.
+///  @param[in] argument Node to reduce.
+///  @param[in] run      Function to run before reduction.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<T(void)> create_max_call(graph::shared_leaf<T, SAFE_MATH> &argument,
@@ -356,8 +404,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
-///  @params[in] index Number of times to record.
-///  @params[in] nodes Nodes to output.
+///  @param[in] index Number of times to record.
+///  @param[in] nodes Nodes to output.
 //------------------------------------------------------------------------------
         void print_results(const size_t index,
                            const graph::output_nodes<T, SAFE_MATH> &nodes) {
@@ -376,8 +424,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Check the value.
 ///
-///  @params[in] index Ray index to check value for.
-///  @params[in] node  Node to check the value for.
+///  @param[in] index Ray index to check value for.
+///  @param[in] node  Node to check the value for.
 ///  @returns The value at the index.
 //------------------------------------------------------------------------------
         T check_value(const size_t index,
@@ -389,8 +437,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to the device.
 ///
-///  @params[in] node   Not to copy buffer to.
-///  @params[in] source Host side buffer to copy from.
+///  @param[in] node   Not to copy buffer to.
+///  @param[in] source Host side buffer to copy from.
 //------------------------------------------------------------------------------
         void copy_to_device(graph::shared_leaf<T, SAFE_MATH> node,
                             T *source) {
@@ -405,8 +453,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Copy buffer contents to host.
 ///
-///  @params[in]     node        Node to copy buffer from.
-///  @params[in,out] destination Host side buffer to copy to.
+///  @param[in]     node        Node to copy buffer from.
+///  @param[in,out] destination Host side buffer to copy to.
 //------------------------------------------------------------------------------
         void copy_to_host(graph::shared_leaf<T, SAFE_MATH> node,
                           T *destination) {
@@ -422,7 +470,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create the source header.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
+///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
             if constexpr (jit::is_complex<T> ()) {
@@ -436,12 +484,12 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create kernel prefix.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     name          Name to call the kernel.
-///  @params[in]     inputs        Input variables of the kernel.
-///  @params[in]     outputs       Output nodes of the graph to compute.
-///  @params[in]     size          Size of the input buffer.
-///  @params[in,out] registers     Map of used registers.
+///  @param[in,out] source_buffer Source buffer stream.
+///  @param[in]     name          Name to call the kernel.
+///  @param[in]     inputs        Input variables of the kernel.
+///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     size          Size of the input buffer.
+///  @param[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
@@ -488,10 +536,10 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create kernel postfix.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     outputs       Output nodes of the graph to compute.
-///  @params[in]     setters       Map outputs back to input values.
-///  @params[in,out] registers     Map of used registers.
+///  @param[in,out] source_buffer Source buffer stream.
+///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     setters       Map outputs back to input values.
+///  @param[in,out] registers     Map of used registers.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
@@ -551,8 +599,8 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create reduction.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     size          Size of the input buffer.
+///  @param[in,out] source_buffer Source buffer stream.
+///  @param[in]     size          Size of the input buffer.
 //------------------------------------------------------------------------------
         void create_reduction(std::ostringstream &source_buffer,
                               const size_t size) {
@@ -605,7 +653,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create a preamble.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
+///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_preamble(std::ostringstream &source_buffer) {
             source_buffer << "extern \"C\" __global__ ";
@@ -614,15 +662,15 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create arg prefix.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
+///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_argument_prefix(std::ostringstream &source_buffer) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Create arg postfix.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
-///  @params[in]     index         Argument index.
+///  @param[in,out] source_buffer Source buffer stream.
+///  @param[in]     index         Argument index.
 //------------------------------------------------------------------------------
         void create_argument_postfix(std::ostringstream &source_buffer,
                                      const size_t index) {}
@@ -630,14 +678,14 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Create index argument.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
+///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_index_argument(std::ostringstream &source_buffer) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Create index.
 ///
-///  @params[in,out] source_buffer Source buffer stream.
+///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_index(std::ostringstream &source_buffer) {
             source_buffer << "blockIdx.x*blockDim.x + threadIdx.x;";
@@ -646,7 +694,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
 ///  @brief Get the buffer for a node.
 ///
-///  @params[in] node Node to get the buffer for.
+///  @param[in] node Node to get the buffer for.
 //------------------------------------------------------------------------------
         T *get_buffer(graph::shared_leaf<T, SAFE_MATH> &node) {
             return reinterpret_cast<T *> (kernel_arguments[node.get()]);
