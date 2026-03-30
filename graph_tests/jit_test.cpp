@@ -332,7 +332,7 @@ template<jit::float_scalar T> void run_math_tests() {
     auto sin_node = graph::sin(v1);
     compile<T> ({graph::variable_cast(v1)},
                 {sin_node}, {},
-                sin_node->evaluate().at(0), 0.0);
+                sin_node->evaluate().at(0), result);
 
     auto cos_node = graph::cos(v1);
     compile<T> ({graph::variable_cast(v1)},
