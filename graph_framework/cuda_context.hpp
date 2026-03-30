@@ -324,7 +324,7 @@ namespace gpu {
             check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
 
             std::vector<void *> buffers;
-            std::set<graph::leaf_node<float, SAFE_MATH> *> needed_buffers;
+            std::set<graph::leaf_node<T, SAFE_MATH> *> needed_buffers;
 
             const size_t buffer_element_size = sizeof(T);
             for (auto &input : inputs) {
