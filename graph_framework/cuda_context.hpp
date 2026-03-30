@@ -343,7 +343,7 @@ namespace gpu {
                     needed_buffers.insert(input.get());
                 }
                 if (!needed_buffers.contains(input.get())) {
-                    buffers.push_back(kernel_arguments[input.get()]);
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
                     needed_buffers.insert(input.get());
                 }
             }
@@ -358,7 +358,7 @@ namespace gpu {
                     needed_buffers.insert(output.get());
                 }
                 if (!needed_buffers.contains(output.get())) {
-                    buffers.push_back(kernel_arguments[output.get()]);
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
                     needed_buffers.insert(output.get());
                 }
             }
