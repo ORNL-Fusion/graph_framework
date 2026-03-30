@@ -756,23 +756,23 @@ namespace gpu {
                 }
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                if (i == 0) {
-                    if (inputs.size()) {
-                        source_buffer << ", // "
-                                      << inputs[inputs.size() - 1]->get_symbol();
+                if (!used_args.contains(outputs[i].get())) {
+                    if (i == 0) {
+                        if (inputs.size()) {
+                            source_buffer << ", // "
+                                          << inputs[inputs.size() - 1]->get_symbol();
 #ifndef USE_INPUT_CACHE
 #ifdef SHOW_USE_COUNT
-                        source_buffer << " used "
-                                      << usage.at(inputs[inputs.size() - 1].get());
+                            source_buffer << " used "
+                                        << usage.at(inputs[inputs.size() - 1].get());
 #endif
 #endif
-                        source_buffer << std::endl;
+                            source_buffer << std::endl;
+                        }
+                    } else {
+                        source_buffer << "," << std::endl;
                     }
-                } else {
-                    source_buffer << "," << std::endl;
-                }
 
-                if (!used_args.contains(outputs[i].get())) {
                     source_buffer << "    ";
                     jit::add_type<T> (source_buffer);
                     source_buffer << " *  __restrict__ "
