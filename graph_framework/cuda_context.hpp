@@ -358,7 +358,7 @@ namespace gpu {
                     needed_buffers.insert(output.get());
                 }
                 if (!needed_buffers.contains(output.get())) {
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
                     needed_buffers.insert(output.get());
                 }
             }
