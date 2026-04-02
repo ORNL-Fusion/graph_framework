@@ -4,6 +4,8 @@
 #-------------------------------------------------------------------------------
 import argparse
 import subprocess
+import shutil
+import os
 
 #-------------------------------------------------------------------------------
 ##  @brief Parse the output to get the include directories.
@@ -11,9 +13,17 @@ import subprocess
 ##  @param[in] args Command line arguments.
 #-------------------------------------------------------------------------------
 def main(**args):
-    output = subprocess.run([args['compiler'], '-Wp,-v', '-x', 'c++', '/dev/null', '-fsyntax-only'],
-                            capture_output=True,
-                            text=True).stderr
+    full_path = args['compiler'];
+    command = os.path.basename(full_path)
+
+    if shutil.which(command) is not None:
+        output = subprocess.run([command, '-Wp,-v', '-x', 'c++', '/dev/null', '-fsyntax-only'],
+                                capture_output=True,
+                                text=True).stderr
+    else:
+        output = subprocess.run([full_path, '-Wp,-v', '-x', 'c++', '/dev/null', '-fsyntax-only'],
+                                capture_output=True,
+                                text=True).stderr
 
     start_capture = False
     includes = ''
