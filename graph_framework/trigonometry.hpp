@@ -115,7 +115,7 @@ namespace graph {
             if (this->is_match(x)) {
                 return one<T, SAFE_MATH> ();
             }
-            
+
             const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
                 this->df_cache[hash] = cos(this->arg)*this->arg->df(x);
@@ -313,7 +313,13 @@ namespace graph {
 ///  @returns Reduced graph from cosine.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
-            if (constant_cast(this->arg).get()) {
+            auto c = constant_cast(this->arg);
+            if (c.get()) {
+//  GNU complex revalues cos(0, i0) evaluates to (1, -i0). This is casuing a
+//  problem with the c and fortran binding tests.
+                if (c->is(0)) {
+                    return one<T, SAFE_MATH> ();
+                }
                 return constant<T, SAFE_MATH> (this->evaluate());
             }
 

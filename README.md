@@ -40,6 +40,3 @@ For instructions to build the code consult the
 documentation. This framework uses a [cmake](https://cmake.org) based build 
 system and requires the 
 [NetCDF-C](https://www.unidata.ucar.edu/software/netcdf/) library.
-
-NOTE: macOS users will need to change the `CMAKE_CXX_COMPILER` to `clang++`. 
-Otherwise the framework will not set the includes correctly for CPU JIT.
