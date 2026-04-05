@@ -44,12 +44,12 @@ jobs:
               if: ${{matrix.os == 'macos-latest'}}
               shell: bash
               working-directory: ${{runner.workspace}}/graph_framework/build
-              run: cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DUSE_METAL=ON ${{runner.workspace}}/graph_framework
+              run: cmake -DUSE_METAL=ON -DBUILD_C_BINDING=ON ${{runner.workspace}}/graph_framework
             - name: Configure CMake Linux
               if: ${{matrix.os == 'ubuntu-latest'}}
               shell: bash
               working-directory: ${{runner.workspace}}/graph_framework/build
-              run: cmake ${{runner.workspace}}/graph_framework
+              run: cmake -DBUILD_C_BINDING=ON -DBUILD_Fortran_BINDING=ON ${{runner.workspace}}/graph_framework
             - name: Build Mac
               if: ${{matrix.os == 'macos-latest'}}
               shell: bash
