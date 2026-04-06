@@ -112,6 +112,29 @@ namespace graph {
         std::shared_ptr<vector_quantity<T, SAFE_MATH>> unit() {
             return std::make_shared<vector_quantity<T, SAFE_MATH>> (x, y, z)/length();
         }
+        
+//------------------------------------------------------------------------------
+///  @brief Take a derivative with respect to each component.
+///
+///  @param[in] arg The variable to take the derivative to.
+///  @returns A vector of the derivative components.
+//------------------------------------------------------------------------------
+        std::shared_ptr<vector_quantity<T, SAFE_MATH>> df(shared_leaf<T, SAFE_MATH> arg) {
+            return std::make_shared<vector_quantity<T, SAFE_MATH>> (x->df(arg),
+                                                                    y->df(arg),
+                                                                    z->df(arg));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variables.
+///
+///  @returns the vector with pseudo variables removed.
+//------------------------------------------------------------------------------
+        std::shared_ptr<vector_quantity<T, SAFE_MATH>> remove_pseudo() {
+            return std::make_shared<vector_quantity<T, SAFE_MATH>> (x->remove_pseudo(),
+                                                                    y->remove_pseudo(),
+                                                                    z->remove_pseudo());
+        }
     };
 
 ///  Convenience type for shared vector quantities.
