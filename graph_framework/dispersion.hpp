@@ -195,9 +195,7 @@
 ///  class new_dispersion final : public dispersion_function<T, SAFE_MATH> {
 ///  public:
 ///      virtual graph::shared_leaf<T, SAFE_MATH> D(graph::shared_leaf<T, SAFE_MATH> w,
-///                                                 graph::shared_leaf<T, SAFE_MATH> kx,
-///                                                 graph::shared_leaf<T, SAFE_MATH> ky,
-///                                                 graph::shared_leaf<T, SAFE_MATH> kz,
+///                                                 graph::shared_vector<T, SAFE_MATH> k_vec,
 ///                                                 graph::shared_leaf<T, SAFE_MATH> x,
 ///                                                 graph::shared_leaf<T, SAFE_MATH> y,
 ///                                                 graph::shared_leaf<T, SAFE_MATH> z,
@@ -369,21 +367,17 @@ namespace dispersion {
 //------------------------------------------------------------------------------
 ///  @brief Interface for a dispersion function.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -427,27 +421,23 @@ namespace dispersion {
 ///
 ///  This satisfies equations 1.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
           graph::shared_leaf<T, SAFE_MATH> t,
           equilibrium::shared<T, SAFE_MATH> &eq) {
-            return (1.0E3*(x - graph::exp(-t)) - graph::exp(-t))*kx + w;
+            return (1.0E3*(x - graph::exp(-t)) - graph::exp(-t))*k_vec->get_x() + w;
         }
     };
 
@@ -465,21 +455,17 @@ namespace dispersion {
 ///
 ///  D = npar^2 + nperp^2 - 1
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -487,8 +473,9 @@ namespace dispersion {
           equilibrium::shared<T, SAFE_MATH> &eq) {
             const T c = 1.0;
 
-            auto npar2 = kz*kz*c*c/(w*w);
-            auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
+            auto npar2 = k_vec->get_z()*k_vec->get_z()*c*c/(w*w);
+            auto nperp2 = (k_vec->get_x()*k_vec->get_x() +
+                           k_vec->get_y()*k_vec->get_y())*c*c/(w*w);
             return npar2 + nperp2 - c;
         }
     };
@@ -531,21 +518,17 @@ namespace dispersion {
 ///
 ///  vth = Sqrt(2*ne*te/me)                                                  (2)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -569,15 +552,12 @@ namespace dispersion {
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
             auto b_vec = eq->get_magnetic_field(x, y, z);
-            auto k = kx*eq->get_esup1(x, y, z)
-                   + ky*eq->get_esup2(x, y, z)
-                   + kz*eq->get_esup3(x, y, z);
             graph::shared_leaf<T, SAFE_MATH> kpara2;
             if (b_vec->length()->is_match(graph::zero<T, SAFE_MATH> ())) {
-                kpara2 = k->dot(k);
+                kpara2 = k_vec->dot(k_vec);
             } else {
                 auto b_hat = b_vec->unit();
-                auto kpara = b_hat->dot(k);
+                auto kpara = b_hat->dot(k_vec);
                 kpara2 = kpara*kpara;
             }
             
@@ -601,21 +581,17 @@ namespace dispersion {
 ///
 ///  B = 0.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -635,10 +611,7 @@ namespace dispersion {
             assert(eq->get_magnetic_field(x, y, z)->length()->is_match(graph::zero<T, SAFE_MATH> ()) &&
                    "Expected equilibrium with no magnetic field.");
 
-            auto k = kx*eq->get_esup1(x, y, z)
-                   + ky*eq->get_esup2(x, y, z)
-                   + kz*eq->get_esup3(x, y, z);
-            auto k2 = k->dot(k);
+            auto k2 = k_vec->dot(k_vec);
             
             return wpe2 + k2 - w*w;
         }
@@ -660,21 +633,17 @@ namespace dispersion {
 ///
 ///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                          (2)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -692,15 +661,12 @@ namespace dispersion {
 //  Wave numbers should be parallel to B if there is a magnetic field. Otherwise
 //  B should be zero.
             auto b_vec = eq->get_magnetic_field(x, y, z);
-            auto k = kx*eq->get_esup1(x, y, z)
-                   + ky*eq->get_esup2(x, y, z)
-                   + kz*eq->get_esup3(x, y, z);
             graph::shared_leaf<T, SAFE_MATH> kpara2;
             if (b_vec->length()->is_match(graph::zero<T, SAFE_MATH> ())) {
-                kpara2 = k->dot(k);
+                kpara2 = k_vec->dot(k_vec);
             } else {
                 auto b_hat = b_vec->unit();
-                auto kpara = b_hat->dot(k);
+                auto kpara = b_hat->dot(k_vec);
                 kpara2 = kpara*kpara;
             }
             
@@ -722,21 +688,17 @@ namespace dispersion {
 ///
 ///  D = npar^2 + nperp^2 - (1 - 0.5*Exp(-x^2/0.1)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -744,8 +706,9 @@ namespace dispersion {
           equilibrium::shared<T, SAFE_MATH> &eq) {
             const T c = 1.0;
             auto well = c - 0.5*exp(-(x*x + y*y)/0.1);
-            auto npar2 = kz*kz*c*c/(w*w);
-            auto nperp2 = (kx*kx + ky*ky)*c*c/(w*w);
+            auto npar2 = k_vec->get_z()*k_vec->get_z()*c*c/(w*w);
+            auto nperp2 = (k_vec->get_x()*k_vec->get_x() +
+                           k_vec->get_y()*k_vec->get_y())*c*c/(w*w);
             return npar2 + nperp2 - well;
         }
     };
@@ -768,21 +731,17 @@ namespace dispersion {
 ///
 ///  vs = Sqrt(kb*Te/M + ɣ*kb*Ti/M)                                          (2)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -806,11 +765,8 @@ namespace dispersion {
                                                  physics<T, SAFE_MATH>::c);
 
 //  Wave numbers.
-            auto k = kx*eq->get_esup1(x, y, z)
-                   + ky*eq->get_esup2(x, y, z)
-                   + kz*eq->get_esup3(x, y, z);
             auto b_hat = b_vec->unit();
-            auto kperp = b_hat->cross(k)->length();
+            auto kperp = b_hat->cross(k_vec)->length();
             auto kperp2 = kperp*kperp;
 
             auto w2 = w*w;
@@ -835,21 +791,17 @@ namespace dispersion {
 ///
 ///  ⍵pe is the plasma frequency.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -864,9 +816,7 @@ namespace dispersion {
                                                physics<T, SAFE_MATH>::epsilon0);
 
 //  Wave numbers.
-            auto n = (kx*eq->get_esup1(x, y, z) +
-                      ky*eq->get_esup2(x, y, z) +
-                      kz*eq->get_esup3(x, y, z))/w;
+            auto n = k_vec/w;
             auto b_vec = eq->get_magnetic_field(x, y, z);
             auto b_hat = b_vec->unit();
             auto nperp = b_hat->cross(n);
@@ -899,21 +849,17 @@ namespace dispersion {
 ///
 ///  ⍵pe is the plasma frequency while ⍵ce is the cyclotron frequency.
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -935,9 +881,7 @@ namespace dispersion {
                                                  physics<T, SAFE_MATH>::c);
             
 //  Wave numbers.
-            auto n = (kx*eq->get_esup1(x, y, z) +
-                      ky*eq->get_esup2(x, y, z) +
-                      kz*eq->get_esup3(x, y, z))/w;
+            auto n = k_vec/w;
             auto b_hat = b_vec->unit();
             auto nperp = b_hat->cross(n);
             auto nperp2 = nperp->dot(nperp);
@@ -986,21 +930,17 @@ namespace dispersion {
 ///  ⍵_p^2 = n*q^2/ϵ0m                                                       (7)
 ///  Ω_c = qB/m                                                              (8)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -1049,9 +989,7 @@ namespace dispersion {
             e33 = 1.0 - e33/w2;
 
 //  Wave numbers.
-            auto n = (kx*eq->get_esup1(x, y, z) +
-                      ky*eq->get_esup2(x, y, z) +
-                      kz*eq->get_esup3(x, y, z))/w;
+            auto n = k_vec/w;
             auto b_hat = b_vec->unit();
 
             auto npara = b_hat->dot(n);
@@ -1093,21 +1031,17 @@ namespace dispersion {
 ///
 ///  q = P/(2(1 + Ωe/⍵))                                                     (5)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -1138,9 +1072,7 @@ namespace dispersion {
             auto P = wpe2/(w*w);
             auto q = P/(2.0*(1.0 + ec/w));
 
-            auto n = (kx*eq->get_esup1(x, y, z) +
-                      ky*eq->get_esup2(x, y, z) +
-                      kz*eq->get_esup3(x, y, z))/w;
+            auto n = k_vec/w;
             auto n2 = n->dot(n);
             auto npara = n->dot(b_hat);
             auto npara2 = npara*npara;
@@ -1197,21 +1129,17 @@ namespace dispersion {
 ///
 ///  ve = Sqrt(2*ne*te/me)                                                  (11)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
 ///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -1242,9 +1170,7 @@ namespace dispersion {
             auto P = wpe2/(w*w);
             auto q = P/(2.0*(1.0 + ec/w));
 
-            auto n = (kx*eq->get_esup1(x, y, z) +
-                      ky*eq->get_esup2(x, y, z) +
-                      kz*eq->get_esup3(x, y, z))/w;
+            auto n = k_vec/w;
             auto n2 = n->dot(n);
             auto npara = n->dot(b_hat);
             auto npara2 = npara*npara;
@@ -1310,21 +1236,17 @@ namespace dispersion {
 ///
 ///  ve = Sqrt(2*ne*te/me)                                                   (8)
 ///
-///  @param[in] w  Omega variable.
-///  @param[in] kx Kx variable.
-///  @param[in] ky Ky variable.
-///  @param[in] kz Kz variable.
-///  @param[in] x  x variable.
-///  @param[in] y  y variable.
-///  @param[in] z  z variable.
-///  @param[in] t  Current time.
-///  @param[in] eq The plasma equilibrium.
+///  @param[in] w     Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x     x variable.
+///  @param[in] y     y variable.
+///  @param[in] z     z variable.
+///  @param[in] t     Current time.
+///  @param[in] eq    The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -1353,9 +1275,7 @@ namespace dispersion {
             auto P = wpe2/(w*w);
             auto q = P/(2.0*(1.0 + ec/w));
 
-            auto n = (kx*eq->get_esup1(x, y, z) +
-                      ky*eq->get_esup2(x, y, z) +
-                      kz*eq->get_esup3(x, y, z))/w;
+            auto n = k_vec/w;
             auto n2 = n->dot(n);
             auto npara = b_hat->dot(n);
             auto npara2 = npara*npara;
@@ -1399,6 +1319,9 @@ namespace dispersion {
     template<function DISPERSION_FUNCTION>
     class dispersion_interface {
     protected:
+///  Wave number.
+        graph::shared_vector<typename DISPERSION_FUNCTION::base,
+                             DISPERSION_FUNCTION::safe_math> k_vec;
 ///  Dispersion function.
         graph::shared_leaf<typename DISPERSION_FUNCTION::base,
                            DISPERSION_FUNCTION::safe_math> D;
@@ -1461,12 +1384,11 @@ namespace dispersion {
                                                 DISPERSION_FUNCTION::safe_math> t,
                              equilibrium::shared<typename DISPERSION_FUNCTION::base,
                                                  DISPERSION_FUNCTION::safe_math> &eq) :
-        D(DISPERSION_FUNCTION().D(w, kx, ky, kz, x, y, z, t, eq)) {
+        k_vec(kx*eq->get_esup1(x, y, z) +
+              ky*eq->get_esup2(x, y, z) +
+              kz*eq->get_esup3(x, y, z)),
+        D(DISPERSION_FUNCTION().D(w, k_vec, x, y, z, t, eq)) {
 //  Add correction term to deal with k_vec being a function of the coordinates.
-            auto k_vec = kx*eq->get_esup1(x, y, z)
-                       + ky*eq->get_esup2(x, y, z)
-                       + kz*eq->get_esup3(x, y, z);
-
             auto dkdx = k_vec->df(x);
             auto dkdy = k_vec->df(y);
             auto dkdz = k_vec->df(z);
