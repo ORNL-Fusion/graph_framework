@@ -217,9 +217,7 @@ namespace absorption {
                       + kz*eq->get_esup3(x, y, z);
             auto klen = kvec->length();
 
-            auto kx_amp = kamp*kx/klen;
-            auto ky_amp = kamp*ky/klen;
-            auto kz_amp = kamp*kz/klen;
+            auto kamp_vec = kamp*kvec/klen;
 
             graph::input_nodes<T, SAFE_MATH> inputs = {
                 graph::variable_cast(this->kamp),
@@ -244,9 +242,7 @@ namespace absorption {
             auto D = dispersion::hot_plasma<T,
                                             dispersion::z_erfi<T, SAFE_MATH>,
                                             SAFE_MATH>().D(w,
-                                                           kx + kx_amp,
-                                                           ky + ky_amp,
-                                                           kz + kz_amp,
+                                                           kvec + kamp_vec,
                                                            x, y, z, t, eq);
 
             solver::newton(work, {kamp}, inputs, {D},
@@ -402,11 +398,11 @@ namespace absorption {
                        + kz*eq->get_esup3(x, y, z);
             auto k_unit = k_vec->unit();
 
-            auto Dc = dispersion::cold_plasma_expansion<T, SAFE_MATH> ().D(w, kx, ky, kz,
+            auto Dc = dispersion::cold_plasma_expansion<T, SAFE_MATH> ().D(w, k_vec,
                                                                            x, y, z, t, eq);
             auto Dw = dispersion::hot_plasma_expansion<T,
                                                        dispersion::z_erfi<T, SAFE_MATH>,
-                                                       SAFE_MATH> ().D(w, kx, ky, kz,
+                                                       SAFE_MATH> ().D(w, k_vec,
                                                                        x, y, z, t, eq);
 
             auto kamp1 = k_vec->length() 
