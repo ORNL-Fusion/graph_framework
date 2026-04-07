@@ -930,21 +930,17 @@ namespace dispersion {
 ///
 ///  ωpi is the plasma frequency and ωci is the cyclotron frequency.
 ///
-///  @params[in] w  Omega variable.
-///  @params[in] kx Kx variable.
-///  @params[in] ky Ky variable.
-///  @params[in] kz Kz variable.
-///  @params[in] x  x variable.
-///  @params[in] y  y variable.
-///  @params[in] z  z variable.
-///  @params[in] t  Current time.
-///  @params[in] eq The plasma equilibrium.
+///  @param[in] w  Omega variable.
+///  @param[in] k_vec Wave number.
+///  @param[in] x  x variable.
+///  @param[in] y  y variable.
+///  @param[in] z  z variable.
+///  @param[in] t  Current time.
+///  @param[in] eq The plasma equilibrium.
 //------------------------------------------------------------------------------
         virtual graph::shared_leaf<T, SAFE_MATH>
         D(graph::shared_leaf<T, SAFE_MATH> w,
-          graph::shared_leaf<T, SAFE_MATH> kx,
-          graph::shared_leaf<T, SAFE_MATH> ky,
-          graph::shared_leaf<T, SAFE_MATH> kz,
+          graph::shared_vector<T, SAFE_MATH> k_vec,
           graph::shared_leaf<T, SAFE_MATH> x,
           graph::shared_leaf<T, SAFE_MATH> y,
           graph::shared_leaf<T, SAFE_MATH> z,
@@ -991,9 +987,7 @@ namespace dispersion {
             e33 = 1.0 - e33/w2;
 
 //  Wave numbers.
-            auto n = (kx*eq->get_esup1(x, y, z) +
-                      ky*eq->get_esup2(x, y, z) +
-                      kz*eq->get_esup3(x, y, z))/w;
+            auto n = k_vec/w;
             auto b_hat = b_vec->unit();
 
             auto npara = b_hat->dot(n);
