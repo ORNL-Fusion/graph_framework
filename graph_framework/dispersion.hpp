@@ -987,7 +987,7 @@ namespace dispersion {
             e33 = 1.0 - e33/w2;
 
 //  Wave numbers.
-            auto n = k_vec`/w;
+            auto n = k_vec/w;
             auto b_hat = b_vec->unit();
 
             auto npara = b_hat->dot(n);
