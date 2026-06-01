@@ -439,6 +439,38 @@ namespace graph {
                 }
             }
 
+//  Add subtraction reduction
+//  (c1 - a) + c2 -> c3 - a
+//  (a - c1) + c2 -> a + c2
+//  These reductions are handled by moving constants to the right.
+//  (a - b) + a -> 2a - b
+//  (b - a) + a -> b
+            auto ls = subtract_cast(this->left);
+            if (ls.get()) {
+                if (ls->get_left()->is_match(this->right)) {
+                    return static_cast<T> (2.0)*this->right - ls->get_right();
+                } else if (ls->get_right()->is_match(this->right)) {
+                    return ls->get_left();
+                }
+            }
+
+//  c1 + (c2 - a) -> c3 - a
+//  c1 + (a - c2) -> c3 + a
+//  a + (a - b) -> 2a - b
+//  a + (b - a) -> b
+            auto rs = subtract_cast(this->right);
+            if (rs.get()) {
+                if (is_constant_combinable(this->left, rs->get_left())) {
+                    return (this->left + rs->get_left()) - rs->get_right();
+                } else if (is_constant_combinable(this->left, rs->get_right())) {
+                    return (this->left - rs->get_right()) + rs->get_left();
+                } else if (this->left->is_match(rs->get_left())) {
+                    return static_cast<T> (2.0)*this->left - rs->get_right();
+                } else if (this->left->is_match(rs->get_right())) {
+                    return rs->get_left();
+                }
+            }
+
 //  Move cases like
 //  (c1 + c2/x) + c3/y -> c1 + (c2/x + c3/y)
 //  (c1 - c2/x) + c3/y -> c1 + (c3/y - c2/x)
