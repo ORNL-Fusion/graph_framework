@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 
 #include <random>
+#include <numbers>
 
 #include "../graph_framework/graph_framework.hpp"
 
@@ -42,28 +43,88 @@ graph::shared_leaf<T> build_parallel_electric_field(graph::shared_leaf<T> x) {
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void run_pic() {
+//  Constants
     const size_t num_particles = 1000000;
+    const size_t num_grid = 200;
+    const T c = 299792458.0;
+    const T epsilon0 = 8.854E-12;
+    const T q = 1.602E-19;
+    const T m_hydrogen = 1.6738E-27;
+    const T m_electron = 9.1093837139E-31;
+    const T kb = 1.380650E-23;
+    const uint8_t Z = 1;
+
+//  Characteristic factors
+    const T mchar = (m_hydrogen + m_electron)/2;
+    const T qchar = (q + q)/2;
+    const T nechar = 2.5E19;
+    const T wpechar = std::sqrt(nechar*qchar*qchar/(mchar*epsilon0));
+    const T tchar = 1/wpechar;
+    const T echar = mchar*c/(qchar*tchar);
+    const T bchar = echar/c;
+
+//  Particle initalization.
     auto x = graph::variable<T> (num_particles, "x");
-    auto vpara = graph::variable<T> (num_particles, "v||");
+    auto vpara = graph::variable<T> (num_particles, "v_{||}");
+    auto vperp = graph::variable<T> (num_particles, "v_{\\perp}");
 
-    std::normal_distribution<T> norm(0, 0.25);
-    std::random_device rand_d;
-    std::mt19937_64 engine(rand_d());
-    backend::buffer<T> a(num_particles);
-    backend::buffer<T> b(num_particles);
-    for (size_t i = 0; i < num_particles; i++) {
-        a[i] = norm(engine);
-        b[i] = norm(engine);
+    {
+        std::uniform_real_distribution<T> position_dist(-0.25, 0.25);
+        std::uniform_real_distribution<T> phi_dist(0.0, 2.0*std::numbers::pi_v<T>);
+        std::uniform_real_distribution<T> r_dist(0.0, 1.0);
+
+        std::random_device rand_d;
+        std::mt19937_64 engine(rand_d());
+
+        backend::buffer<T> pos_buffer(num_particles);
+        backend::buffer<T> vpara_buffer(num_particles);
+        backend::buffer<T> vperp_buffer(num_particles);
+        
+        for (size_t i = 0; i < num_particles; i++) {
+            pos_buffer[i] = position_dist(engine);
+            T phi = phi_dist(engine);
+            T r = r_dist(engine);
+            vpara_buffer[i] = std::fmod(std::sqrt(-kb*std::log(1 - r)), std::sin(phi));
+            phi = phi_dist(engine);
+            r = r_dist(engine);
+            const T vperp1 = std::fmod(std::sqrt(-kb*std::log(1 - r)), std::cos(phi));
+            const T vperp2 = std::fmod(std::sqrt(-kb*std::log(1 - r)), std::sin(phi));
+            vperp_buffer[i] = std::sqrt(vperp1*vperp1 + vperp2*vperp2);
+        }
+        x->set(pos_buffer);
+        vpara->set(vpara_buffer);
+        vperp->set(vperp_buffer);
     }
-    x->set(a);
-    vpara->set(b);
 
-    const T m = 1;//9.1093837139E-31;
-    const T q = 1;//1.602176634E-19;
-    const T te = 1;
-    const T dt = 0.00001;
+//  Electron initialization.
+    auto te = graph::variable<T> (num_grid, static_cast<T> (1.0), "t_{e}");
 
-    const size_t num_grid = 1000;
+//  Magnetic field.
+    auto bfield = (x*x + static_cast<T> (1))/bchar;
+
+//  Electric field.
+    auto efield = graph::variable<T> (num_grid, "E_{||}");
+
+//  Time step
+    const T gyro_frequency = q*1*1.2/2;
+    const T gyro_period = 2*std::numbers::pi_v<T>/gyro_frequency;
+    T dt = 0.25*gyro_period;
+
+    const size_t timeIterations = std::ceil(10/0.25);
+    const size_t outputCadence = std::ceil(600/0.25);
+
+//  Normalize
+    dt /= tchar;
+    vpara = vpara/c;
+    vperp = vperp/c;
+    x = x*wpechar/c;
+
+    bfield = bfield/bchar;
+
+    
+
+//  Build the field solver;
+
     auto epara = graph::variable<T> (num_grid, "e||");
     auto n = graph::variable<T> (num_grid, "n");
     auto grid_position = graph::variable<T> (num_grid, "x_i");
@@ -71,23 +132,23 @@ void run_pic() {
 
     const T scale = 2.0/999.0;
     const T offset = -1.0;
-    backend::buffer<T> c(num_grid);
+    backend::buffer<T> coe(num_grid);
     for (size_t i = 0; i < num_grid; i++) {
-        c[i] = scale*i + offset;
+        coe[i] = scale*i + offset;
     }
-    grid_position->set(c);
+    grid_position->set(coe);
 
     auto x1 = dt*vpara;
-    auto vpara1 = -q/m*graph::index_1D(epara, x, scale, offset);
+    auto vpara1 = -q/m_electron*graph::index_1D(epara, x, scale, offset);
 
     auto x2 = dt*(vpara + vpara1/2.0);
-    auto vpara2 = -q/m*graph::index_1D(epara, x + x1/2.0, scale, offset);
+    auto vpara2 = -q/m_electron*graph::index_1D(epara, x + x1/2.0, scale, offset);
 
     auto x3 = dt*(vpara + vpara2/2.0);
-    auto vpara3 = -q/m*graph::index_1D(epara, x + x2/2.0, scale, offset);
+    auto vpara3 = -q/m_electron*graph::index_1D(epara, x + x2/2.0, scale, offset);
 
     auto x4 = dt*(vpara + vpara3);
-    auto vpara4 = -q/m*graph::index_1D(epara, x + x3, scale, offset);
+    auto vpara4 = -q/m_electron*graph::index_1D(epara, x + x3, scale, offset);
 
     auto x_next = x + (x1 + static_cast<T> (2)*(x2 + x3) + x4)/static_cast<T> (6);
     auto vpara_next = vpara + (vpara1 + static_cast<T> (2)*(vpara2 + vpara3) + vpara4)/static_cast<T> (6);
