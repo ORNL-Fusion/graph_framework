@@ -951,7 +951,7 @@ template<jit::float_scalar T> void test_subtract() {
     assert(constant_combine3_cast->get_right()->is_match(var_a) &&
            "Expected a on the right.");
     auto constant_combine4 = 2.0 - (1.0 - var_a);
-    auto constant_combine4_cast = graph::subtract_cast(constant_combine4);
+    auto constant_combine4_cast = graph::add_cast(constant_combine4);
     assert(constant_combine4_cast.get() && "Expected a subtract node.");
     assert(constant_combine4_cast->get_left()->evaluate().at(0) == static_cast<T> (1.0) &&
            "Expected 1 on the left.");
