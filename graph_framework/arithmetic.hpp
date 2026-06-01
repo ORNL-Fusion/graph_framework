@@ -970,7 +970,7 @@ namespace graph {
                                     pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
             }
 // (c1 + a) - c2 -> c3 + a
-// c1 - (c2 + a) -> c3 + a
+// c1 - (c2 + a) -> c3 - a
             auto la = add_cast(this->left);
             if (la.get()) {
                 if (is_constant_combinable(la->get_left(), this->right)) {
@@ -980,7 +980,7 @@ namespace graph {
             auto ra = add_cast(this->right);
             if (ra.get()) {
                 if (is_constant_combinable(this->left, ra->get_left())) {
-                    return (this->left - ra->get_left()) + ra->get_right();
+                    return (this->left - ra->get_left()) - ra->get_right();
                 }
             }
 
@@ -995,12 +995,12 @@ namespace graph {
                     return -(ls->get_right() + this->right) - ls->get_left();
                 }
             }
-// c1 - (c2 - a) -> c3 - a
+// c1 - (c2 - a) -> c3 + a
 // c1 - (a - c2) -> c3 - a
             auto rs = subtract_cast(this->right);
             if (rs.get()) {
                 if (is_constant_combinable(this->left, rs->get_left())) {
-                    return (this->left - rs->get_left()) - rs->get_right();
+                    return (this->left - rs->get_left()) + rs->get_right();
                 } else if (is_constant_combinable(this->left, rs->get_right())) {
                     return (this->left + rs->get_right()) - rs->get_left();
                 }
