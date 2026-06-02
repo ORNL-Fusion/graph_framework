@@ -27,6 +27,7 @@
 #include "trigonometry.hpp"
 #include "vector.hpp"
 #include "workflow.hpp"
+#include "particle_in_cell.hpp"
 
 #ifdef USE_CUDA
 #include "cuda_context.hpp"
