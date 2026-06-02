@@ -447,6 +447,61 @@ template<jit::float_scalar T> void test_add() {
     auto trig2_cast = graph::constant_cast(trig2);
     assert(trig2_cast.get() && "Expected a constant node.");
     assert(trig2_cast->is(static_cast<T> (1.0)) && "Expected 1.");
+
+//  c1 + (a - c2) -> c3 + a
+    auto add_subtract = 2.0 + (var_a - 1.0);
+    auto add_subtract_cast = graph::add_cast(add_subtract);
+    assert(add_subtract_cast.get() && "Expected an add node.");
+    assert(add_subtract_cast->get_left()->evaluate().at(0) == static_cast<T> (1.0) &&
+           "Expected 1 on the left.");
+    assert(add_subtract_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+//  c1 + (c2 - a) -> c3 - a
+    auto add_subtract2 = 2.0 + (1.0 - var_a);
+    auto add_subtract2_cast = graph::subtract_cast(add_subtract2);
+    assert(add_subtract2_cast.get() && "Expected a subtract node.");
+    assert(add_subtract2_cast->get_left()->evaluate().at(0) == static_cast<T> (3.0) &&
+           "Expected 3 on the left.");
+    assert(add_subtract2_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+//  (c1 - a) + c2 -> c3 - a
+    auto add_subtract3 = (2.0 - var_a) + 1.0;
+    auto add_subtract3_cast = graph::subtract_cast(add_subtract3);
+    assert(add_subtract3_cast.get() && "Expected a subtract node.");
+    assert(add_subtract3_cast->get_left()->evaluate().at(0) == static_cast<T> (3.0) &&
+           "Expected 3 on the left.");
+    assert(add_subtract3_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+//  (a - c1) + c2 -> c3 + a
+    auto add_subtract4 = (var_a - 2.0) + 1.0;
+    auto add_subtract4_cast = graph::add_cast(add_subtract4);
+    assert(add_subtract4_cast.get() && "Expected an add node.");
+    assert(add_subtract4_cast->get_left()->evaluate().at(0) == static_cast<T> (-1.0) &&
+           "Expected -1.0 on the left.");
+    assert(add_subtract4_cast->get_right()->is_match(var_a) &&
+           "Expected a on the right.");
+//  (a - b) + a -> 2a - b
+    auto add_subtract5 = (var_a - var_b) + var_a;
+    auto add_subtract5_cast = graph::subtract_cast(add_subtract5);
+    assert(add_subtract5_cast.get() && "Expected a subtract node.");
+    assert(add_subtract5_cast->get_left()->is_match(static_cast<T> (2.0)*var_a) &&
+           "Expected 2a on the left.");
+    assert(add_subtract5_cast->get_right()->is_match(var_b) &&
+           "Expected b on the right.");
+//  (b - a) + a -> b
+    auto add_subtract6 = (var_b - var_a) + var_a;
+    assert(add_subtract6->is_match(var_b) && "Expected b");
+//  a + (a - b) -> 2a - b
+    auto add_subtract7 = var_a + (var_a - var_b);
+    auto add_subtract7_cast = graph::subtract_cast(add_subtract7);
+    assert(add_subtract7_cast.get() && "Expected a subtract node.");
+    assert(add_subtract7_cast->get_left()->is_match(static_cast<T> (2.0)*var_a) &&
+           "Expected 2a on the left.");
+    assert(add_subtract7_cast->get_right()->is_match(var_b) &&
+           "Expected b on the right.");
+//  a + (b - a) -> b
+    auto add_subtract8 = var_a + (var_b - var_a);
+    assert(add_subtract8->is_match(var_b) && "Expected b");
 }
 
 //------------------------------------------------------------------------------
