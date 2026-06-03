@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		C70D93152A30FF4E006A4227 /* special_functions.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C70D93132A30FF4E006A4227 /* special_functions.hpp */; };
 		C713426A2947F39400672AD4 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
+		C715C79B2FD09E7D003EEFF4 /* pic_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7C16FD02FCF488F008D4ABB /* pic_test.cpp */; };
+		C715C79C2FD09FF3003EEFF4 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C7170CC02C66A228003274E2 /* efit_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7D3C5B02C654AD3008AD8C6 /* efit_test.cpp */; };
 		C7170CC12C66A238003274E2 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C71342682947F36100672AD4 /* Metal.framework */; };
 		C73690382A38C958001733B0 /* node.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C79141AE22DA9C3000E0BA0D /* node.hpp */; };
@@ -165,6 +167,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		C715C7922FD09E29003EEFF4 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		C7170CB72C66A10D003274E2 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -356,6 +367,7 @@
 		C713425C2942665300672AD4 /* register.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = register.hpp; sourceTree = "<group>"; };
 		C71342652947D57900672AD4 /* metal_context.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = metal_context.hpp; sourceTree = "<group>"; };
 		C71342682947F36100672AD4 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		C715C7942FD09E29003EEFF4 /* pic_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pic_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7167B222AC5CE8500E03131 /* fix_NaN.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = fix_NaN.py; sourceTree = "<group>"; };
 		C7170CB92C66A10D003274E2 /* efit_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = efit_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		C717CB8D2A02E361008FBDD8 /* FindNetCDF.cmake */ = {isa = PBXFileReference; lastKnownFileType = text; path = FindNetCDF.cmake; sourceTree = "<group>"; };
@@ -451,6 +463,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C715C7912FD09E29003EEFF4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C715C79C2FD09FF3003EEFF4 /* Metal.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C7170CB62C66A10D003274E2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -746,6 +766,7 @@
 				C7DC9EE82E39789900524F6F /* libgraph_c.a */,
 				C74F2AD22F6D9A6E00B48216 /* graph_pic */,
 				C74F2AE32F6DE8C500B48216 /* workflow_test */,
+				C715C7942FD09E29003EEFF4 /* pic_test */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -879,6 +900,25 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		C715C7932FD09E29003EEFF4 /* pic_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C715C79A2FD09E29003EEFF4 /* Build configuration list for PBXNativeTarget "pic_test" */;
+			buildPhases = (
+				C715C7902FD09E29003EEFF4 /* Sources */,
+				C715C7912FD09E29003EEFF4 /* Frameworks */,
+				C715C7922FD09E29003EEFF4 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = pic_test;
+			packageProductDependencies = (
+			);
+			productName = pic_test;
+			productReference = C715C7942FD09E29003EEFF4 /* pic_test */;
+			productType = "com.apple.product-type.tool";
+		};
 		C7170CB82C66A10D003274E2 /* efit_test */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C7170CBF2C66A10D003274E2 /* Build configuration list for PBXNativeTarget "efit_test" */;
@@ -1289,6 +1329,9 @@
 				LastUpgradeCheck = 2610;
 				ORGANIZATIONNAME = "Cianciosa, Mark R.";
 				TargetAttributes = {
+					C715C7932FD09E29003EEFF4 = {
+						CreatedOnToolsVersion = 26.4;
+					};
 					C7170CB82C66A10D003274E2 = {
 						CreatedOnToolsVersion = 15.4;
 					};
@@ -1392,11 +1435,20 @@
 				C7DC9EE72E39789900524F6F /* graph_c */,
 				C74F2AD12F6D9A6E00B48216 /* graph_pic */,
 				C74F2AE22F6DE8C500B48216 /* workflow_test */,
+				C715C7932FD09E29003EEFF4 /* pic_test */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C715C7902FD09E29003EEFF4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C715C79B2FD09E7D003EEFF4 /* pic_test.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C7170CB52C66A10D003274E2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1648,6 +1700,38 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		C715C7982FD09E29003EEFF4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.4;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C715C7992FD09E29003EEFF4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.4;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		C7170CBD2C66A10D003274E2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2697,6 +2781,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C715C79A2FD09E29003EEFF4 /* Build configuration list for PBXNativeTarget "pic_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C715C7982FD09E29003EEFF4 /* Debug */,
+				C715C7992FD09E29003EEFF4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C7170CBF2C66A10D003274E2 /* Build configuration list for PBXNativeTarget "efit_test" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -30,13 +30,13 @@ namespace pic {
                                               const T xmin,
                                               const T dx) {
         auto x = graph::index_1D(xmesh, xp, dx, xmin) - xp;
-        auto xnorm1 = 1.5 + (x - dx)/dx;
+        auto xnorm1 = static_cast<T> (1.5) + (x - dx)/dx;
         auto xnorm2 = x/dx;
-        auto xnorm3 = 1.5 - (x + dx)/dx;
+        auto xnorm3 = static_cast<T> (1.5) - (x + dx)/dx;
 
-        auto w0 = 0.5*xnorm1*xnorm1;
-        auto w1 = 0.75 - xnorm2*xnorm2;
-        auto w2 = 0.5*xnorm3*xnorm3;
+        auto w0 = static_cast<T> (0.5)*xnorm1*xnorm1;
+        auto w1 = static_cast<T> (0.75) - xnorm2*xnorm2;
+        auto w2 = static_cast<T> (0.5)*xnorm3*xnorm3;
 
         auto ymesh0 = graph::index_1D(ymesh, xp - dx, dx, xmin);
         auto ymesh1 = graph::index_1D(ymesh, xp,      dx, xmin);
@@ -55,7 +55,7 @@ namespace pic {
                 graph::variable_cast(xp)
             }, {
                 weight
-            }, {}, NULL, "Mesh_Interpolation", xp_cast->size());
+            }, {}, NULL, "build_interpolation_unit_test", xp_cast->size());
             work.compile();
             work.run();
             work.wait();

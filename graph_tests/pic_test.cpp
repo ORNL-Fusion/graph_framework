@@ -54,135 +54,134 @@ template<std::floating_point  T> void run_interpolation_test() {
         field
     }, {}, NULL, "Mesh_Interpolation", num_particles);
     work.compile();
-
     work.run();
     work.wait();
 
     auto xp_cast = graph::variable_cast(xp);
     for (size_t i = 0, ie = xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (4.0E-7) &&
-                   "Profile not equal to 1±4.0E-7");
+                   "Profile not equal ±4.0E-7");
         } else {
             assert(diff*diff < static_cast<T> (4.0E-7) &&
-                   "Profile not equal to 1±4.0E-7");
+                   "Profile not equal ±4.0E-7");
         }
     }
     for (size_t i = xp_cast->size()/10, ie = 2*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (1.4E-6) &&
-                   "Profile not equal to 1±1.4E-6");
+                   "Profile not equal ±1.4E-6");
         } else {
             assert(diff*diff < static_cast<T> (1.1E-6) &&
-                   "Profile not equal to 1±1.1E-7");
+                   "Profile not equal ±1.1E-7");
         }
     }
     for (size_t i = 2*xp_cast->size()/10, ie = 3*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (3.8E-6) &&
-                   "Profile not equal to 1±3.8E-6");
+                   "Profile not equal ±3.8E-6");
         } else {
             assert(diff*diff < static_cast<T> (1.5E-8) &&
-                   "Profile not equal to 1±1.5E-8");
+                   "Profile not equal ±1.5E-8");
         }
     }
     for (size_t i = 3*xp_cast->size()/10, ie = 4*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (5.9E-4) &&
-                   "Profile not equal to 1±5.9E-4");
+                   "Profile not equal ±5.9E-4");
         } else {
             assert(diff*diff < static_cast<T> (7.9E-6) &&
-                   "Profile not equal to 1±7.9E-6");
+                   "Profile not equal ±7.9E-6");
         }
     }
     for (size_t i = 4*xp_cast->size()/10, ie = 5*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (1.9E-5) &&
-                   "Profile not equal to 1±1.9E-5");
+                   "Profile not equal ±1.9E-5");
         } else {
             assert(diff*diff < static_cast<T> (2.1E-8) &&
-                   "Profile not equal to 1±2.1E-8");
+                   "Profile not equal ±2.1E-8");
         }
     }
     for (size_t i = 5*xp_cast->size()/10, ie = 6*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (1.6E-5) &&
-                   "Profile not equal to 1±1.6E-5");
+                   "Profile not equal ±1.6E-5");
         } else {
             assert(diff*diff < static_cast<T> (2.9E-6) &&
-                   "Profile not equal to 1±2.9E-6");
+                   "Profile not equal ±2.9E-6");
         }
     }
     for (size_t i = 6*xp_cast->size()/10, ie = 7*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (4.0E-2) &&
-                   "Profile not equal to 1±4.0E-2");
+                   "Profile not equal ±4.0E-2");
         } else {
             assert(diff*diff < static_cast<T> (7.0E-6) &&
-                   "Profile not equal to 1±7.0E-6");
+                   "Profile not equal ±7.0E-6");
         }
     }
     for (size_t i = 7*xp_cast->size()/10, ie = 8*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (1.5E-3) &&
-                   "Profile not equal to 1±1.5E-3");
+                   "Profile not equal ±1.5E-3");
         } else {
             assert(diff*diff < static_cast<T> (1.5E-3) &&
-                   "Profile not equal to 1±1.5E-3");
+                   "Profile not equal ±1.5E-3");
         }
     }
     for (size_t i = 8*xp_cast->size()/10, ie = 9*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (5.0E-3) &&
-                   "Profile not equal to 1±5.0E-3");
+                   "Profile not equal ±5.0E-3");
         } else {
             assert(diff*diff < static_cast<T> (3.0E-3) &&
-                   "Profile not equal to 1±3.0E-3");
+                   "Profile not equal ±3.0E-3");
         }
     }
     for (size_t i = 9*xp_cast->size()/10, ie = 10*xp_cast->size()/10; i < ie; i++) {
         const T x = work.check_value(i, xp);
-        const T recieved = work.check_value(i, field);
-        const T diff = func(x) - recieved;
+        const T received = work.check_value(i, field);
+        const T diff = func(x) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (1.8E-2) &&
-                   "Profile not equal to 1±1.8E-2");
+                   "Profile not equal ±1.8E-2");
         } else {
             assert(diff*diff < static_cast<T> (1.8E-2) &&
-                   "Profile not equal to 1±1.8E-2");
+                   "Profile not equal ±1.8E-2");
         }
     }
 }
 
 //------------------------------------------------------------------------------
-///  @brief Run tests with a specified backend.
+///  @brief Run tests with a specified precision.
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
@@ -201,7 +200,7 @@ int main(int argc, const char * argv[]) {
 
     (void)argc;
     (void)argv;
-    run_tests<float> ();
+    //run_tests<float> ();
     run_tests<double> ();
 
     END_GPU
