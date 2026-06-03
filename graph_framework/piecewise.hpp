@@ -29,13 +29,23 @@ void compile_index(std::ostringstream &stream,
                    const T scale,
                    const T offset) {
     const std::string type = jit::smallest_int_type<T> (length);
-    stream << "min(max(("
-           << type
-           << ")";
+    stream << "min";
+    if constexpr (!jit::use_metal<T> ()) {
+        stream << "<" << type << ">";
+    }
+    stream << "(";
+    if constexpr (jit::use_metal<T> ()) {
+        stream << "(" << type << ")";
+    }
+    stream << "max";
+    if constexpr (!jit::use_metal<T> ()) {
+        stream << "<" << jit::type_to_string<T> () << ">";
+    }
+    stream << "(";
     if constexpr (jit::complex_scalar<T>) {
         stream << "real(";
     }
-    stream << "((" << register_name << " - ";
+    stream << "(" << register_name << " - ";
     if constexpr (jit::complex_scalar<T>) {
         stream << jit::get_type_string<T> ();
     }
@@ -43,12 +53,19 @@ void compile_index(std::ostringstream &stream,
     if constexpr (jit::complex_scalar<T>) {
         stream << jit::get_type_string<T> ();
     }
-    stream << scale << ")";
+    stream << scale;
     if constexpr (jit::complex_scalar<T>) {
         stream << ")";
     }
-    stream << ",(" << type << ")0),("
-           << type << ")" << length - 1 << ")";
+    stream << ",";
+    if constexpr (jit::use_metal<T> ()) {
+        stream << "(" << jit::get_type_string<T> () << ")";
+    }
+    stream << "0),";
+    if constexpr (jit::use_metal<T> ()) {
+        stream << "(" << type << ")";
+    }
+    stream << length - 1 << ")";
 }
 
 //******************************************************************************
@@ -192,9 +209,17 @@ void compile_index(std::ostringstream &stream,
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->arg).get()) {
                 const T arg = (this->arg->evaluate().at(0) + offset)/scale;
-                const size_t i = std::min(static_cast<size_t> (std::real(arg)),
-                                          this->get_size() - 1);
-                return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
+                if constexpr (jit::float_base<T>) {
+                    const size_t i = std::max<size_t> (std::min<float> (std::real(arg),
+                                                                        this->get_size() - 1),
+                                                       0);
+                    return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
+                } else {
+                    const size_t i = std::max<size_t> (std::min<double> (std::real(arg),
+                                                                         this->get_size() - 1),
+                                                       0);
+                    return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
+                }
             }
 
             if (evaluate().is_same()) {
@@ -347,7 +372,7 @@ void compile_index(std::ostringstream &stream,
                 stream << " " << registers[this] << " = ";
 #ifdef USE_CUDA_TEXTURES
                 if constexpr (jit::use_cuda()) {
-                    if constexpr (float_base<T>) {
+                    if constexpr (jit::float_base<T>) {
                         if constexpr (complex_scalar<T>) {
                             stream << "to_cmp_float(tex1D<float2> (";
                         } else {
@@ -835,25 +860,56 @@ void compile_index(std::ostringstream &stream,
                 constant_cast(this->right).get()) {
                 const T l = (this->left->evaluate().at(0) + x_offset)/x_scale;
                 const T r = (this->right->evaluate().at(0) + y_offset)/y_scale;
-                const size_t i = std::min(static_cast<size_t> (std::real(l)),
-                                          this->get_num_rows() - 1);
-                const size_t j = std::min(static_cast<size_t> (std::real(r)),
-                                          this->get_num_columns() - 1);
-                return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
+
+                if constexpr (jit::float_base<T>) {
+                    const size_t i = std::max<size_t> (std::min<float> (std::real(l),
+                                                                        this->get_num_rows() - 1),
+                                                       0);
+                    const size_t j = std::max<size_t> (std::min<float> (std::real(r),
+                                                                        this->get_num_columns() - 1),
+                                                       0);
+                    return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
+                } else {
+                    const size_t i = std::max<size_t> (std::min<double> (std::real(l),
+                                                                         this->get_num_rows() - 1),
+                                                       0);
+                    const size_t j = std::max<size_t> (std::min<double> (std::real(r),
+                                                                         this->get_num_columns() - 1),
+                                                       0);
+                    return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
+                }
             } else if (constant_cast(this->left).get()) {
                 const T l = (this->left->evaluate().at(0) + x_offset)/x_scale;
-                const size_t i = std::min(static_cast<size_t> (std::real(l)),
-                                          this->get_num_rows() - 1);
                 
-                return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
-                                    this->right, y_scale, y_offset);
+                if constexpr (jit::float_base<T>) {
+                    const size_t i = std::max<size_t> (std::min<float> (std::real(l),
+                                                                        this->get_num_rows() - 1),
+                                                       0);
+                    return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
+                                        this->right, y_scale, y_offset);
+                } else {
+                    const size_t i = std::max<size_t> (std::min<double> (std::real(l),
+                                                                         this->get_num_rows() - 1),
+                                                       0);
+                    return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
+                                        this->right, y_scale, y_offset);
+                }
             } else if (constant_cast(this->right).get()) {
                 const T r = (this->right->evaluate().at(0) + y_offset)/y_scale;
-                const size_t j = std::min(static_cast<size_t> (std::real(r)),
-                                          this->get_num_columns() - 1);
-                
-                return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
-                                    this->left, x_scale, x_offset);
+
+                if constexpr (jit::float_base<T>) {
+                    const size_t j = std::max<size_t> (std::min<float> (std::real(r),
+                                                                        this->get_num_columns() - 1),
+                                                       0);
+                    return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
+                                        this->left, x_scale, x_offset);
+                } else {
+                    const size_t j = std::max<size_t> (std::min<double> (std::real(r),
+                                                                         this->get_num_columns() - 1),
+                                                       0);
+                    return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
+                                        this->left, x_scale, x_offset);
+                }
             }
 
             if (evaluate().is_same()) {
@@ -1056,7 +1112,7 @@ void compile_index(std::ostringstream &stream,
                 stream << " " << registers[this] << " = ";
 #ifdef USE_CUDA_TEXTURES
                 if constexpr (jit::use_cuda()) {
-                    if constexpr (float_base<T>) {
+                    if constexpr (jit::float_base<T>) {
                         if constexpr (complex_scalar<T>) {
                             stream << "to_cmp_float(tex1D<float2> (";
                         } else {
