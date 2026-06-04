@@ -28,18 +28,14 @@ void compile_index(std::ostringstream &stream,
                    const size_t length,
                    const T scale,
                    const T offset) {
-    const std::string type = jit::smallest_int_type<T> (length);
-    stream << "min";
+    const std::string type = jit::type_to_string<T> ();
+    stream << "(" << jit::smallest_uint_type<T> (length) << ")min";
     if constexpr (!jit::use_metal<T> ()) {
         stream << "<" << type << ">";
     }
-    stream << "(";
-    if constexpr (jit::use_metal<T> ()) {
-        stream << "(" << type << ")";
-    }
-    stream << "max";
+    stream << "(max";
     if constexpr (!jit::use_metal<T> ()) {
-        stream << "<" << jit::type_to_string<T> () << ">";
+        stream << "<" << type << ">";
     }
     stream << "(";
     if constexpr (jit::complex_scalar<T>) {
@@ -59,7 +55,7 @@ void compile_index(std::ostringstream &stream,
     }
     stream << ",";
     if constexpr (jit::use_metal<T> ()) {
-        stream << "(" << jit::get_type_string<T> () << ")";
+        stream << "(" << type << ")";
     }
     stream << "0),";
     if constexpr (jit::use_metal<T> ()) {
@@ -210,12 +206,12 @@ void compile_index(std::ostringstream &stream,
             if (constant_cast(this->arg).get()) {
                 const T arg = (this->arg->evaluate().at(0) + offset)/scale;
                 if constexpr (jit::float_base<T>) {
-                    const size_t i = std::max<size_t> (std::min<float> (std::real(arg),
-                                                                        this->get_size() - 1),
-                                                       0);
+                    const size_t i = std::max<float> (std::min<float> (std::real(arg),
+                                                                       this->get_size() - 1),
+                                                      0);
                     return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
                 } else {
-                    const size_t i = std::max<size_t> (std::min<double> (std::real(arg),
+                    const size_t i = std::max<double> (std::min<double> (std::real(arg),
                                                                          this->get_size() - 1),
                                                        0);
                     return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
@@ -358,7 +354,7 @@ void compile_index(std::ostringstream &stream,
 #ifdef USE_INDEX_CACHE
                     indices[a.get()] = jit::to_string('i', a.get());
                     stream << "        const "
-                           << jit::smallest_int_type<T> (length) << " "
+                           << jit::smallest_uint_type<T> (length) << " "
                            << indices[a.get()] << " = ";
                     compile_index<T> (stream, registers[a.get()], length,
                                       scale, offset);
@@ -862,18 +858,18 @@ void compile_index(std::ostringstream &stream,
                 const T r = (this->right->evaluate().at(0) + y_offset)/y_scale;
 
                 if constexpr (jit::float_base<T>) {
-                    const size_t i = std::max<size_t> (std::min<float> (std::real(l),
-                                                                        this->get_num_rows() - 1),
-                                                       0);
-                    const size_t j = std::max<size_t> (std::min<float> (std::real(r),
-                                                                        this->get_num_columns() - 1),
-                                                       0);
+                    const size_t i = std::max<float> (std::min<float> (std::real(l),
+                                                                       this->get_num_rows() - 1),
+                                                      0);
+                    const size_t j = std::max<float> (std::min<float> (std::real(r),
+                                                                       this->get_num_columns() - 1),
+                                                      0);
                     return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
                 } else {
-                    const size_t i = std::max<size_t> (std::min<double> (std::real(l),
+                    const size_t i = std::max<double> (std::min<double> (std::real(l),
                                                                          this->get_num_rows() - 1),
                                                        0);
-                    const size_t j = std::max<size_t> (std::min<double> (std::real(r),
+                    const size_t j = std::max<double> (std::min<double> (std::real(r),
                                                                          this->get_num_columns() - 1),
                                                        0);
                     return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
@@ -882,13 +878,13 @@ void compile_index(std::ostringstream &stream,
                 const T l = (this->left->evaluate().at(0) + x_offset)/x_scale;
                 
                 if constexpr (jit::float_base<T>) {
-                    const size_t i = std::max<size_t> (std::min<float> (std::real(l),
-                                                                        this->get_num_rows() - 1),
-                                                       0);
+                    const size_t i = std::max<float> (std::min<float> (std::real(l),
+                                                                       this->get_num_rows() - 1),
+                                                      0);
                     return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
                                         this->right, y_scale, y_offset);
                 } else {
-                    const size_t i = std::max<size_t> (std::min<double> (std::real(l),
+                    const size_t i = std::max<double> (std::min<double> (std::real(l),
                                                                          this->get_num_rows() - 1),
                                                        0);
                     return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
@@ -898,13 +894,13 @@ void compile_index(std::ostringstream &stream,
                 const T r = (this->right->evaluate().at(0) + y_offset)/y_scale;
 
                 if constexpr (jit::float_base<T>) {
-                    const size_t j = std::max<size_t> (std::min<float> (std::real(r),
-                                                                        this->get_num_columns() - 1),
-                                                       0);
+                    const size_t j = std::max<float> (std::min<float> (std::real(r),
+                                                                       this->get_num_columns() - 1),
+                                                      0);
                     return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
                                         this->left, x_scale, x_offset);
                 } else {
-                    const size_t j = std::max<size_t> (std::min<double> (std::real(r),
+                    const size_t j = std::max<double> (std::min<double> (std::real(r),
                                                                          this->get_num_columns() - 1),
                                                        0);
                     return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
@@ -1071,7 +1067,7 @@ void compile_index(std::ostringstream &stream,
                 if (indices.find(x.get()) == indices.end()) {
                     indices[x.get()] = jit::to_string('i', x.get());
                     stream << "        const "
-                           << jit::smallest_int_type<T> (num_rows) << " "
+                           << jit::smallest_uint_type<T> (num_rows) << " "
                            << indices[x.get()] << " = ";
                     compile_index<T> (stream, registers[x.get()], num_rows,
                                       x_scale, x_offset);
@@ -1080,7 +1076,7 @@ void compile_index(std::ostringstream &stream,
                 if (indices.find(y.get()) == indices.end()) {
                     indices[y.get()] = jit::to_string('i', y.get());
                     stream << "        const "
-                           << jit::smallest_int_type<T> (num_columns) << " "
+                           << jit::smallest_uint_type<T> (num_columns) << " "
                            << indices[y.get()] << " = ";
                     compile_index<T> (stream, registers[y.get()], num_columns,
                                       y_scale, y_offset);
@@ -1096,7 +1092,7 @@ void compile_index(std::ostringstream &stream,
                     if (indices.find(temp.get()) == indices.end()) {
                         indices[temp.get()] = jit::to_string('i', temp.get());
                         stream << "        const "
-                               << jit::smallest_int_type<T> (length) << " "
+                               << jit::smallest_uint_type<T> (length) << " "
                                << indices[temp.get()] << " = "
                                << indices[x.get()]
                                << "*" << num_columns << " + "
@@ -1131,8 +1127,8 @@ void compile_index(std::ostringstream &stream,
                 if constexpr (jit::use_metal<T> ()) {
 #ifdef USE_INDEX_CACHE
                     stream << ".read("
-                           << jit::smallest_int_type<T> (std::max(num_rows,
-                                                                  num_columns))
+                           << jit::smallest_uint_type<T> (std::max(num_rows,
+                                                                   num_columns))
                            << "2("
                            << indices[y.get()]
                            << ","
@@ -1517,7 +1513,7 @@ void compile_index(std::ostringstream &stream,
 #ifdef USE_INDEX_CACHE
                     indices[a.get()] = jit::to_string('i', a.get());
                     stream << "        const "
-                           << jit::smallest_int_type<T> (length) << " "
+                           << jit::smallest_uint_type<T> (length) << " "
                            << indices[a.get()] << " = ";
                     compile_index<T> (stream, registers[a.get()], length,
                                       scale, offset);
@@ -1853,7 +1849,7 @@ void compile_index(std::ostringstream &stream,
                 if (indices.find(x.get()) == indices.end()) {
                     indices[x.get()] = jit::to_string('i', x.get());
                     stream << "        const "
-                           << jit::smallest_int_type<T> (num_rows) << " "
+                           << jit::smallest_uint_type<T> (num_rows) << " "
                            << indices[x.get()] << " = ";
                     compile_index<T> (stream, registers[x.get()], num_rows,
                                       x_scale, x_offset);
@@ -1862,7 +1858,7 @@ void compile_index(std::ostringstream &stream,
                 if (indices.find(y.get()) == indices.end()) {
                     indices[y.get()] = jit::to_string('i', y.get());
                     stream << "        const "
-                           << jit::smallest_int_type<T> (num_columns) << " "
+                           << jit::smallest_uint_type<T> (num_columns) << " "
                            << indices[y.get()] << " = ";
                     compile_index<T> (stream, registers[y.get()], num_columns,
                                       y_scale, y_offset);
@@ -1875,7 +1871,7 @@ void compile_index(std::ostringstream &stream,
                     if (indices.find(temp.get()) == indices.end()) {
                         indices[temp.get()] = jit::to_string('i', temp.get());
                         stream << "        const "
-                               << jit::smallest_int_type<T> (length) << " "
+                               << jit::smallest_uint_type<T> (length) << " "
                                << indices[temp.get()] << " = "
                                << indices[x.get()]
                                << "*" << num_columns << " + "
