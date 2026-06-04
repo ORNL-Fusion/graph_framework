@@ -105,7 +105,7 @@ namespace jit {
 ///  @returns The smallest integer type as a string.
 //------------------------------------------------------------------------------
     template<float_scalar T>
-    std::string smallest_int_type(const size_t max_size) {
+    std::string smallest_uint_type(const size_t max_size) {
         if (max_size <= std::numeric_limits<unsigned char>::max()) {
             if constexpr (jit::use_metal<T> ()) {
                 return "ushort";

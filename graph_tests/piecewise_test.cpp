@@ -182,6 +182,11 @@ template<jit::float_scalar T> void piecewise_1D() {
     assert(graph::constant_cast(graph::atan(p1, p3)).get() &&
            "Expected a constant node.");
 
+    a->set(static_cast<T> (-1.5));
+    compile<T> ({graph::variable_cast(a)},
+                {p1}, {},
+                static_cast<T> (1.0), 0.0);
+
     a->set(static_cast<T> (1.5));
     compile<T> ({graph::variable_cast(a)},
                 {p1}, {},
@@ -243,6 +248,15 @@ template<jit::float_scalar T> void piecewise_1D() {
                                       a, 1.0, 0.0);
     assert(graph::constant_cast(pc).get() &&
            "Expected a constant.");
+
+    auto neg_one = graph::none<T> ();
+    auto ps = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (2.0),
+                                                       static_cast<T> (4.0),
+                                                       static_cast<T> (6.0)}),
+                                      neg_one, 1.0, 0.0);
+    auto ps_cast = graph::constant_cast(ps);
+    assert(ps_cast.get() && "Expected a constant");
+    assert(ps_cast->is(2.0) && "Expected a value of 2");
 
 //  fma(p1,c1 + a,p2) -> fma(p1,a,p3)
     auto fma_combine = fma(p1,1.0 + a,p3);
@@ -323,6 +337,16 @@ template<jit::float_scalar T> void piecewise_2D() {
     assert(pc_cast.get() && "Expected a constant node.");
     assert(pc_cast->is(4.0) && "Expected a value of 6");
 
+    auto cx2 = graph::constant<T> (static_cast<T> (-0.5));
+    auto cy2 = graph::constant<T> (static_cast<T> (-1.5));
+    auto pconst2 = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0),
+        static_cast<T> (6.0), static_cast<T> (10.0)
+    }), 2, cx2, 1.0, 0.0, cy2, 1.0, 0.0);
+    auto pc_cast2 = constant_cast(pconst2);
+    assert(pc_cast2.get() && "Expected a constant node.");
+    assert(pc_cast2->is(2.0) && "Expected a value of 2");
+
     auto p1const = graph::piecewise_2D<T> (std::vector<T> ({
         static_cast<T> (2.0), static_cast<T> (4.0),
         static_cast<T> (6.0), static_cast<T> (10.0)
@@ -330,6 +354,18 @@ template<jit::float_scalar T> void piecewise_2D() {
     auto p1c_cast = piecewise_1D_cast(p1const);
     assert(p1c_cast.get() && "Expected a piecewise constant.");
     backend::buffer<T> buffer = p1c_cast->evaluate();
+    assert(buffer[0] == static_cast<T> (2.0) &&
+           "Expected a 2 in the first index.");
+    assert(buffer[1] == static_cast<T> (4.0) &&
+           "Expected a 4 in the second index.");
+
+    auto p1const2 = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0),
+        static_cast<T> (6.0), static_cast<T> (10.0)
+    }), 2, cx2, 1.0, 0.0, ay, 1.0, 0.0);
+    auto p1c_cast2 = piecewise_1D_cast(p1const2);
+    assert(p1c_cast2.get() && "Expected a piecewise constant.");
+    buffer = p1c_cast2->evaluate();
     assert(buffer[0] == static_cast<T> (2.0) &&
            "Expected a 2 in the first index.");
     assert(buffer[1] == static_cast<T> (4.0) &&
@@ -346,6 +382,18 @@ template<jit::float_scalar T> void piecewise_2D() {
            "Expected a 4 in the first index.");
     assert(buffer[1] == static_cast<T> (10.0) &&
            "Expected a 10 in the second index.");
+
+    auto p2const2 = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (2.0), static_cast<T> (4.0),
+        static_cast<T> (6.0), static_cast<T> (10.0)
+    }), 2, ax, 1.0, 0.0, cy2, 1.0, 0.0);
+    auto p2c_cast2 = piecewise_1D_cast(p2const2);
+    assert(p2c_cast2.get() && "Expected a piecewise constant.");
+    buffer = p2c_cast2->evaluate();
+    assert(buffer[0] == static_cast<T> (2.0) &&
+           "Expected a 2 in the first index.");
+    assert(buffer[1] == static_cast<T> (6.0) &&
+           "Expected a 6 in the second index.");
 
     assert(graph::constant_cast(p1*0.0).get() &&
            "Expected a constant node.");
@@ -454,6 +502,27 @@ template<jit::float_scalar T> void piecewise_2D() {
            "Expected a piecewise_2d node.");
     assert(graph::piecewise_2D_cast(graph::atan(p1, p5)).get() &&
            "Expected a piecewise_2d node.");
+
+    ax->set(static_cast<T> (-1.5));
+    ay->set(static_cast<T> (-1.5));
+    compile<T> ({graph::variable_cast(ax),
+                 graph::variable_cast(ay)},
+                {p1}, {},
+                static_cast<T> (1.0), 0.0);
+
+    ax->set(static_cast<T> (-1.5));
+    ay->set(static_cast<T> (1.5));
+    compile<T> ({graph::variable_cast(ax),
+                 graph::variable_cast(ay)},
+                {p1}, {},
+                static_cast<T> (2.0), 0.0);
+
+    ax->set(static_cast<T> (1.5));
+    ay->set(static_cast<T> (-1.5));
+    compile<T> ({graph::variable_cast(ax),
+                 graph::variable_cast(ay)},
+                {p1}, {},
+                static_cast<T> (3.0), 0.0);
 
     ax->set(static_cast<T> (1.5));
     ay->set(static_cast<T> (1.5));
@@ -748,6 +817,13 @@ template<jit::float_scalar T> void index_1D() {
                  graph::variable_cast(arg)},
                 {index}, {},
                 static_cast<T> (3.0), 0.0);
+
+    arg->set(static_cast<T> (-3.5));
+
+    compile<T> ({graph::variable_cast(variable),
+                 graph::variable_cast(arg)},
+                {index}, {},
+                static_cast<T> (0.0), 0.0);
 }
 
 //------------------------------------------------------------------------------
@@ -764,9 +840,40 @@ template<jit::float_scalar T> void index_2D() {
                                      x, 1.0, 0.0,
                                      y, 1.0, 0.0);
 
-    variable->set({1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+    variable->set({
+        1.0, 2.0, 3.0,
+        4.0, 5.0, 6.0,
+        7.0, 8.0, 9.0
+    });
     x->set(static_cast<T> (2.5));
     y->set(static_cast<T> (0.5));
+
+    compile<T> ({graph::variable_cast(variable),
+                 graph::variable_cast(x),
+                 graph::variable_cast(y)},
+                {index}, {},
+                static_cast<T> (7.0), 0.0);
+
+    x->set(static_cast<T> (-2.5));
+    y->set(static_cast<T> (-0.5));
+
+    compile<T> ({graph::variable_cast(variable),
+                 graph::variable_cast(x),
+                 graph::variable_cast(y)},
+                {index}, {},
+                static_cast<T> (1.0), 0.0);
+
+    x->set(static_cast<T> (-2.5));
+    y->set(static_cast<T> (0.5));
+
+    compile<T> ({graph::variable_cast(variable),
+                 graph::variable_cast(x),
+                 graph::variable_cast(y)},
+                {index}, {},
+                static_cast<T> (1.0), 0.0);
+    
+    x->set(static_cast<T> (2.5));
+    y->set(static_cast<T> (-0.5));
 
     compile<T> ({graph::variable_cast(variable),
                  graph::variable_cast(x),
