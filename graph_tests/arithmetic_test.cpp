@@ -3898,6 +3898,30 @@ template<jit::float_scalar T> void test_fma() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests for modulo nodes.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+template<std::floating_point T> void test_modulo() {
+    auto five = graph::constant(static_cast<T> (5));
+    auto four = graph::constant(static_cast<T> (4));
+    
+    auto result = five%four;
+    auto result_cast = graph::constant_cast(result);
+    assert(result_cast.get() && "Expected a constant node.");
+    assert(result_cast->is(static_cast<T> (1)) && "Expected 1");
+
+    auto x = graph::variable<T> (1, "");
+    auto result2 = five%x;
+    auto result2_cast = graph::modulo_cast(result2);
+    assert(result2_cast.get() && "Expected a variable node.");
+
+    auto result3 = x%four;
+    auto result3_cast = graph::modulo_cast(result3);
+    assert(result3_cast.get() && "Expected a variable node.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 ///
 ///  @tparam T Base type of the calculation.
@@ -3908,6 +3932,9 @@ template<jit::float_scalar T> void run_tests() {
     test_multiply<T> ();
     test_divide<T> ();
     test_fma<T> ();
+    if constexpr (std::floating_point<T>) {
+        test_modulo<T> ();
+    }
 }
 
 //------------------------------------------------------------------------------

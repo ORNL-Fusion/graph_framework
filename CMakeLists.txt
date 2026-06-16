@@ -404,4 +404,18 @@ macro (add_test_target target lang)
     endif ()
 endmacro ()
 
+macro (add_compile_test target lang)
+    cmake_path (GET CMAKE_CXX_COMPILER FILENAME compiler_command)
+    add_test (NAME ${target}_off
+              COMMAND ${compiler_command} -std=c++23 -DUSE_VERBOSE=false -DCHECK_TEST -c ${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+    )
+    add_test (NAME ${target}_on
+              COMMAND ${compiler_command} -std=c++23 -DUSE_VERBOSE=false -c ${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+    )
+    set_tests_properties (${target}_on
+                          PROPERTIES
+                          WILL_FAIL true
+    )
+endmacro ()
+
 add_subdirectory (graph_tests)

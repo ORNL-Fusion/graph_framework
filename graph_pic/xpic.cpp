@@ -99,11 +99,17 @@ void run_pic() {
 //  Electron initialization.
     auto te = graph::variable<T> (num_grid, static_cast<T> (1.0), "t_{e}");
 
-//  Magnetic field.
-    auto bfield = (x*x + static_cast<T> (1))/bchar;
-
 //  Electric field.
     auto efield = graph::variable<T> (num_grid, "E_{||}");
+    auto meshx = graph::variable<T> (num_grid, "x_{m}");
+    {
+        backend::buffer<T> pos_buffer(num_grid);
+        const T dx = (0.25 - -0.25)/(num_particles - 1);
+        for (size_t i = 0; i < num_particles; i++) {
+            pos_buffer[i] = dx*i - 0.25;
+        }
+        meshx->set(pos_buffer);
+    }
 
 //  Time step
     const T gyro_frequency = q*1*1.2/2;
@@ -119,9 +125,11 @@ void run_pic() {
     vperp = vperp/c;
     x = x*wpechar/c;
 
-    bfield = bfield/bchar;
-
+    pic::ion<T> ion(q/qchar, m_hydrogen/mchar, x, vpara, vperp);
+    pic::mesh<T> mesh(meshx, efield);
     
+    std::array<graph::shared_leaf<T>, 3> rk4_step(pic::build_rk4_step(ion, mesh, bchar, dt));
+    auto mu = pic::build_magnetic_moment<T> (ion, mesh);
 
 //  Build the field solver;
 

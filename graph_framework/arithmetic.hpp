@@ -5402,6 +5402,268 @@ namespace graph {
     shared_fma<T, SAFE_MATH> fma_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<fma_node<T, SAFE_MATH>> (x);
     }
+
+//******************************************************************************
+//  Modulo node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief An Modulo node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    class modulo_node final : public no_derivative<T, SAFE_MATH, branch_node<T, SAFE_MATH>> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @param[in] l Left node pointer.
+///  @param[in] r Right node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *r) {
+            return jit::format_to_string(reinterpret_cast<size_t> (l)) + "%" +
+                   jit::format_to_string(reinterpret_cast<size_t> (r));
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct an modulo node.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+        modulo_node(shared_leaf<T, SAFE_MATH> l,
+                    shared_leaf<T, SAFE_MATH> r) :
+        no_derivative<T, SAFE_MATH,
+                      branch_node<T, SAFE_MATH>> (l, r,
+                                                  modulo_node::to_string(l.get(),
+                                                                         r.get())) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of modulo.
+///
+///  result = l % r
+///
+///  @returns The value of l % r.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> l_result = this->left->evaluate();
+            backend::buffer<T> r_result = this->right->evaluate();
+            return l_result % r_result;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce an modulo node.
+///
+///  @returns A reduced modulo node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
+//  Constant reductions.
+            auto l = constant_cast(this->left);
+            auto r = constant_cast(this->right);
+
+            if (l.get() && r.get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in,out] indices   List of defined indices.
+///  @param[in]     usage     List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                jit::register_map &indices,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
+                                                                  registers,
+                                                                  indices,
+                                                                  usage);
+                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
+                                                                   registers,
+                                                                   indices,
+                                                                   usage);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                stream << " " << registers[this] << " = fmod("
+                       << registers[l.get()] << ","
+                       << registers[r.get()] << ")";
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            bool l_brackets = add_cast(this->left).get() ||
+                              subtract_cast(this->left).get();
+            bool r_brackets = add_cast(this->right).get() ||
+                              subtract_cast(this->right).get();
+            if (l_brackets) {
+                std::cout << "\\left(";
+            }
+            this->left->to_latex();
+            if (l_brackets) {
+                std::cout << "\\right)";
+            }
+            std::cout << "\%";
+            if (r_brackets) {
+                std::cout << "\\left(";
+            }
+            this->right->to_latex();
+            if (r_brackets) {
+                std::cout << "\\right)";
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"%\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto l = this->left->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[l.get()] << ";" << std::endl;
+                auto r = this->right->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[r.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Build modulo node from two leaves.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> modulo(shared_leaf<T, SAFE_MATH> l,
+                                     shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<modulo_node<T, SAFE_MATH>> (l, r)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build modulo node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator%(shared_leaf<T, SAFE_MATH> l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return modulo<T, SAFE_MATH> (l, r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build modulo node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, std::floating_point L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator%(const L l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return modulo<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build modulo node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, std::floating_point R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator%(shared_leaf<T, SAFE_MATH> l,
+                                        const R r) {
+        return modulo<T, SAFE_MATH> (l, constant<T, SAFE_MATH> (static_cast<T> (r)));
+    }
+
+///  Convenience type alias for shared modulo nodes.
+    template<std::floating_point T, bool SAFE_MATH=false>
+    using shared_modulo = std::shared_ptr<modulo_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a modulo node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_modulo<T, SAFE_MATH> modulo_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<modulo_node<T, SAFE_MATH>> (x);
+    }
 }
 
 #endif /* arithmetic_h */

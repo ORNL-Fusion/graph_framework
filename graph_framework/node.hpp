@@ -346,6 +346,7 @@
 #include <memory>
 #include <iomanip>
 #include <functional>
+#include <type_traits>
 
 #include "backend.hpp"
 
@@ -416,7 +417,9 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
-        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) = 0;
+        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) {
+            return std::shared_ptr<leaf_node<T, SAFE_MATH>> ();
+        };
 
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
@@ -516,7 +519,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const = 0;
+        virtual void to_latex() const {};
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
@@ -1371,6 +1374,71 @@ namespace graph {
                    this->middle->is_all_variables() &&
                    this->right->is_all_variables();
         }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Type trait for not having a valid derivative.
+///
+///  @tparam T Type (Only used to compile time errors)
+//------------------------------------------------------------------------------
+    template<typename T>
+    struct has_no_derivative : std::false_type {};
+
+//------------------------------------------------------------------------------
+///  @brief Nodes without derivatives.
+///
+///  Some functions have no derivative. This can be used as a base class to
+///  case a compile error if a derivative node is attempted.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///  @tparam BASE_NODE Base code to subclass from.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false, class BASE_NODE=leaf_node<T, SAFE_MATH>>
+    class no_derivative : public BASE_NODE {
+    public:
+        template<typename S=bool>
+        std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) requires(has_no_derivative<S>::value);
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for base leaf nodes base classes.
+///
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(const std::string s)
+        requires(std::is_base_of_v<leaf_node<T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 leaf_node<T, SAFE_MATH>>>) :
+        leaf_node<T, SAFE_MATH> (s, 0, false) {}
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for straight node base classes.
+///
+///  @param[in] arg Node argument.
+///  @param[in] s   Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(shared_leaf<T, SAFE_MATH> arg,
+                      const std::string s)
+        requires(std::is_base_of_v<straight_node<T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 straight_node<T, SAFE_MATH>>>) :
+        straight_node<T, SAFE_MATH> (arg, s) {}
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for base branch nodes base classes.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(shared_leaf<T, SAFE_MATH> l,
+                      shared_leaf<T, SAFE_MATH> r,
+                      const std::string s)
+        requires(std::is_base_of_v<branch_node<T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 branch_node<T, SAFE_MATH>>>) :
+        branch_node<T, SAFE_MATH> (l, r, s) {}
     };
 
 //******************************************************************************

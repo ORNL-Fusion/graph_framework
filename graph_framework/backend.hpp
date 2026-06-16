@@ -772,6 +772,60 @@ namespace backend {
             }
         }
 
+//------------------------------------------------------------------------------
+///  @brief Not operation.
+///
+///  @returns The negation of the buffer.
+//------------------------------------------------------------------------------
+        buffer<T> operator!() requires(std::floating_point<T>) {
+            for (size_t i = 0, ie = memory.size(); i < ie; i++) {
+                memory[i] = !memory[i];
+            }
+            return memory;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Apply condition.
+///
+///  @params[in] t True condition.
+///  @params[in] f False condition.
+//------------------------------------------------------------------------------
+        buffer<T> if_(const buffer<T> &t,
+                      const buffer<T> &f) {
+            if (size() == 1) {
+                return memory[0] ? t : f;
+            } else {
+                if (t.size() == 1) {
+                    if (f.size() == 1) {
+                        for (size_t i = 0, ie = size(); i < ie; i++) {
+                            memory[i] = memory[i] ? t.at(0) : f.at(0);
+                        }
+                        return memory;
+                    } else {
+                        assert(size() == f.size() && "Incompatable buffersize.");
+                        for (size_t i = 0, ie = size(); i < ie; i++) {
+                            memory[i] = memory[i] ? t.at(0) : f[i];
+                        }
+                        return memory;
+                    }
+                } else {
+                    assert(size() == t.size() && "Incompatable buffersize.");
+                    if (f.size() == 1) {
+                        for (size_t i = 0, ie = size(); i < ie; i++) {
+                            memory[i] = memory[i] ? t[i] : f.at(0);
+                        }
+                        return memory;
+                    } else {
+                        assert(size() == f.size() && "Incompatable buffersize.");
+                        for (size_t i = 0, ie = size(); i < ie; i++) {
+                            memory[i] = memory[i] ? t[i] : f[i];
+                        }
+                        return memory;
+                    }
+                }
+            }
+        }
+
 ///  Type def to retrieve the backend T type.
         typedef T base;
     };
@@ -1040,6 +1094,312 @@ namespace backend {
             } else {
                 a[i] = a.at(i)*b.at(i) + c.at(i);
             }
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Modulo operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a % b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator%(buffer<T> &a,
+                               buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = std::fmod(a[i], right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = std::fmod(left, b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = std::fmod(a[i], b.at(i));
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Equal operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a == b.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> operator==(buffer<T> &a,
+                                buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = static_cast<T> (a[i] == right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = static_cast<T> (left == b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = static_cast<T> (a[i] == b.at(i));
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Not equal operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a == b.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> operator!=(buffer<T> &a,
+                                buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = static_cast<T> (a[i] != right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = static_cast<T> (left != b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = static_cast<T> (a[i] != b.at(i));
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Greater than operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a > b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator>(buffer<T> &a,
+                               buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = static_cast<T> (a[i] > right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = static_cast<T> (left > b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = static_cast<T> (a[i] > b.at(i));
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Less than operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a < b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator<(buffer<T> &a,
+                               buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = static_cast<T> (a[i] < right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = static_cast<T> (left < b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = static_cast<T> (a[i] < b.at(i));
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Greater than equal operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a >= b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator>=(buffer<T> &a,
+                                buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = static_cast<T> (a[i] >= right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = static_cast<T> (left >= b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = static_cast<T> (a[i] >= b.at(i));
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Less than equal operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a <= b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator<=(buffer<T> &a,
+                                buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = static_cast<T> (a[i] <= right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = static_cast<T> (left <= b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = static_cast<T> (a[i] <= b.at(i));
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief And operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a && b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator&&(buffer<T> &a,
+                                buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = static_cast<T> (a[i] && right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = static_cast<T> (left && b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = static_cast<T> (a[i] && b.at(i));
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Or operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a || b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator||(buffer<T> &a,
+                                buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b.at(0);
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = static_cast<T> (a[i] || right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a.at(0);
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = static_cast<T> (left || b.at(i));
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = static_cast<T> (a[i] || b.at(i));
         }
         return a;
     }

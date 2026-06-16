@@ -28,6 +28,7 @@
 #include "vector.hpp"
 #include "workflow.hpp"
 #include "particle_in_cell.hpp"
+#include "logical.hpp"
 
 #ifdef USE_CUDA
 #include "cuda_context.hpp"

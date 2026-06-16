@@ -10,7 +10,7 @@
 
 #include <cassert>
 
-#include "../graph_framework/dispersion.hpp"
+#include "../graph_framework/graph_framework.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Assert when difference is greater than the tolerance.
@@ -344,6 +344,28 @@ template<jit::float_scalar T> void run_math_tests() {
         graph::variable_cast(v1),
         graph::variable_cast(v2)
     }, {atan_node}, {}, atan_node->evaluate().at(0), result);
+
+    if constexpr (std::floating_point<T>) {
+        auto module_node = v1%v2;
+        compile<T> ({
+            graph::variable_cast(v1),
+            graph::variable_cast(v2)
+        }, {module_node}, {}, module_node->evaluate().at(0), 0.0);
+
+        auto true_v = graph::true_constant<T> ();
+        auto false_v = graph::false_constant<T> ();
+        auto if_node = graph::if_(v1 > v2, true_v, false_v);
+        compile<T> ({
+            graph::variable_cast(v1),
+            graph::variable_cast(v2)
+        }, {if_node}, {}, false_v->evaluate().at(0), 0.0);
+        
+        if_node = graph::if_(v1 < v2, true_v, false_v);
+        compile<T> ({
+            graph::variable_cast(v1),
+            graph::variable_cast(v2)
+        }, {if_node}, {}, true_v->evaluate().at(0), 0.0);
+    }
 }
 
 //------------------------------------------------------------------------------

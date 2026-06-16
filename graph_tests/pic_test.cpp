@@ -37,18 +37,20 @@ template<std::floating_point  T> void run_interpolation_test() {
         graph::variable_cast(ymesh)->data()[i] = func(graph::variable_cast(xmesh)->data()[i]);
     }
 
+    pic::mesh<T> efield_mesh(xmesh, ymesh);
+
     auto xp = graph::variable<T> (num_particles, "xp");
     const T dxp = (xmax - xmin)/(num_particles - 1);
     for (size_t i = 0; i < num_particles; i++) {
         graph::variable_cast(xp)->data()[i] = dxp*i + xmin;
     }
 
-    auto field = pic::build_interpolation<T, true> (xmesh, ymesh, xp, xmin, dx);
+    auto field = pic::build_interpolation<T, true> (efield_mesh, xp);
 
     workflow::manager<T> work(0);
     work.add_item({
-        graph::variable_cast(xmesh),
-        graph::variable_cast(ymesh),
+        graph::variable_cast(efield_mesh.x),
+        graph::variable_cast(efield_mesh.y),
         graph::variable_cast(xp)
     }, {
         field

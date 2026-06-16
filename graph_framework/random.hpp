@@ -553,6 +553,25 @@ namespace graph {
     constexpr shared_leaf<T, SAFE_MATH> random_scale() {
         return constant<T, SAFE_MATH> (static_cast<T> (std::numeric_limits<uint32_t>::max()));
     }
+
+//------------------------------------------------------------------------------
+///  @brief Create a uniform random number.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] min   Minimum value.
+///  @param[in] max   Maximum value.
+///  @param[in] state Random state node.
+///  @returns A uniform random constant.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> uniform_random(const R min,
+                                                       const R max,
+                                                       shared_random_state<T, SAFE_MATH> state) {
+        auto random = graph::random<T> (state);
+        return (max - min)/graph::random_scale<T> ()*random + min;
+    }
 }
 
 #endif /* random_h */
