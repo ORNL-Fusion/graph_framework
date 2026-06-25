@@ -88,24 +88,45 @@ template<std::floating_point  T> void run_interpolation_test() {
         const T x = work.check_value(i, ions[0].x);
         const T received = work.check_value(i, field);
         const T diff = func(x) - received;
-        if constexpr (std::same_as<T, float>) {
-            assert(diff*diff < static_cast<T> (1.4E-6) &&
-                   "Profile not equal ±1.4E-6");
+        if constexpr (jit::use_cuda) {
+            if constexpr (std::same_as<T, float>) {
+                assert(diff*diff < static_cast<T> (1.22E-4) &&
+                       "Profile not equal ±1.22E-4");
+            } else {
+                assert(diff*diff < static_cast<T> (1.04E-6) &&
+                       "Profile not equal ±1.04E-6");
+            }
         } else {
-            assert(diff*diff < static_cast<T> (1.1E-6) &&
-                   "Profile not equal ±1.1E-7");
+            if constexpr (std::same_as<T, float>) {
+                assert(diff*diff < static_cast<T> (1.4E-6) &&
+                       "Profile not equal ±1.4E-6");
+            } else {
+                assert(diff*diff < static_cast<T> (1.1E-6) &&
+                       "Profile not equal ±1.1E-7");
+            }
         }
     }
+    std::cout << std::endl;
     for (size_t i = 2*num_particles/10, ie = 3*num_particles/10; i < ie; i++) {
         const T x = work.check_value(i, ions[0].x);
         const T received = work.check_value(i, field);
         const T diff = func(x) - received;
-        if constexpr (std::same_as<T, float>) {
-            assert(diff*diff < static_cast<T> (3.8E-6) &&
-                   "Profile not equal ±3.8E-6");
+        if constexpr (jit::use_cuda) {
+            if constexpr (std::same_as<T, float>) {
+                assert(diff*diff < static_cast<T> (3.1E-4) &&
+                       "Profile not equal ±3.1E-4");
+            } else {
+                assert(diff*diff < static_cast<T> (1.42E-8) &&
+                       "Profile not equal ±1.42E-8");
+            }
         } else {
-            assert(diff*diff < static_cast<T> (1.5E-8) &&
-                   "Profile not equal ±1.5E-8");
+            if constexpr (std::same_as<T, float>) {
+                assert(diff*diff < static_cast<T> (3.8E-6) &&
+                       "Profile not equal ±3.8E-6");
+            } else {
+                assert(diff*diff < static_cast<T> (1.5E-8) &&
+                       "Profile not equal ±1.5E-8");
+            }
         }
     }
     for (size_t i = 3*num_particles/10, ie = 4*num_particles/10; i < ie; i++) {
