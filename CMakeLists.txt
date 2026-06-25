@@ -394,7 +394,6 @@ macro (add_test_target target lang)
     add_test (NAME ${target}
               COMMAND ${target}
     )
-    
 
     if (${USE_PCH})
         if (${BUILD_C_BINDING})

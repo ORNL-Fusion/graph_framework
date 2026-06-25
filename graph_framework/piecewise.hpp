@@ -30,11 +30,13 @@ void compile_index(std::ostringstream &stream,
                    const T offset) {
     const std::string type = jit::type_to_string<T> ();
     stream << "(" << jit::smallest_uint_type<T> (length) << ")min";
-    if constexpr (!jit::use_metal<T> ()) {
+    if constexpr (!jit::use_metal<T> () &&
+                  !jit::use_cuda()) {
         stream << "<" << type << ">";
     }
     stream << "(max";
-    if constexpr (!jit::use_metal<T> ()) {
+    if constexpr (!jit::use_metal<T> () &&
+                  !jit::use_cuda ()) {
         stream << "<" << type << ">";
     }
     stream << "(";
@@ -54,11 +56,13 @@ void compile_index(std::ostringstream &stream,
         stream << ")";
     }
     stream << ",";
-    if constexpr (jit::use_metal<T> ()) {
+    if constexpr (jit::use_metal<T> () ||
+                  jit::use_cuda()) {
         stream << "(" << type << ")";
     }
     stream << "0),";
-    if constexpr (jit::use_metal<T> ()) {
+    if constexpr (jit::use_metal<T> () ||
+                  jit::use_cuda()) {
         stream << "(" << type << ")";
     }
     stream << length - 1 << ")";

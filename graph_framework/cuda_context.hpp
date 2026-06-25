@@ -580,9 +580,8 @@ namespace gpu {
 ///  @param[in] inputs Input nodes of the kernel.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
-        std::function<void(void)> create_zero_call(graph::input_nodes<float, SAFE_MATH> &inputs) {
-            std::vector<void *> buffers;
-            std::vector<size_t> sizes;
+        std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> &inputs) {
+	    std::vector<CUdeviceptr> buffers;
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
                     kernel_arguments.try_emplace(input.get());
@@ -594,16 +593,18 @@ namespace gpu {
                                              input->data(),
                                              input->size()*sizeof(T)),
                                 "cuMemcpyHtoD");
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
+                    buffers.push_back(kernel_arguments[input.get()]);
                 }
                 buffers.push_back(kernel_arguments[input.get()]);
-                sizes.push_back(inputs->size()*sizeof(T));
             }
 
-            return [this, buffers, sizes] () mutable {
+            return [this, buffers] () mutable {
                 for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                    size_t size;
+                    check_error(cuMemGetAddressRange(NULL, &size, buffers[i]),
+                                "cuMemGetAddressRange");
                     check_error_async(cuMemsetD8Async(buffers[i], 0,
-                                                      size[i], stream),
+                                                      size, stream),
                                       "cuMemsetD8Async");
                 }
             };
@@ -859,7 +860,7 @@ namespace gpu {
             }
             source_buffer << "index < " << size << ") {" << std::endl;
             if (iterations > 1) {
-                source_buffer = "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
+                source_buffer << "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
             }
 
             for (auto &input : inputs) {
