@@ -88,7 +88,7 @@ template<std::floating_point  T> void run_interpolation_test() {
         const T x = work.check_value(i, ions[0].x);
         const T received = work.check_value(i, field);
         const T diff = func(x) - received;
-        if constexpr (jit::use_cuda) {
+        if constexpr (jit::use_cuda()) {
             if constexpr (std::same_as<T, float>) {
                 assert(diff*diff < static_cast<T> (1.22E-4) &&
                        "Profile not equal ±1.22E-4");
@@ -111,7 +111,7 @@ template<std::floating_point  T> void run_interpolation_test() {
         const T x = work.check_value(i, ions[0].x);
         const T received = work.check_value(i, field);
         const T diff = func(x) - received;
-        if constexpr (jit::use_cuda) {
+        if constexpr (jit::use_cuda()) {
             if constexpr (std::same_as<T, float>) {
                 assert(diff*diff < static_cast<T> (3.1E-4) &&
                        "Profile not equal ±3.1E-4");
