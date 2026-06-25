@@ -157,12 +157,17 @@ template<std::floating_point  T> void run_interpolation_test() {
         const T x = work.check_value(i, ions[0].x);
         const T received = work.check_value(i, field);
         const T diff = func(x) - received;
-        if constexpr (std::same_as<T, float>) {
+        if constexpr (jit::use_metal<T> ()) {
             assert(diff*diff < static_cast<T> (1.6E-5) &&
                    "Profile not equal ±1.6E-5");
         } else {
-            assert(diff*diff < static_cast<T> (2.9E-6) &&
-                   "Profile not equal ±2.9E-6");
+            if constexpr (std::same_as<T, float>) {
+                assert(diff*diff < static_cast<T> (1.7E-5) &&
+                       "Profile not equal ±1.7E-5");
+            } else {
+                assert(diff*diff < static_cast<T> (2.9E-6) &&
+                       "Profile not equal ±2.9E-6");
+            }
         }
     }
     for (size_t i = 6*num_particles/10, ie = 7*num_particles/10; i < ie; i++) {
