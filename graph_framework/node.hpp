@@ -720,6 +720,174 @@ namespace graph {
     }
 
 //******************************************************************************
+///  @brief Index node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing kernel thread index.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class index_node final : public leaf_node<T, SAFE_MATH> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string() {
+            return "i";
+        }
+        
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a constant node from a vector.
+//------------------------------------------------------------------------------
+        index_node() :
+        leaf_node<T, SAFE_MATH> (index_node::to_string(), 1, false) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate method.
+///
+///  @returns The evaluated value of the node.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            return backend::buffer<T> ();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  @param[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return this->is_match(x) ? one<T, SAFE_MATH> () : zero<T, SAFE_MATH> ();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @param[in,out] indices   List of defined indices.
+///  @param[in]     usage     List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                jit::register_map &indices,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('i', this);
+                stream << "        const ";
+                if constexpr (jit::use_cuda()) {
+                    stream << "int " << registers[this] << " = index";
+                } else if constexpr (jit::use_metal<T> ()) {
+                    stream << "int " << registers[this] << " = index";
+                } else {
+                    stream << "size_t " << registers[this] << " = i";
+                }
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "i";
+        };
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('i', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"i\", shape = box, style = \"rounded,filled\", fillcolor = black, fontcolor = white];" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if all the sub-nodes terminate in variables.
+///
+///  @returns True if all the sub-nodes terminate in variables.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return false;
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Construct an index.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @returns A reduced constant node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> index() {
+        auto temp = std::make_shared<index_node<T, SAFE_MATH>> ();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+///  Convenience type alias for shared index nodes.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using shared_index = std::shared_ptr<index_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a index node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic case.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_index<T, SAFE_MATH> index_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<index_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
 //  Constant node.
 //******************************************************************************
 //------------------------------------------------------------------------------
@@ -730,6 +898,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class constant_node final : public leaf_node<T, SAFE_MATH> {
+    private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
@@ -740,7 +909,6 @@ namespace graph {
             return jit::format_to_string<T> (d);
         }
 
-    private:
 ///  Storage buffer for the data.
         const backend::buffer<T> data;
 

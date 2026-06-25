@@ -17,6 +17,33 @@
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
+template<jit::float_scalar T> void test_zeros() {
+    auto a = graph::variable<T> (1, "");
+    auto b = graph::variable<T> (1, "");
+    backend::buffer<T> buffer(1, static_cast<T> (1));
+    a->set(buffer);
+    b->set(buffer);
+
+    workflow::manager<T> work(0);
+    work.add_zero_item({
+        graph::variable_cast(a),
+        graph::variable_cast(b)
+    });
+
+    work.compile();
+
+    assert(work.check_value(0, a) == static_cast<T> (1) && "Expected one.");
+    assert(work.check_value(0, b) == static_cast<T> (1) && "Expected one.");
+    work.run();
+    assert(work.check_value(0, a) == static_cast<T> (0) && "Expected zero.");
+    assert(work.check_value(0, b) == static_cast<T> (0) && "Expected zero.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Test setting multiple variables with the same map.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
 template<jit::float_scalar T> void test_maps() {
     auto a = graph::variable<T> (1, "");
     auto b = graph::variable<T> (1, "");
@@ -76,6 +103,7 @@ template<jit::float_scalar T> void test_loops() {
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void run_tests() {
+    test_zeros<T> ();
     test_maps<T> ();
     test_loops<T> ();
 }

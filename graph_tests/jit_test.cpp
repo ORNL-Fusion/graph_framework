@@ -76,6 +76,13 @@ void compile(graph::input_nodes<T> inputs,
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void run_math_tests() {
     auto v1 = graph::variable<T> (1, "v1");
+
+    compile<T> ({
+        graph::variable_cast(v1)
+    }, {
+        graph::index<T> ()
+    }, {}, static_cast<T> (0), 0.0);
+
     auto v2 = graph::variable<T> (1, "v2");
     auto v3 = graph::variable<T> (1, "v3");
 

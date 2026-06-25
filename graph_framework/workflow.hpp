@@ -13,17 +13,81 @@
 ///  Name space for workflows.
 namespace workflow {
 //------------------------------------------------------------------------------
+///  @brief Interface class representing items.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class item {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Run the work item.
+//------------------------------------------------------------------------------
+        virtual void run() = 0;
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Clear buffer item.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class zero_item : public item<T, SAFE_MATH> {
+    protected:
+///  Kernel function.
+        std::function<void(void)> kernel;
+///  Input nodes.
+        graph::input_nodes<T, SAFE_MATH> inputs;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a workflow item.
+///
+///  @param[in] in Input variables.
+//------------------------------------------------------------------------------
+        zero_item(graph::input_nodes<T, SAFE_MATH> in) :
+        inputs(in) {}
+
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
+            kernel = context.create_zero_call(inputs);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run the work item.
+//------------------------------------------------------------------------------
+        virtual void run() {
+            kernel();
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Class representing a work item.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    class work_item {
+    class work_item : public item<T, SAFE_MATH> {
     protected:
+///  Kernel function.
+        std::function<void(void)> kernel;
 ///  Name of the GPU kernel.
         const std::string kernel_name;
-///  Name of the GPU kernel.
+///  Size of the GPU kernel.
         const size_t kernel_size;
 ///  Input nodes.
         graph::input_nodes<T, SAFE_MATH> inputs;
@@ -31,8 +95,6 @@ namespace workflow {
         graph::output_nodes<T, SAFE_MATH> outputs;
 ///  Random state node.
         graph::shared_random_state<T, SAFE_MATH> state;
-///  Kernel function.
-        std::function<void(void)> kernel;
 
     public:
 //------------------------------------------------------------------------------
@@ -82,40 +144,61 @@ namespace workflow {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    class loop_item final : public work_item<T, SAFE_MATH> {
-///  Iterations.
-        const size_t num_iterations;
+    class loop_item final : public item<T, SAFE_MATH> {
+    protected:
+///  Kernel function.
+        std::function<void(void)> kernel;
+///  Name of the GPU kernel.
+        const std::string kernel_name;
+///  Size of the GPU kernel.
+        const size_t kernel_size;
+///  Input nodes.
+        graph::input_nodes<T, SAFE_MATH> inputs;
+///  Output nodes.
+        graph::output_nodes<T, SAFE_MATH> outputs;
+///  Random state node.
+        graph::shared_random_state<T, SAFE_MATH> state;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a workflow item.
 ///
-///  @param[in]     inputs     Input variables.
-///  @param[in]     outputs    Output nodes.
-///  @param[in]     maps       Setter maps.
-///  @param[in]     state      Random state node.
-///  @param[in]     name       Name of the work item.
-///  @param[in]     size       Size of the work item.
-///  @param[in,out] context    Jit context.
+///  @param[in]     in      Input variables.
+///  @param[in]     out     Output nodes.
+///  @param[in]     maps    Setter maps.
+///  @param[in]     state   Random state node.
+///  @param[in]     name    Name of the work item.
+///  @param[in]     size    Size of the work item.
+///  @param[in,out] context Jit context.
 ///  @param[in]     iterations Number of iterations to run the loop.
 //------------------------------------------------------------------------------
-        loop_item(graph::input_nodes<T, SAFE_MATH> inputs,
-                  graph::output_nodes<T, SAFE_MATH> outputs,
+        loop_item(graph::input_nodes<T, SAFE_MATH> in,
+                  graph::output_nodes<T, SAFE_MATH> out,
                   graph::map_nodes<T, SAFE_MATH> maps,
                   graph::shared_random_state<T, SAFE_MATH> state,
                   const std::string name, const size_t size,
                   jit::context<T, SAFE_MATH> &context,
                   const size_t iterations) :
-        work_item<T, SAFE_MATH> (inputs, outputs, maps, state, name, size, context),
-        num_iterations(iterations) {}
+        inputs(in), outputs(out), state(state),
+        kernel_name(name), kernel_size(size) {
+            context.add_kernel(name, in, out, maps, state, size, iterations);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
+            kernel = context.create_kernel_call(kernel_name, inputs, outputs,
+                                                state, kernel_size);
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Run the workitem.
 //------------------------------------------------------------------------------
         virtual void run() {
-            for (size_t i = 0; i < num_iterations; i++) {
-                work_item<T, SAFE_MATH>::run();
-            }
+            kernel();
         }
     };
 
@@ -217,9 +300,9 @@ namespace workflow {
 ///  JIT context.
         jit::context<T, SAFE_MATH> context;
 ///  List of pre work items.
-        std::vector<std::unique_ptr<work_item<T, SAFE_MATH>>> preitems;
+        std::vector<std::unique_ptr<item<T, SAFE_MATH>>> preitems;
 ///  List of work items.
-        std::vector<std::unique_ptr<work_item<T, SAFE_MATH>>> items;
+        std::vector<std::unique_ptr<item<T, SAFE_MATH>>> items;
 ///  Use reduction.
         bool add_reduction;
 
@@ -259,6 +342,15 @@ namespace workflow {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Add a pre zero item.
+///
+///  @param[in] in Input variables.
+//------------------------------------------------------------------------------
+        void add_prezero_item(graph::input_nodes<T, SAFE_MATH> in) {
+            preitems.push_back(std::make_unique<zero_item<T, SAFE_MATH>> (in));
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Add a workflow item.
 ///
 ///  @param[in] in    Input variables.
@@ -277,6 +369,15 @@ namespace workflow {
                                                                        maps, state,
                                                                        name, size,
                                                                        context));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add a zero item.
+///
+///  @param[in] in    Input variables.
+//------------------------------------------------------------------------------
+        void add_zero_item(graph::input_nodes<T, SAFE_MATH> in) {
+            items.push_back(std::make_unique<zero_item<T, SAFE_MATH>> (in));
         }
 
 //------------------------------------------------------------------------------

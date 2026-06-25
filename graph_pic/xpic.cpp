@@ -43,25 +43,22 @@ graph::shared_leaf<T> build_parallel_electric_field(graph::shared_leaf<T> x) {
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void run_pic() {
+#if 0
 //  Constants
     const size_t num_particles = 1000000;
     const size_t num_grid = 200;
-    const T c = 299792458.0;
-    const T epsilon0 = 8.854E-12;
-    const T q = 1.602E-19;
-    const T m_hydrogen = 1.6738E-27;
-    const T m_electron = 9.1093837139E-31;
-    const T kb = 1.380650E-23;
     const uint8_t Z = 1;
 
 //  Characteristic factors
-    const T mchar = (m_hydrogen + m_electron)/2;
-    const T qchar = (q + q)/2;
-    const T nechar = 2.5E19;
-    const T wpechar = std::sqrt(nechar*qchar*qchar/(mchar*epsilon0));
-    const T tchar = 1/wpechar;
-    const T echar = mchar*c/(qchar*tchar);
-    const T bchar = echar/c;
+    const std::vector<T> ion_masses{pic::m_hydrogen<T>};
+    const std::vector<uint8_t> ion_zs{1};
+    
+    const pic::characteristics norms(ion_masses, ion_zs, static_cast<T> (2.5E19));
+    std::vector<pic::ion<T>> ions;
+    for(size_t i = 0, ie = ion_masses.size(); i < ie; i++) {
+        ions.emplace_back(ion_masses[i], ion_zs[i], num_particles);
+    }
+    pic::mesh<T> mesh(-0.25, 0.25, num_grid);
 
 //  Particle initalization.
     auto x = graph::variable<T> (num_particles, "x");
@@ -242,6 +239,7 @@ void run_pic() {
     work.wait();
     sync_particles.join();
     sync_fields.join();
+#endif
 }
 
 //------------------------------------------------------------------------------

@@ -2487,25 +2487,21 @@ namespace graph {
                                                                   indices,
                                                                   usage);
                 registers[this] = jit::to_string('r', this);
-                stream << "        ";
-                jit::add_type<T> (stream);
-                stream << " " << registers[this] << ";" << std::endl
-                       << "        if(" << registers[c.get()] << ") {" << std::endl;
-
                 shared_leaf<T, SAFE_MATH> t = this->middle->compile(stream,
                                                                     registers,
                                                                     indices,
                                                                     usage);
-                stream << "            " << registers[this] << " = " << registers[t.get()] << ";"
-                       << "        } else {" << std::endl;
-                
                 shared_leaf<T, SAFE_MATH> f = this->right->compile(stream,
                                                                    registers,
                                                                    indices,
                                                                    usage);
-                
-                stream << "            " << registers[this] << " = " << registers[f.get()] << ";"
-                       << "        }" << std::endl;
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                stream << " " << registers[this] << " = "
+                       << registers[c.get()] << " ? "
+                       << registers[t.get()] << " : "
+                       << registers[f.get()];
+                this->endline(stream, usage);
             }
 
             return this->shared_from_this();

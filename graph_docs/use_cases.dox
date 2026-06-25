@@ -125,7 +125,7 @@
  * branch is absorbed in the upper hybrid resonance, @f$\omega_{h}@f$, while the
  * O-Mode branch can pass through it.
  *
- * @subsubsection use_cases_rf_correctness Comparison to GENRAY
+ * @subsubsection use_cases_rf_correctness_genray Comparison to GENRAY
  * <a href="https://compxco.com/genray.html">Genray</a> is an RF-Ray tracing
  * code written in Fortran which operates in a cylindrical geometry. Toroidal
  * equilibria can be imported using the

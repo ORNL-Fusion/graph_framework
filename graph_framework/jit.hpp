@@ -108,19 +108,21 @@ namespace jit {
 ///
 ///  Build the source code for a kernel graph.
 ///
-///  @param[in] name    Name to call the kernel.
-///  @param[in] inputs  Input variables of the kernel.
-///  @param[in] outputs Output nodes of the graph to compute.
-///  @param[in] setters Map outputs back to input values.
-///  @param[in] state   Random state node.
-///  @param[in] size    Size of the kernel.
+///  @param[in] name       Name to call the kernel.
+///  @param[in] inputs     Input variables of the kernel.
+///  @param[in] outputs    Output nodes of the graph to compute.
+///  @param[in] setters    Map outputs back to input values.
+///  @param[in] state      Random state node.
+///  @param[in] size       Size of the kernel.
+///  @param[in] iterations Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void add_kernel(const std::string name,
                         graph::input_nodes<T, SAFE_MATH> inputs,
                         graph::output_nodes<T, SAFE_MATH> outputs,
                         graph::map_nodes<T, SAFE_MATH> setters,
                         graph::shared_random_state<T, SAFE_MATH> state,
-                        const size_t size) {
+                        const size_t size,
+                        const size_t iterations=1) {
             kernel_names.push_back(name);
 
             if (state.get() && !used_random) {
@@ -166,7 +168,90 @@ namespace jit {
                                              size, is_constant,
                                              registers, usage,
                                              kernel_1dtextures[name],
-                                             kernel_2dtextures[name]);
+                                             kernel_2dtextures[name],
+                                             iterations);
+
+            register_map indices;
+            for (auto &[out, in] : setters) {
+                out->compile(source_buffer, registers, indices, usage);
+            }
+            for (auto &out : outputs) {
+                out->compile(source_buffer, registers, indices, usage);
+            }
+
+            gpu_context.create_kernel_postfix(source_buffer, outputs,
+                                              setters, state,
+                                              registers, indices, usage,
+                                              iterations);
+
+//  Delete the registers so that they can be used again in other kernels.
+            std::vector<void *> removed_elements;
+            for (auto &[key, value] : registers) {
+                if (value[0] == 'r') {
+                    removed_elements.push_back(key);
+                }
+            }
+
+            for (auto &key : removed_elements) {
+                registers.erase(key);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add a loop kernel.
+///
+///  Build the source code for a kernel graph.
+///
+///  @param[in] name       Name to call the kernel.
+///  @param[in] inputs     Input variables of the kernel.
+///  @param[in] outputs    Output nodes of the graph to compute.
+///  @param[in] setters    Map outputs back to input values.
+///  @param[in] state      Random state node.
+///  @param[in] size       Size of the kernel.
+///  @param[in] iterations Number of iterations of the loop.
+//------------------------------------------------------------------------------
+        void add_loop_kernel(const std::string name,
+                             graph::input_nodes<T, SAFE_MATH> inputs,
+                             graph::output_nodes<T, SAFE_MATH> outputs,
+                             graph::map_nodes<T, SAFE_MATH> setters,
+                             graph::shared_random_state<T, SAFE_MATH> state,
+                             const size_t size,
+                             const size_t iterations) {
+            kernel_names.push_back(name);
+
+            kernel_names.push_back(name);
+
+            std::vector<bool> is_constant(inputs.size(), true);
+            visiter_map visited;
+            register_usage usage;
+            kernel_1dtextures[name] = texture1d_list();
+            kernel_2dtextures[name] = texture2d_list();
+            for (auto &[out, in] : setters) {
+                auto found = std::distance(inputs.begin(),
+                                           std::find(inputs.begin(),
+                                                     inputs.end(), in));
+                if (found < is_constant.size()) {
+                    is_constant[found] = false;
+                }
+                out->compile_preamble(source_buffer, registers,
+                                      visited, usage,
+                                      kernel_1dtextures[name],
+                                      kernel_2dtextures[name],
+                                      gpu_context.remaining_const_memory);
+            }
+            for (auto &out : outputs) {
+                out->compile_preamble(source_buffer, registers,
+                                      visited, usage,
+                                      kernel_1dtextures[name],
+                                      kernel_2dtextures[name],
+                                      gpu_context.remaining_const_memory);
+            }
+
+            for (auto &in : inputs) {
+                if (usage.find(in.get()) == usage.end()) {
+                    usage[in.get()] = 0;
+                }
+            }
 
             register_map indices;
             for (auto &[out, in] : setters) {
@@ -200,6 +285,16 @@ namespace jit {
 //------------------------------------------------------------------------------
         void add_max_reduction(const size_t size) {
             gpu_context.create_reduction(source_buffer, size);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add zero.
+///
+///  @param[in] inputs Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> inputs) {
+            return gpu_context.create_zero_call(inputs);
         }
 
 //------------------------------------------------------------------------------

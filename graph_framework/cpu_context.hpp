@@ -243,9 +243,8 @@ namespace gpu {
 
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
-                    backend::buffer<T> buffer = input->evaluate();
-                    std::vector<T> arg(buffer.size());
-                    memcpy(arg.data(), buffer.data(), buffer.size()*sizeof(T));
+                    std::vector<T> arg(input->size());
+                    memcpy(arg.data(), input->data(), input->size()*sizeof(T));
                     kernel_arguments[input.get()] = arg;
                 }
                 buffers[reinterpret_cast<size_t> (input.get())] = kernel_arguments[input.get()].data();
@@ -302,6 +301,7 @@ namespace gpu {
 ///
 ///  @param[in] argument Node to reduce.
 ///  @param[in] run      Function to run before reduction.
+///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<T(void)> create_max_call(graph::shared_leaf<T, SAFE_MATH> &argument,
                                                std::function<void(void)> run) {
@@ -317,6 +317,33 @@ namespace gpu {
                     });
                 } else {
                     return *std::max_element(begin, end);
+                }
+            };
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create buffer that will be memset to zero.
+///
+///  @param[in] inputs   Input nodes of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> &inputs) {
+            std::vector<T *> buffers;
+            std::vector<size_t> sizes;
+    
+            for (auto &input : inputs) {
+                if (!kernel_arguments.contains(input.get())) {
+                    std::vector<T> arg(input->size());
+                    memcpy(arg.data(), input->data(), input->size()*sizeof(T));
+                    kernel_arguments[input.get()] = arg;
+                }
+                buffers.push_back(kernel_arguments[input.get()].data());
+                sizes.push_back(input->size()*sizeof(T));
+            }
+
+            return [buffers, sizes] () mutable {
+                for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                    std::memset(buffers[i], 0, sizes[i]);
                 }
             };
         }
@@ -424,6 +451,7 @@ namespace gpu {
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     textures1d    List of 1D kernel textures.
 ///  @param[in]     textures2d    List of 2D kernel textures.
+///  @param[in]     iterations    Number of loop iterations.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
@@ -435,7 +463,8 @@ namespace gpu {
                                   jit::register_map &registers,
                                   const jit::register_usage &usage,
                                   jit::texture1d_list &textures1d,
-                                  jit::texture2d_list &textures2d) {
+                                  jit::texture2d_list &textures2d,
+                                  const size_t iterations=1) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
 
@@ -485,6 +514,9 @@ namespace gpu {
                               << std::endl;
             }
             source_buffer << "    for (size_t i = 0; i < " << size << "; i++) {" << std::endl;
+            if (iterations > 1) {
+                source_buffer << "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
+            }
 
             for (auto &input : inputs) {
                 registers[input.get()] = jit::to_string('r', input.get());
@@ -510,6 +542,7 @@ namespace gpu {
 ///  @param[in,out] registers     Map of used registers.
 ///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
+///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
@@ -517,7 +550,8 @@ namespace gpu {
                                    graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
                                    jit::register_map &indices,
-                                   const jit::register_usage &usage) {
+                                   const jit::register_usage &usage,
+                                   const size_t iterations=1) {
             std::unordered_set<void *> out_registers;
             for (auto &[out, in] : setters) {
                 if (!out->is_match(in)) {
@@ -579,8 +613,10 @@ namespace gpu {
                 }
             }
 
-            source_buffer << "    }" << std::endl;
-            source_buffer << "}" << std::endl;
+            if (iterations > 1) {
+                source_buffer << "    }" << std::endl;
+            }
+            source_buffer << "    }" << std::endl  << "}" << std::endl;
         }
 
 //------------------------------------------------------------------------------

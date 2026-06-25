@@ -349,6 +349,39 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Create buffer that will be memset to zero.
+///
+///  @param[in] inputs Input nodes of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_zero_call(graph::input_nodes<float, SAFE_MATH> &inputs) {
+            std::vector<id<MTLBuffer>> buffers;
+            for (auto &input : inputs) {
+                if (!kernel_arguments.contains(input.get())) {
+                    kernel_arguments[input.get()] = [device newBufferWithBytes:input->data()
+                                                                        length:input->size()*sizeof(float)
+                                                                       options:MTLResourceStorageModeShared];
+                    buffers.push_back(kernel_arguments[input.get()]);
+                }
+                buffers.push_back(kernel_arguments[input.get()]);
+            }
+
+            return [this, buffers] () mutable {
+                command_buffer = [queue commandBuffer];
+                id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
+
+                for (id<MTLBuffer> buffer : buffers) {
+                    [encoder fillBuffer:buffer
+                                  range:NSMakeRange(0, buffer.length)
+                                  value:0];
+                }
+                [encoder endEncoding];
+
+                [command_buffer commit];
+            };
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Get the compile options.
 //------------------------------------------------------------------------------
         MTLCompileOptions *compile_options() {
@@ -452,6 +485,7 @@ namespace gpu {
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     textures1d    List of 1D kernel textures.
 ///  @param[in]     textures2d    List of 2D kernel textures.
+///  @param[in]     iterations    Number of loop iterations.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
@@ -463,7 +497,8 @@ namespace gpu {
                                   jit::register_map &registers,
                                   const jit::register_usage &usage,
                                   jit::texture1d_list &textures1d,
-                                  jit::texture2d_list &textures2d) {
+                                  jit::texture2d_list &textures2d,
+                                  const size_t iterations=1) {
             source_buffer << std::endl;
             source_buffer << "kernel void " << name << "(" << std::endl;
 
@@ -531,6 +566,9 @@ namespace gpu {
                 source_buffer << "offset + ";
             }
             source_buffer << "index < "  << size << ") {" << std::endl;
+            if (iterations > 1) {
+                source_buffer << "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
+            }
 
             for (auto &input : inputs) {
 #ifdef USE_INPUT_CACHE
@@ -576,6 +614,7 @@ namespace gpu {
 ///  @param[in,out] registers     Map of used registers.
 ///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
+///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<float, SAFE_MATH> &outputs,
@@ -583,7 +622,8 @@ namespace gpu {
                                    graph::shared_random_state<float, SAFE_MATH> state,
                                    jit::register_map &registers,
                                    jit::register_map &indices,
-                                   const jit::register_usage &usage) {
+                                   const jit::register_usage &usage,
+                                   const size_t iterations=1) {
             std::unordered_set<void *> out_registers;
             for (auto &[out, in] : setters) {
                 if (!out->is_match(in)) {
@@ -621,6 +661,9 @@ namespace gpu {
                 }
             }
 
+            if (iterations > 1) {
+                source_buffer << "    }" << std::endl;
+            }
             source_buffer << "    }" << std::endl << "}" << std::endl;
         }
 
