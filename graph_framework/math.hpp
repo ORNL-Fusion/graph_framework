@@ -88,16 +88,24 @@ namespace graph {
                                     ap2->get_right(), ap2->get_y_scale(), ap2->get_y_offset());
             }
 
-//  Handle cases like sqrt(c*x) where c is constant or cases like
-//  sqrt((x^a)*y).
+//  Handle cases like sqrt(c*x) where c is constant or cases like sqrt((x^a)*y).
+//  Note that we need to disable this reduction C is a negative real.
             auto am = multiply_cast(this->arg);
             if (am.get()) {
                 if (pow_cast(am->get_left()).get()  ||
                     am->get_left()->is_constant()   ||
                     pow_cast(am->get_right()).get() ||
                     am->get_right()->is_constant()) {
-                    return sqrt(am->get_left()) *
-                           sqrt(am->get_right());
+                    if constexpr (jit::complex_scalar<T>) {
+                        return sqrt(am->get_left()) *
+                               sqrt(am->get_right());
+                    } else {
+                        if (am->get_left()->is_constant() &&
+                            !am->get_left()->evaluate().is_negative()) {
+                            return sqrt(am->get_left()) *
+                                   sqrt(am->get_right());
+                        }
+                    }
                 }
             }
 
