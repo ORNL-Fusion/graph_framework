@@ -112,6 +112,12 @@ void test_sqrt() {
     assert(!sqrt_var->is_constant() && "Did not expect a constant.");
     assert(sqrt_var->is_all_variables() && "Expected a variable.");
     assert(sqrt_var->is_power_like() && "Expected a power like.");
+
+    if constexpr (!jit::complex_scalar<T>) {
+        auto sqrtnegvar = graph::sqrt(-x_var);
+        assert(graph::sqrt_cast(sqrtnegvar) &&
+               "Expected no reduction.");
+    }
 }
 
 //------------------------------------------------------------------------------
