@@ -87,6 +87,8 @@ namespace pic {
         const T l;
 ///  Velocity
         const T v;
+///  Electron temperature;
+        const T te;
 ///  Electric field;
         const T efield;
 ///  Magnetic field;
@@ -104,20 +106,60 @@ namespace pic {
                         const T ne) :
         m(make_m(ion_masses)), q(make_q(ion_zs)), ne(ne),
         wpe(std::sqrt(ne*q*q/(m*epsilon0<T>))),
-        t(1/wpe), l(wpe/c<T>), v(c<T>), efield(m*c<T>/(q*t)),
+        t(1/wpe), l(wpe/c<T>), v(c<T>), te(m*v*v/kb<T>), efield(m*c<T>/(q*t)),
         bfield(efield/c<T>) {}
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Parameter Class
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    class parameters {
+    public:
+///  Initial magnetic field
+        const T b0;
+///  Geometry
+        const T a0;
+///  Filter Iterations.
+        const size_t filter_iterations;
+///  Smoothing parameters.
+        const T smoothing;
+///  Time step.
+        const T dt;
+
+//------------------------------------------------------------------------------
+///  @brief Construct a parameters object.
+///
+///  @param[in] b0                Initial magnetic field.
+///  @param[in] r1
+///  @param[in] r2
+///  @param[in] filter_iterations Number of times to apply smoothing filter.
+///  @param[in] smoothing         Smoothing parameter.
+///  @param[in] dt                Time step.
+///  @param[in] norms A @ref pic::characteristics object
+//------------------------------------------------------------------------------
+        parameters(const T b0, const T r1, const T r2,
+                   const size_t filter_iterations,
+                   const T smoothing, const T dt,
+                   const characteristics<T> &norms) :
+        b0(b0/norms.bfield),
+        a0(std::numbers::pi_v<T>*(r2*r2 - r1*r1)/(norms.l*norms.l)),
+        filter_iterations(filter_iterations), smoothing(smoothing),
+        dt(dt/norms.t) {}
     };
 
 //------------------------------------------------------------------------------
 ///  @brief ion class.
 ///
-///  These values need to be initalized using normalized quantities.
+///  These values need to be initialized using normalized quantities.
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
     class ion {
     public:
+///  Atomic number.
+        const T z;
 ///  Charge
         const T charge;
 ///  Particle mass
@@ -132,6 +174,9 @@ namespace pic {
         std::array<graph::shared_leaf<T>, 3> weights;
 ///  Mesh index
         graph::shared_leaf<T> indices;
+///  Number of real particles
+        const T num_real;
+///
 
 //------------------------------------------------------------------------------
 ///  @brief Construct an ion object.
@@ -139,13 +184,16 @@ namespace pic {
 ///  @param[in] mass     Ion mass.
 ///  @param[in] z        Ion Z.
 ///  @param[in] num_ions Number of ions.
+///  @param[in] num_real Number of real particles.
 ///  @param[in] norms    A @ref pic::characteristics object.
 //------------------------------------------------------------------------------
         ion(const T mass,
             const uint8_t z,
             const size_t num_ions,
+            const T num_real,
             const characteristics<T> &norms) :
-        charge(z*pic::q<T>/norms.q), mass(mass/norms.m),
+        z(z), charge(z*pic::q<T>/norms.q),
+        mass(mass/norms.m), num_real(num_real),
         x(graph::variable<T> (num_ions, "x")),
         v_para(graph::variable<T> (num_ions, "v_{||}")),
         v_perp(graph::variable<T> (num_ions, "v_{\\perp}")),
@@ -154,6 +202,78 @@ namespace pic {
             graph::variable<T> (num_ions, "w_{1}"),
             graph::variable<T> (num_ions, "w_{2}")
         }), indices(graph::variable<T> (num_ions, "m_{i}")) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get x case as variable.
+///
+///  @return x cast as a variable.
+//------------------------------------------------------------------------------
+        graph::shared_variable<T> get_x() const {
+            return graph::variable_cast(x);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of computational ions.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        size_t size() const {
+            return get_x()->size();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the data for x.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        T *x_data() const {
+            return get_x()->data();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x case as variable.
+///
+///  @return x cast as a variable.
+//------------------------------------------------------------------------------
+        graph::shared_variable<T> get_v_para() const {
+            return graph::variable_cast(v_para);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the data for the parallel velocity.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        T *v_para_data() const {
+            return get_v_para()->data();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x case as variable.
+///
+///  @return x cast as a variable.
+//------------------------------------------------------------------------------
+        graph::shared_variable<T> get_v_perp() const {
+            return graph::variable_cast(v_perp);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the data for the perpendicular velocity.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        T *v_perp_data() const {
+            return graph::variable_cast(v_perp)->data();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Conversion factor from super particles to real particles.
+///
+///  @returns The super to real conversion factor.
+//------------------------------------------------------------------------------
+        T super_to_real() const {
+            return num_real/size();
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -163,6 +283,34 @@ namespace pic {
 //------------------------------------------------------------------------------
     template<std::floating_point T>
     class mesh {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Build y index.
+///
+///  @tparam I Mesh index.
+///
+///  @param[in] x          The x position.
+///  @param[in] scale      Scale factor.
+///  @param[in] iterations Iterations.
+///  @returns The indexed mesh Y position.
+//------------------------------------------------------------------------------
+        template<size_t I=0>
+        graph::shared_leaf<T> build_y_index(graph::shared_leaf<T> x,
+                                            const T scale,
+                                            const size_t iterations=0) const {
+            auto low = iterations ? build_y_index<I> (x - dx, iterations - 1) :
+                                    graph::index_1D(y[I], x, dx, xmin + dx);
+            auto center = graph::index_1D(y[I], x, dx, xmin);
+            auto high = iterations ? build_y_index<I> (x + dx, iterations - 1) :
+                                     graph::index_1D(y[I], x, dx, xmin + dx);
+
+            const T center_w = static_cast<T> (0.5);
+            const T side_w = static_cast<T> (0.25);
+
+            auto b = center_w*center + side_w*low + side_w*high;
+            return (1 - scale)*center + scale*b;
+        }
+
     public:
 ///  Min x
         const T xmin;
@@ -173,7 +321,16 @@ namespace pic {
 ///  Particle index.
         graph::shared_leaf<T> index;
 ///  Mesh y values.
-        graph::shared_leaf<T> y;
+        std::array<graph::shared_leaf<T>, 4> y;
+///  Mesh point.
+        enum offset {
+///  Lower index.
+            low,
+///  Center index.
+            center,
+///  Higher index.
+            high
+        };
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a mesh object.
@@ -187,7 +344,12 @@ namespace pic {
              const T x_max,
              const size_t num,
              const characteristics<T> &norms) :
-        y(graph::variable<T> (num, "y_{m}")),
+        y({
+            graph::variable<T> (num, "y^{0}_{m}"),
+            graph::variable<T> (num, "y^{1}_{m}"),
+            graph::variable<T> (num, "y^{2}_{m}"),
+            graph::variable<T> (num, "y^{3}_{m}")
+        }),
         index(graph::variable<T> (num, "pi_{m}")),
         xmin(x_min/norms.l), xmax(x_max/norms.l),
         dx((xmax - xmin)/(num - 1)) {}
@@ -195,26 +357,81 @@ namespace pic {
 //------------------------------------------------------------------------------
 ///  @brief Build x index.
 ///
-///  @param[in] ion A @ref pic::ion object.
+///  @param[in] x The x position.
 ///  @returns The indexed mesh X position.
 //------------------------------------------------------------------------------
-        graph::shared_leaf<T> build_x_index(ion<T> &ion) const {
-            const size_t s = graph::variable_cast(y)->size();
-            const backend::buffer<T> buffer(xmin, dx, s);
-            return piecewise_1D(buffer, ion.x, dx, xmin);
+        graph::shared_leaf<T> build_x_index(graph::shared_leaf<T> x) const {
+            const backend::buffer<T> buffer(xmin, dx, size());
+            return graph::piecewise_1D(buffer, x, dx, xmin);
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Build i index.
 ///
-///  @param[in] ion A @ref pic::ion object.
+///  @param[in] x The x position.
 ///  @returns The indexed mesh X position.
 //------------------------------------------------------------------------------
-        graph::shared_leaf<T> build_i_index(ion<T> &ion) const {
-            const size_t s = graph::variable_cast(y)->size();
+        graph::shared_leaf<T> build_i_index(graph::shared_leaf<T> x) const {
             const backend::buffer<T> buffer(static_cast<T> (0),
-                                            static_cast<T> (1), s);
-            return piecewise_1D(buffer, ion.x, dx, xmin);
+                                            static_cast<T> (1), size());
+            return graph::piecewise_1D(buffer, x, dx, xmin);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Build y index.
+///
+///  @tparam I Mesh index.
+///  @tparam O Mesh offset.
+///
+///  @param[in] x The x position.
+///  @param[in] params A @ref pic::parameters object.
+///  @returns The indexed mesh Y position.
+//------------------------------------------------------------------------------
+        template<size_t I=0, offset O=center>
+        graph::shared_leaf<T> build_y_index(graph::shared_leaf<T> x,
+                                            const parameters<T> &params) const {
+            if constexpr (O == low) {
+                return build_y_index<I> (x - dx, params.scale,
+                                         params.filter_iterations);
+            } else if constexpr (O == center) {
+                return build_y_index<I> (x, params.scale,
+                                         params.filter_iterations);
+            } else {
+                return build_y_index<I> (x + dx, params.scale,
+                                         params.filter_iterations);
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Build dy/dx index.
+///
+///  @tparam I Mesh index.
+///  @tparam O Mesh offset.
+///
+///  @param[in] x      The x position.
+///  @param[in] params A @ref pic::parameters object.
+///  @returns The indexed mesh Y position.
+//------------------------------------------------------------------------------
+        template<size_t I=0, offset O=center>
+        graph::shared_leaf<T> build_dydx_index(graph::shared_leaf<T> x,
+                                               const parameters<T> &params) const {
+            const T two = 2;
+            if constexpr (O == low) {
+                auto low = build_y_index<I> (x - two*dx, params.scale,
+                                             params.filter_iterations);
+                auto high = build_y_index<I> (x, params.scale,
+                                              params.filter_iterations);
+            } else if constexpr (O == center) {
+                auto low = build_y_index<I> (x - dx, params.scale,
+                                             params.filter_iterations);
+                auto high = build_y_index<I> (x + dx, params.scale,
+                                              params.filter_iterations);
+            } else {
+                auto low = build_y_index<I> (x, params.scale,
+                                             params.filter_iterations);
+                auto high = build_y_index<I> (x + two*dx, params.scale,
+                                              params.filter_iterations);
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -223,9 +440,9 @@ namespace pic {
 ///  @param[in] ion A @ref pic::ion object.
 ///  @returns Expressions for mesh accumulation.
 //------------------------------------------------------------------------------
-        std::array<graph::shared_leaf<T>, 2> build_mesh_solve(ion<T> &ion) const {
+        std::array<graph::shared_leaf<T>, 2> build_mesh_solve(const ion<T> &ion) const {
             auto next_index = index;
-            auto next_weight = y;
+            auto next_weight = y[0];
             auto kernel_index = graph::index<T> ();
 
             auto index_i = graph::index_1D(ion.indices, next_index,
@@ -249,39 +466,44 @@ namespace pic {
                                      next_weight + index_w2, next_weight);
             return {next_index, next_weight};
         }
-    };
 
 //------------------------------------------------------------------------------
-///  @brief Build Magnetic field.
+///  @brief Get the number of computational ions.
 ///
-///  @tparam T Base type of the calculation.
-///
-///  @param[in] ion   A @ref pic::ion object.
-///  @param[in] norms A @ref pic::characteristics object.
-///  @returns The magnetic field expression.
+///  @return The number of particles.
 //------------------------------------------------------------------------------
-    template<std::floating_point T>
-    graph::shared_leaf<T> build_magnetic_field(ion<T> ion,
-                                               const characteristics<T> &norms) {
-        return (ion.x*ion.x + static_cast<T> (1))/norms.bfield;
-    }
+        size_t size() const {
+            return graph::variable_cast(y[0])->size();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of computational ions.
+///
+///  @tparam I Mesh index.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        template<size_t I=0>
+        T *data() const {
+            return graph::variable_cast(y[I])->data();
+        }
+    };
 
 //------------------------------------------------------------------------------
 ///  @brief Build interpolation weights.
 ///
 ///  @tparam T Base type of the calculation.
-///
+///  @param[in] x    The x position.
 ///  @param[in] mesh Mesh object.
-///  @param[in] ion  A @ref pic::ion object.
 ///  @returns The interpolated mesh weights.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    std::array<graph::shared_leaf<T>, 3> build_weights(mesh<T> &mesh,
-                                                       ion<T> &ion) {
-        auto x = mesh.build_x_index(ion) - ion.x;
-        auto xnorm1 = static_cast<T> (1.5) + (x - mesh.dx)/mesh.dx;
-        auto xnorm2 = x/mesh.dx;
-        auto xnorm3 = static_cast<T> (1.5) - (x + mesh.dx)/mesh.dx;
+    std::array<graph::shared_leaf<T>, 3> build_weights(graph::shared_leaf<T> x,
+                                                       const mesh<T> &mesh) {
+        auto x_off = mesh.build_x_index(x) - x;
+        auto xnorm1 = static_cast<T> (1.5) + (x_off - mesh.dx)/mesh.dx;
+        auto xnorm2 = x_off/mesh.dx;
+        auto xnorm3 = static_cast<T> (1.5) - (x_off + mesh.dx)/mesh.dx;
 
         auto w0 = static_cast<T> (0.5)*xnorm1*xnorm1;
         auto w1 = static_cast<T> (0.75) - xnorm2*xnorm2;
@@ -291,125 +513,7 @@ namespace pic {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Build interpolation expression.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @param[in] mesh Mesh object.
-///  @param[in] ion  A @ref pic::ion object.
-///  @returns The interpolated mesh quantity.
-//------------------------------------------------------------------------------
-    template<std::floating_point T>
-    graph::shared_leaf<T> build_interpolation(mesh<T> &mesh,
-                                              ion<T> &ion) {
-        auto weights = build_weights<T> (mesh, ion);
-
-        auto ymesh0 = graph::index_1D(mesh.y, ion.x - mesh.dx, mesh.dx, mesh.xmin);
-        auto ymesh1 = graph::index_1D(mesh.y, ion.x,           mesh.dx, mesh.xmin);
-        auto ymesh2 = graph::index_1D(mesh.y, ion.x + mesh.dx, mesh.dx, mesh.xmin);
-
-        return weights[0]*ymesh0 + weights[1]*ymesh1 + weights[2]*ymesh2;
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Build F expressions.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @param[in] ion   A @ref pic::ion object.
-///  @param[in] mesh  A @ref pic::mesh object.
-///  @param[in] z     Runga Kutta substep.
-///  @param[in] dt    Normalized time step.
-///  @param[in] norms A @ref pic::characteristics object.
-///  @returns the Forces on the particles.
-//------------------------------------------------------------------------------
-    template<std::floating_point T>
-    std::array<graph::shared_leaf<T>, 3> build_F_expressions(ion<T> &ion,
-                                                             mesh<T> &mesh,
-                                                             const std::array<graph::shared_leaf<T>, 3> z,
-                                                             const T dt,
-                                                             const characteristics<T> &norms) {
-        auto bfield = build_magnetic_field<T> (z[0], norms);
-        auto efield = build_interpolation<T> (mesh, ion.x);
-        auto temp = 0.5*z[2]*z[1]*bfield->df(z[0])/bfield;
-        return {
-            z[1]*dt,
-            temp*dt,
-            (ion.charge/ion.mass*efield - temp)*dt
-        };
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Build Runga Kutta step update.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @param[in] ion   A @ref pic::ion object.
-///  @param[in] mesh  A @ref pic::mesh object.
-///  @param[in] dt    Normalized time step.
-///  @param[in] norms A @ref pic::characteristics object.
-///  @returns Step update expressions for x, v_para, and x_perp.
-//------------------------------------------------------------------------------
-    template<std::floating_point T>
-    std::array<graph::shared_leaf<T>, 3> build_rk4_step(ion<T> &ion,
-                                                        mesh<T> &mesh,
-                                                        const T dt,
-                                                        const characteristics<T> &norms) {
-        std::array<graph::shared_leaf<T>, 3> ion_norm = ion.normalize(norms);
-
-//  Step 1
-        std::array<graph::shared_leaf<T>, 3> Z1{ion.x, ion.v_para, ion.v_perp};
-        std::array<graph::shared_leaf<T>, 3> dZ1(build_F_expressions<T> (ion, mesh, Z1, dt, norms));
-
-//  Step 2
-        std::array<graph::shared_leaf<T>, 3> Z2{
-            Z1[0] + dZ1[0]/static_cast<T> (2),
-            Z1[1] + dZ1[1]/static_cast<T> (2),
-            Z1[2] + dZ1[2]/static_cast<T> (2)
-        };
-        std::array<graph::shared_leaf<T>, 3> dZ2(build_F_expressions<T> (ion, mesh, Z2, dt, norms));
-
-//  Step 3
-        std::array<graph::shared_leaf<T>, 3> Z3{
-            Z1[0] + dZ2[0]/static_cast<T> (2),
-            Z1[1] + dZ2[1]/static_cast<T> (2),
-            Z1[2] + dZ2[2]/static_cast<T> (2)
-        };
-        std::array<graph::shared_leaf<T>, 3> dZ3(build_F_expressions<T> (ion, mesh, Z3, dt, norms));
-
-//  Step 4
-        std::array<graph::shared_leaf<T>, 3> Z4{
-            Z1[0] + dZ3[0],
-            Z1[1] + dZ3[1],
-            Z1[2] + dZ3[2]
-        };
-        std::array<graph::shared_leaf<T>, 3> dZ4(build_F_expressions<T> (ion, mesh, Z4, dt, norms));
-
-//  Rk4 Solution
-        return {
-            Z1[0] + (dZ1[0] + static_cast<T> (2)*(dZ2[0] + dZ3[0]) + dZ4[0])/static_cast<T> (6),
-            Z1[1] + (dZ1[1] + static_cast<T> (2)*(dZ2[1] + dZ3[1]) + dZ4[1])/static_cast<T> (6),
-            Z1[2] + (dZ1[2] + static_cast<T> (2)*(dZ2[2] + dZ3[2]) + dZ4[2])/static_cast<T> (6)
-        };
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Build magnetic moment.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @param[in] ion  A @ref pic::ion object.
-///  @param[in] mesh A @ref pic::mesh object.
-///  @returns The magnetic moment.
-//------------------------------------------------------------------------------
-    template<std::floating_point T>
-    graph::shared_leaf<T> build_magnetic_moment(ion<T> &ion, mesh<T> &mesh) {
-        auto efield = build_interpolation<T> (mesh, ion.x);
-        return 0.5*ion.mass*ion.v_perp*ion.v_perp/efield;
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Build initializtion.
+///  @brief Build initialization.
 ///
 ///  @tparam T Base type of the calculation.
 ///
@@ -419,9 +523,9 @@ namespace pic {
 ///  @returns Initialized normalized values for x, v||, and v⟂
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    std::array<graph::shared_leaf<T>,3> build_initialization(mesh<T> &mesh,
+    std::array<graph::shared_leaf<T>,3> build_initialization(const mesh<T> &mesh,
                                                              const characteristics<T> &norms,
-                                                             graph::shared_random_state<T> state) {
+                                                             const graph::shared_random_state<T> state) {
 //  The mesh is already normalized so position_dist will be a normalized quantity.
         auto position_dist = graph::uniform_random<T> (mesh.xmin, mesh.xmax,
                                                        state);
@@ -432,7 +536,7 @@ namespace pic {
                                                 static_cast<T> (1.0),
                                                 state);
 
-        auto vpara = graph::sqrt(-kb<T>*graph::log(static_cast<T> (1) - r_dist))*graph::sin(phi_dist);
+        auto vpara = graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))*graph::sin(phi_dist);
 
         phi_dist = graph::uniform_random<T> (static_cast<T> (0.0),
                                              static_cast<T> (2.0)*std::numbers::pi_v<T>,
@@ -440,8 +544,8 @@ namespace pic {
         r_dist = graph::uniform_random<T> (static_cast<T> (0.0),
                                            static_cast<T> (1.0),
                                            state);
-        auto vperp1 = graph::sqrt(-pic::kb<T>*graph::log(static_cast<T> (1) - r_dist))*graph::cos(phi_dist);
-        auto vperp2 = graph::sqrt(-pic::kb<T>*graph::log(static_cast<T> (1) - r_dist))*graph::sin(phi_dist);
+        auto vperp1 = graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))*graph::cos(phi_dist);
+        auto vperp2 = graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))*graph::sin(phi_dist);
         auto vperp = graph::sqrt(vperp1*vperp1 + vperp2*vperp2);
 
         return {position_dist, vpara/norms.v, vperp/norms.v};
@@ -462,10 +566,10 @@ namespace pic {
 ///  @returns Reinjected values for x, v||, and v⟂
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    std::array<graph::shared_leaf<T>, 3> build_reinjection(ion<T> &ion,
-                                                           mesh<T> &mesh,
+    std::array<graph::shared_leaf<T>, 3> build_reinjection(const ion<T> &ion,
+                                                           const mesh<T> &mesh,
                                                            const characteristics<T> &norms,
-                                                           graph::shared_random_state<T> state) {
+                                                           const graph::shared_random_state<T> state) {
         auto resampled = build_initialization(mesh, state);
         auto is_outside = ion.x <= mesh.xmin || ion.x >= mesh.xmax;
 
@@ -473,6 +577,259 @@ namespace pic {
         auto reinject_vpara = graph::if_(is_outside, resampled[1], ion.v_para);
         auto reinject_vperp = graph::if_(is_outside, resampled[2], ion.v_perp);
         return {reinject_x, reinject_vpara, reinject_vperp};
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build a magnetic field.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] x      The x position.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @returns The expression for the magnetic field.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    graph::shared_leaf<T> build_magnetic_field(graph::shared_leaf<T> x,
+                                               const characteristics<T> &norms) {
+        return (static_cast<T> (0.1)*x*x + static_cast<T> (0.5))/norms.bfield;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build expressions for the density.
+///
+///  @tparam T Base type of the calculation.
+///  @tparam I Mesh index.
+///  @tparam O Mesh offset.
+///
+///  @param[in] x      The x position.
+///  @param[in] ion    A @ref pic::ion object.
+///  @param[in] mesh   A @ref pic::mesh object.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
+///  @returns The expression for the density.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, size_t I=0,
+             mesh<T>::offset O=mesh<T>::center>
+    graph::shared_leaf<T> build_density(graph::shared_leaf<T> x,
+                                        const ion<T> &ion,
+                                        const mesh<T> &mesh,
+                                        const characteristics<T> &norms,
+                                        const parameters<T> &params) {
+        auto y = mesh.template build_y_index<I, O> (x, params);
+
+//  Compression factor.
+        auto cf = build_magnetic_field(x, norms)/params.b0;
+//  Scale factor.
+        const T sf = ion.super_to_real()/(params.a0*mesh.dx);
+
+        return ion.z*y*cf*sf;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build expressions for the density gradient.
+///
+///  @tparam T Base type of the calculation.
+///  @tparam I Mesh index.
+///  @tparam O Mesh offset.
+///
+///  @param[in] x      The x position.
+///  @param[in] ion    A @ref pic::ion object.
+///  @param[in] mesh   A @ref pic::mesh object.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
+///  @returns The expression for the density.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, size_t I=0,
+             mesh<T>::offset O=mesh<T>::center>
+    graph::shared_leaf<T> build_density_gradient(graph::shared_leaf<T> x,
+                                                 const ion<T> &ion,
+                                                 const mesh<T> &mesh,
+                                                 const characteristics<T> &norms,
+                                                 const parameters<T> &params) {
+        auto y = mesh.template build_dydx_index<I, O> (x, params);
+
+//  Compression factor.
+        auto cf = build_magnetic_field(x, norms)/params.b0;
+//  Scale factor.
+        const T sf = ion.super_to_real()/(params.a0*mesh.dx);
+
+        return ion.z*y*cf*sf;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build Expressions for Electron temperature.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] x     The x position.
+///  @param[in] norms A @ref pic::characteristics object.
+///  @returns The expressions for the electron temperature.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    graph::shared_leaf<T> build_electron_temperature(graph::shared_leaf<T> x,
+                                                     const characteristics<T> &norms) {
+        return graph::one<T> ()/norms.te;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build expressions for the electric field.
+///
+///  @tparam T Base type of the calculation.
+///  @tparam O Mesh offset.
+///
+///  @param[in] x      The x position.
+///  @param[in] mesh   A @ref pic::mesh object.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, mesh<T>::offset O=mesh<T>::center>
+    graph::shared_leaf<T> build_electric_efield(graph::shared_leaf<T> x,
+                                                const mesh<T> &mesh,
+                                                const characteristics<T> &norms,
+                                                const parameters<T> &params) {
+        auto n0 = build_density<T, 0, O> (x, mesh, norms, params);
+        auto n1 = build_density<T, 1, O> (x, mesh, norms, params);
+        auto n2 = build_density<T, 2, O> (x, mesh, norms, params);
+        auto n3 = build_density<T, 3, O> (x, mesh, norms, params);
+
+        auto dn0dx = build_density_gradient<T, 0, O> (x, mesh, norms, params);
+        auto dn1dx = build_density_gradient<T, 1, O> (x, mesh, norms, params);
+        auto dn2dx = build_density_gradient<T, 2, O> (x, mesh, norms, params);
+        auto dn3dx = build_density_gradient<T, 3, O> (x, mesh, norms, params);
+
+        auto n = (n0 + n1 + n2 + n3)/static_cast<T> (4);
+        auto dndx = (dn0dx + dn1dx + dn2dx + dn3dx)/static_cast<T> (4);
+
+        auto te = build_magnetic_field(x, norms);
+        auto pressure = te*n/q<T>;
+
+        return graph::none<T> ()/n*(dndx*te/q<T> + pressure->df(x));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build interpolation expression.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] x    The x position.
+///  @param[in] mesh Mesh object.
+///  @returns The interpolated mesh quantity.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    graph::shared_leaf<T> build_interpolation(graph::shared_leaf<T> x,
+                                              mesh<T> &mesh) {
+        auto weights = build_weights<T> (x, mesh);
+
+        auto ymesh0 = graph::index_1D(mesh.y[0], x - mesh.dx, mesh.dx, mesh.xmin);
+        auto ymesh1 = graph::index_1D(mesh.y[0], x,           mesh.dx, mesh.xmin);
+        auto ymesh2 = graph::index_1D(mesh.y[0], x + mesh.dx, mesh.dx, mesh.xmin);
+
+        return weights[0]*ymesh0 + weights[1]*ymesh1 + weights[2]*ymesh2;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build interpolation expression.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] x      The x position.
+///  @param[in] mesh   A @ref pic::mesh object.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
+///  @returns The interpolated mesh quantity.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    graph::shared_leaf<T> build_interpolate_efield(graph::shared_leaf<T> x,
+                                                   const mesh<T> &mesh,
+                                                   const characteristics<T> &norms,
+                                                   const parameters<T> &params) {
+        auto weights = build_weights<T> (x, mesh);
+
+        auto ymesh0 = build_electric_efield<T, ::pic::mesh<T>::low> (x, mesh, norms, params);
+        auto ymesh1 = build_electric_efield<T, ::pic::mesh<T>::center> (x, mesh, norms, params);
+        auto ymesh2 = build_electric_efield<T, ::pic::mesh<T>::high> (x, mesh, norms, params);
+
+        return weights[0]*ymesh0 + weights[1]*ymesh1 + weights[2]*ymesh2;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build F expressions.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] z      Runga Kutta substep.
+///  @param[in] ion    A @ref pic::ion object.
+///  @param[in] mesh   A @ref pic::mesh object.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
+///  @returns the Forces on the particles.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    std::array<graph::shared_leaf<T>, 3> build_F_expressions(const std::array<graph::shared_leaf<T>, 3> z,
+                                                             const ion<T> &ion,
+                                                             const mesh<T> &mesh,
+                                                             const characteristics<T> &norms,
+                                                             const parameters<T> &params) {
+        auto bfield = build_magnetic_field<T> (z[0], norms);
+        auto efield = build_interpolate_efield<T> (z[0], mesh, norms, params);
+        auto temp = 0.5*z[2]*z[1]*bfield->df(z[0])/bfield;
+        return {
+            z[1]*params.dt,
+            temp*params.dt,
+            (ion.charge/ion.mass*efield - temp)*params.dt
+        };
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build Runga Kutta step update.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] ion    A @ref pic::ion object.
+///  @param[in] mesh   A @ref pic::mesh object.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
+///  @returns Step update expressions for x, v_para, and x_perp.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    std::array<graph::shared_leaf<T>, 3> build_rk4_step(const ion<T> &ion,
+                                                        const mesh<T> &mesh,
+                                                        const characteristics<T> &norms,
+                                                        const parameters<T> &params) {
+//  Step 1
+        std::array<graph::shared_leaf<T>, 3> Z1{ion.x, ion.v_para, ion.v_perp};
+        std::array<graph::shared_leaf<T>, 3> dZ1(build_F_expressions<T> (Z1, ion, mesh, norms, params));
+
+//  Step 2
+        std::array<graph::shared_leaf<T>, 3> Z2{
+            Z1[0] + dZ1[0]/static_cast<T> (2),
+            Z1[1] + dZ1[1]/static_cast<T> (2),
+            Z1[2] + dZ1[2]/static_cast<T> (2)
+        };
+        std::array<graph::shared_leaf<T>, 3> dZ2(build_F_expressions<T> (Z2, ion, mesh, norms, params));
+
+//  Step 3
+        std::array<graph::shared_leaf<T>, 3> Z3{
+            Z1[0] + dZ2[0]/static_cast<T> (2),
+            Z1[1] + dZ2[1]/static_cast<T> (2),
+            Z1[2] + dZ2[2]/static_cast<T> (2)
+        };
+        std::array<graph::shared_leaf<T>, 3> dZ3(build_F_expressions<T> (Z3, ion, mesh, norms, params));
+
+//  Step 4
+        std::array<graph::shared_leaf<T>, 3> Z4{
+            Z1[0] + dZ3[0],
+            Z1[1] + dZ3[1],
+            Z1[2] + dZ3[2]
+        };
+        std::array<graph::shared_leaf<T>, 3> dZ4(build_F_expressions<T> (Z4, ion, mesh, norms, params));
+
+//  Rk4 Solution
+        return {
+            Z1[0] + (dZ1[0] + static_cast<T> (2)*(dZ2[0] + dZ3[0]) + dZ4[0])/static_cast<T> (6),
+            Z1[1] + (dZ1[1] + static_cast<T> (2)*(dZ2[1] + dZ3[1]) + dZ4[1])/static_cast<T> (6),
+            Z1[2] + (dZ1[2] + static_cast<T> (2)*(dZ2[2] + dZ3[2]) + dZ4[2])/static_cast<T> (6)
+        };
     }
 }
 

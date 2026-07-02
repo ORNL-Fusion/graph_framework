@@ -27,7 +27,8 @@ template<std::floating_point  T> void run_interpolation_test() {
     const std::vector<uint8_t> ion_zs{1};
 
     const pic::characteristics norms(ion_masses, ion_zs, static_cast<T> (2.5E19));
-    std::vector<pic::ion<T>> ions{pic::ion<T> (ion_masses[0], ion_zs[0], num_particles, norms)};
+    std::vector<pic::ion<T>> ions{pic::ion<T> (ion_masses[0], ion_zs[0],
+                                               num_particles, 0, norms)};
     pic::mesh<T> mesh(-3.0*norms.l, 3.0*norms.l, num_mesh, norms);
 
     std::function<T(T)> func([&norms](const T x) -> T {
@@ -35,21 +36,21 @@ template<std::floating_point  T> void run_interpolation_test() {
     });
 
     for (size_t i = 0; i < num_mesh; i++) {
-        graph::variable_cast(mesh.y)->data()[i] = func(mesh.dx*i + mesh.xmin);
+        mesh.data()[i] = func(mesh.dx*i + mesh.xmin);
     }
 
     const T dxp = (mesh.xmax - mesh.xmin)/(num_particles - 1);
     for (size_t i = 0; i < num_particles; i++) {
-        graph::variable_cast(ions[0].x)->data()[i] = dxp*i + mesh.xmin;
+        ions[0].x_data()[i] = dxp*i + mesh.xmin;
     }
 
-    auto weights = pic::build_weights<T> (mesh, ions[0]);
-    auto field = pic::build_interpolation<T> (mesh, ions[0]);
+    auto weights = pic::build_weights<T> (ions[0].x, mesh);
+    auto field = pic::build_interpolation<T> (ions[0].x, mesh);
     auto weight = weights[0] + weights[1] + weights[2];
 
     workflow::manager<T> work(0);
     work.add_item({
-        graph::variable_cast(mesh.y),
+        graph::variable_cast(mesh.y[0]),
         graph::variable_cast(ions[0].x)
     }, {
         weight,
@@ -61,8 +62,8 @@ template<std::floating_point  T> void run_interpolation_test() {
 
 //  The weights should sum to 1.
     for (size_t i = 0; i < num_particles; i++) {
-        const T recieved = work.check_value(i, weight);
-        const T diff = static_cast<T> (1) - recieved;
+        const T received = work.check_value(i, weight);
+        const T diff = static_cast<T> (1) - received;
         if constexpr (std::same_as<T, float>) {
             assert(diff*diff < static_cast<T> (4.7E-12) &&
                    "Weight not equal to 1±4.7E-12");
@@ -234,7 +235,9 @@ template<std::floating_point T> void run_field_solve_test() {
     const std::vector<uint8_t> ion_zs{1};
 
     const pic::characteristics norms(ion_masses, ion_zs, static_cast<T> (2.5E19));
-    std::vector<pic::ion<T>> ions{pic::ion<T> (ion_masses[0], ion_zs[0], num_particles, norms)};
+    std::vector<pic::ion<T>> ions{
+        pic::ion<T> (ion_masses[0], ion_zs[0], num_particles, 0, norms)
+    };
     pic::mesh<T> mesh(-3.0*norms.l, 3.0*norms.l, num_mesh, norms);
 
 //  Initialize particle positions.
@@ -262,14 +265,14 @@ template<std::floating_point T> void run_field_solve_test() {
         }
     }
 
-    auto weights = pic::build_weights<T> (mesh, ions[0]);
-    auto mesh_i = mesh.build_i_index(ions[0]);
+    auto weights = pic::build_weights<T> (ions[0].x, mesh);
+    auto mesh_i = mesh.build_i_index(ions[0].x);
     auto mesh_solve = mesh.build_mesh_solve(ions[0]);
 
     workflow::manager<T> work(0);
     work.add_zero_item({
         graph::variable_cast(mesh.index),
-        graph::variable_cast(mesh.y)
+        graph::variable_cast(mesh.y[0])
     });
     work.add_item({
         graph::variable_cast(ions[0].x),
@@ -289,10 +292,10 @@ template<std::floating_point T> void run_field_solve_test() {
         graph::variable_cast(ions[0].weights[1]),
         graph::variable_cast(ions[0].weights[2]),
         graph::variable_cast(mesh.index),
-        graph::variable_cast(mesh.y)
+        graph::variable_cast(mesh.y[0])
     }, {}, {
         {mesh_solve[0], graph::variable_cast(mesh.index)},
-        {mesh_solve[1], graph::variable_cast(mesh.y)}
+        {mesh_solve[1], graph::variable_cast(mesh.y[0])}
     }, NULL, "sum_weights", num_mesh, num_particles);
 
     work.compile();
@@ -303,7 +306,7 @@ template<std::floating_point T> void run_field_solve_test() {
     t_run.print();
 
     for (size_t i = 0; i < num_mesh; i++) {
-        const T recieved = work.check_value(i, mesh.y);
+        const T recieved = work.check_value(i, mesh.y[0]);
         const T error = std::abs((counts[i] - recieved)/counts[i]);
         if constexpr (std::is_same_v<float, T>) {
             assert(error < 0.155 && "Error outside tolarance range.");
