@@ -137,6 +137,21 @@ template<jit::float_scalar T> void test_graph() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Test multiple randoms in a single kernel.
+//------------------------------------------------------------------------------
+template<jit::float_scalar T> void test_multi() {
+    auto state = graph::random_state<T> (jit::context<T>::random_state_size, 0);
+    auto random1 = graph::random<T> (graph::random_state_cast(state));
+    auto random2 = graph::random<T> (graph::random_state_cast(state));
+
+    workflow::manager<T> work(0);
+    work.add_item({}, {
+        random1, random2
+    }, {}, graph::random_state_cast(state), "multi_random", 1);
+    work.compile();
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests.
 ///
 ///  @tparam T Base type of the calculation.
@@ -145,6 +160,7 @@ template<jit::float_scalar T> void test_graph() {
 template<jit::float_scalar T, size_t N> void run_tests() {
     test_dist<T, N> ();
     test_graph<T> ();
+    test_multi<T> ();
 }
 
 //------------------------------------------------------------------------------

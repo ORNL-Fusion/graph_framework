@@ -72,6 +72,8 @@ namespace jit {
 
 ///  GPU Context.
         gpu_context_type gpu_context;
+///  Used random.
+        bool used_random;
 
     public:
 ///  Size of random state needed.
@@ -96,7 +98,7 @@ namespace jit {
 ///
 ///  @param[in] index Concurrent index. Not used.
 //------------------------------------------------------------------------------
-        context(const size_t index) : gpu_context(index) {
+        context(const size_t index) : gpu_context(index), used_random(false) {
             source_buffer << std::setprecision(max_digits10<T> ());
             gpu_context.create_header(source_buffer);
         }
@@ -120,6 +122,12 @@ namespace jit {
                         graph::shared_random_state<T, SAFE_MATH> state,
                         const size_t size) {
             kernel_names.push_back(name);
+
+            if (state.get() && !used_random) {
+                used_random = true;
+                graph::random_state_node<T>::compile_random_state(source_buffer);
+                graph::random_node<T>::compile_random(source_buffer);
+            }
 
             std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;
@@ -225,7 +233,7 @@ namespace jit {
 ///  @brief Compile the kernel.
 ///
 ///  @param[in] add_reduction Optional argument to generate the reduction
-///                            kernel.
+///                           kernel.
 //------------------------------------------------------------------------------
         void compile(const bool add_reduction=false) {
 #ifdef SAVE_KERNEL_SOURCE

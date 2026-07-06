@@ -24,6 +24,21 @@ namespace graph {
     class random_state_node final : public leaf_node<T, SAFE_MATH> {
     public:
 //------------------------------------------------------------------------------
+///  @brief Write the preamble for the random state struct.
+///
+///  @param[in,out] stream String buffer stream.
+//------------------------------------------------------------------------------
+        static void compile_random_state(std::ostringstream &stream) {
+            stream << "struct mt_state {"               << std::endl
+                   << "    array<uint32_t, 624> array;" << std::endl
+                   << "    uint16_t index;"             << std::endl
+#ifdef USE_CUDA
+                   << "    uint16_t padding[3];"        << std::endl
+#endif
+                   << "};"                              << std::endl;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Random state structure.
 //------------------------------------------------------------------------------
         struct mt_state {
@@ -90,14 +105,6 @@ namespace graph {
                                       jit::texture2d_list &textures2d,
                                       int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
-                stream << "struct mt_state {"               << std::endl
-                       << "    array<uint32_t, 624> array;" << std::endl
-                       << "    uint16_t index;"             << std::endl
-#ifdef USE_CUDA
-                       << "    uint16_t padding[3];"        << std::endl
-#endif
-                       << "};"                              << std::endl;
-
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -300,6 +307,39 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
+///  @brief Write the preamble for the random function.
+///
+///  @param[in,out] stream String buffer stream.
+//------------------------------------------------------------------------------
+        static void compile_random(std::ostringstream &stream) {
+            jit::add_type<T> (stream);
+            stream << " random(";
+            if constexpr (jit::use_metal<T> ()) {
+                stream << "device ";
+            }
+            stream <<"mt_state &state) {"                                 << std::endl
+                   << "    uint16_t k = state.index;"                     << std::endl
+                   << "    uint16_t j = (k + 1) % 624;"                   << std::endl
+                   << "    uint32_t x = (state.array[k] & 0x80000000U) |" << std::endl
+                   << "                 (state.array[j] & 0x7fffffffU);"  << std::endl
+                   << "    uint32_t xA = x >> 1;"                         << std::endl
+                   << "    if (x & 0x00000001U) {"                        << std::endl
+                   << "        xA ^= 0x9908b0dfU;"                        << std::endl
+                   << "    }"                                             << std::endl
+                   << "    j = (k + 397) % 624;"                          << std::endl
+                   << "    x = state.array[j]^xA;"                        << std::endl
+                   << "    state.array[k] = x;"                           << std::endl
+                   << "    state.index = (k + 1) % 624;"                  << std::endl
+                   << "    uint32_t y = x^(x >> 11);"                     << std::endl
+                   << "    y = y^((y << 7) & 0x9d2c5680U);"               << std::endl
+                   << "    y = y^((y << 15) & 0xefc60000U);"              << std::endl
+                   << "    return static_cast<";
+            jit::add_type<T> (stream);
+            stream << "> (y^(y >> 18));"                                  << std::endl
+                   << "}"                                                 << std::endl;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Construct a constant node from a vector.
 ///
 ///  @param[in] x Argument.
@@ -353,32 +393,6 @@ namespace graph {
                                             textures1d, textures2d,
                                             avail_const_mem);
 
-                jit::add_type<T> (stream);
-                stream << " random(";
-                if constexpr (jit::use_metal<T> ()) {
-                    stream << "device ";
-                }
-                stream <<"mt_state &state) {"                                 << std::endl
-                       << "    uint16_t k = state.index;"                     << std::endl
-                       << "    uint16_t j = (k + 1) % 624;"                   << std::endl
-                       << "    uint32_t x = (state.array[k] & 0x80000000U) |" << std::endl
-                       << "                 (state.array[j] & 0x7fffffffU);"  << std::endl
-                       << "    uint32_t xA = x >> 1;"                         << std::endl
-                       << "    if (x & 0x00000001U) {"                        << std::endl
-                       << "        xA ^= 0x9908b0dfU;"                        << std::endl
-                       << "    }"                                             << std::endl
-                       << "    j = (k + 397) % 624;"                          << std::endl
-                       << "    x = state.array[j]^xA;"                        << std::endl
-                       << "    state.array[k] = x;"                           << std::endl
-                       << "    state.index = (k + 1) % 624;"                  << std::endl
-                       << "    uint32_t y = x^(x >> 11);"                     << std::endl
-                       << "    y = y^((y << 7) & 0x9d2c5680U);"               << std::endl
-                       << "    y = y^((y << 15) & 0xefc60000U);"              << std::endl
-                       << "    return static_cast<";
-                jit::add_type<T> (stream);
-                stream << "> (y^(y >> 18));"                                  << std::endl
-                       << "}"                                                 << std::endl;
-
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -419,8 +433,8 @@ namespace graph {
 ///
 ///  Arithmetic and math operations on random number umber distributions have
 ///  the effect of changing the distribution. For instance rand1 + rand2 will
-///  to a pyramid shaped distribution function. Assume random numbers never
-///  match as a consequence.
+///  change to a pyramid shaped distribution function. Assume random numbers
+///  never match as a consequence.
 ///
 ///  @param[in] x Other graph to check if it is a match.
 ///  @returns True if the nodes are a match.
@@ -433,7 +447,9 @@ namespace graph {
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
-            std::cout << "state";
+            std::cout << "random(";
+            this->arg->to_latex();
+            std::cout << ")";
         }
 
 //------------------------------------------------------------------------------
