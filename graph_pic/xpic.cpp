@@ -15,9 +15,11 @@
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void run_pic() {
+    const timing::measure_diagnostic init("Init Time");
 //  Sizes
     const size_t num_particles = 1000000;
     const size_t num_grid = 100;
+    const size_t num_batch = 10;
     const size_t num_ions = 1;
 
     const pic::characteristics<T> norms({
@@ -100,7 +102,7 @@ void run_pic() {
             });
         }
 
-        auto mesh_solve = mesh.build_mesh_solve(ions[i]);
+        auto mesh_solve = mesh.build_mesh_solve(ions[i], num_batch);
         work.add_preloop_item({
             graph::variable_cast(ions[i].indices),
             graph::variable_cast(ions[i].weights[0]),
@@ -111,7 +113,7 @@ void run_pic() {
         }, {}, {
             {mesh_solve[0], graph::variable_cast(mesh.index)},
             {mesh_solve[1], graph::variable_cast(mesh.y[0])}
-        }, NULL, "pre_sum_weights_" + ion_tag, num_grid, num_particles);
+        }, NULL, "pre_sum_weights_" + ion_tag, num_grid, num_particles/num_batch);
 
         if (i == ions.size() - 1) {
             work.add_precopy_item({
@@ -190,10 +192,13 @@ void run_pic() {
         }, {}, {
             {mesh_solve[0], graph::variable_cast(mesh.index)},
             {mesh_solve[1], graph::variable_cast(mesh.y[0])}
-        }, NULL, "sum_weights_" + ion_tag, num_grid, num_particles);
+        }, NULL, "sum_weights_" + ion_tag, num_grid, num_particles/num_batch);
     }
+    init.print();
 
+    const timing::measure_diagnostic compile("Compile Time");
     work.compile();
+    compile.print();
 
     const timing::measure_diagnostic prerun("Pre Run Time");
     work.pre_run();
@@ -219,7 +224,9 @@ int main(int argc, const char * argv[]) {
     (void)argc;
     (void)argv;
 
+    const timing::measure_diagnostic total("Run Time");
     run_pic<float> ();
+    total.print();
 
     END_GPU
 }

@@ -440,33 +440,37 @@ namespace pic {
 //------------------------------------------------------------------------------
 ///  @brief Build mesh accumulation.
 ///
-///  @param[in] ion A @ref pic::ion object.
+///  @param[in] ion   A @ref pic::ion object.
+///  @param[in] batch The batch size.
 ///  @returns Expressions for mesh accumulation.
 //------------------------------------------------------------------------------
-        std::array<graph::shared_leaf<T>, 2> build_mesh_solve(const ion<T> &ion) const {
+        std::array<graph::shared_leaf<T>, 2> build_mesh_solve(const ion<T> &ion,
+                                                              const size_t batch=1) const {
             auto next_index = index;
             auto next_weight = y[0];
             auto kernel_index = graph::index<T> ();
 
-            auto index_i = graph::index_1D(ion.indices, next_index,
-                                           static_cast<T> (1),
-                                           static_cast<T> (0));
-            auto index_w0 = graph::index_1D(ion.weights[0], next_index,
-                                            static_cast<T> (1),
-                                            static_cast<T> (0));
-            auto index_w1 = graph::index_1D(ion.weights[1], next_index,
-                                            static_cast<T> (1),
-                                            static_cast<T> (0));
-            auto index_w2 = graph::index_1D(ion.weights[2], next_index,
-                                            static_cast<T> (1),
-                                            static_cast<T> (0));
-            next_index = next_index + static_cast<T> (1);
-            next_weight = graph::if_(index_i - static_cast<T> (1) == kernel_index,
-                                     next_weight + index_w0, next_weight);
-            next_weight = graph::if_(index_i                      == kernel_index,
-                                     next_weight + index_w1, next_weight);
-            next_weight = graph::if_(index_i + static_cast<T> (1) == kernel_index,
-                                     next_weight + index_w2, next_weight);
+            for (size_t i = 0; i < batch; i++) {
+                auto index_i = graph::index_1D(ion.indices, next_index,
+                                               static_cast<T> (1),
+                                               static_cast<T> (0));
+                auto index_w0 = graph::index_1D(ion.weights[0], next_index,
+                                                static_cast<T> (1),
+                                                static_cast<T> (0));
+                auto index_w1 = graph::index_1D(ion.weights[1], next_index,
+                                                static_cast<T> (1),
+                                                static_cast<T> (0));
+                auto index_w2 = graph::index_1D(ion.weights[2], next_index,
+                                                static_cast<T> (1),
+                                                static_cast<T> (0));
+                next_index = next_index + static_cast<T> (1);
+                next_weight = graph::if_(index_i - static_cast<T> (1) == kernel_index,
+                                         next_weight + index_w0, next_weight);
+                next_weight = graph::if_(index_i                      == kernel_index,
+                                         next_weight + index_w1, next_weight);
+                next_weight = graph::if_(index_i + static_cast<T> (1) == kernel_index,
+                                         next_weight + index_w2, next_weight);
+            }
             return {next_index, next_weight};
         }
 
