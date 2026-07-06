@@ -650,11 +650,12 @@ namespace gpu {
             return [this, sources, destinations] () mutable {
                 for (size_t i = 0, ie = sources.size(); i < ie; i++) {
                     size_t size;
-                    check_error(cuMemGetAddressRange(NULL, &size, buffers[i]),
+                    check_error(cuMemGetAddressRange(NULL, &size, sources[i]),
                                 "cuMemGetAddressRange");
-                    check_error_async(cuMemsetD8Async(buffers[i], 0,
-                                                      size, stream),
-                                      "cuMemsetD8Async");
+                    check_error_async(cuMemcpyDtoDAsync(destinations[i],
+                                                        sources[i],
+                                                        size, stream),
+                                      "cuMemcpyDtoDAsync");
                 }
             };
         }
