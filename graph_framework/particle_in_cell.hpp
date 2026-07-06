@@ -391,13 +391,13 @@ namespace pic {
         graph::shared_leaf<T> build_y_index(graph::shared_leaf<T> x,
                                             const parameters<T> &params) const {
             if constexpr (O == low) {
-                return build_y_index<I> (x - dx, params.scale,
+                return build_y_index<I> (x - dx, params.smoothing,
                                          params.filter_iterations);
             } else if constexpr (O == center) {
-                return build_y_index<I> (x, params.scale,
+                return build_y_index<I> (x, params.smoothing,
                                          params.filter_iterations);
             } else {
-                return build_y_index<I> (x + dx, params.scale,
+                return build_y_index<I> (x + dx, params.smoothing,
                                          params.filter_iterations);
             }
         }
@@ -417,20 +417,23 @@ namespace pic {
                                                const parameters<T> &params) const {
             const T two = 2;
             if constexpr (O == low) {
-                auto low = build_y_index<I> (x - two*dx, params.scale,
+                auto low = build_y_index<I> (x - two*dx, params.smoothing,
                                              params.filter_iterations);
-                auto high = build_y_index<I> (x, params.scale,
+                auto high = build_y_index<I> (x, params.smoothing,
                                               params.filter_iterations);
+                return (high - low)/two;
             } else if constexpr (O == center) {
-                auto low = build_y_index<I> (x - dx, params.scale,
+                auto low = build_y_index<I> (x - dx, params.smoothing,
                                              params.filter_iterations);
-                auto high = build_y_index<I> (x + dx, params.scale,
+                auto high = build_y_index<I> (x + dx, params.smoothing,
                                               params.filter_iterations);
+                return (high - low)/two;
             } else {
-                auto low = build_y_index<I> (x, params.scale,
+                auto low = build_y_index<I> (x, params.smoothing,
                                              params.filter_iterations);
-                auto high = build_y_index<I> (x + two*dx, params.scale,
+                auto high = build_y_index<I> (x + two*dx, params.smoothing,
                                               params.filter_iterations);
+                return (high - low)/two;
             }
         }
 
@@ -570,7 +573,7 @@ namespace pic {
                                                            const mesh<T> &mesh,
                                                            const characteristics<T> &norms,
                                                            const graph::shared_random_state<T> state) {
-        auto resampled = build_initialization(mesh, state);
+        auto resampled = build_initialization(mesh, norms, state);
         auto is_outside = ion.x <= mesh.xmin || ion.x >= mesh.xmax;
 
         auto reinject_x     = graph::if_(is_outside, resampled[0], ion.x);
@@ -678,24 +681,26 @@ namespace pic {
 ///  @tparam O Mesh offset.
 ///
 ///  @param[in] x      The x position.
+///  @param[in] ion    A @ref pic::ion object.
 ///  @param[in] mesh   A @ref pic::mesh object.
 ///  @param[in] norms  A @ref pic::characteristics object.
 ///  @param[in] params A @ref pic::parameters object.
 //------------------------------------------------------------------------------
     template<std::floating_point T, mesh<T>::offset O=mesh<T>::center>
     graph::shared_leaf<T> build_electric_efield(graph::shared_leaf<T> x,
+                                                const ion<T> &ion,
                                                 const mesh<T> &mesh,
                                                 const characteristics<T> &norms,
                                                 const parameters<T> &params) {
-        auto n0 = build_density<T, 0, O> (x, mesh, norms, params);
-        auto n1 = build_density<T, 1, O> (x, mesh, norms, params);
-        auto n2 = build_density<T, 2, O> (x, mesh, norms, params);
-        auto n3 = build_density<T, 3, O> (x, mesh, norms, params);
+        auto n0 = build_density<T, 0, O> (x, ion, mesh, norms, params);
+        auto n1 = build_density<T, 1, O> (x, ion, mesh, norms, params);
+        auto n2 = build_density<T, 2, O> (x, ion, mesh, norms, params);
+        auto n3 = build_density<T, 3, O> (x, ion, mesh, norms, params);
 
-        auto dn0dx = build_density_gradient<T, 0, O> (x, mesh, norms, params);
-        auto dn1dx = build_density_gradient<T, 1, O> (x, mesh, norms, params);
-        auto dn2dx = build_density_gradient<T, 2, O> (x, mesh, norms, params);
-        auto dn3dx = build_density_gradient<T, 3, O> (x, mesh, norms, params);
+        auto dn0dx = build_density_gradient<T, 0, O> (x, ion, mesh, norms, params);
+        auto dn1dx = build_density_gradient<T, 1, O> (x, ion, mesh, norms, params);
+        auto dn2dx = build_density_gradient<T, 2, O> (x, ion, mesh, norms, params);
+        auto dn3dx = build_density_gradient<T, 3, O> (x, ion, mesh, norms, params);
 
         auto n = (n0 + n1 + n2 + n3)/static_cast<T> (4);
         auto dndx = (dn0dx + dn1dx + dn2dx + dn3dx)/static_cast<T> (4);
@@ -733,6 +738,7 @@ namespace pic {
 ///  @tparam T Base type of the calculation.
 ///
 ///  @param[in] x      The x position.
+///  @param[in] ion    A @ref pic::ion object.
 ///  @param[in] mesh   A @ref pic::mesh object.
 ///  @param[in] norms  A @ref pic::characteristics object.
 ///  @param[in] params A @ref pic::parameters object.
@@ -740,14 +746,15 @@ namespace pic {
 //------------------------------------------------------------------------------
     template<std::floating_point T>
     graph::shared_leaf<T> build_interpolate_efield(graph::shared_leaf<T> x,
+                                                   const ion<T> &ion,
                                                    const mesh<T> &mesh,
                                                    const characteristics<T> &norms,
                                                    const parameters<T> &params) {
         auto weights = build_weights<T> (x, mesh);
 
-        auto ymesh0 = build_electric_efield<T, ::pic::mesh<T>::low> (x, mesh, norms, params);
-        auto ymesh1 = build_electric_efield<T, ::pic::mesh<T>::center> (x, mesh, norms, params);
-        auto ymesh2 = build_electric_efield<T, ::pic::mesh<T>::high> (x, mesh, norms, params);
+        auto ymesh0 = build_electric_efield<T, ::pic::mesh<T>::low> (x, ion, mesh, norms, params);
+        auto ymesh1 = build_electric_efield<T, ::pic::mesh<T>::center> (x, ion, mesh, norms, params);
+        auto ymesh2 = build_electric_efield<T, ::pic::mesh<T>::high> (x, ion, mesh, norms, params);
 
         return weights[0]*ymesh0 + weights[1]*ymesh1 + weights[2]*ymesh2;
     }
@@ -771,7 +778,7 @@ namespace pic {
                                                              const characteristics<T> &norms,
                                                              const parameters<T> &params) {
         auto bfield = build_magnetic_field<T> (z[0], norms);
-        auto efield = build_interpolate_efield<T> (z[0], mesh, norms, params);
+        auto efield = build_interpolate_efield<T> (z[0], ion, mesh, norms, params);
         auto temp = 0.5*z[2]*z[1]*bfield->df(z[0])/bfield;
         return {
             z[1]*params.dt,

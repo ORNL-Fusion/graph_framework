@@ -1949,6 +1949,10 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using map_nodes = std::vector<std::pair<shared_leaf<T, SAFE_MATH>,
                                             shared_variable<T, SAFE_MATH>>>;
+///  Convenience type alias for copying buffers.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using copy_nodes = std::vector<std::pair<shared_variable<T, SAFE_MATH>,
+                                             shared_variable<T, SAFE_MATH>>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.

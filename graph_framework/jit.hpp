@@ -187,7 +187,9 @@ namespace jit {
 //  Delete the registers so that they can be used again in other kernels.
             std::vector<void *> removed_elements;
             for (auto &[key, value] : registers) {
-                if (value[0] == 'r') {
+                if (value[0] == 'r' ||
+                    value[0] == 'l' ||
+                    value[0] == 'i') {
                     removed_elements.push_back(key);
                 }
             }
@@ -268,7 +270,9 @@ namespace jit {
 //  Delete the registers so that they can be used again in other kernels.
             std::vector<void *> removed_elements;
             for (auto &[key, value] : registers) {
-                if (value[0] == 'r') {
+                if (value[0] == 'r' ||
+                    value[0] == 'l' ||
+                    value[0] == 'i') {
                     removed_elements.push_back(key);
                 }
             }
@@ -295,6 +299,16 @@ namespace jit {
 //------------------------------------------------------------------------------
         std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> inputs) {
             return gpu_context.create_zero_call(inputs);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add copy.
+///
+///  @param[in] setters Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_copy_call(graph::copy_nodes<T, SAFE_MATH> setters) {
+            return gpu_context.create_copy_call(setters);
         }
 
 //------------------------------------------------------------------------------

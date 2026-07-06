@@ -88,12 +88,124 @@ void run_pic() {
             {weights[2], graph::variable_cast(ions[i].weights[2])},
             {mesh_i, graph::variable_cast(ions[i].indices)}
         }, NULL, "pre_compute_weights_" + ion_tag, num_particles);
+
+        if (i == 0) {
+            work.add_prezero_item({
+                graph::variable_cast(mesh.index),
+                graph::variable_cast(mesh.y[0])
+            });
+        } else {
+            work.add_prezero_item({
+                graph::variable_cast(mesh.index)
+            });
+        }
+
+        auto mesh_solve = mesh.build_mesh_solve(ions[i]);
+        work.add_preloop_item({
+            graph::variable_cast(ions[i].indices),
+            graph::variable_cast(ions[i].weights[0]),
+            graph::variable_cast(ions[i].weights[1]),
+            graph::variable_cast(ions[i].weights[2]),
+            graph::variable_cast(mesh.index),
+            graph::variable_cast(mesh.y[0])
+        }, {}, {
+            {mesh_solve[0], graph::variable_cast(mesh.index)},
+            {mesh_solve[1], graph::variable_cast(mesh.y[0])}
+        }, NULL, "pre_sum_weights_" + ion_tag, num_grid, num_particles);
+
+        if (i == ions.size() - 1) {
+            work.add_precopy_item({
+                {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])},
+                {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[2])},
+                {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[3])}
+            });
+        }
+
+        auto particle_step = pic::build_rk4_step(ions[i], mesh, norms, params);
+        work.add_item({
+            ions[i].get_x(),
+            ions[i].get_v_para(),
+            ions[i].get_v_perp(),
+            graph::variable_cast(mesh.y[0]),
+            graph::variable_cast(mesh.y[1]),
+            graph::variable_cast(mesh.y[2]),
+            graph::variable_cast(mesh.y[3])
+        }, {}, {
+            {particle_step[0], ions[i].get_x()},
+            {particle_step[1], ions[i].get_v_para()},
+            {particle_step[2], ions[i].get_v_perp()}
+        }, NULL, "particle_push_" + ion_tag, num_particles);
+
+        auto particle_reinject = pic::build_reinjection(ions[i], mesh, norms,
+                                                        graph::random_state_cast(state));
+        work.add_item({
+            ions[i].get_x(),
+            ions[i].get_v_para(),
+            ions[i].get_v_perp()
+        }, {}, {
+            {particle_reinject[0], ions[i].get_x()},
+            {particle_reinject[1], ions[i].get_v_para()},
+            {particle_reinject[2], ions[i].get_v_perp()}
+        }, graph::random_state_cast(state),
+        "particle_reinjection_" + ion_tag, num_particles);
+
+        work.add_item({
+            ions[i].get_x(),
+            graph::variable_cast(ions[i].weights[0]),
+            graph::variable_cast(ions[i].weights[1]),
+            graph::variable_cast(ions[i].weights[2]),
+            graph::variable_cast(ions[i].indices)
+        }, {}, {
+            {weights[0], graph::variable_cast(ions[i].weights[0])},
+            {weights[1], graph::variable_cast(ions[i].weights[1])},
+            {weights[2], graph::variable_cast(ions[i].weights[2])},
+            {mesh_i, graph::variable_cast(ions[i].indices)}
+        }, NULL, "compute_weights_" + ion_tag, num_particles);
+
+        if (i == 0) {
+            work.add_zero_item({
+                graph::variable_cast(mesh.index),
+                graph::variable_cast(mesh.y[0])
+            });
+        } else {
+            work.add_zero_item({
+                graph::variable_cast(mesh.index)
+            });
+        }
+        if (i == 0) {
+            work.add_copy_item({
+                {graph::variable_cast(mesh.y[2]), graph::variable_cast(mesh.y[3])},
+                {graph::variable_cast(mesh.y[1]), graph::variable_cast(mesh.y[2])},
+                {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])}
+            });
+        }
+
+        work.add_loop_item({
+            graph::variable_cast(ions[i].indices),
+            graph::variable_cast(ions[i].weights[0]),
+            graph::variable_cast(ions[i].weights[1]),
+            graph::variable_cast(ions[i].weights[2]),
+            graph::variable_cast(mesh.index),
+            graph::variable_cast(mesh.y[0])
+        }, {}, {
+            {mesh_solve[0], graph::variable_cast(mesh.index)},
+            {mesh_solve[1], graph::variable_cast(mesh.y[0])}
+        }, NULL, "sum_weights_" + ion_tag, num_grid, num_particles);
     }
 
     work.compile();
-    work.pre_run();
 
+    const timing::measure_diagnostic prerun("Pre Run Time");
+    work.pre_run();
     work.wait();
+    prerun.print();
+
+    const timing::measure_diagnostic run("Run Time");
+    for (size_t i = 0; i < 100; i++) {
+        work.run();
+    }
+    work.wait();
+    run.print();
 }
 
 //------------------------------------------------------------------------------

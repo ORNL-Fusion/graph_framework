@@ -75,6 +75,46 @@ namespace workflow {
     };
 
 //------------------------------------------------------------------------------
+///  @brief Copy one buffer item to another.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class copy_item : public item<T, SAFE_MATH> {
+    protected:
+///  Kernel function.
+        std::function<void(void)> kernel;
+///  Input nodes.
+        graph::copy_nodes<T, SAFE_MATH> maps;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a workflow item.
+///
+///  @param[in] maps Input variables to copy.
+//------------------------------------------------------------------------------
+        copy_item(graph::copy_nodes<T, SAFE_MATH> maps) :
+        maps(maps) {}
+
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
+            kernel = context.create_copy_call(maps);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run the work item.
+//------------------------------------------------------------------------------
+        virtual void run() {
+            kernel();
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Class representing a work item.
 ///
 ///  @tparam T         Base type of the calculation.
@@ -351,6 +391,39 @@ namespace workflow {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Add a pre copy item.
+///
+///  @param[in] maps Copy maps.
+//------------------------------------------------------------------------------
+        void add_precopy_item(graph::copy_nodes<T, SAFE_MATH> maps) {
+            preitems.push_back(std::make_unique<copy_item<T, SAFE_MATH>> (maps));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add a pre loop item.
+///
+///  @param[in] in         Input variables.
+///  @param[in] out        Output nodes.
+///  @param[in] maps       Setter maps.
+///  @param[in] state      Random state node.
+///  @param[in] name       Name of the work item.
+///  @param[in] size       Size of the work item.
+///  @param[in] iterations Number of iterations.
+//------------------------------------------------------------------------------
+        void add_preloop_item(graph::input_nodes<T, SAFE_MATH> in,
+                              graph::output_nodes<T, SAFE_MATH> out,
+                              graph::map_nodes<T, SAFE_MATH> maps,
+                              graph::shared_random_state<T, SAFE_MATH> state,
+                              const std::string name, const size_t size,
+                              const size_t iterations) {
+            preitems.push_back(std::make_unique<loop_item<T, SAFE_MATH>> (in, out,
+                                                                          maps, state,
+                                                                          name, size,
+                                                                          context,
+                                                                          iterations));
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Add a workflow item.
 ///
 ///  @param[in] in    Input variables.
@@ -381,7 +454,16 @@ namespace workflow {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Add a workflow item.
+///  @brief Add a copy item.
+///
+///  @param[in] maps Copy maps.
+//------------------------------------------------------------------------------
+        void add_copy_item(graph::copy_nodes<T, SAFE_MATH> maps) {
+            items.push_back(std::make_unique<copy_item<T, SAFE_MATH>> (maps));
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add a loop item.
 ///
 ///  @param[in] in         Input variables.
 ///  @param[in] out        Output nodes.

@@ -322,7 +322,7 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create buffer that will be memset to zero.
+///  @brief Create kernel call that will be memset a buffer to zero.
 ///
 ///  @param[in] inputs   Input nodes of the kernel.
 ///  @returns A lambda function to run the kernel.
@@ -344,6 +344,41 @@ namespace gpu {
             return [buffers, sizes] () mutable {
                 for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
                     std::memset(buffers[i], 0, sizes[i]);
+                }
+            };
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel call that will to copy one buffer to another.
+///
+///  @param[in] setters Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_copy_call(graph::copy_nodes<T, SAFE_MATH> &setters) {
+            std::vector<T *> sources;
+            std::vector<T *> destinations;
+            std::vector<size_t> sizes;
+    
+            for (auto &[out, in] : setters) {
+                if (!kernel_arguments.contains(in.get())) {
+                    std::vector<T> arg(in->size());
+                    memcpy(arg.data(), in->data(), in->size()*sizeof(T));
+                    kernel_arguments[in.get()] = arg;
+                }
+                destinations.push_back(kernel_arguments[in.get()].data());
+                sizes.push_back(in->size()*sizeof(T));
+
+                if (!kernel_arguments.contains(out.get())) {
+                    std::vector<T> arg(out->size());
+                    memcpy(arg.data(), out->data(), out->size()*sizeof(T));
+                    kernel_arguments[out.get()] = arg;
+                }
+                sources.push_back(kernel_arguments[out.get()].data());
+            }
+
+            return [sources, destinations, sizes] () mutable {
+                for (size_t i = 0, ie = sources.size(); i < ie; i++) {
+                    std::memcpy(destinations[i], sources[i], sizes[i]);
                 }
             };
         }

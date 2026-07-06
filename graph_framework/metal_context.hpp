@@ -349,7 +349,7 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create buffer that will be memset to zero.
+///  @brief Create kernel call that will be memset a buffer to zero.
 ///
 ///  @param[in] inputs Input nodes of the kernel.
 ///  @returns A lambda function to run the kernel.
@@ -361,7 +361,6 @@ namespace gpu {
                     kernel_arguments[input.get()] = [device newBufferWithBytes:input->data()
                                                                         length:input->size()*sizeof(float)
                                                                        options:MTLResourceStorageModeShared];
-                    buffers.push_back(kernel_arguments[input.get()]);
                 }
                 buffers.push_back(kernel_arguments[input.get()]);
             }
@@ -374,6 +373,49 @@ namespace gpu {
                     [encoder fillBuffer:buffer
                                   range:NSMakeRange(0, buffer.length)
                                   value:0];
+                }
+                [encoder endEncoding];
+
+                [command_buffer commit];
+            };
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel call that will to copy one buffer to another.
+///
+///  @param[in] setters Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_copy_call(graph::copy_nodes<float, SAFE_MATH> &setters) {
+            std::vector<id<MTLBuffer>> sources;
+            std::vector<id<MTLBuffer>> destinations;
+
+            for (auto &[out, in] : setters) {
+                if (!kernel_arguments.contains(in.get())) {
+                    kernel_arguments[in.get()] = [device newBufferWithBytes:in->data()
+                                                                     length:in->size()*sizeof(float)
+                                                                    options:MTLResourceStorageModeShared];
+                }
+                destinations.push_back(kernel_arguments[in.get()]);
+
+                if (!kernel_arguments.contains(out.get())) {
+                    kernel_arguments[out.get()] = [device newBufferWithBytes:out->data()
+                                                                      length:out->size()*sizeof(float)
+                                                                     options:MTLResourceStorageModeShared];
+                }
+                sources.push_back(kernel_arguments[out.get()]);
+            }
+
+            return [this, sources, destinations] () mutable {
+                command_buffer = [queue commandBuffer];
+                id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
+
+                for (size_t i = 0, ie = sources.size(); i < ie; i++) {
+                    [encoder copyFromBuffer:sources[i]
+                               sourceOffset:0
+                                   toBuffer:destinations[i]
+                          destinationOffset:0
+                                       size:sources[i].length];
                 }
                 [encoder endEncoding];
 

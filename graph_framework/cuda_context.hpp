@@ -575,13 +575,13 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Create buffer that will be memset to zero.
+///  @brief Create kernel call that will be memset a buffer to zero.
 ///
 ///  @param[in] inputs Input nodes of the kernel.
 ///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> &inputs) {
-	    std::vector<CUdeviceptr> buffers;
+            std::vector<CUdeviceptr> buffers;
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
                     kernel_arguments.try_emplace(input.get());
@@ -593,13 +593,62 @@ namespace gpu {
                                              input->data(),
                                              input->size()*sizeof(T)),
                                 "cuMemcpyHtoD");
-                    buffers.push_back(kernel_arguments[input.get()]);
                 }
                 buffers.push_back(kernel_arguments[input.get()]);
             }
 
             return [this, buffers] () mutable {
-                for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                for (CUdeviceptr &buffer : buffers) {
+                    size_t size;
+                    check_error(cuMemGetAddressRange(NULL, &size, buffer),
+                                "cuMemGetAddressRange");
+                    check_error_async(cuMemsetD8Async(buffer, 0, size, stream),
+                                      "cuMemsetD8Async");
+                }
+            };
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel call that will to copy one buffer to another.
+///
+///  @param[in] setters Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_copy_call(graph::copy_nodes<T, SAFE_MATH> &setters) {
+            std::vector<CUdeviceptr> sources;
+            std::vector<CUdeviceptr> destinations;
+            std::vector<size_t> sizes;
+
+            for (auto &[out, in] : setters) {
+                if (!kernel_arguments.contains(in.get())) {
+                    kernel_arguments.try_emplace(in.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[in.get()],
+                                                  in->size()*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(kernel_arguments[in.get()],
+                                             in->data(),
+                                             in->size()*sizeof(T)),
+                                "cuMemcpyHtoD");
+                }
+                destinations.push_back(kernel_arguments[in.get()]);
+
+                if (!kernel_arguments.contains(out.get())) {
+                    kernel_arguments.try_emplace(out.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[out.get()],
+                                                  out->size()*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(kernel_arguments[out.get()],
+                                             out->data(),
+                                             out->size()*sizeof(T)),
+                                "cuMemcpyHtoD");
+                }
+                sources.push_back(kernel_arguments[out.get()]);
+            }
+
+            return [this, sources, destinations] () mutable {
+                for (size_t i = 0, ie = sources.size(); i < ie; i++) {
                     size_t size;
                     check_error(cuMemGetAddressRange(NULL, &size, buffers[i]),
                                 "cuMemGetAddressRange");
