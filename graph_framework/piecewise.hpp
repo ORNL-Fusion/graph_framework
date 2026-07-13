@@ -127,14 +127,20 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @param[in] d Backend buffer.
-///  @param[in] x Argument.
+///  @param[in] d      Backend buffer.
+///  @param[in] x      Argument.
+///  @param[in] scale  Scale factor for the argument.
+///  @param[in] offset Offset factor for the argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
-                                     shared_leaf<T, SAFE_MATH> x) {
+                                     shared_leaf<T, SAFE_MATH> x,
+                                     const T scale,
+                                     const T offset) {
             return piecewise_1D_node::to_string(d) +
-                   jit::format_to_string(x->get_hash());
+                   jit::format_to_string(x->get_hash()) +
+                   jit::format_to_string(scale) +
+                   jit::format_to_string(offset);
         }
 
 //------------------------------------------------------------------------------
@@ -177,7 +183,9 @@ void compile_index(std::ostringstream &stream,
                           shared_leaf<T, SAFE_MATH> x,
                           const T scale,
                           const T offset) :
-        straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x)),
+        straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x,
+                                                                     scale,
+                                                                     offset)),
         data_hash(piecewise_1D_node::hash_data(d)), scale(scale),
         offset(offset) {}
 
@@ -442,7 +450,7 @@ void compile_index(std::ostringstream &stream,
 
             if (x_cast.get()) {
                 return this->data_hash == x_cast->data_hash &&
-                       this->arg->is_match(x_cast->get_arg());
+                       this->is_arg_match(x);
             }
 
             return false;
@@ -704,17 +712,29 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @param[in] d Backend buffer.
-///  @param[in] x X argument.
-///  @param[in] y Y argument.
+///  @param[in] d        Backend buffer.
+///  @param[in] x        X argument.
+///  @param[in] x_scale  Scale factor for the argument.
+///  @param[in] x_offset Offset factor for the x argument.
+///  @param[in] y        Y argument.
+///  @param[in] y_scale  Scale factor for the y argument.
+///  @param[in] y_offset Offset factor for the y argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
                                      shared_leaf<T, SAFE_MATH> x,
-                                     shared_leaf<T, SAFE_MATH> y) {
+                                     const T x_scale,
+                                     const T x_offset,
+                                     shared_leaf<T, SAFE_MATH> y,
+                                     const T y_scale,
+                                     const T y_offset) {
             return piecewise_2D_node::to_string(d) +
                    jit::format_to_string(x->get_hash()) +
-                   jit::format_to_string(y->get_hash());
+                   jit::format_to_string(x_scale) +
+                   jit::format_to_string(x_offset) +
+                   jit::format_to_string(y->get_hash()) +
+                   jit::format_to_string(y_scale) +
+                   jit::format_to_string(y_offset);
         }
 
 //------------------------------------------------------------------------------
@@ -767,7 +787,10 @@ void compile_index(std::ostringstream &stream,
                           shared_leaf<T, SAFE_MATH> y,
                           const T y_scale,
                           const T y_offset) :
-        branch_node<T, SAFE_MATH> (x, y, piecewise_2D_node::to_string(d, x, y)),
+        branch_node<T, SAFE_MATH> (x, y,
+                                   piecewise_2D_node::to_string(d,
+                                                                x, x_scale, x_offset,
+                                                                y, y_scale, y_offset)),
         data_hash(piecewise_2D_node::hash_data(d)),
         num_columns(n), x_scale(x_scale), x_offset(x_offset), y_scale(y_scale),
         y_offset(y_offset) {
@@ -1196,9 +1219,8 @@ void compile_index(std::ostringstream &stream,
             auto x_cast = piecewise_2D_cast(x);
 
             if (x_cast.get()) {
-                return this->data_hash == x_cast->data_hash     &&
-                       this->left->is_match(x_cast->get_left()) &&
-                       this->right->is_match(x_cast->get_right());
+                return this->data_hash == x_cast->data_hash &&
+                       this->is_arg_match(x);
             }
 
             return false;
@@ -1322,7 +1344,7 @@ void compile_index(std::ostringstream &stream,
             return temp.get()                                 &&
                    this->left->is_match(temp->get_arg())      &&
                    (temp->get_size() == this->get_num_rows()) &&
-                   (temp->get_scale() == this->x_scale)     &&
+                   (temp->get_scale() == this->x_scale)       &&
                    (temp->get_offset() == this->x_offset);
         }
 
@@ -1339,7 +1361,7 @@ void compile_index(std::ostringstream &stream,
             return temp.get()                                    &&
                    this->right->is_match(temp->get_arg())        &&
                    (temp->get_size() == this->get_num_columns()) &&
-                   (temp->get_scale() == this->y_scale)        &&
+                   (temp->get_scale() == this->y_scale)          &&
                    (temp->get_offset() == this->y_offset);
         }
     };
@@ -1433,14 +1455,20 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @param[in] v Value to index.
-///  @param[in] x Argument.
+///  @param[in] v      Value to index.
+///  @param[in] x      Argument.
+///  @param[in] scale  Scale factor for the argument.
+///  @param[in] offset Offset factor for the argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(shared_leaf<T, SAFE_MATH> v,
-                                     shared_leaf<T, SAFE_MATH> x) {
+                                     shared_leaf<T, SAFE_MATH> x,
+                                     const T scale,
+                                     const T offset) {
             return jit::format_to_string(v->get_hash()) + "[" +
-                   jit::format_to_string(x->get_hash()) + "]";
+                   jit::format_to_string(x->get_hash()) +
+                   jit::format_to_string(scale) +
+                   jit::format_to_string(offset) + "]";
         }
 
     public:
@@ -1456,7 +1484,9 @@ void compile_index(std::ostringstream &stream,
                       shared_leaf<T, SAFE_MATH> x,
                       const T scale,
                       const T offset) :
-        branch_node<T, SAFE_MATH> (var, x, index_1D_node::to_string(var, x)),
+        branch_node<T, SAFE_MATH> (var, x,
+                                   index_1D_node::to_string(var, x,
+                                                            scale, offset)),
         scale(scale), offset(offset) {}
 
 //------------------------------------------------------------------------------
@@ -1545,6 +1575,25 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  Assumes both arguments are either set or not set.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+            auto x_cast = index_1D_cast(x);
+
+            if (x_cast.get()) {
+                return this->left->is_match(x_cast->get_left()) &&
+                       this->is_arg_match(x);
+            }
+
+            return false;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
@@ -1623,11 +1672,15 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = index_1D_cast(x);
-            return temp.get()                               &&
-                   this->right->is_match(temp->get_right()) &&
-                   (temp->get_size() == this->get_size())   &&
-                   (temp->get_scale() == this->scale)       &&
-                   (temp->get_offset() == this->offset);
+
+            if (temp.get()) {
+                return this->right->is_match(temp->get_right()) &&
+                       (temp->get_size() == this->get_size())   &&
+                       (temp->get_scale() == this->scale)       &&
+                       (temp->get_offset() == this->offset);
+            }
+
+            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -1748,17 +1801,29 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @param[in] v Value to index.
-///  @param[in] x Argument.
-///  @param[in] y Argument.
+///  @param[in] v        Value to index.
+///  @param[in] x        Argument.
+///  @param[in] x_scale  Scale factor for the argument.
+///  @param[in] x_offset Offset factor for the x argument.
+///  @param[in] y        Argument.
+///  @param[in] y_scale  Scale factor for the y argument.
+///  @param[in] y_offset Offset factor for the y argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(shared_leaf<T, SAFE_MATH> v,
                                      shared_leaf<T, SAFE_MATH> x,
-                                     shared_leaf<T, SAFE_MATH> y) {
+                                     const T x_scale,
+                                     const T x_offset,
+                                     shared_leaf<T, SAFE_MATH> y,
+                                     const T y_scale,
+                                     const T y_offset) {
             return jit::format_to_string(v->get_hash()) + "[" +
-                   jit::format_to_string(x->get_hash()) + "," +
-                   jit::format_to_string(y->get_hash()) + "]";
+                   jit::format_to_string(x->get_hash()) +
+                   jit::format_to_string(x_scale) +
+                   jit::format_to_string(x_offset) + "," +
+                   jit::format_to_string(y->get_hash()) +
+                   jit::format_to_string(x_scale) +
+                   jit::format_to_string(x_offset) + "]";
         }
 
     public:
@@ -1782,7 +1847,10 @@ void compile_index(std::ostringstream &stream,
                       shared_leaf<T, SAFE_MATH> y,
                       const T y_scale,
                       const T y_offset) :
-        triple_node<T, SAFE_MATH> (var, x, y, index_2D_node::to_string(var, x, y)),
+        triple_node<T, SAFE_MATH> (var, x, y,
+                                   index_2D_node::to_string(var,
+                                                            x, x_scale, x_offset,
+                                                            y, y_scale, y_offset)),
         num_columns(n), x_scale(x_scale), x_offset(x_offset), y_scale(y_scale),
         y_offset(y_offset) {
             assert(variable_cast(this->left)->size()%n == 0 &&
@@ -1910,6 +1978,25 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  Assumes both arguments are either set or not set.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+            auto x_cast = index_2D_cast(x);
+
+            if (x_cast.get()) {
+                return this->left->is_match(x_cast->get_left()) &&
+                       this->is_arg_match(x);
+            }
+
+            return false;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
@@ -1991,12 +2078,18 @@ void compile_index(std::ostringstream &stream,
 ///  @returns True if the arguments match.
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
-            auto temp = index_1D_cast(x);
-            return temp.get()                               &&
-                   this->right->is_match(temp->get_right()) &&
-                   (temp->get_size() == this->get_size())   &&
-                   (temp->get_scale() == this->scale)       &&
-                   (temp->get_offset() == this->offset);
+            auto temp = index_2D_cast(x);
+
+            if (temp.get()) {
+                return this->right->is_match(temp->get_right()) &&
+                       (temp->get_size() == this->get_size())   &&
+                       (temp->get_x_scale() == this->x_scale)   &&
+                       (temp->get_x_offset() == this->x_offset) &&
+                       (temp->get_y_scale() == this->y_scale)   &&
+                       (temp->get_y_offset() == this->y_offset);
+            }
+
+            return false;
         }
 
 //------------------------------------------------------------------------------
