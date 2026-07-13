@@ -1586,7 +1586,7 @@ void compile_index(std::ostringstream &stream,
             auto x_cast = index_1D_cast(x);
 
             if (x_cast.get()) {
-                return this->left == x_cast->get_left() &&
+                return this->left->is_match(x_cast->get_left()) &&
                        this->is_arg_match(x);
             }
 
@@ -1989,7 +1989,7 @@ void compile_index(std::ostringstream &stream,
             auto x_cast = index_2D_cast(x);
 
             if (x_cast.get()) {
-                return this->left == x_cast->get_left() &&
+                return this->left->is_match(x_cast->get_left()) &&
                        this->is_arg_match(x);
             }
 
