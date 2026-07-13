@@ -92,6 +92,19 @@ template<jit::float_scalar T> void piecewise_1D() {
                                                        static_cast<T> (4.0),
                                                        static_cast<T> (6.0)}),
                                       a, 1.0, 0.0);
+    auto p4 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                       static_cast<T> (2.0),
+                                                       static_cast<T> (3.0)}),
+                                      a, 2.0, 3.0);
+    auto p5 = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (1.0),
+                                                       static_cast<T> (2.0),
+                                                       static_cast<T> (3.0)}),
+                                      a, 1.0, 0.0);
+
+    assert(!p1->is_match(p4) && "Expected no match.");
+    assert(p1.get() != p4.get() && "Expected no match.");
+    assert(p1->is_match(p5) && "Expected match.");
+    assert(p1.get() == p5.get() && "Expected match.");
 
     auto c = graph::constant<T> (static_cast<T> (2.5));
     auto pconst = graph::piecewise_1D<T> (std::vector<T> ({static_cast<T> (2.0),
@@ -326,6 +339,20 @@ template<jit::float_scalar T> void piecewise_2D() {
     auto p5 = graph::piecewise_1D<T> (std::vector<T> ({
         static_cast<T> (2.0), static_cast<T> (4.0)
     }), ay, 1.0, 0.0);
+
+    auto p6 = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (1.0), static_cast<T> (2.0),
+        static_cast<T> (3.0), static_cast<T> (4.0)
+    }), 2, ax, 1.0, 0.0, ay, 1.0, 5.0);
+    auto p7 = graph::piecewise_2D<T> (std::vector<T> ({
+        static_cast<T> (1.0), static_cast<T> (2.0),
+        static_cast<T> (3.0), static_cast<T> (4.0)
+    }), 2, ax, 1.0, 0.0, ay, 1.0, 0.0);
+
+    assert(!p1->is_match(p6) && "Expected no match.");
+    assert(p1.get() != p6.get() && "Expected no match.");
+    assert(p1->is_match(p7) && "Expected match.");
+    assert(p1.get() == p7.get() && "Expected match.");
 
     auto cx = graph::constant<T> (static_cast<T> (0.5));
     auto cy = graph::constant<T> (static_cast<T> (1.5));
@@ -809,6 +836,13 @@ template<jit::float_scalar T> void index_1D() {
     auto arg = graph::variable<T> (1, "");
 
     auto index = graph::index_1D<T> (variable, arg, 1.0, 0.0);
+    auto index2 = graph::index_1D<T> (variable, arg, 1.0, 2.0);
+    auto index3 = graph::index_1D<T> (variable, arg, 1.0, 0.0);
+
+    assert(!index->is_match(index2) && "Expected no match.");
+    assert(index.get() != index2.get() && "Expected no match.");
+    assert(index->is_match(index3) && "Expected match.");
+    assert(index.get() == index3.get() && "Expected match.");
 
     variable->set({0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0});
     arg->set(static_cast<T> (3.5));
@@ -839,6 +873,16 @@ template<jit::float_scalar T> void index_2D() {
     auto index = graph::index_2D<T> (variable, 3,
                                      x, 1.0, 0.0,
                                      y, 1.0, 0.0);
+    auto index2 = graph::index_2D<T> (variable, 3,
+                                      x, 1.0, 0.0,
+                                      y, 1.0, 2.0);
+    auto index3 = graph::index_2D<T> (variable, 3,
+                                      x, 1.0, 0.0,
+                                      y, 1.0, 0.0);
+    assert(!index->is_match(index2) && "Expected no match.");
+    assert(index.get() != index2.get() && "Expected no match.");
+    assert(index->is_match(index3) && "Expected match.");
+    assert(index.get() == index3.get() && "Expected match.");
 
     variable->set({
         1.0, 2.0, 3.0,
