@@ -72,7 +72,7 @@ void run_korc() {
                                                 pos->get_z())/b0;
             
             workflow::manager<T> work(thread_number);
-            work.add_preitem({
+            work.template add_item<workflow::order::pre_run_item> ({
                 graph::variable_cast(ux),
                 graph::variable_cast(uy),
                 graph::variable_cast(uz),
@@ -142,7 +142,7 @@ void run_korc() {
             t_setup.print();
             
             const timing::measure_diagnostic t_run("Run Time");
-            work.pre_run();
+            work.template run<workflow::order::pre_run_item> ();
             for (size_t i = 0; i < 1000000; i++) {
 /*                sync.join();
                 work.wait();

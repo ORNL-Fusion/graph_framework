@@ -669,6 +669,19 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Run a callback function in the queue.
+///
+///  @param[in] callback The callback function to run.
+///  @returns Lambda to call the function.
+//------------------------------------------------------------------------------
+        std::function<void(void)> run_function(std::function<void(void)> callback) {
+            return [this]() {
+                check_error_async(cuLaunchHostFunc(stream, callback.target()),
+                                  "cuLaunchHostFunc");
+            }
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
 ///  @param[in] index Number of times to record.

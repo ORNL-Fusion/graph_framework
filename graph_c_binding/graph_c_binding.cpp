@@ -2035,13 +2035,13 @@ extern "C" {
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_preitem(in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_preitem(in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
@@ -2072,13 +2072,13 @@ extern "C" {
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_preitem(in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_preitem(in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
                     }
                 }
                 break;
@@ -2113,13 +2113,13 @@ extern "C" {
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_preitem(in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_preitem(in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
@@ -2150,13 +2150,13 @@ extern "C" {
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_preitem(in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_preitem(in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
                     }
                 }
                 break;
@@ -2191,13 +2191,13 @@ extern "C" {
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_preitem(in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_preitem(in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
@@ -2228,13 +2228,13 @@ extern "C" {
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_preitem(in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_preitem(in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
                     }
                 }
                 break;
@@ -2269,13 +2269,13 @@ extern "C" {
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_preitem(in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_preitem(in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
@@ -2306,13 +2306,13 @@ extern "C" {
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_preitem(in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_preitem(in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
                     }
                 }
                 break;
@@ -3074,40 +3074,40 @@ extern "C" {
             case FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
-                    d->work.pre_run();
+                    d->work.run<workflow::order::pre_run_item> ();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
-                    d->work.pre_run();
+                    d->work.run<workflow::order::pre_run_item> ();
                 }
                 break;
 
             case DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
-                    d->work.pre_run();
+                    d->work.run<workflow::order::pre_run_item> ();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
-                    d->work.pre_run();
+                    d->work.run<workflow::order::pre_run_item> ();
                 }
                 break;
 
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
-                    d->work.pre_run();
+                    d->work.run<workflow::order::pre_run_item> ();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
-                    d->work.pre_run();
+                    d->work.run<workflow::order::pre_run_item> ();
                 }
                 break;
 
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
-                    d->work.pre_run();
+                    d->work.run<workflow::order::pre_run_item> ();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
-                    d->work.pre_run();
+                    d->work.run<workflow::order::pre_run_item> ();
                 }
                 break;
         }

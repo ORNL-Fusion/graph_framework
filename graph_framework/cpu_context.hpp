@@ -398,6 +398,16 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Run a callback function in the queue.
+///
+///  @param[in] callback The callback function to run.
+///  @returns Lambda to call the function.
+//------------------------------------------------------------------------------
+        std::function<void(void)> run_function(std::function<void(void)> callback) {
+            return callback;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Print out the results.
 ///
 ///  @param[in] index Particle index to print.

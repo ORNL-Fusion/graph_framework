@@ -147,8 +147,6 @@ namespace gpu {
                     kernel_arguments[input.get()] = [device newBufferWithBytes:buffer.data()
                                                                         length:buffer.size()*buffer_element_size
                                                                        options:MTLResourceStorageModeShared];
-                    buffers.push_back(kernel_arguments[input.get()]);
-                    needed_buffers.insert(input.get());
                 }
                 if (!needed_buffers.contains(input.get())) {
                     buffers.push_back(kernel_arguments[input.get()]);
@@ -159,8 +157,6 @@ namespace gpu {
                 if (!kernel_arguments.contains(output.get())) {
                     kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
                                                                          options:MTLResourceStorageModeShared];
-                    buffers.push_back(kernel_arguments[output.get()]);
-                    needed_buffers.insert(output.get());
                 }
                 if (!needed_buffers.contains(output.get())) {
                     buffers.push_back(kernel_arguments[output.get()]);
@@ -441,6 +437,24 @@ namespace gpu {
 
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run a callback function in the queue.
+///
+///  @param[in] callback The callback function to run.
+///  @returns Lambda to call the function.
+//------------------------------------------------------------------------------
+        std::function<void(void)> run_function(std::function<void(void)> callback) {
+            return [this, callback]() {
+                command_buffer = [queue commandBuffer];
+        
+                [command_buffer addCompletedHandler:[callback](id<MTLCommandBuffer> commandBuffer) {
+                    callback();
+                }];
+        
+                [command_buffer commit];
+            };
         }
 
 //------------------------------------------------------------------------------

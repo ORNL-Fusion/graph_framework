@@ -68,7 +68,7 @@ void field_solve_example() {
     timing::measure_diagnostic compile("compile");
 
     workflow::manager<T> work(0);
-    work.add_preitem({
+    work.add_item<workflow::order::pre_item> ({
         graph::variable_cast(particle_positions)
     }, {}, {
         {random_real, variable_cast(particle_positions)}

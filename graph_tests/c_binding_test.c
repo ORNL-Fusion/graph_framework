@@ -195,12 +195,12 @@ void run_tests(const enum graph_type type,
     graph_node *map_inputs2 = NULL;
     graph_node *map_outputs2 = NULL;
 
-    graph_add_pre_item(c_context,
-                       NULL, 0,
-                       &rand, 1,
-                       NULL, NULL, 0,
-                       state,
-                       "c_binding_pre_kernel", 1);
+    graph_add_item(c_context,
+                   NULL, 0,
+                   &rand, 1,
+                   NULL, NULL, 0,
+                   state,
+                   "c_binding_pre_kernel", 1);
     graph_add_item(c_context,
                    inputs, 1,
                    outputs, 5,

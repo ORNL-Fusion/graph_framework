@@ -29,6 +29,9 @@ namespace pic {
 ///  Hydrogen mass kg.
     template<std::floating_point T>
     constexpr T m_hydrogen = static_cast<T> (1.67362192595E-27);
+///  Atomic mass
+    template<std::floating_point T>
+    constexpr T m_atomic = static_cast<T> (1.66053906892E-27);
 ///  Electron mass kg.
     template<std::floating_point T>
     constexpr T m_electron = static_cast<T> (9.1093837139E-31);
@@ -126,6 +129,10 @@ namespace pic {
         const T smoothing;
 ///  Time step.
         const T dt;
+///  Parallel temperature.
+        const T t_para;
+///  Perpendicular temperature.
+        const T t_perp;
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a parameters object.
@@ -141,11 +148,12 @@ namespace pic {
         parameters(const T b0, const T r1, const T r2,
                    const size_t filter_iterations,
                    const T smoothing, const T dt,
+                   const T t_para, const T t_perp,
                    const characteristics<T> &norms) :
         b0(b0/norms.bfield),
         a0(std::numbers::pi_v<T>*(r2*r2 - r1*r1)/(norms.l*norms.l)),
         filter_iterations(filter_iterations), smoothing(smoothing),
-        dt(dt/norms.t) {}
+        dt(dt/norms.t), t_para(t_para), t_perp(t_perp) {}
     };
 
 //------------------------------------------------------------------------------
@@ -193,7 +201,7 @@ namespace pic {
             const T num_real,
             const characteristics<T> &norms) :
         z(z), charge(z*pic::q<T>/norms.q),
-        mass(mass/norms.m), num_real(num_real),
+        mass(mass), num_real(num_real),
         x(graph::variable<T> (num_ions, "x")),
         v_para(graph::variable<T> (num_ions, "v_{||}")),
         v_perp(graph::variable<T> (num_ions, "v_{\\perp}")),
@@ -273,6 +281,26 @@ namespace pic {
 //------------------------------------------------------------------------------
         T super_to_real() const {
             return num_real/size();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Define variables.
+///
+///  @param[in]     file A @ref output::result_file object to define variables.
+///  @param[in,out] data A @ref output::data_set object to create variable.
+///  @param[in,out] work A @ref workflow::manager object where data was
+///                      computed.
+///  @param[in]     tag  Unique identity for give the ion species.
+//------------------------------------------------------------------------------
+        void define_variables(const output::result_file &file,
+                              output::data_set<T> &data,
+                              workflow::manager<T> &work,
+                              const std::string tag) {
+            data.create_variable(file, "x_" + tag, x,  work.get_context());
+            data.create_variable(file, "vpara_" + tag, v_para,
+                                 work.get_context());
+            data.create_variable(file, "vperp_" + tag, v_perp,
+                                 work.get_context());
         }
     };
 
@@ -494,6 +522,23 @@ namespace pic {
         T *data() const {
             return graph::variable_cast(y[I])->data();
         }
+
+//------------------------------------------------------------------------------
+///  @brief Define variables.
+///
+///  @param[in]     file A @ref output::result_file object to define variables.
+///  @param[in,out] data A @ref output::data_set object to create variable.
+///  @param[in]     work A @ref workflow::manager object where data was
+///                      computed.
+//------------------------------------------------------------------------------
+        void define_variables(const output::result_file &file,
+                              output::data_set<T> &data,
+                              workflow::manager<T> &work) {
+            data.create_variable(file, "y_0", y[0],  work.get_context());
+            data.create_variable(file, "y_1", y[1],  work.get_context());
+            data.create_variable(file, "y_2", y[2],  work.get_context());
+            data.create_variable(file, "y_3", y[3],  work.get_context());
+        }
     };
 
 //------------------------------------------------------------------------------
@@ -524,14 +569,18 @@ namespace pic {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] mesh  A @ref pic::mesh object.
-///  @param[in] norms A @ref pic::characteristics object.
+///  @param[in] ion    A @ref pic::ion object.
+///  @param[in] mesh   A @ref pic::mesh object.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
 ///  @param[in] state Random state node.
 ///  @returns Initialized normalized values for x, v||, and v⟂
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    std::array<graph::shared_leaf<T>,3> build_initialization(const mesh<T> &mesh,
+    std::array<graph::shared_leaf<T>,3> build_initialization(const pic::ion<T> &ion,
+                                                             const mesh<T> &mesh,
                                                              const characteristics<T> &norms,
+                                                             const parameters<T> &params,
                                                              const graph::shared_random_state<T> state) {
 //  The mesh is already normalized so position_dist will be a normalized quantity.
         auto position_dist = graph::uniform_random<T> (mesh.xmin, mesh.xmax,
@@ -543,7 +592,9 @@ namespace pic {
                                                 static_cast<T> (1.0),
                                                 state);
 
-        auto vpara = graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))*graph::sin(phi_dist);
+        const T vtpara = std::sqrt(2*params.t_para*q<T>/ion.mass);
+        auto vpara = vtpara*graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))
+                   * graph::sin(phi_dist);
 
         phi_dist = graph::uniform_random<T> (static_cast<T> (0.0),
                                              static_cast<T> (2.0)*std::numbers::pi_v<T>,
@@ -551,8 +602,12 @@ namespace pic {
         r_dist = graph::uniform_random<T> (static_cast<T> (0.0),
                                            static_cast<T> (1.0),
                                            state);
-        auto vperp1 = graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))*graph::cos(phi_dist);
-        auto vperp2 = graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))*graph::sin(phi_dist);
+
+        const T vtperp = std::sqrt(2*params.t_perp*q<T>/ion.mass);
+        auto vperp1 = vtperp*graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))
+                    * graph::cos(phi_dist);
+        auto vperp2 = vtperp*graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))
+                    * graph::sin(phi_dist);
         auto vperp = graph::sqrt(vperp1*vperp1 + vperp2*vperp2);
 
         return {position_dist, vpara/norms.v, vperp/norms.v};
@@ -566,9 +621,10 @@ namespace pic {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] ion   A @ref pic::ion object.
-///  @param[in] mesh  A @ref pic::mesh object.
-///  @param[in] norms A @ref pic::characteristics object.
+///  @param[in] ion    A @ref pic::ion object.
+///  @param[in] mesh   A @ref pic::mesh object.
+///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
 ///  @param[in] state Random state node.
 ///  @returns Reinjected values for x, v||, and v⟂
 //------------------------------------------------------------------------------
@@ -576,8 +632,9 @@ namespace pic {
     std::array<graph::shared_leaf<T>, 3> build_reinjection(const ion<T> &ion,
                                                            const mesh<T> &mesh,
                                                            const characteristics<T> &norms,
+                                                           const parameters<T> &params,
                                                            const graph::shared_random_state<T> state) {
-        auto resampled = build_initialization(mesh, norms, state);
+        auto resampled = build_initialization(ion, mesh, norms, params, state);
         auto is_outside = ion.x <= mesh.xmin || ion.x >= mesh.xmax;
 
         auto reinject_x     = graph::if_(is_outside, resampled[0], ion.x);
@@ -598,7 +655,7 @@ namespace pic {
     template<std::floating_point T>
     graph::shared_leaf<T> build_magnetic_field(graph::shared_leaf<T> x,
                                                const characteristics<T> &norms) {
-        return (static_cast<T> (0.1)*x*x + static_cast<T> (0.5))/norms.bfield;
+        return (x*x*norms.l*norms.l + static_cast<T> (0.5))/norms.bfield;
     }
 
 //------------------------------------------------------------------------------
@@ -675,7 +732,7 @@ namespace pic {
     template<std::floating_point T>
     graph::shared_leaf<T> build_electron_temperature(graph::shared_leaf<T> x,
                                                      const characteristics<T> &norms) {
-        return graph::one<T> ()/norms.te;
+        return graph::constant<T> (static_cast<T> (2.5)*q<T>/(norms.te*kb<T>));
     }
 
 //------------------------------------------------------------------------------
@@ -709,7 +766,7 @@ namespace pic {
         auto n = (n0 + n1 + n2 + n3)/static_cast<T> (4);
         auto dndx = (dn0dx + dn1dx + dn2dx + dn3dx)/static_cast<T> (4);
 
-        auto te = build_magnetic_field(x, norms);
+        auto te = build_electron_temperature(x, norms);
         auto pressure = te*n/q<T>;
 
         return graph::none<T> ()/n*(dndx*te/q<T> + pressure->df(x));
@@ -787,7 +844,7 @@ namespace pic {
         return {
             z[1]*params.dt,
             temp*params.dt,
-            (ion.charge/ion.mass*efield - temp)*params.dt
+            (ion.charge/ion.mass*norms.m*efield - temp)*params.dt
         };
     }
 

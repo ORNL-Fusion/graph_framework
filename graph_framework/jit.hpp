@@ -416,6 +416,15 @@ namespace jit {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Run a function.
+///
+///  @returns A lambda function to run run the function.
+//------------------------------------------------------------------------------
+        std::function<void(void)> run_function(std::function<void(void)> callback) {
+            return gpu_context.run_function(callback);
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Copy contexts of buffer to device.
 ///
 ///  @param[in] node   Not to copy buffer to.
