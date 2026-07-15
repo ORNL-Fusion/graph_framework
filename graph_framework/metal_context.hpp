@@ -13,6 +13,9 @@
 #import <Metal/Metal.h>
 
 #include "random.hpp"
+#include "timing.hpp"
+
+//#define PROFILE
 
 ///  Name space for GPU backends.
 namespace gpu {
@@ -38,6 +41,13 @@ namespace gpu {
         id<MTLLibrary> library;
 ///  Buffer mutability descriptor.
         std::map<std::string, std::vector<MTLMutability>> bufferMutability;
+
+#ifdef PROFILE
+///  Timer map.
+        std::vector<timing::measure_diagnostic> times;
+///  Current index.
+        size_t index;
+#endif
 
     public:
 ///  Size of random state needed.
@@ -69,7 +79,11 @@ namespace gpu {
 //------------------------------------------------------------------------------
         metal_context(const size_t index) :
         device([MTLCopyAllDevices() objectAtIndex:index]),
-        queue([device newCommandQueue]) {}
+        queue([device newCommandQueue])
+#ifdef PROFILE
+        , index(0)
+#endif
+        {}
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the kernels.
@@ -238,8 +252,21 @@ namespace gpu {
             }
 
             if (state.get()) {
-                return [this, num_rays, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
+#ifdef PROFILE
+                size_t k = index++;
+                times.emplace_back(kernel_name);
+#endif
+                return [this, num_rays, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
+#ifdef PROFILE
+                        ,k
+#endif
+                ] () mutable {
                     command_buffer = [queue commandBuffer];
+#ifdef PROFILE
+                    [command_buffer addScheduledHandler:[this, k](id<MTLCommandBuffer> commandBuffer) {
+                        times[k].reset();
+                    }];
+#endif
                     for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
                         id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
@@ -261,12 +288,29 @@ namespace gpu {
                                 threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                         [encoder endEncoding];
                     }
-
+#ifdef PROFILE
+                    [command_buffer addCompletedHandler:[this, k](id<MTLCommandBuffer> commandBuffer) {
+                        times[k].print();
+                    }];
+#endif
                     [command_buffer commit];
                 };
             } else {
-                return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
+#ifdef PROFILE
+                size_t j = index++;
+                times.emplace_back(kernel_name);
+#endif
+                return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
+#ifdef PROFILE
+                        , j
+#endif
+                ] () mutable {
                     command_buffer = [queue commandBuffer];
+#ifdef PROFILE
+                    [command_buffer addScheduledHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
+                        times[j].reset();
+                    }];
+#endif
                     id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
                     [encoder setComputePipelineState:pipline];
@@ -279,7 +323,11 @@ namespace gpu {
                     [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                             threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                     [encoder endEncoding];
-
+#ifdef PROFILE
+                    [command_buffer addCompletedHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
+                        times[j].print();
+                    }];
+#endif
                     [command_buffer commit];
                 };
             }
@@ -361,8 +409,21 @@ namespace gpu {
                 buffers.push_back(kernel_arguments[input.get()]);
             }
 
-            return [this, buffers] () mutable {
+#ifdef PROFILE
+            size_t j = index++;
+            times.emplace_back("zero_call");
+#endif
+            return [this, buffers
+#ifdef PROFILE
+                    , j
+#endif
+            ] () mutable {
                 command_buffer = [queue commandBuffer];
+#ifdef PROFILE
+                [command_buffer addScheduledHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
+                    times[j].reset();
+                }];
+#endif
                 id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
 
                 for (id<MTLBuffer> buffer : buffers) {
@@ -371,7 +432,11 @@ namespace gpu {
                                   value:0];
                 }
                 [encoder endEncoding];
-
+#ifdef PROFILE
+                [command_buffer addCompletedHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
+                    times[j].print();
+                }];
+#endif
                 [command_buffer commit];
             };
         }
@@ -402,8 +467,21 @@ namespace gpu {
                 sources.push_back(kernel_arguments[out.get()]);
             }
 
-            return [this, sources, destinations] () mutable {
+#ifdef PROFILE
+            size_t j = index++;
+            times.emplace_back("copy_call");
+#endif
+            return [this, sources, destinations
+#ifdef PROFILE
+                    , j
+#endif
+            ] () mutable {
                 command_buffer = [queue commandBuffer];
+#ifdef PROFILE
+                [command_buffer addScheduledHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
+                    times[j].reset();
+                }];
+#endif
                 id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
 
                 for (size_t i = 0, ie = sources.size(); i < ie; i++) {
@@ -414,7 +492,11 @@ namespace gpu {
                                        size:sources[i].length];
                 }
                 [encoder endEncoding];
-
+#ifdef PROFILE
+                [command_buffer addCompletedHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
+                    times[j].print();
+                }];
+#endif
                 [command_buffer commit];
             };
         }
@@ -450,7 +532,13 @@ namespace gpu {
                 command_buffer = [queue commandBuffer];
         
                 [command_buffer addCompletedHandler:[callback](id<MTLCommandBuffer> commandBuffer) {
+#ifdef PROFILE
+                    timing::measure_diagnostic timer("callback");
+#endif
                     callback();
+#ifdef PROFILE
+                    timer.print();
+#endif
                 }];
         
                 [command_buffer commit];

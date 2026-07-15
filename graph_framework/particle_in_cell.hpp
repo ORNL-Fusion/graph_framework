@@ -54,11 +54,11 @@ namespace pic {
 ///  @returns (∑(m_i) + me)/(n_i + 1);
 //------------------------------------------------------------------------------
         T make_m(const std::vector<T> &ion_masses) {
-            T total_m = m_electron<T>;
+            T total_m = static_cast<T> (0);
             for (const T &mass : ion_masses) {
                 total_m += mass;
             }
-            return total_m/(ion_masses.size() + 1);
+            return total_m/ion_masses.size();
         }
 
 //------------------------------------------------------------------------------
@@ -68,11 +68,11 @@ namespace pic {
 ///  @returns (∑(Z_i)*q + q)/(n_i + 1);
 //------------------------------------------------------------------------------
         T make_q(const std::vector<uint8_t> &ion_zs) {
-            T total_q = pic::q<T>;
+            T total_q = static_cast<T> (0);
             for (const uint8_t &z : ion_zs) {
                 total_q += z*pic::q<T>;
             }
-            return total_q/(ion_zs.size() + 1);
+            return total_q/ion_zs.size();
         }
 
     public:
@@ -109,7 +109,7 @@ namespace pic {
                         const T ne) :
         m(make_m(ion_masses)), q(make_q(ion_zs)), ne(ne),
         wpe(std::sqrt(ne*q*q/(m*epsilon0<T>))),
-        t(1/wpe), l(wpe/c<T>), v(c<T>), te(m*v*v/kb<T>), efield(m*c<T>/(q*t)),
+        t(1/wpe), l(c<T>/wpe), v(c<T>), te(m*v*v/kb<T>), efield(m*c<T>/(q*t)),
         bfield(efield/c<T>) {}
     };
 
@@ -585,28 +585,28 @@ namespace pic {
 //  The mesh is already normalized so position_dist will be a normalized quantity.
         auto position_dist = graph::uniform_random<T> (mesh.xmin, mesh.xmax,
                                                        state);
-        auto phi_dist = graph::uniform_random<T> (static_cast<T> (0.0),
-                                                  static_cast<T> (2.0)*std::numbers::pi_v<T>,
+        auto phi_dist = graph::uniform_random<T> (static_cast<T> (0),
+                                                  static_cast<T> (2)*std::numbers::pi_v<T>,
                                                   state);
-        auto r_dist = graph::uniform_random<T> (static_cast<T> (0.0),
-                                                static_cast<T> (1.0),
+        auto r_dist = graph::uniform_random<T> (std::numeric_limits<T>::min(),
+                                                static_cast<T> (1),
                                                 state);
 
         const T vtpara = std::sqrt(2*params.t_para*q<T>/ion.mass);
-        auto vpara = vtpara*graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))
+        auto vpara = vtpara*graph::sqrt(-graph::log(r_dist))
                    * graph::sin(phi_dist);
 
-        phi_dist = graph::uniform_random<T> (static_cast<T> (0.0),
-                                             static_cast<T> (2.0)*std::numbers::pi_v<T>,
+        phi_dist = graph::uniform_random<T> (static_cast<T> (0),
+                                             static_cast<T> (2)*std::numbers::pi_v<T>,
                                              state);
-        r_dist = graph::uniform_random<T> (static_cast<T> (0.0),
-                                           static_cast<T> (1.0),
+        r_dist = graph::uniform_random<T> (std::numeric_limits<T>::min(),
+                                           static_cast<T> (1),
                                            state);
 
         const T vtperp = std::sqrt(2*params.t_perp*q<T>/ion.mass);
-        auto vperp1 = vtperp*graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))
+        auto vperp1 = vtperp*graph::sqrt(-graph::log(r_dist))
                     * graph::cos(phi_dist);
-        auto vperp2 = vtperp*graph::sqrt(-graph::log(static_cast<T> (1) - r_dist))
+        auto vperp2 = vtperp*graph::sqrt(-graph::log(r_dist))
                     * graph::sin(phi_dist);
         auto vperp = graph::sqrt(vperp1*vperp1 + vperp2*vperp2);
 
@@ -650,12 +650,14 @@ namespace pic {
 ///
 ///  @param[in] x      The x position.
 ///  @param[in] norms  A @ref pic::characteristics object.
+///  @param[in] params A @ref pic::parameters object.
 ///  @returns The expression for the magnetic field.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
     graph::shared_leaf<T> build_magnetic_field(graph::shared_leaf<T> x,
-                                               const characteristics<T> &norms) {
-        return (x*x*norms.l*norms.l + static_cast<T> (0.5))/norms.bfield;
+                                               const characteristics<T> &norms,
+                                               const parameters<T> &params) {
+        return (x*x*(norms.l*norms.l) + static_cast<T> (0.5))*params.b0;
     }
 
 //------------------------------------------------------------------------------
@@ -682,7 +684,7 @@ namespace pic {
         auto y = mesh.template build_y_index<I, O> (x, params);
 
 //  Compression factor.
-        auto cf = build_magnetic_field(x, norms)/params.b0;
+        auto cf = build_magnetic_field(x, norms, params)/params.b0;
 //  Scale factor.
         const T sf = ion.super_to_real()/(params.a0*mesh.dx);
 
@@ -713,7 +715,7 @@ namespace pic {
         auto y = mesh.template build_dydx_index<I, O> (x, params);
 
 //  Compression factor.
-        auto cf = build_magnetic_field(x, norms)/params.b0;
+        auto cf = build_magnetic_field(x, norms, params)/params.b0;
 //  Scale factor.
         const T sf = ion.super_to_real()/(params.a0*mesh.dx);
 
@@ -767,9 +769,10 @@ namespace pic {
         auto dndx = (dn0dx + dn1dx + dn2dx + dn3dx)/static_cast<T> (4);
 
         auto te = build_electron_temperature(x, norms);
-        auto pressure = te*n/q<T>;
+        const T scale = norms.q/q<T>;
+        auto pressure = te*n*scale;
 
-        return graph::none<T> ()/n*(dndx*te/q<T> + pressure->df(x));
+        return graph::none<T> ()/n*(dndx*te*scale + pressure->df(x));
     }
 
 //------------------------------------------------------------------------------
@@ -838,7 +841,7 @@ namespace pic {
                                                              const mesh<T> &mesh,
                                                              const characteristics<T> &norms,
                                                              const parameters<T> &params) {
-        auto bfield = build_magnetic_field<T> (z[0], norms);
+        auto bfield = build_magnetic_field<T> (z[0], norms, params);
         auto efield = build_interpolate_efield<T> (z[0], ion, mesh, norms, params);
         auto temp = 0.5*z[2]*z[1]*bfield->df(z[0])/bfield;
         return {

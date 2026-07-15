@@ -17,19 +17,19 @@ template<jit::float_scalar T>
 void run_pic() {
     const timing::measure_diagnostic init("Init Time");
 //  Sizes
-    const size_t num_particles = 10000;//00;
-    const size_t num_grid = 100;
+    const size_t num_particles = 3000000;
+    const size_t num_grid = 1000;
     const size_t num_batch = 10;
     const size_t num_ions = 1;
-    const size_t num_steps = 1;
-    const size_t num_sub_steps = 1;
+    const size_t num_steps = 100;
+    const size_t num_sub_steps = 2400;
 
-    const pic::characteristics<T> norms({
-        2*pic::m_atomic<T>
-    }, {1}, static_cast<T> (2.5E19));
+    const std::vector<T> ion_masses{2*pic::m_atomic<T>};
+    const std::vector<uint8_t> ion_zs{1};
 
-    std::array<T, num_ions> ion_masses{pic::m_hydrogen<T>};
-    std::array<T, num_ions> ion_zs{1};
+    const pic::characteristics<T> norms(ion_masses, ion_zs,
+                                        static_cast<T> (2.5E19));
+
     std::array<T, num_ions> density_fraction{1};
 
     const T lmin = static_cast<T> (-3.0);
@@ -42,11 +42,11 @@ void run_pic() {
     const T ds = (lmax - lmin)/static_cast<T> (num_grid - 1);
 
     std::vector<pic::ion<T>> ions;
-    for(size_t i = 0; i < num_ions; i++) {
+    for (size_t i = 0; i < num_ions; i++) {
         T num_real = 0;
         for (size_t i = 0; i < num_grid; i++) {
             const T x = ds*i + lmin;
-            const T b = static_cast<T> (0.1)*x*x + static_cast<T> (0.5);
+            const T b = b0*(x*x + static_cast<T> (0.5));
             const T a = a0*b0/b;
             num_real += ne0*density_fraction[0]*a*ds;
         }
@@ -54,9 +54,11 @@ void run_pic() {
                           num_real, norms);
     }
 
-    const T gyro_period = ion_zs[0]*pic::q<T>*b0/ion_masses[0];
+    const T b_cv = 1.2;
+    const T cyclotron_frequency = ion_zs[0]*pic::q<T>*b_cv/ion_masses[0];
+    const T gyro_period = 2*std::numbers::pi_v<T>/cyclotron_frequency;
     const T dtc = 0.25;
-    const pic::parameters<T> params(b0, r1, r2, 3, 1.0E-4,
+    const pic::parameters<T> params(b0, r1, r2, 100, 1.0E-4,
                                     dtc*gyro_period, 2.5, 2.5, norms);
 
     pic::mesh<T> mesh(lmin, lmax, num_grid, norms);
@@ -78,7 +80,6 @@ void run_pic() {
         auto ion_inits = pic::build_initialization<T> (ions[i], mesh,
                                                        norms, params,
                                                        graph::random_state_cast(state));
-        auto efield = build_interpolate_efield<T> (ions[i].x, ions[i], mesh, norms, params);
         work.template add_item<workflow::order::pre_run_item> ({
             ions[i].get_x(), ions[i].get_v_para(), ions[i].get_v_perp()
         }, {}, {
@@ -153,12 +154,12 @@ void run_pic() {
             graph::variable_cast(mesh.y[1]),
             graph::variable_cast(mesh.y[2]),
             graph::variable_cast(mesh.y[3])
-        }, {efield}, {
+        }, {}, {
             {particle_step[0], ions[i].get_x()},
             {particle_step[1], ions[i].get_v_para()},
             {particle_step[2], ions[i].get_v_perp()}
         }, NULL, "particle_push_" + ion_tag, num_particles);
-#if 0
+
         auto particle_reinject = pic::build_reinjection(ions[i], mesh, norms, params,
                                                         graph::random_state_cast(state));
         work.add_item({
@@ -214,7 +215,6 @@ void run_pic() {
             {mesh_solve[0], graph::variable_cast(mesh.index)},
             {mesh_solve[1], graph::variable_cast(mesh.y[0])}
         }, NULL, "sum_weights_" + ion_tag, num_grid, num_particles/num_batch);
-#endif
     }
     init.print();
 
@@ -227,13 +227,12 @@ void run_pic() {
 
     for (size_t i = 0; i < num_ions; i++) {
         const std::string ion_tag = jit::format_to_string(i);
-        auto efield = build_interpolate_efield<T> (ions[i].x, ions[i], mesh, norms, params);
         ions[i].define_variables(p_file, p_datasets[i], work, ion_tag);
-        p_datasets[i].create_variable(p_file, "efield" + ion_tag, efield, work.get_context());
     }
     p_file.end_define_mode();
 
     std::atomic_size_t counter = 0;
+#ifndef PROFILE
     std::thread progress = std::thread([&num_steps, &counter]() -> void {
         using namespace std::chrono_literals;
         do {
@@ -243,16 +242,11 @@ void run_pic() {
             std::this_thread::sleep_for(1s);
         } while (counter < num_steps);
     });
-
+#endif
     const timing::measure_diagnostic run("Run Time");
     work.template run<workflow::order::pre_run_item> ();
     work.template run<workflow::order::post_run_item> ();
     work.wait();
-
-    //auto bfield = build_magnetic_field<T> (ions[0].x, norms);
-    //for (size_t i = 0; i < num_particles; i++) {
-    //    work.print(i, {ions[0].x, efield});
-    //}
 
     for (; counter < num_steps; counter++) {
         for (size_t i = 0; i < num_sub_steps; i++) {
@@ -263,7 +257,9 @@ void run_pic() {
     }
 
     counter = num_steps;
+#ifndef PROFILE
     progress.join();
+#endif
     std::cout << "\33[2K\r" << "100% Complete" << std::endl;
     run.print();
 }

@@ -2275,7 +2275,7 @@ namespace graph {
     template<std::floating_point T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> or_(shared_leaf<T, SAFE_MATH> l,
                                   shared_leaf<T, SAFE_MATH> r) {
-        auto temp = std::make_shared<and_node<T, SAFE_MATH>> (l, r)->reduce();
+        auto temp = std::make_shared<or_node<T, SAFE_MATH>> (l, r)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash();
              i < std::numeric_limits<size_t>::max(); i++) {
