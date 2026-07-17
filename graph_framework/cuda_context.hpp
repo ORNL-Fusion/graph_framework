@@ -640,7 +640,7 @@ namespace gpu {
                 size_t size;
                 check_error(cuMemGetAddressRange(NULL, &size, buffer),
                             "cuMemGetAddressRange");
-                size.push_back(size);
+                sizes.push_back(size);
             }
 #ifdef PROFILE_KERNELS
             timers.emplace_back("zero buffer");
@@ -708,11 +708,11 @@ namespace gpu {
             }
 
             std::vector<size_t> sizes;
-            for (CUdeviceptr &buffer : buffers) {
+            for (CUdeviceptr &buffer : sources) {
                 size_t size;
                 check_error(cuMemGetAddressRange(NULL, &size, buffer),
                             "cuMemGetAddressRange");
-                size.push_back(size);
+                sizes.push_back(size);
             }
 #ifdef PROFILE_KERNELS
             timers.emplace_back("copy buffer");
