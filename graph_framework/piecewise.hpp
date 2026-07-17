@@ -1469,10 +1469,10 @@ void compile_index(std::ostringstream &stream,
                                      shared_leaf<T, SAFE_MATH> x,
                                      const T scale,
                                      const T offset) {
-            return jit::format_to_string(v->get_hash()) + "[" +
+            return jit::format_to_string(v->get_hash()) +
                    jit::format_to_string(x->get_hash()) +
                    jit::format_to_string(scale) +
-                   jit::format_to_string(offset) + "]";
+                   jit::format_to_string(offset);
         }
 
     public:
@@ -1559,9 +1559,9 @@ void compile_index(std::ostringstream &stream,
                 stream << "        const ";
                 jit::add_type<T> (stream);
                 auto var = this->left->compile(stream,
-                                                registers,
-                                                indices,
-                                                usage);
+                                               registers,
+                                               indices,
+                                               usage);
                 stream << " " << registers[this] << " = "
                        << jit::to_string('v', var.get());
 #ifdef USE_INDEX_CACHE
@@ -1821,13 +1821,13 @@ void compile_index(std::ostringstream &stream,
                                      shared_leaf<T, SAFE_MATH> y,
                                      const T y_scale,
                                      const T y_offset) {
-            return jit::format_to_string(v->get_hash()) + "[" +
+            return jit::format_to_string(v->get_hash()) +
                    jit::format_to_string(x->get_hash()) +
                    jit::format_to_string(x_scale) +
-                   jit::format_to_string(x_offset) + "," +
+                   jit::format_to_string(x_offset) +
                    jit::format_to_string(y->get_hash()) +
                    jit::format_to_string(x_scale) +
-                   jit::format_to_string(x_offset) + "]";
+                   jit::format_to_string(x_offset);
         }
 
     public:

@@ -272,8 +272,18 @@ namespace gpu {
                               << std::endl;
                 }
 
-                return [kernel, buffers, state] () mutable {
+                return [kernel, buffers, state
+#ifdef PROFILE_KERNELS
+                        , kernel_name
+#endif
+                ] () mutable {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer("callback");
+#endif
                     kernel(buffers, state->data());
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
                 };
             } else {
                 auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
@@ -290,8 +300,18 @@ namespace gpu {
                               << std::endl;
                 }
 
-                return [kernel, buffers] () mutable {
+                return [kernel, buffers
+#ifdef PROFILE_KERNELS
+                        , kernel_name
+#endif
+                ] () mutable {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer("callback");
+#endif
                     kernel(buffers);
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
                 };
             }
         }
@@ -342,9 +362,15 @@ namespace gpu {
             }
 
             return [buffers, sizes] () mutable {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer("zero buffer");
+#endif
                 for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
                     std::memset(buffers[i], 0, sizes[i]);
                 }
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
             };
         }
 
@@ -377,9 +403,15 @@ namespace gpu {
             }
 
             return [sources, destinations, sizes] () mutable {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer("copy buffer");
+#endif
                 for (size_t i = 0, ie = sources.size(); i < ie; i++) {
                     std::memcpy(destinations[i], sources[i], sizes[i]);
                 }
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
             };
         }
 
@@ -404,7 +436,15 @@ namespace gpu {
 ///  @returns Lambda to call the function.
 //------------------------------------------------------------------------------
         std::function<void(void)> run_function(std::function<void(void)> callback) {
+#ifdef PROFILE_KERNELS
+            return [callback]() {
+                timing::measure_diagnostic timer("callback");
+                callback();
+                timer.print();
+            };
+#else
             return callback;
+#endif
         }
 
 //------------------------------------------------------------------------------

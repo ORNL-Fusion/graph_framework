@@ -12,6 +12,7 @@ option (USE_CONSTANT_CACHE "Cache the value of constants in kernel registers." O
 option (SHOW_USE_COUNT "Add a comment showing the use count in kernel sources." OFF)
 option (USE_INDEX_CACHE "Cache index values instead of computing them every time." OFF)
 option (USE_VERBOSE "Verbose jit option." OFF)
+option (PROFILE_KERNELS "Display kernel timing information" OFF)
 option (BUILD_C_BINDING "Build C interface." OFF)
 option (BUILD_Fortran_BINDING "Build Fortran interface." OFF)
 

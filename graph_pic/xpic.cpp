@@ -5,6 +5,7 @@
 
 #include <random>
 #include <numbers>
+#include <future>
 
 #include "../graph_framework/graph_framework.hpp"
 
@@ -21,8 +22,8 @@ void run_pic() {
     const size_t num_grid = 1000;
     const size_t num_batch = 10;
     const size_t num_ions = 1;
-    const size_t num_steps = 100;
-    const size_t num_sub_steps = 2400;
+    const size_t num_steps = 1;
+    const size_t num_sub_steps = 100;
 
     const std::vector<T> ion_masses{2*pic::m_atomic<T>};
     const std::vector<uint8_t> ion_zs{1};
@@ -58,7 +59,7 @@ void run_pic() {
     const T cyclotron_frequency = ion_zs[0]*pic::q<T>*b_cv/ion_masses[0];
     const T gyro_period = 2*std::numbers::pi_v<T>/cyclotron_frequency;
     const T dtc = 0.25;
-    const pic::parameters<T> params(b0, r1, r2, 100, 1.0E-4,
+    const pic::parameters<T> params(b0, r1, r2, 3, 1.0E-4,
                                     dtc*gyro_period, 2.5, 2.5, norms);
 
     pic::mesh<T> mesh(lmin, lmax, num_grid, norms);
@@ -73,6 +74,9 @@ void run_pic() {
     output::result_file p_file("particles.nc", num_particles);
     std::vector<output::data_set<T>> p_datasets(num_ions,
                                                 output::data_set<T> (p_file));
+
+    std::vector<std::mutex> ion_sync(num_ions);
+    std::mutex mesh_sync;
 
     for (size_t i = 0; i < num_ions; i++) {
         const std::string ion_tag = jit::format_to_string(i);
@@ -136,13 +140,29 @@ void run_pic() {
             });
         }
 
+        
+        work.template add_callback_item<workflow::order::post_run_item> ([i, &p_file, &p_datasets, &ion_sync]() {
+            ion_sync[i].lock();
+            std::thread async([i, &p_file, &p_datasets, &ion_sync]() {
+                p_datasets[i].write(p_file);
+                ion_sync[i].unlock();
+            });
+            async.detach();
+        });
         if (i == 0) {
-            work.template add_callback_item<workflow::order::post_run_item> ([&f_file, &mesh_dataset]() {
-                mesh_dataset.write(f_file);
+            work.template add_callback_item<workflow::order::post_run_item> ([&f_file, &mesh_dataset, &mesh_sync]() {
+                mesh_sync.lock();
+                std::thread async([&f_file, &mesh_dataset, &mesh_sync]() {
+                    mesh_dataset.write(f_file);
+                    mesh_sync.unlock();
+                });
+                async.detach();
             });
         }
-        work.template add_callback_item<workflow::order::post_run_item> ([i, &p_file, &p_datasets]() {
-            p_datasets[i].write(p_file);
+
+        work.add_callback_item([i, &ion_sync]() {
+            ion_sync[i].lock();
+            ion_sync[i].unlock();
         });
 
         auto particle_step = pic::build_rk4_step(ions[i], mesh, norms, params);
@@ -187,6 +207,10 @@ void run_pic() {
         }, NULL, "compute_weights_" + ion_tag, num_particles);
 
         if (i == 0) {
+            work.add_callback_item([&mesh_sync]() {
+                mesh_sync.lock();
+                mesh_sync.unlock();
+            });
             work.add_zero_item({
                 graph::variable_cast(mesh.index),
                 graph::variable_cast(mesh.y[0])
@@ -245,21 +269,29 @@ void run_pic() {
 #endif
     const timing::measure_diagnostic run("Run Time");
     work.template run<workflow::order::pre_run_item> ();
-    work.template run<workflow::order::post_run_item> ();
     work.wait();
+    work.template run<workflow::order::post_run_item> ();
 
     for (; counter < num_steps; counter++) {
         for (size_t i = 0; i < num_sub_steps; i++) {
             work.run();
         }
-        work.template run<workflow::order::post_run_item> ();
         work.wait();
+        work.template run<workflow::order::post_run_item> ();
     }
 
     counter = num_steps;
+    work.wait();
 #ifndef PROFILE
     progress.join();
 #endif
+    for (std::mutex &ion : ion_sync) {
+        ion.lock();
+        ion.unlock();
+    }
+    mesh_sync.lock();
+    mesh_sync.unlock();
+
     std::cout << "\33[2K\r" << "100% Complete" << std::endl;
     run.print();
 }
@@ -274,6 +306,8 @@ int main(int argc, const char * argv[]) {
     START_GPU
     (void)argc;
     (void)argv;
+
+    jit::verbose = true;
 
     const timing::measure_diagnostic total("Total Time");
     run_pic<float> ();

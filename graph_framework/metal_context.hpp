@@ -15,8 +15,6 @@
 #include "random.hpp"
 #include "timing.hpp"
 
-//#define PROFILE
-
 ///  Name space for GPU backends.
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -42,16 +40,11 @@ namespace gpu {
 ///  Buffer mutability descriptor.
         std::map<std::string, std::vector<MTLMutability>> bufferMutability;
 
-#ifdef PROFILE
-///  Timer map.
-        std::vector<timing::measure_diagnostic> times;
-///  Current index.
-        size_t index;
-#endif
-
     public:
+///  Random state size multiplyer.
+        constexpr static size_t random_state_scale = 1000;
 ///  Size of random state needed.
-        constexpr static size_t random_state_size = 1024;
+        constexpr static size_t random_state_size = 1024*random_state_scale;
 
 ///  Remaining constant memory in bytes. NOT USED.
         int remaining_const_memory;
@@ -79,11 +72,7 @@ namespace gpu {
 //------------------------------------------------------------------------------
         metal_context(const size_t index) :
         device([MTLCopyAllDevices() objectAtIndex:index]),
-        queue([device newCommandQueue])
-#ifdef PROFILE
-        , index(0)
-#endif
-        {}
+        queue([device newCommandQueue]) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the kernels.
@@ -197,7 +186,7 @@ namespace gpu {
                     descriptor.textureType = MTLTextureType1D;
                     descriptor.pixelFormat = MTLPixelFormatR32Float;
                     descriptor.width = size;
-                    descriptor.storageMode = MTLStorageModeManaged;
+                    descriptor.storageMode = MTLStorageModeShared;
                     descriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
                     descriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
                     descriptor.usage = MTLTextureUsageShaderRead;
@@ -218,7 +207,7 @@ namespace gpu {
                     descriptor.pixelFormat = MTLPixelFormatR32Float;
                     descriptor.width = size[1];
                     descriptor.height = size[0];
-                    descriptor.storageMode = MTLStorageModeManaged;
+                    descriptor.storageMode = MTLStorageModeShared;
                     descriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
                     descriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
                     descriptor.usage = MTLTextureUsageShaderRead;
@@ -239,9 +228,10 @@ namespace gpu {
             NSRange range = NSMakeRange(0, buffers.size());
             NSRange tex_range = NSMakeRange(0, textures.size());
 
-            NSUInteger threads_per_group = pipline.maxTotalThreadsPerThreadgroup;
+            NSUInteger total_parallel = state.get() ? random_state_size : num_rays;
             NSUInteger thread_width = pipline.threadExecutionWidth;
-            NSUInteger thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+            NSUInteger threads_per_group = total_parallel < pipline.maxTotalThreadsPerThreadgroup ? thread_width : pipline.maxTotalThreadsPerThreadgroup;
+            NSUInteger thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 
             if (jit::verbose) {
                 std::cout << "  Kernel name : " << kernel_name << std::endl;
@@ -249,25 +239,18 @@ namespace gpu {
                 std::cout << "    Threads per group      : " << threads_per_group << std::endl;
                 std::cout << "    Number of groups       : " << thread_groups << std::endl;
                 std::cout << "    Total problem size     : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Total parallel size    : " << total_parallel << std::endl;
             }
 
             if (state.get()) {
-#ifdef PROFILE
-                size_t k = index++;
-                times.emplace_back(kernel_name);
-#endif
+
                 return [this, num_rays, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
-#ifdef PROFILE
-                        ,k
+#ifdef PROFILE_KERNELS
+                        , kernel_name
 #endif
                 ] () mutable {
                     command_buffer = [queue commandBuffer];
-#ifdef PROFILE
-                    [command_buffer addScheduledHandler:[this, k](id<MTLCommandBuffer> commandBuffer) {
-                        times[k].reset();
-                    }];
-#endif
-                    for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
+                    for (NSUInteger i = 0, ie = thread_groups*threads_per_group; i < num_rays; i += ie) {
                         id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
                         for (size_t j = 0, je = buffers.size() - 1; j < je; j++) {
@@ -284,33 +267,24 @@ namespace gpu {
                         [encoder setTextures:textures.data()
                                    withRange:tex_range];
 
-                        [encoder dispatchThreadgroups:MTLSizeMake(1, 1, 1)
+                        [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                                 threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                         [encoder endEncoding];
                     }
-#ifdef PROFILE
-                    [command_buffer addCompletedHandler:[this, k](id<MTLCommandBuffer> commandBuffer) {
-                        times[k].print();
+#ifdef PROFILE_KERNELS
+                    [command_buffer addCompletedHandler:[kernel_name](id<MTLCommandBuffer> commandBuffer) {
+                        std::cout << std::endl << "  " << kernel_name << " : " << commandBuffer.GPUEndTime - commandBuffer.GPUStartTime << " s" << std::endl << std::endl;
                     }];
 #endif
                     [command_buffer commit];
                 };
             } else {
-#ifdef PROFILE
-                size_t j = index++;
-                times.emplace_back(kernel_name);
-#endif
                 return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
-#ifdef PROFILE
-                        , j
+#ifdef PROFILE_KERNELS
+                        , kernel_name
 #endif
                 ] () mutable {
                     command_buffer = [queue commandBuffer];
-#ifdef PROFILE
-                    [command_buffer addScheduledHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
-                        times[j].reset();
-                    }];
-#endif
                     id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
                     [encoder setComputePipelineState:pipline];
@@ -323,9 +297,9 @@ namespace gpu {
                     [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                             threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                     [encoder endEncoding];
-#ifdef PROFILE
-                    [command_buffer addCompletedHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
-                        times[j].print();
+#ifdef PROFILE_KERNELS
+                    [command_buffer addCompletedHandler:[kernel_name](id<MTLCommandBuffer> commandBuffer) {
+                         std::cout << std::endl << "  " << kernel_name << " : " << commandBuffer.GPUEndTime - commandBuffer.GPUStartTime << " s" << std::endl << std::endl;
                     }];
 #endif
                     [command_buffer commit];
@@ -409,32 +383,21 @@ namespace gpu {
                 buffers.push_back(kernel_arguments[input.get()]);
             }
 
-#ifdef PROFILE
-            size_t j = index++;
-            times.emplace_back("zero_call");
-#endif
-            return [this, buffers
-#ifdef PROFILE
-                    , j
-#endif
-            ] () mutable {
+            const NSRange range = NSMakeRange(0, buffers.front().length);
+
+            return [this, buffers, range] () mutable {
                 command_buffer = [queue commandBuffer];
-#ifdef PROFILE
-                [command_buffer addScheduledHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
-                    times[j].reset();
-                }];
-#endif
                 id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
 
                 for (id<MTLBuffer> buffer : buffers) {
                     [encoder fillBuffer:buffer
-                                  range:NSMakeRange(0, buffer.length)
+                                  range:range
                                   value:0];
                 }
                 [encoder endEncoding];
-#ifdef PROFILE
-                [command_buffer addCompletedHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
-                    times[j].print();
+#ifdef PROFILE_KERNELS
+                [command_buffer addCompletedHandler:[](id<MTLCommandBuffer> commandBuffer) {
+                    std::cout << std::endl << "  zero buffer : " << commandBuffer.GPUEndTime - commandBuffer.GPUStartTime << " s" << std::endl << std::endl;
                 }];
 #endif
                 [command_buffer commit];
@@ -467,21 +430,8 @@ namespace gpu {
                 sources.push_back(kernel_arguments[out.get()]);
             }
 
-#ifdef PROFILE
-            size_t j = index++;
-            times.emplace_back("copy_call");
-#endif
-            return [this, sources, destinations
-#ifdef PROFILE
-                    , j
-#endif
-            ] () mutable {
+            return [this, sources, destinations] () mutable {
                 command_buffer = [queue commandBuffer];
-#ifdef PROFILE
-                [command_buffer addScheduledHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
-                    times[j].reset();
-                }];
-#endif
                 id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
 
                 for (size_t i = 0, ie = sources.size(); i < ie; i++) {
@@ -492,9 +442,9 @@ namespace gpu {
                                        size:sources[i].length];
                 }
                 [encoder endEncoding];
-#ifdef PROFILE
-                [command_buffer addCompletedHandler:[this, j](id<MTLCommandBuffer> commandBuffer) {
-                    times[j].print();
+#ifdef PROFILE_KERNELS
+                [command_buffer addCompletedHandler:[](id<MTLCommandBuffer> commandBuffer) {
+                    std::cout << std::endl << "  copy buffer : " << commandBuffer.GPUEndTime - commandBuffer.GPUStartTime << " s" << std::endl << std::endl;
                 }];
 #endif
                 [command_buffer commit];
@@ -532,11 +482,11 @@ namespace gpu {
                 command_buffer = [queue commandBuffer];
         
                 [command_buffer addCompletedHandler:[callback](id<MTLCommandBuffer> commandBuffer) {
-#ifdef PROFILE
+#ifdef PROFILE_KERNELS
                     timing::measure_diagnostic timer("callback");
 #endif
                     callback();
-#ifdef PROFILE
+#ifdef PROFILE_KERNELS
                     timer.print();
 #endif
                 }];
@@ -739,7 +689,7 @@ namespace gpu {
                               << " = " << jit::to_string('s', state.get())
                               << "[thread_index];"
 #ifdef SHOW_USE_COUNT
-                              << " // used " << usage.at(input.get())
+                              << " // used " << usage.at(state.get())
 #endif
                               << std::endl;
 #else

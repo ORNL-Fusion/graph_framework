@@ -326,11 +326,11 @@ namespace pic {
         graph::shared_leaf<T> build_y_index(graph::shared_leaf<T> x,
                                             const T scale,
                                             const size_t iterations=0) const {
-            auto low = iterations ? build_y_index<I> (x - dx, iterations - 1) :
+            auto low = iterations ? build_y_index<I> (x - dx, scale, iterations - 1) :
                                     graph::index_1D(y[I], x, dx, xmin + dx);
             auto center = graph::index_1D(y[I], x, dx, xmin);
-            auto high = iterations ? build_y_index<I> (x + dx, iterations - 1) :
-                                     graph::index_1D(y[I], x, dx, xmin + dx);
+            auto high = iterations ? build_y_index<I> (x + dx, scale, iterations - 1) :
+                                     graph::index_1D(y[I], x, dx, xmin - dx);
 
             const T center_w = static_cast<T> (0.5);
             const T side_w = static_cast<T> (0.25);
@@ -420,13 +420,13 @@ namespace pic {
                                             const parameters<T> &params) const {
             if constexpr (O == low) {
                 return build_y_index<I> (x - dx, params.smoothing,
-                                         params.filter_iterations);
+                                         params.filter_iterations - 1);
             } else if constexpr (O == center) {
                 return build_y_index<I> (x, params.smoothing,
-                                         params.filter_iterations);
+                                         params.filter_iterations - 1);
             } else {
                 return build_y_index<I> (x + dx, params.smoothing,
-                                         params.filter_iterations);
+                                         params.filter_iterations - 1);
             }
         }
 

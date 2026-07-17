@@ -2199,7 +2199,7 @@ namespace graph {
                 return true;
             }
 
-            auto x_cast = and_cast(x);
+            auto x_cast = or_cast(x);
             if (x_cast.get()) {
 //  or is commutative.
                 if ((this->left->is_match(x_cast->get_left()) &&

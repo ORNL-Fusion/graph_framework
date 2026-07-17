@@ -91,6 +91,10 @@ namespace gpu {
 ///  Cuda stream.
         CUstream stream;
 
+#ifdef PROFILE_KERNELS
+        std::vector<timing::measure_diagnostic> timers;
+#endif
+
 //------------------------------------------------------------------------------
 ///  @brief  Check results of async cuda functions.
 ///
@@ -107,8 +111,10 @@ namespace gpu {
         }
 
     public:
+///  Random state size multiplyer.
+        constexpr static size_t random_state_scale = 1000;
 ///  Size of random state needed.
-        constexpr static size_t random_state_size = 1024;
+        constexpr static size_t random_state_size = 1024*random_state_scale;
 
 ///  Remaining constant memory in bytes.
         int remaining_const_memory;
@@ -490,41 +496,73 @@ namespace gpu {
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
             unsigned int threads_per_group = value;
-            unsigned int thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+            unsigned int total_parallel = state.get() ? random_state_size : num_rays;
+            unsigned int thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 
             int min_grid;
             check_error(cuOccupancyMaxPotentialBlockSize(&min_grid, &value, function, 0, 0, 0),
                         "cuOccupancyMaxPotentialBlockSize");
 
             if (jit::verbose) {
-                std::cout << "  Kernel name              : " << kernel_name << std::endl;
+                std::cout << "  Kernel name            : " << kernel_name << std::endl;
                 std::cout << "    Threads per group    : " << threads_per_group << std::endl;
                 std::cout << "    Number of groups     : " << thread_groups << std::endl;
                 std::cout << "    Total problem size   : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Total parallel       : " << total_parallel;
                 std::cout << "    Min grid size        : " << min_grid << std::endl;
                 std::cout << "    Suggested Block size : " << value << std::endl;
             }
-
+#ifdef PROFILE_KERNELS
+            timers.emplace_back(kernel_name);
+#endif
             if (state.get()) {
-                return [this, num_rays, function, threads_per_group, buffers] () mutable {
-                    for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
+                return [this, num_rays, function, thread_groups, threads_per_group, buffers
+#ifdef PROFILE_KERNELS
+                        , timer = &timers.back()
+#endif
+                ] () mutable {
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                        timer.reset();
+                    }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
+                    for (uint32_t i = 0, ie = threads_per_group*thread_groups; i < num_rays; i += ie) {
                         check_error_async(cuStreamWriteValue32(stream, offset_buffer, i,
                                                                CU_STREAM_WRITE_VALUE_DEFAULT),
                                           "cuStreamWriteValue32");
                         check_error_async(cuLaunchKernel(function,
-                                                         1, 1, 1,
+                                                         thread_groups, 1, 1,
                                                          threads_per_group, 1, 1,
                                                          0, stream,
                                                          buffers.data(), NULL),
                                           "cuLaunchKernel");
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                        timer.print();
+                    }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
                     }
                 };
             } else {
-                return [this, function, thread_groups, threads_per_group, buffers] () mutable {
+                return [this, function, thread_groups, threads_per_group, buffers
+#ifdef PROFILE_KERNELS
+                        , timer = &timers.back()
+#endif
+                ] () mutable {
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                        timer.reset();
+                    }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
                     check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
                                                      threads_per_group, 1, 1, 0, stream,
                                                      buffers.data(), NULL),
                                       "cuLaunchKernel");
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                        timer.print();
+                    }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
                 };
             }
         }
@@ -597,14 +635,31 @@ namespace gpu {
                 buffers.push_back(kernel_arguments[input.get()]);
             }
 
-            return [this, buffers] () mutable {
+            size_t size;
+            check_error(cuMemGetAddressRange(NULL, &size, buffer),
+                        "cuMemGetAddressRange");
+#ifdef PROFILE_KERNELS
+            timers.emplace_back("zero buffer");
+#endif
+            return [this, buffers, size
+#ifdef PROFILE_KERNELS
+                        , timer = &timers.back()
+#endif
+            ] () mutable {
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                    timer.reset();
+                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
                 for (CUdeviceptr &buffer : buffers) {
-                    size_t size;
-                    check_error(cuMemGetAddressRange(NULL, &size, buffer),
-                                "cuMemGetAddressRange");
                     check_error_async(cuMemsetD8Async(buffer, 0, size, stream),
                                       "cuMemsetD8Async");
                 }
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                    timer.print();
+                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
             };
         }
 
@@ -647,11 +702,11 @@ namespace gpu {
                 sources.push_back(kernel_arguments[out.get()]);
             }
 
-            return [this, sources, destinations] () mutable {
+            size_t size;
+            check_error(cuMemGetAddressRange(NULL, &size, sources[i]),
+                        "cuMemGetAddressRange");
+            return [this, sources, destinations, size] () mutable {
                 for (size_t i = 0, ie = sources.size(); i < ie; i++) {
-                    size_t size;
-                    check_error(cuMemGetAddressRange(NULL, &size, sources[i]),
-                                "cuMemGetAddressRange");
                     check_error_async(cuMemcpyDtoDAsync(destinations[i],
                                                         sources[i],
                                                         size, stream),
@@ -675,10 +730,27 @@ namespace gpu {
 ///  @returns Lambda to call the function.
 //------------------------------------------------------------------------------
         std::function<void(void)> run_function(std::function<void(void)> callback) {
-            return [this]() {
-                check_error_async(cuLaunchHostFunc(stream, callback.target()),
+#ifdef PROFILE_KERNELS
+            timers.emplace_back("callback");
+#endif
+            return [this, callback
+#ifdef PROFILE_KERNELS
+                    , timer = &timers.back()
+#endif
+            ]() mutable {
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                    timer.reset();
+                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
+                check_error_async(cuLaunchHostFunc(stream, callback.target<void(void*)> (), NULL),
                                   "cuLaunchHostFunc");
-            }
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                    timer.print();
+                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
+            };
         }
 
 //------------------------------------------------------------------------------
