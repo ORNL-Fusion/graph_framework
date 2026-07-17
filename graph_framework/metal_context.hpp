@@ -383,15 +383,18 @@ namespace gpu {
                 buffers.push_back(kernel_arguments[input.get()]);
             }
 
-            const NSRange range = NSMakeRange(0, buffers.front().length);
+            std::vector<NSRange> ranges;
+            for (id<MTLBuffer> buffer : buffers) {
+                ranges.push_back(NSMakeRange(0, buffer.length));
+            }
 
-            return [this, buffers, range] () mutable {
+            return [this, buffers, ranges] () mutable {
                 command_buffer = [queue commandBuffer];
                 id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
 
-                for (id<MTLBuffer> buffer : buffers) {
-                    [encoder fillBuffer:buffer
-                                  range:range
+                for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                    [encoder fillBuffer:buffers[i]
+                                  range:ranges[i]
                                   value:0];
                 }
                 [encoder endEncoding];

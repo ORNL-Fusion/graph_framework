@@ -635,15 +635,19 @@ namespace gpu {
                 buffers.push_back(kernel_arguments[input.get()]);
             }
 
-            size_t size;
-            check_error(cuMemGetAddressRange(NULL, &size, buffer),
-                        "cuMemGetAddressRange");
+            std::vector<size_t> sizes;
+            for (CUdeviceptr &buffer : buffers) {
+                size_t size;
+                check_error(cuMemGetAddressRange(NULL, &size, buffer),
+                            "cuMemGetAddressRange");
+                size.push_back(size);
+            }
 #ifdef PROFILE_KERNELS
             timers.emplace_back("zero buffer");
 #endif
-            return [this, buffers, size
+            return [this, buffers, sizes
 #ifdef PROFILE_KERNELS
-                        , timer = &timers.back()
+                    , timer = &timers.back()
 #endif
             ] () mutable {
 #ifdef PROFILE_KERNELS
@@ -651,8 +655,9 @@ namespace gpu {
                     timer.reset();
                 }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
 #endif
-                for (CUdeviceptr &buffer : buffers) {
-                    check_error_async(cuMemsetD8Async(buffer, 0, size, stream),
+                for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                    check_error_async(cuMemsetD8Async(buffers[i], 0, sizes[i],
+                                                      stream),
                                       "cuMemsetD8Async");
                 }
 #ifdef PROFILE_KERNELS
@@ -702,16 +707,37 @@ namespace gpu {
                 sources.push_back(kernel_arguments[out.get()]);
             }
 
-            size_t size;
-            check_error(cuMemGetAddressRange(NULL, &size, sources[i]),
-                        "cuMemGetAddressRange");
-            return [this, sources, destinations, size] () mutable {
+            std::vector<size_t> sizes;
+            for (CUdeviceptr &buffer : buffers) {
+                size_t size;
+                check_error(cuMemGetAddressRange(NULL, &size, buffer),
+                            "cuMemGetAddressRange");
+                size.push_back(size);
+            }
+#ifdef PROFILE_KERNELS
+            timers.emplace_back("copy buffer");
+#endif
+            return [this, sources, destinations, sizes
+#ifdef PROFILE_KERNELS
+                    , timer = &timers.back()
+#endif
+            ] () mutable {
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                    timer.reset();
+                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
                 for (size_t i = 0, ie = sources.size(); i < ie; i++) {
                     check_error_async(cuMemcpyDtoDAsync(destinations[i],
                                                         sources[i],
-                                                        size, stream),
+                                                        sizes[i], stream),
                                       "cuMemcpyDtoDAsync");
                 }
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
+                    timer.print();
+                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+#endif
             };
         }
 
