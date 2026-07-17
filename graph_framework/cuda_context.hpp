@@ -677,7 +677,6 @@ namespace gpu {
         std::function<void(void)> create_copy_call(graph::copy_nodes<T, SAFE_MATH> &setters) {
             std::vector<CUdeviceptr> sources;
             std::vector<CUdeviceptr> destinations;
-            std::vector<size_t> sizes;
 
             for (auto &[out, in] : setters) {
                 if (!kernel_arguments.contains(in.get())) {
