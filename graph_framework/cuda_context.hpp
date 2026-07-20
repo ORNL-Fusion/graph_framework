@@ -16,6 +16,7 @@
 #include <nvrtc.h>
 
 #include "random.hpp"
+#include "timing.hpp"
 
 ///  Maximum number of registers to use.
 #define MAX_REG 128
@@ -90,10 +91,6 @@ namespace gpu {
         CUdeviceptr offset_buffer;
 ///  Cuda stream.
         CUstream stream;
-
-#ifdef PROFILE_KERNELS
-        std::vector<timing::measure_diagnostic> timers;
-#endif
 
 //------------------------------------------------------------------------------
 ///  @brief  Check results of async cuda functions.
@@ -495,8 +492,8 @@ namespace gpu {
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
-            unsigned int threads_per_group = value;
             unsigned int total_parallel = state.get() ? random_state_size : num_rays;
+            unsigned int threads_per_group = total_parallel < 1024 ? 32 : value;
             unsigned int thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 
             int min_grid;
@@ -508,23 +505,23 @@ namespace gpu {
                 std::cout << "    Threads per group    : " << threads_per_group << std::endl;
                 std::cout << "    Number of groups     : " << thread_groups << std::endl;
                 std::cout << "    Total problem size   : " << threads_per_group*thread_groups << std::endl;
-                std::cout << "    Total parallel       : " << total_parallel;
+                std::cout << "    Total parallel       : " << total_parallel << std::endl;
                 std::cout << "    Min grid size        : " << min_grid << std::endl;
                 std::cout << "    Suggested Block size : " << value << std::endl;
             }
 #ifdef PROFILE_KERNELS
-            timers.emplace_back(kernel_name);
+            timing::measure_diagnostic timer(kernel_name);
 #endif
             if (state.get()) {
                 return [this, num_rays, function, thread_groups, threads_per_group, buffers
 #ifdef PROFILE_KERNELS
-                        , timer = &timers.back()
+                        , timer
 #endif
                 ] () mutable {
 #ifdef PROFILE_KERNELS
-                    check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                        timer.reset();
-                    }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                    check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                        reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                    }, &timer), "cuLaunchHostFunc");
 #endif
                     for (uint32_t i = 0, ie = threads_per_group*thread_groups; i < num_rays; i += ie) {
                         check_error_async(cuStreamWriteValue32(stream, offset_buffer, i,
@@ -536,32 +533,32 @@ namespace gpu {
                                                          0, stream,
                                                          buffers.data(), NULL),
                                           "cuLaunchKernel");
-#ifdef PROFILE_KERNELS
-                    check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                        timer.print();
-                    }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
-#endif
                     }
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                        reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                    }, &timer), "cuLaunchHostFunc");
+#endif
                 };
             } else {
                 return [this, function, thread_groups, threads_per_group, buffers
 #ifdef PROFILE_KERNELS
-                        , timer = &timers.back()
+                        , timer
 #endif
                 ] () mutable {
 #ifdef PROFILE_KERNELS
-                    check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                        timer.reset();
-                    }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                    check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                        reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                    }, &timer), "cuLaunchHostFunc");
 #endif
                     check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
                                                      threads_per_group, 1, 1, 0, stream,
                                                      buffers.data(), NULL),
                                       "cuLaunchKernel");
 #ifdef PROFILE_KERNELS
-                    check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                        timer.print();
-                    }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                    check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                        reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                    }, &timer), "cuLaunchHostFunc");
 #endif
                 };
             }
@@ -643,17 +640,17 @@ namespace gpu {
                 sizes.push_back(size);
             }
 #ifdef PROFILE_KERNELS
-            timers.emplace_back("zero buffer");
+            timing::measure_diagnostic timer("zero buffer");
 #endif
             return [this, buffers, sizes
 #ifdef PROFILE_KERNELS
-                    , timer = &timers.back()
+                    , timer
 #endif
             ] () mutable {
 #ifdef PROFILE_KERNELS
-                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                    timer.reset();
-                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                }, &timer), "cuLaunchHostFunc");
 #endif
                 for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
                     check_error_async(cuMemsetD8Async(buffers[i], 0, sizes[i],
@@ -661,9 +658,9 @@ namespace gpu {
                                       "cuMemsetD8Async");
                 }
 #ifdef PROFILE_KERNELS
-                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                    timer.print();
-                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                }, &timer), "cuLaunchHostFunc");
 #endif
             };
         }
@@ -714,17 +711,17 @@ namespace gpu {
                 sizes.push_back(size);
             }
 #ifdef PROFILE_KERNELS
-            timers.emplace_back("copy buffer");
+            timing::measure_diagnostic timer("copy buffer");
 #endif
             return [this, sources, destinations, sizes
 #ifdef PROFILE_KERNELS
-                    , timer = &timers.back()
+                    , timer
 #endif
             ] () mutable {
 #ifdef PROFILE_KERNELS
-                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                    timer.reset();
-                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                }, &timer), "cuLaunchHostFunc");
 #endif
                 for (size_t i = 0, ie = sources.size(); i < ie; i++) {
                     check_error_async(cuMemcpyDtoDAsync(destinations[i],
@@ -733,9 +730,9 @@ namespace gpu {
                                       "cuMemcpyDtoDAsync");
                 }
 #ifdef PROFILE_KERNELS
-                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                    timer.print();
-                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                }, &timer), "cuLaunchHostFunc");
 #endif
             };
         }
@@ -756,24 +753,25 @@ namespace gpu {
 //------------------------------------------------------------------------------
         std::function<void(void)> run_function(std::function<void(void)> callback) {
 #ifdef PROFILE_KERNELS
-            timers.emplace_back("callback");
+            timing::measure_diagnostic timer("callback");
 #endif
             return [this, callback
 #ifdef PROFILE_KERNELS
-                    , timer = &timers.back()
+                    , timer
 #endif
             ]() mutable {
 #ifdef PROFILE_KERNELS
-                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                    timer.reset();
-                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                }, &timer), "cuLaunchHostFunc");
 #endif
-                check_error_async(cuLaunchHostFunc(stream, callback.target<void(void*)> (), NULL),
-                                  "cuLaunchHostFunc");
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<std::function<void(void)> *> (arg)->operator()();
+                }, &callback), "cuLaunchHostFunc");
 #ifdef PROFILE_KERNELS
-                check_error_async(cuLaunchHostFunc(stream, [&timer]() {
-                    timer.print();
-                }.target<void(void*)> (), NULL), "cuLaunchHostFunc");
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                }, &timer), "cuLaunchHostFunc");
 #endif
             };
         }

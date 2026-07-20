@@ -189,11 +189,11 @@ namespace jit {
 ///  @returns The maximum number of digits needed.
 //------------------------------------------------------------------------------
     template<float_scalar T>
-    constexpr int max_base() {
+    constexpr T max_base() {
         if constexpr (float_base<T>) {
-            return std::numeric_limits<float>::max();
+            return static_cast<T> (std::numeric_limits<float>::max());
         } else {
-            return std::numeric_limits<double>::max();
+            return static_cast<T> (std::numeric_limits<double>::max());
         }
     }
 

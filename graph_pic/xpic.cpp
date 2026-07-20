@@ -140,7 +140,6 @@ void run_pic() {
             });
         }
 
-        
         work.template add_callback_item<workflow::order::post_run_item> ([i, &p_file, &p_datasets, &ion_sync]() {
             ion_sync[i].lock();
             std::thread async([i, &p_file, &p_datasets, &ion_sync]() {
@@ -256,7 +255,7 @@ void run_pic() {
     p_file.end_define_mode();
 
     std::atomic_size_t counter = 0;
-#ifndef PROFILE
+#ifndef PROFILE_KERNELS
     std::thread progress = std::thread([&num_steps, &counter]() -> void {
         using namespace std::chrono_literals;
         do {
@@ -282,7 +281,7 @@ void run_pic() {
 
     counter = num_steps;
     work.wait();
-#ifndef PROFILE
+#ifndef PROFILE_KERNELS
     progress.join();
 #endif
     for (std::mutex &ion : ion_sync) {
