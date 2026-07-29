@@ -17,6 +17,7 @@
 #include <charconv>
 #include <array>
 #include <utility>
+#include <unordered_set>
 
 namespace jit {
 ///  Complex scalar concept.
@@ -44,6 +45,9 @@ namespace jit {
 
 ///  Verbose output.
     static bool verbose = USE_VERBOSE;
+
+///  Type for tacking thread shared memory.
+    typedef std::unordered_set<void *> argument_set;
 
 //------------------------------------------------------------------------------
 ///  @brief Convert a base type to a string.
@@ -248,8 +252,8 @@ namespace jit {
         assert((prefix == 'r' || prefix == 'v' ||
                 prefix == 'o' || prefix == 'a' ||
                 prefix == 'i' || prefix == 's' ||
-                prefix == 'l') &&
-               "Expected a variable (v), register (r), output (o), array (a), index (i), state (s), or logical (l) prefix.");
+                prefix == 'l' || prefix == 't') &&
+               "Expected a variable (v), register (r), output (o), array (a), index (i), state (s), logical (l), or (t) thread prefix.");
         return std::string(1, prefix) +
                format_to_string(reinterpret_cast<size_t> (pointer));
     }

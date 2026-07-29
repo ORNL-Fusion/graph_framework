@@ -191,19 +191,20 @@ namespace graph {
 ///
 ///    x' = (x - xmin)/dx                                                    (1)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                auto a = this->arg->compile(stream,
-                                            registers,
-                                            usage);
+                auto a = this->arg->compile(stream, registers,
+                                            thread_mem, usage);
 
 #ifdef USE_INDEX_CACHE
                 registers[this] = jit::to_string('i', this);
@@ -594,19 +595,20 @@ namespace graph {
 ///    c'_i = c_i - 3*d_i*i                                                  (4)
 ///    d'_i = d_i                                                            (5)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
-                                                                 registers,
-                                                                 usage);
+                auto a = this->arg->compile(stream, registers,
+                                            thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -1169,18 +1171,22 @@ namespace graph {
 ///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)   (17)
 ///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)     (18)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                auto x = this->left->compile(stream, registers, usage);
-                auto y = this->right->compile(stream, registers, usage);
+                auto x = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto y = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
                 auto temp = x*static_cast<T> (this->get_num_columns()) + y;
                 if constexpr (!jit::use_metal<T> ()) {
@@ -1198,6 +1204,7 @@ namespace graph {
                         std::ostringstream source_buffer;
                         temp->compile(source_buffer,
                                       registers,
+                                      thread_mem,
                                       usage);
                         registers[temp.get()] = source_buffer.str();
 #endif
@@ -1563,25 +1570,33 @@ namespace graph {
 ///
 ///    x' = (x - xmin)/dx                                                    (1)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                auto a = this->right->compile(stream, registers, usage);
-                auto var = this->left->compile(stream, registers, usage);
-
+                auto a = this->right->compile(stream, registers,
+                                              thread_mem, usage);
+                auto var = this->left->compile(stream, registers,
+                                               thread_mem, usage);
+                
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = "
-                       << jit::to_string('v', var.get())
-                       << "[" << registers[a.get()] << "]";
+                stream << " " << registers[this] << " = ";
+                if (thread_mem.contains(var.get())) {
+                    stream << thread_mem.at(var.get());
+                } else {
+                    stream << jit::to_string('v', var.get());
+                }
+                stream << "[" << registers[a.get()] << "]";
 
                 this->endline(stream, usage);
             }
@@ -1869,18 +1884,22 @@ namespace graph {
 ///    x' = (x - xmin)/dx                                                    (1)
 ///    y' = (y - ymin)/dy                                                    (2)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                auto x = this->middle->compile(stream, registers, usage);
-                auto y = this->right->compile(stream, registers, usage);
+                auto x = this->middle->compile(stream, registers,
+                                               thread_mem, usage);
+                auto y = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
                 auto temp = x*static_cast<T> (this->get_num_columns())
                           + y;
@@ -1903,17 +1922,20 @@ namespace graph {
 #endif
                 }
 
-                auto var = this->left->compile(stream,
-                                               registers,
-                                               usage);
+                auto var = this->left->compile(stream, registers,
+                                               thread_mem, usage);
 
                 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                stream << " " << registers[this] << " = "
-                       << jit::to_string('v', var.get())
-                       << "[" << registers[temp.get()] << "]";
+                stream << " " << registers[this] << " = ";
+                if (thread_mem.contains(var.get())) {
+                    stream << thread_mem.at(var.get());
+                } else {
+                    stream << jit::to_string('v', var.get());
+                }
+                stream << "[" << registers[temp.get()] << "]";
 
                 this->endline(stream, usage);
             }

@@ -12,7 +12,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <thread>
-#include <unordered_set>
 
 //  Clang headers will define IBAction and IBOutlet these so undefined them
 //  here.
@@ -278,7 +277,7 @@ namespace gpu {
 #endif
                 ] () mutable {
 #ifdef PROFILE_KERNELS
-                    timing::measure_diagnostic timer("callback");
+                    timing::measure_diagnostic timer(kernel_name);
 #endif
                     kernel(buffers, state->data());
 #ifdef PROFILE_KERNELS
@@ -306,7 +305,7 @@ namespace gpu {
 #endif
                 ] () mutable {
 #ifdef PROFILE_KERNELS
-                    timing::measure_diagnostic timer("callback");
+                    timing::measure_diagnostic timer(kernel_name);
 #endif
                     kernel(buffers);
 #ifdef PROFILE_KERNELS
@@ -536,6 +535,8 @@ namespace gpu {
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     textures1d    List of 1D kernel textures.
 ///  @param[in]     textures2d    List of 2D kernel textures.
+///  @param[out]    thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
 ///  @param[in]     iterations    Number of loop iterations.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
@@ -549,6 +550,8 @@ namespace gpu {
                                   const jit::register_usage &usage,
                                   jit::texture1d_list &textures1d,
                                   jit::texture2d_list &textures2d,
+                                  jit::argument_set &thread_shared,
+                                  jit::register_map &thread_mem,
                                   const size_t iterations=1) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
@@ -562,7 +565,7 @@ namespace gpu {
             }
             source_buffer << ") {" << std::endl;
 
-            std::unordered_set<void *> used_args;
+            jit::argument_set used_args;
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 if (!used_args.contains(inputs[i].get())) {
                     source_buffer << "    ";
@@ -620,6 +623,8 @@ namespace gpu {
 ///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
 ///  @param[in]     usage         List of register usage count.
+///  @param[in]     thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
 ///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
@@ -628,13 +633,14 @@ namespace gpu {
                                    graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
                                    const jit::register_usage &usage,
+                                   const jit::argument_set &thread_shared,
+                                   jit::register_map &thread_mem,
                                    const size_t iterations=1) {
-            std::unordered_set<void *> out_registers;
+            jit::argument_set out_registers;
             for (auto &[out, in] : setters) {
                 if (!out->is_match(in)) {
-                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      usage);
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
                     source_buffer << "        " << jit::to_string('v', in.get());
                     source_buffer << "[i] = ";
                     if constexpr (SAFE_MATH) {
@@ -661,9 +667,8 @@ namespace gpu {
             for (auto &out : outputs) {
                 if (!graph::variable_cast(out).get() &&
                     !out_registers.contains(out.get())) {
-                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      usage);
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
                     source_buffer << "        " << jit::to_string('o', out.get());
                     source_buffer << "[i] = ";
                     if constexpr (SAFE_MATH) {

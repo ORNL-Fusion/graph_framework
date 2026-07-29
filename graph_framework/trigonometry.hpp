@@ -123,18 +123,20 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
-        virtual shared_leaf<T, SAFE_MATH> compile(std::ostringstream &stream,
-                                                  jit::register_map &registers,
-                                                  const jit::register_usage &usage) {
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
-                                                                 registers,
-                                                                 usage);
+                auto a = this->arg->compile(stream, registers,
+                                            thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -375,19 +377,20 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
-                                                                 registers,
-                                                                 usage);
+                auto a = this->arg->compile(stream, registers,
+                                            thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -673,22 +676,22 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
-                                                                  registers,
-                                                                  usage);
-                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
-                                                                   registers,
-                                                                   usage);
+                auto l = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";

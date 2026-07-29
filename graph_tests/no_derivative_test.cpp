@@ -19,6 +19,7 @@ public:
     virtual graph::shared_leaf<float>
     compile(std::ostringstream &stream,
             jit::register_map &registers,
+            const jit::register_map &thread_mem,
             const jit::register_usage &usage) {
         return this->shared_from_this();
     }
