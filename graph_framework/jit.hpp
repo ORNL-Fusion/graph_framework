@@ -171,17 +171,16 @@ namespace jit {
                                              kernel_2dtextures[name],
                                              iterations);
 
-            register_map indices;
             for (auto &[out, in] : setters) {
-                out->compile(source_buffer, registers, indices, usage);
+                out->compile(source_buffer, registers, usage);
             }
             for (auto &out : outputs) {
-                out->compile(source_buffer, registers, indices, usage);
+                out->compile(source_buffer, registers, usage);
             }
 
             gpu_context.create_kernel_postfix(source_buffer, outputs,
                                               setters, state,
-                                              registers, indices, usage,
+                                              registers, usage,
                                               iterations);
 
 //  Delete the registers so that they can be used again in other kernels.
@@ -255,17 +254,16 @@ namespace jit {
                 }
             }
 
-            register_map indices;
             for (auto &[out, in] : setters) {
-                out->compile(source_buffer, registers, indices, usage);
+                out->compile(source_buffer, registers, usage);
             }
             for (auto &out : outputs) {
-                out->compile(source_buffer, registers, indices, usage);
+                out->compile(source_buffer, registers, usage);
             }
 
             gpu_context.create_kernel_postfix(source_buffer, outputs,
                                               setters, state,
-                                              registers, indices, usage);
+                                              registers, usage);
 
 //  Delete the registers so that they can be used again in other kernels.
             std::vector<void *> removed_elements;

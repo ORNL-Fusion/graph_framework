@@ -933,13 +933,7 @@ namespace gpu {
             }
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
                 if (!used_args.contains(inputs[i].get())) {
-                    source_buffer << ", // " << inputs[i - 1]->get_symbol()
-#ifndef USE_INPUT_CACHE
-#ifdef SHOW_USE_COUNT
-                                  << " used " << usage.at(inputs[i - 1].get())
-#endif
-#endif
-                                  << std::endl;
+                    inputs[i]->endline(source_buffer, usage, ',');
                     source_buffer << "    ";
                     if (is_constant[i]) {
                         source_buffer << "const ";
@@ -954,15 +948,8 @@ namespace gpu {
                 if (!used_args.contains(outputs[i].get())) {
                     if (i == 0) {
                         if (inputs.size()) {
-                            source_buffer << ", // "
-                                          << inputs[inputs.size() - 1]->get_symbol();
-#ifndef USE_INPUT_CACHE
-#ifdef SHOW_USE_COUNT
-                            source_buffer << " used "
-                                        << usage.at(inputs[inputs.size() - 1].get());
-#endif
-#endif
-                            source_buffer << std::endl;
+                            inputs[inputs.size() - 1]->endline(source_buffer,
+                                                               usage, ',');
                         }
                     } else {
                         source_buffer << "," << std::endl;
@@ -1003,11 +990,8 @@ namespace gpu {
                 registers[state.get()] = jit::to_string('r', state.get());
                 source_buffer << "    mt_state &" << registers[state.get()] << " = "
                               << jit::to_string('s', state.get())
-                              << "[threadIdx.x];"
-#ifdef SHOW_USE_COUNT
-                              << " // used " << usage.at(state.get())
-#endif
-                              << std::endl;
+                              << "[index]";
+                state->endline(source_buffer, usage);
 #else
                 registers[state.get()] = jit::to_string('s', state.get()) + "[threadIdx.x]";
 #endif
@@ -1033,11 +1017,8 @@ namespace gpu {
                     if (state.get()) {
                         source_buffer << "offset[0] + ";
                     }
-                    source_buffer << "index]; // " << input->get_symbol()
-#ifdef SHOW_USE_COUNT
-                                  << " used " << usage.at(input.get())
-#endif
-                                  << std::endl;
+                    source_buffer << "index]";
+                    input->endline(source_buffer, usage);
                 }
 #else
                 registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
@@ -1053,7 +1034,6 @@ namespace gpu {
 ///  @param[in]     setters       Map outputs back to input values.
 ///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
-///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
@@ -1062,7 +1042,6 @@ namespace gpu {
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
-                                   jit::register_map &indices,
                                    const jit::register_usage &usage,
                                    const size_t iterations=1) {
             std::unordered_set<void *> out_registers;
@@ -1070,7 +1049,6 @@ namespace gpu {
                 if (!out->is_match(in)) {
                     graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
                                                                       registers,
-                                                                      indices,
                                                                       usage);
                     source_buffer << "        "
                                   << jit::to_string('v',  in.get())
@@ -1108,7 +1086,6 @@ namespace gpu {
                     !out_registers.contains(out.get())) {
                     graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
                                                                       registers,
-                                                                      indices,
                                                                       usage);
                     source_buffer << "        "
                                   << jit::to_string('o',  out.get())

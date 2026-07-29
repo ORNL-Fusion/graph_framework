@@ -239,6 +239,13 @@ for (T &d : *this) { \
         }
 
 //------------------------------------------------------------------------------
+///  @brief Take cos.
+//------------------------------------------------------------------------------
+        void real() {
+            apply_op(std::real)
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Take erfi.
 //------------------------------------------------------------------------------
         void erfi() requires(jit::complex_scalar<T>) {
@@ -700,6 +707,66 @@ if (size() > x.size()) {                                                    \
             }
         }
         return true;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Applies an associative function.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define build_assoc_func(func)                    \
+if (b.size() == 1) {                              \
+    const T right = b[0];                         \
+    for (T &l : a) {                              \
+        l = func(std::real(l),                    \
+                 std::real(right));               \
+    }                                             \
+    return a;                                     \
+} else if (a.size() == 1) {                       \
+    const T left = a[0];                          \
+    for (T &r : b) {                              \
+        r = func(std::real(r),                    \
+                 std::real(left));                \
+    }                                             \
+    return b;                                     \
+}                                                 \
+                                                  \
+assert(a.size() == b.size() &&                    \
+       "Left and right sizes are incompatible."); \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {  \
+    a[i] = func(std::real(a[i]),                  \
+                std::real(b[i]));                 \
+}                                                 \
+return a;
+
+//------------------------------------------------------------------------------
+///  @brief Max operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns max(a, b).
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> max(buffer<T> &a,
+                         buffer<T> &b) {
+        build_assoc_func(std::max);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Min operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns min(a, b).
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> min(buffer<T> &a,
+                         buffer<T> &b) {
+        build_assoc_func(std::min);
     }
 
 //------------------------------------------------------------------------------

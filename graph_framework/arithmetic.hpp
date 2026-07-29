@@ -193,11 +193,9 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg(),
-                                    pl1->get_scale(), pl1->get_offset());
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg(),
-                                    pr1->get_scale(), pr1->get_offset());
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -206,13 +204,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -221,29 +219,29 @@ namespace graph {
                 result.add_row(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.add_col(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.add_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.add_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 
 //  Identity reductions.
@@ -637,23 +635,19 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, 
                                                                   registers,
-                                                                  indices,
                                                                   usage);
                 shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
                                                                    registers,
-                                                                   indices,
                                                                    usage);
 
                 registers[this] = jit::to_string('r', this);
@@ -949,11 +943,9 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg(),
-                                    pl1->get_scale(), pl1->get_offset());
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg(),
-                                    pr1->get_scale(), pr1->get_offset());
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -962,13 +954,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
-                                    pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pl2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -976,30 +968,30 @@ namespace graph {
                 backend::buffer<T> result = pl1->evaluate();
                 result.subtract_row(pr2->evaluate());
                 return piecewise_2D(result,
-                                    pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pl2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.subtract_col(pr2->evaluate());
                 return piecewise_2D(result,
-                                    pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pl2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.subtract_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.subtract_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 // (c1 + a) - c2 -> c3 + a
 // c1 - (c2 + a) -> c3 - a
@@ -1467,23 +1459,19 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, 
                                                                   registers,
-                                                                  indices,
                                                                   usage);
                 shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
                                                                    registers,
-                                                                   indices,
                                                                    usage);
 
                 registers[this] = jit::to_string('r', this);
@@ -1901,11 +1889,9 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg(),
-                                    pl1->get_scale(), pl1->get_offset());
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg(),
-                                    pr1->get_scale(), pr1->get_offset());
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -1914,13 +1900,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -1929,29 +1915,29 @@ namespace graph {
                 result.multiply_row(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.multiply_col(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.multiply_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.multiply_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 
 //  Move constants to the left.
@@ -2508,23 +2494,19 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
                                                                   registers,
-                                                                  indices,
                                                                   usage);
                 shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
                                                                    registers,
-                                                                   indices,
                                                                    usage);
 
                 registers[this] = jit::to_string('r', this);
@@ -2835,11 +2817,9 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg(),
-                                    pl1->get_scale(), pl1->get_offset());
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg(),
-                                    pr1->get_scale(), pr1->get_offset());
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -2848,13 +2828,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -2863,29 +2843,29 @@ namespace graph {
                 result.divide_row(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.divide_col(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.divide_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.divide_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 
             if (this->left->is_match(this->right)) {
@@ -3500,23 +3480,19 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
                                                                   registers,
-                                                                  indices,
                                                                   usage);
                 shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
                                                                    registers,
-                                                                   indices,
                                                                    usage);
 
                 registers[this] = jit::to_string('r', this);
@@ -5071,27 +5047,22 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
                                                                   registers,
-                                                                  indices,
                                                                   usage);
                 shared_leaf<T, SAFE_MATH> m = this->middle->compile(stream,
                                                                     registers,
-                                                                    indices,
                                                                     usage);
                 shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
                                                                    registers,
-                                                                   indices,
                                                                    usage);
 
                 registers[this] = jit::to_string('r', this);
@@ -5479,23 +5450,19 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
                                                                   registers,
-                                                                  indices,
                                                                   usage);
                 shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
                                                                    registers,
-                                                                   indices,
                                                                    usage);
 
                 registers[this] = jit::to_string('r', this);

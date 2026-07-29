@@ -20,7 +20,7 @@ void run_pic() {
 //  Sizes
     const size_t num_particles = 3000000;
     const size_t num_grid = 1000;
-    const size_t num_batch = 10;
+    const size_t num_batch = 1;
     const size_t num_ions = 1;
     const size_t num_steps = 1;
     const size_t num_sub_steps = 100;

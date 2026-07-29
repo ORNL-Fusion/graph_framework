@@ -592,11 +592,8 @@ namespace gpu {
                 registers[state.get()] = jit::to_string('r', state.get());
                 source_buffer << "    mt_state &"
                               << registers[state.get()] << " = "
-                              << jit::to_string('s', state.get()) << "[0];"
-#ifdef SHOW_USE_COUNT
-                              << " // used " << usage.at(state.get())
-#endif
-                              << std::endl;
+                              << jit::to_string('s', state.get()) << "[0]";
+                state->endline(source_buffer, usage);
             }
             source_buffer << "    for (size_t i = 0; i < " << size << "; i++) {" << std::endl;
             if (iterations > 1) {
@@ -609,11 +606,8 @@ namespace gpu {
                 jit::add_type<T> (source_buffer);
                 source_buffer << " " << registers[input.get()]
                               << " = " << jit::to_string('v', input.get())
-                              << "[i]; // " << input->get_symbol()
-#ifdef SHOW_USE_COUNT
-                              << " used " << usage.at(input.get())
-#endif
-                              << std::endl;
+                              << "[i]";
+                input->endline(source_buffer, usage);
             }
         }
 
@@ -625,7 +619,6 @@ namespace gpu {
 ///  @param[in]     setters       Map outputs back to input values.
 ///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
-///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
@@ -634,7 +627,6 @@ namespace gpu {
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
-                                   jit::register_map &indices,
                                    const jit::register_usage &usage,
                                    const size_t iterations=1) {
             std::unordered_set<void *> out_registers;
@@ -642,7 +634,6 @@ namespace gpu {
                 if (!out->is_match(in)) {
                     graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
                                                                       registers,
-                                                                      indices,
                                                                       usage);
                     source_buffer << "        " << jit::to_string('v', in.get());
                     source_buffer << "[i] = ";
@@ -672,7 +663,6 @@ namespace gpu {
                     !out_registers.contains(out.get())) {
                     graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
                                                                       registers,
-                                                                      indices,
                                                                       usage);
                     source_buffer << "        " << jit::to_string('o', out.get());
                     source_buffer << "[i] = ";

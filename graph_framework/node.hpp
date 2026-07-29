@@ -233,12 +233,10 @@
 ///  virtual shared_leaf<T, SAFE_MATH>
 ///  compile(std::ostringstream &stream,
 ///          jit::register_map &registers,
-///          jit::register_map &indices,
 ///          const jit::register_usage &usage) {
 ///      if (registers.find(this) == registers.end()) {
 ///          shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
 ///                                                           registers,
-///                                                           indices,
 ///                                                           usage);
 ///
 ///          registers[this] = jit::to_string('r', this);
@@ -456,14 +454,12 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) = 0;
 
 //------------------------------------------------------------------------------
@@ -638,14 +634,16 @@ namespace graph {
 ///
 ///  @param[in,out] stream String buffer stream.
 ///  @param[in]     usage  List of register usage count.
+///  @param[in]     end    The end character.
 //------------------------------------------------------------------------------
         virtual void endline(std::ostringstream &stream,
-                             const jit::register_usage &usage)
+                             const jit::register_usage &usage,
+                             const char end=';')
 #ifndef SHOW_USE_COUNT
                              const
 #endif
-                             final {
-            stream << ";"
+                             {
+            stream << end
 #ifdef SHOW_USE_COUNT
                    << " // used " << usage.at(this)
 #endif
@@ -771,14 +769,12 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
                 registers[this] = jit::to_string('i', this);
@@ -786,7 +782,7 @@ namespace graph {
                 if constexpr (jit::use_cuda()) {
                     stream << "int " << registers[this] << " = index";
                 } else if constexpr (jit::use_metal<T> ()) {
-                    stream << "int " << registers[this] << " = index";
+                    stream << "uint " << registers[this] << " = index";
                 } else {
                     stream << "size_t " << registers[this] << " = i";
                 }
@@ -948,14 +944,12 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
 #ifdef USE_CONSTANT_CACHE
@@ -1283,16 +1277,14 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
-            return this->arg->compile(stream, registers, indices, usage);
+            return this->arg->compile(stream, registers, usage);
         }
 
 //------------------------------------------------------------------------------
@@ -1743,14 +1735,12 @@ namespace graph {
 ///
 ///  @param[in,out] stream    String buffer stream.
 ///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
 ///  @param[in]     usage     List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
                 const jit::register_usage &usage) {
            return this->shared_from_this();
         }
@@ -1877,6 +1867,27 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return one<T, SAFE_MATH> ();
         }
+
+//------------------------------------------------------------------------------
+///  @brief End a line in the kernel source.
+///
+///  @param[in,out] stream String buffer stream.
+///  @param[in]     usage  List of register usage count.
+///  @param[in]     end    The end character.
+//------------------------------------------------------------------------------
+        virtual void endline(std::ostringstream &stream,
+                             const jit::register_usage &usage,
+                             const char end=';')
+        #ifndef SHOW_USE_COUNT
+                             const
+        #endif
+                             {
+                    stream << end << " // " << symbol
+        #ifdef SHOW_USE_COUNT
+                           << " used " << usage.at(this)
+        #endif
+                           << std::endl;
+                }
     };
 
 //------------------------------------------------------------------------------

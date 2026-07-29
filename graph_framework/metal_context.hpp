@@ -232,14 +232,16 @@ namespace gpu {
             NSUInteger thread_width = pipline.threadExecutionWidth;
             NSUInteger threads_per_group = total_parallel < pipline.maxTotalThreadsPerThreadgroup ? thread_width : pipline.maxTotalThreadsPerThreadgroup;
             NSUInteger thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
+            NSUInteger thread_group_memory = device.maxThreadgroupMemoryLength;
 
             if (jit::verbose) {
                 std::cout << "  Kernel name : " << kernel_name << std::endl;
-                std::cout << "    Thread execution width : " << thread_width << std::endl;
-                std::cout << "    Threads per group      : " << threads_per_group << std::endl;
-                std::cout << "    Number of groups       : " << thread_groups << std::endl;
-                std::cout << "    Total problem size     : " << threads_per_group*thread_groups << std::endl;
-                std::cout << "    Total parallel size    : " << total_parallel << std::endl;
+                std::cout << "    Thread execution width  : " << thread_width << std::endl;
+                std::cout << "    Threads per group       : " << threads_per_group << std::endl;
+                std::cout << "    Number of groups        : " << thread_groups << std::endl;
+                std::cout << "    Total problem size      : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Total parallel size     : " << total_parallel << std::endl;
+                std::cout << "    Max thread group memory : " << thread_group_memory << std::endl;
             }
 
             if (state.get()) {
@@ -609,14 +611,8 @@ namespace gpu {
                     source_buffer << "    " << (is_constant[i] ? "constant" : "device")
                                   << " float *"
                                   << jit::to_string('v', inputs[i].get())
-                                  << " [[buffer(" << buffer_count++ << ")]], // "
-                                  << inputs[i]->get_symbol()
-#ifndef USE_INPUT_CACHE
-#ifdef SHOW_USE_COUNT
-                                  << " used " << usage.at(inputs[i].get())
-#endif
-#endif
-                                  << std::endl;
+                                  << " [[buffer(" << buffer_count++ << ")]]";
+                    inputs[i]->endline(source_buffer, usage, ',');
                     used_args.insert(inputs[i].get());
                 }
             }
@@ -653,48 +649,59 @@ namespace gpu {
                               << " [[texture(" << index++ << ")]],"
                               << std::endl;
             }
-            if (state.get()) {
-                source_buffer << "    uint thread_index [[thread_index_in_threadgroup]],"
-                              << std::endl;
-            }
             source_buffer << "    uint index [[thread_position_in_grid]]) {" << std::endl
                           << "    if (";
             if (state.get()) {
                 source_buffer << "offset + ";
             }
             source_buffer << "index < "  << size << ") {" << std::endl;
+
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                if (is_constant[i]) {
+#ifdef USE_INPUT_CACHE
+                    if (usage.at(inputs[i].get())) {
+                        registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+                        source_buffer << "        const ";
+                        jit::add_type<float> (source_buffer);
+                        source_buffer << " " << registers[inputs[i].get()] << " = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[index]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+#else
+                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "[index]";
+#endif
+                }
+            }
+
             if (iterations > 1) {
                 source_buffer << "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
             }
 
-            for (auto &input : inputs) {
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                if (!is_constant[i]) {
 #ifdef USE_INPUT_CACHE
-                if (usage.at(input.get())) {
-                    registers[input.get()] = jit::to_string('r', input.get());
-                    source_buffer << "        const ";
-                    jit::add_type<float> (source_buffer);
-                    source_buffer << " " << registers[input.get()] << " = "
-                                  << jit::to_string('v', input.get())
-                                  << "[index]; // " << input->get_symbol()
-#ifdef SHOW_USE_COUNT
-                                  << " used " << usage.at(input.get())
-#endif
-                                  << std::endl;
-                }
+                    if (usage.at(inputs[i].get())) {
+                        registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+                        source_buffer << "        const ";
+                        jit::add_type<float> (source_buffer);
+                        source_buffer << " " << registers[inputs[i].get()] << " = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[index]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
 #else
-                registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "[index]";
 #endif
+                }
             }
             if (state.get()) {
 #ifdef USE_INPUT_CACHE
                 registers[state.get()] = jit::to_string('r', state.get());
                 source_buffer << "        device mt_state &" << registers[state.get()]
                               << " = " << jit::to_string('s', state.get())
-                              << "[thread_index];"
-#ifdef SHOW_USE_COUNT
-                              << " // used " << usage.at(state.get())
-#endif
-                              << std::endl;
+                              << "[index]";
+                state->endline(source_buffer, usage);
 #else
                 registers[state.get()] = jit::to_string('s', state.get()) + "[thread_index]";
 #endif
@@ -709,7 +716,6 @@ namespace gpu {
 ///  @param[in]     setters       Map outputs back to input values.
 ///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
-///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
@@ -718,7 +724,6 @@ namespace gpu {
                                    graph::map_nodes<float, SAFE_MATH> &setters,
                                    graph::shared_random_state<float, SAFE_MATH> state,
                                    jit::register_map &registers,
-                                   jit::register_map &indices,
                                    const jit::register_usage &usage,
                                    const size_t iterations=1) {
             std::unordered_set<void *> out_registers;
@@ -726,7 +731,6 @@ namespace gpu {
                 if (!out->is_match(in)) {
                     graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
                                                                           registers,
-                                                                          indices,
                                                                           usage);
                     source_buffer << "        "
                                   << jit::to_string('v',  in.get())
@@ -745,7 +749,6 @@ namespace gpu {
                     !out_registers.contains(out.get())) {
                     graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
                                                                           registers,
-                                                                          indices,
                                                                           usage);
                     source_buffer << "        " << jit::to_string('o',  out.get())
                                   << "[index] = ";
