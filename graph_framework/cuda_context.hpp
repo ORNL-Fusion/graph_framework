@@ -945,8 +945,8 @@ namespace gpu {
                         thread_shared.insert(inputs[0].get());
                     }
                 } else if (is_constant[i]           &&
-                           inputs[i]->size() < size &&
-                           inputs[i]->size() < 1024) {
+                           inputs[0]->size() < size &&
+                           inputs[0]->size() < 1024) {
                     const size_t needed_mem = inputs[i]->size()*sizeof(T);
                     if (used_thread_mem + needed_mem < max_shared_mem) {
                         used_thread_mem += needed_mem;
