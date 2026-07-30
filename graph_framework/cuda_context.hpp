@@ -1209,7 +1209,7 @@ namespace gpu {
             for (auto &out : outputs) {
                 if (!graph::variable_cast(out).get() &&
                     !out_registers.contains(out.get())) {
-                    auto a = out->compile(source_buffer, egisters,
+                    auto a = out->compile(source_buffer, registers,
                                           thread_mem, usage);
                     source_buffer << "        "
                                   << jit::to_string('o',  out.get())
