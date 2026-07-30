@@ -1173,9 +1173,8 @@ namespace gpu {
             std::unordered_set<void *> out_registers;
             for (auto &[out, in] : setters) {
                 if (!out->is_match(in)) {
-                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      usage);
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
                     source_buffer << "        "
                                   << jit::to_string('v',  in.get())
                                   << "[";
@@ -1210,9 +1209,8 @@ namespace gpu {
             for (auto &out : outputs) {
                 if (!graph::variable_cast(out).get() &&
                     !out_registers.contains(out.get())) {
-                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      usage);
+                    auto a = out->compile(source_buffer, egisters,
+                                          thread_mem, usage);
                     source_buffer << "        "
                                   << jit::to_string('o',  out.get())
                                   << "[";
