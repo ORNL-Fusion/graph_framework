@@ -939,15 +939,15 @@ namespace gpu {
             jit::argument_set used_args;
             if (inputs.size()) {
                 if (!is_constant[0] && iterations > 1) {
-                    const size_t needed_mem = inputs[i]->size() > 1024 ? 1024*sizeof(T) : 32*sizeof(T);
+                    const size_t needed_mem = inputs[0]->size() > 1024 ? 1024*sizeof(T) : 32*sizeof(T);
                     if (used_thread_mem + needed_mem < max_shared_mem) {
                         used_thread_mem += needed_mem;
                         thread_shared.insert(inputs[0].get());
                     }
-                } else if (is_constant[i]           &&
+                } else if (is_constant[0]           &&
                            inputs[0]->size() < size &&
                            inputs[0]->size() < 1024) {
-                    const size_t needed_mem = inputs[i]->size()*sizeof(T);
+                    const size_t needed_mem = inputs[0]->size()*sizeof(T);
                     if (used_thread_mem + needed_mem < max_shared_mem) {
                         used_thread_mem += needed_mem;
                         thread_shared.insert(inputs[0].get());
