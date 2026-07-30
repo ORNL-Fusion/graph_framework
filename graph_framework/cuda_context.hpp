@@ -90,6 +90,8 @@ namespace gpu {
         CUdeviceptr offset_buffer;
 ///  Cuda stream.
         CUstream stream;
+///  Assumed thread sizes.
+        std::map<std::string, int> assumed_thread_size;
 
 //------------------------------------------------------------------------------
 ///  @brief  Check results of async cuda functions.
@@ -491,7 +493,10 @@ namespace gpu {
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
-            
+            if (assumed_thread_size[kernel_name] != -1) {
+                value = assumed_thread_size[kernel_name];
+            }
+
             unsigned int total_parallel = state.get() ? random_state_size : num_rays;
             unsigned int threads_per_group = total_parallel < 1024 ? 32 : value;
             unsigned int thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
@@ -943,6 +948,9 @@ namespace gpu {
                     if (used_thread_mem + needed_mem < max_shared_mem) {
                         used_thread_mem += needed_mem;
                         thread_shared.insert(inputs[0].get());
+                        if (!assumed_thread_size.contains(name)) {
+                            assumed_thread_size[name] = inputs[i]->size() > 1024 ? 1024 : 32;
+                        }
                     }
                 } else if (is_constant[0]           &&
                            inputs[0]->size() < size &&
@@ -952,6 +960,9 @@ namespace gpu {
                         used_thread_mem += needed_mem;
                         thread_shared.insert(inputs[0].get());
                         thread_mem[inputs[0].get()] = jit::to_string('t', inputs[0].get());
+                        if (!assumed_thread_size.contains(name)) {
+                            assumed_thread_size[name] = 1024;
+                        }
                     }
                 }
                 source_buffer << "    ";
@@ -964,6 +975,28 @@ namespace gpu {
                 used_args.insert(inputs[0].get());
             }
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
+                if (!is_constant[i] && iterations > 1) {
+                    const size_t needed_mem = inputs[i]->size() > 1024 ? 1024*sizeof(T) : 32*sizeof(T);
+                    if (used_thread_mem + needed_mem < max_shared_mem) {
+                        used_thread_mem += needed_mem;
+                        thread_shared.insert(inputs[i].get());
+                        if (!assumed_thread_size.contains(name)) {
+                            assumed_thread_size[name] = inputs[i]->size() > 1024 ? 1024 : 32;
+                        }
+                    }
+                } else if (is_constant[i]           &&
+                           inputs[i]->size() < size &&
+                           inputs[i]->size() < 1024) {
+                    const size_t needed_mem = inputs[i]->size()*sizeof(T);
+                    if (used_thread_mem + needed_mem < max_shared_mem) {
+                        used_thread_mem += needed_mem;
+                        thread_shared.insert(inputs[i].get());
+                        thread_mem[inputs[i].get()] = jit::to_string('t', inputs[0].get());
+                        if (!assumed_thread_size.contains(name)) {
+                            assumed_thread_size[name] = 1024;
+                        }
+                    }
+                }
                 if (!used_args.contains(inputs[i].get())) {
                     inputs[i]->endline(source_buffer, usage, ',');
                     source_buffer << "    ";
