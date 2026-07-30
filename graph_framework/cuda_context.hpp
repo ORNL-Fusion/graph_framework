@@ -8,7 +8,6 @@
 #ifndef cuda_context_h
 #define cuda_context_h
 
-#include <unordered_set>
 #include <array>
 #include <cstring>
 
@@ -492,6 +491,7 @@ namespace gpu {
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
+            
             unsigned int total_parallel = state.get() ? random_state_size : num_rays;
             unsigned int threads_per_group = total_parallel < 1024 ? 32 : value;
             unsigned int thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
@@ -508,6 +508,12 @@ namespace gpu {
                 std::cout << "    Total parallel       : " << total_parallel << std::endl;
                 std::cout << "    Min grid size        : " << min_grid << std::endl;
                 std::cout << "    Suggested Block size : " << value << std::endl;
+
+                check_error(cuDeviceGetAttribute(&value,
+                                                 CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK,
+                                                 device), "cuDeviceGetAttribute");
+                
+                std::cout << "    Max shared memory    : " << value << std::endl;
             }
 #ifdef PROFILE_KERNELS
             timing::measure_diagnostic timer(kernel_name);
@@ -902,6 +908,8 @@ namespace gpu {
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     textures1d    List of 1D kernel textures.
 ///  @param[in]     textures2d    List of 2D kernel textures.
+///  @param[out]    thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
 ///  @param[in]     iterations    Number of loop iterations.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
@@ -915,13 +923,37 @@ namespace gpu {
                                   const jit::register_usage &usage,
                                   jit::texture1d_list &textures1d,
                                   jit::texture2d_list &textures2d,
+                                  jit::argument_set &thread_shared,
+                                  jit::register_map &thread_mem,
                                   const size_t iterations=1) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" __global__ void "
                           << name << "(" << std::endl;
+            
+            int used_thread_mem = 0;
+            int max_shared_mem;
+            check_error(cuDeviceGetAttribute(&max_shared_mem,
+                                             CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK,
+                                             device), "cuDeviceGetAttribute");
 
-            std::unordered_set<void *> used_args;
+            jit::argument_set used_args;
             if (inputs.size()) {
+                if (!is_constant[0] && iterations > 1) {
+                    const size_t needed_mem = inputs[i]->size() > 1024 ? 1024*sizeof(T) : 32*sizeof(T);
+                    if (used_thread_mem + needed_mem < max_shared_mem) {
+                        used_thread_mem += needed_mem;
+                        thread_shared.insert(inputs[0].get());
+                    }
+                } else if (is_constant[i]           &&
+                           inputs[i]->size() < size &&
+                           inputs[i]->size() < 1024) {
+                    const size_t needed_mem = inputs[i]->size()*sizeof(T);
+                    if (used_thread_mem + needed_mem < max_shared_mem) {
+                        used_thread_mem += needed_mem;
+                        thread_shared.insert(inputs[0].get());
+                        thread_mem[inputs[0].get()] = jit::to_string('t', inputs[0].get());
+                    }
+                }
                 source_buffer << "    ";
                 if (is_constant[0]) {
                     source_buffer << "const ";
@@ -982,8 +1014,12 @@ namespace gpu {
                               << jit::to_string('a', key);
             }
 #endif
-            source_buffer << ") {" << std::endl
-                          << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
+            source_buffer << ") {" << std::endl;
+            if (thread_shared.size()) {
+                source_buffer << "    const int t_index = threadIdx.x;"
+                              << std::endl;
+            }
+            source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
                           << std::endl;
             if (state.get()) {
 #ifdef USE_INPUT_CACHE
@@ -1001,28 +1037,114 @@ namespace gpu {
                 source_buffer << "offset[0] + ";
             }
             source_buffer << "index < " << size << ") {" << std::endl;
+
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                if (is_constant[i]) {
+#ifdef USE_INPUT_CACHE
+                    if (usage.at(inputs[i].get()) && inputs[i]->size() == size) {
+                        registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+                        source_buffer << "        const ";
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " " << registers[inputs[i].get()] << " = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[index]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+#else
+                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "[index]";
+#endif
+                }
+            }
+
+            if (thread_shared.size()) {
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "        __shared__ ";
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << jit::to_string('t', inputs[i].get())
+                                      << "[" << inputs[i]->size() << "]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "    if (t_index < "
+                                      << inputs[i]->size()
+                                      << ") {" << std::endl;
+                        break;
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "        "
+                                      << jit::to_string('t', inputs[i].get())
+                                      << "[t_index] = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[t_index]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "    }" << std::endl
+                                      << "    __syncthreads();"
+                                      << std::endl;
+                        break;
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        thread_shared.erase(inputs[i].get());
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && !is_constant[i]) {
+                        source_buffer << "        __shared__ ";
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << jit::to_string('t', inputs[i].get())
+                                      << "["
+                                      << (inputs[i]->size() > 1024 ? 1024 : 32)
+                                      << "]";
+                        inputs[i]->endline(source_buffer, usage);
+                        source_buffer << "        "
+                                      << jit::to_string('t', inputs[i].get())
+                                      << "[t_index] = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[index]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+                }
+            }
+
             if (iterations > 1) {
                 source_buffer << "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
             }
 
-            for (auto &input : inputs) {
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                if (!is_constant[i]) {
 #ifdef USE_INPUT_CACHE
-                if (usage.at(input.get())) {
-                    registers[input.get()] = jit::to_string('r', input.get());
-                    source_buffer << "        const ";
-                    jit::add_type<T> (source_buffer);
-                    source_buffer << " " << registers[input.get()] << " = "
-                                  << jit::to_string('v', input.get())
-                                  << "[";
-                    if (state.get()) {
-                        source_buffer << "offset[0] + ";
+                    if (usage.at(inputs[i].get())) {
+                        registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+                        source_buffer << "        const ";
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " " << registers[inputs[i].get()] << " = ";
+                        if (thread_shared.contains(inputs[i].get())) {
+                            source_buffer << jit::to_string('t', inputs[i].get())
+                                          << "[t_index]";
+                        } else {
+                            source_buffer << jit::to_string('v', inputs[i].get())
+                                          << "[index]";
+                        }
+                        inputs[i]->endline(source_buffer, usage);
                     }
-                    source_buffer << "index]";
-                    input->endline(source_buffer, usage);
-                }
 #else
-                registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+                    if (thread_shared.contains(inputs[i].get())) {
+                        registers[inputs[i].get()] = jit::to_string('t', inputs[i].get()) + "[t_index]";
+                    } else {
+                        registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "[index]";
+                    }
 #endif
+                }
             }
         }
 
@@ -1035,6 +1157,8 @@ namespace gpu {
 ///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
 ///  @param[in]     usage         List of register usage count.
+///  @param[in]     thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
 ///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
@@ -1043,6 +1167,8 @@ namespace gpu {
                                    graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
                                    const jit::register_usage &usage,
+                                   const jit::argument_set &thread_shared,
+                                   jit::register_map &thread_mem,
                                    const size_t iterations=1) {
             std::unordered_set<void *> out_registers;
             for (auto &[out, in] : setters) {
@@ -1120,6 +1246,15 @@ namespace gpu {
 
             if (iterations > 1) {
                 source_buffer << "    }" << std::endl;
+            }
+            for (auto &[out, in] : setters) {
+                if (thread_shared.contains(in.get())) {
+                    source_buffer << "        "
+                                  << jit::to_string('v',  in.get())
+                                  << "[index] = "
+                                  << jit::to_string('t',  in.get())
+                                  << "[t_index];" << std::endl;
+                }
             }
             source_buffer << "    }" << std::endl << "}" << std::endl;
         }

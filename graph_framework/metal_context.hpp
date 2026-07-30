@@ -230,7 +230,6 @@ namespace gpu {
             NSUInteger thread_width = pipline.threadExecutionWidth;
             NSUInteger threads_per_group = total_parallel < pipline.maxTotalThreadsPerThreadgroup ? thread_width : pipline.maxTotalThreadsPerThreadgroup;
             NSUInteger thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
-            NSUInteger thread_group_memory = device.maxThreadgroupMemoryLength;
 
             if (jit::verbose) {
                 std::cout << "  Kernel name : " << kernel_name << std::endl;
@@ -239,7 +238,7 @@ namespace gpu {
                 std::cout << "    Number of groups        : " << thread_groups << std::endl;
                 std::cout << "    Total problem size      : " << threads_per_group*thread_groups << std::endl;
                 std::cout << "    Total parallel size     : " << total_parallel << std::endl;
-                std::cout << "    Max thread group memory : " << thread_group_memory << std::endl;
+                std::cout << "    Max thread group memory : " << device.maxThreadgroupMemoryLength << std::endl;
             }
 
             if (state.get()) {

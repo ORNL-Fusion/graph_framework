@@ -46,9 +46,6 @@ namespace jit {
 ///  Verbose output.
     static bool verbose = USE_VERBOSE;
 
-///  Type for tacking thread shared memory.
-    typedef std::unordered_set<void *> argument_set;
-
 //------------------------------------------------------------------------------
 ///  @brief Convert a base type to a string.
 ///
@@ -268,6 +265,8 @@ namespace jit {
     typedef std::map<void *, size_t> texture1d_list;
 ///  Type alias for indexing 2D textures.
     typedef std::map<void *, std::array<size_t,2>> texture2d_list;
+///  Type for tacking thread shared memory.
+    typedef std::unordered_set<void *> argument_set;
 
 //------------------------------------------------------------------------------
 ///  @brief  Define a custom comparator class.
