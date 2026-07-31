@@ -954,6 +954,7 @@ namespace gpu {
 
             jit::argument_set used_args;
             if (inputs.size()) {
+#ifdef USE_INPUT_CACHE
                 if (!is_constant[0] && iterations > 1) {
                     const size_t needed_mem = inputs[0]->size() > 1024 ?
                                               1024*sizeof(T)           :
@@ -972,6 +973,7 @@ namespace gpu {
                         thread_mem[inputs[0].get()] = jit::to_string('t', inputs[0].get());
                     }
                 }
+#endif
                 source_buffer << "    ";
                 if (is_constant[0]) {
                     source_buffer << "const ";
@@ -982,6 +984,7 @@ namespace gpu {
                 used_args.insert(inputs[0].get());
             }
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
+#ifdef USE_INPUT_CACHE
                 if (!is_constant[i] && iterations > 1) {
                     const size_t needed_mem = inputs[i]->size() > 1024 ?
                                               1024*sizeof(T)           :
@@ -1000,6 +1003,7 @@ namespace gpu {
                         thread_mem[inputs[i].get()] = jit::to_string('t', inputs[i].get());
                     }
                 }
+#endif
                 if (!used_args.contains(inputs[i].get())) {
                     inputs[i]->endline(source_buffer, usage, ',');
                     source_buffer << "    ";
@@ -1057,17 +1061,7 @@ namespace gpu {
             }
             source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
                           << std::endl;
-            if (state.get()) {
-#ifdef USE_INPUT_CACHE
-                registers[state.get()] = jit::to_string('r', state.get());
-                source_buffer << "    mt_state &" << registers[state.get()] << " = "
-                              << jit::to_string('s', state.get())
-                              << "[index]";
-                state->endline(source_buffer, usage);
-#else
-                registers[state.get()] = jit::to_string('s', state.get()) + "[threadIdx.x]";
-#endif
-            }
+
             source_buffer << "    if (";
             if (state.get()) {
                 source_buffer << "offset[0] + ";
@@ -1087,7 +1081,10 @@ namespace gpu {
                         inputs[i]->endline(source_buffer, usage);
                     }
 #else
-                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "[index]";
+                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get())
+                                               + "["
+                                               + (state.get() ? "offset[0] + " : "")
+                                               + "index]";
 #endif
                 }
             }
@@ -1164,7 +1161,11 @@ namespace gpu {
                                           << "[t_index]";
                         } else {
                             source_buffer << jit::to_string('v', inputs[i].get())
-                                          << "[index]";
+                                          << "[";
+                            if (state.get()) {
+                                source_buffer << "offset[0] + ";
+                            }
+                            source_buffer << "index]";
                         }
                         inputs[i]->endline(source_buffer, usage);
                     }
@@ -1172,10 +1173,23 @@ namespace gpu {
                     if (thread_shared.contains(inputs[i].get())) {
                         registers[inputs[i].get()] = jit::to_string('t', inputs[i].get()) + "[t_index]";
                     } else {
-                        registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "[index]";
+                        registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "["
+                                                   + (state.get() ? "offset[0] + " : "")
+                                                   + "index]";
                     }
 #endif
                 }
+            }
+            if (state.get()) {
+#ifdef USE_INPUT_CACHE
+                registers[state.get()] = jit::to_string('r', state.get());
+                source_buffer << "    mt_state &" << registers[state.get()] << " = "
+                              << jit::to_string('s', state.get())
+                              << "[index]";
+                state->endline(source_buffer, usage);
+#else
+                registers[state.get()] = jit::to_string('s', state.get()) + "[threadIdx.x]";
+#endif
             }
         }
 

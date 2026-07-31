@@ -617,6 +617,7 @@ namespace gpu {
             jit::argument_set used_args;
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 if (!used_args.contains(inputs[i].get())) {
+#ifdef USE_INPUT_CACHE
                     if (!is_constant[i] && iterations > 1) {
                         const size_t needed_mem = inputs[i]->size() > 1024 ?
                                                   1024*4                   :
@@ -635,6 +636,7 @@ namespace gpu {
                             thread_mem[inputs[i].get()] = jit::to_string('t', inputs[i].get());
                         }
                     }
+#endif
                     bufferMutability[name].push_back(is_constant[i] ? MTLMutabilityMutable : MTLMutabilityImmutable);
                     source_buffer << "    " << (is_constant[i] ? "constant" : "device")
                                   << " float *"
@@ -699,11 +701,18 @@ namespace gpu {
                         jit::add_type<float> (source_buffer);
                         source_buffer << " " << registers[inputs[i].get()] << " = "
                                       << jit::to_string('v', inputs[i].get())
-                                      << "[index]";
+                                      << "[";
+                        if (state.get()) {
+                            source_buffer << "offset + ";
+                        }
+                        source_buffer << "index]";
                         inputs[i]->endline(source_buffer, usage);
                     }
 #else
-                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "[index]";
+                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get())
+                                               + "["
+                                               + (state.get() ? "offset + " : "")
+                                               + "index]";
 #endif
                 }
             }
@@ -755,7 +764,11 @@ namespace gpu {
                                       << jit::to_string('t', inputs[i].get())
                                       << "[t_index] = "
                                       << jit::to_string('v', inputs[i].get())
-                                      << "[index]";
+                                      << "[";
+                        if (state.get()) {
+                            source_buffer << "offset + ";
+                        }
+                        source_buffer << "index]";
                         inputs[i]->endline(source_buffer, usage);
                     }
                 }
@@ -778,7 +791,11 @@ namespace gpu {
                                           << "[t_index]";
                         } else {
                             source_buffer << jit::to_string('v', inputs[i].get())
-                                          << "[index]";
+                                          << "[";
+                            if (state.get()) {
+                                source_buffer << "offset + ";
+                            }
+                            source_buffer << "index]";
                         }
                         inputs[i]->endline(source_buffer, usage);
                     }
@@ -786,7 +803,9 @@ namespace gpu {
                     if (thread_shared.contains(inputs[i].get())) {
                         registers[inputs[i].get()] = jit::to_string('t', inputs[i].get()) + "[t_index]";
                     } else {
-                        registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "[index]";
+                        registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "["
+                                                   + (state.get() ? "offset + " : "")
+                                                   + "index]";
                     }
 #endif
                 }
@@ -799,7 +818,8 @@ namespace gpu {
                               << "[index]";
                 state->endline(source_buffer, usage);
 #else
-                registers[state.get()] = jit::to_string('s', state.get()) + "[thread_index]";
+                registers[state.get()] = jit::to_string('s', state.get())
+                                       + "[index]";
 #endif
             }
         }
@@ -837,7 +857,11 @@ namespace gpu {
                                       << "[t_index] = ";
                     } else {
                         source_buffer << jit::to_string('v',  in.get())
-                                      << "[index] = ";
+                                      << "[";
+                        if (state.get()) {
+                            source_buffer << "offset + ";
+                        }
+                        source_buffer << "index] = ";
                     }
                     if constexpr (SAFE_MATH) {
                         source_buffer << "isnan(" << registers[a.get()]
@@ -854,7 +878,11 @@ namespace gpu {
                     auto a = out->compile(source_buffer, registers,
                                           thread_mem, usage);
                     source_buffer << "        " << jit::to_string('o',  out.get())
-                                  << "[index] = ";
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset + ";
+                    }
+                    source_buffer << "index] = ";
                     if constexpr (SAFE_MATH) {
                         source_buffer << "isnan(" << registers[a.get()]
                                       << ") ? 0.0 : ";
@@ -871,7 +899,11 @@ namespace gpu {
                 if (thread_shared.contains(in.get())) {
                     source_buffer << "        "
                                   << jit::to_string('v',  in.get())
-                                  << "[index] = "
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset + ";
+                    }
+                    source_buffer << "index] = "
                                   << jit::to_string('t',  in.get())
                                   << "[t_index];" << std::endl;
                 }
