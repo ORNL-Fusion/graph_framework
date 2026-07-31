@@ -94,6 +94,10 @@ namespace gpu {
 
             if (jit::verbose) {
                 std::cout << "Metal GPU info." << std::endl;
+                std::cout << "  Max thread group memory : " << device.maxThreadgroupMemoryLength << std::endl;
+                std::cout << "  Max thread per group    : " << device.maxThreadsPerThreadgroup.width << std::endl;
+                std::cout << "  Device name             : " << device.name << std::endl;
+                std::cout << "  Architecture            : " << device.architecture << std::endl;
             }
         }
 
@@ -129,10 +133,10 @@ namespace gpu {
                 compute.buffers[i].mutability = bufferMutability[kernel_name][i];
             }
 
-            id<MTLComputePipelineState> pipline = [device newComputePipelineStateWithDescriptor:compute
-                                                                                        options:MTLPipelineOptionNone
-                                                                                     reflection:NULL
-                                                                                          error:&error];
+            id<MTLComputePipelineState> pipeline = [device newComputePipelineStateWithDescriptor:compute
+                                                                                         options:MTLPipelineOptionNone
+                                                                                      reflection:NULL
+                                                                                           error:&error];
 
             if (error) {
                 NSLog(@"%@", error);
@@ -227,8 +231,10 @@ namespace gpu {
             NSRange tex_range = NSMakeRange(0, textures.size());
 
             NSUInteger total_parallel = state.get() ? random_state_size : num_rays;
-            NSUInteger thread_width = pipline.threadExecutionWidth;
-            NSUInteger threads_per_group = total_parallel < pipline.maxTotalThreadsPerThreadgroup ? thread_width : pipline.maxTotalThreadsPerThreadgroup;
+            NSUInteger thread_width = pipeline.threadExecutionWidth;
+            NSUInteger threads_per_group = total_parallel < pipeline.maxTotalThreadsPerThreadgroup ?
+                                                            thread_width                           :
+                                                            pipeline.maxTotalThreadsPerThreadgroup;
             NSUInteger thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 
             if (jit::verbose) {
@@ -238,12 +244,13 @@ namespace gpu {
                 std::cout << "    Number of groups        : " << thread_groups << std::endl;
                 std::cout << "    Total problem size      : " << threads_per_group*thread_groups << std::endl;
                 std::cout << "    Total parallel size     : " << total_parallel << std::endl;
-                std::cout << "    Max thread group memory : " << device.maxThreadgroupMemoryLength << std::endl;
+                std::cout << "    Allocated thread mem    : " << pipeline.staticThreadgroupMemoryLength << std::endl;
+                std::cout << "    Required threads        : " << pipeline.requiredThreadsPerThreadgroup.width << std::endl;
             }
 
             if (state.get()) {
 
-                return [this, num_rays, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
+                return [this, num_rays, pipeline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
 #ifdef PROFILE_KERNELS
                         , kernel_name
 #endif
@@ -256,7 +263,7 @@ namespace gpu {
                             offsets[j] = i*sizeof(float);
                         }
 
-                        [encoder setComputePipelineState:pipline];
+                        [encoder setComputePipelineState:pipeline];
                         [encoder setBuffers:buffers.data()
                                     offsets:offsets.data()
                                   withRange:range];
@@ -278,7 +285,7 @@ namespace gpu {
                     [command_buffer commit];
                 };
             } else {
-                return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
+                return [this, pipeline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
 #ifdef PROFILE_KERNELS
                         , kernel_name
 #endif
@@ -286,7 +293,7 @@ namespace gpu {
                     command_buffer = [queue commandBuffer];
                     id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
-                    [encoder setComputePipelineState:pipline];
+                    [encoder setComputePipelineState:pipeline];
                     [encoder setBuffers:buffers.data()
                                 offsets:offsets.data()
                               withRange:range];
@@ -611,7 +618,9 @@ namespace gpu {
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 if (!used_args.contains(inputs[i].get())) {
                     if (!is_constant[i] && iterations > 1) {
-                        const size_t needed_mem = inputs[i]->size() > 1024 ? 1024*4 : 32*4;
+                        const size_t needed_mem = inputs[i]->size() > 1024 ?
+                                                  1024*4                   :
+                                                  32*4;
                         if (used_thread_mem + needed_mem < device.maxThreadgroupMemoryLength) {
                             used_thread_mem += needed_mem;
                             thread_shared.insert(inputs[i].get());
@@ -670,6 +679,7 @@ namespace gpu {
             }
             if (thread_shared.size()) {
                 source_buffer << "    ushort t_index [[thread_position_in_threadgroup]]," << std::endl;
+                source_buffer << "    ushort t_total [[threads_per_threadgroup]]," << std::endl;
             }
             source_buffer << "    "
                           << jit::smallest_uint_type<float> (size)
@@ -709,26 +719,21 @@ namespace gpu {
                 }
                 for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                     if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
-                        source_buffer << "    if (t_index < "
+                        source_buffer << "    for(int j = t_index; j < "
                                       << inputs[i]->size()
-                                      << ") {" << std::endl;
-                        break;
-                    }
-                }
-                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
-                        source_buffer << "        "
+                                      << "; j += t_total) {" << std::endl
+                                      << "        "
                                       << jit::to_string('t', inputs[i].get())
-                                      << "[t_index] = "
+                                      << "[j] = "
                                       << jit::to_string('v', inputs[i].get())
-                                      << "[t_index]";
+                                      << "[j]";
                         inputs[i]->endline(source_buffer, usage);
+                        source_buffer << "    }" << std::endl;
                     }
                 }
                 for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                     if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
-                        source_buffer << "    }" << std::endl
-                                      << "    threadgroup_barrier(mem_flags::mem_threadgroup);"
+                        source_buffer << "    threadgroup_barrier(mem_flags::mem_threadgroup);"
                                       << std::endl;
                         break;
                     }
