@@ -18,7 +18,7 @@
 #include "timing.hpp"
 
 ///  Maximum number of registers to use.
-#define MAX_REG 128
+#define MAX_REG 256
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -90,8 +90,6 @@ namespace gpu {
         CUdeviceptr offset_buffer;
 ///  Cuda stream.
         CUstream stream;
-///  Assumed thread sizes.
-        std::map<std::string, int> assumed_thread_size;
 
 //------------------------------------------------------------------------------
 ///  @brief  Check results of async cuda functions.
@@ -229,6 +227,19 @@ namespace gpu {
             if (jit::verbose) {
                 std::cout << "CUDA GPU info." << std::endl;
                 std::cout << "  Major compute capability : " << compute_version << std::endl;
+
+                int value;
+                check_error(cuDeviceGetAttribute(&value,
+                                                 CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK,
+                                                 device), "cuDeviceGetAttribute");
+
+                std::cout << "  Max shared memory        : " << value << std::endl;
+
+                check_error(cuDeviceGetAttribute(&value,
+                                                 CU_DEVICE_ATTRIBUTE_WARP_SIZE,
+                                                 device), "cuDeviceGetAttribute");
+
+                std::cout << "  Warp size                : " << value << std::endl;
             }
 
             check_error(cuDeviceGetAttribute(&compute_version,
@@ -493,12 +504,13 @@ namespace gpu {
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
-            if (assumed_thread_size[kernel_name] != -1) {
-                value = assumed_thread_size[kernel_name];
-            }
+            int warp_size;
+            check_error(cuDeviceGetAttribute(&warp_size,
+                                             CU_DEVICE_ATTRIBUTE_WARP_SIZE,
+                                             device), "cuDeviceGetAttribute");
 
             unsigned int total_parallel = state.get() ? random_state_size : num_rays;
-            unsigned int threads_per_group = total_parallel < 1024 ? 32 : value;
+            unsigned int threads_per_group = total_parallel < 1024 ? warp_size : value;
             unsigned int thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 
             int min_grid;
@@ -513,12 +525,6 @@ namespace gpu {
                 std::cout << "    Total parallel       : " << total_parallel << std::endl;
                 std::cout << "    Min grid size        : " << min_grid << std::endl;
                 std::cout << "    Suggested Block size : " << value << std::endl;
-
-                check_error(cuDeviceGetAttribute(&value,
-                                                 CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK,
-                                                 device), "cuDeviceGetAttribute");
-                
-                std::cout << "    Max shared memory    : " << value << std::endl;
             }
 #ifdef PROFILE_KERNELS
             timing::measure_diagnostic timer(kernel_name);
@@ -934,23 +940,27 @@ namespace gpu {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" __global__ void "
                           << name << "(" << std::endl;
-            
+
             int used_thread_mem = 0;
             int max_shared_mem;
             check_error(cuDeviceGetAttribute(&max_shared_mem,
                                              CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK,
                                              device), "cuDeviceGetAttribute");
 
+            int warp_size;
+            check_error(cuDeviceGetAttribute(&warp_size,
+                                             CU_DEVICE_ATTRIBUTE_WARP_SIZE,
+                                             device), "cuDeviceGetAttribute");
+
             jit::argument_set used_args;
             if (inputs.size()) {
                 if (!is_constant[0] && iterations > 1) {
-                    const size_t needed_mem = inputs[0]->size() > 1024 ? 1024*sizeof(T) : 32*sizeof(T);
+                    const size_t needed_mem = inputs[0]->size() > 1024 ?
+                                              1024*sizeof(T)           :
+                                              warp_size*sizeof(T);
                     if (used_thread_mem + needed_mem < max_shared_mem) {
                         used_thread_mem += needed_mem;
                         thread_shared.insert(inputs[0].get());
-                        if (!assumed_thread_size.contains(name)) {
-                            assumed_thread_size[name] = inputs[i]->size() > 1024 ? 1024 : 32;
-                        }
                     }
                 } else if (is_constant[0]           &&
                            inputs[0]->size() < size &&
@@ -960,9 +970,6 @@ namespace gpu {
                         used_thread_mem += needed_mem;
                         thread_shared.insert(inputs[0].get());
                         thread_mem[inputs[0].get()] = jit::to_string('t', inputs[0].get());
-                        if (!assumed_thread_size.contains(name)) {
-                            assumed_thread_size[name] = 1024;
-                        }
                     }
                 }
                 source_buffer << "    ";
@@ -976,13 +983,12 @@ namespace gpu {
             }
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
                 if (!is_constant[i] && iterations > 1) {
-                    const size_t needed_mem = inputs[i]->size() > 1024 ? 1024*sizeof(T) : 32*sizeof(T);
+                    const size_t needed_mem = inputs[i]->size() > 1024 ?
+                                              1024*sizeof(T)           :
+                                              warp_size*sizeof(T);
                     if (used_thread_mem + needed_mem < max_shared_mem) {
                         used_thread_mem += needed_mem;
                         thread_shared.insert(inputs[i].get());
-                        if (!assumed_thread_size.contains(name)) {
-                            assumed_thread_size[name] = inputs[i]->size() > 1024 ? 1024 : 32;
-                        }
                     }
                 } else if (is_constant[i]           &&
                            inputs[i]->size() < size &&
@@ -991,10 +997,7 @@ namespace gpu {
                     if (used_thread_mem + needed_mem < max_shared_mem) {
                         used_thread_mem += needed_mem;
                         thread_shared.insert(inputs[i].get());
-                        thread_mem[inputs[i].get()] = jit::to_string('t', inputs[0].get());
-                        if (!assumed_thread_size.contains(name)) {
-                            assumed_thread_size[name] = 1024;
-                        }
+                        thread_mem[inputs[i].get()] = jit::to_string('t', inputs[i].get());
                     }
                 }
                 if (!used_args.contains(inputs[i].get())) {
@@ -1094,33 +1097,28 @@ namespace gpu {
                     if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
                         source_buffer << "        __shared__ ";
                         jit::add_type<T> (source_buffer);
-                        source_buffer << jit::to_string('t', inputs[i].get())
+                        source_buffer << " " << jit::to_string('t', inputs[i].get())
                                       << "[" << inputs[i]->size() << "]";
                         inputs[i]->endline(source_buffer, usage);
                     }
                 }
                 for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                     if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
-                        source_buffer << "    if (t_index < "
+                        source_buffer << "    for(int j = t_index; j < "
                                       << inputs[i]->size()
-                                      << ") {" << std::endl;
-                        break;
-                    }
-                }
-                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
-                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
-                        source_buffer << "        "
+                                      << "; j += blockDim.x) {" << std::endl
+                                      << "        "
                                       << jit::to_string('t', inputs[i].get())
-                                      << "[t_index] = "
+                                      << "[j] = "
                                       << jit::to_string('v', inputs[i].get())
-                                      << "[t_index]";
+                                      << "[j]";
                         inputs[i]->endline(source_buffer, usage);
+                        source_buffer << "    }" << std::endl;
                     }
                 }
                 for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                     if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
-                        source_buffer << "    }" << std::endl
-                                      << "    __syncthreads();"
+                        source_buffer << "    __syncthreads();"
                                       << std::endl;
                         break;
                     }
@@ -1134,9 +1132,9 @@ namespace gpu {
                     if (thread_shared.contains(inputs[i].get()) && !is_constant[i]) {
                         source_buffer << "        __shared__ ";
                         jit::add_type<T> (source_buffer);
-                        source_buffer << jit::to_string('t', inputs[i].get())
+                        source_buffer << " " << jit::to_string('t', inputs[i].get())
                                       << "["
-                                      << (inputs[i]->size() > 1024 ? 1024 : 32)
+                                      << (inputs[i]->size() > 1024 ? 1024 : warp_size)
                                       << "]";
                         inputs[i]->endline(source_buffer, usage);
                         source_buffer << "        "
@@ -1208,13 +1206,18 @@ namespace gpu {
                 if (!out->is_match(in)) {
                     auto a = out->compile(source_buffer, registers,
                                           thread_mem, usage);
-                    source_buffer << "        "
-                                  << jit::to_string('v',  in.get())
-                                  << "[";
-                    if (state.get()) {
-                        source_buffer << "offset[0] + ";
+                    source_buffer << "        ";
+                    if (thread_shared.contains(in.get())) {
+                        source_buffer << jit::to_string('t', in.get())
+                                      << "[t_index] = ";
+                    } else {
+                        source_buffer << jit::to_string('v', in.get())
+                                      << "[";
+                        if (state.get()) {
+                            source_buffer << "offset[0] + ";
+                        }
+                        source_buffer << "index] = ";
                     }
-                    source_buffer << "index] = ";
                     if constexpr (SAFE_MATH) {
                         if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (source_buffer);
@@ -1282,7 +1285,11 @@ namespace gpu {
                 if (thread_shared.contains(in.get())) {
                     source_buffer << "        "
                                   << jit::to_string('v',  in.get())
-                                  << "[index] = "
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset[0] + ";
+                    }
+                    source_buffer << "index] = "
                                   << jit::to_string('t',  in.get())
                                   << "[t_index];" << std::endl;
                 }
