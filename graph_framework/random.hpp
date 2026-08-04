@@ -158,15 +158,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if all the sub-nodes terminate in variables.
-///
-///  @returns True if all the sub-nodes terminate in variables.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Get the exponent of a power.
 ///
 ///  @returns The exponent of a power like node.
@@ -470,15 +461,6 @@ namespace graph {
             }
 
             return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if all the sub-nodes terminate in variables.
-///
-///  @returns True if all the sub-nodes terminate in variables.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------

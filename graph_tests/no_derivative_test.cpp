@@ -29,10 +29,6 @@ public:
         return this->shared_from_this();
     }
 
-    virtual bool is_all_variables() const {
-        return false;
-    }
-
     virtual graph::shared_leaf<float> get_power_exponent() const {
         return graph::one<float> ();
     }

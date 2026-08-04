@@ -44,8 +44,8 @@ template<std::floating_point  T> void run_interpolation_test() {
         ions[0].x_data()[i] = dxp*i + mesh.xmin;
     }
 
-    auto weights = pic::build_weights<T> (ions[0].x, mesh);
-    auto field = pic::build_interpolation<T> (ions[0].x, mesh);
+    auto weights = mesh.build_weights(ions[0].x);
+    auto field = mesh.build_interpolation(ions[0].x);
     auto weight = weights[0] + weights[1] + weights[2];
 
     workflow::manager<T> work(0);
@@ -55,7 +55,7 @@ template<std::floating_point  T> void run_interpolation_test() {
     }, {
         weight,
         field
-    }, {}, NULL, "Mesh_Interpolation", num_particles);
+    }, {}, {}, NULL, "Mesh_Interpolation", num_particles);
     work.compile();
     work.run();
     work.wait();
@@ -265,38 +265,21 @@ template<std::floating_point T> void run_field_solve_test() {
         }
     }
 
-    auto weights = pic::build_weights<T> (ions[0].x, mesh);
-    auto mesh_i = mesh.build_i_index(ions[0].x);
     auto mesh_solve = mesh.build_mesh_solve(ions[0]);
 
     workflow::manager<T> work(0);
     work.add_zero_item({
-        graph::variable_cast(mesh.index),
         graph::variable_cast(mesh.y[0])
     });
     work.add_item({
-        graph::variable_cast(ions[0].x),
-        graph::variable_cast(ions[0].weights[0]),
-        graph::variable_cast(ions[0].weights[1]),
-        graph::variable_cast(ions[0].weights[2]),
-        graph::variable_cast(ions[0].indices)
+        graph::variable_cast(ions[0].x)
+    }, {
+        mesh_solve[0],
+        mesh_solve[1],
+        mesh_solve[2]
     }, {}, {
-        {weights[0], graph::variable_cast(ions[0].weights[0])},
-        {weights[1], graph::variable_cast(ions[0].weights[1])},
-        {weights[2], graph::variable_cast(ions[0].weights[2])},
-        {mesh_i, graph::variable_cast(ions[0].indices)}
-    }, NULL, "compute_weights", num_particles);
-    work.add_loop_item({
-        graph::variable_cast(ions[0].indices),
-        graph::variable_cast(ions[0].weights[0]),
-        graph::variable_cast(ions[0].weights[1]),
-        graph::variable_cast(ions[0].weights[2]),
-        graph::variable_cast(mesh.index),
         graph::variable_cast(mesh.y[0])
-    }, {}, {
-        {mesh_solve[0], graph::variable_cast(mesh.index)},
-        {mesh_solve[1], graph::variable_cast(mesh.y[0])}
-    }, NULL, "sum_weights", num_mesh, num_particles);
+    }, NULL, "sum_weights", num_particles);
 
     work.compile();
 

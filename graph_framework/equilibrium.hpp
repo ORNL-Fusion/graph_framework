@@ -1599,11 +1599,11 @@ namespace equilibrium {
             };
 
             workflow::manager<T, SAFE_MATH> work(device_number);
-            solver::newton(work, {
+            solver::newton<T, SAFE_MATH> (work, {
                 x_axis, z_axis
-            }, inputs, (psi_cache - psimin)/dpsi, graph::shared_random_state<T, SAFE_MATH> (), static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
-            work.add_item(inputs, {b_mod}, {},
-                          graph::shared_random_state<T, SAFE_MATH> (),
+            }, inputs, {}, (psi_cache - psimin)/dpsi,
+            NULL, static_cast<T> (1.0E-30), 1000, static_cast<T> (0.1));
+            work.add_item(inputs, {b_mod}, {}, {}, NULL,
                           "bmod_at_axis", inputs.back()->size());
             work.compile();
             work.run();

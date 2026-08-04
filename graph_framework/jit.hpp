@@ -112,15 +112,17 @@ namespace jit {
 ///  @param[in] inputs     Input variables of the kernel.
 ///  @param[in] outputs    Output nodes of the graph to compute.
 ///  @param[in] setters    Map outputs back to input values.
+///  @param[in] atomics    Input variables for atomic operations.
 ///  @param[in] state      Random state node.
 ///  @param[in] size       Size of the kernel.
 ///  @param[in] iterations Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void add_kernel(const std::string name,
-                        graph::input_nodes<T, SAFE_MATH> inputs,
-                        graph::output_nodes<T, SAFE_MATH> outputs,
-                        graph::map_nodes<T, SAFE_MATH> setters,
-                        graph::shared_random_state<T, SAFE_MATH> state,
+                        graph::input_nodes<T, SAFE_MATH> &inputs,
+                        graph::output_nodes<T, SAFE_MATH> &outputs,
+                        graph::map_nodes<T, SAFE_MATH> &setters,
+                        graph::input_nodes<T, SAFE_MATH> &atomics,
+                        graph::shared_random_state<T, SAFE_MATH> &state,
                         const size_t size,
                         const size_t iterations=1) {
             kernel_names.push_back(name);
@@ -167,7 +169,8 @@ namespace jit {
             jit::register_map thread_mem;
 
             gpu_context.create_kernel_prefix(source_buffer,
-                                             name, inputs, outputs, state,
+                                             name, inputs, outputs,
+                                             atomics, state,
                                              size, is_constant,
                                              registers, usage,
                                              kernel_1dtextures[name],
@@ -197,6 +200,11 @@ namespace jit {
                     value[0] == 'l' ||
                     value[0] == 'i') {
                     removed_elements.push_back(key);
+                }
+            }
+            for (auto &out : outputs) {
+                if (graph::atomic_accumulate_1D_cast(out).get()) {
+                    removed_elements.push_back(out.get());
                 }
             }
 
@@ -282,6 +290,7 @@ namespace jit {
 ///  @param[in] kernel_name  Name of the kernel for later reference.
 ///  @param[in] inputs       Input nodes of the kernel.
 ///  @param[in] outputs      Output nodes of the kernel.
+///  @param[in] atomics      Input variables for atomic operations.
 ///  @param[in] state        Random states.
 ///  @param[in] num_rays     Number of rays to trace.
 ///  @returns A lambda function to run the kernel.
@@ -289,9 +298,11 @@ namespace jit {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     graph::input_nodes<T, SAFE_MATH> atomics,
                                                      graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays) {
-            return gpu_context.create_kernel_call(kernel_name, inputs, outputs, state, num_rays,
+            return gpu_context.create_kernel_call(kernel_name, inputs, outputs,
+                                                  atomics, state, num_rays,
                                                   kernel_1dtextures[kernel_name],
                                                   kernel_2dtextures[kernel_name]);
         }

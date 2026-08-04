@@ -37,6 +37,7 @@
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 
 #include "random.hpp"
+#include "piecewise.hpp"
 
 #ifndef NDEBUG
 //------------------------------------------------------------------------------
@@ -223,6 +224,7 @@ namespace gpu {
 ///  @param[in] kernel_name Name of the kernel for later reference.
 ///  @param[in] inputs      Input nodes of the kernel.
 ///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] atomics     Atomic nodes of the kernel.
 ///  @param[in] state       Random states.
 ///  @param[in] num_rays    Number of rays to trace.
 ///  @param[in] tex1d_list  List of 1D textures.
@@ -232,6 +234,7 @@ namespace gpu {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     graph::input_nodes<T, SAFE_MATH> atomics,
                                                      graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays,
                                                      const jit::texture1d_list &tex1d_list,
@@ -249,11 +252,21 @@ namespace gpu {
                 buffers[reinterpret_cast<size_t> (input.get())] = kernel_arguments[input.get()].data();
             }
             for (auto &output : outputs) {
-                if (!kernel_arguments.contains(output.get())) {
-                    std::vector<T> arg(num_rays);
-                    kernel_arguments[output.get()] = arg;
+                if (!graph::atomic_accumulate_1D_cast(output).get()) {
+                    if (!kernel_arguments.contains(output.get())) {
+                        std::vector<T> arg(num_rays);
+                        kernel_arguments[output.get()] = arg;
+                    }
+                    buffers[reinterpret_cast<size_t> (output.get())] = kernel_arguments[output.get()].data();
                 }
-                buffers[reinterpret_cast<size_t> (output.get())] = kernel_arguments[output.get()].data();
+            }
+            for (auto &atomic : atomics) {
+                if (!kernel_arguments.contains(atomic.get())) {
+                    std::vector<T> arg(atomic->size());
+                    memcpy(arg.data(), atomic->data(), atomic->size()*sizeof(T));
+                    kernel_arguments[atomic.get()] = arg;
+                }
+                buffers[reinterpret_cast<size_t> (atomic.get())] = kernel_arguments[atomic.get()].data();
             }
 
             if (state.get()) {
@@ -528,6 +541,7 @@ namespace gpu {
 ///  @param[in]     name          Name to call the kernel.
 ///  @param[in]     inputs        Input variables of the kernel.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     atomics       Input variables for atomic operations.
 ///  @param[in]     state         Random states.
 ///  @param[in]     size          Size of the input buffer.
 ///  @param[in]     is_constant   Flags if the input is read only.
@@ -543,6 +557,7 @@ namespace gpu {
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
+                                  graph::input_nodes<T, SAFE_MATH> atomics,
                                   graph::shared_random_state<T, SAFE_MATH> state,
                                   const size_t size,
                                   const std::vector<bool> &is_constant,
@@ -581,7 +596,8 @@ namespace gpu {
                 }
             }
             for (auto &output : outputs) {
-                if (!used_args.contains(output.get())) {
+                if (!used_args.contains(output.get()) &&
+                    !graph::atomic_accumulate_1D_cast(output).get()) {
                     source_buffer << "    ";
                     jit::add_type<T> (source_buffer);
                     source_buffer << " *" << jit::to_string('o', output.get())
@@ -589,6 +605,19 @@ namespace gpu {
                                   << reinterpret_cast<size_t> (output.get())
                                   << "];" << std::endl;
                     used_args.insert(output.get());
+                }
+            }
+            for (size_t i = 0, ie = atomics.size(); i < ie; i++) {
+                if (!used_args.contains(atomics[i].get())) {
+                    source_buffer << "    ";
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " *"
+                                  << jit::to_string('v', atomics[i].get())
+                                  << " = args["
+                                  << reinterpret_cast<size_t> (atomics[i].get())
+                                  << "];"
+                                  << std::endl;
+                    used_args.insert(atomics[i].get());
                 }
             }
             if (state.get()) {
@@ -665,7 +694,8 @@ namespace gpu {
                 }
             }
             for (auto &out : outputs) {
-                if (!graph::variable_cast(out).get() &&
+                if (!graph::variable_cast(out).get()             &&
+                    !graph::atomic_accumulate_1D_cast(out).get() &&
                     !out_registers.contains(out.get())) {
                     auto a = out->compile(source_buffer, registers,
                                           thread_mem, usage);

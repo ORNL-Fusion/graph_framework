@@ -563,7 +563,9 @@ namespace graph {
 ///
 ///  @returns True if all the sub-nodes terminate in variables.
 //------------------------------------------------------------------------------
-        virtual bool is_all_variables() const = 0;
+        virtual bool is_all_variables() const {
+            return false;
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
@@ -832,15 +834,6 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return one<T, SAFE_MATH> ();
         }
-
-//------------------------------------------------------------------------------
-///  @brief Test if all the sub-nodes terminate in variables.
-///
-///  @returns True if all the sub-nodes terminate in variables.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
-        }
     };
 
 //------------------------------------------------------------------------------
@@ -1065,15 +1058,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual bool has_constant_zero() const {
             return data.has_zero();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------

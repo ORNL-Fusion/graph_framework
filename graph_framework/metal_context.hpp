@@ -12,6 +12,7 @@
 
 #include "random.hpp"
 #include "timing.hpp"
+#include "piecewise.hpp"
 
 ///  Name space for GPU backends.
 namespace gpu {
@@ -107,6 +108,7 @@ namespace gpu {
 ///  @param[in] kernel_name Name of the kernel for later reference.
 ///  @param[in] inputs      Input nodes of the kernel.
 ///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] atomics     Atomic nodes of the kernel.
 ///  @param[in] state       Random states.
 ///  @param[in] num_rays    Number of rays to trace.
 ///  @param[in] tex1d_list  List of 1D textures.
@@ -116,14 +118,20 @@ namespace gpu {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<float, SAFE_MATH> inputs,
                                                      graph::output_nodes<float, SAFE_MATH> outputs,
+                                                     graph::input_nodes<float, SAFE_MATH> atomics,
                                                      graph::shared_random_state<float, SAFE_MATH> state,
                                                      const size_t num_rays,
                                                      const jit::texture1d_list &tex1d_list,
                                                      const jit::texture2d_list &tex2d_list) {
             NSError *error;
 
-            id<MTLFunction> function = [library newFunctionWithName:[NSString stringWithCString:kernel_name.c_str()
-                                                                                       encoding:NSUTF8StringEncoding]];
+            MTLFunctionDescriptor *funcDesc = [MTLFunctionDescriptor new];
+            funcDesc.options = MTLFunctionOptionNone;
+            funcDesc.name = [NSString stringWithCString:kernel_name.c_str()
+                                               encoding:NSUTF8StringEncoding];
+
+            id<MTLFunction> function = [library newFunctionWithDescriptor:funcDesc
+                                                                    error:&error];
 
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
@@ -159,13 +167,25 @@ namespace gpu {
                 }
             }
             for (graph::shared_leaf<float, SAFE_MATH> &output : outputs) {
-                if (!kernel_arguments.contains(output.get())) {
-                    kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
+                if (!graph::atomic_accumulate_1D_cast(output).get()) {
+                    if (!kernel_arguments.contains(output.get())) {
+                        kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
+                                                                             options:MTLResourceStorageModeShared];
+                    }
+                    if (!needed_buffers.contains(output.get())) {
+                        buffers.push_back(kernel_arguments[output.get()]);
+                        needed_buffers.insert(output.get());
+                    }
+                }
+            }
+            for (graph::shared_variable<float, SAFE_MATH> &atomic : atomics) {
+                if (!kernel_arguments.contains(atomic.get())) {
+                    kernel_arguments[atomic.get()] = [device newBufferWithLength:atomic->size()*buffer_element_size
                                                                          options:MTLResourceStorageModeShared];
                 }
-                if (!needed_buffers.contains(output.get())) {
-                    buffers.push_back(kernel_arguments[output.get()]);
-                    needed_buffers.insert(output.get());
+                if (!needed_buffers.contains(atomic.get())) {
+                    buffers.push_back(kernel_arguments[atomic.get()]);
+                    needed_buffers.insert(atomic.get());
                 }
             }
             if (state.get()) {
@@ -244,8 +264,6 @@ namespace gpu {
                 std::cout << "    Number of groups        : " << thread_groups << std::endl;
                 std::cout << "    Total problem size      : " << threads_per_group*thread_groups << std::endl;
                 std::cout << "    Total parallel size     : " << total_parallel << std::endl;
-                std::cout << "    Allocated thread mem    : " << pipeline.staticThreadgroupMemoryLength << std::endl;
-                std::cout << "    Required threads        : " << pipeline.requiredThreadsPerThreadgroup.width << std::endl;
             }
 
             if (state.get()) {
@@ -322,13 +340,21 @@ namespace gpu {
 //------------------------------------------------------------------------------
         std::function<float(void)> create_max_call(graph::shared_leaf<float, SAFE_MATH> &argument,
                                                    std::function<void(void)> run) {
+            NSError *error;
+
+            MTLFunctionDescriptor *funcDesc = [MTLFunctionDescriptor new];
+            funcDesc.options = MTLFunctionOptionNone;
+            funcDesc.name = @"max_reduction";
+
+            id<MTLFunction> function = [library newFunctionWithDescriptor:funcDesc
+                                                                    error:&error];
+
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
-            compute.computeFunction = [library newFunctionWithName:@"max_reduction"];
+            compute.computeFunction = function;
             compute.maxTotalThreadsPerThreadgroup = 1024;
             compute.buffers[0].mutability = MTLMutabilityImmutable;
 
-            NSError *error;
             id<MTLComputePipelineState> max_state = [device newComputePipelineStateWithDescriptor:compute
                                                                                           options:MTLPipelineOptionNone
                                                                                        reflection:NULL
@@ -467,6 +493,8 @@ namespace gpu {
             MTLCompileOptions *options = [MTLCompileOptions new];
             options.mathMode = MTLMathModeFast;
             options.mathFloatingPointFunctions = MTLMathFloatingPointFunctionsFast;
+            options.optimizationLevel = MTLLibraryOptimizationLevelDefault;
+            options.languageVersion = MTLLanguageVersion3_2;
             return options;
         }
 
@@ -581,6 +609,7 @@ namespace gpu {
 ///  @param[in]     name          Name to call the kernel.
 ///  @param[in]     inputs        Input variables of the kernel.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     atomics       Input variables for atomic operations.
 ///  @param[in]     state         Random states.
 ///  @param[in]     size          Size of the input buffer.
 ///  @param[in]     is_constant   Flags if the input is read only.
@@ -596,7 +625,8 @@ namespace gpu {
                                   const std::string name,
                                   graph::input_nodes<float, SAFE_MATH> &inputs,
                                   graph::output_nodes<float, SAFE_MATH> &outputs,
-                                  graph::shared_random_state<float, SAFE_MATH> state,
+                                  graph::input_nodes<float, SAFE_MATH> atomics,
+                                  graph::shared_random_state<float, SAFE_MATH> &state,
                                   const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
@@ -647,13 +677,24 @@ namespace gpu {
                 }
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                if (!used_args.contains(outputs[i].get())) {
+                if (!used_args.contains(outputs[i].get()) &&
+                    !graph::atomic_accumulate_1D_cast(outputs[i]).get()) {
                     bufferMutability[name].push_back(MTLMutabilityMutable);
                     source_buffer << "    device float *"
                                   << jit::to_string('o', outputs[i].get())
                                   << " [[buffer(" << buffer_count++ << ")]],"
                                   << std::endl;
                     used_args.insert(outputs[i].get());
+                }
+            }
+            for (size_t i = 0, ie = atomics.size(); i < ie; i++) {
+                if (!used_args.contains(atomics[i].get())) {
+                    bufferMutability[name].push_back(MTLMutabilityMutable);
+                    source_buffer << "    device atomic_float *"
+                                  << jit::to_string('v', atomics[i].get())
+                                  << " [[buffer(" << buffer_count++ << ")]],"
+                                  << std::endl;
+                    used_args.insert(atomics[i].get());
                 }
             }
             if (state.get()) {
@@ -873,7 +914,8 @@ namespace gpu {
             }
 
             for (auto &out : outputs) {
-                if (!graph::variable_cast(out).get() &&
+                if (!graph::variable_cast(out).get()             &&
+                    !graph::atomic_accumulate_1D_cast(out).get() &&
                     !out_registers.contains(out.get())) {
                     auto a = out->compile(source_buffer, registers,
                                           thread_mem, usage);

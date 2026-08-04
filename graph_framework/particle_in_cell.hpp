@@ -468,38 +468,18 @@ namespace pic {
 //------------------------------------------------------------------------------
 ///  @brief Build mesh accumulation.
 ///
-///  @param[in] ion   A @ref pic::ion object.
-///  @param[in] batch The batch size.
+///  @param[in] ion A @ref pic::ion object.
 ///  @returns Expressions for mesh accumulation.
 //------------------------------------------------------------------------------
-        std::array<graph::shared_leaf<T>, 2> build_mesh_solve(const ion<T> &ion,
-                                                              const size_t batch=1) const {
-            auto next_index = index;
-            auto next_weight = y[0];
-            auto kernel_index = graph::index<T> ();
-
-            for (size_t i = 0; i < batch; i++) {
-                auto index_i = graph::index_1D(ion.indices, next_index,
-                                               static_cast<T> (1),
-                                               static_cast<T> (0));
-                auto index_w0 = graph::index_1D(ion.weights[0], next_index,
-                                                static_cast<T> (1),
-                                                static_cast<T> (0));
-                auto index_w1 = graph::index_1D(ion.weights[1], next_index,
-                                                static_cast<T> (1),
-                                                static_cast<T> (0));
-                auto index_w2 = graph::index_1D(ion.weights[2], next_index,
-                                                static_cast<T> (1),
-                                                static_cast<T> (0));
-                next_index = next_index + static_cast<T> (1);
-                next_weight = graph::if_(index_i - static_cast<T> (1) == kernel_index,
-                                         next_weight + index_w0, next_weight);
-                next_weight = graph::if_(index_i                      == kernel_index,
-                                         next_weight + index_w1, next_weight);
-                next_weight = graph::if_(index_i + static_cast<T> (1) == kernel_index,
-                                         next_weight + index_w2, next_weight);
-            }
-            return {next_index, next_weight};
+        std::array<graph::shared_leaf<T>, 3> build_mesh_solve(const ion<T> &ion) const {
+            auto weights = build_weights(ion.x);
+            auto sum_low = graph::atomic_accumulate_1D(y[0], ion.x - dx,
+                                                       dx, xmin, weights[0]);
+            auto sum = graph::atomic_accumulate_1D(y[0], ion.x,
+                                                   dx, xmin, weights[1]);
+            auto sum_high = graph::atomic_accumulate_1D(y[0], ion.x + dx,
+                                                        dx, xmin, weights[2]);
+            return {sum_low, sum, sum_high};
         }
 
 //------------------------------------------------------------------------------
@@ -539,30 +519,42 @@ namespace pic {
             data.create_variable(file, "y_2", y[2],  work.get_context());
             data.create_variable(file, "y_3", y[3],  work.get_context());
         }
-    };
 
 //------------------------------------------------------------------------------
 ///  @brief Build interpolation weights.
 ///
-///  @tparam T Base type of the calculation.
-///  @param[in] x    The x position.
-///  @param[in] mesh Mesh object.
+///  @param[in] x The x position.
 ///  @returns The interpolated mesh weights.
 //------------------------------------------------------------------------------
-    template<std::floating_point T>
-    std::array<graph::shared_leaf<T>, 3> build_weights(graph::shared_leaf<T> x,
-                                                       const mesh<T> &mesh) {
-        auto x_off = mesh.build_x_index(x) - x;
-        auto xnorm1 = static_cast<T> (1.5) + (x_off - mesh.dx)/mesh.dx;
-        auto xnorm2 = x_off/mesh.dx;
-        auto xnorm3 = static_cast<T> (1.5) - (x_off + mesh.dx)/mesh.dx;
+        std::array<graph::shared_leaf<T>, 3> build_weights(graph::shared_leaf<T> x) const {
+            auto x_off = build_x_index(x) - x;
+            auto xnorm1 = static_cast<T> (1.5) + (x_off - dx)/dx;
+            auto xnorm2 = x_off/dx;
+            auto xnorm3 = static_cast<T> (1.5) - (x_off + dx)/dx;
 
-        auto w0 = static_cast<T> (0.5)*xnorm1*xnorm1;
-        auto w1 = static_cast<T> (0.75) - xnorm2*xnorm2;
-        auto w2 = static_cast<T> (0.5)*xnorm3*xnorm3;
-        
-        return {w0, w1, w2};
-    }
+            auto w0 = static_cast<T> (0.5)*xnorm1*xnorm1;
+            auto w1 = static_cast<T> (0.75) - xnorm2*xnorm2;
+            auto w2 = static_cast<T> (0.5)*xnorm3*xnorm3;
+                
+            return {w0, w1, w2};
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Build interpolation expression.
+///
+///  @param[in] x The x position.
+///  @returns The interpolated mesh quantity.
+//------------------------------------------------------------------------------
+        graph::shared_leaf<T> build_interpolation(graph::shared_leaf<T> x) const {
+            auto weights = build_weights(x);
+
+            auto ymesh0 = graph::index_1D(y[0], x - dx, dx, xmin);
+            auto ymesh1 = graph::index_1D(y[0], x,      dx, xmin);
+            auto ymesh2 = graph::index_1D(y[0], x + dx, dx, xmin);
+
+            return weights[0]*ymesh0 + weights[1]*ymesh1 + weights[2]*ymesh2;
+        }
+    };
 
 //------------------------------------------------------------------------------
 ///  @brief Build initialization.
@@ -780,27 +772,6 @@ namespace pic {
 ///
 ///  @tparam T Base type of the calculation.
 ///
-///  @param[in] x    The x position.
-///  @param[in] mesh Mesh object.
-///  @returns The interpolated mesh quantity.
-//------------------------------------------------------------------------------
-    template<std::floating_point T>
-    graph::shared_leaf<T> build_interpolation(graph::shared_leaf<T> x,
-                                              mesh<T> &mesh) {
-        auto weights = build_weights<T> (x, mesh);
-
-        auto ymesh0 = graph::index_1D(mesh.y[0], x - mesh.dx, mesh.dx, mesh.xmin);
-        auto ymesh1 = graph::index_1D(mesh.y[0], x,           mesh.dx, mesh.xmin);
-        auto ymesh2 = graph::index_1D(mesh.y[0], x + mesh.dx, mesh.dx, mesh.xmin);
-
-        return weights[0]*ymesh0 + weights[1]*ymesh1 + weights[2]*ymesh2;
-    }
-
-//------------------------------------------------------------------------------
-///  @brief Build interpolation expression.
-///
-///  @tparam T Base type of the calculation.
-///
 ///  @param[in] x      The x position.
 ///  @param[in] ion    A @ref pic::ion object.
 ///  @param[in] mesh   A @ref pic::mesh object.
@@ -814,7 +785,7 @@ namespace pic {
                                                    const mesh<T> &mesh,
                                                    const characteristics<T> &norms,
                                                    const parameters<T> &params) {
-        auto weights = build_weights<T> (x, mesh);
+        auto weights = mesh.build_weights(x);
 
         auto ymesh0 = build_electric_efield<T, ::pic::mesh<T>::low> (x, ion, mesh, norms, params);
         auto ymesh1 = build_electric_efield<T, ::pic::mesh<T>::center> (x, ion, mesh, norms, params);

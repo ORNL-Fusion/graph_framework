@@ -79,7 +79,6 @@ namespace graph {
 ///  @param[in]     x_register_name Register for the x argument.
 ///  @param[in]     y_register_name Register for the x argument.
 ///  @param[in]     num_columns     The y index.
-///  @param
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
     void compile_2D_index(std::ostringstream &stream,
@@ -738,15 +737,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
 ///
 ///  @returns True.
@@ -1353,15 +1343,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
 ///
 ///  @returns True.
@@ -1540,9 +1521,9 @@ namespace graph {
                                    index_1D_node::to_string(var, x)) {}
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate the results of the piecewise constant.
+///  @brief Evaluate the results of the 1D index.
 ///
-///  Evaluate functions are only used by the minimization. So this node does not
+///  Evaluate functions are only used by the reduction. So this node does not
 ///  evaluate the argument. Instead this only returns the data as if it were a
 ///  constant.
 ///
@@ -1563,7 +1544,7 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief the node.
+///  @brief Compile the node.
 ///
 ///  This node first evaluates the value of the argument then chooses the
 ///  correct index of the variable.
@@ -1615,19 +1596,16 @@ namespace graph {
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             auto x_cast = index_1D_cast(x);
 
-            if (x_cast.get()) {
-                return this->left->is_match(x_cast->get_left()) &&
-                       this->is_arg_match(x);
-            }
-
-            return false;
+            return x_cast.get()                             &&
+                   this->left->is_match(x_cast->get_left()) &&
+                   this->is_arg_match(x);
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
-            std::cout << "r\\_" << reinterpret_cast<size_t> (this->left.get())
+            std::cout << "v\\_" << reinterpret_cast<size_t> (this->left.get())
                       << "\\left[i\\_"
                       << reinterpret_cast<size_t> (this->right.get())
                       << "\\right]";
@@ -1656,24 +1634,6 @@ namespace graph {
             }
 
             return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node is a constant.
-///
-///  @returns True if the node is a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -1712,9 +1672,9 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] v      Variable to index.
-///  @param[in] x      Argument.
-///  @returns A reduced piecewise_1D node.
+///  @param[in] v Variable to index.
+///  @param[in] x Argument.
+///  @returns A reduced index_1D node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> index_1D(shared_leaf<T, SAFE_MATH> v,
@@ -1749,7 +1709,7 @@ namespace graph {
 ///  @param[in] x      Argument.
 ///  @param[in] scale  Argument scale factor.
 ///  @param[in] offset Argument offset factor.
-///  @returns A reduced piecewise_1D node.
+///  @returns A reduced index_1D node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> index_1D(shared_leaf<T, SAFE_MATH> v,
@@ -2001,24 +1961,6 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node is a constant.
-///
-///  @returns True if the node is a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
 ///
 ///  @returns True.
@@ -2139,6 +2081,319 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_index_2D<T, SAFE_MATH> index_2D_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<index_2D_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
+//  1D Atomic Accumulate.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a 1D accumulated array.
+///
+///  This class is used to implement summation into an array. This uses atomic
+///  add to avoid race conditions when multiple threads try to accumulate.
+///
+///  Indicies are selected by
+///
+///    x_norm' = (x - xmin)/dx                                               (1)
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class atomic_accumulate_1D_node final : public triple_node<T, SAFE_MATH> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string with the argument.
+///
+///  @param[in] v Array to accumulate to.
+///  @param[in] i Index of the array.
+///  @param[in] x Argument to add to the existing value.
+///  @returns A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(shared_leaf<T, SAFE_MATH> v,
+                                     shared_leaf<T, SAFE_MATH> i,
+                                     shared_leaf<T, SAFE_MATH> x) {
+            return jit::format_to_string(v->get_hash()) +
+                   jit::format_to_string(i->get_hash()) +
+                   jit::format_to_string(x->get_hash());
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a 1D index.
+///
+///  @param[in] var   Array node to accumulate to.
+///  @param[in] index Index into the array.
+///  @param[in] x     Argument to add the existing array value.
+//------------------------------------------------------------------------------
+        atomic_accumulate_1D_node(shared_leaf<T, SAFE_MATH> var,
+                                  shared_leaf<T, SAFE_MATH> index,
+                                  shared_leaf<T, SAFE_MATH> x) :
+        triple_node<T, SAFE_MATH> (var, index, x,
+                                   atomic_accumulate_1D_node::to_string(var, index, x)) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of accumulate.
+///
+///  Evaluate functions are only used by the reduction. So this node does not
+///  evaluate the argument. Instead this only returns the data as if it were a
+///  constant.
+///
+///  @returns The evaluated value of the node.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            return this->left->evaluate();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  This node is effectively.
+///
+///    y_i + x                                                               (1)
+///
+///  So its effective derivative is
+///
+///    ∂y_i/∂z + ∂x/dz
+///
+///  @param[in] x The variable to take the derivative to.
+///  @return The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return constant<T, SAFE_MATH> (static_cast<T> (this->left->is_match(x))) +
+                   this->right->df(x);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  This node first evaluates the value of the argument then chooses the
+///  correct index of the variable.
+///
+///    x' = (x - xmin)/dx                                                    (1)
+///
+///  @note Since this node accumulates, the right hand side is basically.
+///
+///    y[i] = atomic_add(y[i], x)                                            (2)
+///
+///  @note The atomic add varies depending on the backend.
+///
+///  - <a href="https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf">Metal</a> atomic_fetch_add_explicit
+///  - <a href="https://docs.nvidia.com/cuda/pdf/CUDA_C_Programming_Guide.pdf">Cuda</a> atomic_add
+///  - <a href="https://en.cppreference.com/cpp/atomic/atomic_fetch_add">CPU</a> std::atomic_fetch_add_explicit
+///
+///  @note These functions only take atomic data types. This changes the type
+///        used the kernel argument.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto a = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto index = this->middle->compile(stream, registers,
+                                                   thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                               thread_mem, usage);
+
+                registers[this] = jit::to_string('v', a.get())
+                                + "["
+                                + registers[index.get()]
+                                + "]";
+                stream << "        atomic";
+                if constexpr (jit::use_cuda()) {
+                    stream << "Add(&";
+                } else if constexpr (jit::use_metal<T> ()){
+                    stream << "_fetch_add_explicit(&";
+                } else {
+                    stream << "_ref(";
+                }
+                stream << registers[this];
+                if constexpr (jit::use_cuda() ||
+                              jit::use_metal<T> ()) {
+                    stream << ", ";
+                } else {
+                    stream << ").fetch_add(";
+                }
+                stream << registers[r.get()];
+                if constexpr (jit::use_cuda()) {
+                    stream << ")";
+                } else {
+                    stream << ", memory_order_relaxed)";
+                }
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  Assumes both arguments are either set or not set.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+            auto x_cast = atomic_accumulate_1D_cast(x);
+
+            return x_cast.get()                             &&
+                   this->left->is_match(x_cast->get_left()) &&
+                   this->is_arg_match(x)                    &&
+                   this->right->is_match(x_cast->get_right());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes arguments match.
+///
+///  The argument of this node can be deferred so we need to check if the
+///  arguments are null.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto x_cast = atomic_accumulate_1D_cast(x);
+
+            return x_cast.get() &&
+                   this->middle->is_match(x_cast->get_middle());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "v\\_" << reinterpret_cast<size_t> (this->left.get())
+                      << "\\left[i\\_"
+                      << reinterpret_cast<size_t> (this->middle.get())
+                      << "\\right] + ";
+            this->right->to_latex();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"r_" << reinterpret_cast<size_t> (this->left.get())
+                       << "\", shape = hexagon, style = filled, fillcolor = black, fontcolor = white];" << std::endl;
+
+                auto l = this->left->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[l.get()] << ";" << std::endl;
+                auto m = this->middle->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[m.get()] << ";" << std::endl;
+                auto r = this->right->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[r.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define atomic_accumulate_1D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] v Variable to index.
+///  @param[in] i Index into the variable.
+///  @param[in] x Argument.
+///  @returns A reduced atomic_accumulate_1D node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> atomic_accumulate_1D(shared_leaf<T, SAFE_MATH> v,
+                                                   shared_leaf<T, SAFE_MATH> i,
+                                                   shared_leaf<T, SAFE_MATH> x) {
+        assert(argument_cast(i).get() &&
+               "atomic_accumulate_1D requires a argument node for second arg.");
+        auto temp = std::make_shared<atomic_accumulate_1D_node<T, SAFE_MATH>> (v, i, x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Define atomic_accumulate_1D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] v      Variable to index.
+///  @param[in] x      Index Argument.
+///  @param[in] scale  Argument scale factor.
+///  @param[in] offset Argument offset factor.
+///  @param[in] y      Argument.
+///  @returns A reduced atomic_accumulate_1D node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> atomic_accumulate_1D(shared_leaf<T, SAFE_MATH> v,
+                                                   shared_leaf<T, SAFE_MATH> x,
+                                                   const T scale,
+                                                   const T offset,
+                                                   shared_leaf<T, SAFE_MATH> y) {
+        assert(variable_cast(v).get() &&
+               "atomic_accumulate_1D requires a variable node for first arg.");
+        auto index = argument(x, scale, offset, variable_cast(v)->size());
+        return atomic_accumulate_1D<T, SAFE_MATH> (v, index, y);
+    }
+
+///  Convenience type alias for shared atomic accumulate 1D nodes.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using shared_atomic_accumulate_1D =
+        std::shared_ptr<atomic_accumulate_1D_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a atomic accumulate 1D node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_atomic_accumulate_1D<T, SAFE_MATH>
+    atomic_accumulate_1D_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<atomic_accumulate_1D_node<T, SAFE_MATH>> (x);
     }
 }
 

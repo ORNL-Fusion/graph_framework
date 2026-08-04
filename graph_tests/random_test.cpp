@@ -49,8 +49,9 @@ template<jit::float_scalar T, size_t N> void test_dist() {
     auto random_real = (max - min)/graph::random_scale<T> ()*random + min;
 
     workflow::manager<T> work(0);
-    work.add_item({}, {random_real}, {}, graph::random_state_cast(state),
-                  "step", N);
+    work.add_item({}, {
+        random_real
+    }, {}, {}, graph::random_state_cast(state), "step", N);
     work.compile();
     work.run();
 
@@ -147,7 +148,7 @@ template<jit::float_scalar T> void test_multi() {
     workflow::manager<T> work(0);
     work.add_item({}, {
         random1, random2
-    }, {}, graph::random_state_cast(state), "multi_random", 1);
+    }, {}, {}, graph::random_state_cast(state), "multi_random", 1);
     work.compile();
 }
 

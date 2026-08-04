@@ -20,10 +20,9 @@ void run_pic() {
 //  Sizes
     const size_t num_particles = 3000000;
     const size_t num_grid = 1000;
-    const size_t num_batch = 1;
     const size_t num_ions = 1;
     const size_t num_steps = 1;
-    const size_t num_sub_steps = 100;
+    const size_t num_sub_steps = 1;
 
     const std::vector<T> ion_masses{2*pic::m_atomic<T>};
     const std::vector<uint8_t> ion_zs{1};
@@ -84,53 +83,32 @@ void run_pic() {
         auto ion_inits = pic::build_initialization<T> (ions[i], mesh,
                                                        norms, params,
                                                        graph::random_state_cast(state));
+
+        if (i == 0) {
+            work.template add_zero_item<workflow::order::pre_run_item> ({
+                graph::variable_cast(mesh.y[0])
+            });
+        }
+
         work.template add_item<workflow::order::pre_run_item> ({
             ions[i].get_x(), ions[i].get_v_para(), ions[i].get_v_perp()
         }, {}, {
             {ion_inits[0], ions[i].get_x()},
             {ion_inits[1], ions[i].get_v_para()},
             {ion_inits[2], ions[i].get_v_perp()}
-        }, graph::random_state_cast(state),
+        }, {}, graph::random_state_cast(state),
         "pre_initization_" + ion_tag, num_particles);
 
-        auto mesh_i = mesh.build_i_index(ions[i].x);
-        auto weights = pic::build_weights<T> (ions[i].x, mesh);
+        auto mesh_solve = mesh.build_mesh_solve(ions[i]);
         work.template add_item<workflow::order::pre_run_item> ({
-            ions[i].get_x(),
-            graph::variable_cast(ions[i].weights[0]),
-            graph::variable_cast(ions[i].weights[1]),
-            graph::variable_cast(ions[i].weights[2]),
-            graph::variable_cast(ions[i].indices)
+            ions[i].get_x()
+        }, {
+            mesh_solve[0],
+            mesh_solve[1],
+            mesh_solve[2]
         }, {}, {
-            {weights[0], graph::variable_cast(ions[i].weights[0])},
-            {weights[1], graph::variable_cast(ions[i].weights[1])},
-            {weights[2], graph::variable_cast(ions[i].weights[2])},
-            {mesh_i, graph::variable_cast(ions[i].indices)}
-        }, NULL, "pre_compute_weights_" + ion_tag, num_particles);
-
-        if (i == 0) {
-            work.template add_zero_item<workflow::order::pre_run_item> ({
-                graph::variable_cast(mesh.index),
-                graph::variable_cast(mesh.y[0])
-            });
-        } else {
-            work.template add_zero_item<workflow::order::pre_run_item> ({
-                graph::variable_cast(mesh.index)
-            });
-        }
-
-        auto mesh_solve = mesh.build_mesh_solve(ions[i], num_batch);
-        work.template add_loop_item<workflow::order::pre_run_item> ({
-            graph::variable_cast(ions[i].indices),
-            graph::variable_cast(ions[i].weights[0]),
-            graph::variable_cast(ions[i].weights[1]),
-            graph::variable_cast(ions[i].weights[2]),
-            graph::variable_cast(mesh.index),
             graph::variable_cast(mesh.y[0])
-        }, {}, {
-            {mesh_solve[0], graph::variable_cast(mesh.index)},
-            {mesh_solve[1], graph::variable_cast(mesh.y[0])}
-        }, NULL, "pre_sum_weights_" + ion_tag, num_grid, num_particles/num_batch);
+        }, NULL, "pre_sum_weights_" + ion_tag, num_particles);
 
         if (i == ions.size() - 1) {
             work.template add_copy_item<workflow::order::pre_run_item> ({
@@ -177,7 +155,7 @@ void run_pic() {
             {particle_step[0], ions[i].get_x()},
             {particle_step[1], ions[i].get_v_para()},
             {particle_step[2], ions[i].get_v_perp()}
-        }, NULL, "particle_push_" + ion_tag, num_particles);
+        }, {}, NULL, "particle_push_" + ion_tag, num_particles);
 
         auto particle_reinject = pic::build_reinjection(ions[i], mesh, norms, params,
                                                         graph::random_state_cast(state));
@@ -189,21 +167,8 @@ void run_pic() {
             {particle_reinject[0], ions[i].get_x()},
             {particle_reinject[1], ions[i].get_v_para()},
             {particle_reinject[2], ions[i].get_v_perp()}
-        }, graph::random_state_cast(state),
+        }, {}, graph::random_state_cast(state),
         "particle_reinjection_" + ion_tag, num_particles);
-
-        work.add_item({
-            ions[i].get_x(),
-            graph::variable_cast(ions[i].weights[0]),
-            graph::variable_cast(ions[i].weights[1]),
-            graph::variable_cast(ions[i].weights[2]),
-            graph::variable_cast(ions[i].indices)
-        }, {}, {
-            {weights[0], graph::variable_cast(ions[i].weights[0])},
-            {weights[1], graph::variable_cast(ions[i].weights[1])},
-            {weights[2], graph::variable_cast(ions[i].weights[2])},
-            {mesh_i, graph::variable_cast(ions[i].indices)}
-        }, NULL, "compute_weights_" + ion_tag, num_particles);
 
         if (i == 0) {
             work.add_callback_item([&mesh_sync]() {
@@ -211,15 +176,8 @@ void run_pic() {
                 mesh_sync.unlock();
             });
             work.add_zero_item({
-                graph::variable_cast(mesh.index),
-                graph::variable_cast(mesh.y[0])
-            });
-        } else {
-            work.add_zero_item({
                 graph::variable_cast(mesh.index)
             });
-        }
-        if (i == 0) {
             work.add_copy_item({
                 {graph::variable_cast(mesh.y[2]), graph::variable_cast(mesh.y[3])},
                 {graph::variable_cast(mesh.y[1]), graph::variable_cast(mesh.y[2])},
@@ -227,17 +185,15 @@ void run_pic() {
             });
         }
 
-        work.add_loop_item({
-            graph::variable_cast(ions[i].indices),
-            graph::variable_cast(ions[i].weights[0]),
-            graph::variable_cast(ions[i].weights[1]),
-            graph::variable_cast(ions[i].weights[2]),
-            graph::variable_cast(mesh.index),
-            graph::variable_cast(mesh.y[0])
+        work.add_item({
+            graph::variable_cast(ions[i].x)
+        }, {
+            mesh_solve[0],
+            mesh_solve[1],
+            mesh_solve[2]
         }, {}, {
-            {mesh_solve[0], graph::variable_cast(mesh.index)},
-            {mesh_solve[1], graph::variable_cast(mesh.y[0])}
-        }, NULL, "sum_weights_" + ion_tag, num_grid, num_particles/num_batch);
+            graph::variable_cast(mesh.y[0])
+        }, NULL, "sum_weights_" + ion_tag, num_particles);
     }
     init.print();
 

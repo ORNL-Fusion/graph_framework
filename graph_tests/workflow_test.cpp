@@ -112,7 +112,7 @@ template<jit::float_scalar T, workflow::order O> void test_maps() {
     }, {}, {
         {zero, graph::variable_cast(a)},
         {zero, graph::variable_cast(b)}
-    }, NULL, "test_maps", 1);
+    }, {}, NULL, "test_maps", 1);
 
     work.compile();
 
@@ -141,7 +141,7 @@ template<jit::float_scalar T, workflow::order O> void test_loops() {
         graph::variable_cast(a)
     }, {}, {
         {a_next, graph::variable_cast(a)}
-    }, NULL, "test_maps", 1, 10);
+    }, {}, NULL, "test_maps", 1, 10);
 
     work.compile();
 
