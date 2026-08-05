@@ -21,8 +21,8 @@ void run_pic() {
     const size_t num_particles = 3000000;
     const size_t num_grid = 1000;
     const size_t num_ions = 1;
-    const size_t num_steps = 1;
-    const size_t num_sub_steps = 1;
+    const size_t num_steps = 100;
+    const size_t num_sub_steps = 2500;
 
     const std::vector<T> ion_masses{2*pic::m_atomic<T>};
     const std::vector<uint8_t> ion_zs{1};
