@@ -389,8 +389,7 @@ namespace pic {
 ///  @returns The indexed mesh X position.
 //------------------------------------------------------------------------------
         graph::shared_leaf<T> build_x_index(graph::shared_leaf<T> x) const {
-            const backend::buffer<T> buffer(xmin, dx, size());
-            return graph::piecewise_1D(buffer, x, dx, xmin);
+            return dx*graph::argument(x, dx, xmin, size()) + xmin;
         }
 
 //------------------------------------------------------------------------------
@@ -400,9 +399,7 @@ namespace pic {
 ///  @returns The indexed mesh X position.
 //------------------------------------------------------------------------------
         graph::shared_leaf<T> build_i_index(graph::shared_leaf<T> x) const {
-            const backend::buffer<T> buffer(static_cast<T> (0),
-                                            static_cast<T> (1), size());
-            return graph::piecewise_1D(buffer, x, dx, xmin);
+            return graph::argument(x, dx, xmin, size());
         }
 
 //------------------------------------------------------------------------------
