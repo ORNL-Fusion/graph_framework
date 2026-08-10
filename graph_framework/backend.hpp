@@ -648,18 +648,30 @@ if (size() > x.size()) {                                                    \
         buffer<T> if_(const buffer<T> &t,
                       const buffer<T> &f) {
             if (size() == 1) {
-                return (*this)[0] ? t : f;
+                if constexpr (std::floating_point<T>) {
+                    return (*this)[0] ? t : f;
+                } else {
+                    return (*this)[0] != static_cast<T> (0) ? t : f;
+                }
             } else {
                 if (t.size() == 1) {
                     if (f.size() == 1) {
                         for (T &d : *this) {
-                            d = d ? t[0] : f[0];
+                            if constexpr (std::floating_point<T>) {
+                                d = d ? t[0] : f[0];
+                            } else {
+                                d = d != static_cast<T> (0) ? t[0] : f[0];
+                            }
                         }
                         return *this;
                     } else {
                         assert(size() == f.size() && "Incompatable buffersize.");
                         for (size_t i = 0, ie = size(); i < ie; i++) {
-                            (*this)[i] = (*this)[i] ? t[0] : f[i];
+                            if constexpr (std::floating_point<T>) {
+                                (*this)[i] = (*this)[i] ? t[0] : f[i];
+                            } else {
+                                (*this)[i] = (*this)[i] != static_cast<T> (0) ? t[0] : f[i];
+                            }
                         }
                         return *this;
                     }
@@ -667,13 +679,21 @@ if (size() > x.size()) {                                                    \
                     assert(size() == t.size() && "Incompatable buffersize.");
                     if (f.size() == 1) {
                         for (size_t i = 0, ie = size(); i < ie; i++) {
-                            (*this)[i] = (*this)[i] ? t[i] : f[0];
+                            if constexpr (std::floating_point<T>) {
+                                (*this)[i] = (*this)[i] ? t[i] : f[0];
+                            } else {
+                                (*this)[i] = (*this)[i] != static_cast<T> (0) ? t[i] : f[0];
+                            }
                         }
                         return *this;
                     } else {
                         assert(size() == f.size() && "Incompatable buffersize.");
                         for (size_t i = 0, ie = size(); i < ie; i++) {
-                            (*this)[i] = (*this)[i] ? t[i] : f[i];
+                            if constexpr (std::floating_point<T>) {
+                                (*this)[i] = (*this)[i] ? t[i] : f[i];
+                            } else {
+                                (*this)[i] = (*this)[i] != static_cast<T> (0) ? t[i] : f[i];
+                            }
                         }
                         return *this;
                     }

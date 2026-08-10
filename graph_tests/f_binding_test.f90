@@ -180,7 +180,8 @@
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
-                              graph_null_array, graph_null_array, state,       &
+                              graph_null_array, graph_null_array,              &
+                              graph_null_array, state,                         &
                               'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
       CALL graph%add_item((/ graph_ptr(x) /), (/                               &
@@ -189,17 +190,17 @@
          graph_ptr(dydm),                                                      &
          graph_ptr(dydb),                                                      &
          graph_ptr(dydy)                                                       &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_item((/                                                   &
          graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
       /), (/                                                                   &
          graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR,                                 &
+                                   graph_null_array, C_NULL_PTR,               &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
       CALL graph%compile
@@ -373,7 +374,8 @@
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
-                              graph_null_array, graph_null_array, state,       &
+                              graph_null_array, graph_null_array,              &
+                              graph_null_array, state,                         &
                               'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
       CALL graph%add_item((/ graph_ptr(x) /), (/                               &
@@ -382,17 +384,17 @@
          graph_ptr(dydm),                                                      &
          graph_ptr(dydb),                                                      &
          graph_ptr(dydy)                                                       &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_item((/                                                   &
          graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
       /), (/                                                                   &
          graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR,                                 &
+                                   graph_null_array, C_NULL_PTR,               &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
       CALL graph%compile
@@ -570,7 +572,8 @@
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
-                              graph_null_array, graph_null_array, state,       &
+                              graph_null_array, graph_null_array,              &
+                              graph_null_array, state,                         &
                               'c_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
       CALL graph%add_item((/ graph_ptr(x) /), (/                               &
@@ -579,17 +582,17 @@
          graph_ptr(dydm),                                                      &
          graph_ptr(dydb),                                                      &
          graph_ptr(dydy)                                                       &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_item((/                                                   &
          graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
       /), (/                                                                   &
          graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR,                                 &
+                                   graph_null_array, C_NULL_PTR,               &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
       CALL graph%compile
@@ -788,7 +791,8 @@
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
-                              graph_null_array, graph_null_array, state,       &
+                              graph_null_array, graph_null_array,              &
+                              graph_null_array, state,                         &
                               'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
       CALL graph%add_item((/ graph_ptr(x) /), (/                               &
@@ -797,17 +801,17 @@
          graph_ptr(dydm),                                                      &
          graph_ptr(dydb),                                                      &
          graph_ptr(dydy)                                                       &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_item((/                                                   &
          graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
       /), (/                                                                   &
          graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR,                                 &
+                                   graph_null_array, C_NULL_PTR,               &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
       CALL graph%compile

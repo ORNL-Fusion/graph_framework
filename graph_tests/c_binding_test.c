@@ -199,21 +199,25 @@ void run_tests(const enum graph_type type,
                    NULL, 0,
                    &rand, 1,
                    NULL, NULL, 0,
+                   NULL, 0,
                    state,
                    "c_binding_pre_kernel", 1);
     graph_add_item(c_context,
                    inputs, 1,
                    outputs, 5,
                    map_inputs, map_outputs, 0,
+                   NULL, 0,
                    NULL, "c_binding", 1);
     graph_add_item(c_context,
                    inputs2, 4,
                    outputs2, 4,
                    map_inputs2, map_outputs2, 0,
+                   NULL, 0,
                    NULL, "c_binding_piecewise", 1);
     graph_add_converge_item(c_context, &z, 1,
                             &root2, 1,
                             &z, &dz, 1,
+                            NULL, 0,
                             NULL, "c_binding_converge", 1,
                             1.0E-30, 1000);
     graph_compile(c_context);

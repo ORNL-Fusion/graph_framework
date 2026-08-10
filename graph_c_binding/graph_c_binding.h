@@ -486,6 +486,152 @@ extern "C" {
                               const double y_offset);
 
 //------------------------------------------------------------------------------
+///  @brief Create an atomic accumulate 1D index.
+///
+///  @param[in] c        The graph C context.
+///  @param[in] variable The variable to index.
+///  @param[in] index    The function argument.
+///  @param[in] scale    Scale factor argument.
+///  @param[in] offset   Offset factor argument.
+///  @param[in] arg      Argument.
+///  @returns An atomic accumulate 1D node.
+//------------------------------------------------------------------------------
+    graph_node graph_atomic_accumulate_1D(STRUCT_TAG graph_c_context *c,
+                                          graph_node variable,
+                                          graph_node index,
+                                          const double scale,
+                                          const double offset,
+                                          graph_node arg);
+
+//------------------------------------------------------------------------------
+///  @brief Create an index code.
+///
+///  @param[in] c The graph C context.
+///  @returns An index node.
+//------------------------------------------------------------------------------
+    graph_node graph_index(STRUCT_TAG graph_c_context *c);
+
+//------------------------------------------------------------------------------
+///  @brief Create not node.
+///
+///  @param[in] c   The graph C context.
+///  @param[in] arg The function argument.
+///  @returns !arg
+//------------------------------------------------------------------------------
+    graph_node graph_not(STRUCT_TAG graph_c_context *c,
+                         graph_node arg);
+
+//------------------------------------------------------------------------------
+///  @brief Create an equal node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left == right
+//------------------------------------------------------------------------------
+    graph_node graph_equal(STRUCT_TAG graph_c_context *c,
+                           graph_node left,
+                           graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Create a not equal node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left != right
+//------------------------------------------------------------------------------
+    graph_node graph_not_equal(STRUCT_TAG graph_c_context *c,
+                               graph_node left,
+                               graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Create a greater than node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left > right
+//------------------------------------------------------------------------------
+    graph_node graph_greater_than(STRUCT_TAG graph_c_context *c,
+                                  graph_node left,
+                                  graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Create a less than node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left < right
+//------------------------------------------------------------------------------
+    graph_node graph_less_than(STRUCT_TAG graph_c_context *c,
+                               graph_node left,
+                               graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Create a greater than equal node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left >= right
+//------------------------------------------------------------------------------
+    graph_node graph_greater_than_equal(STRUCT_TAG graph_c_context *c,
+                                        graph_node left,
+                                        graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Create a less than node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left <= right
+//------------------------------------------------------------------------------
+    graph_node graph_less_than_equal(STRUCT_TAG graph_c_context *c,
+                                     graph_node left,
+                                     graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Create an and node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left && right
+//------------------------------------------------------------------------------
+    graph_node graph_and(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Create an or node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left || right
+//------------------------------------------------------------------------------
+    graph_node graph_or(STRUCT_TAG graph_c_context *c,
+                        graph_node left,
+                        graph_node right);
+
+//------------------------------------------------------------------------------
+///  @brief Create a if node.
+///
+///  @param[in] c         The graph C context.
+///  @param[in] condition The logical condition.
+///  @param[in] t         The true case.
+///  @param[in] f         The false case.
+///  @returns condiiton ? t : f
+//------------------------------------------------------------------------------
+    graph_node graph_if(STRUCT_TAG graph_c_context *c,
+                        graph_node condition,
+                        graph_node t,
+                        graph_node f);
+
+//------------------------------------------------------------------------------
 ///  @brief Create 2D piecewise node with complex arguments.
 ///
 ///  @param[in] c The graph C context.
@@ -513,6 +659,8 @@ extern "C" {
 ///  @param[in] map_inputs   Array of map input nodes.
 ///  @param[in] map_outputs  Array of map output nodes.
 ///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
 ///  @param[in] random_state Optional random state, can be NULL if not used.
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
@@ -522,6 +670,7 @@ extern "C" {
                             graph_node *outputs, size_t num_outputs,
                             graph_node *map_inputs,
                             graph_node *map_outputs, size_t num_maps,
+                            graph_node *atomics, size_t num_atomics,
                             graph_node random_state,
                             const char *name,
                             const size_t size);
@@ -537,6 +686,8 @@ extern "C" {
 ///  @param[in] map_inputs   Array of map input nodes.
 ///  @param[in] map_outputs  Array of map output nodes.
 ///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
 ///  @param[in] random_state Optional random state, can be NULL if not used.
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
@@ -546,9 +697,153 @@ extern "C" {
                         graph_node *outputs, size_t num_outputs,
                         graph_node *map_inputs,
                         graph_node *map_outputs, size_t num_maps,
+                        graph_node *atomics, size_t num_atomics,
                         graph_node random_state,
                         const char *name,
                         const size_t size);
+
+//------------------------------------------------------------------------------
+///  @brief Add post workflow item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+//------------------------------------------------------------------------------
+    void graph_add_post_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *inputs, size_t num_inputs,
+                             graph_node *outputs, size_t num_outputs,
+                             graph_node *map_inputs,
+                             graph_node *map_outputs, size_t num_maps,
+                             graph_node *atomics, size_t num_atomics,
+                             graph_node random_state,
+                             const char *name,
+                             const size_t size);
+
+//------------------------------------------------------------------------------
+///  @brief Add pre loop workflow item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] iterations   Number of loop iterations.
+//------------------------------------------------------------------------------
+    void graph_add_pre_loop_item(STRUCT_TAG graph_c_context *c,
+                                 graph_node *inputs, size_t num_inputs,
+                                 graph_node *outputs, size_t num_outputs,
+                                 graph_node *map_inputs,
+                                 graph_node *map_outputs, size_t num_maps,
+                                 graph_node *atomics, size_t num_atomics,
+                                 graph_node random_state,
+                                 const char *name,
+                                 const size_t size,
+                                 const size_t iterations);
+
+//------------------------------------------------------------------------------
+///  @brief Add workflow loop item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] iterations   Number of loop iterations.
+//------------------------------------------------------------------------------
+    void graph_add_loop_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *inputs, size_t num_inputs,
+                             graph_node *outputs, size_t num_outputs,
+                             graph_node *map_inputs,
+                             graph_node *map_outputs, size_t num_maps,
+                             graph_node *atomics, size_t num_atomics,
+                             graph_node random_state,
+                             const char *name,
+                             const size_t size,
+                             const size_t iterations);
+
+//------------------------------------------------------------------------------
+///  @brief Add post workflow item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+//------------------------------------------------------------------------------
+    void graph_add_post_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *inputs, size_t num_inputs,
+                             graph_node *outputs, size_t num_outputs,
+                             graph_node *map_inputs,
+                             graph_node *map_outputs, size_t num_maps,
+                             graph_node *atomics, size_t num_atomics,
+                             graph_node random_state,
+                             const char *name,
+                             const size_t size);
+
+//------------------------------------------------------------------------------
+///  @brief Add a pre converge item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] tol          Tolerance to converge the function to.
+///  @param[in] max_iter     Maximum number of iterations before giving up.
+//------------------------------------------------------------------------------
+    void graph_add_pre_converge_item(STRUCT_TAG graph_c_context *c,
+                                     graph_node *inputs, size_t num_inputs,
+                                     graph_node *outputs, size_t num_outputs,
+                                     graph_node *map_inputs,
+                                     graph_node *map_outputs, size_t num_maps,
+                                     graph_node *atomics, size_t num_atomics,
+                                     graph_node random_state,
+                                     const char *name,
+                                     const size_t size,
+                                     const double tol,
+                                     const size_t max_iter);
 
 //------------------------------------------------------------------------------
 ///  @brief Add a converge item.
@@ -561,6 +856,8 @@ extern "C" {
 ///  @param[in] map_inputs   Array of map input nodes.
 ///  @param[in] map_outputs  Array of map output nodes.
 ///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
 ///  @param[in] random_state Optional random state, can be NULL if not used.
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
@@ -572,11 +869,109 @@ extern "C" {
                                  graph_node *outputs, size_t num_outputs,
                                  graph_node *map_inputs,
                                  graph_node *map_outputs, size_t num_maps,
+                                 graph_node *atomics, size_t num_atomics,
                                  graph_node random_state,
                                  const char *name,
                                  const size_t size,
                                  const double tol,
                                  const size_t max_iter);
+
+//------------------------------------------------------------------------------
+///  @brief Add a post converge item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] tol          Tolerance to converge the function to.
+///  @param[in] max_iter     Maximum number of iterations before giving up.
+//------------------------------------------------------------------------------
+    void graph_add_post_converge_item(STRUCT_TAG graph_c_context *c,
+                                      graph_node *inputs, size_t num_inputs,
+                                      graph_node *outputs, size_t num_outputs,
+                                      graph_node *map_inputs,
+                                      graph_node *map_outputs, size_t num_maps,
+                                      graph_node *atomics, size_t num_atomics,
+                                      graph_node random_state,
+                                      const char *name,
+                                      const size_t size,
+                                      const double tol,
+                                      const size_t max_iter);
+
+//------------------------------------------------------------------------------
+///  @brief Add a pre zero item.
+///
+///  @param[in] c          The graph C context.
+///  @param[in] inputs     Array of input nodes.
+///  @param[in] num_inputs Number of inputs.
+//------------------------------------------------------------------------------
+    void graph_add_pre_zero_item(STRUCT_TAG graph_c_context *c,
+                                 graph_node *inputs, size_t num_inputs);
+
+//------------------------------------------------------------------------------
+///  @brief Add a copy item.
+///
+///  @param[in] c          The graph C context.
+///  @param[in] inputs     Array of input nodes.
+///  @param[in] num_inputs Number of inputs.
+//------------------------------------------------------------------------------
+    void graph_add_zero_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *inputs, size_t num_inputs);
+
+//------------------------------------------------------------------------------
+///  @brief Add a post zero item.
+///
+///  @param[in] c          The graph C context.
+///  @param[in] inputs     Array of input nodes.
+///  @param[in] num_inputs Number of inputs.
+//------------------------------------------------------------------------------
+    void graph_add_post_zero_item(STRUCT_TAG graph_c_context *c,
+                                  graph_node *inputs, size_t num_inputs);
+
+//------------------------------------------------------------------------------
+///  @brief Add a pre copy item.
+///
+///  @param[in] c           The graph C context.
+///  @param[in] map_inputs  Array of map input nodes.
+///  @param[in] map_outputs Array of map output nodes.
+///  @param[in] num_maps    Number of maps.
+//------------------------------------------------------------------------------
+    void graph_add_pre_copy_item(STRUCT_TAG graph_c_context *c,
+                                 graph_node *map_inputs,
+                                 graph_node *map_outputs, size_t num_maps);
+
+//------------------------------------------------------------------------------
+///  @brief Add a copy item.
+///
+///  @param[in] c           The graph C context.
+///  @param[in] map_inputs  Array of map input nodes.
+///  @param[in] map_outputs Array of map output nodes.
+///  @param[in] num_maps    Number of maps.
+//------------------------------------------------------------------------------
+    void graph_add_copy_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *map_inputs,
+                             graph_node *map_outputs, size_t num_maps);
+
+//------------------------------------------------------------------------------
+///  @brief Add a post copy item.
+///
+///  @param[in] c           The graph C context.
+///  @param[in] map_inputs  Array of map input nodes.
+///  @param[in] map_outputs Array of map output nodes.
+///  @param[in] num_maps    Number of maps.
+//------------------------------------------------------------------------------
+    void graph_add_post_copy_item(STRUCT_TAG graph_c_context *c,
+                                  graph_node *map_inputs,
+                                  graph_node *map_outputs, size_t num_maps);
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the work items.
@@ -598,6 +993,13 @@ extern "C" {
 ///  @param[in] c The graph C context.
 //------------------------------------------------------------------------------
     void graph_run(STRUCT_TAG graph_c_context *c);
+
+//------------------------------------------------------------------------------
+///  @brief Run post work items.
+///
+///  @param[in] c The graph C context.
+//------------------------------------------------------------------------------
+    void graph_post_run(STRUCT_TAG graph_c_context *c);
 
 //------------------------------------------------------------------------------
 ///  @brief Wait for work items to complete.

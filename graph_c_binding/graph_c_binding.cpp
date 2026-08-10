@@ -1886,6 +1886,702 @@ extern "C" {
         }
     }
 
+//------------------------------------------------------------------------------
+///  @brief Create an atomic accumulate 1D index.
+///
+///  @param[in] c        The graph C context.
+///  @param[in] variable The variable to index.
+///  @param[in] index    The function argument.
+///  @param[in] scale    Scale factor argument.
+///  @param[in] offset   Offset factor argument.
+///  @param[in] arg      Argument.
+///  @returns An atomic accumulate 1D node.
+//----------------------------------------------
+//------------------------------------------------------------------------------
+    graph_node graph_atomic_accumulate_1D(STRUCT_TAG graph_c_context *c,
+                                          graph_node variable,
+                                          graph_node index,
+                                          const double scale,
+                                          const double offset,
+                                          graph_node arg) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = graph::atomic_accumulate_1D(d->nodes[variable],
+                                                            d->nodes[index],
+                                                            static_cast<float> (scale),
+                                                            static_cast<float> (offset),
+                                                            d->nodes[arg]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = graph::atomic_accumulate_1D(d->nodes[variable],
+                                                            d->nodes[index],
+                                                            static_cast<float> (scale),
+                                                            static_cast<float> (offset),
+                                                            d->nodes[arg]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = graph::atomic_accumulate_1D(d->nodes[variable],
+                                                            d->nodes[index],
+                                                            static_cast<double> (scale),
+                                                            static_cast<double> (offset),
+                                                            d->nodes[arg]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = graph::atomic_accumulate_1D(d->nodes[variable],
+                                                            d->nodes[index],
+                                                            static_cast<double> (scale),
+                                                            static_cast<double> (offset),
+                                                            d->nodes[arg]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    auto temp = graph::atomic_accumulate_1D(d->nodes[variable],
+                                                            d->nodes[index],
+                                                            static_cast<std::complex<float>> (scale),
+                                                            static_cast<std::complex<float>> (offset),
+                                                            d->nodes[arg]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    auto temp = graph::atomic_accumulate_1D(d->nodes[variable],
+                                                            d->nodes[index],
+                                                            static_cast<std::complex<float>> (scale),
+                                                            static_cast<std::complex<float>> (offset),
+                                                            d->nodes[arg]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    auto temp = graph::atomic_accumulate_1D(d->nodes[variable],
+                                                            d->nodes[index],
+                                                            static_cast<std::complex<double>> (scale),
+                                                            static_cast<std::complex<double>> (offset),
+                                                            d->nodes[arg]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    auto temp = graph::atomic_accumulate_1D(d->nodes[variable],
+                                                            d->nodes[index],
+                                                            static_cast<std::complex<double>> (scale),
+                                                            static_cast<std::complex<double>> (offset),
+                                                            d->nodes[arg]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create an index code.
+///
+///  @param[in] c The graph C context.
+///  @returns An index node.
+//------------------------------------------------------------------------------
+    graph_node graph_index(STRUCT_TAG graph_c_context *c) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = graph::index<float, true> ();
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = graph::index<float> ();
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = graph::index<double, true> ();
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = graph::index<double> ();
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    auto temp = graph::index<std::complex<float>, true> ();
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    auto temp = graph::index<std::complex<float>> ();
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    auto temp = graph::index<std::complex<double>, true> ();
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    auto temp = graph::index<std::complex<double>> ();
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create not node.
+///
+///  @param[in] c   The graph C context.
+///  @param[in] arg The function argument.
+///  @returns !arg
+//------------------------------------------------------------------------------
+    graph_node graph_not(STRUCT_TAG graph_c_context *c,
+                         graph_node arg) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = !d->nodes[arg];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = !d->nodes[arg];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = !d->nodes[arg];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = !d->nodes[arg];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+            case COMPLEX_DOUBLE:
+                std::cerr << "Operation not supported for complex types." << std::endl;
+                exit(1);
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create an equal node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left == right
+//------------------------------------------------------------------------------
+    graph_node graph_equal(STRUCT_TAG graph_c_context *c,
+                           graph_node left,
+                           graph_node right) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = d->nodes[left] == d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = d->nodes[left] == d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = d->nodes[left] == d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = d->nodes[left] == d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    auto temp = d->nodes[left] == d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    auto temp = d->nodes[left] == d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    auto temp = d->nodes[left] == d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    auto temp = d->nodes[left] == d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create a not equal node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left != right
+//------------------------------------------------------------------------------
+    graph_node graph_not_equal(STRUCT_TAG graph_c_context *c,
+                               graph_node left,
+                               graph_node right) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = d->nodes[left] != d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = d->nodes[left] != d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = d->nodes[left] != d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = d->nodes[left] != d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    auto temp = d->nodes[left] != d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    auto temp = d->nodes[left] != d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    auto temp = d->nodes[left] != d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    auto temp = d->nodes[left] != d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create a greater than node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left > right
+//------------------------------------------------------------------------------
+    graph_node graph_greater_than(STRUCT_TAG graph_c_context *c,
+                                  graph_node left,
+                                  graph_node right) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = d->nodes[left] > d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = d->nodes[left] > d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = d->nodes[left] > d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = d->nodes[left] > d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+            case COMPLEX_DOUBLE:
+                std::cerr << "Operation not supported for complex types." << std::endl;
+                exit(1);
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create a less than node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left < right
+//------------------------------------------------------------------------------
+    graph_node graph_less_than(STRUCT_TAG graph_c_context *c,
+                               graph_node left,
+                               graph_node right) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = d->nodes[left] < d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = d->nodes[left] < d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = d->nodes[left] < d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = d->nodes[left] < d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+            case COMPLEX_DOUBLE:
+                std::cerr << "Operation not supported for complex types." << std::endl;
+                exit(1);
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create a greater than equal node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left >= right
+//------------------------------------------------------------------------------
+    graph_node graph_greater_than_equal(STRUCT_TAG graph_c_context *c,
+                                        graph_node left,
+                                        graph_node right) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = d->nodes[left] >= d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = d->nodes[left] >= d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = d->nodes[left] >= d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = d->nodes[left] >= d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+            case COMPLEX_DOUBLE:
+                std::cerr << "Operation not supported for complex types." << std::endl;
+                exit(1);
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create a less than node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left <= right
+//------------------------------------------------------------------------------
+    graph_node graph_less_than_equal(STRUCT_TAG graph_c_context *c,
+                                     graph_node left,
+                                     graph_node right) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = d->nodes[left] <= d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = d->nodes[left] <= d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = d->nodes[left] <= d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = d->nodes[left] <= d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+            case COMPLEX_DOUBLE:
+                std::cerr << "Operation not supported for complex types." << std::endl;
+                exit(1);
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create an and node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left && right
+//------------------------------------------------------------------------------
+    graph_node graph_and(STRUCT_TAG graph_c_context *c,
+                         graph_node left,
+                         graph_node right) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = d->nodes[left] && d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = d->nodes[left] && d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = d->nodes[left] && d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = d->nodes[left] && d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+            case COMPLEX_DOUBLE:
+                std::cerr << "Operation not supported for complex types." << std::endl;
+                exit(1);
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create an or node.
+///
+///  @param[in] c     The graph C context.
+///  @param[in] left  The left operand.
+///  @param[in] right The right operand.
+///  @returns left || right
+//------------------------------------------------------------------------------
+    graph_node graph_or(STRUCT_TAG graph_c_context *c,
+                        graph_node left,
+                        graph_node right) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = d->nodes[left] || d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = d->nodes[left] || d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = d->nodes[left] || d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = d->nodes[left] || d->nodes[right];
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+            case COMPLEX_DOUBLE:
+                std::cerr << "Operation not supported for complex types." << std::endl;
+                exit(1);
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create a if node.
+///
+///  @param[in] c         The graph C context.
+///  @param[in] condition The logical condition.
+///  @param[in] t         The true case.
+///  @param[in] f         The false case.
+///  @returns condiiton ? t : f
+//------------------------------------------------------------------------------
+    graph_node graph_if(STRUCT_TAG graph_c_context *c,
+                        graph_node condition,
+                        graph_node t,
+                        graph_node f) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    auto temp = graph::if_(d->nodes[condition],
+                                           d->nodes[t],
+                                           d->nodes[f]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    auto temp = graph::if_(d->nodes[condition],
+                                           d->nodes[t],
+                                           d->nodes[f]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    auto temp = graph::if_(d->nodes[condition],
+                                           d->nodes[t],
+                                           d->nodes[f]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    auto temp = graph::if_(d->nodes[condition],
+                                           d->nodes[t],
+                                           d->nodes[f]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    auto temp = graph::if_(d->nodes[condition],
+                                           d->nodes[t],
+                                           d->nodes[f]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    auto temp = graph::if_(d->nodes[condition],
+                                           d->nodes[t],
+                                           d->nodes[f]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    auto temp = graph::if_(d->nodes[condition],
+                                           d->nodes[t],
+                                           d->nodes[f]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    auto temp = graph::if_(d->nodes[condition],
+                                           d->nodes[t],
+                                           d->nodes[f]);
+                    d->nodes[temp.get()] = temp;
+                    return temp.get();
+                }
+        }
+    }
+
 //******************************************************************************
 //  JIT
 //******************************************************************************
@@ -1992,6 +2688,8 @@ extern "C" {
 ///  @param[in] map_inputs   Array of map input nodes.
 ///  @param[in] map_outputs  Array of map output nodes.
 ///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
 ///  @param[in] random_state Optional random state, can be NULL if not used.
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
@@ -2001,6 +2699,7 @@ extern "C" {
                             graph_node *outputs, size_t num_outputs,
                             graph_node *map_inputs,
                             graph_node *map_outputs, size_t num_maps,
+                            graph_node *atomics, size_t num_atomics,
                             graph_node random_state,
                             const char *name,
                             const size_t size) {
@@ -2032,16 +2731,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
@@ -2069,16 +2778,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size);
                     }
                 }
                 break;
@@ -2110,16 +2829,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
@@ -2147,16 +2876,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size);
                     }
                 }
                 break;
@@ -2188,16 +2927,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
@@ -2225,16 +2974,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size);
                     }
                 }
                 break;
@@ -2266,16 +3025,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
@@ -2303,16 +3072,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, rand, name, size);
+                            d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, NULL, name, size);
+                        d->work.add_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size);
                     }
                 }
                 break;
@@ -2330,6 +3109,8 @@ extern "C" {
 ///  @param[in] map_inputs   Array of map input nodes.
 ///  @param[in] map_outputs  Array of map output nodes.
 ///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
 ///  @param[in] random_state Optional random state, can be NULL if not used.
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
@@ -2339,6 +3120,7 @@ extern "C" {
                         graph_node *outputs, size_t num_outputs,
                         graph_node *map_inputs,
                         graph_node *map_outputs, size_t num_maps,
+                        graph_node *atomics, size_t num_atomics,
                         graph_node random_state,
                         const char *name,
                         const size_t size) {
@@ -2370,16 +3152,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item(in, out, map, rand, name, size);
+                            d->work.add_item(in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item(in, out, map, NULL, name, size);
+                        d->work.add_item(in, out, map, atom, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
@@ -2407,16 +3199,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item(in, out, map, rand, name, size);
+                            d->work.add_item(in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item(in, out, map, NULL, name, size);
+                        d->work.add_item(in, out, map, atom, NULL, name, size);
                     }
                 }
                 break;
@@ -2448,16 +3250,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item(in, out, map, rand, name, size);
+                            d->work.add_item(in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item(in, out, map, NULL, name, size);
+                        d->work.add_item(in, out, map, atom, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
@@ -2485,16 +3297,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item(in, out, map, rand, name, size);
+                            d->work.add_item(in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item(in, out, map, NULL, name, size);
+                        d->work.add_item(in, out, map, atom, NULL, name, size);
                     }
                 }
                 break;
@@ -2526,16 +3348,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item(in, out, map, rand, name, size);
+                            d->work.add_item(in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item(in, out, map, NULL, name, size);
+                        d->work.add_item(in, out, map, atom, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
@@ -2563,16 +3395,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item(in, out, map, rand, name, size);
+                            d->work.add_item(in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item(in, out, map, NULL, name, size);
+                        d->work.add_item(in, out, map, atom, NULL, name, size);
                     }
                 }
                 break;
@@ -2604,16 +3446,26 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item(in, out, map, rand, name, size);
+                            d->work.add_item(in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item(in, out, map, NULL, name, size);
+                        d->work.add_item(in, out, map, atom, NULL, name, size);
                     }
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
@@ -2641,16 +3493,2157 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_item(in, out, map, rand, name, size);
+                            d->work.add_item(in, out, map, atom, rand, name, size);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_item(in, out, map, NULL, name, size);
+                        d->work.add_item(in, out, map, atom, NULL, name, size);
+                    }
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add post workflow item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+//------------------------------------------------------------------------------
+    void graph_add_post_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *inputs, size_t num_inputs,
+                             graph_node *outputs, size_t num_outputs,
+                             graph_node *map_inputs,
+                             graph_node *map_outputs, size_t num_maps,
+                             graph_node *atomics, size_t num_atomics,
+                             graph_node random_state,
+                             const char *name,
+                             const size_t size) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add pre workflow loop item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] iterations   Number of loop iterations.
+//------------------------------------------------------------------------------
+    void graph_add_pre_loop_item(STRUCT_TAG graph_c_context *c,
+                                 graph_node *inputs, size_t num_inputs,
+                                 graph_node *outputs, size_t num_outputs,
+                                 graph_node *map_inputs,
+                                 graph_node *map_outputs, size_t num_maps,
+                                 graph_node *atomics, size_t num_atomics,
+                                 graph_node random_state,
+                                 const char *name,
+                                 const size_t size,
+                                 const size_t iterations) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add workflow loopitem.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] iterations   Number of loop iterations.
+//------------------------------------------------------------------------------
+    void graph_add_loop_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *inputs, size_t num_inputs,
+                             graph_node *outputs, size_t num_outputs,
+                             graph_node *map_inputs,
+                             graph_node *map_outputs, size_t num_maps,
+                             graph_node *atomics, size_t num_atomics,
+                             graph_node random_state,
+                             const char *name,
+                             const size_t size,
+                             const size_t iterations) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item(in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item(in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item(in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item(in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item(in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item(in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item(in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item(in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item(in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item(in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item(in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item(in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item(in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item(in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item(in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item(in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add post workflow loopitem.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] iterations   Number of loop iterations.
+//------------------------------------------------------------------------------
+    void graph_add_post_loop_item(STRUCT_TAG graph_c_context *c,
+                                  graph_node *inputs, size_t num_inputs,
+                                  graph_node *outputs, size_t num_outputs,
+                                  graph_node *map_inputs,
+                                  graph_node *map_outputs, size_t num_maps,
+                                  graph_node *atomics, size_t num_atomics,
+                                  graph_node random_state,
+                                  const char *name,
+                                  const size_t size,
+                                  const size_t iterations) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, rand, name, size, iterations);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_loop_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name, size, iterations);
+                    }
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add a pre converge item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] tol          Tolerance to converge the function to.
+///  @param[in] max_iter     Maximum number of iterations before giving up.
+//------------------------------------------------------------------------------
+    void graph_add_pre_converge_item(STRUCT_TAG graph_c_context *c,
+                                     graph_node *inputs, size_t num_inputs,
+                                     graph_node *outputs, size_t num_outputs,
+                                     graph_node *map_inputs,
+                                     graph_node *map_outputs, size_t num_maps,
+                                     graph_node *atomics, size_t num_atomics,
+                                     graph_node random_state,
+                                     const char *name,
+                                     const size_t size,
+                                     const double tol,
+                                     const size_t max_iter) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name,
+                                                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name,
+                                                                                  size, tol, max_iter);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name,
+                                                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name,
+                                                                                  size, tol, max_iter);
+                    }
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name,
+                                                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name,
+                                                                                  size, tol, max_iter);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name,
+                                                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name,
+                                                                                  size, tol, max_iter);
+                    }
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name,
+                                                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name,
+                                                                                  size, tol, max_iter);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name,
+                                                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name,
+                                                                                  size, tol, max_iter);
+                    }
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name,
+                                                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name,
+                                                                                  size, tol, max_iter);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, rand, name,
+                                                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::pre_run_item> (in, out, map, atom, NULL, name,
+                                                                                  size, tol, max_iter);
                     }
                 }
                 break;
@@ -2668,6 +5661,8 @@ extern "C" {
 ///  @param[in] map_inputs   Array of map input nodes.
 ///  @param[in] map_outputs  Array of map output nodes.
 ///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
 ///  @param[in] random_state Optional random state, can be NULL if not used.
 ///  @param[in] name         Name for the kernel.
 ///  @param[in] size         Number of elements to operate on.
@@ -2679,6 +5674,7 @@ extern "C" {
                                  graph_node *outputs, size_t num_outputs,
                                  graph_node *map_inputs,
                                  graph_node *map_outputs, size_t num_maps,
+                                 graph_node *atomics, size_t num_atomics,
                                  graph_node random_state,
                                  const char *name,
                                  const size_t size,
@@ -2712,17 +5708,27 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_converge_item(in, out, map, rand, name,
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
                                                       size, tol, max_iter);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_converge_item(in, out, map, NULL, name,
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
                                                   size, tol, max_iter);
                     }
                 } else {
@@ -2751,17 +5757,27 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_converge_item(in, out, map, rand, name,
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
                                                       size, tol, max_iter);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_converge_item(in, out, map, NULL, name,
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
                                                   size, tol, max_iter);
                     }
                 }
@@ -2794,17 +5810,27 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_converge_item(in, out, map, rand, name,
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
                                                       size, tol, max_iter);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_converge_item(in, out, map, NULL, name,
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
                                                   size, tol, max_iter);
                     }
                 } else {
@@ -2833,17 +5859,27 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_converge_item(in, out, map, rand, name,
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
                                                       size, tol, max_iter);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_converge_item(in, out, map, NULL, name,
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
                                                   size, tol, max_iter);
                     }
                 }
@@ -2876,17 +5912,27 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_converge_item(in, out, map, rand, name,
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
                                                       size, tol, max_iter);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_converge_item(in, out, map, NULL, name,
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
                                                   size, tol, max_iter);
                     }
                 } else {
@@ -2915,17 +5961,27 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_converge_item(in, out, map, rand, name,
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
                                                       size, tol, max_iter);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_converge_item(in, out, map, NULL, name,
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
                                                   size, tol, max_iter);
                     }
                 }
@@ -2958,17 +6014,27 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_converge_item(in, out, map, rand, name,
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
                                                       size, tol, max_iter);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_converge_item(in, out, map, NULL, name,
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
                                                   size, tol, max_iter);
                     }
                 } else {
@@ -2997,19 +6063,1340 @@ extern "C" {
                             exit(1);
                         }
                     }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
                     if (random_state) {
                         auto rand = graph::random_state_cast(d->nodes[random_state]);
                         if (rand.get()) {
-                            d->work.add_converge_item(in, out, map, rand, name,
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
                                                       size, tol, max_iter);
                         } else {
                             std::cerr << "Invalid random state." << std::endl;
                             exit(1);
                         }
                     } else {
-                        d->work.add_converge_item(in, out, map, NULL, name,
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
                                                   size, tol, max_iter);
                     }
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add a post converge item.
+///
+///  @param[in] c            The graph C context.
+///  @param[in] inputs       Array of input nodes.
+///  @param[in] num_inputs   Number of inputs.
+///  @param[in] outputs      Array of output nodes.
+///  @param[in] num_outputs  Number of outputs.
+///  @param[in] map_inputs   Array of map input nodes.
+///  @param[in] map_outputs  Array of map output nodes.
+///  @param[in] num_maps     Number of maps.
+///  @param[in] atomics      Array of atomic nodes.
+///  @param[in] num_atomics  Number of atomics.
+///  @param[in] random_state Optional random state, can be NULL if not used.
+///  @param[in] name         Name for the kernel.
+///  @param[in] size         Number of elements to operate on.
+///  @param[in] tol          Tolerance to converge the function to.
+///  @param[in] max_iter     Maximum number of iterations before giving up.
+//------------------------------------------------------------------------------
+    void graph_add_post_converge_item(STRUCT_TAG graph_c_context *c,
+                                      graph_node *inputs, size_t num_inputs,
+                                      graph_node *outputs, size_t num_outputs,
+                                      graph_node *map_inputs,
+                                      graph_node *map_outputs, size_t num_maps,
+                                      graph_node *atomics, size_t num_atomics,
+                                      graph_node random_state,
+                                      const char *name,
+                                      const size_t size,
+                                      const double tol,
+                                      const size_t max_iter) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, rand, name,
+                                                                                       size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name,
+                                                                                   size, tol, max_iter);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<float> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<float> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, rand, name,
+                                                                                       size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name,
+                                                                                   size, tol, max_iter);
+                    }
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, rand, name,
+                                                                                       size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name,
+                                                                                   size, tol, max_iter);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<double> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<double> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item(in, out, map, atom, rand, name,
+                                                      size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item(in, out, map, atom, NULL, name,
+                                                  size, tol, max_iter);
+                    }
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, rand, name,
+                                                                                       size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name,
+                                                                                   size, tol, max_iter);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<float>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<float>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, rand, name,
+                                                                                       size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name,
+                                                                                   size, tol, max_iter);
+                    }
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>, true> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>, true> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, rand, name,
+                                                                                       size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name,
+                                                                                   size, tol, max_iter);
+                    }
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::output_nodes<std::complex<double>> out;
+                    for (size_t i = 0; i < num_outputs; i++) {
+                        out.push_back(d->nodes[outputs[i]]);
+                    }
+                    graph::map_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        if (temp.get()) {
+                            map.push_back({d->nodes[map_outputs[i]], temp});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    graph::input_nodes<std::complex<double>> atom;
+                    for (size_t i = 0; i < num_atomics; i++) {
+                        auto temp = graph::variable_cast(d->nodes[atomics[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    if (random_state) {
+                        auto rand = graph::random_state_cast(d->nodes[random_state]);
+                        if (rand.get()) {
+                            d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, rand, name,
+                                                                                       size, tol, max_iter);
+                        } else {
+                            std::cerr << "Invalid random state." << std::endl;
+                            exit(1);
+                        }
+                    } else {
+                        d->work.add_converge_item<workflow::order::post_run_item> (in, out, map, atom, NULL, name,
+                                                                                   size, tol, max_iter);
+                    }
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add a pre zero item.
+///
+///  @param[in] c          The graph C context.
+///  @param[in] inputs     Array of input nodes.
+///  @param[in] num_inputs Number of inputs.
+//------------------------------------------------------------------------------
+    void graph_add_pre_zero_item(STRUCT_TAG graph_c_context *c,
+                                 graph_node *inputs, size_t num_inputs) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    
+                    d->work.add_zero_item<workflow::order::pre_run_item> (in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::pre_run_item> (in);
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::pre_run_item> (in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::pre_run_item> (in);
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::pre_run_item> (in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::pre_run_item> (in);
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::pre_run_item> (in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Preitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::pre_run_item> (in);
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add a copy item.
+///
+///  @param[in] c          The graph C context.
+///  @param[in] inputs     Array of input nodes.
+///  @param[in] num_inputs Number of inputs.
+//------------------------------------------------------------------------------
+    void graph_add_zero_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *inputs, size_t num_inputs) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    
+                    d->work.add_zero_item(in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item(in);
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item(in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item(in);
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item(in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item(in);
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item(in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Work input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item(in);
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add a post zero item.
+///
+///  @param[in] c          The graph C context.
+///  @param[in] inputs     Array of input nodes.
+///  @param[in] num_inputs Number of inputs.
+//------------------------------------------------------------------------------
+    void graph_add_post_zero_item(STRUCT_TAG graph_c_context *c,
+                                  graph_node *inputs, size_t num_inputs) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::input_nodes<float, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+                    
+                    d->work.add_zero_item<workflow::order::post_run_item> (in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::input_nodes<float> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::post_run_item> (in);
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::input_nodes<double, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::post_run_item> (in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::input_nodes<double> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::post_run_item> (in);
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::input_nodes<std::complex<float>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::post_run_item> (in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::input_nodes<std::complex<float>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::post_run_item> (in);
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::input_nodes<std::complex<double>, true> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::post_run_item> (in);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::input_nodes<std::complex<double>> in;
+                    for (size_t i = 0; i < num_inputs; i++) {
+                        auto temp = graph::variable_cast(d->nodes[inputs[i]]);
+                        if (temp.get()) {
+                            in.push_back(temp);
+                        } else {
+                            std::cerr << "Postitem input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_zero_item<workflow::order::post_run_item> (in);
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add a pre copy item.
+///
+///  @param[in] c           The graph C context.
+///  @param[in] map_inputs  Array of map input nodes.
+///  @param[in] map_outputs Array of map output nodes.
+///  @param[in] num_maps    Number of maps.
+//------------------------------------------------------------------------------
+    void graph_add_pre_copy_item(STRUCT_TAG graph_c_context *c,
+                                 graph_node *map_inputs,
+                                 graph_node *map_outputs, size_t num_maps) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::copy_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::pre_run_item> (map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::copy_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::pre_run_item> (map);
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::copy_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::pre_run_item> (map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::copy_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::pre_run_item> (map);
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::copy_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::pre_run_item> (map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::copy_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::pre_run_item> (map);
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::copy_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::pre_run_item> (map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::copy_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Preitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::pre_run_item> (map);
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add a copy item.
+///
+///  @param[in] c           The graph C context.
+///  @param[in] map_inputs  Array of map input nodes.
+///  @param[in] map_outputs Array of map output nodes.
+///  @param[in] num_maps    Number of maps.
+//------------------------------------------------------------------------------
+    void graph_add_copy_item(STRUCT_TAG graph_c_context *c,
+                             graph_node *map_inputs,
+                             graph_node *map_outputs, size_t num_maps) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::copy_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item(map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::copy_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item(map);
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::copy_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item(map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::copy_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item(map);
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::copy_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item(map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::copy_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item(map);
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::copy_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item(map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::copy_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Work map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item(map);
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Add a post copy item.
+///
+///  @param[in] c           The graph C context.
+///  @param[in] map_inputs  Array of map input nodes.
+///  @param[in] map_outputs Array of map output nodes.
+///  @param[in] num_maps    Number of maps.
+//------------------------------------------------------------------------------
+    void graph_add_post_copy_item(STRUCT_TAG graph_c_context *c,
+                                  graph_node *map_inputs,
+                                  graph_node *map_outputs, size_t num_maps) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    graph::copy_nodes<float, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::post_run_item> (map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    graph::copy_nodes<float> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::post_run_item> (map);
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    graph::copy_nodes<double, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::post_run_item> (map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    graph::copy_nodes<double> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::post_run_item> (map);
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    graph::copy_nodes<std::complex<float>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::post_run_item> (map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    graph::copy_nodes<std::complex<float>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::post_run_item> (map);
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    graph::copy_nodes<std::complex<double>, true> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::post_run_item> (map);
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    graph::copy_nodes<std::complex<double>> map;
+                    for (size_t i = 0; i < num_maps; i++) {
+                        auto temp_in = graph::variable_cast(d->nodes[map_inputs[i]]);
+                        auto temp_out = graph::variable_cast(d->nodes[map_outputs[i]]);
+                        if (temp_in.get() && temp_out.get()) {
+                            map.push_back({temp_out, temp_in});
+                        } else {
+                            std::cerr << "Postitem map input " << i << " is not a variable." << std::endl;
+                            exit(1);
+                        }
+                    }
+
+                    d->work.add_copy_item<workflow::order::post_run_item> (map);
                 }
                 break;
         }
@@ -3157,6 +7544,55 @@ extern "C" {
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
                     d->work.run();
+                }
+                break;
+        }
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Run post work items.
+///
+///  @param[in] c The graph C context.
+//------------------------------------------------------------------------------
+    void graph_post_run(graph_c_context *c) {
+        switch (c->type) {
+            case FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
+                    d->work.run<workflow::order::post_run_item> ();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
+                    d->work.run<workflow::order::post_run_item> ();
+                }
+                break;
+
+            case DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
+                    d->work.run<workflow::order::post_run_item> ();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
+                    d->work.run<workflow::order::post_run_item> ();
+                }
+                break;
+
+            case COMPLEX_FLOAT:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
+                    d->work.run<workflow::order::post_run_item> ();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
+                    d->work.run<workflow::order::post_run_item> ();
+                }
+                break;
+
+            case COMPLEX_DOUBLE:
+                if (c->safe_math) {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
+                    d->work.run<workflow::order::post_run_item> ();
+                } else {
+                    auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
+                    d->work.run<workflow::order::post_run_item> ();
                 }
                 break;
         }
