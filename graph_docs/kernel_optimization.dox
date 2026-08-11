@@ -57,7 +57,7 @@ void field_solve_example() {
                         + graph::exp(static_cast<T> (-1)*arg*arg/static_cast<T> (10));
     }
 
-    auto state = graph::random_state<T> (jit::context<T>::random_state_size, 0);
+    auto state = graph::random_state<T> (jit::context<T>::max_random_state_size(num_particles), 0);
     auto random = graph::random<T> (graph::random_state_cast(state));
     const T max = 1.0;
     const T min = -1.0;

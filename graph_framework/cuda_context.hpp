@@ -531,7 +531,7 @@ namespace gpu {
                                              CU_DEVICE_ATTRIBUTE_WARP_SIZE,
                                              device), "cuDeviceGetAttribute");
 
-            unsigned int total_parallel = state.get() ? random_state_size : num_rays;
+            unsigned int total_parallel = state.get() ? state->size() : num_rays;
             unsigned int threads_per_group = total_parallel < 1024 ? warp_size : value;
             unsigned int thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 

@@ -40,7 +40,7 @@ namespace gpu {
         std::map<std::string, std::vector<MTLMutability>> bufferMutability;
 
     public:
-///  Random state size multiplyer.
+///  Random state size multiplier.
         constexpr static size_t random_state_scale = 1000;
 ///  Size of random state needed.
         constexpr static size_t random_state_size = 1024*random_state_scale;
@@ -250,7 +250,7 @@ namespace gpu {
             NSRange range = NSMakeRange(0, buffers.size());
             NSRange tex_range = NSMakeRange(0, textures.size());
 
-            NSUInteger total_parallel = state.get() ? random_state_size : num_rays;
+            NSUInteger total_parallel = state.get() ? state->size() : num_rays;
             NSUInteger thread_width = pipeline.threadExecutionWidth;
             NSUInteger threads_per_group = total_parallel < pipeline.maxTotalThreadsPerThreadgroup ?
                                                             thread_width                           :

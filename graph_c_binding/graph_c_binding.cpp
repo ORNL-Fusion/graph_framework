@@ -1259,22 +1259,24 @@ extern "C" {
 ///  @brief Construct a random state node.
 ///
 ///  @param[in] c    The graph C context.
+///  @param[in] size The number of randoms needed.
 ///  @param[in] seed Intial random seed.
 ///  @returns A random state node.
 //------------------------------------------------------------------------------
     graph_node graph_random_state(STRUCT_TAG graph_c_context *c,
+                                  const size_t size,
                                   const uint32_t seed) {
         switch (c->type) {
             case FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<float, true> *> (c);
-                    auto temp = graph::random_state<float, true> (jit::context<float, true>::random_state_size,
+                    auto temp = graph::random_state<float, true> (jit::context<float, true>::max_random_state_size(size),
                                                                   seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<float> *> (c);
-                    auto temp = graph::random_state<float> (jit::context<float>::random_state_size,
+                    auto temp = graph::random_state<float> (jit::context<float>::max_random_state_size(size),
                                                             seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
@@ -1283,13 +1285,13 @@ extern "C" {
             case DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<double, true> *> (c);
-                    auto temp = graph::random_state<double, true> (jit::context<double, true>::random_state_size,
+                    auto temp = graph::random_state<double, true> (jit::context<double, true>::max_random_state_size(size),
                                                                    seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<double> *> (c);
-                    auto temp = graph::random_state<double> (jit::context<double>::random_state_size,
+                    auto temp = graph::random_state<double> (jit::context<double>::max_random_state_size(size),
                                                              seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
@@ -1298,13 +1300,13 @@ extern "C" {
             case COMPLEX_FLOAT:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>, true> *> (c);
-                    auto temp = graph::random_state<std::complex<float>, true> (jit::context<std::complex<float>, true>::random_state_size,
+                    auto temp = graph::random_state<std::complex<float>, true> (jit::context<std::complex<float>, true>::max_random_state_size(size),
                                                                                 seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<float>> *> (c);
-                    auto temp = graph::random_state<std::complex<float>> (jit::context<std::complex<float>>::random_state_size, seed);
+                    auto temp = graph::random_state<std::complex<float>> (jit::context<std::complex<float>>::max_random_state_size(size), seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
@@ -1312,13 +1314,13 @@ extern "C" {
             case COMPLEX_DOUBLE:
                 if (c->safe_math) {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>, true> *> (c);
-                    auto temp = graph::random_state<std::complex<double>, true> (jit::context<std::complex<double>, true>::random_state_size,
+                    auto temp = graph::random_state<std::complex<double>, true> (jit::context<std::complex<double>, true>::max_random_state_size(size),
                                                                                  seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 } else {
                     auto d = reinterpret_cast<graph_c_context_type<std::complex<double>> *> (c);
-                    auto temp = graph::random_state<std::complex<double>> (jit::context<std::complex<double>>::random_state_size, seed);
+                    auto temp = graph::random_state<std::complex<double>> (jit::context<std::complex<double>>::max_random_state_size(size), seed);
                     d->nodes[temp.get()] = temp;
                     return temp.get();
                 }
@@ -2735,7 +2737,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -2782,7 +2784,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -2833,7 +2835,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -2880,7 +2882,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -2931,7 +2933,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -2978,7 +2980,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3029,7 +3031,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3076,7 +3078,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3156,7 +3158,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3203,7 +3205,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3254,7 +3256,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3301,7 +3303,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3352,7 +3354,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3399,7 +3401,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3450,7 +3452,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3497,7 +3499,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3577,7 +3579,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3624,7 +3626,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3675,7 +3677,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3722,7 +3724,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3773,7 +3775,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3820,7 +3822,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3871,7 +3873,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -3918,7 +3920,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4000,7 +4002,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4047,7 +4049,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4098,7 +4100,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4145,7 +4147,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4196,7 +4198,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4243,7 +4245,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4294,7 +4296,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4341,7 +4343,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4423,7 +4425,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4470,7 +4472,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4521,7 +4523,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4568,7 +4570,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4619,7 +4621,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4666,7 +4668,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4717,7 +4719,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4764,7 +4766,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4846,7 +4848,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4893,7 +4895,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4944,7 +4946,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -4991,7 +4993,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5042,7 +5044,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5089,7 +5091,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5140,7 +5142,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5187,7 +5189,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5271,7 +5273,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5320,7 +5322,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5373,7 +5375,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5422,7 +5424,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5475,7 +5477,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5524,7 +5526,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5577,7 +5579,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5626,7 +5628,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Preitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5712,7 +5714,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5761,7 +5763,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5814,7 +5816,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5863,7 +5865,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5916,7 +5918,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -5965,7 +5967,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6018,7 +6020,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6067,7 +6069,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Work atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6153,7 +6155,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6202,7 +6204,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6255,7 +6257,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6304,7 +6306,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6357,7 +6359,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6406,7 +6408,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6459,7 +6461,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);
@@ -6508,7 +6510,7 @@ extern "C" {
                     for (size_t i = 0; i < num_atomics; i++) {
                         auto temp = graph::variable_cast(d->nodes[atomics[i]]);
                         if (temp.get()) {
-                            in.push_back(temp);
+                            atom.push_back(temp);
                         } else {
                             std::cerr << "Postitem atomic " << i << " is not a variable." << std::endl;
                             exit(1);

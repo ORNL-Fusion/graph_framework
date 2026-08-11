@@ -728,6 +728,19 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @note Even though @ref graph::leaf_node define a default of false. The
+///        @ref graph::straight_node subclass overrides it so we need to
+///        explicitly define these nodes as constants.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Test the constant node has a zero.
 ///
 ///  @returns True the node has a zero constant value.
@@ -1331,6 +1344,19 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual bool is_constant() const {
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @note Even though @ref graph::leaf_node define a default of false. The
+///        @ref graph::branch_node subclass overrides it so we need to
+///        explicitly define these nodes as constants.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return false;
         }
 
 //------------------------------------------------------------------------------

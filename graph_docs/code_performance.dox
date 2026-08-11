@@ -112,7 +112,7 @@ for (size_t i = 0, ie = threads.size(); i < ie; i++) {
             {v_next->get_x(), graph::variable_cast(vx)},
             {v_next->get_y(), graph::variable_cast(vy)},
             {v_next->get_z(), graph::variable_cast(vz)}
-        }, NULL, "Lorentz_kernel", local_size);
+        }, {}, NULL, "Lorentz_kernel", local_size);
         work.compile();
             
         time_steps.start_time(thread_number);

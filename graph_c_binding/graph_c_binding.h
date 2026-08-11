@@ -385,10 +385,12 @@ extern "C" {
 ///  @brief Construct a random state node.
 ///
 ///  @param[in] c    The graph C context.
+///  @param[in] size The number of randoms needed.
 ///  @param[in] seed Initial random seed.
 ///  @returns A random state node.
 //------------------------------------------------------------------------------
     graph_node graph_random_state(STRUCT_TAG graph_c_context *c,
+                                  const size_t size,
                                   const uint32_t seed);
 
 //------------------------------------------------------------------------------

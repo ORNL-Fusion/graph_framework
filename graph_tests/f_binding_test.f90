@@ -143,7 +143,7 @@
       CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      state = graph%random_state(0)
+      state = graph%random_state(1_C_LONG, 0)
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
@@ -337,7 +337,7 @@
       CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      state = graph%random_state(0)
+      state = graph%random_state(1_C_LONG, 0)
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
@@ -533,7 +533,7 @@
       CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      state = graph%random_state(0)
+      state = graph%random_state(1_C_LONG, 0)
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
@@ -740,7 +740,7 @@
       CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      state = graph%random_state(0)
+      state = graph%random_state(1_C_LONG, 0)
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)

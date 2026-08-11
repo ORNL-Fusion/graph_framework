@@ -568,14 +568,16 @@
 !>  @brief Construct a random state node.
 !>
 !>  @param[in] c    The graph C context.
+!>  @param[in] size Number of randoms needed.
 !>  @param[in] seed Initial random seed.
 !>  @returns A random state node.
 !-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_random_state(c, seed)                      &
+         TYPE(C_PTR) FUNCTION graph_random_state(c, size, seed)                &
          BIND(C, NAME='graph_random_state')
          USE, INTRINSIC :: ISO_C_BINDING
          IMPLICIT NONE
          TYPE(C_PTR), VALUE        :: c
+         INTEGER(C_LONG), value    :: size
          INTEGER(C_INT32_T), VALUE :: seed
          END FUNCTION
 
@@ -1603,20 +1605,23 @@
 !>  @brief Get random size.
 !>
 !>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     size Number of random numbers needed.
 !>  @param[in]     seed Initial random seed.
 !>  @returns The random size.
 !-------------------------------------------------------------------------------
-      FUNCTION graph_context_random_state(this, seed)
+      FUNCTION graph_context_random_state(this, size, seed)
 
       IMPLICIT NONE
 
 !  Declare Arguments
       TYPE(C_PTR)                         :: graph_context_random_state
       CLASS(graph_context), INTENT(INOUT) :: this
+      INTEGER(C_LONG), INTENT(IN)         :: size
       INTEGER(C_INT32_T), INTENT(IN)      :: seed
 
 !  Start of executable.
-      graph_context_random_state = graph_random_state(this%c_context, seed)
+      graph_context_random_state = graph_random_state(this%c_context,          &
+                                                      size, seed)
 
       END FUNCTION
 

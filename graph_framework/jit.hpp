@@ -80,6 +80,16 @@ namespace jit {
         constexpr static size_t random_state_size = gpu_context_type::random_state_size;
 
 //------------------------------------------------------------------------------
+///  @brief Get the number of random states needed.
+///
+///  @param[in] size Number of random numbers needed.
+///  @returns The maximum number of random states needed.
+//------------------------------------------------------------------------------
+        static size_t max_random_state_size(const size_t size) {
+            return std::min(size, random_state_size);
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Get the maximum number of concurrent instances.
 ///
 ///  @returns The maximum available concurrency.

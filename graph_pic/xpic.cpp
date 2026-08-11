@@ -63,7 +63,7 @@ void run_pic() {
 
     pic::mesh<T> mesh(lmin, lmax, num_grid, norms);
     
-    auto state = graph::random_state<T> (jit::context<T>::random_state_size, 0);
+    auto state = graph::random_state<T> (jit::context<T>::max_random_state_size(num_particles), 0);
 
     workflow::manager<T> work(0);
 
