@@ -38,6 +38,7 @@
 
 #include "random.hpp"
 #include "piecewise.hpp"
+#include "timing.hpp"
 
 #ifndef NDEBUG
 //------------------------------------------------------------------------------
@@ -362,7 +363,7 @@ namespace gpu {
         std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> &inputs) {
             std::vector<T *> buffers;
             std::vector<size_t> sizes;
-    
+
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
                     std::vector<T> arg(input->size());
@@ -396,7 +397,7 @@ namespace gpu {
             std::vector<T *> sources;
             std::vector<T *> destinations;
             std::vector<size_t> sizes;
-    
+
             for (auto &[out, in] : setters) {
                 if (!kernel_arguments.contains(in.get())) {
                     std::vector<T> arg(in->size());
@@ -531,7 +532,8 @@ namespace gpu {
             } else {
                 source_buffer << "#include <cmath>" << std::endl;
             }
-            source_buffer << "using namespace std;" << std::endl;
+            source_buffer << "#include <atomic>" << std::endl
+                          << "using namespace std;" << std::endl;
         }
 
 //------------------------------------------------------------------------------

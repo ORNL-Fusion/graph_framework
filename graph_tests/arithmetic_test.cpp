@@ -97,7 +97,7 @@ template<jit::float_scalar T> void test_add() {
            "Expected to reduce to a constant one.");
     assert(done_plus_var->evaluate()[0] == static_cast<T> (1.0) &&
            "Expected value of one.");
-    
+
 //  Test common factors.
     auto var_a = graph::variable<T> (1, "");
     auto var_b = graph::variable<T> (1, "");
@@ -188,7 +188,7 @@ template<jit::float_scalar T> void test_add() {
     auto constant_factor = three*variable + (one + one)*var_b;
     assert(graph::multiply_cast(constant_factor).get() &&
            "Expected multiply node.");
-    
+
 //  Test is_match
     auto match1 = graph::one<T> () + variable;
     auto match2 = graph::one<T> () + variable;
@@ -231,7 +231,7 @@ template<jit::float_scalar T> void test_add() {
            "Expected var_c in the second slot.");
     assert(graph::add_cast(add_fma_cast->get_right()) &&
            "Expected add_node in the third slot.");
-    
+
 //  (a/(b*c) + d/(e*c)) -> (a/b + d/e)/c
     auto multiply_divide_factor = var_a/(var_b*var_c) + var_d/(var_e*var_c);
     auto multiply_divide_factor_cast = divide_cast(multiply_divide_factor);
