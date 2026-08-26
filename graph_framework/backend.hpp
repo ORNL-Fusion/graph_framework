@@ -632,9 +632,14 @@ if (size() > x.size()) {                                                    \
 ///
 ///  @returns The negation of the buffer.
 //------------------------------------------------------------------------------
-        buffer<T> operator!() requires(std::floating_point<T>) {
+        buffer<T> operator!() {
             for (T &d : *this) {
-                d = !d;
+                if constexpr (jit::complex_scalar<T>) {
+                    assert(d.imag() == 0.0 && "Imaginary part not zero.");
+                    d = static_cast<T> (!d.real());
+                } else {
+                    d = !d;
+                }
             }
             return *this;
         }
@@ -700,6 +705,30 @@ if (size() > x.size()) {                                                    \
                 }
             }
         }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a logical is operator.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define logic_is(op) \
+for (T &d : *this) { \
+    d = std::op(d);  \
+}
+
+//------------------------------------------------------------------------------
+///  @brief isinf query.
+//------------------------------------------------------------------------------
+    void isinf() {
+        logic_is(isinf)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief isnan query.
+//------------------------------------------------------------------------------
+    void isnan() {
+        logic_is(isnan)
+    }
 
 ///  Type def to retrieve the backend T type.
         typedef T base;

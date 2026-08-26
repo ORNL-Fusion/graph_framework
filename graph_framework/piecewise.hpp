@@ -2231,23 +2231,22 @@ namespace graph {
                                                thread_mem, usage);
 
                 registers[this] = jit::to_string('v', a.get())
-                                + "["
-                                + registers[index.get()]
-                                + "]";
+                                + " + "
+                                + registers[index.get()];
                 stream << "        atomic";
                 if constexpr (jit::use_cuda()) {
-                    stream << "Add(&";
+                    stream << "Add(";
                 } else if constexpr (jit::use_metal<T> ()){
-                    stream << "_fetch_add_explicit(&";
+                    stream << "_fetch_add_explicit(";
                 } else {
-                    stream << "_ref(";
+                    stream << "_ref(*(";
                 }
                 stream << registers[this];
                 if constexpr (jit::use_cuda() ||
                               jit::use_metal<T> ()) {
                     stream << ", ";
                 } else {
-                    stream << ").fetch_add(";
+                    stream << ")).fetch_add(";
                 }
                 stream << registers[r.get()];
                 if constexpr (jit::use_cuda()) {

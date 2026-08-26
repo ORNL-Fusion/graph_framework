@@ -24,18 +24,16 @@ namespace graph {
     }
 
 //******************************************************************************
-//  Not node.
+//  IsInf node.
 //******************************************************************************
 //------------------------------------------------------------------------------
-///  @brief Not node.
-///
-///  Note use templates here to defer this so it can use the operator functions.
+///  @brief isinf node.
 ///
 ///  @tparam T         Base type of the operands.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<std::floating_point T, bool SAFE_MATH=false>
-    class not_node final : public no_derivative<T, SAFE_MATH, straight_node<T, SAFE_MATH>> {
+    class isinf_node final : public no_derivative<T, SAFE_MATH, straight_node<T, SAFE_MATH>> {
     private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
@@ -44,36 +42,38 @@ namespace graph {
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(leaf_node<T, SAFE_MATH> *arg) {
-            return "!" + jit::format_to_string(reinterpret_cast<size_t> (arg));
+            return "isinf" +
+                   jit::format_to_string(reinterpret_cast<size_t> (arg));
         }
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct an not node.
+///  @brief Construct an isinf node.
 ///
 ///  @param[in] arg Node argument.
 //------------------------------------------------------------------------------
-        not_node(shared_leaf<T, SAFE_MATH> arg) :
+        isinf_node(shared_leaf<T, SAFE_MATH> arg) :
         no_derivative<T, SAFE_MATH,
                       straight_node<T, SAFE_MATH>> (arg,
-                                                    not_node::to_string(arg.get())) {}
+                                                    isinf_node::to_string(arg.get())) {}
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate the results of equal.
+///  @brief Evaluate the results of isinf.
 ///
-///  result = !a
+///  result = isinf(a)
 ///
 ///  @returns The value of !a.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
             backend::buffer<T> arg = this->arg->evaluate();
-            return !arg;
+            arg.isinf();
+            return arg;
         }
 
 //------------------------------------------------------------------------------
-///  @brief Reduce an equal node.
+///  @brief Reduce an isinf node.
 ///
-///  @returns A reduced equal node.
+///  @returns A reduced isinf node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
 //  Constant reductions.
@@ -81,26 +81,6 @@ namespace graph {
 
             if (arg.get()) {
                 return constant<T, SAFE_MATH> (this->evaluate());
-            }
-
-            auto equalc = equal_cast(this->arg);
-            if (equalc.get()) {
-                return equalc->get_left() != equalc->get_right();
-            }
-
-            auto nequalc = not_equal_cast(this->arg);
-            if (nequalc.get()) {
-                return nequalc->get_left() == nequalc->get_right();
-            }
-
-            auto ltc = less_than_cast(this->arg);
-            if (ltc.get()) {
-                return ltc->get_left() >= ltc->get_right();
-            }
-
-            auto gtc = greater_than_cast(this->arg);
-            if (gtc.get()) {
-                return gtc->get_left() <= gtc->get_right();
             }
 
             return this->shared_from_this();
@@ -125,8 +105,396 @@ namespace graph {
 
                 registers[this] = jit::to_string('l', this);
                 stream << "        const bool ";
-                stream << registers[this] << " = !"
-                       << registers[arg.get()];
+                stream << registers[this] << " = isinf("
+                       << registers[arg.get()] << ")";
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "isinf\\left(";
+            this->arg->to_latex();
+            std::cout << "\\right)";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"!\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto arg = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[arg.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Build not node from the argument leaves.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] arg Arguement
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> isinf(shared_leaf<T, SAFE_MATH> arg) {
+        auto temp = std::make_shared<isinf_node<T, SAFE_MATH>> (arg)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+///  Convenience type alias for shared isinf nodes.
+    template<std::floating_point T, bool SAFE_MATH=false>
+    using shared_isinf = std::shared_ptr<isinf_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a isinf node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_isinf<T, SAFE_MATH> isinf_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<isinf_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
+//  IsNaN node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief isnan node.
+///
+///  @tparam T         Base type of the operands.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    class isnan_node final : public no_derivative<T, SAFE_MATH, straight_node<T, SAFE_MATH>> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @param[in] arg Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T, SAFE_MATH> *arg) {
+            return "isnan" +
+                   jit::format_to_string(reinterpret_cast<size_t> (arg));
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct an isnan node.
+///
+///  @param[in] arg Node argument.
+//------------------------------------------------------------------------------
+        isnan_node(shared_leaf<T, SAFE_MATH> arg) :
+        no_derivative<T, SAFE_MATH,
+                      straight_node<T, SAFE_MATH>> (arg,
+                                                    isnan_node::to_string(arg.get())) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of isnan.
+///
+///  result = isnan(a)
+///
+///  @returns The value of !a.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> arg = this->arg->evaluate();
+            arg.isnan();
+            return arg;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce an isnan node.
+///
+///  @returns A reduced isnan node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
+//  Constant reductions.
+            auto arg = constant_cast(this->arg);
+
+            if (arg.get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto arg = this->arg->compile(stream, registers,
+                                              thread_mem, usage);
+
+                registers[this] = jit::to_string('l', this);
+                stream << "        const bool ";
+                stream << registers[this] << " = isnan("
+                       << registers[arg.get()] << ")";
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "isnan\\left(";
+            this->arg->to_latex();
+            std::cout << "\\right)";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"!\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto arg = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[arg.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Build isnan node from the argument leaves.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] arg Arguement
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> isnan(shared_leaf<T, SAFE_MATH> arg) {
+        auto temp = std::make_shared<isnan_node<T, SAFE_MATH>> (arg)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+///  Convenience type alias for shared isnan nodes.
+    template<std::floating_point T, bool SAFE_MATH=false>
+    using shared_isnan = std::shared_ptr<isnan_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to an isnan node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_isnan<T, SAFE_MATH> isnan_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<isnan_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
+//  Not node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Not node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
+///
+///  @tparam T         Base type of the operands.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class not_node final : public no_derivative<T, SAFE_MATH, straight_node<T, SAFE_MATH>> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @param[in] arg Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T, SAFE_MATH> *arg) {
+            return "!" + jit::format_to_string(reinterpret_cast<size_t> (arg));
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct an not node.
+///
+///  @param[in] arg Node argument.
+//------------------------------------------------------------------------------
+        not_node(shared_leaf<T, SAFE_MATH> arg) :
+        no_derivative<T, SAFE_MATH,
+                      straight_node<T, SAFE_MATH>> (arg,
+                                                    not_node::to_string(arg.get())) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of not.
+///
+///  result = !a
+///
+///  @returns The value of !a.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> arg = this->arg->evaluate();
+            return !arg;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce a not node.
+///
+///  @returns A reduced equal node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
+//  Constant reductions.
+            auto arg = constant_cast(this->arg);
+
+            if (arg.get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+//  !(a == b) -> a != b
+            auto equalc = equal_cast(this->arg);
+            if (equalc.get()) {
+                return equalc->get_left() != equalc->get_right();
+            }
+
+//  !(a != b) -> a == b
+            auto nequalc = not_equal_cast(this->arg);
+            if (nequalc.get()) {
+                return nequalc->get_left() == nequalc->get_right();
+            }
+
+            if constexpr (!jit::complex_scalar<T>) {
+//  !(a < b) -> a >= b
+                auto ltc = less_than_cast(this->arg);
+                if (ltc.get()) {
+                    return ltc->get_left() >= ltc->get_right();
+                }
+                
+//  !(a <= b) -> a > b
+                auto lec = less_than_equal_cast(this->arg);
+                if (lec.get()) {
+                    return lec->get_left() > lec->get_right();
+                }
+                
+//  !(a > b) -> a <= b
+                auto gtc = greater_than_cast(this->arg);
+                if (gtc.get()) {
+                    return gtc->get_left() <= gtc->get_right();
+                }
+                
+//  !(a >= b) -> a < b
+                auto gec = greater_than_equal_cast(this->arg);
+                if (gec.get()) {
+                    return gec->get_left() < gec->get_right();
+                }
+            }
+
+//  !!a -> a
+            auto n = not_cast(this->arg);
+            if (n.get()) {
+                return n->get_arg();
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto arg = this->arg->compile(stream, registers,
+                                              thread_mem, usage);
+
+                registers[this] = jit::to_string('l', this);
+                stream << "        const bool "
+                       << registers[this] << " = !";
+                if constexpr (jit::complex_scalar<T>) {
+                    stream << "real(";
+                }
+                stream << registers[arg.get()];
+                if constexpr (jit::complex_scalar<T>) {
+                    stream << ")";
+                }
                 this->endline(stream, usage);
             }
 
@@ -180,7 +548,7 @@ namespace graph {
 ///
 ///  @param[in] arg Arguement
 //------------------------------------------------------------------------------
-    template<std::floating_point T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> not_(shared_leaf<T, SAFE_MATH> arg) {
         auto temp = std::make_shared<not_node<T, SAFE_MATH>> (arg)->reduce();
 //  Test for hash collisions.
@@ -202,7 +570,7 @@ namespace graph {
     }
 
 //------------------------------------------------------------------------------
-///  @brief Build equal node from two leaves.
+///  @brief Build not node from two leaves.
 ///
 ///  Note use templates here to defer this so it can be used in the above
 ///  classes.
@@ -212,17 +580,17 @@ namespace graph {
 ///
 ///  @param[in] arg Arguement
 //------------------------------------------------------------------------------
-    template<std::floating_point T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> operator!(shared_leaf<T, SAFE_MATH> arg) {
         return not_<T, SAFE_MATH> (arg);
     }
 
-///  Convenience type alias for shared equal nodes.
-    template<std::floating_point T, bool SAFE_MATH=false>
+///  Convenience type alias for shared not nodes.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_not = std::shared_ptr<not_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
-///  @brief Cast to a equal node.
+///  @brief Cast to a not node.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
@@ -230,7 +598,7 @@ namespace graph {
 ///  @param[in] x Leaf node to attempt cast.
 ///  @returns An attempted dynamic cast.
 //------------------------------------------------------------------------------
-    template<std::floating_point T, bool SAFE_MATH=false>
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_not<T, SAFE_MATH> not_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<not_node<T, SAFE_MATH>> (x);
     }
@@ -2456,6 +2824,12 @@ namespace graph {
 //  If(c, a, a) -> a
             if (this->middle->is_match(this->right)) {
                 return this->middle;
+            }
+
+//  If(!a, b, c) -> If(a, c, b)
+            auto n = not_cast(this->left);
+            if (n.get()) {
+                return if_(n->get_arg(), this->right, this->middle);
             }
 
             return this->shared_from_this();

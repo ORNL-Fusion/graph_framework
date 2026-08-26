@@ -277,10 +277,6 @@ namespace gpu {
                     for (NSUInteger i = 0, ie = thread_groups*threads_per_group; i < num_rays; i += ie) {
                         id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
-                        for (size_t j = 0, je = buffers.size() - 1; j < je; j++) {
-                            offsets[j] = i*sizeof(float);
-                        }
-
                         [encoder setComputePipelineState:pipeline];
                         [encoder setBuffers:buffers.data()
                                     offsets:offsets.data()

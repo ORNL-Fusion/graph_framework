@@ -175,13 +175,13 @@ void run_pic() {
                 mesh_sync.lock();
                 mesh_sync.unlock();
             });
-            work.add_zero_item({
-                graph::variable_cast(mesh.index)
-            });
             work.add_copy_item({
                 {graph::variable_cast(mesh.y[2]), graph::variable_cast(mesh.y[3])},
                 {graph::variable_cast(mesh.y[1]), graph::variable_cast(mesh.y[2])},
                 {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])}
+            });
+            work.add_zero_item({
+                graph::variable_cast(mesh.y[0])
             });
         }
 

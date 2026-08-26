@@ -915,7 +915,9 @@ namespace graph {
 //------------------------------------------------------------------------------
         constant_node(const backend::buffer<T> &d) :
         leaf_node<T, SAFE_MATH> (constant_node::to_string(d.at(0)), 1, false), data(d) {
-            assert(d.is_normal() && "Denormal encountered");
+            if constexpr (SAFE_MATH) {
+                assert(d.is_normal() && "Denormal encountered");
+            }
             assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
 

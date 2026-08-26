@@ -180,11 +180,8 @@ namespace pic {
         graph::shared_leaf<T> v_perp;
 ///  Mesh Weights
         std::array<graph::shared_leaf<T>, 3> weights;
-///  Mesh index
-        graph::shared_leaf<T> indices;
 ///  Number of real particles
         const T num_real;
-///
 
 //------------------------------------------------------------------------------
 ///  @brief Construct an ion object.
@@ -209,7 +206,7 @@ namespace pic {
             graph::variable<T> (num_ions, "w_{0}"),
             graph::variable<T> (num_ions, "w_{1}"),
             graph::variable<T> (num_ions, "w_{2}")
-        }), indices(graph::variable<T> (num_ions, "m_{i}")) {}
+        }) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Get x case as variable.
@@ -346,8 +343,6 @@ namespace pic {
         const T xmax;
 ///  Dx
         const T dx;
-///  Particle index.
-        graph::shared_leaf<T> index;
 ///  Mesh y values.
         std::array<graph::shared_leaf<T>, 4> y;
 ///  Mesh point.
@@ -377,9 +372,7 @@ namespace pic {
             graph::variable<T> (num, "y^{1}_{m}"),
             graph::variable<T> (num, "y^{2}_{m}"),
             graph::variable<T> (num, "y^{3}_{m}")
-        }),
-        index(graph::variable<T> (num, "pi_{m}")),
-        xmin(x_min/norms.l), xmax(x_max/norms.l),
+        }), xmin(x_min/norms.l), xmax(x_max/norms.l),
         dx((xmax - xmin)/(num - 1)) {}
 
 //------------------------------------------------------------------------------
@@ -626,9 +619,15 @@ namespace pic {
         auto resampled = build_initialization(ion, mesh, norms, params, state);
         auto is_outside = ion.x <= mesh.xmin || ion.x >= mesh.xmax;
 
-        auto reinject_x     = graph::if_(is_outside, resampled[0], ion.x);
-        auto reinject_vpara = graph::if_(is_outside, resampled[1], ion.v_para);
-        auto reinject_vperp = graph::if_(is_outside, resampled[2], ion.v_perp);
+        auto reinject_x     = graph::if_(is_outside          ||
+                                         graph::isnan(ion.x) ||
+                                         graph::isinf(ion.x), resampled[0], ion.x);
+        auto reinject_vpara = graph::if_(is_outside          ||
+                                         graph::isnan(ion.x) ||
+                                         graph::isinf(ion.x), resampled[1], ion.v_para);
+        auto reinject_vperp = graph::if_(is_outside          ||
+                                         graph::isnan(ion.x) ||
+                                         graph::isinf(ion.x), resampled[2], ion.v_perp);
         return {reinject_x, reinject_vpara, reinject_vperp};
     }
 
