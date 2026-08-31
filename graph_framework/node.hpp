@@ -1231,7 +1231,7 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return this->arg->evaluate();
+            return arg->evaluate();
         }
 
 //------------------------------------------------------------------------------
@@ -1253,10 +1253,10 @@ namespace graph {
                                       jit::texture2d_list &textures2d,
                                       int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
-                this->arg->compile_preamble(stream, registers,
-                                            visited, usage,
-                                            textures1d, textures2d,
-                                            avail_const_mem);
+                arg->compile_preamble(stream, registers,
+                                      visited, usage,
+                                      textures1d, textures2d,
+                                      avail_const_mem);
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -1280,14 +1280,16 @@ namespace graph {
                 jit::register_map &registers,
                 const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
-            return this->arg->compile(stream, registers, thread_mem, usage);
+            return arg->compile(stream, registers, thread_mem, usage);
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the argument.
+///
+///  @returns The argument.
 //------------------------------------------------------------------------------
-        shared_leaf<T, SAFE_MATH> get_arg() {
-            return this->arg;
+        shared_leaf<T, SAFE_MATH> get_arg() const {
+            return arg;
         }
 
 //------------------------------------------------------------------------------
@@ -1296,7 +1298,7 @@ namespace graph {
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
         virtual bool is_all_variables() const {
-            return this->arg->is_all_variables();
+            return arg->is_all_variables();
         }
 
 //------------------------------------------------------------------------------
@@ -1381,14 +1383,14 @@ namespace graph {
                                       jit::texture2d_list &textures2d,
                                       int &avail_const_mem) {
             if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, 
-                                             visited, usage,
-                                             textures1d, textures2d,
-                                             avail_const_mem);
-                this->right->compile_preamble(stream, registers,
-                                              visited, usage,
-                                              textures1d, textures2d,
-                                              avail_const_mem);
+                left->compile_preamble(stream, registers,
+                                       visited, usage,
+                                       textures1d, textures2d,
+                                       avail_const_mem);
+                right->compile_preamble(stream, registers,
+                                        visited, usage,
+                                        textures1d, textures2d,
+                                        avail_const_mem);
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -1400,16 +1402,20 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Get the left branch.
+///
+///  @returns The left argument.
 //------------------------------------------------------------------------------
-        shared_leaf<T, SAFE_MATH> get_left() {
-            return this->left;
+        shared_leaf<T, SAFE_MATH> get_left() const {
+            return left;
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the right branch.
+///
+///  @returns The right argument.
 //------------------------------------------------------------------------------
-        shared_leaf<T, SAFE_MATH> get_right() {
-            return this->right;
+        shared_leaf<T, SAFE_MATH> get_right() const {
+            return right;
         }
 
 //------------------------------------------------------------------------------
@@ -1418,8 +1424,8 @@ namespace graph {
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
         virtual bool is_all_variables() const {
-            return this->left->is_all_variables() &&
-                   this->right->is_all_variables();
+            return left->is_all_variables() &&
+                   right->is_all_variables();
         }
 
 //------------------------------------------------------------------------------
@@ -1452,7 +1458,6 @@ namespace graph {
         shared_leaf<T, SAFE_MATH> middle;
 
     public:
-
 //------------------------------------------------------------------------------
 ///  @brief Reduces and assigns the left and right branches.
 ///
@@ -1515,10 +1520,12 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Get the right branch.
+///  @brief Get the middle branch.
+///
+///  @returns The middle branch.
 //------------------------------------------------------------------------------
-        shared_leaf<T, SAFE_MATH> get_middle() {
-            return this->middle;
+        shared_leaf<T, SAFE_MATH> get_middle() const {
+            return middle;
         }
 
 //------------------------------------------------------------------------------
@@ -1528,8 +1535,131 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual bool is_all_variables() const {
             return this->left->is_all_variables()   &&
-                   this->middle->is_all_variables() &&
+                   middle->is_all_variables() &&
                    this->right->is_all_variables();
+        }
+    };
+
+//******************************************************************************
+//  Base N arg node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a N branch node.
+///
+///  @tparam N         Number of branches of the node.
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  This ensures that the base leaf type has the common type between the two
+///  template arguments.
+//------------------------------------------------------------------------------
+    template<size_t N, jit::float_scalar T, bool SAFE_MATH=false>
+    class n_branch_node : public leaf_node<T, SAFE_MATH> {
+    protected:
+///  Branches of the tree.
+        std::array<shared_leaf<T, SAFE_MATH>, N> branches;
+
+//------------------------------------------------------------------------------
+///  @brief  Check if any sub-node has a pseudo variable.
+///
+///  @param[in] branches Array of branches.
+///  @returns True if any branch contains pseudo.
+//------------------------------------------------------------------------------
+        bool any_has_pseudo(std::array<shared_leaf<T, SAFE_MATH>, N> &branches) {
+            for (auto &b : branches) {
+                const bool test = b->has_pseudo();
+                if (test) {
+                    return test;
+                }
+            }
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief  Check if any sub-node has a pseudo variable.
+///
+///  @param[in] branches Array of branches.
+///  @returns True if any branch contains pseudo.
+//------------------------------------------------------------------------------
+        size_t total_complexity(std::array<shared_leaf<T, SAFE_MATH>, N> &branches) {
+            size_t complexity = 1;
+            for (auto &b : branches) {
+                complexity += b->get_complexity();
+            }
+            return complexity;
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Reduces and assigns the branches.
+///
+///  @param[in] branches Array of branches.
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        n_branch_node(std::array<shared_leaf<T, SAFE_MATH>, N> branches,
+                      const std::string s) :
+        leaf_node<T, SAFE_MATH> (s, n_branch_node::total_complexity(branches),
+                                 n_branch_node::any_has_pseudo(branches)),
+        branches(branches) {}
+
+//------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::ostringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
+            if (visited.find(this) == visited.end()) {
+                for (auto &b : branches) {
+                    b->compile_preamble(stream, registers,
+                                        visited, usage,
+                                        textures1d, textures2d,
+                                        avail_const_mem);
+                }
+
+            visited.insert(this);
+#ifdef SHOW_USE_COUNT
+                usage[this] = 1;
+            } else {
+                ++usage[this];
+#endif
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the Nth arg.
+///
+///  @param[in] index The argument index.
+///  @returns The argument at the index.
+//------------------------------------------------------------------------------
+        shared_leaf<T, SAFE_MATH> get_arg(const size_t index) const {
+            return branches[index];
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            for (auto b : branches) {
+                const bool test = b->is_all_variables();
+                if (!test) {
+                    return test;
+                }
+            }
+            return true;
         }
     };
 
@@ -1550,8 +1680,10 @@ namespace graph {
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///  @tparam BASE_NODE Base code to subclass from.
+///  @tparam N         Number of sub-nodes.
 //------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH=false, class BASE_NODE=leaf_node<T, SAFE_MATH>>
+    template<jit::float_scalar T, bool SAFE_MATH=false,
+             class BASE_NODE=leaf_node<T, SAFE_MATH>, size_t N=1>
     class no_derivative : public BASE_NODE {
     public:
         template<typename S=bool>
@@ -1596,6 +1728,38 @@ namespace graph {
                                    no_derivative<T, SAFE_MATH,
                                                  branch_node<T, SAFE_MATH>>>) :
         branch_node<T, SAFE_MATH> (l, r, s) {}
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for base triple nodes base classes.
+///
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(shared_leaf<T, SAFE_MATH> l,
+                      shared_leaf<T, SAFE_MATH> m,
+                      shared_leaf<T, SAFE_MATH> r,
+                      const std::string s)
+        requires(std::is_base_of_v<triple_node<T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 triple_node<T, SAFE_MATH>>>) :
+        triple_node<T, SAFE_MATH> (l, m, r, s) {}
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for base n branch nodes base classes.
+///
+///  @param[in] b Array of branches.
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(std::array<shared_leaf<T, SAFE_MATH>, N> &b,
+                      const std::string s)
+        requires(std::is_base_of_v<n_branch_node<N, T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 n_branch_node<N, T,
+                                                               SAFE_MATH>,
+                                                 N>>) :
+        n_branch_node<N, T, SAFE_MATH> (b, s) {}
     };
 
 //******************************************************************************

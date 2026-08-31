@@ -308,7 +308,7 @@ namespace graph {
             if constexpr (jit::use_metal<T> ()) {
                 stream << "device ";
             }
-            stream <<"mt_state &state) {"                                 << std::endl
+            stream << "mt_state &state) {"                                << std::endl
                    << "    uint16_t k = state.index;"                     << std::endl
                    << "    uint16_t j = (k + 1) % 624;"                   << std::endl
                    << "    uint32_t x = (state.array[k] & 0x80000000U) |" << std::endl

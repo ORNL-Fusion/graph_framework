@@ -302,6 +302,353 @@ namespace pic {
     };
 
 //------------------------------------------------------------------------------
+///  @brief U Collision node.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    class apply_u_node final : public graph::no_derivative<T, false,
+                                                           graph::n_branch_node<7, T, false>,
+                                                           7> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @param[in] branches Array of branches.
+///  @return A string rep of a the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(std::array<graph::shared_leaf<T>, 7> &branches) {
+            std::string s = "apply_u";
+            for (auto &b : branches) {
+                s += jit::format_to_string(reinterpret_cast<size_t> (b.get()));
+            }
+            return s;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Define a CPU evaluator.
+///
+///  @param[in] x         Argument to apply collision to.
+///  @param[in] i         Number of collision iterations.
+///  @param[in] rand      A random value of 32 0s and 1s.
+///  @param[in] mof       Mass over 2 e.
+///  @param[in] tbnu_e_dt Temperature of species b times normalized collision rate.
+///  @param[in] A         A collision factor.
+///  @param[in] B         B collision factor.
+//------------------------------------------------------------------------------
+        static void func(backend::buffer<T> &x,
+                         const backend::buffer<T> &i,
+                         const backend::buffer<T> &rand,
+                         const backend::buffer<T> &mof,
+                         const backend::buffer<T> &tbnu_e_dt,
+                         const backend::buffer<T> &A,
+                         const backend::buffer<T> &B) {
+            assert(x.size() == i.size() == rand.size() == mof.size() == tbnu_e_dt.size() &&
+                   "Expected all arguments to have the same length.");
+
+            for (size_t j = 0, ej = x.size(); j < ej; j++) {
+                const T mof_j = mof[j];
+                T temp_x = x[j];
+                const uint32_t rand_j = reintrepet_cast<uint32_t> (rand[j]);
+                const T tbnu_e_dt_j = tbnu_e_dt[j];
+                for (uint8_t k = 0, ke = i[j]; k < ke; k++) {
+                    const T E0 = mof_j*temp_x;
+                    const int8_t rm = 4*((rand_j >> k) & 1) - 2;
+                    const T C = rm*std::sqrt(tbnu_e_dt_j*E0);
+                    temp_x = (E0*A + B + C)/mof_j;
+                }
+                x[j] = temp_x;
+            }
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct an apply_u_node.
+///
+///  @param[in] x         Argument to apply collision to.
+///  @param[in] i         Number of collision iterations.
+///  @param[in] rand      A random value of 32 0s and 1s.
+///  @param[in] mof       Mass over 2 e.
+///  @param[in] tbnu_e_dt Temperature of species b times normalized collision rate.
+///  @param[in] A         A collision factor.
+///  @param[in] B         B collision factor.
+//------------------------------------------------------------------------------
+        apply_u_node(graph::shared_leaf<T> x,
+                     graph::shared_leaf<T> i,
+                     graph::shared_leaf<T> rand,
+                     graph::shared_leaf<T> mof,
+                     graph::shared_leaf<T> tbnu_e_dt,
+                     graph::shared_leaf<T> A,
+                     graph::shared_leaf<T> B) :
+        graph::no_derivative<T, false,
+                             graph::n_branch_node<7, T, false>> ({x, i, rand, mof, tbnu_e_dt, A, B},
+                                                                 apply_u_node::to_string({x, i, rand, mof, tbnu_e_dt, A, B})) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of the applying the u operator.
+///
+///  result = apply_u(x, i, rand, mof, tbnu_e_dt, A, B)
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> x = this->branches[0]->evaluate();
+            const backend::buffer<T> i = this->branches[1]->evaluate();
+            const backend::buffer<T> rand = this->branches[2]->evaluate();
+            const backend::buffer<T> mof = this->branches[3]->evaluate();
+            const backend::buffer<T> tbnu_e_dt = this->branches[4]->evaluate();
+            const backend::buffer<T> A = this->branches[5]->evaluate();
+            const backend::buffer<T> B = this->branches[6]->evaluate();
+
+            apply_u_node::func(x, i, rand, mof, tbnu_e_dt, A, B);
+            return x;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce the apply_u(x, i, rand, mof, tbnu_e_dt, A, B).
+///
+///  @returns Reduced graph from apply_u.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T> reduce() {
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] avail_const_mem Available constant memory.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::ostringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      int &avail_const_mem) {
+            if (visited.find(this) == visited.end()) {
+                for (auto &b : this->branches) {
+                    b->compile_preamble(stream, registers,
+                                        visited, usage,
+                                        textures1d, textures2d,
+                                        avail_const_mem);
+                }
+                                     
+                stream << "void apply_u(";
+                jit::add_type<T> (stream);
+                stream << " &x, const uint8_t i, const ";
+                if constexpr (std::same_as<T, float>) {
+                    stream << "uint32_t";
+                } else {
+                    stream << "uint64_t";
+                }
+                stream << " rand, const ";
+                jit::add_type<T> (stream);
+                stream << " mof, const ";
+                jit::add_type<T> (stream);
+                stream << " tbnu_e_dt, const ";
+                jit::add_type<T> (stream);
+                stream << " A, const ";
+                jit::add_type<T> (stream);
+                stream << " B) {"
+                       << "    for (uint8_t j = 0; j < i; j++) {" << std::endl
+                       << "        const ";
+                jit::add_type<T> (stream);
+                stream << "E0 = mof*x;" << std::endl
+                       << "        const uint8_t rm = 4*((rand >> j) & 1) - 2;" << std::endl
+                       << "        const ";
+                jit::add_type<T> (stream);
+                stream << " C = rm*sqrt(tbnu_e_dt*E0);" << std::endl
+                       << "        x = (E0*A + B + C)/mof;" << std::endl
+                       << "    }" << std::endl
+                       << "}";
+
+                visited.insert(this);
+#ifdef SHOW_USE_COUNT
+                usage[this] = 1;
+            } else {
+                ++usage[this];
+#endif
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T> compile(std::ostringstream &stream,
+                                              jit::register_map &registers,
+                                              const jit::register_map &thread_mem,
+                                              const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto x = this->branches[0]->compile(stream, registers, thread_mem, usage);
+                auto i = this->branches[1]->compile(stream, registers, thread_mem, usage);
+                auto rand = this->branches[2]->compile(stream, registers, thread_mem, usage);
+                auto mof = this->branches[3]->compile(stream, registers, thread_mem, usage);
+                auto tbnu_e_dt = this->branches[4]->compile(stream, registers, thread_mem, usage);
+                auto A = this->branches[5]->compile(stream, registers, thread_mem, usage);
+                auto B = this->branches[6]->compile(stream, registers, thread_mem, usage);
+
+                registers[this] = registers[x.get()];
+                stream << "        apply_u("
+                       << registers[x.get()] << ", "
+                       << registers[i.get()] << ", "
+                       << registers[rand.get()] << ", "
+                       << registers[mof.get()] << ", "
+                       << registers[tbnu_e_dt.get()] << ", "
+                       << registers[A.get()] << ", "
+                       << registers[B.get()] << ")";
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(graph::shared_leaf<T> x) {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = apply_u_cast(x);
+            bool temp = true;
+            if (x_cast.get()) {
+                for (size_t i = 0; i < 7; i++) {
+                    temp = temp && this->branches[i]->is_match(x_cast->get_arg(i));
+                }
+            }
+             
+            return temp;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "\\apply_u{\\left(";
+            this->branches[0]->to_latex();
+            for (uint8_t i = 1; i < 7; i++) {
+                std::cout << ", " << this->branches[i]->to_latex();
+            }
+            std::cout << "\\right)}";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T> remove_pseudo() {
+            if (this->has_pseudo()) {
+                return apply_u(this->branches[0]->remove_pseudo(),
+                               this->branches[1]->remove_pseudo(),
+                               this->branches[2]->remove_pseudo(),
+                               this->branches[3]->remove_pseudo(),
+                               this->branches[4]->remove_pseudo(),
+                               this->branches[5]->remove_pseudo(),
+                               this->branches[6]->remove_pseudo());
+            }
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual graph::shared_leaf<T> to_vizgraph(std::stringstream &stream,
+                                                  jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"apply_u\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                for (auto &b : this->branches) {
+                    auto temp = b->to_vizgraph(stream, registers);
+                    stream << "    " << name << " -- " << registers[temp.get()] << ";" << std::endl;
+                }
+            }
+
+            return this->shared_from_this();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Build apply_u node.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] x         Argument to apply collision to.
+///  @param[in] i         Number of collision iterations.
+///  @param[in] rand      A random value of 32 0s and 1s.
+///  @param[in] mof       Mass over 2 e.
+///  @param[in] tbnu_e_dt Temperature of species b times normalized collision rate.
+///  @param[in] A         A collision factor.
+///  @param[in] B         B collision factor.
+///  @returns A reduced apply_u node.
+//------------------------------------------------------------------------------
+        template<jit::float_scalar T>
+        graph::shared_leaf<T> apply_u(graph::shared_leaf<T> x,
+                                      graph::shared_leaf<T> i,
+                                      graph::shared_leaf<T> rand,
+                                      graph::shared_leaf<T> mof,
+                                      graph::shared_leaf<T> tbnu_e_dt,
+                                      graph::shared_leaf<T> A,
+                                      graph::shared_leaf<T> B) {
+            auto temp = std::make_shared<apply_u<T>> (x, i, rand, mof,
+                                                      tbnu_e_dt, A, B)->reduce();
+//  Test for hash collisions.
+            for (size_t i = temp->get_hash();
+                 i < std::numeric_limits<size_t>::max(); i++) {
+                if (graph::leaf_node<T>::caches.nodes.find(i) ==
+                    graph::leaf_node<T>::caches.nodes.end()) {
+                    graph::leaf_node<T>::caches.nodes[i] = temp;
+                    return temp;
+                } else if (temp->is_match(graph::leaf_node<T>::caches.nodes[i])) {
+                    return graph::leaf_node<T>::caches.nodes[i];
+                }
+            }
+#if defined(__clang__) || defined(__GNUC__)
+            __builtin_unreachable();
+#else
+            assert(false && "Should never reach.");
+#endif
+        }
+
+///  Convenience type alias for shared sqrt nodes.
+        template<jit::float_scalar T>
+        using shared_apply_u = std::shared_ptr<apply_u_node<T>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a apply_u node.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic case.
+//------------------------------------------------------------------------------
+        template<jit::float_scalar T>
+        shared_apply_u<T> apply_u_cast(graph::shared_leaf<T> x) {
+            return std::dynamic_pointer_cast<apply_u_node<T>> (x);
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Mesh class.
 ///
 ///  @tparam T Base type of the calculation.
