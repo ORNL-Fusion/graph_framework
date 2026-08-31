@@ -436,10 +436,11 @@ namespace pic {
                                         textures1d, textures2d,
                                         avail_const_mem);
                 }
-                                     
-                stream << "void apply_u(";
+
                 jit::add_type<T> (stream);
-                stream << " &x, const uint8_t i, const ";
+                stream << " apply_u(const ";
+                jit::add_type<T> (stream);
+                stream << " x, const uint8_t i, const ";
                 if constexpr (std::same_as<T, float>) {
                     stream << "uint32_t";
                 } else {
@@ -454,16 +455,20 @@ namespace pic {
                 stream << " A, const ";
                 jit::add_type<T> (stream);
                 stream << " B) {"
+                       << "    ";
+                jit::add_type<T> (stream);
+                stream << " temp_x = x;" << std::endl
                        << "    for (uint8_t j = 0; j < i; j++) {" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
-                stream << "E0 = mof*x;" << std::endl
+                stream << "E0 = mof*temp_x;" << std::endl
                        << "        const uint8_t rm = 4*((rand >> j) & 1) - 2;" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " C = rm*sqrt(tbnu_e_dt*E0);" << std::endl
-                       << "        x = (E0*A + B + C)/mof;" << std::endl
+                       << "        temp_x = (E0*A + B + C)/mof;" << std::endl
                        << "    }" << std::endl
+                       << "    return temp_x;"
                        << "}";
 
                 visited.insert(this);
@@ -497,8 +502,10 @@ namespace pic {
                 auto A = this->branches[5]->compile(stream, registers, thread_mem, usage);
                 auto B = this->branches[6]->compile(stream, registers, thread_mem, usage);
 
-                registers[this] = registers[x.get()];
-                stream << "        apply_u("
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                stream << " " << registers[this] << " = apply_u("
                        << registers[x.get()] << ", "
                        << registers[i.get()] << ", "
                        << registers[rand.get()] << ", "
