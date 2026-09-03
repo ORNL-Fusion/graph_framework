@@ -1026,6 +1026,17 @@ template<jit::float_scalar T> void test_subtract() {
            "Expected 3 on the left.");
     assert(constant_combine6_cast->get_right()->is_match(var_a) &&
            "Expected a on the right.");
+
+//  (a + b) - a -> b
+    assert(((var_a + var_b) - var_a)->is_match(var_b) && "Expected b.");
+//  (a + b) - b -> a
+    assert(((var_a + var_b) - var_b)->is_match(var_a) && "Expected a.");
+//  a - (a + b) -> -b
+    assert((var_a - (var_a + var_b))->is_match(graph::none<T> ()*var_b) &&
+           "Expected b.");
+//  b - (a + b) -> -a
+    assert((var_b - (var_a + var_b))->is_match(graph::none<T> ()*var_a) &&
+           "Expected a.");
 }
 
 //------------------------------------------------------------------------------
@@ -2036,6 +2047,55 @@ template<jit::float_scalar T> void test_multiply() {
                                          v1,
                                          3.0)*v2) &&
            "Expected fma(fma(fma(50,x,4),x,3),x,3)*y");
+
+//  Sqrt(a)*Sqrt(b) -> Sqrt(a*b)
+    auto sqsq = graph::sqrt(v1)*graph::sqrt(v2);
+    assert(sqsq->is_match(graph::sqrt(v1*v2)) && "Expected Sqrt(a*b)");
+
+    auto v3 = graph::variable<T> (1, "v3");
+    if constexpr (std::floating_point<T>) {
+//  hypot(b,c)*Sqrt(a) -> Sqrt((b^2 + c^2)*a)
+        auto hypotsq = graph::hypot(v1, v2)*graph::sqrt(v3);
+        assert(hypotsq->is_match(graph::sqrt((v1*v1 + v2*v2)*v3)) &&
+               "Expected Sqrt((b^2 + c^2)*a)");
+//  Sqrt(a)*hypot(b,c) -> Sqrt(a*(b^2 + c^2))
+        auto sqhypot = graph::sqrt(v3)*graph::hypot(v1, v2);
+        assert(sqhypot->is_match(graph::sqrt((v1*v1 + v2*v2)*v3)) &&
+               "Expected Sqrt((b^2 + c^2)*a)");
+
+//  Sqrt(x^2)*copysign(1,x) -> x
+        auto sqcs = graph::sqrt(v1*v1)*graph::copysign(static_cast<T> (1), v1);
+        assert(sqcs->is_match(v1) && "Expected x");
+//  copysign(1,x)*Sqrt(x^2) -> x
+        auto cssq = graph::copysign(static_cast<T> (1), v1)*graph::sqrt(v1*v1);
+        assert(cssq->is_match(v1) && "Expected x");
+    }
+
+// (a + b/c)*c -> fma(a,c,b)
+    auto result = (v1 + v2/v3)*v3;
+    assert(result->is_match(graph::fma(v1, v3, v2)) && "Expected fma(a,c,b)");
+// c*(a + b/c) -> fma(a,c,b)
+    auto result2 = v3*(v1 + v2/v3);
+    assert(result2->is_match(graph::fma(v1, v3, v2)) && "Expected fma(a,c,b)");
+// (b/c + a)*c -> fma(a,c,b)
+    auto result3 = (v2/v3 + v1)*v3;
+    assert(result3->is_match(graph::fma(v1, v3, v2)) && "Expected fma(a,c,b)");
+// c*(b/c + a) -> fma(a,c,b)
+    auto result4 = v3*(v2/v3 + v1);
+    assert(result4->is_match(graph::fma(v1, v3, v2)) && "Expected fma(a,c,b)");
+
+// (a - b/c)*c -> a*c - b
+    auto result5 = (v1 - v2/v3)*v3;
+    assert(result5->is_match(v1*v3 - v2) && "Expected a*c - b");
+// c*(a - b/c) -> a*c - b
+    auto result6 = v3*(v1 - v2/v3);
+    assert(result6->is_match(v1*v3 - v2) && "Expected a*c - b");
+// (b/c - a)*c -> b - a*c
+    auto result7 = (v2/v3 - v1)*v3;
+    assert(result7->is_match(v2 - v1*v3) && "Expected b - a*c");
+// c*(b/c - a) -> b - a*c
+    auto result8 = v3*(v2/v3 - v1);
+    assert(result8->is_match(v2 - v1*v3) && "Expected b - a*c");
 }
 
 //------------------------------------------------------------------------------
@@ -3895,6 +3955,38 @@ template<jit::float_scalar T> void test_fma() {
                                                    -49.0))) &&
            "Expected fma(fma(fma(fma(2,x,20),x,30),x,50),b,fma(fma(fma(2,x,-19),-29),-49)");
  */
+
+
+//  fma(sqrt(a),sqrt(b),c) -> sqrt(a*b) + c
+    auto sqsq = graph::fma(graph::sqrt(var_a),graph::sqrt(var_b),var_c);
+    assert(sqsq->is_match(graph::sqrt(var_a*var_b) + var_c) &&
+           "Expected Sqrt(a*b) + c");
+
+    if constexpr (std::floating_point<T>) {
+//  fma(hypot(b,c),Sqrt(a),d) -> Sqrt((b^2 + c^2)*a) + d
+        auto hypotsq = graph::fma(graph::hypot(var_a,var_b),graph::sqrt(var_c),var_d);
+        assert(hypotsq->is_match(graph::sqrt((var_a*var_a +
+                                              var_b*var_b)*var_c) + var_d) &&
+               "Expected Sqrt((b^2 + c^2)*a) + d");
+//  fma(Sqrt(a),hypot(b,c),d) -> Sqrt(a*(b^2 + c^2)) + d
+        auto sqhypot = fma(graph::sqrt(var_c),
+                           graph::hypot(var_a, var_b),
+                           var_d);
+        assert(sqhypot->is_match(graph::sqrt((var_a*var_a +
+                                              var_b*var_b)*var_c) + var_d) &&
+               "Expected Sqrt((b^2 + c^2)*a) + d");
+
+//  fma(Sqrt(x^2),copysign(1,x),y) -> x + y
+        auto sqcs = fma(graph::sqrt(var_a*var_a),
+                        graph::copysign(static_cast<T> (1), var_a),
+                        var_b);
+        assert(sqcs->is_match(var_a + var_b) && "Expected x");
+//  fma(copysign(1,x),Sqrt(x^2),y) -> x + y
+        auto cssq = fma(graph::copysign(static_cast<T> (1), var_a),
+                        graph::sqrt(var_a*var_a),
+                        var_b);
+        assert(cssq->is_match(var_a + var_b) && "Expected x");
+    }
 }
 
 //------------------------------------------------------------------------------

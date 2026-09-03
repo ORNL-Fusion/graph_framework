@@ -504,6 +504,14 @@ void test_pow() {
                                                   graph::pow(expr_a, 2.0) *
                                                   graph::pow(expr_c, 2.0)) &&
            "Expected b*c^2*d^2.");
+
+//  hypot(a,b)^2 -> a^2 + b^2
+    if constexpr (std::floating_point<T>) {
+        assert((graph::pow(graph::hypot(var_a, var_b),
+                           static_cast<T>(2))->is_match(var_a*var_a +
+                                                        var_b*var_b)) &&
+               "Expected a^2 + b^2");
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -557,6 +565,101 @@ void test_erfi() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Tests for hypot nodes.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+template<std::floating_point T>
+void test_hypot() {
+    auto a = graph::constant<T> (0.5);
+    auto b = graph::constant<T> (1.2);
+    
+    auto result = graph::hypot<T> (a, b);
+    auto result_cast = graph::constant_cast(result);
+    assert(result_cast.get() && "Expected a constant.");
+    assert(result_cast->is(std::hypot(static_cast<T> (0.5),
+                                      static_cast<T> (1.2))) &&
+           "Expected hypot(0.5, 1.2)");
+
+    auto v1 = graph::variable<T> (1, "");
+    auto v2 = graph::variable<T> (1, "");
+
+    assert(graph::hypot<T> (v1, v2)->is_match(graph::hypot<T> (v2, v1)) &&
+           "Expected match.");
+
+//  hypot(sqrt(a), sqrt(b)) -> sqrt(a + b)
+    auto result2 = graph::hypot(sqrt(v1), sqrt(v2));
+    auto result2_cast = graph::sqrt_cast(result2);
+    assert(result2_cast.get() && "Expected a sqrt node.");
+    assert(result2->is_match(graph::sqrt(v1 + v2)) &&
+           "Expected sqrt(a + b).");
+    
+//  hypot(a, sqrt(b)) -> sqrt(a^2 + b)
+    auto result3 = graph::hypot(v1, sqrt(v2));
+    auto result3_cast = graph::sqrt_cast(result3);
+    assert(result3_cast.get() && "Expected a sqrt node.");
+    assert(result3->is_match(graph::sqrt(v1*v1 + v2)) &&
+           "Expected sqrt(a^2 + b).");
+
+//  hypot(sqrt(a), b) -> sqrt(a + b^2)
+    auto result4 = graph::hypot(sqrt(v1), v2);
+    auto result4_cast = graph::sqrt_cast(result4);
+    assert(result4_cast.get() && "Expected a sqrt node.");
+    assert(result4->is_match(graph::sqrt(v1 + v2*v2)) &&
+           "Expected sqrt(a + b^2).");
+
+//  hypoy(a,a) -> sqrt(2)sqrt(a^2)
+    auto result5 = graph::hypot(v1, v1);
+    auto result5_cast = graph::multiply_cast(result5);
+    assert(result5_cast.get() && "Expected a multiply node.");
+    assert(result5->is_match(std::numbers::sqrt2_v<T>*graph::sqrt(v1*v1)) &&
+           "Expected sqrt(2)sqrt(a^2).");
+
+// d hypoy(a,b)/dx -> 0
+    auto result6 = graph::hypot(v1, v2)->df(a);
+    auto result6_cast = graph::constant_cast(result6);
+    assert(result6_cast.get() && "Expected a constant.");
+    assert(result6_cast->is(0) && "Expected zero");
+
+// d hypoy(a,b)/da -> 0
+    auto result7 = graph::hypot(v1, v2)->df(v1);
+    auto result7_cast = graph::divide_cast(result7);
+    assert(result7_cast.get() && "Expected a divide node.");
+    assert(result7_cast->is_match(v1/graph::hypot(v1, v2)) &&
+           "v1/hypot(v1, v2)");
+
+// d hypoy(a,b)/db -> 0
+    auto result8 = graph::hypot(v1, v2)->df(v2);
+    auto result8_cast = graph::divide_cast(result8);
+    assert(result8_cast.get() && "Expected a divide node.");
+    assert(result8_cast->is_match(v2/graph::hypot(v1, v2)) &&
+           "v2/hypot(v1, v2)");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Tests for copysign nodes.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+template<std::floating_point T>
+void test_copysign() {
+    auto a = graph::constant<T> (0.5);
+    auto b = graph::constant<T> (-1.2);
+    
+    auto result = graph::copysign<T> (a, b);
+    auto result_cast = graph::constant_cast(result);
+    assert(result_cast.get() && "Expected a constant.");
+    assert(result_cast->is(-0.5) && "Expected -0.5");
+
+    auto v1 = graph::variable<T> (1, "");
+    auto v2 = graph::variable<T> (1, "");
+
+    auto result2 = graph::copysign(v1, v2);
+    auto result2_cast = graph::copysign_cast(result2);
+    assert(result2_cast.get() && "Expected a copysign node.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Tests function for variable like expressions.
 ///
 ///  @tparam T Base type of the calculation.
@@ -592,6 +695,9 @@ template<jit::float_scalar T> void run_tests() {
     test_log<T> ();
     if constexpr (jit::complex_scalar<T>) {
         test_erfi<T> ();
+    }
+    if constexpr (std::floating_point<T>) {
+        test_hypot<T> ();
     }
 }
 

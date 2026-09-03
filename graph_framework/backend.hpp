@@ -628,6 +628,150 @@ if (size() > x.size()) {                                                    \
         }
 
 //------------------------------------------------------------------------------
+///  @brief Hypot row operation.
+///
+///  Computes Hypot(m_ij, v_i) or Hypot(v_i, m_ij). This will resize the buffer
+///  if it needs to be.
+///
+///  @param[in] x The right operand.
+//------------------------------------------------------------------------------
+        void hypot_row(const buffer<T> &x) requires(std::floating_point<T>) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_columns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        (*this)[i*num_columns + j] = std::hypot((*this)[i*num_columns + j], x[i]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_columns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_columns; i++) {
+                    for (size_t j = 0; j < num_rows; j++) {
+                        m[i*num_columns + j] = std::hypot((*this)[i], x[i*num_columns + j]);
+                    }
+                }
+                *this = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Hypot col operation.
+///
+///  Computes Hypot(m_ij, v_j) or Hypot(v_j, m_ij). This will resize the buffer
+///  if it needs to be.
+///
+///  @param[in] x The other operand.
+//------------------------------------------------------------------------------
+        void hypot_col(const buffer<T> &x) requires(std::floating_point<T>) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_columns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        (*this)[i*num_columns + j] = std::hypot((*this)[i*num_columns + j], x[j]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_columns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = std::hypot((*this)[j], x[i*num_columns + j]);
+                    }
+                }
+                *this = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief copysign row operation.
+///
+///  Computes copysign(m_ij, v_i) or copysign(v_i, m_ij). This will resize the
+///  buffer if it needs to be.
+///
+///  @param[in] x The right operand.
+//------------------------------------------------------------------------------
+        void copysign_row(const buffer<T> &x) requires(std::floating_point<T>) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_columns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        (*this)[i*num_columns + j] = std::copysign((*this)[i*num_columns + j], x[i]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_columns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = std::copysign((*this)[i], x[i*num_columns + j]);
+                    }
+                }
+                *this = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief copysign col operation.
+///
+///  Computes atan(m_ij, v_j) or atan(v_j, m_ij). This will resize the buffer if
+///  it needs to be.
+///
+///  @param[in] x The other operand.
+//------------------------------------------------------------------------------
+        void copysign_col(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_columns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_columns; i++) {
+                    for (size_t j = 0; j < num_rows; j++) {
+                        (*this)[i*num_columns + j] = std::copysign((*this)[i*num_columns + j], x[j]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_columns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = std::copysign((*this)[j], x[i*num_columns + j]);
+                    }
+                }
+                *this = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Not operation.
 ///
 ///  @returns The negation of the buffer.
@@ -650,8 +794,7 @@ if (size() > x.size()) {                                                    \
 ///  @params[in] t True condition.
 ///  @params[in] f False condition.
 //------------------------------------------------------------------------------
-        buffer<T> if_(const buffer<T> &t,
-                      const buffer<T> &f) {
+        buffer<T> if_(const buffer<T> &t, const buffer<T> &f) {
             if (size() == 1) {
                 if constexpr (std::floating_point<T>) {
                     return (*this)[0] ? t : f;
@@ -744,8 +887,7 @@ for (T &d : *this) { \
 ///  @returns a == b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline bool operator==(const buffer<T> &a,
-                           const buffer<T> &b) {
+    inline bool operator==(const buffer<T> &a, const buffer<T> &b) {
         if (a.size() != b.size()) {
             return false;
         }
@@ -798,8 +940,7 @@ return a;
 ///  @returns max(a, b).
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> max(buffer<T> &a,
-                         buffer<T> &b) {
+    inline buffer<T> max(buffer<T> &a, buffer<T> &b) {
         build_assoc_func(std::max);
     }
 
@@ -813,8 +954,7 @@ return a;
 ///  @returns min(a, b).
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> min(buffer<T> &a,
-                         buffer<T> &b) {
+    inline buffer<T> min(buffer<T> &a, buffer<T> &b) {
         build_assoc_func(std::min);
     }
 
@@ -855,8 +995,7 @@ return a;
 ///  @returns a + b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator+(buffer<T> &a,
-                               buffer<T> &b) {
+    inline buffer<T> operator+(buffer<T> &a, buffer<T> &b) {
         build_assoc_op(+=)
     }
 
@@ -898,8 +1037,7 @@ return a;
 ///  @returns a - b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator-(buffer<T> &a,
-                               buffer<T> &b) {
+    inline buffer<T> operator-(buffer<T> &a, buffer<T> &b) {
         build_non_assoc_op(-, -=)
     }
 
@@ -913,8 +1051,7 @@ return a;
 ///  @returns a * b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator*(buffer<T> &a,
-                               buffer<T> &b) {
+    inline buffer<T> operator*(buffer<T> &a, buffer<T> &b) {
         build_assoc_op(*=)
     }
 
@@ -928,9 +1065,49 @@ return a;
 ///  @returns a / b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator/(buffer<T> &a,
-                               buffer<T> &b) {
+    inline buffer<T> operator/(buffer<T> &a, buffer<T> &b) {
         build_non_assoc_op(/, /=)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Applies an associative function.
+///
+///  @param func The function to apply.
+//------------------------------------------------------------------------------
+#define build_assoc_func(func)                    \
+if (b.size() == 1) {                              \
+    const T right = b[0];                         \
+    for (T &l : a) {                              \
+        l = func(l, right);                       \
+    }                                             \
+    return a;                                     \
+} else if (a.size() == 1) {                       \
+    const T left = a[0];                          \
+    for (T &r : b) {                              \
+        r = func(r, left);                        \
+    }                                             \
+    return b;                                     \
+}                                                 \
+                                                  \
+assert(a.size() == b.size() &&                    \
+       "Left and right sizes are incompatible."); \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {  \
+    a[i] = func(a[i], b[i]);                      \
+}                                                 \
+return a;
+
+//------------------------------------------------------------------------------
+///  @brief hypot operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns hypot(a,b)
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> hypot(buffer<T> &a, buffer<T> &b) {
+        build_assoc_func(std::hypot)
     }
 
 //------------------------------------------------------------------------------
@@ -944,9 +1121,7 @@ return a;
 ///  @returns a*b + c.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> fma(buffer<T> &a,
-                         buffer<T> &b,
-                         buffer<T> &c) {
+    inline buffer<T> fma(buffer<T> &a, buffer<T> &b, buffer<T> &c) {
         constexpr bool use_fma = !jit::complex_scalar<T> &&
 #ifdef FP_FAST_FMA
                                  true;
@@ -1051,8 +1226,7 @@ return a;
 ///  @returns a % b.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    inline buffer<T> operator%(buffer<T> &a,
-                               buffer<T> &b) {
+    inline buffer<T> operator%(buffer<T> &a, buffer<T> &b) {
         if (b.size() == 1) {
             const T right = b[0];
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
@@ -1112,8 +1286,7 @@ return a;
 ///  @returns a == b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator==(buffer<T> &a,
-                                buffer<T> &b) {
+    inline buffer<T> operator==(buffer<T> &a, buffer<T> &b) {
         logic_op(==)
     }
 
@@ -1127,8 +1300,7 @@ return a;
 ///  @returns a == b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator!=(buffer<T> &a,
-                                buffer<T> &b) {
+    inline buffer<T> operator!=(buffer<T> &a, buffer<T> &b) {
         logic_op(!=)
     }
 
@@ -1142,8 +1314,7 @@ return a;
 ///  @returns a > b.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    inline buffer<T> operator>(buffer<T> &a,
-                               buffer<T> &b) {
+    inline buffer<T> operator>(buffer<T> &a, buffer<T> &b) {
         logic_op(>)
     }
 
@@ -1157,8 +1328,7 @@ return a;
 ///  @returns a < b.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    inline buffer<T> operator<(buffer<T> &a,
-                               buffer<T> &b) {
+    inline buffer<T> operator<(buffer<T> &a, buffer<T> &b) {
         logic_op(<)
     }
 
@@ -1172,8 +1342,7 @@ return a;
 ///  @returns a >= b.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    inline buffer<T> operator>=(buffer<T> &a,
-                                buffer<T> &b) {
+    inline buffer<T> operator>=(buffer<T> &a, buffer<T> &b) {
         logic_op(>=)
     }
 
@@ -1187,8 +1356,7 @@ return a;
 ///  @returns a <= b.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    inline buffer<T> operator<=(buffer<T> &a,
-                                buffer<T> &b) {
+    inline buffer<T> operator<=(buffer<T> &a, buffer<T> &b) {
         logic_op(<=)
     }
 
@@ -1202,8 +1370,7 @@ return a;
 ///  @returns a && b.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    inline buffer<T> operator&&(buffer<T> &a,
-                                buffer<T> &b) {
+    inline buffer<T> operator&&(buffer<T> &a, buffer<T> &b) {
         logic_op(&&)
     }
 
@@ -1217,8 +1384,7 @@ return a;
 ///  @returns a || b.
 //------------------------------------------------------------------------------
     template<std::floating_point T>
-    inline buffer<T> operator||(buffer<T> &a,
-                                buffer<T> &b) {
+    inline buffer<T> operator||(buffer<T> &a, buffer<T> &b) {
         logic_op(||)
     }
 
@@ -1232,8 +1398,7 @@ return a;
 ///  @returns base^exponent.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> pow(buffer<T> &base,
-                         buffer<T> &exponent) {
+    inline buffer<T> pow(buffer<T> &base, buffer<T> &exponent) {
         if (exponent.size() == 1) {
             const T right = exponent[0];
             if (std::imag(right) == 0) {
@@ -1305,8 +1470,7 @@ return a;
 ///  @returns atan2(y, x)
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> atan(buffer<T> &x,
-                          buffer<T> &y) {
+    inline buffer<T> atan(buffer<T> &x, buffer<T> &y) {
         if (y.size() == 1) {
             const T right = y[0];
             for (size_t i = 0, ie = x.size(); i < ie; i++) {
@@ -1337,6 +1501,40 @@ return a;
             } else {
                 x[i] = std::atan2(y[i], x[i]);
             }
+        }
+        return x;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Copy the sign of x and apply it to y.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] x X argument.
+///  @param[in] y Y argument.
+///  @returns copysign(x, y)
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> copysign(buffer<T> &x,
+                              buffer<T> &y) {
+        if (y.size() == 1) {
+            const T right = y[0];
+            for (size_t i = 0, ie = x.size(); i < ie; i++) {
+                x[i] = std::copysign(x[i], right);
+            }
+            return x;
+        } else if (x.size() == 1) {
+            const T left = x[0];
+            for (size_t i = 0, ie = y.size(); i < ie; i++) {
+                y[i] = std::copysign(left, y[i]);
+            }
+            return y;
+        }
+
+        assert(x.size() == y.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = x.size(); i < ie; i++) {
+            x[i] = std::copysign(x[i], y[i]);
         }
         return x;
     }

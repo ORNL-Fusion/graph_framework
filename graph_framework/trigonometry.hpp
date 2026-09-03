@@ -843,7 +843,7 @@ namespace graph {
         return atan(l, constant<T, SAFE_MATH> (static_cast<T> (r)));
     }
 
-///  Convenience type alias for shared add nodes.
+///  Convenience type alias for shared atan nodes.
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using shared_atan = std::shared_ptr<arctan_node<T, SAFE_MATH>>;
 

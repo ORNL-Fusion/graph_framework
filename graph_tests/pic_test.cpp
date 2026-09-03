@@ -300,6 +300,22 @@ template<std::floating_point T> void run_field_solve_test() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Coordinate tests.
+//------------------------------------------------------------------------------
+template<std::floating_point T> void run_coord_tests() {
+    auto x = graph::variable<T> (1, "x");
+    auto y = graph::variable<T> (1, "y");
+
+    std::array<graph::shared_leaf<T>, 3> sphere = pic::cartesian_to_sphereical(x, y);
+    std::array<graph::shared_leaf<T>, 2> cart = pic::sphereical_to_cartesian(sphere[0],
+                                                                             sphere[1],
+                                                                             sphere[2]);
+
+    assert(cart[0]->is_match(x) && "x not converted correctly.");
+    assert(cart[1]->is_match(y) && "y not converted correctly.");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified precision.
 ///
 ///  @tparam T Base type of the calculation.
@@ -307,6 +323,7 @@ template<std::floating_point T> void run_field_solve_test() {
 template<std::floating_point T> void run_tests() {
     run_interpolation_test<T> ();
     run_field_solve_test<T> ();
+    run_coord_tests<T> ();
 }
 
 //------------------------------------------------------------------------------

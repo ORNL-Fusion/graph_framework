@@ -676,12 +676,10 @@ namespace graph {
             auto x_cast = add_cast(x);
             if (x_cast.get()) {
 //  Addition is commutative.
-                if ((this->left->is_match(x_cast->get_left()) &&
-                     this->right->is_match(x_cast->get_right())) ||
-                    (this->right->is_match(x_cast->get_left()) &&
-                     this->left->is_match(x_cast->get_right()))) {
-                    return true;
-                }
+                return (this->left->is_match(x_cast->get_left()) &&
+                        this->right->is_match(x_cast->get_right())) ||
+                       (this->right->is_match(x_cast->get_left()) &&
+                        this->left->is_match(x_cast->get_right()));
             }
 
             return false;
@@ -1058,6 +1056,24 @@ namespace graph {
                         return lm->get_left()*lmrs->get_left() - this->right -
                                lm->get_left()*lmrs->get_right();
                     }
+                }
+            }
+
+//  (a + b) - a -> b
+//  (a + b) - b -> a
+//  a - (a + b) -> -b
+//  b - (a + b) -> -a
+            if (la.get()) {
+                if (la->get_left()->is_match(this->right)) {
+                    return la->get_right();
+                } else if (la->get_right()->is_match(this->right)) {
+                    return la->get_left();
+                }
+            } else if (ra.get()) {
+                if (ra->get_left()->is_match(this->left)) {
+                    return none<T, SAFE_MATH> ()*ra->get_right();
+                } else if (ra->get_right()->is_match(this->left)) {
+                    return none<T, SAFE_MATH> ()*ra->get_left();
                 }
             }
 
@@ -2455,6 +2471,96 @@ namespace graph {
                                                                     ra);
                 if (fma_expand.get()) {
                     return fma_expand;
+                }
+            }
+
+//  Sqrt(a)*Sqrt(b) -> Sqrt(a*b)
+            auto lsqr = sqrt_cast(this->left);
+            auto rsqr = sqrt_cast(this->right);
+            if (lsqr.get() && rsqr.get()) {
+                return sqrt(lsqr->get_arg()*rsqr->get_arg());
+            }
+
+            if constexpr (std::floating_point<T>) {
+//  hypot(b,c)*Sqrt(a) -> Sqrt((b^2 + c^2)*a)
+//  Sqrt(a)*hypot(b,c) -> Sqrt(a*(b^2 + c^2))
+                auto lhypot = hypot_cast(this->left);
+                auto rhypot = hypot_cast(this->right);
+                if (lhypot.get() && rsqr.get()) {
+                    return sqrt((pow(lhypot->get_left(), static_cast<T> (2)) +
+                                 pow(lhypot->get_right(), static_cast<T> (2))) *
+                                rsqr->get_arg());
+                } else if (rhypot.get() && lsqr.get()) {
+                    return sqrt((pow(rhypot->get_left(), static_cast<T> (2)) +
+                                 pow(rhypot->get_right(), static_cast<T> (2))) *
+                                lsqr->get_arg());
+                }
+                
+//  Sqrt(x^2)*copysign(1,x) -> x
+//  copysign(1,x)*Sqrt(x^2) -> x
+                auto lcsc = copysign_cast(this->left);
+                auto rcsc = copysign_cast(this->right);
+                if (rcsc.get() && lsqr.get()) {
+                    auto rcsclc = constant_cast(rcsc->get_left());
+                    auto lsqrpc = pow_cast(lsqr->get_arg());
+                    if (lsqrpc.get() && rcsclc.get() && rcsclc->is(1) &&
+                        lsqrpc->get_left()->is_match(rcsc->get_right())) {
+                        return rcsc->get_right();
+                    }
+                } else if (lcsc.get() && rsqr.get()) {
+                    auto lcsclc = constant_cast(lcsc->get_left());
+                    auto rsqrpc = pow_cast(rsqr->get_arg());
+                    if (rsqrpc.get() && lcsclc.get() && lcsclc->is(1) &&
+                        rsqrpc->get_left()->is_match(lcsc->get_right())) {
+                        return lcsc->get_right();
+                    }
+                }
+            }
+
+// (a + b/c)*c -> fma(a,c,b)
+// c*(a + b/c) -> fma(a,c,b)
+// (b/c + a)*c -> fma(a,c,b)
+// c*(b/c + a) -> fma(a,c,b)
+            auto la = add_cast(this->left);
+            if (la.get()) {
+                auto lald = divide_cast(la->get_left());
+                auto lard = divide_cast(la->get_right());
+                if (lald.get() && lald->get_right()->is_match(this->right)) {
+                    return fma(la->get_right(), this->right, lald->get_left());
+                } else if (lard.get() && lard->get_right()->is_match(this->right)) {
+                    return fma(la->get_left(), this->right, lard->get_left());
+                }
+            } else if (ra.get()) {
+                auto rald = divide_cast(ra->get_left());
+                auto rard = divide_cast(ra->get_right());
+                if (rald.get() && rald->get_right()->is_match(this->left)) {
+                    return fma(ra->get_right(), this->left, rald->get_left());
+                } else if (rard.get() && rard->get_right()->is_match(this->left)) {
+                    return fma(ra->get_left(), this->left, rard->get_left());
+                }
+            }
+
+// (a - b/c)*c -> a*c - b
+// c*(a - b/c) -> a*c - b
+// (b/c - a)*c -> b - a*c
+// c*(b/c - a) -> b - a*c
+            auto ls = subtract_cast(this->left);
+            auto rs = subtract_cast(this->right);
+            if (ls.get()) {
+                auto lsld = divide_cast(ls->get_left());
+                auto lsrd = divide_cast(ls->get_right());
+                if (lsld.get() && lsld->get_right()->is_match(this->right)) {
+                    return lsld->get_left() - ls->get_right()*this->right;
+                } else if (lsrd.get() && lsrd->get_right()->is_match(this->right)) {
+                    return ls->get_left()*this->right - lsrd->get_left();
+                }
+            } else if (rs.get()) {
+                auto rsld = divide_cast(rs->get_left());
+                auto rsrd = divide_cast(rs->get_right());
+                if (rsld.get() && rsld->get_right()->is_match(this->left)) {
+                    return rsld->get_right() - rs->get_right()*this->left;
+                } else if (rsrd.get() && rsrd->get_right()->is_match(this->left)) {
+                    return rs->get_left()*this->left - rsld->get_left();
                 }
             }
 
@@ -5008,6 +5114,49 @@ namespace graph {
                         return ((ld->get_left()*md->get_left()) /
                                 (ld->get_right()*md->get_right())) +
                                this->right;
+                    }
+                }
+            }
+
+//  fma(sqrt(a),sqrt(b),c) -> sqrt(a*b) + c
+            auto lsqr = sqrt_cast(this->left);
+            auto msqr = sqrt_cast(this->middle);
+            if (lsqr.get() && msqr.get()) {
+                return sqrt(lsqr->get_arg()*msqr->get_arg()) + this->right;
+            }
+
+            if constexpr (std::floating_point<T>) {
+//  fma(hypot(b,c),Sqrt(a),d) -> Sqrt((b^2 + c^2)*a) + d
+//  fma(Sqrt(a),hypot(b,c),d) -> Sqrt(a*(b^2 + c^2)) + d
+                auto lhypot = hypot_cast(this->left);
+                auto mhypot = hypot_cast(this->middle);
+                if (lhypot.get() && msqr.get()) {
+                    return sqrt((pow(lhypot->get_left(), static_cast<T> (2)) +
+                                 pow(lhypot->get_right(), static_cast<T> (2))) *
+                                msqr->get_arg()) + this->right;
+                } else if (mhypot.get() && lsqr.get()) {
+                    return sqrt((pow(mhypot->get_left(), static_cast<T> (2)) +
+                                 pow(mhypot->get_right(), static_cast<T> (2))) *
+                                lsqr->get_arg()) + this->right;
+                }
+
+//  fma(Sqrt(x^2),copysign(1,x),d) -> x
+//  fma(copysign(1,x),Sqrt(x^2),d) -> x
+                auto lcsc = copysign_cast(this->left);
+                auto mcsc = copysign_cast(this->middle);
+                if (mcsc.get() && lsqr.get()) {
+                    auto mcsclc = constant_cast(mcsc->get_left());
+                    auto lsqrpc = pow_cast(lsqr->get_arg());
+                    if (lsqrpc.get() && mcsclc.get() && mcsclc->is(1) &&
+                        lsqrpc->get_left()->is_match(mcsc->get_right())) {
+                        return mcsc->get_right() + this->right;
+                    }
+                } else if (lcsc.get() && msqr.get()) {
+                    auto lcsclc = constant_cast(lcsc->get_left());
+                    auto msqrpc = pow_cast(msqr->get_arg());
+                    if (msqrpc.get() && lcsclc.get() && lcsclc->is(1) &&
+                        msqrpc->get_left()->is_match(lcsc->get_right())) {
+                        return lcsc->get_right() + this->right;
                     }
                 }
             }

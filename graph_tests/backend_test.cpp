@@ -330,6 +330,77 @@ template<jit::float_scalar T> void test_backend() {
         static_cast<T> (1.0),
         static_cast<T> (2.0)
     }));
+    avec.sin();
+    assert(avec.size() == 2 && "Expected a size of 2");
+    assert(avec.at(0) == std::sin(static_cast<T> (1.0)) &&
+           "Expected a value of sin(1).");
+    assert(avec.at(1) == std::sin(static_cast<T> (2.0)) &&
+           "Expected a value of sin(2).");
+
+    avec.set(std::vector<T> ({
+        static_cast<T> (1.0),
+        static_cast<T> (2.0)
+    }));
+    avec.cos();
+    assert(avec.size() == 2 && "Expected a size of 2");
+    assert(avec.at(0) == std::cos(static_cast<T> (1.0)) &&
+           "Expected a value of cos(1).");
+    assert(avec.at(1) == std::cos(static_cast<T> (2.0)) &&
+           "Expected a value of cos(2).");
+
+    avec.set(std::vector<T> ({
+        static_cast<T> (1.0),
+        static_cast<T> (2.0)
+    }));
+    bvec.set(std::vector<T> ({
+        static_cast<T> (3.0),
+        static_cast<T> (4.0)
+    }));
+    const backend::buffer<T> arctanvec = backend::atan(avec, bvec);
+    assert(arctanvec.size() == 2 && "Expected a size of 2");
+    if constexpr (jit::complex_scalar<T>) {
+        assert(arctanvec.at(0) == std::atan(static_cast<T> (3.0)/
+                                            static_cast<T> (1.0)) &&
+               "Expected a value of atan(3/1).");
+        assert(arctanvec.at(1) == std::atan(static_cast<T> (4.0)/
+                                            static_cast<T> (2.0)) &&
+               "Expected a value of atan(4/2).");
+    } else {
+        assert(arctanvec.at(0) == std::atan2(static_cast<T> (3.0),
+                                             static_cast<T> (1.0)) &&
+               "Expected a value of atan2(3,1).");
+        assert(arctanvec.at(1) == std::atan2(static_cast<T> (4.0),
+                                             static_cast<T> (2.0)) &&
+               "Expected a value of atan2(4,2).");
+    }
+
+    if constexpr (std::floating_point<T>) {
+        avec.set(std::vector<T> ({
+            static_cast<T> (1.0),
+            static_cast<T> (2.0)
+        }));
+        bvec.set(std::vector<T> ({
+            static_cast<T> (3.0),
+            static_cast<T> (4.0)
+        }));
+        const backend::buffer<T> hypotvec = backend::hypot(avec, bvec);
+        assert(hypotvec.size() == 2 && "Expected a size of 2");
+        assert(hypotvec.at(0) == std::hypot(static_cast<T> (1.0),
+                                            static_cast<T> (3.0)) &&
+               "Expected a value of hypot(1,3).");
+        assert(hypotvec.at(1) == std::hypot(static_cast<T> (2.0),
+                                            static_cast<T> (4.0)) &&
+               "Expected a value of hypot(2,4).");
+    }
+
+    avec.set(std::vector<T> ({
+        static_cast<T> (1.0),
+        static_cast<T> (2.0)
+    }));
+    bvec.set(std::vector<T> ({
+        static_cast<T> (3.0),
+        static_cast<T> (4.0)
+    }));
     const backend::buffer<T> fma_vec_scale_scale = backend::fma(avec, bscalar, cscalar);
     assert(fma_vec_scale_scale.size() == 2 && "Expected a size of 2");
     assert(fma_vec_scale_scale.at(0) == static_cast<T> (-2.0) &&
@@ -564,6 +635,23 @@ template<jit::float_scalar T> void test_backend() {
         static_cast<T> (NAN)
     }));
     assert(!nan_vec.is_normal() && "Expected a NaN.");
+
+    if constexpr (std::floating_point<T>) {
+        avec.set(std::vector<T> ({
+            static_cast<T> (4.0),
+            static_cast<T> (-2.0)
+        }));
+        bvec.set(std::vector<T> ({
+            static_cast<T> (-3.0),
+            static_cast<T> (0.30)
+        }));
+        const backend::buffer<T> copysignvec = backend::copysign(avec, bvec);
+        assert(copysignvec.size() == 2 && "Expected a size of 2");
+        assert(copysignvec.at(0) == static_cast<T> (-4.0) &&
+               "Expected a value of -4.");
+        assert(copysignvec.at(1) == static_cast<T> (2.0) &&
+               "Expected a value of 2.");
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -157,151 +157,6 @@ namespace pic {
     };
 
 //------------------------------------------------------------------------------
-///  @brief ion class.
-///
-///  These values need to be initialized using normalized quantities.
-///
-///  @tparam T Base type of the calculation.
-//------------------------------------------------------------------------------
-    template<std::floating_point T>
-    class ion {
-    public:
-///  Atomic number.
-        const T z;
-///  Charge
-        const T charge;
-///  Particle mass
-        const T mass;
-///  Normalized Position
-        graph::shared_leaf<T> x;
-///  Normalized Parallel velocity.
-        graph::shared_leaf<T> v_para;
-///  Normalized Perpendicular velocity.
-        graph::shared_leaf<T> v_perp;
-///  Mesh Weights
-        std::array<graph::shared_leaf<T>, 3> weights;
-///  Number of real particles
-        const T num_real;
-
-//------------------------------------------------------------------------------
-///  @brief Construct an ion object.
-///
-///  @param[in] mass     Ion mass.
-///  @param[in] z        Ion Z.
-///  @param[in] num_ions Number of ions.
-///  @param[in] num_real Number of real particles.
-///  @param[in] norms    A @ref pic::characteristics object.
-//------------------------------------------------------------------------------
-        ion(const T mass,
-            const uint8_t z,
-            const size_t num_ions,
-            const T num_real,
-            const characteristics<T> &norms) :
-        z(z), charge(z*pic::q<T>/norms.q),
-        mass(mass), num_real(num_real),
-        x(graph::variable<T> (num_ions, "x")),
-        v_para(graph::variable<T> (num_ions, "v_{||}")),
-        v_perp(graph::variable<T> (num_ions, "v_{\\perp}")),
-        weights({
-            graph::variable<T> (num_ions, "w_{0}"),
-            graph::variable<T> (num_ions, "w_{1}"),
-            graph::variable<T> (num_ions, "w_{2}")
-        }) {}
-
-//------------------------------------------------------------------------------
-///  @brief Get x case as variable.
-///
-///  @return x cast as a variable.
-//------------------------------------------------------------------------------
-        graph::shared_variable<T> get_x() const {
-            return graph::variable_cast(x);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the number of computational ions.
-///
-///  @return The number of particles.
-//------------------------------------------------------------------------------
-        size_t size() const {
-            return get_x()->size();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the data for x.
-///
-///  @return The number of particles.
-//------------------------------------------------------------------------------
-        T *x_data() const {
-            return get_x()->data();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x case as variable.
-///
-///  @return x cast as a variable.
-//------------------------------------------------------------------------------
-        graph::shared_variable<T> get_v_para() const {
-            return graph::variable_cast(v_para);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the data for the parallel velocity.
-///
-///  @return The number of particles.
-//------------------------------------------------------------------------------
-        T *v_para_data() const {
-            return get_v_para()->data();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x case as variable.
-///
-///  @return x cast as a variable.
-//------------------------------------------------------------------------------
-        graph::shared_variable<T> get_v_perp() const {
-            return graph::variable_cast(v_perp);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the data for the perpendicular velocity.
-///
-///  @return The number of particles.
-//------------------------------------------------------------------------------
-        T *v_perp_data() const {
-            return graph::variable_cast(v_perp)->data();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Conversion factor from super particles to real particles.
-///
-///  @returns The super to real conversion factor.
-//------------------------------------------------------------------------------
-        T super_to_real() const {
-            return num_real/size();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Define variables.
-///
-///  @param[in]     file A @ref output::result_file object to define variables.
-///  @param[in,out] data A @ref output::data_set object to create variable.
-///  @param[in,out] work A @ref workflow::manager object where data was
-///                      computed.
-///  @param[in]     tag  Unique identity for give the ion species.
-//------------------------------------------------------------------------------
-        void define_variables(const output::result_file &file,
-                              output::data_set<T> &data,
-                              workflow::manager<T> &work,
-                              const std::string tag) {
-            data.create_variable(file, "x_" + tag, x,  work.get_context());
-            data.create_variable(file, "vpara_" + tag, v_para,
-                                 work.get_context());
-            data.create_variable(file, "vperp_" + tag, v_perp,
-                                 work.get_context());
-        }
-    };
-
-//------------------------------------------------------------------------------
 ///  @brief U Collision node.
 ///
 ///  @tparam T Base type of the calculation.
@@ -1016,6 +871,151 @@ namespace pic {
     }
 
 //------------------------------------------------------------------------------
+///  @brief ion class.
+///
+///  These values need to be initialized using normalized quantities.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    class ion {
+    public:
+///  Atomic number.
+        const T z;
+///  Charge
+        const T charge;
+///  Particle mass
+        const T mass;
+///  Normalized Position
+        graph::shared_leaf<T> x;
+///  Normalized Parallel velocity.
+        graph::shared_leaf<T> v_para;
+///  Normalized Perpendicular velocity.
+        graph::shared_leaf<T> v_perp;
+///  Mesh Weights
+        std::array<graph::shared_leaf<T>, 3> weights;
+///  Number of real particles
+        const T num_real;
+
+//------------------------------------------------------------------------------
+///  @brief Construct an ion object.
+///
+///  @param[in] mass     Ion mass.
+///  @param[in] z        Ion Z.
+///  @param[in] num_ions Number of ions.
+///  @param[in] num_real Number of real particles.
+///  @param[in] norms    A @ref pic::characteristics object.
+//------------------------------------------------------------------------------
+        ion(const T mass,
+            const uint8_t z,
+            const size_t num_ions,
+            const T num_real,
+            const characteristics<T> &norms) :
+        z(z), charge(z*pic::q<T>/norms.q),
+        mass(mass), num_real(num_real),
+        x(graph::variable<T> (num_ions, "x")),
+        v_para(graph::variable<T> (num_ions, "v_{||}")),
+        v_perp(graph::variable<T> (num_ions, "v_{\\perp}")),
+        weights({
+            graph::variable<T> (num_ions, "w_{0}"),
+            graph::variable<T> (num_ions, "w_{1}"),
+            graph::variable<T> (num_ions, "w_{2}")
+        }) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get x case as variable.
+///
+///  @return x cast as a variable.
+//------------------------------------------------------------------------------
+        graph::shared_variable<T> get_x() const {
+            return graph::variable_cast(x);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of computational ions.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        size_t size() const {
+            return get_x()->size();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the data for x.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        T *x_data() const {
+            return get_x()->data();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x case as variable.
+///
+///  @return x cast as a variable.
+//------------------------------------------------------------------------------
+        graph::shared_variable<T> get_v_para() const {
+            return graph::variable_cast(v_para);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the data for the parallel velocity.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        T *v_para_data() const {
+            return get_v_para()->data();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get x case as variable.
+///
+///  @return x cast as a variable.
+//------------------------------------------------------------------------------
+        graph::shared_variable<T> get_v_perp() const {
+            return graph::variable_cast(v_perp);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the data for the perpendicular velocity.
+///
+///  @return The number of particles.
+//------------------------------------------------------------------------------
+        T *v_perp_data() const {
+            return graph::variable_cast(v_perp)->data();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Conversion factor from super particles to real particles.
+///
+///  @returns The super to real conversion factor.
+//------------------------------------------------------------------------------
+        T super_to_real() const {
+            return num_real/size();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Define variables.
+///
+///  @param[in]     file A @ref output::result_file object to define variables.
+///  @param[in,out] data A @ref output::data_set object to create variable.
+///  @param[in,out] work A @ref workflow::manager object where data was
+///                      computed.
+///  @param[in]     tag  Unique identity for give the ion species.
+//------------------------------------------------------------------------------
+        void define_variables(const output::result_file &file,
+                              output::data_set<T> &data,
+                              workflow::manager<T> &work,
+                              const std::string tag) {
+            data.create_variable(file, "x_" + tag, x,  work.get_context());
+            data.create_variable(file, "vpara_" + tag, v_para,
+                                 work.get_context());
+            data.create_variable(file, "vperp_" + tag, v_perp,
+                                 work.get_context());
+        }
+    };
+
+//------------------------------------------------------------------------------
 ///  @brief Mesh class.
 ///
 ///  @tparam T Base type of the calculation.
@@ -1259,6 +1259,41 @@ namespace pic {
             return weights[0]*ymesh0 + weights[1]*ymesh1 + weights[2]*ymesh2;
         }
     };
+
+//------------------------------------------------------------------------------
+///  @brief Convert from cartesian to sphereical coordinates.
+///
+///  @param[in] x
+///  @param[in] y
+///  @returns The coordinates as sphereical coordinates.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    std::array<graph::shared_leaf<T>, 3> cartesian_to_sphereical(graph::shared_leaf<T> x,
+                                                                 graph::shared_leaf<T> y) {
+        auto w = graph::hypot(x, y);
+        return {
+            w, x/w,
+            graph::none<T> ()*graph::copysign(static_cast<T> (1), y)
+        };
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Convert from sphereical to cartesian coordinates.
+///
+///  @param[in] w
+///  @param[in] xi
+///  @param[in] sinphi
+///  @returns The coordinates as cartesian coordinates.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    std::array<graph::shared_leaf<T>, 2> sphereical_to_cartesian(graph::shared_leaf<T> w,
+                                                                 graph::shared_leaf<T> xi,
+                                                                 graph::shared_leaf<T> sinphi) {
+        return {
+            w*xi,
+            graph::none<T> ()*w*graph::sqrt(static_cast<T> (1) - xi*xi)*sinphi
+        };
+    }
 
 //------------------------------------------------------------------------------
 ///  @brief Build initialization.
