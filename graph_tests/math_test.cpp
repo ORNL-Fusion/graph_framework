@@ -538,7 +538,34 @@ void test_log() {
 }
 
 //------------------------------------------------------------------------------
-///  @brief Tests for log nodes.
+///  @brief Tests for erfi nodes.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+template<std::floating_point T>
+void test_erf() {
+    auto a = graph::variable<T> (1, "");
+    auto erf = graph::erf(a);
+    
+    assert(graph::erf_cast(erf) &&
+           "Expected an erf node.");
+
+    auto derfda = erf->df(a);
+    assert(graph::multiply_cast(derfda) &&
+           "Expected a multiply node.");
+    
+    auto erfc = graph::erf(graph::one<T> ());
+    assert(graph::constant_cast(erfc) &&
+           "Expected a constant node.");
+
+//  Test node properties.
+    assert(!erf->is_constant() && "Did not expect a constant.");
+    assert(erf->is_all_variables() && "Expected a variable.");
+    assert(!erf->is_power_like() && "Did not expect a power like.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Tests for erfi nodes.
 ///
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
@@ -697,6 +724,7 @@ template<jit::float_scalar T> void run_tests() {
         test_erfi<T> ();
     }
     if constexpr (std::floating_point<T>) {
+        test_erf<T> ();
         test_hypot<T> ();
     }
 }

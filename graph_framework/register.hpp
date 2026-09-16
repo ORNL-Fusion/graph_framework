@@ -8,8 +8,8 @@
 
 #include <concepts>
 #include <cassert>
-#include <map>
-#include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <sstream>
 #include <complex>
 #include <type_traits>
@@ -256,15 +256,17 @@ namespace jit {
     }
 
 ///  Type alias for mapping node pointers to register names.
-    typedef std::map<void *, std::string> register_map;
+    typedef std::unordered_map<void *, std::string> register_map;
 ///  Type alias for counting register usage.
-    typedef std::map<void *, size_t> register_usage;
+    typedef std::unordered_map<void *, size_t> register_usage;
 ///  Type alias for listing visited nodes.
-    typedef std::set<void *> visiter_map;
+    typedef std::unordered_set<void *> visiter_map;
 ///  Type alias for indexing 1D textures.
-    typedef std::map<void *, size_t> texture1d_list;
+    typedef std::unordered_map<void *, size_t> texture1d_list;
 ///  Type alias for indexing 2D textures.
-    typedef std::map<void *, std::array<size_t,2>> texture2d_list;
+    typedef std::unordered_map<void *, std::array<size_t,2>> texture2d_list;
+///  Type alias for preamble defined functions.
+    typedef std::unordered_set<std::string> preamble_map;
 ///  Type for tacking thread shared memory.
     typedef std::unordered_set<void *> argument_set;
 

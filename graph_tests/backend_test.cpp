@@ -571,7 +571,7 @@ template<jit::float_scalar T> void test_backend() {
     }));
     exp_vec.set(std::vector<T> ({
         static_cast<T> (-4.0),
-        static_cast<T> (0.30)
+        static_cast<T> (0.3)
     }));
     const backend::buffer<T> vec_vec = backend::pow(base_vec, exp_vec);
     assert(vec_vec.size() == 2 && "Expected a size of 2");
@@ -581,8 +581,8 @@ template<jit::float_scalar T> void test_backend() {
            std::abs(static_cast<T> (8.6736173798840355e-19)) &&
            "Expected 4^-4.");
     assert(vec_vec.at(1) == std::pow(static_cast<T> (2.0),
-                                     static_cast<T> (0.30)) &&
-           "Expected 2^0.30.");
+                                     static_cast<T> (0.3)) &&
+           "Expected 2^0.3.");
 
     base_scalar.set(static_cast<T> (4.0));
     base_scalar.log();
@@ -636,6 +636,50 @@ template<jit::float_scalar T> void test_backend() {
     }));
     assert(!nan_vec.is_normal() && "Expected a NaN.");
 
+    if constexpr (jit::complex_scalar<T>) {
+        avec.set(std::vector<T> ({
+            static_cast<T> (4.0),
+            static_cast<T> (-2.0)
+        }));
+        avec.erfi();
+        assert(avec.at(0) == static_cast<T> (special::erfi(static_cast<T> (4.0))) &&
+               "Expected a value of Erfi(4 + 0i).");
+        assert(avec.at(1) == static_cast<T> (special::erfi(static_cast<T> (-2))) &&
+               "Expected a value of Erfi(-2 + 0i).");
+    }
+
+    avec.set(std::vector<T> ({
+        static_cast<T> (4.0),
+        static_cast<T> (-2.0)
+    }));
+    bvec.set(std::vector<T> ({
+        static_cast<T> (-3.0),
+        static_cast<T> (0.3)
+    }));
+    assert((avec == avec).at(0) == static_cast<T> (1) && "Expected true.");
+    assert((avec == avec).at(1) == static_cast<T> (1) && "Expected true.");
+
+    avec.set(std::vector<T> ({
+        static_cast<T> (4.0),
+        static_cast<T> (-2.0)
+    }));
+    assert((avec == bvec).at(0) == static_cast<T> (0) && "Expected false.");
+    assert((avec == bvec).at(1) == static_cast<T> (0) && "Expected false.");
+
+    avec.set(std::vector<T> ({
+        static_cast<T> (4.0),
+        static_cast<T> (-2.0)
+    }));
+    assert((avec != avec).at(0) == static_cast<T> (0) && "Expected false.");
+    assert((avec != avec).at(1) == static_cast<T> (0) && "Expected false.");
+
+    avec.set(std::vector<T> ({
+        static_cast<T> (4.0),
+        static_cast<T> (-2.0)
+    }));
+    assert((avec != bvec).at(0) == static_cast<T> (1) && "Expected true.");
+    assert((avec != bvec).at(1) == static_cast<T> (1) && "Expected true.");
+
     if constexpr (std::floating_point<T>) {
         avec.set(std::vector<T> ({
             static_cast<T> (4.0),
@@ -643,7 +687,7 @@ template<jit::float_scalar T> void test_backend() {
         }));
         bvec.set(std::vector<T> ({
             static_cast<T> (-3.0),
-            static_cast<T> (0.30)
+            static_cast<T> (0.3)
         }));
         const backend::buffer<T> copysignvec = backend::copysign(avec, bvec);
         assert(copysignvec.size() == 2 && "Expected a size of 2");
@@ -651,6 +695,28 @@ template<jit::float_scalar T> void test_backend() {
                "Expected a value of -4.");
         assert(copysignvec.at(1) == static_cast<T> (2.0) &&
                "Expected a value of 2.");
+
+        avec.set(std::vector<T> ({
+            static_cast<T> (4.0),
+            static_cast<T> (-2.0)
+        }));
+        avec.erf();
+        assert(avec.at(0) == static_cast<T> (std::erf(static_cast<T> (4.0))) &&
+               "Expected a value of Erf(4).");
+        assert(avec.at(1) == static_cast<T> (std::erf(static_cast<T> (-2.0))) &&
+               "Expected a value of Erf(-2).");
+
+        avec.set(std::vector<T> ({
+            static_cast<T> (4.0),
+            static_cast<T> (-2.0)
+        }));
+        const backend::buffer<T> modvec = avec % bvec;
+        assert((modvec.at(0) == static_cast<T> (std::fmod(static_cast<T> (4.0),
+                                                          static_cast<T> (-3.0)))) &&
+               "Expected a value of 4 % -3.");
+        assert((modvec.at(1) == static_cast<T> (std::fmod(static_cast<T> (-2.0),
+                                                          static_cast<T> (0.3)))) &&
+               "Expected a value of -2 % 0.3.");
     }
 }
 

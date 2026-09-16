@@ -246,6 +246,13 @@ for (T &d : *this) { \
         }
 
 //------------------------------------------------------------------------------
+///  @brief Take erf.
+//------------------------------------------------------------------------------
+        void erf() requires(std::floating_point<T>) {
+            apply_op(std::erf)
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Take erfi.
 //------------------------------------------------------------------------------
         void erfi() requires(jit::complex_scalar<T>) {
@@ -306,7 +313,7 @@ for (T &d : *this) { \
         }
 
 //------------------------------------------------------------------------------
-///  @brief Applies an operatator along a row.
+///  @brief Applies an operator along a row.
 ///
 ///  @param opp   The operation to apply.
 ///  @param oppeq The assignment operator to apply.
@@ -351,7 +358,7 @@ if (size() > x.size()) {                                                    \
         }
 
 //------------------------------------------------------------------------------
-///  @brief Applies an operatator along a column.
+///  @brief Applies an operator along a column.
 ///
 ///  @param opp   The operation to apply.
 ///  @param oppeq The assignment operator to apply.
@@ -465,6 +472,94 @@ if (size() > x.size()) {                                                    \
 //------------------------------------------------------------------------------
         void divide_col(const buffer<T> &x) {
             col_op(/, /=)
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a function along a row.
+///
+///  @param fn The function to apply.
+//------------------------------------------------------------------------------
+        #define row_fn(fn)                                                             \
+        if (size() > x.size()) {                                                       \
+            assert(size()%x.size() == 0 &&                                             \
+                   "Vector operand size is not a multiple of matrix operand size");    \
+                                                                                       \
+            const size_t num_columns = size()/x.size();                                \
+            const size_t num_rows = x.size();                                          \
+            for (size_t i = 0; i < num_rows; i++) {                                    \
+                for (size_t j = 0; j < num_columns; j++) {                             \
+                    (*this)[i*num_columns + j] = fn((*this)[i*num_columns + j], x[i]); \
+                }                                                                      \
+            }                                                                          \
+        } else {                                                                       \
+            assert(x.size()%size() == 0 &&                                             \
+                   "Vector operand size is not a multiple of matrix operand size");    \
+                                                                                       \
+            std::vector<T> m(x.size());                                                \
+            const size_t num_columns = x.size()/size();                                \
+            const size_t num_rows = size();                                            \
+            for (size_t i = 0; i < num_rows; i++) {                                    \
+                for (size_t j = 0; j < num_columns; j++) {                             \
+                    m[i*num_columns + j] = fn((*this)[i], x[i*num_columns + j]);       \
+                }                                                                      \
+            }                                                                          \
+            *this = m;                                                                 \
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Min row operation.
+///
+///  Takes Min(m_ij, v_i) or Min(v_i, m_ij). This will resize the buffer if it
+///  needs to be.
+///
+///  @param[in] x The other operand.
+//------------------------------------------------------------------------------
+        void min_row(const buffer<T> &x) {
+            row_fn(std::min)
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a function along a column.
+///
+///  @param fn The function to apply.
+//------------------------------------------------------------------------------
+        #define col_fn(fn)                                                             \
+        if (size() > x.size()) {                                                       \
+            assert(size()%x.size() == 0 &&                                             \
+                   "Vector operand size is not a multiple of matrix operand size");    \
+                                                                                       \
+            const size_t num_columns = size()/x.size();                                \
+            const size_t num_rows = x.size();                                          \
+            for (size_t i = 0; i < num_rows; i++) {                                    \
+                for (size_t j = 0; j < num_columns; j++) {                             \
+                    (*this)[i*num_columns + j] = fn((*this)[i*num_columns + j], x[j]); \
+                }                                                                      \
+            }                                                                          \
+        } else {                                                                       \
+            assert(x.size()%size() == 0 &&                                             \
+                   "Vector operand size is not a multiple of matrix operand size");    \
+                                                                                       \
+            std::vector<T> m(x.size());                                                \
+            const size_t num_columns = x.size()/size();                                \
+            const size_t num_rows = size();                                            \
+            for (size_t i = 0; i < num_rows; i++) {                                    \
+                for (size_t j = 0; j < num_columns; j++) {                             \
+                    m[i*num_columns + j] = fn((*this)[j], x[i*num_columns + j]);       \
+                }                                                                      \
+            }                                                                          \
+            *this = m;                                                                 \
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Min col operation.
+///
+///  Takes Min(m_ij, v_j) or Min(v_j, m_ij). This will resize the buffer if it
+///  needs to be.
+///
+///  @param[in] x The other operand.
+//------------------------------------------------------------------------------
+        void min_col(const buffer<T> &x) {
+            col_fn(std::min)
         }
 
 //------------------------------------------------------------------------------
@@ -1386,6 +1481,47 @@ return a;
     template<std::floating_point T>
     inline buffer<T> operator||(buffer<T> &a, buffer<T> &b) {
         logic_op(||)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a function with two operands.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define branch_fn(fn)                                \
+if (b.size() == 1) {                                 \
+    const T right = b[0];                            \
+    for (size_t i = 0, ie = a.size(); i < ie; i++) { \
+        a[i] = fn(a[i], right);                      \
+    }                                                \
+    return a;                                        \
+} else if (a.size() == 1) {                          \
+    const T left = a[0];                             \
+    for (size_t i = 0, ie = b.size(); i < ie; i++) { \
+        b[i] = fn(left, b[i]);                       \
+    }                                                \
+    return b;                                        \
+}                                                    \
+                                                     \
+assert(a.size() == b.size() &&                       \
+       "Left and right sizes are incompatible.");    \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {     \
+    a[i] = fn(a[i], b[i]);                           \
+}                                                    \
+return a;
+
+//------------------------------------------------------------------------------
+///  @brief Min operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns min(a, b).
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> min(buffer<T> &a, buffer<T> &b) {
+        branch_fn(std::min)
     }
 
 //------------------------------------------------------------------------------

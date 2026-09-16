@@ -303,6 +303,42 @@ template<std::floating_point T> void test_if() {
 }
 
 //------------------------------------------------------------------------------
+///  @brief Test for min nodes.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+template<std::floating_point T> void test_min() {
+    auto one = graph::one<T> ();
+    auto none = graph::none<T> ();
+
+    assert(graph::min(one, none)->is_match(none) &&
+           "Expected -1.");
+    assert(graph::min(none, one)->is_match(none) &&
+           "Expected -1.");
+    assert(graph::min(none, none)->is_match(none) &&
+           "Expected -1.");
+    assert(graph::min(one, one)->is_match(one) &&
+           "Expected 1.");
+
+    auto v1 = graph::variable<T> (1, "");
+    auto v2 = graph::variable<T> (1, "");
+    auto zero = graph::zero<T> ();
+
+    auto min_result = graph::min(v1, v2);
+    assert(min_result->df(v1)->is_match(zero) &&
+           "Expected 1.");
+    assert(min_result->df(v2)->is_match(zero) &&
+           "Expected 1.");
+
+    auto v3 = graph::variable<T> (1, "");
+    assert(min_result->df(v3)->is_match(zero) &&
+           "Expected 0.");
+
+    assert(min_result->df(min_result)->is_match(one) &&
+           "Expected 1");
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Run tests with a specified backend.
 ///
 ///  @tparam T Base type of the calculation.
@@ -319,6 +355,7 @@ template<jit::float_scalar T> void run_tests() {
         test_and<T> ();
         test_or<T> ();
         test_if<T> ();
+        test_min<T> ();
     }
 }
 

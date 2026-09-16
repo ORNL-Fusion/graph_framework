@@ -85,11 +85,11 @@ namespace gpu {
 ///  Handle for the dynamic library.
         std::unique_ptr<llvm::orc::LLJIT> jit;
 ///  Argument map.
-        std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> kernel_arguments;
+        std::unordered_map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> kernel_arguments;
 ///  Host buffer map.
-        std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> host_buffers;
+        std::unordered_map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> host_buffers;
 ///  Argument index map.
-        std::map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
+        std::unordered_map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
 
     public:
 ///  Size of random state needed.
@@ -242,7 +242,7 @@ namespace gpu {
                                                      const jit::texture2d_list &tex2d_list) {
             auto entry = std::move(jit->lookup(kernel_name)).get();
 
-            std::map<size_t, T *> buffers;
+            std::unordered_map<size_t, T *> buffers;
 
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
@@ -271,7 +271,7 @@ namespace gpu {
             }
 
             if (state.get()) {
-                auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &, typename graph::random_state_node<T, SAFE_MATH>::mt_state *)> ();
+                auto kernel = entry.toPtr<void(*)(std::unordered_map<size_t, T *> &, typename graph::random_state_node<T, SAFE_MATH>::mt_state *)> ();
 
                 if (!kernel) {
                     std::cerr << "Failed to load function. " << kernel_name
@@ -299,7 +299,7 @@ namespace gpu {
 #endif
                 };
             } else {
-                auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
+                auto kernel = entry.toPtr<void(*)(std::unordered_map<size_t, T *> &)> ();
 
                 if (!kernel) {
                     std::cerr << "Failed to load function. " << kernel_name
@@ -523,9 +523,10 @@ namespace gpu {
 ///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
-            source_buffer << "#include <map>"     << std::endl
-                          << "#include <array>"   << std::endl
-                          << "#include <cstdint>" << std::endl;
+            source_buffer << "#include <unordered_map>" << std::endl
+                          << "#include <array>"         << std::endl
+                          << "#include <cstdint>"       << std::endl
+                          << "#include <bit>"           << std::endl;
             if (jit::complex_scalar<T>) {
                 source_buffer << "#include <complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
@@ -573,7 +574,7 @@ namespace gpu {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
 
-            source_buffer << "    map<size_t, ";
+            source_buffer << "    unordered_map<size_t, ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args";
             if (state.get()) {

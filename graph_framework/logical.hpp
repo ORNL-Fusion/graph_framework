@@ -2770,10 +2770,10 @@ namespace graph {
         static std::string to_string(leaf_node<T, SAFE_MATH> *c,
                                      leaf_node<T, SAFE_MATH> *t,
                                      leaf_node<T, SAFE_MATH> *f) {
-            return "if(" +
-                   jit::format_to_string(reinterpret_cast<size_t> (c)) + "," +
-                   jit::format_to_string(reinterpret_cast<size_t> (t)) + "," +
-                   jit::format_to_string(reinterpret_cast<size_t> (f)) + ")";
+            return "if" +
+                   jit::format_to_string(reinterpret_cast<size_t> (c)) +
+                   jit::format_to_string(reinterpret_cast<size_t> (t)) +
+                   jit::format_to_string(reinterpret_cast<size_t> (f));
         }
 
     public:
@@ -2957,6 +2957,7 @@ namespace graph {
 ///  @param[in] c Condition branch.
 ///  @param[in] t True branch.
 ///  @param[in] f False branch.
+///  @returns A reduced if node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> if_(shared_leaf<T, SAFE_MATH> c,
@@ -2997,6 +2998,342 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_if<T, SAFE_MATH> if_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<if_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
+//  Min node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief A Min node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
+///
+///  @tparam T         Base type of the operands.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    class min_node final : public branch_node<T, SAFE_MATH> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *r) {
+            return "min" +
+                   jit::format_to_string(reinterpret_cast<size_t> (l)) +
+                   jit::format_to_string(reinterpret_cast<size_t> (r));
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct an equal node.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+        min_node(shared_leaf<T, SAFE_MATH> l,
+                 shared_leaf<T, SAFE_MATH> r) :
+        branch_node<T, SAFE_MATH> (l, r,
+                                   min_node::to_string(l.get(),
+                                                       r.get())) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of if.
+///
+///  result = min(l, r)
+///
+///  @returns The value of min(l, r).
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> l_result = this->left->evaluate();
+            backend::buffer<T> r_result = this->right->evaluate();
+            return backend::min(l_result, r_result);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce a min node.
+///
+///  @returns A reduced equal node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
+//  Constant reductions.
+            auto lc = constant_cast(this->left);
+            auto rc = constant_cast(this->right);
+
+            if (lc.get() && rc.get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto pl1 = piecewise_1D_cast(this->left);
+            auto pr1 = piecewise_1D_cast(this->right);
+            if (pl1.get() && (rc.get() || pl1->is_arg_match(this->right))) {
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
+            } else if (pr1.get() && (lc.get() || pr1->is_arg_match(this->left))) {
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
+            }
+            
+            auto pl2 = piecewise_2D_cast(this->left);
+            auto pr2 = piecewise_2D_cast(this->right);
+            if (pl2.get() && (rc.get() || pl2->is_arg_match(this->right))) {
+                return piecewise_2D(this->evaluate(),
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pr2.get() && (lc.get() || pr2->is_arg_match(this->left))) {
+                return piecewise_2D(this->evaluate(),
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            }
+
+//  Combine 2D and 1D piecewise constants if a row or column matches.
+            if (pr2.get() && pr2->is_row_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.min_row(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pr2.get() && pr2->is_col_match(this->left)) {
+                backend::buffer<T> result = pl1->evaluate();
+                result.min_col(pr2->evaluate());
+                return piecewise_2D(result,
+                                    pr2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
+            } else if (pl2.get() && pl2->is_row_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.min_row(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            } else if (pl2.get() && pl2->is_col_match(this->right)) {
+                backend::buffer<T> result = pl2->evaluate();
+                result.min_col(pr1->evaluate());
+                return piecewise_2D(result,
+                                    pl2->get_num_columns(),
+                                    pl2->get_left(),
+                                    pl2->get_right());
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  d min(l,r)/dx = min(dl/dx,dr/dx)
+///
+///  @param[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        df(shared_leaf<T, SAFE_MATH> x) {
+            if (this->is_match(x)) {
+                return one<T, SAFE_MATH> ();
+            }
+
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = min<T, SAFE_MATH> (this->left->df(x),
+                                                          this->right->df(x));
+            }
+            return this->df_cache[hash];
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto l = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto r = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                registers[this] = jit::to_string('r', this);
+
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                stream << " " << registers[this] << " = min("
+                       << registers[l.get()] << ", "
+                       << registers[r.get()] << ")";
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = min_cast(x);
+            if (x_cast.get()) {
+//  Min is commutative.
+                return (this->left->is_match(x_cast->get_left()) &&
+                        this->right->is_match(x_cast->get_right())) ||
+                       (this->right->is_match(x_cast->get_left()) &&
+                        this->left->is_match(x_cast->get_right()));
+            }
+
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "min\\left(";
+            this->left->to_latex();
+            std::cout << ",";
+            this->right->to_latex();
+            std::cout << "\\right)";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
+            if (this->has_pseudo()) {
+                return min<T, SAFE_MATH> (this->left->remove_pseudo(),
+                                          this->right->remove_pseudo());
+            }
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"min\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto l = this->left->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[l.get()] << ";" << std::endl;
+                auto r = this->right->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[r.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Build a max node from a condition and two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+///  @returns A reduced min node.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> min(shared_leaf<T, SAFE_MATH> l,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<min_node<T, SAFE_MATH>> (l, r)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build min node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+///  @returns A reduced min node.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, jit::float_scalar L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> min(const L l,
+                                  shared_leaf<T, SAFE_MATH> r) {
+        return min(constant<T, SAFE_MATH> (static_cast<T> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build min node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+///  @returns A reduced min node.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, jit::float_scalar R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> min(shared_leaf<T, SAFE_MATH> l,
+                                  const R r) {
+        return min(l, constant<T, SAFE_MATH> (static_cast<T> (r)));
+    }
+
+///  Convenience type alias for shared min nodes.
+    template<std::floating_point T, bool SAFE_MATH=false>
+    using shared_min = std::shared_ptr<min_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to an min node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_min<T, SAFE_MATH> min_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<min_node<T, SAFE_MATH>> (x);
     }
 }
 

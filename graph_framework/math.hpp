@@ -1450,6 +1450,241 @@ namespace graph {
     }
 
 //******************************************************************************
+//  Erf node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief An error function node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  Note use templates here to defer this so it can use the operator functions.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    class erf_node final : public straight_node<T, SAFE_MATH> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @param[in] a Argument node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T, SAFE_MATH> *a) {
+            return "erf" + jit::format_to_string(reinterpret_cast<size_t> (a));
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a erf node.
+///
+///  @param[in] x Argument.
+//------------------------------------------------------------------------------
+        erf_node(shared_leaf<T, SAFE_MATH> x) :
+        straight_node<T, SAFE_MATH> (x, erf_node::to_string(x.get())) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of erf.
+///
+///  result = erf(x)
+///
+///  @returns The value of erf(x).
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> result = this->arg->evaluate();
+            result.erf();
+            return result;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce the erf(x).
+///
+///  @returns Reduced graph from erf.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
+            if (constant_cast(this->arg).get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            auto ap1 = piecewise_1D_cast(this->arg);
+            if (ap1.get()) {
+                return piecewise_1D(this->evaluate(),
+                                    ap1->get_arg());
+            }
+
+            auto ap2 = piecewise_2D_cast(this->arg);
+            if (ap2.get()) {
+                return piecewise_2D(this->evaluate(),
+                                    ap2->get_num_columns(),
+                                    ap2->get_left(),
+                                    ap2->get_right());
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  d erf(y)/dx = 2/sqrt(pi)Exp(-y^2)*dy/dx
+///
+///  @param[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            if (this->is_match(x)) {
+                return one<T, SAFE_MATH> ();
+            }
+
+            const size_t hash = reinterpret_cast<size_t> (x.get());
+            if (this->df_cache.find(hash) == this->df_cache.end()) {
+                this->df_cache[hash] = static_cast<T> (2)
+                                     * std::numbers::inv_sqrtpi_v<T>
+                                     * exp(this->arg*this->arg)*this->arg->df(x);
+            }
+            return this->df_cache[hash];
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto a = this->arg->compile(stream, registers,
+                                            thread_mem, usage);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                stream << " " << registers[this] << " = erf("
+                       << registers[a.get()] << ")";
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+            if (this == x.get()) {
+                return true;
+            }
+
+            auto x_cast = erf_cast(x);
+            if (x_cast.get()) {
+                return this->arg->is_match(x_cast->get_arg());
+            }
+
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "erf\\left(";
+            this->arg->to_latex();
+            std::cout << "\\right)";
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Remove pseudo variable nodes.
+///
+///  @returns A tree without variable nodes.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> remove_pseudo() {
+            if (this->has_pseudo()) {
+                return erf(this->arg->remove_pseudo());
+            }
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"erf\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto a = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define erf convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Argument.
+///  @returns A reduced exp node.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> erf(shared_leaf<T, SAFE_MATH> x) {
+        auto temp = std::make_shared<erf_node<T, SAFE_MATH>> (x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+///  Convenience type alias for shared erf nodes.
+    template<std::floating_point T, bool SAFE_MATH=false>
+    using shared_erf = std::shared_ptr<erf_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a erf node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_erf<T, SAFE_MATH> erf_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<erf_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
 //  Erfi node.
 //******************************************************************************
 //------------------------------------------------------------------------------
@@ -1475,7 +1710,7 @@ namespace graph {
 
     public:
 //------------------------------------------------------------------------------
-///  @brief Construct a exp node.
+///  @brief Construct a erfi node.
 ///
 ///  @param[in] x Argument.
 //------------------------------------------------------------------------------
@@ -1498,7 +1733,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Reduce the erfi(x).
 ///
-///  @returns Reduced graph from exp.
+///  @returns Reduced graph from erfi.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->arg).get()) {
@@ -1537,7 +1772,14 @@ namespace graph {
 
             const size_t hash = reinterpret_cast<size_t> (x.get());
             if (this->df_cache.find(hash) == this->df_cache.end()) {
-                this->df_cache[hash] = 2.0/std::sqrt(M_PI)
+                T invsqpi;
+                if constexpr(std::same_as<T, std::complex<float>>) {
+                    invsqpi = std::numbers::inv_sqrtpi_v<float>;
+                } else {
+                    invsqpi = std::numbers::inv_sqrtpi_v<double>;
+                }
+                this->df_cache[hash] = static_cast<T> (2)
+                                     * invsqpi
                                      * exp(this->arg*this->arg)*this->arg->df(x);
             }
             return this->df_cache[hash];
@@ -1665,12 +1907,12 @@ namespace graph {
 #endif
     }
 
-///  Convenience type alias for shared exp nodes.
+///  Convenience type alias for shared erfi nodes.
     template<jit::complex_scalar T, bool SAFE_MATH=false>
     using shared_erfi = std::shared_ptr<erfi_node<T, SAFE_MATH>>;
 
 //------------------------------------------------------------------------------
-///  @brief Cast to a exp node.
+///  @brief Cast to a erfi node.
 ///
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.

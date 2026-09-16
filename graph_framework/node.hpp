@@ -194,19 +194,14 @@
 ///                                jit::register_usage &usage,
 ///                                jit::texture1d_list &textures1d,
 ///                                jit::texture2d_list &textures2d,
+///                                jit::preamble_map &pre_funcs,
 ///                                int &avail_const_mem) {
-///      if (visited.find(this) == visited.end()) {
+///      if (!visited.contains(this)) {
 ///          this->arg->compile_preamble(stream, registers,
 ///                                      visited, usage,
 ///                                      textures1d, textures2d,
+///                                      pre_funcs,
 ///                                      avail_const_mem);
-///
-///          jit::add_type<T> (stream);
-///          stream << " foo(const "
-///          jit::add_type<T> (stream);
-///          stream << "x) {"
-///                 << "    return 2*x;"
-///                 << "}";
 ///
 ///          visited.insert(this);
 ///  #ifdef SHOW_USE_COUNT
@@ -214,6 +209,17 @@
 ///      } else {
 ///          ++usage[this];
 ///  #endif
+///      }
+///
+///      if (!pre_funcs.contains("foo")) {
+///          visited.insert("foo");
+///
+///          jit::add_type<T> (stream);
+///          stream << " foo(const "
+///          jit::add_type<T> (stream);
+///          stream << "x) {" << std::endl
+///                 << "    return 2*x;" << std::endl
+///                 << "}" << std::endl;
 ///      }
 ///  }
 ///  @endcode
@@ -369,7 +375,7 @@ namespace graph {
 ///  Graph complexity.
         const size_t complexity;
 ///  Cache derivative terms.
-        std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> df_cache;
+        std::unordered_map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> df_cache;
 ///  Node contains pseudo variables.
         const bool contains_pseudo;
 
@@ -433,6 +439,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -441,6 +448,7 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
 #ifdef SHOW_USE_COUNT
             if (usage.find(this) == usage.end()) {
@@ -666,9 +674,9 @@ namespace graph {
 //------------------------------------------------------------------------------
         struct caches_t {
 ///  Cache of node.
-            std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> nodes;
+            std::unordered_map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> nodes;
 ///  Cache of backend buffers.
-            std::map<size_t, backend::buffer<T>> backends;
+            std::unordered_map<size_t, backend::buffer<T>> backends;
         };
 
 ///  A per thread instance of the cache structure.
@@ -1243,6 +1251,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1251,12 +1260,13 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!visited.contains(this)) {
                 arg->compile_preamble(stream, registers,
                                       visited, usage,
                                       textures1d, textures2d,
-                                      avail_const_mem);
+                                      pre_funcs, avail_const_mem);
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -1373,6 +1383,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1381,16 +1392,17 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!visited.contains(this)) {
                 left->compile_preamble(stream, registers,
                                        visited, usage,
                                        textures1d, textures2d,
-                                       avail_const_mem);
+                                       pre_funcs, avail_const_mem);
                 right->compile_preamble(stream, registers,
                                         visited, usage,
                                         textures1d, textures2d,
-                                        avail_const_mem);
+                                        pre_funcs, avail_const_mem);
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -1488,6 +1500,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1496,20 +1509,21 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, 
+            if (!visited.contains(this)) {
+                this->left->compile_preamble(stream, registers,
                                              visited, usage,
                                              textures1d, textures2d,
-                                             avail_const_mem);
+                                             pre_funcs, avail_const_mem);
                 this->middle->compile_preamble(stream, registers,
                                                visited, usage,
                                                textures1d, textures2d,
-                                               avail_const_mem);
+                                               pre_funcs, avail_const_mem);
                 this->right->compile_preamble(stream, registers,
                                               visited, usage,
                                               textures1d, textures2d,
-                                              avail_const_mem);
+                                              pre_funcs, avail_const_mem);
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -1611,6 +1625,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1619,13 +1634,14 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!visited.contains(this)) {
                 for (auto &b : branches) {
                     b->compile_preamble(stream, registers,
                                         visited, usage,
                                         textures1d, textures2d,
-                                        avail_const_mem);
+                                        pre_funcs, avail_const_mem);
                 }
 
             visited.insert(this);
@@ -1660,6 +1676,16 @@ namespace graph {
                 }
             }
             return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns Returns a power of one.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
         }
     };
 
@@ -1752,7 +1778,7 @@ namespace graph {
 ///  @param[in] b Array of branches.
 ///  @param[in] s Node string to hash.
 //------------------------------------------------------------------------------
-        no_derivative(std::array<shared_leaf<T, SAFE_MATH>, N> &b,
+        no_derivative(std::array<shared_leaf<T, SAFE_MATH>, N> b,
                       const std::string s)
         requires(std::is_base_of_v<n_branch_node<N, T, SAFE_MATH>,
                                    no_derivative<T, SAFE_MATH,
@@ -1872,6 +1898,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1880,6 +1907,7 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
             if (usage.find(this) == usage.end()) {
                 usage[this] = 1;

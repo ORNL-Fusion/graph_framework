@@ -545,7 +545,8 @@ namespace workflow {
                            const std::string name, const size_t size,
                            const size_t iterations) {
             if constexpr (O == pre_run_item) {
-                preitems.push_back(std::make_unique<loop_item<T, SAFE_MATH>> (in, out,                                                                              maps,
+                preitems.push_back(std::make_unique<loop_item<T, SAFE_MATH>> (in, out,
+                                                                              maps,
                                                                               atomics,
                                                                               state,
                                                                               name, size,

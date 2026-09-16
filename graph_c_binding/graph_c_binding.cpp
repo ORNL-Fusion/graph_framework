@@ -19,7 +19,7 @@
 template<jit::float_scalar T, bool SAFE_MATH=false>
 struct graph_c_context_type : public graph_c_context {
 ///  Variables nodes.
-    std::map<graph_node, graph::shared_leaf<T, SAFE_MATH>> nodes;
+    std::unordered_map<graph_node, graph::shared_leaf<T, SAFE_MATH>> nodes;
 ///  Workflow manager.
     workflow::manager<T, SAFE_MATH> work;
 

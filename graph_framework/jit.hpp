@@ -52,12 +52,14 @@ namespace jit {
         std::ostringstream source_buffer;
 ///  Nodes that have been jitted.
         register_map registers;
+///  Prefunctions that have been defined.
+        preamble_map pre_funcs;
 ///  Kernel names.
         std::vector<std::string> kernel_names;
 ///  Kernel textures.
-        std::map<std::string, texture1d_list> kernel_1dtextures;
+        std::unordered_map<std::string, texture1d_list> kernel_1dtextures;
 ///  Kernel textures.
-        std::map<std::string, texture2d_list> kernel_2dtextures;
+        std::unordered_map<std::string, texture2d_list> kernel_2dtextures;
 
 ///  Type for the GPU context.
         using gpu_context_type = typename std::conditional<use_gpu<T> (),
@@ -72,8 +74,6 @@ namespace jit {
 
 ///  GPU Context.
         gpu_context_type gpu_context;
-///  Used random.
-        bool used_random;
 
     public:
 ///  Size of random state needed.
@@ -108,7 +108,7 @@ namespace jit {
 ///
 ///  @param[in] index Concurrent index. Not used.
 //------------------------------------------------------------------------------
-        context(const size_t index) : gpu_context(index), used_random(false) {
+        context(const size_t index) : gpu_context(index) {
             source_buffer << std::setprecision(max_digits10<T> ());
             gpu_context.create_header(source_buffer);
         }
@@ -137,12 +137,6 @@ namespace jit {
                         const size_t iterations=1) {
             kernel_names.push_back(name);
 
-            if (state.get() && !used_random) {
-                used_random = true;
-                graph::random_state_node<T>::compile_random_state(source_buffer);
-                graph::random_node<T>::compile_random(source_buffer);
-            }
-
             std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;
             register_usage usage;
@@ -159,6 +153,7 @@ namespace jit {
                                       visited, usage,
                                       kernel_1dtextures[name],
                                       kernel_2dtextures[name],
+                                      pre_funcs,
                                       gpu_context.remaining_const_memory);
             }
             for (auto &out : outputs) {
@@ -166,6 +161,7 @@ namespace jit {
                                       visited, usage,
                                       kernel_1dtextures[name],
                                       kernel_2dtextures[name],
+                                      pre_funcs,
                                       gpu_context.remaining_const_memory);
             }
 

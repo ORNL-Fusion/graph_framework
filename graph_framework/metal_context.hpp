@@ -29,15 +29,15 @@ namespace gpu {
 ///  The metal command queue.
         id<MTLCommandQueue> queue;
 ///  Argument map.
-        std::map<graph::leaf_node<float, SAFE_MATH> *, id<MTLBuffer>> kernel_arguments;
+        std::unordered_map<graph::leaf_node<float, SAFE_MATH> *, id<MTLBuffer>> kernel_arguments;
 ///  Textures.
-        std::map<void *, id<MTLTexture>> texture_arguments;
+        std::unordered_map<void *, id<MTLTexture>> texture_arguments;
 ///  Metal command buffer.
         id<MTLCommandBuffer> command_buffer;
 ///  Metal library.
         id<MTLLibrary> library;
 ///  Buffer mutability descriptor.
-        std::map<std::string, std::vector<MTLMutability>> bufferMutability;
+        std::unordered_map<std::string, std::vector<MTLMutability>> bufferMutability;
 
     public:
 ///  Random state size multiplier.
@@ -151,7 +151,7 @@ namespace gpu {
             }
 
             std::vector<id<MTLBuffer>> buffers;
-            std::set<graph::leaf_node<float, SAFE_MATH> *> needed_buffers;
+            std::unordered_set<graph::leaf_node<float, SAFE_MATH> *> needed_buffers;
 
             const size_t buffer_element_size = sizeof(float);
             for (graph::shared_variable<float, SAFE_MATH> &input : inputs) {
@@ -672,6 +672,9 @@ namespace gpu {
                     used_args.insert(inputs[i].get());
                 }
             }
+            assert(used_args.size() == inputs.size() &&
+                   "Kernel inputs contain duplicates.");
+
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
                 if (!used_args.contains(outputs[i].get()) &&
                     !graph::atomic_accumulate_1D_cast(outputs[i]).get()) {
@@ -683,6 +686,9 @@ namespace gpu {
                     used_args.insert(outputs[i].get());
                 }
             }
+            assert(used_args.size() == inputs.size() + outputs.size() &&
+                   "Kernel outputs contain duplicates.");
+
             for (size_t i = 0, ie = atomics.size(); i < ie; i++) {
                 if (!used_args.contains(atomics[i].get())) {
                     bufferMutability[name].push_back(MTLMutabilityMutable);
@@ -693,6 +699,10 @@ namespace gpu {
                     used_args.insert(atomics[i].get());
                 }
             }
+            assert(used_args.size() == inputs.size() + outputs.size() +
+                                       atomics.size() &&
+                   "Kernel atomics contain duplicates.");
+
             if (state.get()) {
                 bufferMutability[name].push_back(MTLMutabilityMutable);
                 source_buffer << "    device mt_state *"

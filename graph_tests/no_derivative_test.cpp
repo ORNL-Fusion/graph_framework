@@ -10,12 +10,26 @@
 //------------------------------------------------------------------------------
 class dummy : public graph::no_derivative<float, false, graph::leaf_node<float, false>> {
 public:
-    dummy() : graph::no_derivative<float, false, graph::leaf_node<float, false>> ("") {}
+//------------------------------------------------------------------------------
+///  @brief A dummy constructor.
+//------------------------------------------------------------------------------
+    dummy() :
+    graph::no_derivative<float, false, graph::leaf_node<float, false>> ("") {}
 
+//------------------------------------------------------------------------------
+///  @brief Dummy evaluate method.
+///
+///  @returns An empty buffer.
+//------------------------------------------------------------------------------
     virtual backend::buffer<float> evaluate() {
         return backend::buffer<float> ();
     };
 
+//------------------------------------------------------------------------------
+///  @brief Dummy reduce method.
+///
+///  @returns Returns the dummy node.
+//------------------------------------------------------------------------------
     virtual graph::shared_leaf<float>
     compile(std::ostringstream &stream,
             jit::register_map &registers,
@@ -24,11 +38,21 @@ public:
         return this->shared_from_this();
     }
 
+//------------------------------------------------------------------------------
+///  @brief Dummy to vizgraph method.
+///
+///  @returns A reference to this.
+//------------------------------------------------------------------------------
     virtual graph::shared_leaf<float> to_vizgraph(std::stringstream &stream,
                                                   jit::register_map &registers) {
         return this->shared_from_this();
     }
 
+//------------------------------------------------------------------------------
+///  @brief Dummy get power exponent method.
+///
+///  @returns One.
+//------------------------------------------------------------------------------
     virtual graph::shared_leaf<float> get_power_exponent() const {
         return graph::one<float> ();
     }

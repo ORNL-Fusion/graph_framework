@@ -506,6 +506,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -514,12 +515,14 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!visited.contains(this)) {
                 this->arg->compile_preamble(stream, registers,
                                             visited, usage,
                                             textures1d, textures2d,
-                                            avail_const_mem);
+                                            pre_funcs, avail_const_mem);
+
                 if (registers.find(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data());
@@ -1058,6 +1061,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1066,16 +1070,18 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!visited.contains(this)) {
                 this->left->compile_preamble(stream, registers,
                                              visited, usage,
                                              textures1d, textures2d,
-                                             avail_const_mem);
+                                             pre_funcs, avail_const_mem);
                 this->right->compile_preamble(stream, registers,
                                               visited, usage,
                                               textures1d, textures2d,
-                                              avail_const_mem);
+                                              pre_funcs, avail_const_mem);
+
                 if (registers.find(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data());

@@ -80,10 +80,10 @@ namespace gpu {
 ///  The cuda code library.
         CUmodule module;
 ///  Argument map.
-        std::map<graph::leaf_node<T, SAFE_MATH> *, CUdeviceptr> kernel_arguments;
+        std::unordered_map<graph::leaf_node<T, SAFE_MATH> *, CUdeviceptr> kernel_arguments;
 #ifdef USE_CUDA_TEXTURES
 ///  Textures.
-        std::map<void *, CUtexObject> texture_arguments;
+        std::unordered_map<void *, CUtexObject> texture_arguments;
 #endif
 ///  Result buffer.
         CUdeviceptr result_buffer;

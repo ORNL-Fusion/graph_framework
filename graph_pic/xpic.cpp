@@ -194,6 +194,50 @@ void run_pic() {
         }, {}, {
             graph::variable_cast(mesh.y[0])
         }, NULL, "sum_weights_" + ion_tag, num_particles);
+
+        graph::shared_leaf<T> total_density = graph::zero<T> ();
+        graph::shared_leaf<T> total_flux = graph::zero<T> ();
+        for (size_t j = 0; j < num_ions; j++) {
+            const std::string inner_ion_tag = jit::format_to_string(j);
+
+            auto coll = pic::build_ion_ion_collision<T, pic::model::chen> (ions[i],
+                                                                           ions[j],
+                                                                           mesh,
+                                                                           norms,
+                                                                           params,
+                                                                           total_density,
+                                                                           total_flux,
+                                                                           graph::random_state_cast(state));
+
+            work.add_item({
+                ions[i].get_x(),
+                ions[i].get_v_para(),
+                ions[i].get_v_perp(),
+                graph::variable_cast(mesh.y[0])
+            }, {}, {
+                {coll[0], ions[i].get_v_para()},
+                {coll[1], ions[i].get_v_perp()}
+            }, {}, graph::random_state_cast(state),
+            "ion_ion_" + ion_tag + "_" + inner_ion_tag, num_particles);
+        }
+
+        auto coll = pic::build_ion_electron_collision<T, pic::model::chen> (ions[i],
+                                                                            mesh,
+                                                                            norms,
+                                                                            params,
+                                                                            total_density,
+                                                                            total_flux,
+                                                                            graph::random_state_cast(state));
+
+        work.add_item({
+            ions[i].get_x(),
+            ions[i].get_v_para(),
+            ions[i].get_v_perp()
+        }, {}, {
+            {coll[0], ions[i].get_v_para()},
+            {coll[1], ions[i].get_v_perp()}
+        }, {}, graph::random_state_cast(state),
+        "ion_elec_" + ion_tag, num_particles);
     }
     init.print();
 
