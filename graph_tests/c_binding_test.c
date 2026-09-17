@@ -272,11 +272,7 @@ void run_tests(const enum graph_type type,
             assert(value[2] == 2.0f && "Value of dydm does not match.");
             assert(value[3] == 1.0f && "Value of dydb does not match.");
             assert(value[4] == 1.0f && "Value of dydy does not match.");
-            if (c_context->safe_math) {
-                assert(value[5] == 2546248192.0f && "Value of rand does not match.");
-            } else {
-                assert(value[5] == 2357136128.0f && "Value of rand does not match.");
-            }
+            assert(value[5] == 2357136128.0f && "Value of rand does not match.");
             assert(value[6] == 1.0f && "Value of root does not match.");
             assert(value[7] == 4.0f && "Value of p1 does not match.");
             assert(value[8] == 8.0f && "Value of p2 does not match.");

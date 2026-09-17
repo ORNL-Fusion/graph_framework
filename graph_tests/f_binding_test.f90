@@ -223,13 +223,8 @@
       CALL graph%copy_to_host(dydy, value)
       CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      IF (use_safe_math) THEN
-         CALL assert(value(1) .eq. 2546248192.0_C_FLOAT,                       &
-                     'Value of rand does not match.')
-      ELSE
-         CALL assert(value(1) .eq. 2357136128.0_C_FLOAT,                       &
-                     'Value of rand does not match.')
-      END IF
+      CALL assert(value(1) .eq. 2357136128.0_C_FLOAT,                          &
+                  'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of root does not match.')
       CALL graph%copy_to_host(p1, value)

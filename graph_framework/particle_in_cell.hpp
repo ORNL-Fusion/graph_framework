@@ -171,13 +171,7 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " apply_u(const ";
                 jit::add_type<T> (stream);
-                stream << " x, const uint8_t i, ";
-                if constexpr (std::same_as<T, float>) {
-                    stream << "uint32_t";
-                } else {
-                    stream << "uint64_t";
-                }
-                stream << " rand, const ";
+                stream << " x, const uint8_t i, uint32_t rand, const ";
                 jit::add_type<T> (stream);
                 stream << " mof, const ";
                 jit::add_type<T> (stream);
@@ -248,18 +242,7 @@ namespace graph {
                 stream << " " << registers[this] << " = apply_u("
                        << registers[x.get()] << ", "
                        << registers[i.get()] << ", ";
-                if (jit::use_metal<T> ()) {
-                    stream << "as_type<";
-                } else {
-                    stream << "bit_cast<";
-                }
-                if constexpr (std::same_as<T, float>) {
-                    stream << "uint32_t";
-                } else {
-                    stream << "uint64_t";
-                }
-                stream << "> ("
-                       << registers[rand.get()] << "), "
+                stream << registers[rand.get()] << ", "
                        << registers[mof.get()] << ", "
                        << registers[tbnu_e_dt.get()] << ", "
                        << registers[A.get()] << ", "
@@ -541,13 +524,7 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " apply_xi(const ";
                 jit::add_type<T> (stream);
-                stream << " x, const uint8_t i, ";
-                if constexpr (std::same_as<T, float>) {
-                    stream << "uint32_t";
-                } else {
-                    stream << "uint64_t";
-                }
-                stream << " rand, const ";
+                stream << " x, const uint8_t i, uint32_t rand, const ";
                 jit::add_type<T> (stream);
                 stream << " nu_D_dt) {" << std::endl
                        << "    ";
@@ -609,18 +586,7 @@ namespace graph {
                 stream << " " << registers[this] << " = apply_xi("
                        << registers[x.get()] << ", "
                        << registers[i.get()] << ", ";
-                if (jit::use_metal<T> ()) {
-                    stream << "as_type<";
-                } else {
-                    stream << "bit_cast<";
-                }
-                if constexpr (std::same_as<T, float>) {
-                    stream << "uint32_t";
-                } else {
-                    stream << "uint64_t";
-                }
-                stream << "> ("
-                       << registers[rand.get()] << "), "
+                stream << registers[rand.get()] << ", "
                        << registers[nu_D_dt.get()] << ")";
                 this->endline(stream, usage);
             }
@@ -1525,7 +1491,7 @@ namespace pic {
 
 //  Velocity Scattering operator.
         auto nu_e_dt = build_colision_rate<T, M> (xab, mass_a, mass_b, gb, nuab0, erfp_xab)*dt;
-        auto steps = graph::min(nu_e_dt*2.5, static_cast<T> (sizeof(T)*8));
+        auto steps = graph::min(nu_e_dt*2.5, static_cast<T> (32));
 
         nu_e_dt = nu_e_dt*steps;
 
@@ -1542,7 +1508,7 @@ namespace pic {
         sphere[0] = graph::sqrt(u_op);
 
         auto nu_D_dt = nuab0*(erf_xab - gb)/(xab*xab*xab)*dt;
-        steps = graph::min(nu_D_dt, static_cast<T> (sizeof(T)*8));
+        steps = graph::min(nu_D_dt, static_cast<T> (32));
         nu_D_dt = nu_D_dt/steps;
 
         auto rand2 = graph::random<T> (state);

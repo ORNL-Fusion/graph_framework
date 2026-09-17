@@ -932,8 +932,10 @@ namespace gpu {
                     }
                     source_buffer << "index] = ";
                     if constexpr (SAFE_MATH) {
-                        source_buffer << "isnan(" << registers[a.get()]
-                                      << ") ? 0.0 : ";
+                        if (!graph::random_cast(a).get()) {
+                            source_buffer << "isnan(" << registers[a.get()]
+                                          << ") ? 0.0 : ";
+                        }
                     }
                     source_buffer << registers[a.get()] << ";" << std::endl;
                     out_registers.insert(out.get());

@@ -359,18 +359,18 @@ template<jit::float_scalar T> void test_backend() {
     const backend::buffer<T> arctanvec = backend::atan(avec, bvec);
     assert(arctanvec.size() == 2 && "Expected a size of 2");
     if constexpr (jit::complex_scalar<T>) {
-        assert(arctanvec.at(0) == std::atan(static_cast<T> (3.0)/
-                                            static_cast<T> (1.0)) &&
+        assert(arctanvec.at(0) == static_cast<T> (std::atan(static_cast<T> (3.0)/
+                                                            static_cast<T> (1.0))) &&
                "Expected a value of atan(3/1).");
-        assert(arctanvec.at(1) == std::atan(static_cast<T> (4.0)/
-                                            static_cast<T> (2.0)) &&
+        assert(arctanvec.at(1) == static_cast<T> (std::atan(static_cast<T> (4.0)/
+                                                            static_cast<T> (2.0))) &&
                "Expected a value of atan(4/2).");
     } else {
-        assert(arctanvec.at(0) == std::atan2(static_cast<T> (3.0),
-                                             static_cast<T> (1.0)) &&
+        assert(arctanvec.at(0) == static_cast<T> (std::atan2(static_cast<T> (3.0),
+                                                             static_cast<T> (1.0))) &&
                "Expected a value of atan2(3,1).");
-        assert(arctanvec.at(1) == std::atan2(static_cast<T> (4.0),
-                                             static_cast<T> (2.0)) &&
+        assert(arctanvec.at(1) == static_cast<T> (std::atan2(static_cast<T> (4.0),
+                                                             static_cast<T> (2.0))) &&
                "Expected a value of atan2(4,2).");
     }
 

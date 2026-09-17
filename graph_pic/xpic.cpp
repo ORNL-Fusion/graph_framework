@@ -5,7 +5,7 @@
 
 #include <random>
 #include <numbers>
-#include <future>
+#include <thread>
 
 #include "../graph_framework/graph_framework.hpp"
 
@@ -74,22 +74,22 @@ void run_pic() {
     std::vector<output::data_set<T>> p_datasets(num_ions,
                                                 output::data_set<T> (p_file));
 
-    std::vector<std::mutex> ion_sync(num_ions);
-    std::mutex mesh_sync;
+    std::vector<std::thread> ion_sync;
+    std::thread mesh_sync;
+
+    work.template add_zero_item<workflow::order::pre_run_item> ({
+        graph::variable_cast(mesh.y[0])
+    });
+
+    std::vector<std::array<graph::shared_leaf<T>, 3>> mesh_solves;
 
     for (size_t i = 0; i < num_ions; i++) {
         const std::string ion_tag = jit::format_to_string(i);
-
+        
         auto ion_inits = pic::build_initialization<T> (ions[i], mesh,
                                                        norms, params,
                                                        graph::random_state_cast(state));
-
-        if (i == 0) {
-            work.template add_zero_item<workflow::order::pre_run_item> ({
-                graph::variable_cast(mesh.y[0])
-            });
-        }
-
+        
         work.template add_item<workflow::order::pre_run_item> ({
             ions[i].get_x(), ions[i].get_v_para(), ions[i].get_v_perp()
         }, {}, {
@@ -99,49 +99,44 @@ void run_pic() {
         }, {}, graph::random_state_cast(state),
         "pre_initization_" + ion_tag, num_particles);
 
-        auto mesh_solve = mesh.build_mesh_solve(ions[i]);
+        work.template add_callback_item<workflow::order::pre_run_item> ([i, &p_file, &p_datasets, &ion_sync]() {
+            ion_sync.push_back(std::thread([i, &p_file, &p_datasets]() {
+                p_datasets[i].write(p_file);
+            }));
+        });
+
+        mesh_solves.emplace_back(mesh.build_mesh_solve(ions[i]));
         work.template add_item<workflow::order::pre_run_item> ({
             ions[i].get_x()
         }, {
-            mesh_solve[0],
-            mesh_solve[1],
-            mesh_solve[2]
+            mesh_solves[i][0],
+            mesh_solves[i][1],
+            mesh_solves[i][2]
         }, {}, {
             graph::variable_cast(mesh.y[0])
         }, NULL, "pre_sum_weights_" + ion_tag, num_particles);
+    }
 
-        if (i == ions.size() - 1) {
-            work.template add_copy_item<workflow::order::pre_run_item> ({
-                {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])},
-                {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[2])},
-                {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[3])}
-            });
-        }
+    work.template add_copy_item<workflow::order::pre_run_item> ({
+        {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])},
+        {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[2])},
+        {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[3])}
+    });
 
-        work.template add_callback_item<workflow::order::post_run_item> ([i, &p_file, &p_datasets, &ion_sync]() {
-            ion_sync[i].lock();
-            std::thread async([i, &p_file, &p_datasets, &ion_sync]() {
-                p_datasets[i].write(p_file);
-                ion_sync[i].unlock();
-            });
-            async.detach();
+    work.template add_callback_item<workflow::order::pre_run_item> ([&f_file, &mesh_dataset, &mesh_sync]() {
+        mesh_sync = std::thread([&f_file, &mesh_dataset]() {
+            mesh_dataset.write(f_file);
         });
-        if (i == 0) {
-            work.template add_callback_item<workflow::order::post_run_item> ([&f_file, &mesh_dataset, &mesh_sync]() {
-                mesh_sync.lock();
-                std::thread async([&f_file, &mesh_dataset, &mesh_sync]() {
-                    mesh_dataset.write(f_file);
-                    mesh_sync.unlock();
-                });
-                async.detach();
-            });
-        }
+    });
 
+    for (size_t i = 0; i < num_ions; i++) {
+        const std::string ion_tag = jit::format_to_string(i);
         work.add_callback_item([i, &ion_sync]() {
-            ion_sync[i].lock();
-            ion_sync[i].unlock();
+            if (ion_sync[i].joinable()) {
+                ion_sync[i].join();
+            }
         });
-
+        
         auto particle_step = pic::build_rk4_step(ions[i], mesh, norms, params);
         work.add_item({
             ions[i].get_x(),
@@ -156,7 +151,7 @@ void run_pic() {
             {particle_step[1], ions[i].get_v_para()},
             {particle_step[2], ions[i].get_v_perp()}
         }, {}, NULL, "particle_push_" + ion_tag, num_particles);
-
+        
         auto particle_reinject = pic::build_reinjection(ions[i], mesh, norms, params,
                                                         graph::random_state_cast(state));
         work.add_item({
@@ -170,30 +165,55 @@ void run_pic() {
         }, {}, graph::random_state_cast(state),
         "particle_reinjection_" + ion_tag, num_particles);
 
-        if (i == 0) {
-            work.add_callback_item([&mesh_sync]() {
-                mesh_sync.lock();
-                mesh_sync.unlock();
+        work.template add_callback_item<workflow::order::post_run_item> ([i, &p_file, &p_datasets, &ion_sync]() {
+            ion_sync[i] = std::thread([i, &p_file, &p_datasets]() {
+                p_datasets[i].write(p_file);
             });
-            work.add_copy_item({
-                {graph::variable_cast(mesh.y[2]), graph::variable_cast(mesh.y[3])},
-                {graph::variable_cast(mesh.y[1]), graph::variable_cast(mesh.y[2])},
-                {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])}
-            });
-            work.add_zero_item({
-                graph::variable_cast(mesh.y[0])
-            });
-        }
+        });
+    }
 
+    work.add_callback_item([&mesh_sync]() {
+        if (mesh_sync.joinable()) {
+            mesh_sync.join();
+        }
+    });
+    work.add_copy_item({
+        {graph::variable_cast(mesh.y[2]), graph::variable_cast(mesh.y[3])},
+        {graph::variable_cast(mesh.y[1]), graph::variable_cast(mesh.y[2])},
+        {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])}
+    });
+    work.add_zero_item({
+        graph::variable_cast(mesh.y[0])
+    });
+
+    for (size_t i = 0; i < num_ions; i++) {
+        const std::string ion_tag = jit::format_to_string(i);
+        
         work.add_item({
             graph::variable_cast(ions[i].x)
         }, {
-            mesh_solve[0],
-            mesh_solve[1],
-            mesh_solve[2]
+            mesh_solves[i][0],
+            mesh_solves[i][1],
+            mesh_solves[i][2]
         }, {}, {
             graph::variable_cast(mesh.y[0])
         }, NULL, "sum_weights_" + ion_tag, num_particles);
+    }
+
+    work.template add_callback_item<workflow::order::post_run_item> ([&f_file, &mesh_dataset, &mesh_sync]() {
+        mesh_sync = std::thread([&f_file, &mesh_dataset]() {
+            mesh_dataset.write(f_file);
+        });
+    });
+
+    for (size_t i = 0; i < num_ions; i++) {
+        const std::string ion_tag = jit::format_to_string(i);
+
+        work.add_callback_item([i, &ion_sync]() {
+            if (ion_sync[i].joinable()) {
+                ion_sync[i].join();
+            }
+        });
 
         graph::shared_leaf<T> total_density = graph::zero<T> ();
         graph::shared_leaf<T> total_flux = graph::zero<T> ();
@@ -268,14 +288,10 @@ void run_pic() {
 #endif
     const timing::measure_diagnostic run("Run Time");
     work.template run<workflow::order::pre_run_item> ();
-    work.wait();
-    work.template run<workflow::order::post_run_item> ();
-
     for (; counter < num_steps; counter++) {
         for (size_t i = 0; i < num_sub_steps; i++) {
             work.run();
         }
-        work.wait();
         work.template run<workflow::order::post_run_item> ();
     }
 
@@ -284,12 +300,10 @@ void run_pic() {
 #ifndef PROFILE_KERNELS
     progress.join();
 #endif
-    for (std::mutex &ion : ion_sync) {
-        ion.lock();
-        ion.unlock();
+    for (std::thread &ion : ion_sync) {
+        ion.join();
     }
-    mesh_sync.lock();
-    mesh_sync.unlock();
+    mesh_sync.join();
 
     std::cout << "\33[2K\r" << "100% Complete" << std::endl;
     run.print();

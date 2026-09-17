@@ -311,31 +311,25 @@ namespace graph {
 ///  @param[in,out] stream String buffer stream.
 //------------------------------------------------------------------------------
         static void compile_random(std::ostringstream &stream) {
-            jit::add_type<T> (stream);
-            stream << " random(";
+            stream << "uint32_t random(";
             if constexpr (jit::use_metal<T> ()) {
                 stream << "device ";
             }
-            stream << "mt_state &state) {"                                << std::endl
-                   << "    uint16_t k = state.index;"                     << std::endl
-                   << "    uint16_t j = (k + 1) % 624;"                   << std::endl
-                   << "    uint32_t x = (state.array[k] & 0x80000000U) |" << std::endl
-                   << "                 (state.array[j] & 0x7fffffffU);"  << std::endl
-                   << "    uint32_t xA = x >> 1;"                         << std::endl
-                   << "    if (x & 0x00000001U) {"                        << std::endl
-                   << "        xA ^= 0x9908b0dfU;"                        << std::endl
-                   << "    }"                                             << std::endl
-                   << "    j = (k + 397) % 624;"                          << std::endl
-                   << "    x = state.array[j]^xA;"                        << std::endl
-                   << "    state.array[k] = x;"                           << std::endl
-                   << "    state.index = (k + 1) % 624;"                  << std::endl
-                   << "    uint32_t y = x^(x >> 11);"                     << std::endl
-                   << "    y = y^((y << 7) & 0x9d2c5680U);"               << std::endl
-                   << "    y = y^((y << 15) & 0xefc60000U);"              << std::endl
-                   << "    return static_cast<";
-            jit::add_type<T> (stream);
-            stream << "> (y^(y >> 18));"                                  << std::endl
-                   << "}"                                                 << std::endl;
+            stream << "mt_state &state) {"                                         << std::endl
+                   << "    const uint16_t k = state.index;"                        << std::endl
+                   << "    state.index = (k + 1) % 624;"                           << std::endl
+                   << "    uint32_t x = (state.array[k] & 0x80000000U) |"          << std::endl
+                   << "                 (state.array[state.index] & 0x7fffffffU);" << std::endl
+                   << "    uint32_t xA = x >> 1;"                                  << std::endl
+                   << "    xA = x & 0x1U ? xA^0x9908b0dfU : xA;"                   << std::endl
+                   << "    const uint16_t j = (k + 397) % 624;"                    << std::endl
+                   << "    x = state.array[j]^xA;"                                 << std::endl
+                   << "    state.array[k] = x;"                                    << std::endl
+                   << "    uint32_t y = x^(x >> 11);"                              << std::endl
+                   << "    y = y^((y << 7) & 0x9d2c5680U);"                        << std::endl
+                   << "    y = y^((y << 15) & 0xefc60000U);"                       << std::endl
+                   << "    return y^(y >> 18);"                                    << std::endl
+                   << "}"                                                          << std::endl;
         }
 
 //------------------------------------------------------------------------------
@@ -429,7 +423,14 @@ namespace graph {
                 auto a = this->arg->compile(stream, registers,
                                             thread_mem, usage);
 
-                registers[this] = "random(" + registers[a.get()] + ")";
+                if constexpr (jit::complex_scalar<T>) {
+                    registers[this] = "static_cast<"
+                                    + jit::get_type_string<T> ()
+                                    + "> (random("
+                                    + registers[a.get()] + "))";
+                } else {
+                    registers[this] = "random(" + registers[a.get()] + ")";
+                }
             }
 
             return this->shared_from_this();
