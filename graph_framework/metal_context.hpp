@@ -94,11 +94,13 @@ namespace gpu {
             }
 
             if (jit::verbose) {
-                std::cout << "Metal GPU info." << std::endl;
-                std::cout << "  Max thread group memory : " << device.maxThreadgroupMemoryLength << std::endl;
-                std::cout << "  Max thread per group    : " << device.maxThreadsPerThreadgroup.width << std::endl;
-                std::cout << "  Device name             : " << device.name << std::endl;
-                std::cout << "  Architecture            : " << device.architecture << std::endl;
+                std::cout << "Metal GPU info." << std::endl
+                          << "  Max thread group memory : " << device.maxThreadgroupMemoryLength << std::endl
+                          << "  Max thread per group    : " << device.maxThreadsPerThreadgroup.width << std::endl
+                          << "  Device name             : " << [device.name cStringUsingEncoding:NSString.defaultCStringEncoding] << std::endl
+                          << "  Architecture            : " << [device.architecture.name cStringUsingEncoding:NSString.defaultCStringEncoding] << std::endl
+                          << "  Max buffer length       : " << device.maxBufferLength << std::endl
+                          << "  Max working set         : " << device.recommendedMaxWorkingSetSize << std::endl;
             }
         }
 
@@ -258,12 +260,13 @@ namespace gpu {
             NSUInteger thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 
             if (jit::verbose) {
-                std::cout << "  Kernel name : " << kernel_name << std::endl;
-                std::cout << "    Thread execution width  : " << thread_width << std::endl;
-                std::cout << "    Threads per group       : " << threads_per_group << std::endl;
-                std::cout << "    Number of groups        : " << thread_groups << std::endl;
-                std::cout << "    Total problem size      : " << threads_per_group*thread_groups << std::endl;
-                std::cout << "    Total parallel size     : " << total_parallel << std::endl;
+                std::cout << "  Kernel name : " << kernel_name << std::endl
+                          << "    Thread execution width  : " << thread_width << std::endl
+                          << "    Threads per group       : " << threads_per_group << std::endl
+                          << "    Number of groups        : " << thread_groups << std::endl
+                          << "    Total problem size      : " << threads_per_group*thread_groups << std::endl
+                          << "    Total parallel size     : " << total_parallel << std::endl
+                          << "    Current allocation size : " << device.currentAllocatedSize << std::endl;
             }
 
             if (state.get()) {
