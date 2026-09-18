@@ -41,7 +41,7 @@ namespace gpu {
 
     public:
 ///  Random state size multiplier.
-        constexpr static size_t random_state_scale = 1000;
+        constexpr static size_t random_state_scale = 3000;
 ///  Size of random state needed.
         constexpr static size_t random_state_size = 1024*random_state_scale;
 
