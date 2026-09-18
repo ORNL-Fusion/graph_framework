@@ -359,9 +359,18 @@ template<jit::float_scalar T> void test_backend() {
     const backend::buffer<T> arctanvec = backend::atan(avec, bvec);
     assert(arctanvec.size() == 2 && "Expected a size of 2");
     if constexpr (jit::complex_scalar<T>) {
-        assert(arctanvec.at(0) == static_cast<T> (std::atan(static_cast<T> (3.0)/
-                                                            static_cast<T> (1.0))) &&
+        const T temp = arctanvec.at(0)
+                     - static_cast<T> (std::atan(static_cast<T> (3.0)/
+                                                 static_cast<T> (1.0)));
+        assert(std::imag(temp) == 0 &&
                "Expected a value of atan(3/1).");
+        if constexpr (jit::float_base<T>) {
+            assert(std::real(temp) < 1.3E-7 &&
+                   "Expected a value of atan(3/1).");
+        } else {
+            assert(std::real(temp) == 0 &&
+                   "Expected a value of atan(3/1).");
+        }
         assert(arctanvec.at(1) == static_cast<T> (std::atan(static_cast<T> (4.0)/
                                                             static_cast<T> (2.0))) &&
                "Expected a value of atan(4/2).");

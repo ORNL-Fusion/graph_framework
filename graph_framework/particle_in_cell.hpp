@@ -171,7 +171,13 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " apply_u(const ";
                 jit::add_type<T> (stream);
-                stream << " x, const uint8_t i, uint32_t rand, const ";
+                stream << " x, const ";
+                if constexpr (jit::use_cuda()) {
+                    stream << "unsigned char";
+                } else {
+                    stream << "uint8_t";
+                }
+                stream << " i, uint32_t rand, const ";
                 jit::add_type<T> (stream);
                 stream << " mof, const ";
                 jit::add_type<T> (stream);
@@ -183,11 +189,23 @@ namespace graph {
                        << "    ";
                 jit::add_type<T> (stream);
                 stream << " temp_x = x;" << std::endl
-                       << "    for (uint8_t j = 0; j < i; j++, rand >>= 1) {" << std::endl
+                       << "    for (";
+                if constexpr (jit::use_cuda()) {
+                    stream << "unsigned char";
+                } else {
+                    stream << "uint8_t";
+                }
+                stream << " j = 0; j < i; j++, rand >>= 1) {" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " E0 = mof*temp_x;" << std::endl
-                       << "        const uint8_t rm = 4*(rand & 1) - 2;" << std::endl
+                       << "        const ";
+                if constexpr (jit::use_cuda()) {
+                    stream << "unsigned char";
+                } else {
+                    stream << "uint8_t";
+                }
+                stream << " rm = 4*(rand & 1) - 2;" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " C = rm*sqrt(tbnu_e_dt*E0);" << std::endl
@@ -524,17 +542,35 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " apply_xi(const ";
                 jit::add_type<T> (stream);
-                stream << " x, const uint8_t i, uint32_t rand, const ";
+                stream << " x, const ";
+                if constexpr (jit::use_cuda()) {
+                    stream << "unsigned char";
+                } else {
+                    stream << "uint8_t";
+                }
+                stream << " i, uint32_t rand, const ";
                 jit::add_type<T> (stream);
                 stream << " nu_D_dt) {" << std::endl
                        << "    ";
                 jit::add_type<T> (stream);
                 stream << " temp_x = x;" << std::endl
-                       << "    for (uint8_t j = 0; j < i; j++, rand >>= 1) {" << std::endl
+                       << "    for (";
+                if constexpr (jit::use_cuda()) {
+                    stream << "unsigned char";
+                } else {
+                    stream << "uint8_t";
+                }
+                stream << " j = 0; j < i; j++, rand >>= 1) {" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " A = -temp_x*nu_D_dt;" << std::endl
-                       << "        const uint8_t rm = 2*(rand & 1) - 1;" << std::endl
+                       << "        const ";
+                if constexpr (jit::use_cuda()) {
+                    stream << "unsigned char";
+                } else {
+                    stream << "uint8_t";
+                }
+                stream << " rm = 2*(rand & 1) - 1;" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " C = rm*sqrt((1 - temp_x*temp_x)*nu_D_dt);" << std::endl
