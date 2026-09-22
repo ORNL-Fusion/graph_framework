@@ -111,19 +111,19 @@ namespace jit {
             if constexpr (jit::use_metal<T> ()) {
                 return "ushort";
             } else {
-                return "unsigned char";
+                return "uint8_t";
             }
         } else if (max_size <= std::numeric_limits<unsigned short>::max()) {
             if constexpr (jit::use_metal<T> ()) {
                 return "ushort";
             } else {
-                return "unsigned short";
+                return "uint16_t";
             }
         } else if (max_size <= std::numeric_limits<unsigned int>::max()) {
             if constexpr (jit::use_metal<T> ()) {
                 return "uint";
             } else {
-                return "unsigned int";
+                return "uint32_t";
             }
         } else {
             if constexpr (jit::use_metal<T> ()) {

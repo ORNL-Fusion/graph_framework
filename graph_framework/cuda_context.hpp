@@ -356,8 +356,6 @@ namespace gpu {
                                              input->data(),
                                              input->size()*sizeof(T)),
                                 "cuMemcpyHtoD");
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
-                    needed_buffers.insert(input.get());
                 }
                 if (!needed_buffers.contains(input.get())) {
                     buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
@@ -365,18 +363,18 @@ namespace gpu {
                 }
             }
             for (auto &output : outputs) {
-                if (!kernel_arguments.contains(output.get())) {
-                    kernel_arguments.try_emplace(output.get());
-                    check_error(cuMemAllocManaged(&kernel_arguments[output.get()],
-                                                  num_rays*sizeof(T),
-                                                  CU_MEM_ATTACH_GLOBAL),
-                                "cuMemAllocManaged");
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
-                    needed_buffers.insert(output.get());
-                }
-                if (!needed_buffers.contains(output.get())) {
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
-                    needed_buffers.insert(output.get());
+                if (!graph::atomic_accumulate_1D_cast(output).get()) {
+                    if (!kernel_arguments.contains(output.get())) {
+                        kernel_arguments.try_emplace(output.get());
+                        check_error(cuMemAllocManaged(&kernel_arguments[output.get()],
+                                                      num_rays*sizeof(T),
+                                                      CU_MEM_ATTACH_GLOBAL),
+                                    "cuMemAllocManaged");
+                    }
+                    if (!needed_buffers.contains(output.get())) {
+                        buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
+                        needed_buffers.insert(output.get());
+                    }
                 }
             }
             for (auto &atomic : atomics) {
@@ -390,8 +388,6 @@ namespace gpu {
                                              atomic->data(),
                                              atomic->size()*sizeof(T)),
                                 "cuMemcpyHtoD");
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[atomic.get()]));
-                    needed_buffers.insert(atomic.get());
                 }
                 if (!needed_buffers.contains(atomic.get())) {
                     buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[atomic.get()]));
@@ -883,6 +879,7 @@ namespace gpu {
             source_buffer << "typedef unsigned int uint32_t;"                << std::endl
                           << "typedef unsigned short uint16_t;"              << std::endl
                           << "typedef short int16_t;"                        << std::endl
+                          << "typedef unsigned char uint8_t;"                << std::endl
                           << "template<typename T, size_t S>"                << std::endl
                           << "class array {"                                 << std::endl
                           << "private:"                                      << std::endl

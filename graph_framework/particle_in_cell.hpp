@@ -171,13 +171,7 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " apply_u(const ";
                 jit::add_type<T> (stream);
-                stream << " x, const ";
-                if constexpr (jit::use_cuda()) {
-                    stream << "unsigned char";
-                } else {
-                    stream << "uint8_t";
-                }
-                stream << " i, uint32_t rand, const ";
+                stream << " x, const uint8_t i, uint32_t rand, const ";
                 jit::add_type<T> (stream);
                 stream << " mof, const ";
                 jit::add_type<T> (stream);
@@ -189,23 +183,11 @@ namespace graph {
                        << "    ";
                 jit::add_type<T> (stream);
                 stream << " temp_x = x;" << std::endl
-                       << "    for (";
-                if constexpr (jit::use_cuda()) {
-                    stream << "unsigned char";
-                } else {
-                    stream << "uint8_t";
-                }
-                stream << " j = 0; j < i; j++, rand >>= 1) {" << std::endl
+                       << "    for (uint8_t j = 0; j < i; j++, rand >>= 1) {" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " E0 = mof*temp_x;" << std::endl
-                       << "        const ";
-                if constexpr (jit::use_cuda()) {
-                    stream << "unsigned char";
-                } else {
-                    stream << "uint8_t";
-                }
-                stream << " rm = 4*(rand & 1) - 2;" << std::endl
+                       << "        const uint8_t rm = 4*(rand & 1) - 2;" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " C = rm*sqrt(tbnu_e_dt*E0);" << std::endl
@@ -542,35 +524,17 @@ namespace graph {
                 jit::add_type<T> (stream);
                 stream << " apply_xi(const ";
                 jit::add_type<T> (stream);
-                stream << " x, const ";
-                if constexpr (jit::use_cuda()) {
-                    stream << "unsigned char";
-                } else {
-                    stream << "uint8_t";
-                }
-                stream << " i, uint32_t rand, const ";
+                stream << " x, const uint8_t i, uint32_t rand, const ";
                 jit::add_type<T> (stream);
                 stream << " nu_D_dt) {" << std::endl
                        << "    ";
                 jit::add_type<T> (stream);
                 stream << " temp_x = x;" << std::endl
-                       << "    for (";
-                if constexpr (jit::use_cuda()) {
-                    stream << "unsigned char";
-                } else {
-                    stream << "uint8_t";
-                }
-                stream << " j = 0; j < i; j++, rand >>= 1) {" << std::endl
+                       << "    for (uint8_t j = 0; j < i; j++, rand >>= 1) {" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " A = -temp_x*nu_D_dt;" << std::endl
-                       << "        const ";
-                if constexpr (jit::use_cuda()) {
-                    stream << "unsigned char";
-                } else {
-                    stream << "uint8_t";
-                }
-                stream << " rm = 2*(rand & 1) - 1;" << std::endl
+                       << "        const uint8_t rm = 2*(rand & 1) - 1;" << std::endl
                        << "        const ";
                 jit::add_type<T> (stream);
                 stream << " C = rm*sqrt((1 - temp_x*temp_x)*nu_D_dt);" << std::endl
@@ -1414,10 +1378,10 @@ namespace pic {
                                                                  graph::shared_leaf<T> total_flux,
                                                                  const graph::shared_random_state<T> state) {
         const T dt = params.dt*norms.t;
-        
+
         const T mass_b = ion_b.mass*norms.m;
         const uint8_t zb2 = ion_b.z*ion_b.z;
-        
+
         auto nb = build_density(ion_a.x, ion_b, mesh, norms, params)/norms.get_volume();
         auto tpara = ion_a.build_profile([](graph::shared_leaf<T> x) -> graph::shared_leaf<T> {
             return graph::one<T> ();
@@ -1430,7 +1394,7 @@ namespace pic {
             return graph::one<T> ();
         })*norms.v/norms.get_volume();
         auto uxb = nv/nb;
-        
+
         total_density = total_density + nb;
         total_flux = total_flux + nv;
 
@@ -1461,10 +1425,10 @@ namespace pic {
                                                                         graph::shared_leaf<T> total_flux,
                                                                         const graph::shared_random_state<T> state) {
         const T dt = params.dt*norms.t;
-        
+
         const T mass_b = m_electron<T>;
         const uint8_t zb2 = 1;
-        
+
         auto nb = total_density;
         auto tb = ion_a.build_profile([](graph::shared_leaf<T> x) -> graph::shared_leaf<T> {
             return graph::one<T> ();

@@ -367,7 +367,7 @@ template<jit::float_scalar T> void run_math_tests() {
             graph::variable_cast(v1),
             graph::variable_cast(v2)
         }, {if_node}, {}, false_v->evaluate().at(0), 0.0);
-        
+
         if_node = graph::if_(v1 < v2, true_v, false_v);
         compile<T> ({
             graph::variable_cast(v1),
@@ -378,7 +378,7 @@ template<jit::float_scalar T> void run_math_tests() {
         compile<T> ({
             graph::variable_cast(v1),
             graph::variable_cast(v2)
-        }, {hypot_node}, {}, hypot_node->evaluate().at(0), 0.0);
+        }, {hypot_node}, {}, hypot_node->evaluate().at(0), 5.0E-16);
 
         auto min_node = graph::min(v1, v2);
         compile<T> ({

@@ -272,7 +272,7 @@ template<std::floating_point T> void run_field_solve_test() {
         graph::variable_cast(mesh.y[0])
     });
     work.add_item({
-        graph::variable_cast(ions[0].x)
+        ions[0].get_x()
     }, {
         mesh_solve[0],
         mesh_solve[1],
