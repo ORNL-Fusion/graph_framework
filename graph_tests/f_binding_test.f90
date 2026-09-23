@@ -223,7 +223,7 @@
       CALL graph%copy_to_host(dydy, value)
       CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      CALL assert(value(1) .eq. 2357136128.0_C_FLOAT,                          &
+      CALL assert(value(1) .eq. 2357136044.0_C_FLOAT,                          &
                   'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of root does not match.')
@@ -412,13 +412,8 @@
       CALL graph%copy_to_host(dydy, value)
       CALL assert(value(1) .eq. 1.0_C_DOUBLE, 'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      IF (use_safe_math) THEN
-         CALL assert(value(1) .eq. 2546248239.0_C_DOUBLE,                      &
-                     'Value of rand does not match.')
-      ELSE
-         CALL assert(value(1) .eq. 2357136044.0_C_DOUBLE,                      &
-                     'Value of rand does not match.')
-      END IF
+      CALL assert(value(1) .eq. 2357136044_C_DOUBLE,                           &
+                  'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(value(1) .eq. 1.0_C_DOUBLE, 'Value of root does not match.')
       CALL graph%copy_to_host(p1, value)
@@ -614,13 +609,8 @@
       CALL assert(REAL(value(1)) .eq. 1.0_C_FLOAT,                             &
                   'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      IF (use_safe_math) THEN
-         CALL assert(REAL(value(1)) .eq. 2546248192.0_C_FLOAT,                 &
-                     'Value of rand does not match.')
-      ELSE
-         CALL assert(REAL(value(1)) .eq. 2357136128.0_C_FLOAT,                 &
-                     'Value of rand does not match.')
-      END IF
+      CALL assert(REAL(value(1)) .eq. 2357136044.0_C_FLOAT,                    &
+                  'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(REAL(value(1)) .eq. 1.0_C_FLOAT,                             &
                   'Value of root does not match.')
@@ -834,13 +824,8 @@
       CALL assert(DBLE(value(1)) .eq. 1.0_C_DOUBLE,                            &
                   'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      IF (use_safe_math) THEN
-         CALL assert(DBLE(value(1)) .eq. 2546248239.0_C_DOUBLE,                &
-                     'Value of rand does not match.')
-      ELSE
-         CALL assert(DBLE(value(1)) .eq. 2357136044.0_C_DOUBLE,                &
-                     'Value of rand does not match.')
-      END IF
+      CALL assert(DBLE(value(1)) .eq. 2357136044_C_DOUBLE,                     &
+                  'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(DBLE(value(1)) .eq. 1.0_C_DOUBLE,                            &
                   'Value of root does not match.')

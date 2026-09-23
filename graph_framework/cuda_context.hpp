@@ -1279,17 +1279,26 @@ namespace gpu {
                         if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (source_buffer);
                             source_buffer << " (";
-                            source_buffer << "isnan(real(" << registers[a.get()]
-                                          << ")) ? 0.0 : real("
-                                          << registers[a.get()]
-                                          << "), ";
-                            source_buffer << "isnan(imag(" << registers[a.get()]
-                                          << ")) ? 0.0 : imag("
-                                          << registers[a.get()]
-                                          << "));" << std::endl;
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(real("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : real("
+                                              << registers[a.get()]
+                                              << "), isnan(imag("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : imag("
+                                              << registers[a.get()]
+                                              << ")";
+                            } else {
+                                source_buffer << registers[a.get()];
+                            }
+                            source_buffer << ");" << std::endl;
                         } else {
-                            source_buffer << "isnan(" << registers[a.get()]
-                                          << ") ? 0.0 : " << registers[a.get()]
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(" << registers[a.get()]
+                                              << ") ? 0.0 : ";
+                            }
+                            source_buffer << registers[a.get()]
                                           << ";" << std::endl;
                         }
                     } else {
@@ -1316,17 +1325,26 @@ namespace gpu {
                         if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (source_buffer);
                             source_buffer << " (";
-                            source_buffer << "isnan(real(" << registers[a.get()]
-                                          << ")) ? 0.0 : real("
-                                          << registers[a.get()]
-                                          << "), ";
-                            source_buffer << "isnan(imag(" << registers[a.get()]
-                                          << ")) ? 0.0 : imag("
-                                          << registers[a.get()]
-                                          << "));" << std::endl;
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(real("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : real("
+                                              << registers[a.get()]
+                                              << "), isnan(imag("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : imag("
+                                              << registers[a.get()]
+                                              << ")";
+                            } else {
+                                source_buffer << registers[a.get()];
+                            }
+                            source_buffer << ");" << std::endl;
                         } else {
-                            source_buffer << "isnan(" << registers[a.get()]
-                                          << ") ? 0.0 : " << registers[a.get()]
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(" << registers[a.get()]
+                                              << ") ? 0.0 : ";
+                            }
+                            source_buffer << registers[a.get()]
                                           << ";" << std::endl;
                         }
                     } else {
