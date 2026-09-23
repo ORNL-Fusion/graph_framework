@@ -42,15 +42,16 @@ T autocorrelation(const std::vector<T> &sequence,
 ///  @tparam N Number of random numbers to use.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T, size_t N> void test_dist() {
-    auto state = graph::random_state<T> (jit::context<T>::random_state_size, 0);
+    auto state = graph::random_state<T> (jit::context<T>::max_random_state_size(N), 0);
     auto random = graph::random<T> (graph::random_state_cast(state));
     const T max = 1.0;
     const T min = -1.0;
     auto random_real = (max - min)/graph::random_scale<T> ()*random + min;
 
     workflow::manager<T> work(0);
-    work.add_item({}, {random_real}, {}, graph::random_state_cast(state),
-                  "step", N);
+    work.add_item({}, {
+        random_real
+    }, {}, {}, graph::random_state_cast(state), "step", N);
     work.compile();
     work.run();
 
@@ -68,7 +69,7 @@ template<jit::float_scalar T, size_t N> void test_dist() {
 ///  @brief Test graph properties of random numbers.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void test_graph() {
-    auto state = graph::random_state<T> (jit::context<T>::random_state_size, 0);
+    auto state = graph::random_state<T> (jit::context<T>::max_random_state_size(1), 0);
     auto random = graph::random<T> (graph::random_state_cast(state));
 
 //  r + r -> r + r
@@ -140,14 +141,14 @@ template<jit::float_scalar T> void test_graph() {
 ///  @brief Test multiple randoms in a single kernel.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void test_multi() {
-    auto state = graph::random_state<T> (jit::context<T>::random_state_size, 0);
+    auto state = graph::random_state<T> (jit::context<T>::max_random_state_size(1), 0);
     auto random1 = graph::random<T> (graph::random_state_cast(state));
     auto random2 = graph::random<T> (graph::random_state_cast(state));
 
     workflow::manager<T> work(0);
     work.add_item({}, {
         random1, random2
-    }, {}, graph::random_state_cast(state), "multi_random", 1);
+    }, {}, {}, graph::random_state_cast(state), "multi_random", 1);
     work.compile();
 }
 

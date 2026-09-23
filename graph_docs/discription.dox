@@ -39,9 +39,9 @@
  * expression nodes. The factory method checks a node_cache to avoid building
  * duplicate sub-graphs. Identification of duplicate graphs is performed by
  * computing a hash of the sub-graph. This hash can be rapidly checked if the
- * same hash already exists in a <tt>std::map</tt> container. If the sub-graph
- * already exists, the existing graph is returned otherwise a new sub-graph is
- * registered in the node_cache.
+ * same hash already exists in a <tt>std::unordered_map</tt> container. If the
+ * sub-graph already exists, the existing graph is returned otherwise a new
+ * sub-graph is registered in the node_cache.
  *
  * Each time an expression is built, the reduce method is called to simplify the
  * graph. For instance, a graph consisting of constant added to a constant will

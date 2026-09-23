@@ -52,12 +52,14 @@ namespace jit {
         std::ostringstream source_buffer;
 ///  Nodes that have been jitted.
         register_map registers;
+///  Prefunctions that have been defined.
+        preamble_map pre_funcs;
 ///  Kernel names.
         std::vector<std::string> kernel_names;
 ///  Kernel textures.
-        std::map<std::string, texture1d_list> kernel_1dtextures;
+        std::unordered_map<std::string, texture1d_list> kernel_1dtextures;
 ///  Kernel textures.
-        std::map<std::string, texture2d_list> kernel_2dtextures;
+        std::unordered_map<std::string, texture2d_list> kernel_2dtextures;
 
 ///  Type for the GPU context.
         using gpu_context_type = typename std::conditional<use_gpu<T> (),
@@ -72,12 +74,20 @@ namespace jit {
 
 ///  GPU Context.
         gpu_context_type gpu_context;
-///  Used random.
-        bool used_random;
 
     public:
 ///  Size of random state needed.
         constexpr static size_t random_state_size = gpu_context_type::random_state_size;
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of random states needed.
+///
+///  @param[in] size Number of random numbers needed.
+///  @returns The maximum number of random states needed.
+//------------------------------------------------------------------------------
+        static size_t max_random_state_size(const size_t size) {
+            return std::min(size, random_state_size);
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the maximum number of concurrent instances.
@@ -98,7 +108,7 @@ namespace jit {
 ///
 ///  @param[in] index Concurrent index. Not used.
 //------------------------------------------------------------------------------
-        context(const size_t index) : gpu_context(index), used_random(false) {
+        context(const size_t index) : gpu_context(index) {
             source_buffer << std::setprecision(max_digits10<T> ());
             gpu_context.create_header(source_buffer);
         }
@@ -108,26 +118,24 @@ namespace jit {
 ///
 ///  Build the source code for a kernel graph.
 ///
-///  @param[in] name    Name to call the kernel.
-///  @param[in] inputs  Input variables of the kernel.
-///  @param[in] outputs Output nodes of the graph to compute.
-///  @param[in] setters Map outputs back to input values.
-///  @param[in] state   Random state node.
-///  @param[in] size    Size of the kernel.
+///  @param[in] name       Name to call the kernel.
+///  @param[in] inputs     Input variables of the kernel.
+///  @param[in] outputs    Output nodes of the graph to compute.
+///  @param[in] setters    Map outputs back to input values.
+///  @param[in] atomics    Input variables for atomic operations.
+///  @param[in] state      Random state node.
+///  @param[in] size       Size of the kernel.
+///  @param[in] iterations Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void add_kernel(const std::string name,
-                        graph::input_nodes<T, SAFE_MATH> inputs,
-                        graph::output_nodes<T, SAFE_MATH> outputs,
-                        graph::map_nodes<T, SAFE_MATH> setters,
-                        graph::shared_random_state<T, SAFE_MATH> state,
-                        const size_t size) {
+                        graph::input_nodes<T, SAFE_MATH> &inputs,
+                        graph::output_nodes<T, SAFE_MATH> &outputs,
+                        graph::map_nodes<T, SAFE_MATH> &setters,
+                        graph::input_nodes<T, SAFE_MATH> &atomics,
+                        graph::shared_random_state<T, SAFE_MATH> &state,
+                        const size_t size,
+                        const size_t iterations=1) {
             kernel_names.push_back(name);
-
-            if (state.get() && !used_random) {
-                used_random = true;
-                graph::random_state_node<T>::compile_random_state(source_buffer);
-                graph::random_node<T>::compile_random(source_buffer);
-            }
 
             std::vector<bool> is_constant(inputs.size(), true);
             visiter_map visited;
@@ -145,6 +153,7 @@ namespace jit {
                                       visited, usage,
                                       kernel_1dtextures[name],
                                       kernel_2dtextures[name],
+                                      pre_funcs,
                                       gpu_context.remaining_const_memory);
             }
             for (auto &out : outputs) {
@@ -152,6 +161,7 @@ namespace jit {
                                       visited, usage,
                                       kernel_1dtextures[name],
                                       kernel_2dtextures[name],
+                                      pre_funcs,
                                       gpu_context.remaining_const_memory);
             }
 
@@ -161,30 +171,46 @@ namespace jit {
                 }
             }
 
+            argument_set thread_shared;
+            jit::register_map thread_mem;
+
             gpu_context.create_kernel_prefix(source_buffer,
-                                             name, inputs, outputs, state,
+                                             name, inputs, outputs,
+                                             atomics, state,
                                              size, is_constant,
                                              registers, usage,
                                              kernel_1dtextures[name],
-                                             kernel_2dtextures[name]);
+                                             kernel_2dtextures[name],
+                                             thread_shared,
+                                             thread_mem,
+                                             iterations);
 
-            register_map indices;
             for (auto &[out, in] : setters) {
-                out->compile(source_buffer, registers, indices, usage);
+                out->compile(source_buffer, registers, thread_mem, usage);
             }
             for (auto &out : outputs) {
-                out->compile(source_buffer, registers, indices, usage);
+                out->compile(source_buffer, registers, thread_mem, usage);
             }
 
             gpu_context.create_kernel_postfix(source_buffer, outputs,
                                               setters, state,
-                                              registers, indices, usage);
+                                              registers, usage,
+                                              thread_shared,
+                                              thread_mem,
+                                              iterations);
 
 //  Delete the registers so that they can be used again in other kernels.
             std::vector<void *> removed_elements;
             for (auto &[key, value] : registers) {
-                if (value[0] == 'r') {
+                if (value[0] == 'r' ||
+                    value[0] == 'l' ||
+                    value[0] == 'i') {
                     removed_elements.push_back(key);
+                }
+            }
+            for (auto &out : outputs) {
+                if (graph::atomic_accumulate_1D_cast(out).get()) {
+                    removed_elements.push_back(out.get());
                 }
             }
 
@@ -200,6 +226,26 @@ namespace jit {
 //------------------------------------------------------------------------------
         void add_max_reduction(const size_t size) {
             gpu_context.create_reduction(source_buffer, size);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add zero.
+///
+///  @param[in] inputs Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> inputs) {
+            return gpu_context.create_zero_call(inputs);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add copy.
+///
+///  @param[in] setters Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_copy_call(graph::copy_nodes<T, SAFE_MATH> setters) {
+            return gpu_context.create_copy_call(setters);
         }
 
 //------------------------------------------------------------------------------
@@ -250,6 +296,7 @@ namespace jit {
 ///  @param[in] kernel_name  Name of the kernel for later reference.
 ///  @param[in] inputs       Input nodes of the kernel.
 ///  @param[in] outputs      Output nodes of the kernel.
+///  @param[in] atomics      Input variables for atomic operations.
 ///  @param[in] state        Random states.
 ///  @param[in] num_rays     Number of rays to trace.
 ///  @returns A lambda function to run the kernel.
@@ -257,9 +304,11 @@ namespace jit {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     graph::input_nodes<T, SAFE_MATH> atomics,
                                                      graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays) {
-            return gpu_context.create_kernel_call(kernel_name, inputs, outputs, state, num_rays,
+            return gpu_context.create_kernel_call(kernel_name, inputs, outputs,
+                                                  atomics, state, num_rays,
                                                   kernel_1dtextures[kernel_name],
                                                   kernel_2dtextures[kernel_name]);
         }
@@ -304,6 +353,15 @@ namespace jit {
 //------------------------------------------------------------------------------
         void wait() {
             gpu_context.wait();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run a function.
+///
+///  @returns A lambda function to run run the function.
+//------------------------------------------------------------------------------
+        std::function<void(void)> run_function(std::function<void(void)> callback) {
+            return gpu_context.run_function(callback);
         }
 
 //------------------------------------------------------------------------------

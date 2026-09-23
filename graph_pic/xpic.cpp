@@ -4,36 +4,10 @@
 //------------------------------------------------------------------------------
 
 #include <random>
+#include <numbers>
+#include <thread>
 
 #include "../graph_framework/graph_framework.hpp"
-
-//------------------------------------------------------------------------------
-///  @brief Build density.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @param[in] x The particle position.
-//------------------------------------------------------------------------------
-template<jit::float_scalar T>
-graph::shared_leaf<T> build_density(graph::shared_leaf<T> x) {
-    return graph::exp(x*x/static_cast<T> (-0.0001));
-}
-
-//------------------------------------------------------------------------------
-///  @brief Build parallel electric field.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @param[in] x The particle position.
-//------------------------------------------------------------------------------
-template<jit::float_scalar T>
-graph::shared_leaf<T> build_parallel_electric_field(graph::shared_leaf<T> x) {
-    const T te = 1;
-    const T q = 1;//1.602176634E-19;
-    auto n = build_density<T> (x);
-    auto pe = n*te;
-    return static_cast<T> (-1)/(q*n)*pe->df(x);
-}
 
 //------------------------------------------------------------------------------
 ///  @brief Pic code.
@@ -42,137 +16,297 @@ graph::shared_leaf<T> build_parallel_electric_field(graph::shared_leaf<T> x) {
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
 void run_pic() {
-    const size_t num_particles = 1000000;
-    auto x = graph::variable<T> (num_particles, "x");
-    auto vpara = graph::variable<T> (num_particles, "v||");
-
-    std::normal_distribution<T> norm(0, 0.25);
-    std::random_device rand_d;
-    std::mt19937_64 engine(rand_d());
-    backend::buffer<T> a(num_particles);
-    backend::buffer<T> b(num_particles);
-    for (size_t i = 0; i < num_particles; i++) {
-        a[i] = norm(engine);
-        b[i] = norm(engine);
-    }
-    x->set(a);
-    vpara->set(b);
-
-    const T m = 1;//9.1093837139E-31;
-    const T q = 1;//1.602176634E-19;
-    const T te = 1;
-    const T dt = 0.00001;
-
+    const timing::measure_diagnostic init("Init Time");
+//  Sizes
+    const size_t num_particles = 3000000;
     const size_t num_grid = 1000;
-    auto epara = graph::variable<T> (num_grid, "e||");
-    auto n = graph::variable<T> (num_grid, "n");
-    auto grid_position = graph::variable<T> (num_grid, "x_i");
-    auto particle_index = graph::variable<T> (num_grid, "i");
+    const size_t num_ions = 1;
+    const size_t num_steps = 100;
+    const size_t num_sub_steps = 2500;
 
-    const T scale = 2.0/999.0;
-    const T offset = -1.0;
-    backend::buffer<T> c(num_grid);
-    for (size_t i = 0; i < num_grid; i++) {
-        c[i] = scale*i + offset;
+    const std::vector<T> ion_masses{2*pic::m_atomic<T>};
+    const std::vector<uint8_t> ion_zs{1};
+
+    const pic::characteristics<T> norms(ion_masses, ion_zs,
+                                        static_cast<T> (2.5E19));
+
+    std::array<T, num_ions> density_fraction{1};
+
+    const T lmin = static_cast<T> (-3.0);
+    const T lmax = static_cast<T> (3.0);
+    const T ne0 = 0.4E18;
+    const T b0 = 0.050072;
+    const T r1 = 0.0;
+    const T r2 = 0.5;
+    const T a0 = std::numbers::pi_v<T>*(r2*r2 - r1*r1);
+    const T ds = (lmax - lmin)/static_cast<T> (num_grid - 1);
+
+    std::vector<pic::ion<T>> ions;
+    for (size_t i = 0; i < num_ions; i++) {
+        T num_real = 0;
+        for (size_t i = 0; i < num_grid; i++) {
+            const T x = ds*i + lmin;
+            const T b = b0*(x*x + static_cast<T> (0.5));
+            const T a = a0*b0/b;
+            num_real += ne0*density_fraction[0]*a*ds;
+        }
+        ions.emplace_back(ion_masses[i], ion_zs[i], num_particles,
+                          num_real, norms);
     }
-    grid_position->set(c);
 
-    auto x1 = dt*vpara;
-    auto vpara1 = -q/m*graph::index_1D(epara, x, scale, offset);
+    const T b_cv = 1.2;
+    const T cyclotron_frequency = ion_zs[0]*pic::q<T>*b_cv/ion_masses[0];
+    const T gyro_period = 2*std::numbers::pi_v<T>/cyclotron_frequency;
+    const T dtc = 0.25;
+    const pic::parameters<T> params(b0, r1, r2, 3, 1.0E-4,
+                                    dtc*gyro_period, 2.5, 2.5, norms);
 
-    auto x2 = dt*(vpara + vpara1/2.0);
-    auto vpara2 = -q/m*graph::index_1D(epara, x + x1/2.0, scale, offset);
-
-    auto x3 = dt*(vpara + vpara2/2.0);
-    auto vpara3 = -q/m*graph::index_1D(epara, x + x2/2.0, scale, offset);
-
-    auto x4 = dt*(vpara + vpara3);
-    auto vpara4 = -q/m*graph::index_1D(epara, x + x3, scale, offset);
-
-    auto x_next = x + (x1 + static_cast<T> (2)*(x2 + x3) + x4)/static_cast<T> (6);
-    auto vpara_next = vpara + (vpara1 + static_cast<T> (2)*(vpara2 + vpara3) + vpara4)/static_cast<T> (6);
-
-    auto next_index = particle_index;
-    auto next_epara = epara;
-    auto next_n = n;
-
-    const size_t batch = 1000;
-//  Unroll the loop
-    for (size_t i = 0; i < batch; i++) {
-        auto indexed_particle = graph::index_1D(x, next_index,
-                                                static_cast<T> (1),
-                                                static_cast<T> (0));
-        next_index = next_index + static_cast<T> (1);
-        next_epara = next_epara
-                   + build_parallel_electric_field<T> (indexed_particle - grid_position);
-        next_n = next_n + build_density(indexed_particle - grid_position);
-    }
+    pic::mesh<T> mesh(lmin, lmax, num_grid, norms);
+    
+    auto state = graph::random_state<T> (jit::context<T>::max_random_state_size(num_particles), 0);
 
     workflow::manager<T> work(0);
-    work.add_item({
-        graph::variable_cast(particle_index),
-        graph::variable_cast(epara),
-        graph::variable_cast(n)
-    }, {}, {
-        {graph::zero<T> (), graph::variable_cast(particle_index)},
-        {graph::zero<T> (), graph::variable_cast(epara)},
-        {graph::zero<T> (), graph::variable_cast(n)}
-    }, NULL, "Index_reset", num_grid);
-    work.add_loop_item({
-        graph::variable_cast(epara),
-        graph::variable_cast(n),
-        graph::variable_cast(grid_position),
-        graph::variable_cast(particle_index),
-        graph::variable_cast(x)
-    }, {}, {
-        {next_epara, graph::variable_cast(epara)},
-        {next_index, graph::variable_cast(particle_index)},
-        {next_n, graph::variable_cast(n)}
-    }, NULL, "Compute_efield", num_grid, num_particles/batch);
-    work.add_item({
-        graph::variable_cast(x),
-        graph::variable_cast(vpara),
-        graph::variable_cast(epara)
-    }, {}, {
-        {x_next, graph::variable_cast(x)},
-        {vpara_next, graph::variable_cast(vpara)}
-    }, NULL, "Particle_Push", num_particles);
 
-    work.compile();
- 
-    output::result_file particles_file("pic_particles.nc", num_particles);
-    output::data_set<T> p_dataset(particles_file);
+    output::result_file f_file("fields.nc", num_grid);
+    output::data_set<T> mesh_dataset(f_file);
 
-    p_dataset.create_variable(particles_file, "x", x, work.get_context());
-    p_dataset.create_variable(particles_file, "vpara", vpara, work.get_context());
+    output::result_file p_file("particles.nc", num_particles);
+    std::vector<output::data_set<T>> p_datasets(num_ions,
+                                                output::data_set<T> (p_file));
 
-    particles_file.end_define_mode();
-    
-    output::result_file fields_file("pic_fields.nc", num_grid);
-    output::data_set<T> f_dataset(fields_file);
+    std::vector<std::thread> ion_sync;
+    std::thread mesh_sync;
 
-    f_dataset.create_variable(fields_file, "epara", epara, work.get_context());
-    f_dataset.create_variable(fields_file, "n", n, work.get_context());
+    work.template add_zero_item<workflow::order::pre_run_item> ({
+        graph::variable_cast(mesh.y[0])
+    });
 
-    fields_file.end_define_mode();
-    std::thread sync_particles([]{});
-    std::thread sync_fields([]{});
+    std::vector<std::array<graph::shared_leaf<T>, 3>> mesh_solves;
 
-    const size_t num_steps = 1000;
-    for (size_t i = 0; i < num_steps; i++) {
-        sync_particles.join();
-        sync_fields.join();
-        work.run();
-        sync_particles = std::thread([&particles_file, &p_dataset] () -> void {
-            p_dataset.write(particles_file);
+    for (size_t i = 0; i < num_ions; i++) {
+        const std::string ion_tag = jit::format_to_string(i);
+        
+        auto ion_inits = pic::build_initialization<T> (ions[i], mesh,
+                                                       norms, params,
+                                                       graph::random_state_cast(state));
+        
+        work.template add_item<workflow::order::pre_run_item> ({
+            ions[i].get_x(), ions[i].get_v_para(), ions[i].get_v_perp()
+        }, {}, {
+            {ion_inits[0], ions[i].get_x()},
+            {ion_inits[1], ions[i].get_v_para()},
+            {ion_inits[2], ions[i].get_v_perp()}
+        }, {}, graph::random_state_cast(state),
+        "pre_initization_" + ion_tag, num_particles);
+
+        work.template add_callback_item<workflow::order::pre_run_item> ([i, &p_file, &p_datasets, &ion_sync]() {
+            ion_sync.push_back(std::thread([i, &p_file, &p_datasets]() {
+                p_datasets[i].write(p_file);
+            }));
         });
-        sync_fields = std::thread([&fields_file, &f_dataset] () -> void {
-            f_dataset.write(fields_file);
+
+        mesh_solves.emplace_back(mesh.build_mesh_solve(ions[i]));
+        work.template add_item<workflow::order::pre_run_item> ({
+            ions[i].get_x()
+        }, {
+            mesh_solves[i][0],
+            mesh_solves[i][1],
+            mesh_solves[i][2]
+        }, {}, {
+            graph::variable_cast(mesh.y[0])
+        }, NULL, "pre_sum_weights_" + ion_tag, num_particles);
+    }
+
+    work.template add_copy_item<workflow::order::pre_run_item> ({
+        {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])},
+        {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[2])},
+        {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[3])}
+    });
+
+    work.template add_callback_item<workflow::order::pre_run_item> ([&f_file, &mesh_dataset, &mesh_sync]() {
+        mesh_sync = std::thread([&f_file, &mesh_dataset]() {
+            mesh_dataset.write(f_file);
+        });
+    });
+
+    for (size_t i = 0; i < num_ions; i++) {
+        const std::string ion_tag = jit::format_to_string(i);
+        work.add_callback_item([i, &ion_sync]() {
+            if (ion_sync[i].joinable()) {
+                ion_sync[i].join();
+            }
+        });
+        
+        auto particle_step = pic::build_rk4_step(ions[i], mesh, norms, params);
+        work.add_item({
+            ions[i].get_x(),
+            ions[i].get_v_para(),
+            ions[i].get_v_perp(),
+            graph::variable_cast(mesh.y[0]),
+            graph::variable_cast(mesh.y[1]),
+            graph::variable_cast(mesh.y[2]),
+            graph::variable_cast(mesh.y[3])
+        }, {}, {
+            {particle_step[0], ions[i].get_x()},
+            {particle_step[1], ions[i].get_v_para()},
+            {particle_step[2], ions[i].get_v_perp()}
+        }, {}, NULL, "particle_push_" + ion_tag, num_particles);
+        
+        auto particle_reinject = pic::build_reinjection(ions[i], mesh, norms, params,
+                                                        graph::random_state_cast(state));
+        work.add_item({
+            ions[i].get_x(),
+            ions[i].get_v_para(),
+            ions[i].get_v_perp()
+        }, {}, {
+            {particle_reinject[0], ions[i].get_x()},
+            {particle_reinject[1], ions[i].get_v_para()},
+            {particle_reinject[2], ions[i].get_v_perp()}
+        }, {}, graph::random_state_cast(state),
+        "particle_reinjection_" + ion_tag, num_particles);
+
+        work.template add_callback_item<workflow::order::post_run_item> ([i, &p_file, &p_datasets, &ion_sync]() {
+            ion_sync[i] = std::thread([i, &p_file, &p_datasets]() {
+                p_datasets[i].write(p_file);
+            });
         });
     }
+
+    work.add_callback_item([&mesh_sync]() {
+        if (mesh_sync.joinable()) {
+            mesh_sync.join();
+        }
+    });
+    work.add_copy_item({
+        {graph::variable_cast(mesh.y[2]), graph::variable_cast(mesh.y[3])},
+        {graph::variable_cast(mesh.y[1]), graph::variable_cast(mesh.y[2])},
+        {graph::variable_cast(mesh.y[0]), graph::variable_cast(mesh.y[1])}
+    });
+    work.add_zero_item({
+        graph::variable_cast(mesh.y[0])
+    });
+
+    for (size_t i = 0; i < num_ions; i++) {
+        const std::string ion_tag = jit::format_to_string(i);
+        
+        work.add_item({
+            graph::variable_cast(ions[i].x)
+        }, {
+            mesh_solves[i][0],
+            mesh_solves[i][1],
+            mesh_solves[i][2]
+        }, {}, {
+            graph::variable_cast(mesh.y[0])
+        }, NULL, "sum_weights_" + ion_tag, num_particles);
+    }
+
+    work.template add_callback_item<workflow::order::post_run_item> ([&f_file, &mesh_dataset, &mesh_sync]() {
+        mesh_sync = std::thread([&f_file, &mesh_dataset]() {
+            mesh_dataset.write(f_file);
+        });
+    });
+
+    for (size_t i = 0; i < num_ions; i++) {
+        const std::string ion_tag = jit::format_to_string(i);
+
+        work.add_callback_item([i, &ion_sync]() {
+            if (ion_sync[i].joinable()) {
+                ion_sync[i].join();
+            }
+        });
+
+        graph::shared_leaf<T> total_density = graph::zero<T> ();
+        graph::shared_leaf<T> total_flux = graph::zero<T> ();
+        for (size_t j = 0; j < num_ions; j++) {
+            const std::string inner_ion_tag = jit::format_to_string(j);
+
+            auto coll = pic::build_ion_ion_collision<T, pic::model::chen> (ions[i],
+                                                                           ions[j],
+                                                                           mesh,
+                                                                           norms,
+                                                                           params,
+                                                                           total_density,
+                                                                           total_flux,
+                                                                           graph::random_state_cast(state));
+
+            work.add_item({
+                ions[i].get_x(),
+                ions[i].get_v_para(),
+                ions[i].get_v_perp(),
+                graph::variable_cast(mesh.y[0])
+            }, {}, {
+                {coll[0], ions[i].get_v_para()},
+                {coll[1], ions[i].get_v_perp()}
+            }, {}, graph::random_state_cast(state),
+            "ion_ion_" + ion_tag + "_" + inner_ion_tag, num_particles);
+        }
+
+        auto coll = pic::build_ion_electron_collision<T, pic::model::chen> (ions[i],
+                                                                            mesh,
+                                                                            norms,
+                                                                            params,
+                                                                            total_density,
+                                                                            total_flux,
+                                                                            graph::random_state_cast(state));
+
+        work.add_item({
+            ions[i].get_x(),
+            ions[i].get_v_para(),
+            ions[i].get_v_perp()
+        }, {}, {
+            {coll[0], ions[i].get_v_para()},
+            {coll[1], ions[i].get_v_perp()}
+        }, {}, graph::random_state_cast(state),
+        "ion_elec_" + ion_tag, num_particles);
+    }
+    init.print();
+
+    const timing::measure_diagnostic compile("Compile Time");
+    work.compile();
+    compile.print();
+
+    mesh.define_variables(f_file, mesh_dataset, work);
+    f_file.end_define_mode();
+
+    for (size_t i = 0; i < num_ions; i++) {
+        const std::string ion_tag = jit::format_to_string(i);
+        ions[i].define_variables(p_file, p_datasets[i], work, ion_tag);
+    }
+    p_file.end_define_mode();
+
+    std::atomic_size_t counter = 0;
+#ifndef PROFILE_KERNELS
+    std::thread progress = std::thread([&num_steps, &counter]() -> void {
+        using namespace std::chrono_literals;
+        do {
+            const size_t progress = (counter*100.0)/num_steps;
+            std::cout << "\33[2K\r" << std::setw(3) << progress << "% Complete"
+                      << std::flush;
+            std::this_thread::sleep_for(1s);
+        } while (counter < num_steps);
+    });
+#endif
+    const timing::measure_diagnostic run("Run Time");
+    work.template run<workflow::order::pre_run_item> ();
+    for (; counter < num_steps; counter++) {
+        for (size_t i = 0; i < num_sub_steps; i++) {
+            work.run();
+        }
+        work.template run<workflow::order::post_run_item> ();
+    }
+
+    counter = num_steps;
     work.wait();
-    sync_particles.join();
-    sync_fields.join();
+#ifndef PROFILE_KERNELS
+    progress.join();
+#endif
+    for (std::thread &ion : ion_sync) {
+        ion.join();
+    }
+    mesh_sync.join();
+
+    std::cout << "\33[2K\r" << "100% Complete" << std::endl;
+    run.print();
 }
 
 //------------------------------------------------------------------------------
@@ -186,7 +320,11 @@ int main(int argc, const char * argv[]) {
     (void)argc;
     (void)argv;
 
+    jit::verbose = true;
+
+    const timing::measure_diagnostic total("Total Time");
     run_pic<float> ();
+    total.print();
 
     END_GPU
 }

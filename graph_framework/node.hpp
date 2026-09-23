@@ -194,19 +194,14 @@
 ///                                jit::register_usage &usage,
 ///                                jit::texture1d_list &textures1d,
 ///                                jit::texture2d_list &textures2d,
+///                                jit::preamble_map &pre_funcs,
 ///                                int &avail_const_mem) {
-///      if (visited.find(this) == visited.end()) {
+///      if (!visited.contains(this)) {
 ///          this->arg->compile_preamble(stream, registers,
 ///                                      visited, usage,
 ///                                      textures1d, textures2d,
+///                                      pre_funcs,
 ///                                      avail_const_mem);
-///
-///          jit::add_type<T> (stream);
-///          stream << " foo(const "
-///          jit::add_type<T> (stream);
-///          stream << "x) {"
-///                 << "    return 2*x;"
-///                 << "}";
 ///
 ///          visited.insert(this);
 ///  #ifdef SHOW_USE_COUNT
@@ -214,6 +209,17 @@
 ///      } else {
 ///          ++usage[this];
 ///  #endif
+///      }
+///
+///      if (!pre_funcs.contains("foo")) {
+///          visited.insert("foo");
+///
+///          jit::add_type<T> (stream);
+///          stream << " foo(const "
+///          jit::add_type<T> (stream);
+///          stream << "x) {" << std::endl
+///                 << "    return 2*x;" << std::endl
+///                 << "}" << std::endl;
 ///      }
 ///  }
 ///  @endcode
@@ -233,12 +239,12 @@
 ///  virtual shared_leaf<T, SAFE_MATH>
 ///  compile(std::ostringstream &stream,
 ///          jit::register_map &registers,
-///          jit::register_map &indices,
+///          const jit::register_map &thread_mem,
 ///          const jit::register_usage &usage) {
 ///      if (registers.find(this) == registers.end()) {
 ///          shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
 ///                                                           registers,
-///                                                           indices,
+///                                                           thread_mem,
 ///                                                           usage);
 ///
 ///          registers[this] = jit::to_string('r', this);
@@ -346,6 +352,7 @@
 #include <memory>
 #include <iomanip>
 #include <functional>
+#include <type_traits>
 
 #include "backend.hpp"
 
@@ -368,7 +375,7 @@ namespace graph {
 ///  Graph complexity.
         const size_t complexity;
 ///  Cache derivative terms.
-        std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> df_cache;
+        std::unordered_map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> df_cache;
 ///  Node contains pseudo variables.
         const bool contains_pseudo;
 
@@ -416,7 +423,9 @@ namespace graph {
 ///  @returns The derivative of the node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
-        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) = 0;
+        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) {
+            return std::shared_ptr<leaf_node<T, SAFE_MATH>> ();
+        };
 
 //------------------------------------------------------------------------------
 ///  @brief Compile preamble.
@@ -430,6 +439,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -438,6 +448,7 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
 #ifdef SHOW_USE_COUNT
             if (usage.find(this) == usage.end()) {
@@ -451,16 +462,16 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) = 0;
 
 //------------------------------------------------------------------------------
@@ -516,7 +527,7 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
-        virtual void to_latex() const = 0;
+        virtual void to_latex() const {};
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to vizgraph.
@@ -560,7 +571,9 @@ namespace graph {
 ///
 ///  @returns True if all the sub-nodes terminate in variables.
 //------------------------------------------------------------------------------
-        virtual bool is_all_variables() const = 0;
+        virtual bool is_all_variables() const {
+            return false;
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
@@ -635,14 +648,16 @@ namespace graph {
 ///
 ///  @param[in,out] stream String buffer stream.
 ///  @param[in]     usage  List of register usage count.
+///  @param[in]     end    The end character.
 //------------------------------------------------------------------------------
         virtual void endline(std::ostringstream &stream,
-                             const jit::register_usage &usage)
+                             const jit::register_usage &usage,
+                             const char end=';')
 #ifndef SHOW_USE_COUNT
                              const
 #endif
-                             final {
-            stream << ";"
+                             {
+            stream << end
 #ifdef SHOW_USE_COUNT
                    << " // used " << usage.at(this)
 #endif
@@ -659,9 +674,9 @@ namespace graph {
 //------------------------------------------------------------------------------
         struct caches_t {
 ///  Cache of node.
-            std::map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> nodes;
+            std::unordered_map<size_t, std::shared_ptr<leaf_node<T, SAFE_MATH>>> nodes;
 ///  Cache of backend buffers.
-            std::map<size_t, backend::buffer<T>> backends;
+            std::unordered_map<size_t, backend::buffer<T>> backends;
         };
 
 ///  A per thread instance of the cache structure.
@@ -717,6 +732,165 @@ namespace graph {
     }
 
 //******************************************************************************
+///  @brief Index node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing kernel thread index.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class index_node final : public leaf_node<T, SAFE_MATH> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string() {
+            return "i";
+        }
+        
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a constant node from a vector.
+//------------------------------------------------------------------------------
+        index_node() :
+        leaf_node<T, SAFE_MATH> (index_node::to_string(), 1, false) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate method.
+///
+///  @returns The evaluated value of the node.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            return backend::buffer<T> ();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  @param[in] x The variable to take the derivative to.
+///  @returns The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return this->is_match(x) ? one<T, SAFE_MATH> () : zero<T, SAFE_MATH> ();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                registers[this] = jit::to_string('i', this);
+                stream << "        const ";
+                if constexpr (jit::use_cuda()) {
+                    stream << "int " << registers[this] << " = index";
+                } else if constexpr (jit::use_metal<T> ()) {
+                    stream << "uint " << registers[this] << " = index";
+                } else {
+                    stream << "size_t " << registers[this] << " = i";
+                }
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "i";
+        };
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('i', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"i\", shape = box, style = \"rounded,filled\", fillcolor = black, fontcolor = white];" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Construct an index.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @returns A reduced constant node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> index() {
+        auto temp = std::make_shared<index_node<T, SAFE_MATH>> ();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+///  Convenience type alias for shared index nodes.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using shared_index = std::shared_ptr<index_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a index node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic case.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_index<T, SAFE_MATH> index_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<index_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
 //  Constant node.
 //******************************************************************************
 //------------------------------------------------------------------------------
@@ -727,6 +901,7 @@ namespace graph {
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class constant_node final : public leaf_node<T, SAFE_MATH> {
+    private:
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
@@ -737,7 +912,6 @@ namespace graph {
             return jit::format_to_string<T> (d);
         }
 
-    private:
 ///  Storage buffer for the data.
         const backend::buffer<T> data;
 
@@ -749,6 +923,9 @@ namespace graph {
 //------------------------------------------------------------------------------
         constant_node(const backend::buffer<T> &d) :
         leaf_node<T, SAFE_MATH> (constant_node::to_string(d.at(0)), 1, false), data(d) {
+            if constexpr (SAFE_MATH) {
+                assert(d.is_normal() && "Denormal encountered");
+            }
             assert(d.size() == 1 && "Constants need to be scalar functions.");
         }
 
@@ -774,16 +951,16 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
 #ifdef USE_CONSTANT_CACHE
@@ -891,15 +1068,6 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual bool has_constant_zero() const {
             return data.has_zero();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -1071,7 +1239,7 @@ namespace graph {
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return this->arg->evaluate();
+            return arg->evaluate();
         }
 
 //------------------------------------------------------------------------------
@@ -1083,6 +1251,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1091,12 +1260,13 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
-                this->arg->compile_preamble(stream, registers,
-                                            visited, usage,
-                                            textures1d, textures2d,
-                                            avail_const_mem);
+            if (!visited.contains(this)) {
+                arg->compile_preamble(stream, registers,
+                                      visited, usage,
+                                      textures1d, textures2d,
+                                      pre_funcs, avail_const_mem);
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -1109,25 +1279,27 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
-            return this->arg->compile(stream, registers, indices, usage);
+            return arg->compile(stream, registers, thread_mem, usage);
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the argument.
+///
+///  @returns The argument.
 //------------------------------------------------------------------------------
-        shared_leaf<T, SAFE_MATH> get_arg() {
-            return this->arg;
+        shared_leaf<T, SAFE_MATH> get_arg() const {
+            return arg;
         }
 
 //------------------------------------------------------------------------------
@@ -1136,7 +1308,7 @@ namespace graph {
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
         virtual bool is_all_variables() const {
-            return this->arg->is_all_variables();
+            return arg->is_all_variables();
         }
 
 //------------------------------------------------------------------------------
@@ -1211,6 +1383,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1219,16 +1392,17 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, 
-                                             visited, usage,
-                                             textures1d, textures2d,
-                                             avail_const_mem);
-                this->right->compile_preamble(stream, registers,
-                                              visited, usage,
-                                              textures1d, textures2d,
-                                              avail_const_mem);
+            if (!visited.contains(this)) {
+                left->compile_preamble(stream, registers,
+                                       visited, usage,
+                                       textures1d, textures2d,
+                                       pre_funcs, avail_const_mem);
+                right->compile_preamble(stream, registers,
+                                        visited, usage,
+                                        textures1d, textures2d,
+                                        pre_funcs, avail_const_mem);
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -1240,16 +1414,20 @@ namespace graph {
 
 //------------------------------------------------------------------------------
 ///  @brief Get the left branch.
+///
+///  @returns The left argument.
 //------------------------------------------------------------------------------
-        shared_leaf<T, SAFE_MATH> get_left() {
-            return this->left;
+        shared_leaf<T, SAFE_MATH> get_left() const {
+            return left;
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Get the right branch.
+///
+///  @returns The right argument.
 //------------------------------------------------------------------------------
-        shared_leaf<T, SAFE_MATH> get_right() {
-            return this->right;
+        shared_leaf<T, SAFE_MATH> get_right() const {
+            return right;
         }
 
 //------------------------------------------------------------------------------
@@ -1258,8 +1436,8 @@ namespace graph {
 ///  @returns True if the node acts like a variable.
 //------------------------------------------------------------------------------
         virtual bool is_all_variables() const {
-            return this->left->is_all_variables() &&
-                   this->right->is_all_variables();
+            return left->is_all_variables() &&
+                   right->is_all_variables();
         }
 
 //------------------------------------------------------------------------------
@@ -1292,7 +1470,6 @@ namespace graph {
         shared_leaf<T, SAFE_MATH> middle;
 
     public:
-
 //------------------------------------------------------------------------------
 ///  @brief Reduces and assigns the left and right branches.
 ///
@@ -1323,6 +1500,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1331,20 +1509,21 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
-                this->left->compile_preamble(stream, registers, 
+            if (!visited.contains(this)) {
+                this->left->compile_preamble(stream, registers,
                                              visited, usage,
                                              textures1d, textures2d,
-                                             avail_const_mem);
+                                             pre_funcs, avail_const_mem);
                 this->middle->compile_preamble(stream, registers,
                                                visited, usage,
                                                textures1d, textures2d,
-                                               avail_const_mem);
+                                               pre_funcs, avail_const_mem);
                 this->right->compile_preamble(stream, registers,
                                               visited, usage,
                                               textures1d, textures2d,
-                                              avail_const_mem);
+                                              pre_funcs, avail_const_mem);
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -1355,10 +1534,12 @@ namespace graph {
         }
 
 //------------------------------------------------------------------------------
-///  @brief Get the right branch.
+///  @brief Get the middle branch.
+///
+///  @returns The middle branch.
 //------------------------------------------------------------------------------
-        shared_leaf<T, SAFE_MATH> get_middle() {
-            return this->middle;
+        shared_leaf<T, SAFE_MATH> get_middle() const {
+            return middle;
         }
 
 //------------------------------------------------------------------------------
@@ -1368,9 +1549,243 @@ namespace graph {
 //------------------------------------------------------------------------------
         virtual bool is_all_variables() const {
             return this->left->is_all_variables()   &&
-                   this->middle->is_all_variables() &&
+                   middle->is_all_variables() &&
                    this->right->is_all_variables();
         }
+    };
+
+//******************************************************************************
+//  Base N arg node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a N branch node.
+///
+///  @tparam N         Number of branches of the node.
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  This ensures that the base leaf type has the common type between the two
+///  template arguments.
+//------------------------------------------------------------------------------
+    template<size_t N, jit::float_scalar T, bool SAFE_MATH=false>
+    class n_branch_node : public leaf_node<T, SAFE_MATH> {
+    protected:
+///  Branches of the tree.
+        std::array<shared_leaf<T, SAFE_MATH>, N> branches;
+
+//------------------------------------------------------------------------------
+///  @brief  Check if any sub-node has a pseudo variable.
+///
+///  @param[in] branches Array of branches.
+///  @returns True if any branch contains pseudo.
+//------------------------------------------------------------------------------
+        bool any_has_pseudo(std::array<shared_leaf<T, SAFE_MATH>, N> &branches) {
+            for (auto &b : branches) {
+                const bool test = b->has_pseudo();
+                if (test) {
+                    return test;
+                }
+            }
+            return false;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief  Check if any sub-node has a pseudo variable.
+///
+///  @param[in] branches Array of branches.
+///  @returns True if any branch contains pseudo.
+//------------------------------------------------------------------------------
+        size_t total_complexity(std::array<shared_leaf<T, SAFE_MATH>, N> &branches) {
+            size_t complexity = 1;
+            for (auto &b : branches) {
+                complexity += b->get_complexity();
+            }
+            return complexity;
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Reduces and assigns the branches.
+///
+///  @param[in] branches Array of branches.
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        n_branch_node(std::array<shared_leaf<T, SAFE_MATH>, N> branches,
+                      const std::string s) :
+        leaf_node<T, SAFE_MATH> (s, n_branch_node::total_complexity(branches),
+                                 n_branch_node::any_has_pseudo(branches)),
+        branches(branches) {}
+
+//------------------------------------------------------------------------------
+///  @brief Compile preamble.
+///
+///  @param[in,out] stream          String buffer stream.
+///  @param[in,out] registers       List of defined registers.
+///  @param[in,out] visited         List of visited nodes.
+///  @param[in,out] usage           List of register usage count.
+///  @param[in,out] textures1d      List of 1D textures.
+///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
+///  @param[in,out] avail_const_mem Available constant memory.
+//------------------------------------------------------------------------------
+        virtual void compile_preamble(std::ostringstream &stream,
+                                      jit::register_map &registers,
+                                      jit::visiter_map &visited,
+                                      jit::register_usage &usage,
+                                      jit::texture1d_list &textures1d,
+                                      jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
+                                      int &avail_const_mem) {
+            if (!visited.contains(this)) {
+                for (auto &b : branches) {
+                    b->compile_preamble(stream, registers,
+                                        visited, usage,
+                                        textures1d, textures2d,
+                                        pre_funcs, avail_const_mem);
+                }
+
+            visited.insert(this);
+#ifdef SHOW_USE_COUNT
+                usage[this] = 1;
+            } else {
+                ++usage[this];
+#endif
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the Nth arg.
+///
+///  @param[in] index The argument index.
+///  @returns The argument at the index.
+//------------------------------------------------------------------------------
+        shared_leaf<T, SAFE_MATH> get_arg(const size_t index) const {
+            return branches[index];
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            for (auto b : branches) {
+                const bool test = b->is_all_variables();
+                if (!test) {
+                    return test;
+                }
+            }
+            return true;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns Returns a power of one.
+//------------------------------------------------------------------------------
+        virtual std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Type trait for not having a valid derivative.
+///
+///  @tparam T Type (Only used to compile time errors)
+//------------------------------------------------------------------------------
+    template<typename T>
+    struct has_no_derivative : std::false_type {};
+
+//------------------------------------------------------------------------------
+///  @brief Nodes without derivatives.
+///
+///  Some functions have no derivative. This can be used as a base class to
+///  case a compile error if a derivative node is attempted.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///  @tparam BASE_NODE Base code to subclass from.
+///  @tparam N         Number of sub-nodes.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false,
+             class BASE_NODE=leaf_node<T, SAFE_MATH>, size_t N=1>
+    class no_derivative : public BASE_NODE {
+    public:
+        template<typename S=bool>
+        std::shared_ptr<leaf_node<T, SAFE_MATH>>
+        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) requires(has_no_derivative<S>::value);
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for base leaf nodes base classes.
+///
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(const std::string s)
+        requires(std::is_base_of_v<leaf_node<T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 leaf_node<T, SAFE_MATH>>>) :
+        leaf_node<T, SAFE_MATH> (s, 0, false) {}
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for straight node base classes.
+///
+///  @param[in] arg Node argument.
+///  @param[in] s   Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(shared_leaf<T, SAFE_MATH> arg,
+                      const std::string s)
+        requires(std::is_base_of_v<straight_node<T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 straight_node<T, SAFE_MATH>>>) :
+        straight_node<T, SAFE_MATH> (arg, s) {}
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for base branch nodes base classes.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(shared_leaf<T, SAFE_MATH> l,
+                      shared_leaf<T, SAFE_MATH> r,
+                      const std::string s)
+        requires(std::is_base_of_v<branch_node<T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 branch_node<T, SAFE_MATH>>>) :
+        branch_node<T, SAFE_MATH> (l, r, s) {}
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for base triple nodes base classes.
+///
+///  @param[in] l Left branch.
+///  @param[in] m Middle branch.
+///  @param[in] r Right branch.
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(shared_leaf<T, SAFE_MATH> l,
+                      shared_leaf<T, SAFE_MATH> m,
+                      shared_leaf<T, SAFE_MATH> r,
+                      const std::string s)
+        requires(std::is_base_of_v<triple_node<T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 triple_node<T, SAFE_MATH>>>) :
+        triple_node<T, SAFE_MATH> (l, m, r, s) {}
+
+//------------------------------------------------------------------------------
+///  @brief Constructor for base n branch nodes base classes.
+///
+///  @param[in] b Array of branches.
+///  @param[in] s Node string to hash.
+//------------------------------------------------------------------------------
+        no_derivative(std::array<shared_leaf<T, SAFE_MATH>, N> b,
+                      const std::string s)
+        requires(std::is_base_of_v<n_branch_node<N, T, SAFE_MATH>,
+                                   no_derivative<T, SAFE_MATH,
+                                                 n_branch_node<N, T,
+                                                               SAFE_MATH>,
+                                                 N>>) :
+        n_branch_node<N, T, SAFE_MATH> (b, s) {}
     };
 
 //******************************************************************************
@@ -1483,6 +1898,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -1491,6 +1907,7 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
             if (usage.find(this) == usage.end()) {
                 usage[this] = 1;
@@ -1504,16 +1921,16 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
            return this->shared_from_this();
         }
@@ -1640,6 +2057,27 @@ namespace graph {
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return one<T, SAFE_MATH> ();
         }
+
+//------------------------------------------------------------------------------
+///  @brief End a line in the kernel source.
+///
+///  @param[in,out] stream String buffer stream.
+///  @param[in]     usage  List of register usage count.
+///  @param[in]     end    The end character.
+//------------------------------------------------------------------------------
+        virtual void endline(std::ostringstream &stream,
+                             const jit::register_usage &usage,
+                             const char end=';')
+        #ifndef SHOW_USE_COUNT
+                             const
+        #endif
+                             {
+                    stream << end << " // " << symbol
+        #ifdef SHOW_USE_COUNT
+                           << " used " << usage.at(this)
+        #endif
+                           << std::endl;
+                }
     };
 
 //------------------------------------------------------------------------------
@@ -1713,6 +2151,10 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using map_nodes = std::vector<std::pair<shared_leaf<T, SAFE_MATH>,
                                             shared_variable<T, SAFE_MATH>>>;
+///  Convenience type alias for copying buffers.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using copy_nodes = std::vector<std::pair<shared_variable<T, SAFE_MATH>,
+                                             shared_variable<T, SAFE_MATH>>>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.

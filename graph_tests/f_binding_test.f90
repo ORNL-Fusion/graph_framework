@@ -143,7 +143,7 @@
       CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      state = graph%random_state(0)
+      state = graph%random_state(1_C_LONG, 0)
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
@@ -180,7 +180,8 @@
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
-                              graph_null_array, graph_null_array, state,       &
+                              graph_null_array, graph_null_array,              &
+                              graph_null_array, state,                         &
                               'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
       CALL graph%add_item((/ graph_ptr(x) /), (/                               &
@@ -189,17 +190,17 @@
          graph_ptr(dydm),                                                      &
          graph_ptr(dydb),                                                      &
          graph_ptr(dydy)                                                       &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_item((/                                                   &
          graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
       /), (/                                                                   &
          graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR,                                 &
+                                   graph_null_array, C_NULL_PTR,               &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
       CALL graph%compile
@@ -222,13 +223,8 @@
       CALL graph%copy_to_host(dydy, value)
       CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      IF (use_safe_math) THEN
-         CALL assert(value(1) .eq. 2546248192.0_C_FLOAT,                       &
-                     'Value of rand does not match.')
-      ELSE
-         CALL assert(value(1) .eq. 2357136128.0_C_FLOAT,                       &
-                     'Value of rand does not match.')
-      END IF
+      CALL assert(value(1) .eq. 2357136044.0_C_FLOAT,                          &
+                  'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(value(1) .eq. 1.0_C_FLOAT, 'Value of root does not match.')
       CALL graph%copy_to_host(p1, value)
@@ -336,7 +332,7 @@
       CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      state = graph%random_state(0)
+      state = graph%random_state(1_C_LONG, 0)
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
@@ -373,7 +369,8 @@
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
-                              graph_null_array, graph_null_array, state,       &
+                              graph_null_array, graph_null_array,              &
+                              graph_null_array, state,                         &
                               'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
       CALL graph%add_item((/ graph_ptr(x) /), (/                               &
@@ -382,17 +379,17 @@
          graph_ptr(dydm),                                                      &
          graph_ptr(dydb),                                                      &
          graph_ptr(dydy)                                                       &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_item((/                                                   &
          graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
       /), (/                                                                   &
          graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR,                                 &
+                                   graph_null_array, C_NULL_PTR,               &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
       CALL graph%compile
@@ -415,13 +412,8 @@
       CALL graph%copy_to_host(dydy, value)
       CALL assert(value(1) .eq. 1.0_C_DOUBLE, 'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      IF (use_safe_math) THEN
-         CALL assert(value(1) .eq. 2546248239.0_C_DOUBLE,                      &
-                     'Value of rand does not match.')
-      ELSE
-         CALL assert(value(1) .eq. 2357136044.0_C_DOUBLE,                      &
-                     'Value of rand does not match.')
-      END IF
+      CALL assert(value(1) .eq. 2357136044_C_DOUBLE,                           &
+                  'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(value(1) .eq. 1.0_C_DOUBLE, 'Value of root does not match.')
       CALL graph%copy_to_host(p1, value)
@@ -531,7 +523,7 @@
       CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      state = graph%random_state(0)
+      state = graph%random_state(1_C_LONG, 0)
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
@@ -570,7 +562,8 @@
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
-                              graph_null_array, graph_null_array, state,       &
+                              graph_null_array, graph_null_array,              &
+                              graph_null_array, state,                         &
                               'c_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
       CALL graph%add_item((/ graph_ptr(x) /), (/                               &
@@ -579,17 +572,17 @@
          graph_ptr(dydm),                                                      &
          graph_ptr(dydb),                                                      &
          graph_ptr(dydy)                                                       &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_item((/                                                   &
          graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
       /), (/                                                                   &
          graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR,                                 &
+                                   graph_null_array, C_NULL_PTR,               &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
       CALL graph%compile
@@ -616,13 +609,8 @@
       CALL assert(REAL(value(1)) .eq. 1.0_C_FLOAT,                             &
                   'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      IF (use_safe_math) THEN
-         CALL assert(REAL(value(1)) .eq. 2546248192.0_C_FLOAT,                 &
-                     'Value of rand does not match.')
-      ELSE
-         CALL assert(REAL(value(1)) .eq. 2357136128.0_C_FLOAT,                 &
-                     'Value of rand does not match.')
-      END IF
+      CALL assert(REAL(value(1)) .eq. 2357136044.0_C_FLOAT,                    &
+                  'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(REAL(value(1)) .eq. 1.0_C_FLOAT,                             &
                   'Value of root does not match.')
@@ -737,7 +725,7 @@
       CALL assert(graph_ptr(graph%atan(one, zero)) .eq. graph_ptr(zero),       &
                   'Expected atan(one, zero) = zero.')
 
-      state = graph%random_state(0)
+      state = graph%random_state(1_C_LONG, 0)
       rand = graph%random(state)
 
       i = graph%variable(1_C_LONG, 'i' // C_NULL_CHAR)
@@ -788,7 +776,8 @@
       CALL graph%set_device_number(graph%get_max_concurrency() - 1)
 
       CALL graph%add_pre_item(graph_null_array, (/ graph_ptr(rand) /),         &
-                              graph_null_array, graph_null_array, state,       &
+                              graph_null_array, graph_null_array,              &
+                              graph_null_array, state,                         &
                               'f_binding_pre_kernel' // C_NULL_CHAR,           &
                               1_C_LONG)
       CALL graph%add_item((/ graph_ptr(x) /), (/                               &
@@ -797,17 +786,17 @@
          graph_ptr(dydm),                                                      &
          graph_ptr(dydb),                                                      &
          graph_ptr(dydy)                                                       &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_item((/                                                   &
          graph_ptr(i), graph_ptr(j), graph_ptr(variable), graph_ptr(variable2) &
       /), (/                                                                   &
          graph_ptr(p1), graph_ptr(p2), graph_ptr(i1), graph_ptr(i2)            &
-      /), graph_null_array, graph_null_array, C_NULL_PTR,                      &
+      /), graph_null_array, graph_null_array, graph_null_array, C_NULL_PTR,    &
       'f_binding_piecewise' // C_NULL_CHAR, 1_C_LONG)
       CALL graph%add_converge_item((/ graph_ptr(z) /), (/ graph_ptr(root2) /), &
                                    (/ graph_ptr(z) /), (/ graph_ptr(dz) /),    &
-                                   C_NULL_PTR,                                 &
+                                   graph_null_array, C_NULL_PTR,               &
                                    'f_binding_converge' // C_NULL_CHAR,        &
                                    1_C_LONG, 1.0E-30_C_DOUBLE, 1000_C_LONG)
       CALL graph%compile
@@ -835,13 +824,8 @@
       CALL assert(DBLE(value(1)) .eq. 1.0_C_DOUBLE,                            &
                   'Value of dydy does not match.')
       CALL graph%copy_to_host(rand, value)
-      IF (use_safe_math) THEN
-         CALL assert(DBLE(value(1)) .eq. 2546248239.0_C_DOUBLE,                &
-                     'Value of rand does not match.')
-      ELSE
-         CALL assert(DBLE(value(1)) .eq. 2357136044.0_C_DOUBLE,                &
-                     'Value of rand does not match.')
-      END IF
+      CALL assert(DBLE(value(1)) .eq. 2357136044_C_DOUBLE,                     &
+                  'Value of rand does not match.')
       CALL graph%copy_to_host(z, value)
       CALL assert(DBLE(value(1)) .eq. 1.0_C_DOUBLE,                            &
                   'Value of root does not match.')

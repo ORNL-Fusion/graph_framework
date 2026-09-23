@@ -20,9 +20,7 @@ namespace timing {
 ///  Description of what is being timed.
         const std::string label;
 ///  Starting time of the measure.
-        const std::chrono::high_resolution_clock::time_point start;
-///  Ending time of the measure.
-        std::chrono::high_resolution_clock::time_point end;
+        std::chrono::high_resolution_clock::time_point start;
 
     public:
 //------------------------------------------------------------------------------
@@ -32,6 +30,21 @@ namespace timing {
 //------------------------------------------------------------------------------
         measure_diagnostic(const std::string message = "") :
         label(message), start(std::chrono::high_resolution_clock::now()) {}
+
+//------------------------------------------------------------------------------
+///  @brief Construct a time diagnostic object.
+///
+///  @param[in] md Object to copy.
+//------------------------------------------------------------------------------
+        measure_diagnostic(const measure_diagnostic &md) :
+        label(md.label), start(md.start) {}
+
+//------------------------------------------------------------------------------
+///  @brief Reset the time.
+//------------------------------------------------------------------------------
+        void reset() {
+            start = std::chrono::high_resolution_clock::now();
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Print the result.
@@ -85,6 +98,14 @@ namespace timing {
 //------------------------------------------------------------------------------
         measure_diagnostic_threaded(const std::string message = "") :
         label(message) {}
+
+//------------------------------------------------------------------------------
+///  @brief Construct a time diagnostic object.
+///
+///  @param[in] mdt Object to copy.
+//------------------------------------------------------------------------------
+        measure_diagnostic_threaded(const measure_diagnostic_threaded &mdt) :
+        label(mdt.label) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Start time for a given thread.

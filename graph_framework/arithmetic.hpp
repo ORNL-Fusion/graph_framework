@@ -193,11 +193,9 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg(),
-                                    pl1->get_scale(), pl1->get_offset());
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg(),
-                                    pr1->get_scale(), pr1->get_offset());
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -206,13 +204,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -221,29 +219,29 @@ namespace graph {
                 result.add_row(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.add_col(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.add_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.add_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 
 //  Identity reductions.
@@ -635,26 +633,22 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, 
-                                                                  registers,
-                                                                  indices,
-                                                                  usage);
-                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
-                                                                   registers,
-                                                                   indices,
-                                                                   usage);
+                auto l = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -682,12 +676,10 @@ namespace graph {
             auto x_cast = add_cast(x);
             if (x_cast.get()) {
 //  Addition is commutative.
-                if ((this->left->is_match(x_cast->get_left()) &&
-                     this->right->is_match(x_cast->get_right())) ||
-                    (this->right->is_match(x_cast->get_left()) &&
-                     this->left->is_match(x_cast->get_right()))) {
-                    return true;
-                }
+                return (this->left->is_match(x_cast->get_left()) &&
+                        this->right->is_match(x_cast->get_right())) ||
+                       (this->right->is_match(x_cast->get_left()) &&
+                        this->left->is_match(x_cast->get_right()));
             }
 
             return false;
@@ -949,11 +941,9 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg(),
-                                    pl1->get_scale(), pl1->get_offset());
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg(),
-                                    pr1->get_scale(), pr1->get_offset());
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -962,13 +952,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
-                                    pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pl2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -976,30 +966,30 @@ namespace graph {
                 backend::buffer<T> result = pl1->evaluate();
                 result.subtract_row(pr2->evaluate());
                 return piecewise_2D(result,
-                                    pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pl2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.subtract_col(pr2->evaluate());
                 return piecewise_2D(result,
-                                    pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pl2->get_num_columns(),
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.subtract_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.subtract_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 // (c1 + a) - c2 -> c3 + a
 // c1 - (c2 + a) -> c3 - a
@@ -1066,6 +1056,24 @@ namespace graph {
                         return lm->get_left()*lmrs->get_left() - this->right -
                                lm->get_left()*lmrs->get_right();
                     }
+                }
+            }
+
+//  (a + b) - a -> b
+//  (a + b) - b -> a
+//  a - (a + b) -> -b
+//  b - (a + b) -> -a
+            if (la.get()) {
+                if (la->get_left()->is_match(this->right)) {
+                    return la->get_right();
+                } else if (la->get_right()->is_match(this->right)) {
+                    return la->get_left();
+                }
+            } else if (ra.get()) {
+                if (ra->get_left()->is_match(this->left)) {
+                    return none<T, SAFE_MATH> ()*ra->get_right();
+                } else if (ra->get_right()->is_match(this->left)) {
+                    return none<T, SAFE_MATH> ()*ra->get_left();
                 }
             }
 
@@ -1465,26 +1473,22 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream, 
-                                                                  registers,
-                                                                  indices,
-                                                                  usage);
-                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
-                                                                   registers,
-                                                                   indices,
-                                                                   usage);
+                auto l = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -1901,11 +1905,9 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg(),
-                                    pl1->get_scale(), pl1->get_offset());
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg(),
-                                    pr1->get_scale(), pr1->get_offset());
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -1914,13 +1916,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -1929,29 +1931,29 @@ namespace graph {
                 result.multiply_row(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.multiply_col(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.multiply_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.multiply_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 
 //  Move constants to the left.
@@ -2472,6 +2474,96 @@ namespace graph {
                 }
             }
 
+//  Sqrt(a)*Sqrt(b) -> Sqrt(a*b)
+            auto lsqr = sqrt_cast(this->left);
+            auto rsqr = sqrt_cast(this->right);
+            if (lsqr.get() && rsqr.get()) {
+                return sqrt(lsqr->get_arg()*rsqr->get_arg());
+            }
+
+            if constexpr (std::floating_point<T>) {
+//  hypot(b,c)*Sqrt(a) -> Sqrt((b^2 + c^2)*a)
+//  Sqrt(a)*hypot(b,c) -> Sqrt(a*(b^2 + c^2))
+                auto lhypot = hypot_cast(this->left);
+                auto rhypot = hypot_cast(this->right);
+                if (lhypot.get() && rsqr.get()) {
+                    return sqrt((pow(lhypot->get_left(), static_cast<T> (2)) +
+                                 pow(lhypot->get_right(), static_cast<T> (2))) *
+                                rsqr->get_arg());
+                } else if (rhypot.get() && lsqr.get()) {
+                    return sqrt((pow(rhypot->get_left(), static_cast<T> (2)) +
+                                 pow(rhypot->get_right(), static_cast<T> (2))) *
+                                lsqr->get_arg());
+                }
+                
+//  Sqrt(x^2)*copysign(1,x) -> x
+//  copysign(1,x)*Sqrt(x^2) -> x
+                auto lcsc = copysign_cast(this->left);
+                auto rcsc = copysign_cast(this->right);
+                if (rcsc.get() && lsqr.get()) {
+                    auto rcsclc = constant_cast(rcsc->get_left());
+                    auto lsqrpc = pow_cast(lsqr->get_arg());
+                    if (lsqrpc.get() && rcsclc.get() && rcsclc->is(1) &&
+                        lsqrpc->get_left()->is_match(rcsc->get_right())) {
+                        return rcsc->get_right();
+                    }
+                } else if (lcsc.get() && rsqr.get()) {
+                    auto lcsclc = constant_cast(lcsc->get_left());
+                    auto rsqrpc = pow_cast(rsqr->get_arg());
+                    if (rsqrpc.get() && lcsclc.get() && lcsclc->is(1) &&
+                        rsqrpc->get_left()->is_match(lcsc->get_right())) {
+                        return lcsc->get_right();
+                    }
+                }
+            }
+
+// (a + b/c)*c -> fma(a,c,b)
+// c*(a + b/c) -> fma(a,c,b)
+// (b/c + a)*c -> fma(a,c,b)
+// c*(b/c + a) -> fma(a,c,b)
+            auto la = add_cast(this->left);
+            if (la.get()) {
+                auto lald = divide_cast(la->get_left());
+                auto lard = divide_cast(la->get_right());
+                if (lald.get() && lald->get_right()->is_match(this->right)) {
+                    return fma(la->get_right(), this->right, lald->get_left());
+                } else if (lard.get() && lard->get_right()->is_match(this->right)) {
+                    return fma(la->get_left(), this->right, lard->get_left());
+                }
+            } else if (ra.get()) {
+                auto rald = divide_cast(ra->get_left());
+                auto rard = divide_cast(ra->get_right());
+                if (rald.get() && rald->get_right()->is_match(this->left)) {
+                    return fma(ra->get_right(), this->left, rald->get_left());
+                } else if (rard.get() && rard->get_right()->is_match(this->left)) {
+                    return fma(ra->get_left(), this->left, rard->get_left());
+                }
+            }
+
+// (a - b/c)*c -> a*c - b
+// c*(a - b/c) -> a*c - b
+// (b/c - a)*c -> b - a*c
+// c*(b/c - a) -> b - a*c
+            auto ls = subtract_cast(this->left);
+            auto rs = subtract_cast(this->right);
+            if (ls.get()) {
+                auto lsld = divide_cast(ls->get_left());
+                auto lsrd = divide_cast(ls->get_right());
+                if (lsld.get() && lsld->get_right()->is_match(this->right)) {
+                    return lsld->get_left() - ls->get_right()*this->right;
+                } else if (lsrd.get() && lsrd->get_right()->is_match(this->right)) {
+                    return ls->get_left()*this->right - lsrd->get_left();
+                }
+            } else if (rs.get()) {
+                auto rsld = divide_cast(rs->get_left());
+                auto rsrd = divide_cast(rs->get_right());
+                if (rsld.get() && rsld->get_right()->is_match(this->left)) {
+                    return rsld->get_right() - rs->get_right()*this->left;
+                } else if (rsrd.get() && rsrd->get_right()->is_match(this->left)) {
+                    return rs->get_left()*this->left - rsld->get_left();
+                }
+            }
+
 //  Cases like
 //  (c/exp(a))*(exp(b)/d) -> (c/d)*(exp(b)/exp(a))
 //  (c/exp(a))*(d/exp(b)) -> (c*e)/(exp(b)*exp(a))
@@ -2506,26 +2598,22 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
-                                                                  registers,
-                                                                  indices,
-                                                                  usage);
-                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
-                                                                   registers,
-                                                                   indices,
-                                                                   usage);
+                auto l = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -2835,11 +2923,9 @@ namespace graph {
             auto pr1 = piecewise_1D_cast(this->right);
 
             if (pl1.get() && (r.get() || pl1->is_arg_match(this->right))) {
-                return piecewise_1D(this->evaluate(), pl1->get_arg(),
-                                    pl1->get_scale(), pl1->get_offset());
+                return piecewise_1D(this->evaluate(), pl1->get_arg());
             } else if (pr1.get() && (l.get() || pr1->is_arg_match(this->left))) {
-                return piecewise_1D(this->evaluate(), pr1->get_arg(),
-                                    pr1->get_scale(), pr1->get_offset());
+                return piecewise_1D(this->evaluate(), pr1->get_arg());
             }
 
             auto pl2 = piecewise_2D_cast(this->left);
@@ -2848,13 +2934,13 @@ namespace graph {
             if (pl2.get() && (r.get() || pl2->is_arg_match(this->right))) {
                 return piecewise_2D(this->evaluate(),
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pr2.get() && (l.get() || pr2->is_arg_match(this->left))) {
                 return piecewise_2D(this->evaluate(),
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             }
 
 //  Combine 2D and 1D piecewise constants if a row or column matches.
@@ -2863,29 +2949,29 @@ namespace graph {
                 result.divide_row(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pr2.get() && pr2->is_col_match(this->left)) {
                 backend::buffer<T> result = pl1->evaluate();
                 result.divide_col(pr2->evaluate());
                 return piecewise_2D(result,
                                     pr2->get_num_columns(),
-                                    pr2->get_left(), pr2->get_x_scale(), pr2->get_x_offset(),
-                                    pr2->get_right(), pr2->get_y_scale(), pr2->get_y_offset());
+                                    pr2->get_left(),
+                                    pr2->get_right());
             } else if (pl2.get() && pl2->is_row_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.divide_row(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             } else if (pl2.get() && pl2->is_col_match(this->right)) {
                 backend::buffer<T> result = pl2->evaluate();
                 result.divide_col(pr1->evaluate());
                 return piecewise_2D(result,
                                     pl2->get_num_columns(),
-                                    pl2->get_left(), pl2->get_x_scale(), pl2->get_x_offset(),
-                                    pl2->get_right(), pl2->get_y_scale(), pl2->get_y_offset());
+                                    pl2->get_left(),
+                                    pl2->get_right());
             }
 
             if (this->left->is_match(this->right)) {
@@ -3498,26 +3584,22 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
-                                                                  registers,
-                                                                  indices,
-                                                                  usage);
-                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
-                                                                   registers,
-                                                                   indices,
-                                                                   usage);
+                auto l = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -5036,6 +5118,49 @@ namespace graph {
                 }
             }
 
+//  fma(sqrt(a),sqrt(b),c) -> sqrt(a*b) + c
+            auto lsqr = sqrt_cast(this->left);
+            auto msqr = sqrt_cast(this->middle);
+            if (lsqr.get() && msqr.get()) {
+                return sqrt(lsqr->get_arg()*msqr->get_arg()) + this->right;
+            }
+
+            if constexpr (std::floating_point<T>) {
+//  fma(hypot(b,c),Sqrt(a),d) -> Sqrt((b^2 + c^2)*a) + d
+//  fma(Sqrt(a),hypot(b,c),d) -> Sqrt(a*(b^2 + c^2)) + d
+                auto lhypot = hypot_cast(this->left);
+                auto mhypot = hypot_cast(this->middle);
+                if (lhypot.get() && msqr.get()) {
+                    return sqrt((pow(lhypot->get_left(), static_cast<T> (2)) +
+                                 pow(lhypot->get_right(), static_cast<T> (2))) *
+                                msqr->get_arg()) + this->right;
+                } else if (mhypot.get() && lsqr.get()) {
+                    return sqrt((pow(mhypot->get_left(), static_cast<T> (2)) +
+                                 pow(mhypot->get_right(), static_cast<T> (2))) *
+                                lsqr->get_arg()) + this->right;
+                }
+
+//  fma(Sqrt(x^2),copysign(1,x),d) -> x
+//  fma(copysign(1,x),Sqrt(x^2),d) -> x
+                auto lcsc = copysign_cast(this->left);
+                auto mcsc = copysign_cast(this->middle);
+                if (mcsc.get() && lsqr.get()) {
+                    auto mcsclc = constant_cast(mcsc->get_left());
+                    auto lsqrpc = pow_cast(lsqr->get_arg());
+                    if (lsqrpc.get() && mcsclc.get() && mcsclc->is(1) &&
+                        lsqrpc->get_left()->is_match(mcsc->get_right())) {
+                        return mcsc->get_right() + this->right;
+                    }
+                } else if (lcsc.get() && msqr.get()) {
+                    auto lcsclc = constant_cast(lcsc->get_left());
+                    auto msqrpc = pow_cast(msqr->get_arg());
+                    if (msqrpc.get() && lcsclc.get() && lcsclc->is(1) &&
+                        msqrpc->get_left()->is_match(lcsc->get_right())) {
+                        return lcsc->get_right() + this->right;
+                    }
+                }
+            }
+
             return this->shared_from_this();
         }
 
@@ -5069,30 +5194,24 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> l = this->left->compile(stream,
-                                                                  registers,
-                                                                  indices,
-                                                                  usage);
-                shared_leaf<T, SAFE_MATH> m = this->middle->compile(stream,
-                                                                    registers,
-                                                                    indices,
-                                                                    usage);
-                shared_leaf<T, SAFE_MATH> r = this->right->compile(stream,
-                                                                   registers,
-                                                                   indices,
-                                                                   usage);
+                auto l = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto m = this->middle->compile(stream, registers,
+                                               thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -5401,6 +5520,264 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_fma<T, SAFE_MATH> fma_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<fma_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
+//  Modulo node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief An Modulo node.
+///
+///  Note use templates here to defer this so it can use the operator functions.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    class modulo_node final : public no_derivative<T, SAFE_MATH, branch_node<T, SAFE_MATH>> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string.
+///
+///  @param[in] l Left node pointer.
+///  @param[in] r Right node pointer.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(leaf_node<T, SAFE_MATH> *l,
+                                     leaf_node<T, SAFE_MATH> *r) {
+            return jit::format_to_string(reinterpret_cast<size_t> (l)) + "%" +
+                   jit::format_to_string(reinterpret_cast<size_t> (r));
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct an modulo node.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+        modulo_node(shared_leaf<T, SAFE_MATH> l,
+                    shared_leaf<T, SAFE_MATH> r) :
+        no_derivative<T, SAFE_MATH,
+                      branch_node<T, SAFE_MATH>> (l, r,
+                                                  modulo_node::to_string(l.get(),
+                                                                         r.get())) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of modulo.
+///
+///  result = l % r
+///
+///  @returns The value of l % r.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> l_result = this->left->evaluate();
+            backend::buffer<T> r_result = this->right->evaluate();
+            return l_result % r_result;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduce an modulo node.
+///
+///  @returns A reduced modulo node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
+//  Constant reductions.
+            auto l = constant_cast(this->left);
+            auto r = constant_cast(this->right);
+
+            if (l.get() && r.get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto l = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                              thread_mem, usage);
+
+                registers[this] = jit::to_string('r', this);
+                stream << "        const ";
+                jit::add_type<T> (stream);
+                stream << " " << registers[this] << " = fmod("
+                       << registers[l.get()] << ","
+                       << registers[r.get()] << ")";
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            bool l_brackets = add_cast(this->left).get() ||
+                              subtract_cast(this->left).get();
+            bool r_brackets = add_cast(this->right).get() ||
+                              subtract_cast(this->right).get();
+            if (l_brackets) {
+                std::cout << "\\left(";
+            }
+            this->left->to_latex();
+            if (l_brackets) {
+                std::cout << "\\right)";
+            }
+            std::cout << "\%";
+            if (r_brackets) {
+                std::cout << "\\left(";
+            }
+            this->right->to_latex();
+            if (r_brackets) {
+                std::cout << "\\right)";
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"%\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto l = this->left->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[l.get()] << ";" << std::endl;
+                auto r = this->right->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[r.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Build modulo node from two leaves.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> modulo(shared_leaf<T, SAFE_MATH> l,
+                                     shared_leaf<T, SAFE_MATH> r) {
+        auto temp = std::make_shared<modulo_node<T, SAFE_MATH>> (l, r)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash();
+             i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build modulo node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator%(shared_leaf<T, SAFE_MATH> l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return modulo<T, SAFE_MATH> (l, r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build modulo node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam L         Float type for the constant.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, std::floating_point L, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator%(const L l,
+                                        shared_leaf<T, SAFE_MATH> r) {
+        return modulo<T, SAFE_MATH> (constant<T, SAFE_MATH> (static_cast<T> (l)), r);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Build modulo node from two leaves.
+///
+///  Note use templates here to defer this so it can be used in the above
+///  classes.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam R         Float type for the constant.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] l Left branch.
+///  @param[in] r Right branch.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, std::floating_point R, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> operator%(shared_leaf<T, SAFE_MATH> l,
+                                        const R r) {
+        return modulo<T, SAFE_MATH> (l, constant<T, SAFE_MATH> (static_cast<T> (r)));
+    }
+
+///  Convenience type alias for shared modulo nodes.
+    template<std::floating_point T, bool SAFE_MATH=false>
+    using shared_modulo = std::shared_ptr<modulo_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a modulo node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<std::floating_point T, bool SAFE_MATH=false>
+    shared_modulo<T, SAFE_MATH> modulo_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<modulo_node<T, SAFE_MATH>> (x);
     }
 }
 

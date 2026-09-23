@@ -22,6 +22,7 @@ namespace solver {
 ///  @param[in,out] work           Workflow manager.
 ///  @param[in]     vars           The unknowns to solver for.
 ///  @param[in]     inputs         Inputs for jit compile.
+///  @param[in]     atomics        Atomic inputs for jit compile.
 ///  @param[in]     func           Function to find the root of.
 ///  @param[in]     state          Random state node.
 ///  @param[in]     tolerance      Tolerance to solve the dispersion function
@@ -34,6 +35,7 @@ namespace solver {
     void newton(workflow::manager<T, SAFE_MATH> &work,
                 graph::output_nodes<T, SAFE_MATH> vars,
                 graph::input_nodes<T, SAFE_MATH> inputs,
+                graph::input_nodes<T, SAFE_MATH> atomics,
                 graph::shared_leaf<T, SAFE_MATH> func,
                 graph::shared_random_state<T, SAFE_MATH> state,
                 const T tolerance = 1.0E-30,
@@ -45,7 +47,7 @@ namespace solver {
                                graph::variable_cast(x)});
         }
 
-        work.add_converge_item(inputs, {func*func}, setters, state,
+        work.add_converge_item(inputs, {func*func}, setters, atomics, state,
                                "loss_kernel", inputs.back()->size(),
                                tolerance, max_iterations);
     }

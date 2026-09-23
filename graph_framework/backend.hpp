@@ -26,17 +26,17 @@ namespace backend {
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    class buffer {
-    private:
-///  The data buffer to hold the data.
-        std::vector<T> memory;
-
+    class buffer : public std::vector<T> {
     public:
+        using std::vector<T>::size;
+        using std::vector<T>::data;
+        using std::vector<T>::assign;
+
 //------------------------------------------------------------------------------
 ///  @brief Construct an empty buffer backend.
 //------------------------------------------------------------------------------
         buffer() :
-        memory() {}
+        std::vector<T> () {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend with a size.
@@ -44,7 +44,7 @@ namespace backend {
 ///  @param[in] s Size of he data buffer.
 //------------------------------------------------------------------------------
         buffer(const size_t s) :
-        memory(s) {}
+        std::vector<T> (s) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend with a size.
@@ -53,7 +53,7 @@ namespace backend {
 ///  @param[in] d Scalar data to initialize.
 //------------------------------------------------------------------------------
         buffer(const size_t s, const T d) :
-        memory(s, d) {}
+        std::vector<T> (s, d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend from a vector.
@@ -61,7 +61,7 @@ namespace backend {
 ///  @param[in] d Array buffer.
 //------------------------------------------------------------------------------
         buffer(const std::vector<T> &d) :
-        memory(d) {}
+        std::vector<T> (d) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Construct a buffer backend from a buffer backend.
@@ -69,27 +69,19 @@ namespace backend {
 ///  @param[in] d Backend buffer.
 //------------------------------------------------------------------------------
         buffer(const buffer &d) :
-        memory(d.memory) {}
+        std::vector<T> (d) {}
 
 //------------------------------------------------------------------------------
-///  @brief Index operator.
+///  @brief Construct a buffer backend linearly.
+///
+///  @param[in] min Minimum value..
+///  @param[in] dx  Step size.
+///  @param[in] num Number of mesh points.
 //------------------------------------------------------------------------------
-        T &operator[] (const size_t index) {
-            return memory[index];
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Const index operator.
-//------------------------------------------------------------------------------
-        const T &operator[] (const size_t index) const {
-            return memory[index];
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get value at.
-//------------------------------------------------------------------------------
-        const T at(const size_t index) const {
-            return memory.at(index);
+        buffer(const T min, const T dx, const size_t num) : std::vector<T> (num) {
+            for (size_t i = 0; i < num; i++) {
+                (*this)[i] = dx*i + min;
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -98,7 +90,7 @@ namespace backend {
 ///  @param[in] d Scalar data to set.
 //------------------------------------------------------------------------------
         void set(const T d) {
-            memory.assign(memory.size(), d);
+            assign(size(), d);
         }
 
 //------------------------------------------------------------------------------
@@ -107,14 +99,7 @@ namespace backend {
 ///  @param[in] d Vector data to set.
 //------------------------------------------------------------------------------
         void set(const std::vector<T> &d) {
-            memory.assign(d.cbegin(), d.cend());
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get size of the buffer.
-//------------------------------------------------------------------------------
-        size_t size() const {
-            return memory.size();
+            assign(d.cbegin(), d.cend());
         }
 
 //------------------------------------------------------------------------------
@@ -123,9 +108,9 @@ namespace backend {
 ///  @returns Returns true if every element is the same.
 //------------------------------------------------------------------------------
         bool is_same() const {
-            const T same = memory.at(0);
-            for (size_t i = 1, ie = memory.size(); i < ie; i++) {
-                if (memory.at(i) != same) {
+            const T same = (*this)[0];
+            for (size_t i = 1, ie = size(); i < ie; i++) {
+                if ((*this)[i] != same) {
                     return false;
                 }
             }
@@ -139,7 +124,7 @@ namespace backend {
 ///  @returns Returns true if every element is zero.
 //------------------------------------------------------------------------------
         bool is_zero() const {
-            for (const T &d : memory) {
+            for (const T &d : *this) {
                 if (d != static_cast<T> (0.0)) {
                     return false;
                 }
@@ -154,7 +139,7 @@ namespace backend {
 ///  @returns Returns true if any element is zero.
 //------------------------------------------------------------------------------
         bool has_zero() const {
-            for (const T &d : memory) {
+            for (const T &d : *this) {
                 if (d == static_cast<T> (0.0)) {
                     return true;
                 }
@@ -169,7 +154,7 @@ namespace backend {
 ///  @returns Returns true if every element is negative.
 //------------------------------------------------------------------------------
         bool is_negative() const {
-            for (const T &d : memory) {
+            for (const T &d : *this) {
                 if (std::real(d) > std::real(static_cast<T> (0.0))) {
                     return false;
                 }
@@ -184,7 +169,7 @@ namespace backend {
 ///  @returns Returns true if every element is negative.
 //------------------------------------------------------------------------------
         bool is_even() const {
-            for (const T &d : memory) {
+            for (const T &d : *this) {
                 if (std::fmod(std::real(d), std::real(static_cast<T> (2.0)))) {
                     return false;
                 }
@@ -199,7 +184,7 @@ namespace backend {
 ///  @returns Returns true if every element is negative one.
 //------------------------------------------------------------------------------
         bool is_none() const {
-            for (const T &d : memory) {
+            for (const T &d : *this) {
                 if (d != static_cast<T> (-1.0)) {
                     return false;
                 }
@@ -209,66 +194,69 @@ namespace backend {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Applies an operation over all elements in the buffer.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define apply_op(op) \
+for (T &d : *this) { \
+    d = op(d);       \
+}
+
+//------------------------------------------------------------------------------
 ///  @brief Take sqrt.
 //------------------------------------------------------------------------------
         void sqrt() {
-            for (T &d : memory) {
-                d = std::sqrt(d);
-            }
+            apply_op(std::sqrt)
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Take exp.
 //------------------------------------------------------------------------------
         void exp() {
-            for (T &d : memory) {
-                d = std::exp(d);
-            }
+            apply_op(std::exp)
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Take log.
 //------------------------------------------------------------------------------
         void log() {
-            for (T &d : memory) {
-                d = std::log(d);
-            }
+            apply_op(std::log)
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Take sin.
 //------------------------------------------------------------------------------
         void sin() {
-            for (T &d : memory) {
-                d = std::sin(d);
-            }
+            apply_op(std::sin)
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Take cos.
 //------------------------------------------------------------------------------
         void cos() {
-            for (T &d : memory) {
-                d = std::cos(d);
-            }
+            apply_op(std::cos)
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Take cos.
+//------------------------------------------------------------------------------
+        void real() {
+            apply_op(std::real)
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Take erf.
+//------------------------------------------------------------------------------
+        void erf() requires(std::floating_point<T>) {
+            apply_op(std::erf)
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Take erfi.
 //------------------------------------------------------------------------------
         void erfi() requires(jit::complex_scalar<T>) {
-            for (T &d : memory) {
-                d = special::erfi(d);
-            }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get a pointer to the basic memory buffer.
-///
-///  @returns The pointer to the buffer memory.
-//------------------------------------------------------------------------------
-        T *data() {
-            return memory.data();
+            apply_op(special::erfi)
         }
 
 //------------------------------------------------------------------------------
@@ -277,7 +265,7 @@ namespace backend {
 ///  @returns False if any NaN or Inf is found.
 //------------------------------------------------------------------------------
         bool is_normal() const {
-            for (const T &x : memory) {
+            for (const T &x : *this) {
                 if constexpr (jit::complex_scalar<T>) {
                     if (std::isnan(std::real(x)) || std::isinf(std::real(x)) ||
                         std::isnan(std::imag(x)) || std::isinf(std::imag(x))) {
@@ -303,7 +291,7 @@ namespace backend {
             buffer<T> b(num_columns);
             const size_t num_rows = size()/num_columns;
             for (size_t j = 0; j < num_columns; j++) {
-                b[j] = memory[index*num_rows + j];
+                b[j] = (*this)[index*num_rows + j];
             }
             return b;
         }
@@ -319,10 +307,43 @@ namespace backend {
             const size_t num_rows = size()/num_columns;
             buffer<T> b(num_rows);
             for (size_t i = 0; i < num_rows; i++) {
-                b[i] = memory[i*num_rows + index];
+                b[i] = (*this)[i*num_rows + index];
             }
             return b;
         }
+
+//------------------------------------------------------------------------------
+///  @brief Applies an operator along a row.
+///
+///  @param opp   The operation to apply.
+///  @param oppeq The assignment operator to apply.
+//------------------------------------------------------------------------------
+#define row_op(opp, oppeq)                                                  \
+if (size() > x.size()) {                                                    \
+    assert(size()%x.size() == 0 &&                                          \
+           "Vector operand size is not a multiple of matrix operand size"); \
+                                                                            \
+    const size_t num_columns = size()/x.size();                             \
+    const size_t num_rows = x.size();                                       \
+    for (size_t i = 0; i < num_rows; i++) {                                 \
+        for (size_t j = 0; j < num_columns; j++) {                          \
+            (*this)[i*num_columns + j] oppeq x[i];                          \
+        }                                                                   \
+    }                                                                       \
+} else {                                                                    \
+    assert(x.size()%size() == 0 &&                                          \
+           "Vector operand size is not a multiple of matrix operand size"); \
+                                                                            \
+    std::vector<T> m(x.size());                                             \
+    const size_t num_columns = x.size()/size();                             \
+    const size_t num_rows = size();                                         \
+    for (size_t i = 0; i < num_rows; i++) {                                 \
+        for (size_t j = 0; j < num_columns; j++) {                          \
+            m[i*num_columns + j] = (*this)[i] opp x[i*num_columns + j];     \
+        }                                                                   \
+    }                                                                       \
+    *this = m;                                                              \
+}
 
 //------------------------------------------------------------------------------
 ///  @brief Add row operation.
@@ -333,32 +354,41 @@ namespace backend {
 ///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void add_row(const buffer<T> &x) {
-            if (size() > x.size()) {
-                assert(size()%x.size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                const size_t num_columns = size()/x.size();
-                const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_rows + j] += x[i];
-                    }
-                }
-            } else {
-                assert(x.size()%size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                std::vector<T> m(x.size());
-                const size_t num_columns = x.size()/size();
-                const size_t num_rows = size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        m[i*num_columns + j] = memory[i] + x[i*num_columns + j];
-                    }
-                }
-                memory = m;
-            }
+            row_op(+, +=)
         }
+
+//------------------------------------------------------------------------------
+///  @brief Applies an operator along a column.
+///
+///  @param opp   The operation to apply.
+///  @param oppeq The assignment operator to apply.
+//------------------------------------------------------------------------------
+#define col_op(opp, oppeq)                                                  \
+if (size() > x.size()) {                                                    \
+    assert(size()%x.size() == 0 &&                                          \
+           "Vector operand size is not a multiple of matrix operand size"); \
+                                                                            \
+    const size_t num_columns = size()/x.size();                             \
+    const size_t num_rows = x.size();                                       \
+    for (size_t i = 0; i < num_rows; i++) {                                 \
+        for (size_t j = 0; j < num_columns; j++) {                          \
+            (*this)[i*num_columns + j] oppeq x[j];                          \
+        }                                                                   \
+    }                                                                       \
+} else {                                                                    \
+    assert(x.size()%size() == 0 &&                                          \
+           "Vector operand size is not a multiple of matrix operand size"); \
+                                                                            \
+    std::vector<T> m(x.size());                                             \
+    const size_t num_columns = x.size()/size();                             \
+    const size_t num_rows = size();                                         \
+    for (size_t i = 0; i < num_rows; i++) {                                 \
+        for (size_t j = 0; j < num_columns; j++) {                          \
+            m[i*num_columns + j] = (*this)[j] opp x[i*num_columns + j];     \
+        }                                                                   \
+    }                                                                       \
+    *this = m;                                                              \
+}
 
 //------------------------------------------------------------------------------
 ///  @brief Add col operation.
@@ -369,31 +399,7 @@ namespace backend {
 ///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void add_col(const buffer<T> &x) {
-            if (size() > x.size()) {
-                assert(size()%x.size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                const size_t num_columns = size()/x.size();
-                const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] += x[j];
-                    }
-                }
-            } else {
-                assert(x.size()%size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                std::vector<T> m(x.size());
-                const size_t num_columns = x.size()/size();
-                const size_t num_rows = size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        m[i*num_columns + j] = memory[j] + x[i*num_columns + j];
-                    }
-                }
-                memory = m;
-            }
+            col_op(+, +=)
         }
 
 //------------------------------------------------------------------------------
@@ -405,31 +411,7 @@ namespace backend {
 ///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void subtract_row(const buffer<T> &x) {
-            if (size() > x.size()) {
-                assert(size()%x.size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                const size_t num_columns = size()/x.size();
-                const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] -= x[i];
-                    }
-                }
-            } else {
-                assert(x.size()%size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                std::vector<T> m(x.size());
-                const size_t num_columns = x.size()/size();
-                const size_t num_rows = size();
-                for (size_t i = 0; i < num_columns; i++) {
-                    for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_columns + j] = memory[i] - x[i*num_columns + j];
-                    }
-                }
-                memory = m;
-            }
+            row_op(-, -=)
         }
 
 //------------------------------------------------------------------------------
@@ -441,31 +423,7 @@ namespace backend {
 ///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void subtract_col(const buffer<T> &x) {
-            if (size() > x.size()) {
-                assert(size()%x.size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                const size_t num_columns = size()/x.size();
-                const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] -= x[j];
-                    }
-                }
-            } else {
-                assert(x.size()%size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                std::vector<T> m(x.size());
-                const size_t num_columns = x.size()/size();
-                const size_t num_rows = size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        m[i*num_columns + j] = memory[j] - x[i*num_columns + j];
-                    }
-                }
-                memory = m;
-            }
+            col_op(-, -=)
         }
 
 //------------------------------------------------------------------------------
@@ -477,31 +435,7 @@ namespace backend {
 ///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void multiply_row(const buffer<T> &x) {
-            if (size() > x.size()) {
-                assert(size()%x.size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                const size_t num_columns = size()/x.size();
-                const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] *= x[i];
-                    }
-                }
-            } else {
-                assert(x.size()%size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                std::vector<T> m(x.size());
-                const size_t num_columns = x.size()/size();
-                const size_t num_rows = size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        m[i*num_columns + j] = memory[i]*x[i*num_columns + j];
-                    }
-                }
-                memory = m;
-            }
+            row_op(*, *=)
         }
 
 //------------------------------------------------------------------------------
@@ -513,31 +447,7 @@ namespace backend {
 ///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void multiply_col(const buffer<T> &x) {
-            if (size() > x.size()) {
-                assert(size()%x.size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                const size_t num_columns = size()/x.size();
-                const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] *= x[j];
-                    }
-                }
-            } else {
-                assert(x.size()%size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                std::vector<T> m(x.size());
-                const size_t num_columns = x.size()/size();
-                const size_t num_rows = size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        m[i*num_columns + j] = memory[j]*x[i*num_columns + j];
-                    }
-                }
-                memory = m;
-            }
+            col_op(*, *=)
         }
 
 //------------------------------------------------------------------------------
@@ -549,31 +459,7 @@ namespace backend {
 ///  @param[in] x The right operand.
 //------------------------------------------------------------------------------
         void divide_row(const buffer<T> &x) {
-            if (size() > x.size()) {
-                assert(size()%x.size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                const size_t num_columns = size()/x.size();
-                const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] /= x[i];
-                    }
-                }
-            } else {
-                assert(x.size()%size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
-
-                std::vector<T> m(x.size());
-                const size_t num_columns = x.size()/size();
-                const size_t num_rows = size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        m[i*num_columns + j] = memory[i]/x[i*num_columns + j];
-                    }
-                }
-                memory = m;
-            }
+            row_op(/, /=)
         }
 
 //------------------------------------------------------------------------------
@@ -585,31 +471,95 @@ namespace backend {
 ///  @param[in] x The other operand.
 //------------------------------------------------------------------------------
         void divide_col(const buffer<T> &x) {
-            if (size() > x.size()) {
-                assert(size()%x.size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
+            col_op(/, /=)
+        }
 
-                const size_t num_columns = size()/x.size();
-                const size_t num_rows = x.size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] /= x[j];
-                    }
-                }
-            } else {
-                assert(x.size()%size() == 0 &&
-                       "Vector operand size is not a multiple of matrix operand size");
+//------------------------------------------------------------------------------
+///  @brief Applies a function along a row.
+///
+///  @param fn The function to apply.
+//------------------------------------------------------------------------------
+        #define row_fn(fn)                                                             \
+        if (size() > x.size()) {                                                       \
+            assert(size()%x.size() == 0 &&                                             \
+                   "Vector operand size is not a multiple of matrix operand size");    \
+                                                                                       \
+            const size_t num_columns = size()/x.size();                                \
+            const size_t num_rows = x.size();                                          \
+            for (size_t i = 0; i < num_rows; i++) {                                    \
+                for (size_t j = 0; j < num_columns; j++) {                             \
+                    (*this)[i*num_columns + j] = fn((*this)[i*num_columns + j], x[i]); \
+                }                                                                      \
+            }                                                                          \
+        } else {                                                                       \
+            assert(x.size()%size() == 0 &&                                             \
+                   "Vector operand size is not a multiple of matrix operand size");    \
+                                                                                       \
+            std::vector<T> m(x.size());                                                \
+            const size_t num_columns = x.size()/size();                                \
+            const size_t num_rows = size();                                            \
+            for (size_t i = 0; i < num_rows; i++) {                                    \
+                for (size_t j = 0; j < num_columns; j++) {                             \
+                    m[i*num_columns + j] = fn((*this)[i], x[i*num_columns + j]);       \
+                }                                                                      \
+            }                                                                          \
+            *this = m;                                                                 \
+        }
 
-                std::vector<T> m(x.size());
-                const size_t num_columns = x.size()/size();
-                const size_t num_rows = size();
-                for (size_t i = 0; i < num_rows; i++) {
-                    for (size_t j = 0; j < num_columns; j++) {
-                        m[i*num_columns + j] = memory[j]/x[i*num_columns + j];
-                    }
-                }
-                memory = m;
-            }
+//------------------------------------------------------------------------------
+///  @brief Min row operation.
+///
+///  Takes Min(m_ij, v_i) or Min(v_i, m_ij). This will resize the buffer if it
+///  needs to be.
+///
+///  @param[in] x The other operand.
+//------------------------------------------------------------------------------
+        void min_row(const buffer<T> &x) {
+            row_fn(std::min)
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a function along a column.
+///
+///  @param fn The function to apply.
+//------------------------------------------------------------------------------
+        #define col_fn(fn)                                                             \
+        if (size() > x.size()) {                                                       \
+            assert(size()%x.size() == 0 &&                                             \
+                   "Vector operand size is not a multiple of matrix operand size");    \
+                                                                                       \
+            const size_t num_columns = size()/x.size();                                \
+            const size_t num_rows = x.size();                                          \
+            for (size_t i = 0; i < num_rows; i++) {                                    \
+                for (size_t j = 0; j < num_columns; j++) {                             \
+                    (*this)[i*num_columns + j] = fn((*this)[i*num_columns + j], x[j]); \
+                }                                                                      \
+            }                                                                          \
+        } else {                                                                       \
+            assert(x.size()%size() == 0 &&                                             \
+                   "Vector operand size is not a multiple of matrix operand size");    \
+                                                                                       \
+            std::vector<T> m(x.size());                                                \
+            const size_t num_columns = x.size()/size();                                \
+            const size_t num_rows = size();                                            \
+            for (size_t i = 0; i < num_rows; i++) {                                    \
+                for (size_t j = 0; j < num_columns; j++) {                             \
+                    m[i*num_columns + j] = fn((*this)[j], x[i*num_columns + j]);       \
+                }                                                                      \
+            }                                                                          \
+            *this = m;                                                                 \
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Min col operation.
+///
+///  Takes Min(m_ij, v_j) or Min(v_j, m_ij). This will resize the buffer if it
+///  needs to be.
+///
+///  @param[in] x The other operand.
+//------------------------------------------------------------------------------
+        void min_col(const buffer<T> &x) {
+            col_fn(std::min)
         }
 
 //------------------------------------------------------------------------------
@@ -630,9 +580,9 @@ namespace backend {
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_columns; j++) {
                         if constexpr (jit::complex_scalar<T>) {
-                            memory[i*num_columns + j] = std::atan(x[i]/memory[i*num_columns + j]);
+                            (*this)[i*num_columns + j] = std::atan(x[i]/(*this)[i*num_columns + j]);
                         } else {
-                            memory[i*num_columns + j] = std::atan2(x[i], memory[i*num_columns + j]);
+                            (*this)[i*num_columns + j] = std::atan2(x[i], (*this)[i*num_columns + j]);
                         }
                     }
                 }
@@ -646,13 +596,13 @@ namespace backend {
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_columns; j++) {
                         if constexpr (jit::complex_scalar<T>) {
-                            m[i*num_columns + j] = std::atan(x[i*num_columns + j]/memory[i]);
+                            m[i*num_columns + j] = std::atan(x[i*num_columns + j]/(*this)[i]);
                         } else {
-                            m[i*num_columns + j] = std::atan2(x[i*num_columns + j], memory[i]);
+                            m[i*num_columns + j] = std::atan2(x[i*num_columns + j], (*this)[i]);
                         }
                     }
                 }
-                memory = m;
+                *this = m;
             }
         }
 
@@ -674,9 +624,9 @@ namespace backend {
                 for (size_t i = 0; i < num_columns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
                         if constexpr (jit::complex_scalar<T>) {
-                            memory[i*num_columns + j] = std::atan(x[j]/memory[i*num_columns + j]);
+                            (*this)[i*num_columns + j] = std::atan(x[j]/(*this)[i*num_columns + j]);
                         } else {
-                            memory[i*num_columns + j] = std::atan2(x[j], memory[i*num_columns + j]);
+                            (*this)[i*num_columns + j] = std::atan2(x[j], (*this)[i*num_columns + j]);
                         }
                     }
                 }
@@ -690,13 +640,13 @@ namespace backend {
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_columns; j++) {
                         if constexpr (jit::complex_scalar<T>) {
-                            m[i*num_columns + j] = std::atan(x[i*num_columns + j]/memory[j]);
+                            m[i*num_columns + j] = std::atan(x[i*num_columns + j]/(*this)[j]);
                         } else {
-                            m[i*num_columns + j] = std::atan2(x[i*num_columns + j], memory[j]);
+                            m[i*num_columns + j] = std::atan2(x[i*num_columns + j], (*this)[j]);
                         }
                     }
                 }
-                memory = m;
+                *this = m;
             }
         }
 
@@ -717,7 +667,7 @@ namespace backend {
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] = std::pow(memory[i*num_columns + j], x[i]);
+                        (*this)[i*num_columns + j] = std::pow((*this)[i*num_columns + j], x[i]);
                     }
                 }
             } else {
@@ -729,10 +679,10 @@ namespace backend {
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_columns; i++) {
                     for (size_t j = 0; j < num_rows; j++) {
-                        m[i*num_columns + j] = std::pow(memory[i], x[i*num_columns + j]);
+                        m[i*num_columns + j] = std::pow((*this)[i], x[i*num_columns + j]);
                     }
                 }
-                memory = m;
+                *this = m;
             }
         }
 
@@ -753,7 +703,7 @@ namespace backend {
                 const size_t num_rows = x.size();
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_columns; j++) {
-                        memory[i*num_columns + j] = std::pow(memory[i*num_columns + j], x[j]);
+                        (*this)[i*num_columns + j] = std::pow((*this)[i*num_columns + j], x[j]);
                     }
                 }
             } else {
@@ -765,50 +715,262 @@ namespace backend {
                 const size_t num_rows = size();
                 for (size_t i = 0; i < num_rows; i++) {
                     for (size_t j = 0; j < num_columns; j++) {
-                        m[i*num_columns + j] = std::pow(memory[j], x[i*num_columns + j]);
+                        m[i*num_columns + j] = std::pow((*this)[j], x[i*num_columns + j]);
                     }
                 }
-                memory = m;
+                *this = m;
             }
         }
+
+//------------------------------------------------------------------------------
+///  @brief Hypot row operation.
+///
+///  Computes Hypot(m_ij, v_i) or Hypot(v_i, m_ij). This will resize the buffer
+///  if it needs to be.
+///
+///  @param[in] x The right operand.
+//------------------------------------------------------------------------------
+        void hypot_row(const buffer<T> &x) requires(std::floating_point<T>) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_columns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        (*this)[i*num_columns + j] = std::hypot((*this)[i*num_columns + j], x[i]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_columns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_columns; i++) {
+                    for (size_t j = 0; j < num_rows; j++) {
+                        m[i*num_columns + j] = std::hypot((*this)[i], x[i*num_columns + j]);
+                    }
+                }
+                *this = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Hypot col operation.
+///
+///  Computes Hypot(m_ij, v_j) or Hypot(v_j, m_ij). This will resize the buffer
+///  if it needs to be.
+///
+///  @param[in] x The other operand.
+//------------------------------------------------------------------------------
+        void hypot_col(const buffer<T> &x) requires(std::floating_point<T>) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_columns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        (*this)[i*num_columns + j] = std::hypot((*this)[i*num_columns + j], x[j]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_columns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = std::hypot((*this)[j], x[i*num_columns + j]);
+                    }
+                }
+                *this = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief copysign row operation.
+///
+///  Computes copysign(m_ij, v_i) or copysign(v_i, m_ij). This will resize the
+///  buffer if it needs to be.
+///
+///  @param[in] x The right operand.
+//------------------------------------------------------------------------------
+        void copysign_row(const buffer<T> &x) requires(std::floating_point<T>) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_columns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        (*this)[i*num_columns + j] = std::copysign((*this)[i*num_columns + j], x[i]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_columns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = std::copysign((*this)[i], x[i*num_columns + j]);
+                    }
+                }
+                *this = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief copysign col operation.
+///
+///  Computes atan(m_ij, v_j) or atan(v_j, m_ij). This will resize the buffer if
+///  it needs to be.
+///
+///  @param[in] x The other operand.
+//------------------------------------------------------------------------------
+        void copysign_col(const buffer<T> &x) {
+            if (size() > x.size()) {
+                assert(size()%x.size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                const size_t num_columns = size()/x.size();
+                const size_t num_rows = x.size();
+                for (size_t i = 0; i < num_columns; i++) {
+                    for (size_t j = 0; j < num_rows; j++) {
+                        (*this)[i*num_columns + j] = std::copysign((*this)[i*num_columns + j], x[j]);
+                    }
+                }
+            } else {
+                assert(x.size()%size() == 0 &&
+                       "Vector operand size is not a multiple of matrix operand size");
+
+                std::vector<T> m(x.size());
+                const size_t num_columns = x.size()/size();
+                const size_t num_rows = size();
+                for (size_t i = 0; i < num_rows; i++) {
+                    for (size_t j = 0; j < num_columns; j++) {
+                        m[i*num_columns + j] = std::copysign((*this)[j], x[i*num_columns + j]);
+                    }
+                }
+                *this = m;
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Not operation.
+///
+///  @returns The negation of the buffer.
+//------------------------------------------------------------------------------
+        buffer<T> operator!() {
+            for (T &d : *this) {
+                if constexpr (jit::complex_scalar<T>) {
+                    assert(d.imag() == 0.0 && "Imaginary part not zero.");
+                    d = static_cast<T> (!d.real());
+                } else {
+                    d = !d;
+                }
+            }
+            return *this;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Apply condition.
+///
+///  @params[in] t True condition.
+///  @params[in] f False condition.
+//------------------------------------------------------------------------------
+        buffer<T> if_(const buffer<T> &t, const buffer<T> &f) {
+            if (size() == 1) {
+                if constexpr (std::floating_point<T>) {
+                    return (*this)[0] ? t : f;
+                } else {
+                    return (*this)[0] != static_cast<T> (0) ? t : f;
+                }
+            } else {
+                if (t.size() == 1) {
+                    if (f.size() == 1) {
+                        for (T &d : *this) {
+                            if constexpr (std::floating_point<T>) {
+                                d = d ? t[0] : f[0];
+                            } else {
+                                d = d != static_cast<T> (0) ? t[0] : f[0];
+                            }
+                        }
+                        return *this;
+                    } else {
+                        assert(size() == f.size() && "Incompatable buffersize.");
+                        for (size_t i = 0, ie = size(); i < ie; i++) {
+                            if constexpr (std::floating_point<T>) {
+                                (*this)[i] = (*this)[i] ? t[0] : f[i];
+                            } else {
+                                (*this)[i] = (*this)[i] != static_cast<T> (0) ? t[0] : f[i];
+                            }
+                        }
+                        return *this;
+                    }
+                } else {
+                    assert(size() == t.size() && "Incompatable buffersize.");
+                    if (f.size() == 1) {
+                        for (size_t i = 0, ie = size(); i < ie; i++) {
+                            if constexpr (std::floating_point<T>) {
+                                (*this)[i] = (*this)[i] ? t[i] : f[0];
+                            } else {
+                                (*this)[i] = (*this)[i] != static_cast<T> (0) ? t[i] : f[0];
+                            }
+                        }
+                        return *this;
+                    } else {
+                        assert(size() == f.size() && "Incompatable buffersize.");
+                        for (size_t i = 0, ie = size(); i < ie; i++) {
+                            if constexpr (std::floating_point<T>) {
+                                (*this)[i] = (*this)[i] ? t[i] : f[i];
+                            } else {
+                                (*this)[i] = (*this)[i] != static_cast<T> (0) ? t[i] : f[i];
+                            }
+                        }
+                        return *this;
+                    }
+                }
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a logical is operator.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define logic_is(op) \
+for (T &d : *this) { \
+    d = std::op(d);  \
+}
+
+//------------------------------------------------------------------------------
+///  @brief isinf query.
+//------------------------------------------------------------------------------
+    void isinf() {
+        logic_is(isinf)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief isnan query.
+//------------------------------------------------------------------------------
+    void isnan() {
+        logic_is(isnan)
+    }
 
 ///  Type def to retrieve the backend T type.
         typedef T base;
     };
-
-//------------------------------------------------------------------------------
-///  @brief Add operation.
-///
-///  @tparam T Base type of the calculation.
-///
-///  @param[in] a Left operand.
-///  @param[in] b Right operand.
-///  @returns a + b.
-//------------------------------------------------------------------------------
-    template<jit::float_scalar T>
-    inline buffer<T> operator+(buffer<T> &a,
-                               buffer<T> &b) {
-        if (b.size() == 1) {
-            const T right = b.at(0);
-            for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] += right;
-            }
-            return a;
-        } else if (a.size() == 1) {
-            const T left = a.at(0);
-            for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] += left;
-            }
-            return b;
-        }
-
-        assert(a.size() == b.size() &&
-               "Left and right sizes are incompatible.");
-        for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            a[i] += b.at(i);
-        }
-        return a;
-    }
 
 //------------------------------------------------------------------------------
 ///  @brief Equal operation.
@@ -820,19 +982,145 @@ namespace backend {
 ///  @returns a == b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline bool operator==(const buffer<T> &a,
-                           const buffer<T> &b) {
+    inline bool operator==(const buffer<T> &a, const buffer<T> &b) {
         if (a.size() != b.size()) {
             return false;
         }
 
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            if (a.at(i) != b.at(i)) {
+            if (a[i] != b[i]) {
                 return false;
             }
         }
         return true;
     }
+
+//------------------------------------------------------------------------------
+///  @brief Applies an associative function.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define build_assoc_func(func)                    \
+if (b.size() == 1) {                              \
+    const T right = b[0];                         \
+    for (T &l : a) {                              \
+        l = func(std::real(l),                    \
+                 std::real(right));               \
+    }                                             \
+    return a;                                     \
+} else if (a.size() == 1) {                       \
+    const T left = a[0];                          \
+    for (T &r : b) {                              \
+        r = func(std::real(r),                    \
+                 std::real(left));                \
+    }                                             \
+    return b;                                     \
+}                                                 \
+                                                  \
+assert(a.size() == b.size() &&                    \
+       "Left and right sizes are incompatible."); \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {  \
+    a[i] = func(std::real(a[i]),                  \
+                std::real(b[i]));                 \
+}                                                 \
+return a;
+
+//------------------------------------------------------------------------------
+///  @brief Max operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns max(a, b).
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> max(buffer<T> &a, buffer<T> &b) {
+        build_assoc_func(std::max);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Min operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns min(a, b).
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> min(buffer<T> &a, buffer<T> &b) {
+        build_assoc_func(std::min);
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Applies an associative operator.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define build_assoc_op(op)                        \
+if (b.size() == 1) {                              \
+    const T right = b[0];                         \
+    for (T &l : a) {                              \
+        l op right;                               \
+    }                                             \
+    return a;                                     \
+} else if (a.size() == 1) {                       \
+    const T left = a[0];                          \
+    for (T &r : b) {                              \
+        r op left;                                \
+    }                                             \
+    return b;                                     \
+}                                                 \
+                                                  \
+assert(a.size() == b.size() &&                    \
+       "Left and right sizes are incompatible."); \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {  \
+    a[i] op b[i];                                 \
+}                                                 \
+return a;
+
+//------------------------------------------------------------------------------
+///  @brief Add operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns a + b.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> operator+(buffer<T> &a, buffer<T> &b) {
+        build_assoc_op(+=)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a non-associative operator.
+///
+///  @param op   The operation to apply.
+///  @param opeq The assign operation to apply.
+//------------------------------------------------------------------------------
+#define build_non_assoc_op(op, opeq)              \
+if (b.size() == 1) {                              \
+    const T right = b[0];                         \
+    for (T &l : a) {                              \
+        l opeq right;                             \
+    }                                             \
+    return a;                                     \
+} else if (a.size() == 1) {                       \
+    const T left = a[0];                          \
+    for (T &r : b) {                              \
+        r = left op r;                            \
+    }                                             \
+    return b;                                     \
+}                                                 \
+                                                  \
+assert(a.size() == b.size() &&                    \
+       "Left and right sizes are incompatible."); \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {  \
+    a[i] opeq b[i];                               \
+}                                                 \
+return a;
 
 //------------------------------------------------------------------------------
 ///  @brief Subtract operation.
@@ -844,28 +1132,8 @@ namespace backend {
 ///  @returns a - b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator-(buffer<T> &a,
-                               buffer<T> &b) {
-        if (b.size() == 1) {
-            const T right = b.at(0);
-            for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] -= right;
-            }
-            return a;
-        } else if (a.size() == 1) {
-            const T left = a.at(0);
-            for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] = left - b.at(i);
-            }
-            return b;
-        }
-
-        assert(a.size() == b.size() &&
-               "Left and right sizes are incompatible.");
-        for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            a[i] -= b.at(i);
-        }
-        return a;
+    inline buffer<T> operator-(buffer<T> &a, buffer<T> &b) {
+        build_non_assoc_op(-, -=)
     }
 
 //------------------------------------------------------------------------------
@@ -878,28 +1146,8 @@ namespace backend {
 ///  @returns a * b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator*(buffer<T> &a,
-                               buffer<T> &b) {
-        if (b.size() == 1) {
-            const T right = b.at(0);
-            for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] *= right;
-            }
-            return a;
-        } else if (a.size() == 1) {
-            const T left = a.at(0);
-            for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] *= left;
-            }
-            return b;
-        }
-
-        assert(a.size() == b.size() &&
-               "Left and right sizes are incompatible.");
-        for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            a[i] *= b.at(i);
-        }
-        return a;
+    inline buffer<T> operator*(buffer<T> &a, buffer<T> &b) {
+        build_assoc_op(*=)
     }
 
 //------------------------------------------------------------------------------
@@ -912,28 +1160,49 @@ namespace backend {
 ///  @returns a / b.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> operator/(buffer<T> &a,
-                               buffer<T> &b) {
-        if (b.size() == 1) {
-            const T right = b.at(0);
-            for (size_t i = 0, ie = a.size(); i < ie; i++) {
-                a[i] /= right;
-            }
-            return a;
-        } else if (a.size() == 1) {
-            const T left = a.at(0);
-            for (size_t i = 0, ie = b.size(); i < ie; i++) {
-                b[i] = left/b.at(i);
-            }
-            return b;
-        }
+    inline buffer<T> operator/(buffer<T> &a, buffer<T> &b) {
+        build_non_assoc_op(/, /=)
+    }
 
-        assert(a.size() == b.size() &&
-               "Left and right sizes are incompatible.");
-        for (size_t i = 0, ie = a.size(); i < ie; i++) {
-            a[i] /= b.at(i);
-        }
-        return a;
+//------------------------------------------------------------------------------
+///  @brief Applies an associative function.
+///
+///  @param func The function to apply.
+//------------------------------------------------------------------------------
+#define build_assoc_func(func)                    \
+if (b.size() == 1) {                              \
+    const T right = b[0];                         \
+    for (T &l : a) {                              \
+        l = func(l, right);                       \
+    }                                             \
+    return a;                                     \
+} else if (a.size() == 1) {                       \
+    const T left = a[0];                          \
+    for (T &r : b) {                              \
+        r = func(r, left);                        \
+    }                                             \
+    return b;                                     \
+}                                                 \
+                                                  \
+assert(a.size() == b.size() &&                    \
+       "Left and right sizes are incompatible."); \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {  \
+    a[i] = func(a[i], b[i]);                      \
+}                                                 \
+return a;
+
+//------------------------------------------------------------------------------
+///  @brief hypot operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Left operand.
+///  @param[in] b Right operand.
+///  @returns hypot(a,b)
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> hypot(buffer<T> &a, buffer<T> &b) {
+        build_assoc_func(std::hypot)
     }
 
 //------------------------------------------------------------------------------
@@ -947,9 +1216,7 @@ namespace backend {
 ///  @returns a*b + c.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> fma(buffer<T> &a,
-                         buffer<T> &b,
-                         buffer<T> &c) {
+    inline buffer<T> fma(buffer<T> &a, buffer<T> &b, buffer<T> &c) {
         constexpr bool use_fma = !jit::complex_scalar<T> &&
 #ifdef FP_FAST_FMA
                                  true;
@@ -958,25 +1225,25 @@ namespace backend {
 #endif
         
         if (a.size() == 1) {
-            const T left = a.at(0);
+            const T left = a[0];
 
             if (b.size() == 1) {
-                const T middle = b.at(0);
+                const T middle = b[0];
                 for (size_t i = 0, ie = c.size(); i < ie; i++) {
                     if constexpr (use_fma) {
-                        c[i] = std::fma(left, middle, c.at(i));
+                        c[i] = std::fma(left, middle, c[i]);
                     } else {
-                        c[i] = left*middle + c.at(i);
+                        c[i] = left*middle + c[i];
                     }
                 }
                 return c;
             } else if (c.size() == 1) {
-                const T right = c.at(0);
+                const T right = c[0];
                 for (size_t i = 0, ie = b.size(); i < ie; i++) {
                     if constexpr (use_fma) {
-                        b[i] = std::fma(left, b.at(i), right);
+                        b[i] = std::fma(left, b[i], right);
                     } else {
-                        b[i] = left*b.at(i) + right;
+                        b[i] = left*b[i] + right;
                     }
                 }
                 return b;
@@ -986,21 +1253,21 @@ namespace backend {
                    "Size mismatch between middle and right.");
             for (size_t i = 0, ie = b.size(); i < ie; i++) {
                 if constexpr (use_fma) {
-                    b[i] = std::fma(left, b.at(i), c.at(i));
+                    b[i] = std::fma(left, b[i], c[i]);
                 } else {
-                    b[i] = left*b.at(i) + c.at(i);
+                    b[i] = left*b[i] + c[i];
                 }
             }
             return b;
         } else if (b.size() == 1) {
-            const T middle = b.at(0);
+            const T middle = b[0];
             if (c.size() == 1) {
-                const T right = c.at(0);
+                const T right = c[0];
                 for (size_t i = 0, ie = a.size(); i < ie; i++) {
                     if constexpr (use_fma) {
-                        a[i] = std::fma(a.at(i), middle, right);
+                        a[i] = std::fma(a[i], middle, right);
                     } else {
-                        a[i] = a.at(i)*middle + right;
+                        a[i] = a[i]*middle + right;
                     }
                 }
                 return a;
@@ -1010,21 +1277,21 @@ namespace backend {
                    "Size mismatch between left and right.");
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
                 if constexpr (use_fma) {
-                    a[i] = std::fma(a.at(i), middle, c.at(i));
+                    a[i] = std::fma(a[i], middle, c[i]);
                 } else {
-                    a[i] = a.at(i)*middle + c.at(i);
+                    a[i] = a[i]*middle + c[i];
                 }
             }
             return a;
         } else if (c.size() == 1) {
             assert(a.size() == b.size() &&
                    "Size mismatch between left and middle.");
-            const T right = c.at(0);
+            const T right = c[0];
             for (size_t i = 0, ie = a.size(); i < ie; i++) {
                 if constexpr (use_fma) {
-                    a[i] = std::fma(a.at(i), b.at(i), right);
+                    a[i] = std::fma(a[i], b[i], right);
                 } else {
-                    a[i] = a.at(i)*b.at(i) + right;
+                    a[i] = a[i]*b[i] + right;
                 }
             }
             return a;
@@ -1036,12 +1303,225 @@ namespace backend {
                "Left, middle and right sizes are incompatible.");
         for (size_t i = 0, ie = a.size(); i < ie; i++) {
             if constexpr (use_fma) {
-                a[i] = std::fma(a.at(i), b.at(i), c.at(i));
+                a[i] = std::fma(a[i], b[i], c[i]);
             } else {
-                a[i] = a.at(i)*b.at(i) + c.at(i);
+                a[i] = a[i]*b[i] + c[i];
             }
         }
         return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Modulo operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a % b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator%(buffer<T> &a, buffer<T> &b) {
+        if (b.size() == 1) {
+            const T right = b[0];
+            for (size_t i = 0, ie = a.size(); i < ie; i++) {
+                a[i] = std::fmod(a[i], right);
+            }
+            return a;
+        } else if (a.size() == 1) {
+            const T left = a[0];
+            for (size_t i = 0, ie = b.size(); i < ie; i++) {
+                b[i] = std::fmod(left, b[i]);
+            }
+            return b;
+        }
+
+        assert(a.size() == b.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = a.size(); i < ie; i++) {
+            a[i] = std::fmod(a[i], b[i]);
+        }
+        return a;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a logical operator.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define logic_op(op)                                 \
+if (b.size() == 1) {                                 \
+    const T right = b[0];                            \
+    for (size_t i = 0, ie = a.size(); i < ie; i++) { \
+        a[i] = static_cast<T> (a[i] op right);       \
+    }                                                \
+    return a;                                        \
+} else if (a.size() == 1) {                          \
+    const T left = a[0];                             \
+    for (size_t i = 0, ie = b.size(); i < ie; i++) { \
+        b[i] = static_cast<T> (left op b[i]);        \
+    }                                                \
+    return b;                                        \
+}                                                    \
+                                                     \
+assert(a.size() == b.size() &&                       \
+       "Left and right sizes are incompatible.");    \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {     \
+    a[i] = static_cast<T> (a[i] op b[i]);            \
+}                                                    \
+return a;
+
+//------------------------------------------------------------------------------
+///  @brief Equal operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a == b.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> operator==(buffer<T> &a, buffer<T> &b) {
+        logic_op(==)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Not equal operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a == b.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    inline buffer<T> operator!=(buffer<T> &a, buffer<T> &b) {
+        logic_op(!=)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Greater than operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a > b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator>(buffer<T> &a, buffer<T> &b) {
+        logic_op(>)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Less than operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a < b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator<(buffer<T> &a, buffer<T> &b) {
+        logic_op(<)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Greater than equal operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a >= b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator>=(buffer<T> &a, buffer<T> &b) {
+        logic_op(>=)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Less than equal operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a <= b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator<=(buffer<T> &a, buffer<T> &b) {
+        logic_op(<=)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief And operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a && b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator&&(buffer<T> &a, buffer<T> &b) {
+        logic_op(&&)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Or operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns a || b.
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> operator||(buffer<T> &a, buffer<T> &b) {
+        logic_op(||)
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Applies a function with two operands.
+///
+///  @param op The operation to apply.
+//------------------------------------------------------------------------------
+#define branch_fn(fn)                                \
+if (b.size() == 1) {                                 \
+    const T right = b[0];                            \
+    for (size_t i = 0, ie = a.size(); i < ie; i++) { \
+        a[i] = fn(a[i], right);                      \
+    }                                                \
+    return a;                                        \
+} else if (a.size() == 1) {                          \
+    const T left = a[0];                             \
+    for (size_t i = 0, ie = b.size(); i < ie; i++) { \
+        b[i] = fn(left, b[i]);                       \
+    }                                                \
+    return b;                                        \
+}                                                    \
+                                                     \
+assert(a.size() == b.size() &&                       \
+       "Left and right sizes are incompatible.");    \
+for (size_t i = 0, ie = a.size(); i < ie; i++) {     \
+    a[i] = fn(a[i], b[i]);                           \
+}                                                    \
+return a;
+
+//------------------------------------------------------------------------------
+///  @brief Min operation.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] a Numerator.
+///  @param[in] b Denominator.
+///  @returns min(a, b).
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> min(buffer<T> &a, buffer<T> &b) {
+        branch_fn(std::min)
     }
 
 //------------------------------------------------------------------------------
@@ -1054,10 +1534,9 @@ namespace backend {
 ///  @returns base^exponent.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> pow(buffer<T> &base,
-                         buffer<T> &exponent) {
+    inline buffer<T> pow(buffer<T> &base, buffer<T> &exponent) {
         if (exponent.size() == 1) {
-            const T right = exponent.at(0);
+            const T right = exponent[0];
             if (std::imag(right) == 0) {
                 const int64_t right_int = static_cast<int64_t> (std::real(right));
                 if (std::real(right) - right_int) {
@@ -1067,14 +1546,14 @@ namespace backend {
                     }
 
                     for (size_t i = 0, ie = base.size(); i < ie; i++) {
-                        base[i] = std::pow(base.at(i), right);
+                        base[i] = std::pow(base[i], right);
                     }
                     return base;
                 }
 
                 if (right_int > 0) {
                     for (size_t i = 0, ie = base.size(); i < ie; i++) {
-                        const T left = base.at(i);
+                        const T left = base[i];
                         for (size_t j = 0, je = right_int - 1; j < je; j++) {
                             base[i] *= left;
                         }
@@ -1087,7 +1566,7 @@ namespace backend {
                     return base;
                 } else {
                     for (size_t i = 0, ie = base.size(); i < ie; i++) {
-                        const T left = static_cast<T> (1.0)/base.at(i);
+                        const T left = static_cast<T> (1.0)/base[i];
                         base[i] = left;
                         for (size_t j = 0, je = std::abs(right_int) - 1; j < je; j++) {
                             base[i] *= left;
@@ -1097,14 +1576,14 @@ namespace backend {
                 }
             } else {
                 for (size_t i = 0, ie = base.size(); i < ie; i++) {
-                    base[i] = std::pow(base.at(i), right);
+                    base[i] = std::pow(base[i], right);
                 }
                 return base;
             }
         } else if (base.size() == 1) {
-            const T left = base.at(0);
+            const T left = base[0];
             for (size_t i = 0, ie = exponent.size(); i < ie; i++) {
-                exponent[i] = std::pow(left, exponent.at(i));
+                exponent[i] = std::pow(left, exponent[i]);
             }
             return exponent;
         }
@@ -1112,7 +1591,7 @@ namespace backend {
         assert(base.size() == exponent.size() &&
                "Left and right sizes are incompatible.");
         for (size_t i = 0, ie = base.size(); i < ie; i++) {
-            base[i] = std::pow(base.at(i), exponent.at(i));
+            base[i] = std::pow(base[i], exponent[i]);
         }
         return base;
     }
@@ -1127,10 +1606,9 @@ namespace backend {
 ///  @returns atan2(y, x)
 //------------------------------------------------------------------------------
     template<jit::float_scalar T>
-    inline buffer<T> atan(buffer<T> &x,
-                          buffer<T> &y) {
+    inline buffer<T> atan(buffer<T> &x, buffer<T> &y) {
         if (y.size() == 1) {
-            const T right = y.at(0);
+            const T right = y[0];
             for (size_t i = 0, ie = x.size(); i < ie; i++) {
                 if constexpr (jit::complex_scalar<T>) {
                     x[i] = std::atan(right/x[i]);
@@ -1140,7 +1618,7 @@ namespace backend {
             }
             return x;
         } else if (x.size() == 1) {
-            const T left = x.at(0);
+            const T left = x[0];
             for (size_t i = 0, ie = y.size(); i < ie; i++) {
                 if constexpr (jit::complex_scalar<T>) {
                     y[i] = std::atan(y[i]/left);
@@ -1159,6 +1637,40 @@ namespace backend {
             } else {
                 x[i] = std::atan2(y[i], x[i]);
             }
+        }
+        return x;
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Copy the sign of x and apply it to y.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in] x X argument.
+///  @param[in] y Y argument.
+///  @returns copysign(x, y)
+//------------------------------------------------------------------------------
+    template<std::floating_point T>
+    inline buffer<T> copysign(buffer<T> &x,
+                              buffer<T> &y) {
+        if (y.size() == 1) {
+            const T right = y[0];
+            for (size_t i = 0, ie = x.size(); i < ie; i++) {
+                x[i] = std::copysign(x[i], right);
+            }
+            return x;
+        } else if (x.size() == 1) {
+            const T left = x[0];
+            for (size_t i = 0, ie = y.size(); i < ie; i++) {
+                y[i] = std::copysign(left, y[i]);
+            }
+            return y;
+        }
+
+        assert(x.size() == y.size() &&
+               "Left and right sizes are incompatible.");
+        for (size_t i = 0, ie = x.size(); i < ie; i++) {
+            x[i] = std::copysign(x[i], y[i]);
         }
         return x;
     }

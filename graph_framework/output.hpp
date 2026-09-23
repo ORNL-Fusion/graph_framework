@@ -369,33 +369,17 @@ namespace output {
             for (variable &var : variables) {
                 sync.lock();
                 if constexpr (jit::float_base<T>) {
-                    if constexpr (jit::complex_scalar<T>) {
-                        check_error(nc_put_vara_float(result.get_ncid(),
-                                                      var.id,
-                                                      start.data(),
-                                                      count.data(),
-                                                      reinterpret_cast<float *> (var.buffer)));
-                    } else {
-                        check_error(nc_put_vara_float(result.get_ncid(),
-                                                      var.id,
-                                                      start.data(),
-                                                      count.data(),
-                                                      var.buffer));
-                    }
+                    check_error(nc_put_vara_float(result.get_ncid(),
+                                                  var.id,
+                                                  start.data(),
+                                                  count.data(),
+                                                  reinterpret_cast<float *> (var.buffer)));
                 } else {
-                    if constexpr (jit::complex_scalar<T>) {
-                        check_error(nc_put_vara_double(result.get_ncid(),
-                                                       var.id,
-                                                       start.data(),
-                                                       count.data(),
-                                                       reinterpret_cast<double *> (var.buffer)));
-                    } else {
-                        check_error(nc_put_vara_double(result.get_ncid(),
-                                                       var.id,
-                                                       start.data(),
-                                                       count.data(),
-                                                       var.buffer));
-                    }
+                    check_error(nc_put_vara_double(result.get_ncid(),
+                                                   var.id,
+                                                   start.data(),
+                                                   count.data(),
+                                                   reinterpret_cast<double *> (var.buffer)));
                 }
                 sync.unlock();
             }
@@ -430,41 +414,21 @@ namespace output {
 
                 sync.lock();
                 if constexpr (jit::float_base<T>) {
-                    if constexpr (jit::complex_scalar<T>) {
-                        check_error(nc_get_varm_float(result.get_ncid(),
-                                                      ref.id,
-                                                      ref_start.data(),
-                                                      ref_count.data(),
-                                                      stride.data(),
-                                                      map.data(),
-                                                      reinterpret_cast<float *> (ref.buffer)));
-                    } else {
-                        check_error(nc_get_varm_float(result.get_ncid(),
-                                                      ref.id,
-                                                      ref_start.data(),
-                                                      ref_count.data(),
-                                                      stride.data(),
-                                                      map.data(),
-                                                      ref.buffer));
-                    }
+                    check_error(nc_get_varm_float(result.get_ncid(),
+                                                  ref.id,
+                                                  ref_start.data(),
+                                                  ref_count.data(),
+                                                  stride.data(),
+                                                  map.data(),
+                                                  reinterpret_cast<float *> (ref.buffer)));
                 } else {
-                    if constexpr (jit::complex_scalar<T>) {
-                        check_error(nc_get_varm_double(result.get_ncid(),
-                                                       ref.id,
-                                                       ref_start.data(),
-                                                       ref_count.data(),
-                                                       stride.data(),
-                                                       map.data(),
-                                                       reinterpret_cast<double *> (ref.buffer)));
-                    } else {
-                        check_error(nc_get_varm_double(result.get_ncid(),
-                                                       ref.id,
-                                                       ref_start.data(),
-                                                       ref_count.data(),
-                                                       stride.data(),
-                                                       map.data(),
-                                                       ref.buffer));
-                    }
+                    check_error(nc_get_varm_double(result.get_ncid(),
+                                                   ref.id,
+                                                   ref_start.data(),
+                                                   ref_count.data(),
+                                                   stride.data(),
+                                                   map.data(),
+                                                   reinterpret_cast<double *> (ref.buffer)));
                 }
 
                 sync.unlock();

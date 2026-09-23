@@ -72,7 +72,7 @@ void run_korc() {
                                                 pos->get_z())/b0;
             
             workflow::manager<T> work(thread_number);
-            work.add_preitem({
+            work.template add_item<workflow::order::pre_run_item> ({
                 graph::variable_cast(ux),
                 graph::variable_cast(uy),
                 graph::variable_cast(uz),
@@ -82,7 +82,7 @@ void run_korc() {
                 {u_init->get_y(), graph::variable_cast(uy)},
                 {u_init->get_z(), graph::variable_cast(uz)},
                 {gamma_init, graph::variable_cast(gamma)}
-            }, graph::shared_random_state<T> (), "initialize_gamma", local_num_particles);
+            }, {}, NULL, "initialize_gamma", local_num_particles);
             
             auto u_prime = u_vec - dt*u_vec->cross(b_vec)/(2.0*gamma);
             
@@ -118,7 +118,7 @@ void run_korc() {
                 {u_next->get_y(), graph::variable_cast(uy)},
                 {u_next->get_z(), graph::variable_cast(uz)},
                 {gamma_next, graph::variable_cast(gamma)}
-            }, graph::shared_random_state<T> (), "step", local_num_particles);
+            }, {}, NULL, "step", local_num_particles);
             
             work.compile();
             
@@ -142,7 +142,7 @@ void run_korc() {
             t_setup.print();
             
             const timing::measure_diagnostic t_run("Run Time");
-            work.pre_run();
+            work.template run<workflow::order::pre_run_item> ();
             for (size_t i = 0; i < 1000000; i++) {
 /*                sync.join();
                 work.wait();

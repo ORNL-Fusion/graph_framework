@@ -12,7 +12,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <thread>
-#include <unordered_set>
 
 //  Clang headers will define IBAction and IBOutlet these so undefined them
 //  here.
@@ -38,6 +37,8 @@
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 
 #include "random.hpp"
+#include "piecewise.hpp"
+#include "timing.hpp"
 
 #ifndef NDEBUG
 //------------------------------------------------------------------------------
@@ -84,11 +85,11 @@ namespace gpu {
 ///  Handle for the dynamic library.
         std::unique_ptr<llvm::orc::LLJIT> jit;
 ///  Argument map.
-        std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> kernel_arguments;
+        std::unordered_map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> kernel_arguments;
 ///  Host buffer map.
-        std::map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> host_buffers;
+        std::unordered_map<graph::leaf_node<T, SAFE_MATH> *, std::vector<T>> host_buffers;
 ///  Argument index map.
-        std::map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
+        std::unordered_map<graph::leaf_node<T, SAFE_MATH> *, size_t> arg_index;
 
     public:
 ///  Size of random state needed.
@@ -224,6 +225,7 @@ namespace gpu {
 ///  @param[in] kernel_name Name of the kernel for later reference.
 ///  @param[in] inputs      Input nodes of the kernel.
 ///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] atomics     Atomic nodes of the kernel.
 ///  @param[in] state       Random states.
 ///  @param[in] num_rays    Number of rays to trace.
 ///  @param[in] tex1d_list  List of 1D textures.
@@ -233,33 +235,43 @@ namespace gpu {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     graph::input_nodes<T, SAFE_MATH> atomics,
                                                      graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays,
                                                      const jit::texture1d_list &tex1d_list,
                                                      const jit::texture2d_list &tex2d_list) {
             auto entry = std::move(jit->lookup(kernel_name)).get();
 
-            std::map<size_t, T *> buffers;
+            std::unordered_map<size_t, T *> buffers;
 
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
-                    backend::buffer<T> buffer = input->evaluate();
-                    std::vector<T> arg(buffer.size());
-                    memcpy(arg.data(), buffer.data(), buffer.size()*sizeof(T));
+                    std::vector<T> arg(input->size());
+                    memcpy(arg.data(), input->data(), input->size()*sizeof(T));
                     kernel_arguments[input.get()] = arg;
                 }
                 buffers[reinterpret_cast<size_t> (input.get())] = kernel_arguments[input.get()].data();
             }
             for (auto &output : outputs) {
-                if (!kernel_arguments.contains(output.get())) {
-                    std::vector<T> arg(num_rays);
-                    kernel_arguments[output.get()] = arg;
+                if (!graph::atomic_accumulate_1D_cast(output).get()) {
+                    if (!kernel_arguments.contains(output.get())) {
+                        std::vector<T> arg(num_rays);
+                        kernel_arguments[output.get()] = arg;
+                    }
+                    buffers[reinterpret_cast<size_t> (output.get())] = kernel_arguments[output.get()].data();
                 }
-                buffers[reinterpret_cast<size_t> (output.get())] = kernel_arguments[output.get()].data();
+            }
+            for (auto &atomic : atomics) {
+                if (!kernel_arguments.contains(atomic.get())) {
+                    std::vector<T> arg(atomic->size());
+                    memcpy(arg.data(), atomic->data(), atomic->size()*sizeof(T));
+                    kernel_arguments[atomic.get()] = arg;
+                }
+                buffers[reinterpret_cast<size_t> (atomic.get())] = kernel_arguments[atomic.get()].data();
             }
 
             if (state.get()) {
-                auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &, typename graph::random_state_node<T, SAFE_MATH>::mt_state *)> ();
+                auto kernel = entry.toPtr<void(*)(std::unordered_map<size_t, T *> &, typename graph::random_state_node<T, SAFE_MATH>::mt_state *)> ();
 
                 if (!kernel) {
                     std::cerr << "Failed to load function. " << kernel_name
@@ -273,11 +285,21 @@ namespace gpu {
                               << std::endl;
                 }
 
-                return [kernel, buffers, state] () mutable {
+                return [kernel, buffers, state
+#ifdef PROFILE_KERNELS
+                        , kernel_name
+#endif
+                ] () mutable {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer(kernel_name);
+#endif
                     kernel(buffers, state->data());
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
                 };
             } else {
-                auto kernel = entry.toPtr<void(*)(std::map<size_t, T *> &)> ();
+                auto kernel = entry.toPtr<void(*)(std::unordered_map<size_t, T *> &)> ();
 
                 if (!kernel) {
                     std::cerr << "Failed to load function. " << kernel_name
@@ -291,8 +313,18 @@ namespace gpu {
                               << std::endl;
                 }
 
-                return [kernel, buffers] () mutable {
+                return [kernel, buffers
+#ifdef PROFILE_KERNELS
+                        , kernel_name
+#endif
+                ] () mutable {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer(kernel_name);
+#endif
                     kernel(buffers);
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
                 };
             }
         }
@@ -302,6 +334,7 @@ namespace gpu {
 ///
 ///  @param[in] argument Node to reduce.
 ///  @param[in] run      Function to run before reduction.
+///  @returns A lambda function to run the kernel.
 //------------------------------------------------------------------------------
         std::function<T(void)> create_max_call(graph::shared_leaf<T, SAFE_MATH> &argument,
                                                std::function<void(void)> run) {
@@ -322,6 +355,80 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Create kernel call that will be memset a buffer to zero.
+///
+///  @param[in] inputs   Input nodes of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> &inputs) {
+            std::vector<T *> buffers;
+            std::vector<size_t> sizes;
+
+            for (auto &input : inputs) {
+                if (!kernel_arguments.contains(input.get())) {
+                    std::vector<T> arg(input->size());
+                    memcpy(arg.data(), input->data(), input->size()*sizeof(T));
+                    kernel_arguments[input.get()] = arg;
+                }
+                buffers.push_back(kernel_arguments[input.get()].data());
+                sizes.push_back(input->size()*sizeof(T));
+            }
+
+            return [buffers, sizes] () mutable {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer("zero buffer");
+#endif
+                for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                    std::memset(buffers[i], 0, sizes[i]);
+                }
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
+            };
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel call that will to copy one buffer to another.
+///
+///  @param[in] setters Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_copy_call(graph::copy_nodes<T, SAFE_MATH> &setters) {
+            std::vector<T *> sources;
+            std::vector<T *> destinations;
+            std::vector<size_t> sizes;
+
+            for (auto &[out, in] : setters) {
+                if (!kernel_arguments.contains(in.get())) {
+                    std::vector<T> arg(in->size());
+                    memcpy(arg.data(), in->data(), in->size()*sizeof(T));
+                    kernel_arguments[in.get()] = arg;
+                }
+                destinations.push_back(kernel_arguments[in.get()].data());
+                sizes.push_back(in->size()*sizeof(T));
+
+                if (!kernel_arguments.contains(out.get())) {
+                    std::vector<T> arg(out->size());
+                    memcpy(arg.data(), out->data(), out->size()*sizeof(T));
+                    kernel_arguments[out.get()] = arg;
+                }
+                sources.push_back(kernel_arguments[out.get()].data());
+            }
+
+            return [sources, destinations, sizes] () mutable {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer("copy buffer");
+#endif
+                for (size_t i = 0, ie = sources.size(); i < ie; i++) {
+                    std::memcpy(destinations[i], sources[i], sizes[i]);
+                }
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
+            };
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Hold the current thread until the command buffer has completed.
 ///
 ///  This syncs the host buffers with the kernel arguments so a kernel can run
@@ -333,6 +440,24 @@ namespace gpu {
                        kernel_arguments[item.first].data(),
                        sizeof(T)*kernel_arguments[item.first].size());
             }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run a callback function in the queue.
+///
+///  @param[in] callback The callback function to run.
+///  @returns Lambda to call the function.
+//------------------------------------------------------------------------------
+        std::function<void(void)> run_function(std::function<void(void)> callback) {
+#ifdef PROFILE_KERNELS
+            return [callback]() {
+                timing::measure_diagnostic timer("callback");
+                callback();
+                timer.print();
+            };
+#else
+            return callback;
+#endif
         }
 
 //------------------------------------------------------------------------------
@@ -398,16 +523,18 @@ namespace gpu {
 ///  @param[in,out] source_buffer Source buffer stream.
 //------------------------------------------------------------------------------
         void create_header(std::ostringstream &source_buffer) {
-            source_buffer << "#include <map>"     << std::endl
-                          << "#include <array>"   << std::endl
-                          << "#include <cstdint>" << std::endl;
+            source_buffer << "#include <unordered_map>" << std::endl
+                          << "#include <array>"         << std::endl
+                          << "#include <cstdint>"       << std::endl
+                          << "#include <bit>"           << std::endl;
             if (jit::complex_scalar<T>) {
                 source_buffer << "#include <complex>" << std::endl;
                 source_buffer << "#include <special_functions.hpp>" << std::endl;
             } else {
                 source_buffer << "#include <cmath>" << std::endl;
             }
-            source_buffer << "using namespace std;" << std::endl;
+            source_buffer << "#include <atomic>" << std::endl
+                          << "using namespace std;" << std::endl;
         }
 
 //------------------------------------------------------------------------------
@@ -417,6 +544,7 @@ namespace gpu {
 ///  @param[in]     name          Name to call the kernel.
 ///  @param[in]     inputs        Input variables of the kernel.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     atomics       Input variables for atomic operations.
 ///  @param[in]     state         Random states.
 ///  @param[in]     size          Size of the input buffer.
 ///  @param[in]     is_constant   Flags if the input is read only.
@@ -424,22 +552,29 @@ namespace gpu {
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     textures1d    List of 1D kernel textures.
 ///  @param[in]     textures2d    List of 2D kernel textures.
+///  @param[out]    thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
+///  @param[in]     iterations    Number of loop iterations.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
+                                  graph::input_nodes<T, SAFE_MATH> atomics,
                                   graph::shared_random_state<T, SAFE_MATH> state,
                                   const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
                                   const jit::register_usage &usage,
                                   jit::texture1d_list &textures1d,
-                                  jit::texture2d_list &textures2d) {
+                                  jit::texture2d_list &textures2d,
+                                  jit::argument_set &thread_shared,
+                                  jit::register_map &thread_mem,
+                                  const size_t iterations=1) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" void " << name << "(" << std::endl;
 
-            source_buffer << "    map<size_t, ";
+            source_buffer << "    unordered_map<size_t, ";
             jit::add_type<T> (source_buffer);
             source_buffer << " *> &args";
             if (state.get()) {
@@ -448,7 +583,7 @@ namespace gpu {
             }
             source_buffer << ") {" << std::endl;
 
-            std::unordered_set<void *> used_args;
+            jit::argument_set used_args;
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 if (!used_args.contains(inputs[i].get())) {
                     source_buffer << "    ";
@@ -464,7 +599,8 @@ namespace gpu {
                 }
             }
             for (auto &output : outputs) {
-                if (!used_args.contains(output.get())) {
+                if (!used_args.contains(output.get()) &&
+                    !graph::atomic_accumulate_1D_cast(output).get()) {
                     source_buffer << "    ";
                     jit::add_type<T> (source_buffer);
                     source_buffer << " *" << jit::to_string('o', output.get())
@@ -474,17 +610,30 @@ namespace gpu {
                     used_args.insert(output.get());
                 }
             }
+            for (size_t i = 0, ie = atomics.size(); i < ie; i++) {
+                if (!used_args.contains(atomics[i].get())) {
+                    source_buffer << "    ";
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " *"
+                                  << jit::to_string('v', atomics[i].get())
+                                  << " = args["
+                                  << reinterpret_cast<size_t> (atomics[i].get())
+                                  << "];"
+                                  << std::endl;
+                    used_args.insert(atomics[i].get());
+                }
+            }
             if (state.get()) {
                 registers[state.get()] = jit::to_string('r', state.get());
                 source_buffer << "    mt_state &"
                               << registers[state.get()] << " = "
-                              << jit::to_string('s', state.get()) << "[0];"
-#ifdef SHOW_USE_COUNT
-                              << " // used " << usage.at(state.get())
-#endif
-                              << std::endl;
+                              << jit::to_string('s', state.get()) << "[0]";
+                state->endline(source_buffer, usage);
             }
             source_buffer << "    for (size_t i = 0; i < " << size << "; i++) {" << std::endl;
+            if (iterations > 1) {
+                source_buffer << "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
+            }
 
             for (auto &input : inputs) {
                 registers[input.get()] = jit::to_string('r', input.get());
@@ -492,11 +641,8 @@ namespace gpu {
                 jit::add_type<T> (source_buffer);
                 source_buffer << " " << registers[input.get()]
                               << " = " << jit::to_string('v', input.get())
-                              << "[i]; // " << input->get_symbol()
-#ifdef SHOW_USE_COUNT
-                              << " used " << usage.at(input.get())
-#endif
-                              << std::endl;
+                              << "[i]";
+                input->endline(source_buffer, usage);
             }
         }
 
@@ -508,39 +654,52 @@ namespace gpu {
 ///  @param[in]     setters       Map outputs back to input values.
 ///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
-///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
+///  @param[in]     thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
+///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
-                                   jit::register_map &indices,
-                                   const jit::register_usage &usage) {
-            std::unordered_set<void *> out_registers;
+                                   const jit::register_usage &usage,
+                                   const jit::argument_set &thread_shared,
+                                   jit::register_map &thread_mem,
+                                   const size_t iterations=1) {
+            jit::argument_set out_registers;
             for (auto &[out, in] : setters) {
                 if (!out->is_match(in)) {
-                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      indices,
-                                                                      usage);
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
                     source_buffer << "        " << jit::to_string('v', in.get());
                     source_buffer << "[i] = ";
                     if constexpr (SAFE_MATH) {
                         if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (source_buffer);
                             source_buffer << " (";
-                            source_buffer << "isnan(real(" << registers[a.get()]
-                            << ")) ? 0.0 : real(" << registers[a.get()]
-                            << "), ";
-                            source_buffer << "isnan(imag(" << registers[a.get()]
-                            << ")) ? 0.0 : imag(" << registers[a.get()]
-                            << "));" << std::endl;
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(real("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : real("
+                                              << registers[a.get()]
+                                              << "), isnan(imag("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : imag("
+                                              << registers[a.get()]
+                                              << ")";
+                            } else {
+                                source_buffer << registers[a.get()];
+                            }
+                            source_buffer << ");" << std::endl;
                         } else {
-                            source_buffer << "isnan(" << registers[a.get()]
-                            << ") ? 0.0 : " << registers[a.get()]
-                            << ";" << std::endl;
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(" << registers[a.get()]
+                                              << ") ? 0.0 : ";
+                            }
+                            source_buffer << registers[a.get()]
+                                          << ";" << std::endl;
                         }
                     } else {
                         source_buffer << registers[a.get()] << ";" << std::endl;
@@ -549,28 +708,38 @@ namespace gpu {
                 }
             }
             for (auto &out : outputs) {
-                if (!graph::variable_cast(out).get() &&
+                if (!graph::variable_cast(out).get()             &&
+                    !graph::atomic_accumulate_1D_cast(out).get() &&
                     !out_registers.contains(out.get())) {
-                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      indices,
-                                                                      usage);
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
                     source_buffer << "        " << jit::to_string('o', out.get());
                     source_buffer << "[i] = ";
                     if constexpr (SAFE_MATH) {
                         if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (source_buffer);
                             source_buffer << " (";
-                            source_buffer << "isnan(real(" << registers[a.get()]
-                            << ")) ? 0.0 : real(" << registers[a.get()]
-                            << "), ";
-                            source_buffer << "isnan(imag(" << registers[a.get()]
-                            << ")) ? 0.0 : imag(" << registers[a.get()]
-                            << "));" << std::endl;
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(real("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : real("
+                                              << registers[a.get()]
+                                              << "), isnan(imag("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : imag("
+                                              << registers[a.get()]
+                                              << ")";
+                            } else {
+                                source_buffer << registers[a.get()];
+                            }
+                            source_buffer << ");" << std::endl;
                         } else {
-                            source_buffer << "isnan(" << registers[a.get()]
-                            << ") ? 0.0 : " << registers[a.get()]
-                            << ";" << std::endl;
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(" << registers[a.get()]
+                                              << ") ? 0.0 : ";
+                            }
+                            source_buffer << registers[a.get()]
+                                          << ";" << std::endl;
                         }
                     } else {
                         source_buffer << registers[a.get()] << ";" << std::endl;
@@ -579,8 +748,10 @@ namespace gpu {
                 }
             }
 
-            source_buffer << "    }" << std::endl;
-            source_buffer << "}" << std::endl;
+            if (iterations > 1) {
+                source_buffer << "    }" << std::endl;
+            }
+            source_buffer << "    }" << std::endl  << "}" << std::endl;
         }
 
 //------------------------------------------------------------------------------

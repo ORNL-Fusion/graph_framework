@@ -233,7 +233,7 @@ namespace absorption {
                 {graph::zero<T, SAFE_MATH> (), graph::variable_cast(this->kamp)}
             };
 
-            work.add_item(inputs, {}, setters, NULL,
+            work.add_item(inputs, {}, setters, {}, NULL,
                           "root_find_init_kernel", inputs.back()->size());
 
             inputs.push_back(graph::variable_cast(this->t));
@@ -245,8 +245,7 @@ namespace absorption {
                                                            kvec + kamp_vec,
                                                            x, y, z, t, eq);
 
-            solver::newton(work, {kamp}, inputs, {D},
-                           graph::shared_random_state<T, SAFE_MATH> ());
+            solver::newton<T, SAFE_MATH> (work, {kamp}, inputs, {}, {D}, NULL);
 
             inputs = {
                 graph::variable_cast(this->kamp),
@@ -260,7 +259,7 @@ namespace absorption {
             setters = {
                 {klen + kamp, graph::variable_cast(this->kamp)}
             };
-            work.add_item(inputs, {}, setters, NULL,
+            work.add_item(inputs, {}, setters, {}, NULL,
                           "final_kamp", inputs.back()->size());
         }
 
@@ -426,8 +425,7 @@ namespace absorption {
                 {kamp1, graph::variable_cast(this->kamp)}
             };
             
-            work.add_item(inputs, {}, setters,
-                          graph::shared_random_state<T, SAFE_MATH> (),
+            work.add_item(inputs, {}, setters, {}, NULL,
                           "weak_damping_kimg_kernel", inputs.back()->size());
         }
 

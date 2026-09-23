@@ -10,7 +10,7 @@
 
 #include <cassert>
 
-#include "../graph_framework/dispersion.hpp"
+#include "../graph_framework/graph_framework.hpp"
 
 //------------------------------------------------------------------------------
 ///  @brief Assert when difference is greater than the tolerance.
@@ -52,14 +52,15 @@ void compile(graph::input_nodes<T> inputs,
              const T expected,
              const T tolerance) {
     jit::context<T> source(0);
+    graph::input_nodes<T> atomics;
+    graph::shared_random_state<T, false> state;
     source.add_kernel("test_kernel", inputs, outputs, setters,
-                      graph::shared_random_state<T> (),
-                      inputs.back()->size());
+                      atomics, state, inputs.back()->size());
 
     source.compile();
 
     auto run = source.create_kernel_call("test_kernel", inputs, outputs,
-                                         graph::shared_random_state<T> (), 1);
+                                         atomics, state, 1);
     run();
 
     T result;
@@ -76,6 +77,13 @@ void compile(graph::input_nodes<T> inputs,
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void run_math_tests() {
     auto v1 = graph::variable<T> (1, "v1");
+
+    compile<T> ({
+        graph::variable_cast(v1)
+    }, {
+        graph::index<T> ()
+    }, {}, static_cast<T> (0), 0.0);
+
     auto v2 = graph::variable<T> (1, "v2");
     auto v3 = graph::variable<T> (1, "v3");
 
@@ -344,6 +352,40 @@ template<jit::float_scalar T> void run_math_tests() {
         graph::variable_cast(v1),
         graph::variable_cast(v2)
     }, {atan_node}, {}, atan_node->evaluate().at(0), result);
+
+    if constexpr (std::floating_point<T>) {
+        auto module_node = v1%v2;
+        compile<T> ({
+            graph::variable_cast(v1),
+            graph::variable_cast(v2)
+        }, {module_node}, {}, module_node->evaluate().at(0), 0.0);
+
+        auto true_v = graph::true_constant<T> ();
+        auto false_v = graph::false_constant<T> ();
+        auto if_node = graph::if_(v1 > v2, true_v, false_v);
+        compile<T> ({
+            graph::variable_cast(v1),
+            graph::variable_cast(v2)
+        }, {if_node}, {}, false_v->evaluate().at(0), 0.0);
+
+        if_node = graph::if_(v1 < v2, true_v, false_v);
+        compile<T> ({
+            graph::variable_cast(v1),
+            graph::variable_cast(v2)
+        }, {if_node}, {}, true_v->evaluate().at(0), 0.0);
+
+        auto hypot_node = graph::hypot(v1, v2);
+        compile<T> ({
+            graph::variable_cast(v1),
+            graph::variable_cast(v2)
+        }, {hypot_node}, {}, hypot_node->evaluate().at(0), 5.0E-16);
+
+        auto min_node = graph::min(v1, v2);
+        compile<T> ({
+            graph::variable_cast(v1),
+            graph::variable_cast(v2)
+        }, {min_node}, {}, min_node->evaluate().at(0), 0.0);
+    }
 }
 
 //------------------------------------------------------------------------------

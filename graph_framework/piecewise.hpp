@@ -22,47 +22,330 @@ namespace graph {
 ///  @param[in]     scale         Argument scale factor.
 ///  @param[in]     offset        Argument offset factor.
 //------------------------------------------------------------------------------
-template<jit::float_scalar T>
-void compile_index(std::ostringstream &stream,
-                   const std::string &register_name,
-                   const size_t length,
-                   const T scale,
-                   const T offset) {
-    const std::string type = jit::type_to_string<T> ();
-    stream << "(" << jit::smallest_uint_type<T> (length) << ")min";
-    if constexpr (!jit::use_metal<T> ()) {
-        stream << "<" << type << ">";
+    template<jit::float_scalar T>
+    void compile_index(std::ostringstream &stream,
+                       const std::string &register_name,
+                       const size_t length,
+                       const T scale,
+                       const T offset) {
+        const std::string type = jit::type_to_string<T> ();
+        stream << "(" << jit::smallest_uint_type<T> (length) << ")min";
+        if constexpr (!jit::use_metal<T> () &&
+                      !jit::use_cuda()) {
+            stream << "<" << type << ">";
+        }
+        stream << "(max";
+        if constexpr (!jit::use_metal<T> () &&
+                      !jit::use_cuda ()) {
+            stream << "<" << type << ">";
+        }
+        stream << "(";
+        if constexpr (jit::complex_scalar<T>) {
+            stream << "real(";
+        }
+        stream << "(" << register_name << " - ";
+        if constexpr (jit::complex_scalar<T>) {
+            stream << jit::get_type_string<T> ();
+        }
+        stream << offset << ")/";
+        if constexpr (jit::complex_scalar<T>) {
+            stream << jit::get_type_string<T> ();
+        }
+        stream << scale;
+        if constexpr (jit::complex_scalar<T>) {
+            stream << ")";
+        }
+        stream << ",";
+        if constexpr (jit::use_metal<T> () ||
+                      jit::use_cuda()) {
+            stream << "(" << type << ")";
+        }
+        stream << "0),";
+        if constexpr (jit::use_metal<T> () ||
+                      jit::use_cuda()) {
+            stream << "(" << type << ")";
+        }
+        stream << length - 1 << ")";
     }
-    stream << "(max";
-    if constexpr (!jit::use_metal<T> ()) {
-        stream << "<" << type << ">";
+
+//------------------------------------------------------------------------------
+///  @brief Compile an 2D index.
+///
+///  2D indicies are flattened to a single index.
+///
+///  @tparam T Base type of the calculation.
+///
+///  @param[in,out] stream          String buffer stream.
+///  @param[in]     x_register_name Register for the x argument.
+///  @param[in]     y_register_name Register for the x argument.
+///  @param[in]     num_columns     The y index.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T>
+    void compile_2D_index(std::ostringstream &stream,
+                          const std::string &x_register_name,
+                          const std::string &y_register_name,
+                          const size_t num_columns) {
+        stream << x_register_name << "*" << num_columns << " + "
+               << y_register_name;
     }
-    stream << "(";
-    if constexpr (jit::complex_scalar<T>) {
-        stream << "real(";
+
+//******************************************************************************
+//  Argument node.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Node class to contain the index argument.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class argument_node final : public no_derivative<T, SAFE_MATH, straight_node<T, SAFE_MATH>> {
+    private:
+///  Scale factor.
+        const T scale;
+///  Offset factor.
+        const T offset;
+///  Length
+        const size_t length;
+
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string with the argument.
+///
+///  @param[in] x      Argument.
+///  @param[in] scale  Scale factor for the argument.
+///  @param[in] offset Offset factor for the argument.
+///  @param[in] length Length of the array to index.
+///  @return A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(shared_leaf<T, SAFE_MATH> x,
+                                     const T scale,
+                                     const T offset,
+                                     const size_t length) {
+            return jit::format_to_string(x->get_hash()) +
+                   jit::format_to_string(scale) +
+                   jit::format_to_string(offset) +
+                   jit::format_to_string(length);
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct an Argument node.
+///
+///  @param[in] x      Argument.
+///  @param[in] scale  Scale factor for the argument.
+///  @param[in] offset Offset factor for the argument.
+///  @param[in] length Length of the array to index.
+//------------------------------------------------------------------------------
+        argument_node(shared_leaf<T, SAFE_MATH> x,
+                      const T scale,
+                      const T offset,
+                      const size_t length) :
+        no_derivative<T, SAFE_MATH,
+                      straight_node<T, SAFE_MATH>> (x, argument_node::to_string(x, scale,
+                                                                                offset,
+                                                                                length)),
+        scale(scale), offset(offset), length(length) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the argument.
+///
+///  Evaluate functions are only used by the minimization. So this node does not
+///  evaluate the argument. Instead this only returns the data as if it were a
+///  constant.
+///
+///  @returns The evaluated value of the node.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            backend::buffer<T> result = this->arg->evaluate();
+            backend::buffer<T> o(1, offset);
+            backend::buffer<T> s(1, scale);
+            result = result - o;
+            result = result/s;
+            result.real();
+            backend::buffer<T> upper(1, static_cast<T> (length - 1));
+            backend::buffer<T> lower(1, static_cast<T> (0));
+            result = backend::min(result, upper);
+            result = backend::max(result, lower);
+            return result;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Reduction method.
+///
+///  If all the values in the data buffer are the same. Reduce to a single
+///  constant.
+///
+///  @returns A reduced representation of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> reduce() {
+            if (constant_cast(this->arg).get()) {
+                return constant<T, SAFE_MATH> (this->evaluate());
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///    x' = (x - xmin)/dx                                                    (1)
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto a = this->arg->compile(stream, registers,
+                                            thread_mem, usage);
+
+#ifdef USE_INDEX_CACHE
+                registers[this] = jit::to_string('i', this);
+                stream << "        const "
+                       << jit::smallest_uint_type<T> (length) << " "
+                       << registers[this] << " = ";
+                compile_index<T> (stream, registers[a.get()], length,
+                                  scale, offset);
+                this->endline(stream, usage);
+#else
+                std::ostringstream source_buffer;
+                compile_index<T> (source_buffer, registers[a.get()],
+                                  length, scale, offset);
+                registers[this] = source_buffer.str();
+#endif
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  The argument of this node can be deferred so we need to check if the
+///  arguments are null.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+            auto temp = argument_cast(x);
+            return temp.get()                           &&
+                   this->arg->is_match(temp->get_arg()) &&
+                   (temp->get_size() == this->length)   &&
+                   (temp->get_scale() == this->scale)   &&
+                   (temp->get_offset() == this->offset);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get argument scale.
+///
+///  @returns The scale factor for x.
+//------------------------------------------------------------------------------
+        T get_scale() const {
+            return scale;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get argument offset.
+///
+///  @returns The offset factor for x.
+//------------------------------------------------------------------------------
+        T get_offset() const {
+            return offset;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the size of the array.
+///
+///  @returns The size of the array.
+//------------------------------------------------------------------------------
+        size_t get_size() const {
+            return length;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"arg\", shape = oval, style = filled, fillcolor = blue, fontcolor = white];" << std::endl;
+
+                auto a = this->arg->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[a.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define argument convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x      Argument.
+///  @param[in] scale  Argument scale factor.
+///  @param[in] offset Argument offset factor.
+///  @param[in] length The array length.
+///  @returns A reduced argument node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> argument(shared_leaf<T, SAFE_MATH> x,
+                                       const T scale,
+                                       const T offset,
+                                       const size_t length) {
+        auto temp = std::make_shared<argument_node<T, SAFE_MATH>> (x, scale,
+                                                                   offset,
+                                                                   length)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
     }
-    stream << "(" << register_name << " - ";
-    if constexpr (jit::complex_scalar<T>) {
-        stream << jit::get_type_string<T> ();
+
+///  Convenience type alias for shared argument nodes.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using shared_argument = std::shared_ptr<argument_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a argument node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_argument<T, SAFE_MATH> argument_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<argument_node<T, SAFE_MATH>> (x);
     }
-    stream << offset << ")/";
-    if constexpr (jit::complex_scalar<T>) {
-        stream << jit::get_type_string<T> ();
-    }
-    stream << scale;
-    if constexpr (jit::complex_scalar<T>) {
-        stream << ")";
-    }
-    stream << ",";
-    if constexpr (jit::use_metal<T> ()) {
-        stream << "(" << type << ")";
-    }
-    stream << "0),";
-    if constexpr (jit::use_metal<T> ()) {
-        stream << "(" << type << ")";
-    }
-    stream << length - 1 << ")";
-}
 
 //******************************************************************************
 //  1D Piecewise node.
@@ -104,11 +387,6 @@ void compile_index(std::ostringstream &stream,
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class piecewise_1D_node final : public straight_node<T, SAFE_MATH> {
     private:
-///  Scale factor for the argument.
-        const T scale;
-///  Offset factor for the argument.
-        const T offset;
-
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
@@ -127,20 +405,14 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @param[in] d      Backend buffer.
-///  @param[in] x      Argument.
-///  @param[in] scale  Scale factor for the argument.
-///  @param[in] offset Offset factor for the argument.
+///  @param[in] d Backend buffer.
+///  @param[in] x Argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
-                                     shared_leaf<T, SAFE_MATH> x,
-                                     const T scale,
-                                     const T offset) {
+                                     shared_leaf<T, SAFE_MATH> x) {
             return piecewise_1D_node::to_string(d) +
-                   jit::format_to_string(x->get_hash()) +
-                   jit::format_to_string(scale) +
-                   jit::format_to_string(offset);
+                   jit::format_to_string(x->get_hash());
         }
 
 //------------------------------------------------------------------------------
@@ -176,18 +448,11 @@ void compile_index(std::ostringstream &stream,
 ///
 ///  @param[in] d      Data to initialize the piecewise constant.
 ///  @param[in] x      Argument.
-///  @param[in] scale  Scale factor for the argument.
-///  @param[in] offset Offset factor for the argument.
 //------------------------------------------------------------------------------
         piecewise_1D_node(const backend::buffer<T> &d,
-                          shared_leaf<T, SAFE_MATH> x,
-                          const T scale,
-                          const T offset) :
-        straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x,
-                                                                     scale,
-                                                                     offset)),
-        data_hash(piecewise_1D_node::hash_data(d)), scale(scale),
-        offset(offset) {}
+                          shared_leaf<T, SAFE_MATH> x) :
+        straight_node<T, SAFE_MATH> (x, piecewise_1D_node::to_string(d, x)),
+        data_hash(piecewise_1D_node::hash_data(d)) {}
 
 //------------------------------------------------------------------------------
 ///  @brief Evaluate the results of the piecewise constant.
@@ -212,18 +477,8 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->arg).get()) {
-                const T arg = (this->arg->evaluate().at(0) + offset)/scale;
-                if constexpr (jit::float_base<T>) {
-                    const size_t i = std::max<float> (std::min<float> (std::real(arg),
-                                                                       this->get_size() - 1),
-                                                      0);
-                    return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
-                } else {
-                    const size_t i = std::max<double> (std::min<double> (std::real(arg),
-                                                                         this->get_size() - 1),
-                                                       0);
-                    return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
-                }
+                const size_t i = std::real(this->arg->evaluate().at(0));
+                return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i]);
             }
 
             if (evaluate().is_same()) {
@@ -251,6 +506,7 @@ void compile_index(std::ostringstream &stream,
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -259,12 +515,14 @@ void compile_index(std::ostringstream &stream,
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!visited.contains(this)) {
                 this->arg->compile_preamble(stream, registers,
                                             visited, usage,
                                             textures1d, textures2d,
-                                            avail_const_mem);
+                                            pre_funcs, avail_const_mem);
+
                 if (registers.find(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data());
@@ -339,36 +597,20 @@ void compile_index(std::ostringstream &stream,
 ///    c'_i = c_i - 3*d_i*i                                                  (4)
 ///    d'_i = d_i                                                            (5)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-#ifdef USE_INDEX_CACHE
-                if (indices.find(this->arg.get()) == indices.end()) {
-#endif
-                    const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
-                    shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
-                                                                     registers,
-                                                                     indices,
-                                                                     usage);
-#ifdef USE_INDEX_CACHE
-                    indices[a.get()] = jit::to_string('i', a.get());
-                    stream << "        const "
-                           << jit::smallest_uint_type<T> (length) << " "
-                           << indices[a.get()] << " = ";
-                    compile_index<T> (stream, registers[a.get()], length,
-                                      scale, offset);
-                    a->endline(stream, usage);
-                }
-#endif
+                auto a = this->arg->compile(stream, registers,
+                                            thread_mem, usage);
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -393,42 +635,22 @@ void compile_index(std::ostringstream &stream,
 #endif
                 stream << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()];
                 if constexpr (jit::use_metal<T> ()) {
-#ifdef USE_INDEX_CACHE
                     stream << ".read("
-                           << indices[this->arg.get()]
+                           << registers[a.get()]
                            << ").r";
-#else
-                    stream << ".read(";
-                    compile_index<T> (stream, registers[a.get()], length,
-                                      scale, offset);
-                    stream << ").r";
-#endif
 #ifdef USE_CUDA_TEXTURES
                 } else if constexpr (jit::use_cuda()) {
-#ifdef USE_INDEX_CACHE
                     stream << ", "
-                           << indices[this->arg.get()];
-#else
-                    stream << ", ";
-                    compile_index<T> (stream, registers[a.get()], length,
-                                      scale, offset);
-#endif
+                           << registers[a.get()]
                     if constexpr (jit::complex_scalar<T> || jit::double_base<T>) {
                         stream << ")";
                     }
                     stream << ")";
 #endif
                 } else {
-#ifdef USE_INDEX_CACHE
                     stream << "["
-                           << indices[this->arg.get()]
+                           << registers[a.get()]
                            << "]";
-#else
-                    stream << "[";
-                    compile_index<T> (stream, registers[a.get()], length,
-                                      scale, offset);
-                    stream << "]";
-#endif
                 }
                 this->endline(stream, usage);
             }
@@ -448,12 +670,25 @@ void compile_index(std::ostringstream &stream,
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             auto x_cast = piecewise_1D_cast(x);
 
-            if (x_cast.get()) {
-                return this->data_hash == x_cast->data_hash &&
-                       this->is_arg_match(x);
-            }
+            return x_cast.get()                         &&
+                   this->data_hash == x_cast->data_hash &&
+                   this->arg->is_match(x_cast->get_arg());
+        }
 
-            return false;
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes arguments match.
+///
+///  The argument of this node can be deferred so we need to check if the
+///  arguments are null.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto x_cast = piecewise_1D_cast(x);
+
+            return x_cast.get()                         &&
+                   this->arg->is_match(x_cast->get_arg());
         }
 
 //------------------------------------------------------------------------------
@@ -496,21 +731,25 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @note Even though @ref graph::leaf_node define a default of false. The
+///        @ref graph::straight_node subclass overrides it so we need to
+///        explicitly define these nodes as constants.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Test the constant node has a zero.
 ///
 ///  @returns True the node has a zero constant value.
 //------------------------------------------------------------------------------
         virtual bool has_constant_zero() const {
             return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].has_zero();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -539,49 +778,38 @@ void compile_index(std::ostringstream &stream,
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return one<T, SAFE_MATH> ();
         }
-
-//------------------------------------------------------------------------------
-///  @brief Check if the args match.
-///
-///  @param[in] x Node to match.
-///  @returns True if the arguments match.
-//------------------------------------------------------------------------------
-        bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
-            auto temp = piecewise_1D_cast(x);
-            return temp.get()                             &&
-                   this->arg->is_match(temp->get_arg())   &&
-                   (temp->get_size() == this->get_size()) &&
-                   (temp->get_scale() == this->scale)     &&
-                   (temp->get_offset() == this->offset);
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x argument scale.
-///
-///  @returns The scale factor for x.
-//------------------------------------------------------------------------------
-        T get_scale() const {
-            return scale;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x argument offset.
-///
-///  @returns The offset factor for x.
-//------------------------------------------------------------------------------
-        T get_offset() const {
-            return offset;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the size of the buffer.
-///
-///  @returns The size of the buffer.
-//------------------------------------------------------------------------------
-        size_t get_size() const {
-            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
-        }
     };
+
+//------------------------------------------------------------------------------
+///  @brief Define piecewise_1D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] d Data to initialize the piecewise constant.
+///  @param[in] x Argument.
+///  @returns A reduced piecewise_1D node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> piecewise_1D(const backend::buffer<T> &d,
+                                           shared_leaf<T, SAFE_MATH> x) {
+        auto temp = std::make_shared<piecewise_1D_node<T, SAFE_MATH>> (d, x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
 
 //------------------------------------------------------------------------------
 ///  @brief Define piecewise_1D convenience function.
@@ -600,24 +828,8 @@ void compile_index(std::ostringstream &stream,
                                            shared_leaf<T, SAFE_MATH> x,
                                            const T scale,
                                            const T offset) {
-        auto temp = std::make_shared<piecewise_1D_node<T, SAFE_MATH>> (d, x,
-                                                                       scale,
-                                                                       offset)->reduce();
-//  Test for hash collisions.
-        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
-                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
-                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
-                return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
-                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
-            }
-        }
-#if defined(__clang__) || defined(__GNUC__)
-        __builtin_unreachable();
-#else
-        assert(false && "Should never reach.");
-#endif
+        return piecewise_1D<T, SAFE_MATH> (d, argument(x, scale,
+                                                       offset, d.size()));
     }
 
 ///  Convenience type alias for shared piecewise 1D nodes.
@@ -685,15 +897,6 @@ void compile_index(std::ostringstream &stream,
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class piecewise_2D_node final : public branch_node<T, SAFE_MATH> {
     private:
-///  Scale factor for the x argument.
-        const T x_scale;
-///  Offset factor for the x argument.
-        const T x_offset;
-///  Scale factor for the y argument.
-        const T y_scale;
-///  Offset factor for the y argument.
-        const T y_offset;
-
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string.
 ///
@@ -714,27 +917,15 @@ void compile_index(std::ostringstream &stream,
 ///
 ///  @param[in] d        Backend buffer.
 ///  @param[in] x        X argument.
-///  @param[in] x_scale  Scale factor for the argument.
-///  @param[in] x_offset Offset factor for the x argument.
 ///  @param[in] y        Y argument.
-///  @param[in] y_scale  Scale factor for the y argument.
-///  @param[in] y_offset Offset factor for the y argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(const backend::buffer<T> &d,
                                      shared_leaf<T, SAFE_MATH> x,
-                                     const T x_scale,
-                                     const T x_offset,
-                                     shared_leaf<T, SAFE_MATH> y,
-                                     const T y_scale,
-                                     const T y_offset) {
+                                     shared_leaf<T, SAFE_MATH> y) {
             return piecewise_2D_node::to_string(d) +
                    jit::format_to_string(x->get_hash()) +
-                   jit::format_to_string(x_scale) +
-                   jit::format_to_string(x_offset) +
-                   jit::format_to_string(y->get_hash()) +
-                   jit::format_to_string(y_scale) +
-                   jit::format_to_string(y_offset);
+                   jit::format_to_string(y->get_hash());
         }
 
 //------------------------------------------------------------------------------
@@ -770,31 +961,19 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
 ///  @brief Construct 2D a piecewise constant node.
 ///
-///  @param[in] d        Data to initialize the piecewise constant.
-///  @param[in] n        Number of columns.
-///  @param[in] x        X Argument.
-///  @param[in] x_scale  Scale factor for the argument.
-///  @param[in] x_offset Offset factor for the x argument.
-///  @param[in] y        Y Argument.
-///  @param[in] y_scale  Scale factor for the y argument.
-///  @param[in] y_offset Offset factor for the y argument.
+///  @param[in] d Data to initialize the piecewise constant.
+///  @param[in] n Number of columns.
+///  @param[in] x X Argument.
+///  @param[in] y Y Argument.
 //------------------------------------------------------------------------------
         piecewise_2D_node(const backend::buffer<T> &d,
                           const size_t n,
                           shared_leaf<T, SAFE_MATH> x,
-                          const T x_scale,
-                          const T x_offset,
-                          shared_leaf<T, SAFE_MATH> y,
-                          const T y_scale,
-                          const T y_offset) :
+                          shared_leaf<T, SAFE_MATH> y) :
         branch_node<T, SAFE_MATH> (x, y,
-                                   piecewise_2D_node::to_string(d,
-                                                                x, x_scale, x_offset,
-                                                                y, y_scale, y_offset)),
-        data_hash(piecewise_2D_node::hash_data(d)),
-        num_columns(n), x_scale(x_scale), x_offset(x_offset), y_scale(y_scale),
-        y_offset(y_offset) {
-            assert(d.size()%n == 0 &&
+                                   piecewise_2D_node::to_string(d, x, y)),
+        data_hash(piecewise_2D_node::hash_data(d)), num_columns(n) {
+            assert(d.size()%get_num_columns() == 0 &&
                    "Expected the data buffer to be a multiple of the number of columns.");
         }
 
@@ -813,44 +992,7 @@ void compile_index(std::ostringstream &stream,
 ///  @returns The number of columns in the constant.
 //------------------------------------------------------------------------------
         size_t get_num_rows() const {
-            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size() /
-                   num_columns;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x argument scale.
-///
-///  @returns The scale factor for x.
-//------------------------------------------------------------------------------
-        T get_x_scale() const {
-            return x_scale;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x argument offset.
-///
-///  @returns The offset factor for x.
-//------------------------------------------------------------------------------
-        T get_x_offset() const {
-            return x_offset;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get y argument scale.
-///
-///  @returns The scale factor for y.
-//------------------------------------------------------------------------------
-        T get_y_scale() const {
-            return y_scale;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get y argument offset.
-///
-///  @returns The offset factor for x.
-//------------------------------------------------------------------------------
-        T get_y_offset() const {
-            return y_offset;
+            return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size()/num_columns;
         }
 
 //------------------------------------------------------------------------------
@@ -877,58 +1019,20 @@ void compile_index(std::ostringstream &stream,
         virtual shared_leaf<T, SAFE_MATH> reduce() {
             if (constant_cast(this->left).get() &&
                 constant_cast(this->right).get()) {
-                const T l = (this->left->evaluate().at(0) + x_offset)/x_scale;
-                const T r = (this->right->evaluate().at(0) + y_offset)/y_scale;
+                const size_t i = std::real(this->left->evaluate().at(0));
+                const size_t j = std::real(this->right->evaluate().at(0));
 
-                if constexpr (jit::float_base<T>) {
-                    const size_t i = std::max<float> (std::min<float> (std::real(l),
-                                                                       this->get_num_rows() - 1),
-                                                      0);
-                    const size_t j = std::max<float> (std::min<float> (std::real(r),
-                                                                       this->get_num_columns() - 1),
-                                                      0);
-                    return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
-                } else {
-                    const size_t i = std::max<double> (std::min<double> (std::real(l),
-                                                                         this->get_num_rows() - 1),
-                                                       0);
-                    const size_t j = std::max<double> (std::min<double> (std::real(r),
-                                                                         this->get_num_columns() - 1),
-                                                       0);
-                    return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
-                }
+                return constant<T, SAFE_MATH> (leaf_node<T, SAFE_MATH>::caches.backends[data_hash][i*this->get_num_columns() + j]);
             } else if (constant_cast(this->left).get()) {
-                const T l = (this->left->evaluate().at(0) + x_offset)/x_scale;
+                const size_t i = std::real(this->left->evaluate().at(0));
                 
-                if constexpr (jit::float_base<T>) {
-                    const size_t i = std::max<float> (std::min<float> (std::real(l),
-                                                                       this->get_num_rows() - 1),
-                                                      0);
-                    return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
-                                        this->right, y_scale, y_offset);
-                } else {
-                    const size_t i = std::max<double> (std::min<double> (std::real(l),
-                                                                         this->get_num_rows() - 1),
-                                                       0);
-                    return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
-                                        this->right, y_scale, y_offset);
-                }
+                return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_row(i, this->get_num_columns()),
+                                    this->right);
             } else if (constant_cast(this->right).get()) {
-                const T r = (this->right->evaluate().at(0) + y_offset)/y_scale;
+                const size_t j = std::real(this->right->evaluate().at(0));
 
-                if constexpr (jit::float_base<T>) {
-                    const size_t j = std::max<float> (std::min<float> (std::real(r),
-                                                                       this->get_num_columns() - 1),
-                                                      0);
-                    return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
-                                        this->left, x_scale, x_offset);
-                } else {
-                    const size_t j = std::max<double> (std::min<double> (std::real(r),
-                                                                         this->get_num_columns() - 1),
-                                                       0);
-                    return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
-                                        this->left, x_scale, x_offset);
-                }
+                return piecewise_1D(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].index_column(j, this->get_num_columns()),
+                                    this->left);
             }
 
             if (evaluate().is_same()) {
@@ -957,6 +1061,7 @@ void compile_index(std::ostringstream &stream,
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -965,27 +1070,34 @@ void compile_index(std::ostringstream &stream,
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!visited.contains(this)) {
                 this->left->compile_preamble(stream, registers,
                                              visited, usage,
                                              textures1d, textures2d,
-                                             avail_const_mem);
+                                             pre_funcs, avail_const_mem);
                 this->right->compile_preamble(stream, registers,
                                               visited, usage,
                                               textures1d, textures2d,
-                                              avail_const_mem);
+                                              pre_funcs, avail_const_mem);
+
                 if (registers.find(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()) == registers.end()) {
                     registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()] =
                         jit::to_string('a', leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data());
                     const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
                         textures2d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
-                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+                                               std::array<size_t, 2> ({
+                            length/this->get_num_columns(),
+                            this->get_num_columns()
+                        }));
 #ifdef USE_CUDA_TEXTURES
                     } else if constexpr (jit::use_cuda()) {
                         textures2d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
-                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+                                               std::array<size_t, 2> ({
+                            length/this->get_num_columns(), this->get_num_columns()
+                        }));
 #endif
                     } else {
                         if constexpr (jit::use_cuda()) {
@@ -1017,11 +1129,17 @@ void compile_index(std::ostringstream &stream,
                     const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
                     if constexpr (jit::use_metal<T> ()) {
                         textures2d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
-                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+                                               std::array<size_t, 2> ({
+                            length/this->get_num_columns(),
+                            this->get_num_columns()
+                        }));
 #ifdef USE_CUDA_TEXTURES
                     } else if constexpr (jit::use_cuda()) {
                         textures2d.try_emplace(leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data(),
-                                               std::array<size_t, 2> ({length/num_columns, num_columns}));
+                                               std::array<size_t, 2> ({
+                            length/this->get_num_columns(),
+                            this->get_num_columns()
+                        }));
 #endif
                     }
                 }
@@ -1062,68 +1180,46 @@ void compile_index(std::ostringstream &stream,
 ///    c23'_ij = Σ_k,3Σ_l,3 Max(2*k-3,0)*Max(l-2,0)*(-i)^(k-2)*(-j)^(j-3)   (17)
 ///    c33'_ij = Σ_k,3Σ_l,3 Max(k-2,0)*Max(l-2,0)*(-i)^(k-3)*(-j)^(j-3)     (18)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                const size_t length = leaf_node<T, SAFE_MATH>::caches.backends[data_hash].size();
-                const size_t num_rows = length/num_columns;
+                auto x = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto y = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
-                shared_leaf<T, SAFE_MATH> x = this->left->compile(stream,
-                                                                  registers,
-                                                                  indices,
-                                                                  usage);
-                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream,
-                                                                   registers,
-                                                                   indices,
-                                                                   usage);
-
+                auto temp = x*static_cast<T> (this->get_num_columns()) + y;
+                if constexpr (!jit::use_metal<T> ()) {
+                    if (registers.find(temp.get()) == registers.end()) {
+#ifndef USE_CUDA_TEXTURES
 #ifdef USE_INDEX_CACHE
-                if (indices.find(x.get()) == indices.end()) {
-                    indices[x.get()] = jit::to_string('i', x.get());
-                    stream << "        const "
-                           << jit::smallest_uint_type<T> (num_rows) << " "
-                           << indices[x.get()] << " = ";
-                    compile_index<T> (stream, registers[x.get()], num_rows,
-                                      x_scale, x_offset);
-                    x->endline(stream, usage);
-                }
-                if (indices.find(y.get()) == indices.end()) {
-                    indices[y.get()] = jit::to_string('i', y.get());
-                    stream << "        const "
-                           << jit::smallest_uint_type<T> (num_columns) << " "
-                           << indices[y.get()] << " = ";
-                    compile_index<T> (stream, registers[y.get()], num_columns,
-                                      y_scale, y_offset);
-                    y->endline(stream, usage);
-                }
-
-                auto temp = this->left + this->right;
-                if constexpr (!jit::use_metal<T> ()
-#ifdef USE_CUDA_TEXTURES
-                              || !jit::use_cuda()
-#endif
-                             ) {
-                    if (indices.find(temp.get()) == indices.end()) {
-                        indices[temp.get()] = jit::to_string('i', temp.get());
+                        registers[temp.get()] = jit::to_string('i', temp.get());
                         stream << "        const "
-                               << jit::smallest_uint_type<T> (length) << " "
-                               << indices[temp.get()] << " = "
-                               << indices[x.get()]
-                               << "*" << num_columns << " + "
-                               << indices[y.get()]
-                               << ";" << std::endl;
+                        << jit::smallest_uint_type<T> (this->get_num_columns()*this->get_num_rows())
+                        << " " << registers[temp.get()] << " = ";
+                        compile_2D_index<T> (stream, registers[x.get()], registers[y.get()],
+                                             this->get_num_columns());
+                        this->endline(stream, usage);
+#else
+                        std::ostringstream source_buffer;
+                        temp->compile(source_buffer,
+                                      registers,
+                                      thread_mem,
+                                      usage);
+                        registers[temp.get()] = source_buffer.str();
+#endif
+#endif
                     }
                 }
-#endif
 
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
@@ -1147,60 +1243,31 @@ void compile_index(std::ostringstream &stream,
                 }
 #endif
                 stream << registers[leaf_node<T, SAFE_MATH>::caches.backends[data_hash].data()];
+
                 if constexpr (jit::use_metal<T> ()) {
-#ifdef USE_INDEX_CACHE
                     stream << ".read("
-                           << jit::smallest_uint_type<T> (std::max(num_rows,
-                                                                   num_columns))
+                           << jit::smallest_uint_type<T> (std::max(this->get_num_rows(),
+                                                                   this->get_num_columns()))
                            << "2("
-                           << indices[y.get()]
+                           << registers[y.get()]
                            << ","
-                           << indices[x.get()]
+                           << registers[x.get()]
                            << ")).r";
-#else
-                    stream << ".read(uint2(";
-                    compile_index<T> (stream, registers[y.get()], num_columns,
-                                      y_scale, y_offset);
-                    stream << ",";
-                    compile_index<T> (stream, registers[x.get()], num_rows,
-                                      x_scale, x_offset);
-                    stream << ")).r";
-#endif
 #ifdef USE_CUDA_TEXTURES
                 } else if constexpr (jit::use_cuda()) {
-#ifdef USE_INDEX_CACHE
                     stream << ", "
-                           << indices[y.get()]
+                           << registers[y.get()]
                            << ", "
-                           << indices[x.get()];
-#else
-                    stream << ", ";
-                    compile_index<T> (stream, registers[y.get()], num_columns,
-                                      y_scale, y_offset);
-                    stream << ", ";
-                    compile_index<T> (stream, registers[x.get()], num_rows,
-                                      x_scale, x_offset);
-#endif
+                           << registers[x.get()];
                     if constexpr (jit::complex_scalar<T> || jit::double_base<T>) {
                         stream << ")";
                     }
                     stream << ")";
 #endif
                 } else {
-#ifdef USE_INDEX_CACHE
-                    stream << "["
-                           << indices[temp.get()]
-                           << "]";
-#else
-                    stream << "[";
-                    compile_index<T> (stream, registers[x.get()], num_rows,
-                                      x_scale, x_offset);
-                    stream << "*" << num_columns << " + ";
-                    compile_index<T> (stream, registers[y.get()], num_columns,
-                                      y_scale, y_offset);
-                    stream << "]";
-#endif
+                    stream << "[" << registers[temp.get()] << "]";
                 }
+
                 this->endline(stream, usage);
             }
 
@@ -1218,12 +1285,28 @@ void compile_index(std::ostringstream &stream,
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             auto x_cast = piecewise_2D_cast(x);
 
-            if (x_cast.get()) {
-                return this->data_hash == x_cast->data_hash &&
-                       this->is_arg_match(x);
-            }
+            return x_cast.get()                                   &&
+                   this->data_hash == x_cast->data_hash           &&
+                   this->num_columns == x_cast->get_num_columns() &&
+                   this->left->is_match(x_cast->get_left())       &&
+                   this->right->is_match(x_cast->get_right());
+        }
 
-            return false;
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  Assumes both arguments are either set or not set.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto x_cast = piecewise_2D_cast(x);
+
+            return x_cast.get()                                   &&
+                   this->num_columns == x_cast->get_num_columns() &&
+                   this->left->is_match(x_cast->get_left())       &&
+                   this->right->is_match(x_cast->get_right());
         }
 
 //------------------------------------------------------------------------------
@@ -1270,21 +1353,25 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
+///  @brief Test if node acts like a variable.
+///
+///  @note Even though @ref graph::leaf_node define a default of false. The
+///        @ref graph::branch_node subclass overrides it so we need to
+///        explicitly define these nodes as constants.
+///
+///  @returns True if the node acts like a variable.
+//------------------------------------------------------------------------------
+        virtual bool is_all_variables() const {
+            return false;
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Test the constant node has a zero.
 ///
 ///  @returns True the node has a zero constant value.
 //------------------------------------------------------------------------------
         virtual bool has_constant_zero() const {
             return leaf_node<T, SAFE_MATH>::caches.backends[data_hash].has_zero();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -1313,25 +1400,6 @@ void compile_index(std::ostringstream &stream,
         virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
             return one<T, SAFE_MATH> ();
         }
-        
-//------------------------------------------------------------------------------
-///  @brief Check if the args match.
-///
-///  @param[in] x Node to match.
-///  @returns True if the arguments match.
-//------------------------------------------------------------------------------
-        bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
-            auto temp = piecewise_2D_cast(x);
-            return temp.get()                                           &&
-                   this->left->is_match(temp->get_left())               &&
-                   this->right->is_match(temp->get_right())             &&
-                   (temp->get_num_rows() == this->get_num_rows())       &&
-                   (temp->get_num_columns() == this->get_num_columns()) &&
-                   (temp->get_x_scale() == this->x_scale)               &&
-                   (temp->get_x_offset() == this->x_offset)             &&
-                   (temp->get_y_scale() == this->y_scale)               &&
-                   (temp->get_y_offset() == this->y_offset);
-        }
 
 //------------------------------------------------------------------------------
 ///  @brief Do the rows match.
@@ -1341,11 +1409,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_row_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get()                                 &&
-                   this->left->is_match(temp->get_arg())      &&
-                   (temp->get_size() == this->get_num_rows()) &&
-                   (temp->get_scale() == this->x_scale)       &&
-                   (temp->get_offset() == this->x_offset);
+            return temp.get() && this->left->is_match(temp->get_arg());
         }
 
 //------------------------------------------------------------------------------
@@ -1358,11 +1422,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_col_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = piecewise_1D_cast(x);
-            return temp.get()                                    &&
-                   this->right->is_match(temp->get_arg())        &&
-                   (temp->get_size() == this->get_num_columns()) &&
-                   (temp->get_scale() == this->y_scale)          &&
-                   (temp->get_offset() == this->y_offset);
+            return temp.get() && this->right->is_match(temp->get_arg());
         }
     };
 
@@ -1372,28 +1432,18 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] d        Data to initialize the piecewise constant.
-///  @param[in] n        Number of columns.
-///  @param[in] x        X argument.
-///  @param[in] x_scale  Scale for x argument.
-///  @param[in] x_offset Offset for x argument.
-///  @param[in] y        Argument.
-///  @param[in] y_scale  Scale for y argument.
-///  @param[in] y_offset Offset for y argument.
-///  @returns A reduced sqrt node.
+///  @param[in] d Data to initialize the piecewise constant.
+///  @param[in] n Number of columns.
+///  @param[in] x X argument.
+///  @param[in] y Y argument.
+///  @returns A reduced piecewise_2D node.
 //------------------------------------------------------------------------------
-    template<jit::float_scalar T, bool SAFE_MATH=false> 
+    template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> piecewise_2D(const backend::buffer<T> &d,
                                            const size_t n,
                                            shared_leaf<T, SAFE_MATH> x,
-                                           const T x_scale,
-                                           const T x_offset,
-                                           shared_leaf<T, SAFE_MATH> y,
-                                           const T y_scale,
-                                           const T y_offset) {
-        auto temp = std::make_shared<piecewise_2D_node<T, SAFE_MATH>> (d, n,
-                                                                       x, x_scale, x_offset,
-                                                                       y, y_scale, y_offset)->reduce();
+                                           shared_leaf<T, SAFE_MATH> y) {
+        auto temp = std::make_shared<piecewise_2D_node<T, SAFE_MATH>> (d, n, x, y)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
             if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
@@ -1409,6 +1459,36 @@ void compile_index(std::ostringstream &stream,
 #else
         assert(false && "Should never reach.");
 #endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Define piecewise_2D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] d        Data to initialize the piecewise constant.
+///  @param[in] n        Number of columns.
+///  @param[in] x        X argument.
+///  @param[in] x_scale  Scale for x argument.
+///  @param[in] x_offset Offset for x argument.
+///  @param[in] y        Y argument.
+///  @param[in] y_scale  Scale for y argument.
+///  @param[in] y_offset Offset for y argument.
+///  @returns A reduced sqrt node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false> 
+    shared_leaf<T, SAFE_MATH> piecewise_2D(const backend::buffer<T> &d,
+                                           const size_t n,
+                                           shared_leaf<T, SAFE_MATH> x,
+                                           const T x_scale,
+                                           const T x_offset,
+                                           shared_leaf<T, SAFE_MATH> y,
+                                           const T y_scale,
+                                           const T y_offset) {
+        return piecewise_2D<T, SAFE_MATH> (d, n,
+                                           argument(x, x_scale, x_offset, d.size()/n),
+                                           argument(y, y_scale, y_offset, n))->reduce();
     }
 
 ///  Convenience type alias for shared piecewise 2D nodes.
@@ -1447,59 +1527,42 @@ void compile_index(std::ostringstream &stream,
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class index_1D_node final : public branch_node<T, SAFE_MATH> {
     private:
-///  Scale factor for the argument.
-        const T scale;
-///  Offset factor for the argument.
-        const T offset;
-
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @param[in] v      Value to index.
-///  @param[in] x      Argument.
-///  @param[in] scale  Scale factor for the argument.
-///  @param[in] offset Offset factor for the argument.
+///  @param[in] v Value to index.
+///  @param[in] x Argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(shared_leaf<T, SAFE_MATH> v,
-                                     shared_leaf<T, SAFE_MATH> x,
-                                     const T scale,
-                                     const T offset) {
-            return jit::format_to_string(v->get_hash()) + "[" +
-                   jit::format_to_string(x->get_hash()) +
-                   jit::format_to_string(scale) +
-                   jit::format_to_string(offset) + "]";
+                                     shared_leaf<T, SAFE_MATH> x) {
+            return jit::format_to_string(v->get_hash()) +
+                   jit::format_to_string(x->get_hash());
         }
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a 1D index.
 ///
-///  @param[in] var    Node to index.
-///  @param[in] x      Argument.
-///  @param[in] scale  Scale factor for the argument.
-///  @param[in] offset Offset factor for the argument.
+///  @param[in] var Node to index.
+///  @param[in] x   Argument.
 //------------------------------------------------------------------------------
         index_1D_node(shared_leaf<T, SAFE_MATH> var,
-                      shared_leaf<T, SAFE_MATH> x,
-                      const T scale,
-                      const T offset) :
+                      shared_leaf<T, SAFE_MATH> x) :
         branch_node<T, SAFE_MATH> (var, x,
-                                   index_1D_node::to_string(var, x,
-                                                            scale, offset)),
-        scale(scale), offset(offset) {}
+                                   index_1D_node::to_string(var, x)) {}
 
 //------------------------------------------------------------------------------
-///  @brief Evaluate the results of the piecewise constant.
+///  @brief Evaluate the results of the 1D index.
 ///
-///  Evaluate functions are only used by the minimization. So this node does not
+///  Evaluate functions are only used by the reduction. So this node does not
 ///  evaluate the argument. Instead this only returns the data as if it were a
 ///  constant.
 ///
 ///  @returns The evaluated value of the node.
 //------------------------------------------------------------------------------
         virtual backend::buffer<T> evaluate() {
-            return this->right->evaluate();
+            return this->left->evaluate();
         }
 
 //------------------------------------------------------------------------------
@@ -1513,61 +1576,41 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
-///  @brief the node.
+///  @brief Compile the node.
 ///
 ///  This node first evaluates the value of the argument then chooses the
 ///  correct index of the variable.
 ///
 ///    x' = (x - xmin)/dx                                                    (1)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-#ifdef USE_INDEX_CACHE
-                if (indices.find(this->right.get()) == indices.end()) {
-#endif
-                    const size_t length = variable_cast(this->left)->size();
-                    shared_leaf<T, SAFE_MATH> a = this->right->compile(stream,
-                                                                       registers,
-                                                                       indices,
-                                                                       usage);
-#ifdef USE_INDEX_CACHE
-                    indices[a.get()] = jit::to_string('i', a.get());
-                    stream << "        const "
-                           << jit::smallest_uint_type<T> (length) << " "
-                           << indices[a.get()] << " = ";
-                    compile_index<T> (stream, registers[a.get()], length,
-                                      scale, offset);
-                    a->endline(stream, usage);
-                }
-#endif
-
+                auto a = this->right->compile(stream, registers,
+                                              thread_mem, usage);
+                auto var = this->left->compile(stream, registers,
+                                               thread_mem, usage);
+                
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                auto var = this->left->compile(stream,
-                                                registers,
-                                                indices,
-                                                usage);
-                stream << " " << registers[this] << " = "
-                       << jit::to_string('v', var.get());
-#ifdef USE_INDEX_CACHE
-                stream << "[" << indices[this->right.get()] << "]";
-#else
-                stream << "[";
-                compile_index<T> (stream, registers[a.get()], length,
-                                  scale, offset);
-                stream << "]";
-#endif
+                stream << " " << registers[this] << " = ";
+                if (thread_mem.contains(var.get())) {
+                    stream << thread_mem.at(var.get());
+                } else {
+                    stream << jit::to_string('v', var.get());
+                }
+                stream << "[" << registers[a.get()] << "]";
+
                 this->endline(stream, usage);
             }
 
@@ -1585,19 +1628,16 @@ void compile_index(std::ostringstream &stream,
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             auto x_cast = index_1D_cast(x);
 
-            if (x_cast.get()) {
-                return this->left->is_match(x_cast->get_left()) &&
-                       this->is_arg_match(x);
-            }
-
-            return false;
+            return x_cast.get()                             &&
+                   this->left->is_match(x_cast->get_left()) &&
+                   this->is_arg_match(x);
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Convert the node to latex.
 //------------------------------------------------------------------------------
         virtual void to_latex() const {
-            std::cout << "r\\_" << reinterpret_cast<size_t> (this->left.get())
+            std::cout << "v\\_" << reinterpret_cast<size_t> (this->left.get())
                       << "\\left[i\\_"
                       << reinterpret_cast<size_t> (this->right.get())
                       << "\\right]";
@@ -1629,24 +1669,6 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node is a constant.
-///
-///  @returns True if the node is a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
 ///
 ///  @returns True.
@@ -1672,42 +1694,7 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = index_1D_cast(x);
-
-            if (temp.get()) {
-                return this->right->is_match(temp->get_right()) &&
-                       (temp->get_size() == this->get_size())   &&
-                       (temp->get_scale() == this->scale)       &&
-                       (temp->get_offset() == this->offset);
-            }
-
-            return false;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x argument scale.
-///
-///  @returns The scale factor for x.
-//------------------------------------------------------------------------------
-        T get_scale() const {
-            return scale;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x argument offset.
-///
-///  @returns The offset factor for x.
-//------------------------------------------------------------------------------
-        T get_offset() const {
-            return offset;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the size of the buffer.
-///
-///  @returns The size of the buffer.
-//------------------------------------------------------------------------------
-        size_t get_size() const {
-            return variable_cast(this->left)->size();
+            return temp.get() && this->right->is_match(temp->get_right());
         }
     };
 
@@ -1717,22 +1704,16 @@ void compile_index(std::ostringstream &stream,
 ///  @tparam T         Base type of the calculation.
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 ///
-///  @param[in] v      Variable to index.
-///  @param[in] x      Argument.
-///  @param[in] scale  Argument scale factor.
-///  @param[in] offset Argument offset factor.
-///  @returns A reduced piecewise_1D node.
+///  @param[in] v Variable to index.
+///  @param[in] x Argument.
+///  @returns A reduced index_1D node.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_leaf<T, SAFE_MATH> index_1D(shared_leaf<T, SAFE_MATH> v,
-                                       shared_leaf<T, SAFE_MATH> x,
-                                       const T scale,
-                                       const T offset) {
-        assert(variable_cast(v).get() &&
-               "index_1D requires a variable node for first arg.");
-        auto temp = std::make_shared<index_1D_node<T, SAFE_MATH>> (v, x,
-                                                                   scale,
-                                                                   offset)->reduce();
+                                       shared_leaf<T, SAFE_MATH> x) {
+        assert(argument_cast(x).get() &&
+               "index_1D requires a argument node for second arg.");
+        auto temp = std::make_shared<index_1D_node<T, SAFE_MATH>> (v, x)->reduce();
 //  Test for hash collisions.
         for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
             if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
@@ -1748,6 +1729,28 @@ void compile_index(std::ostringstream &stream,
 #else
         assert(false && "Should never reach.");
 #endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Define index_1D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] v      Variable to index.
+///  @param[in] x      Argument.
+///  @param[in] scale  Argument scale factor.
+///  @param[in] offset Argument offset factor.
+///  @returns A reduced index_1D node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> index_1D(shared_leaf<T, SAFE_MATH> v,
+                                       shared_leaf<T, SAFE_MATH> x,
+                                       const T scale,
+                                       const T offset) {
+        assert(variable_cast(v).get() &&
+               "index_1D requires a variable node for first arg.");
+        return index_1D<T, SAFE_MATH> (v, argument(x, scale, offset, variable_cast(v)->size()));
     }
 
 ///  Convenience type alias for shared index 1D nodes.
@@ -1787,74 +1790,58 @@ void compile_index(std::ostringstream &stream,
     template<jit::float_scalar T, bool SAFE_MATH=false>
     class index_2D_node final : public triple_node<T, SAFE_MATH> {
     private:
-///  Scale factor for the x argument.
-        const T x_scale;
-///  Offset factor for the x argument.
-        const T x_offset;
-///  Scale factor for the y argument.
-        const T y_scale;
-///  Offset factor for the y argument.
-        const T y_offset;
-///  Number of columns.
-        const size_t num_columns;
-
 //------------------------------------------------------------------------------
 ///  @brief Convert node pointer to a string with the argument.
 ///
-///  @param[in] v        Value to index.
-///  @param[in] x        Argument.
-///  @param[in] x_scale  Scale factor for the argument.
-///  @param[in] x_offset Offset factor for the x argument.
-///  @param[in] y        Argument.
-///  @param[in] y_scale  Scale factor for the y argument.
-///  @param[in] y_offset Offset factor for the y argument.
+///  @param[in] v Value to index.
+///  @param[in] x X argument.
+///  @param[in] y Y argument.
 ///  @return A string rep of the node.
 //------------------------------------------------------------------------------
         static std::string to_string(shared_leaf<T, SAFE_MATH> v,
                                      shared_leaf<T, SAFE_MATH> x,
-                                     const T x_scale,
-                                     const T x_offset,
-                                     shared_leaf<T, SAFE_MATH> y,
-                                     const T y_scale,
-                                     const T y_offset) {
-            return jit::format_to_string(v->get_hash()) + "[" +
+                                     shared_leaf<T, SAFE_MATH> y) {
+            return jit::format_to_string(v->get_hash()) +
                    jit::format_to_string(x->get_hash()) +
-                   jit::format_to_string(x_scale) +
-                   jit::format_to_string(x_offset) + "," +
-                   jit::format_to_string(y->get_hash()) +
-                   jit::format_to_string(x_scale) +
-                   jit::format_to_string(x_offset) + "]";
+                   jit::format_to_string(y->get_hash());
         }
+
+///  Number of columns.
+        const size_t num_columns;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a 2D index.
 ///
-///  @param[in] var      Node to index.
-///  @param[in] n        Number of columns.
-///  @param[in] x        X Argument.
-///  @param[in] x_scale  Scale factor for the argument.
-///  @param[in] x_offset Offset factor for the x argument.
-///  @param[in] y        Y Argument.
-///  @param[in] y_scale  Scale factor for the y argument.
-///  @param[in] y_offset Offset factor for the y argument.
+///  @param[in] var Node to index.
+///  @param[in] n   Number of columns.
+///  @param[in] x   X Argument.
+///  @param[in] y   Y Argument.
 //------------------------------------------------------------------------------
         index_2D_node(shared_leaf<T, SAFE_MATH> var,
                       const size_t n,
                       shared_leaf<T, SAFE_MATH> x,
-                      const T x_scale,
-                      const T x_offset,
-                      shared_leaf<T, SAFE_MATH> y,
-                      const T y_scale,
-                      const T y_offset) :
+                      shared_leaf<T, SAFE_MATH> y) :
         triple_node<T, SAFE_MATH> (var, x, y,
-                                   index_2D_node::to_string(var,
-                                                            x, x_scale, x_offset,
-                                                            y, y_scale, y_offset)),
-        num_columns(n), x_scale(x_scale), x_offset(x_offset), y_scale(y_scale),
-        y_offset(y_offset) {
-            assert(variable_cast(this->left)->size()%n == 0 &&
-                   "Expected the data buffer to be a multiple of the number of columns.");
+                                   index_2D_node::to_string(var, x, y)),
+        num_columns(n) {}
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of columns.
+///
+///  @returns The number of columns in the constant.
+//------------------------------------------------------------------------------
+        size_t get_num_columns() const {
+            return num_columns;
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the number of columns.
+///
+///  @returns The number of columns in the constant.
+//------------------------------------------------------------------------------
+        size_t get_num_rows() const {
+            return variable_cast(this->left)->size()/num_columns;
         }
 
 //------------------------------------------------------------------------------
@@ -1889,88 +1876,59 @@ void compile_index(std::ostringstream &stream,
 ///    x' = (x - xmin)/dx                                                    (1)
 ///    y' = (y - ymin)/dy                                                    (2)
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                const size_t length = variable_cast(this->left)->size();
-                const size_t num_rows = length/num_columns;
+                auto x = this->middle->compile(stream, registers,
+                                               thread_mem, usage);
+                auto y = this->right->compile(stream, registers,
+                                              thread_mem, usage);
 
-                shared_leaf<T, SAFE_MATH> x = this->middle->compile(stream,
-                                                                    registers,
-                                                                    indices,
-                                                                    usage);
-                shared_leaf<T, SAFE_MATH> y = this->right->compile(stream,
-                                                                   registers,
-                                                                   indices,
-                                                                   usage);
+                auto temp = x*static_cast<T> (this->get_num_columns())
+                          + y;
 
+                if (registers.find(temp.get()) == registers.end()) {
 #ifdef USE_INDEX_CACHE
-                if (indices.find(x.get()) == indices.end()) {
-                    indices[x.get()] = jit::to_string('i', x.get());
+                    registers[temp.get()] = jit::to_string('i', temp.get());
                     stream << "        const "
-                           << jit::smallest_uint_type<T> (num_rows) << " "
-                           << indices[x.get()] << " = ";
-                    compile_index<T> (stream, registers[x.get()], num_rows,
-                                      x_scale, x_offset);
-                    x->endline(stream, usage);
-                }
-                if (indices.find(y.get()) == indices.end()) {
-                    indices[y.get()] = jit::to_string('i', y.get());
-                    stream << "        const "
-                           << jit::smallest_uint_type<T> (num_columns) << " "
-                           << indices[y.get()] << " = ";
-                    compile_index<T> (stream, registers[y.get()], num_columns,
-                                      y_scale, y_offset);
-                    y->endline(stream, usage);
-                }
-
-                auto temp = this->middle + this->right;
-                if constexpr (!jit::use_metal<T> () ||
-                              !jit::use_cuda()) {
-                    if (indices.find(temp.get()) == indices.end()) {
-                        indices[temp.get()] = jit::to_string('i', temp.get());
-                        stream << "        const "
-                               << jit::smallest_uint_type<T> (length) << " "
-                               << indices[temp.get()] << " = "
-                               << indices[x.get()]
-                               << "*" << num_columns << " + "
-                               << indices[y.get()]
-                               << ";" << std::endl;
-                    }
-                }
+                    << jit::smallest_uint_type<T> (this->get_num_columns()*this->get_num_rows())
+                    << " " << registers[temp.get()] << " = ";
+                    compile_2D_index<T> (stream, registers[x.get()], registers[y.get()],
+                                         this->get_num_columns());
+                    this->endline(stream, usage);
+                    
+#else
+                    std::ostringstream source_buffer;
+                    compile_2D_index<T> (source_buffer, registers[x.get()], registers[y.get()],
+                                         this->get_num_columns());
+                    registers[temp.get()] = source_buffer.str();
 #endif
+                }
 
+                auto var = this->left->compile(stream, registers,
+                                               thread_mem, usage);
+
+                
                 registers[this] = jit::to_string('r', this);
                 stream << "        const ";
                 jit::add_type<T> (stream);
-                auto var = this->left->compile(stream,
-                                                registers,
-                                                indices,
-                                                usage);
-                stream << " " << registers[this] << " = "
-                       << jit::to_string('v', var.get());
-#ifdef USE_INDEX_CACHE
-                stream << "["
-                       << indices[temp.get()]
-                       << "]";
-#else
-                stream << "[";
-                compile_index<T> (stream, registers[x.get()], num_rows,
-                                  x_scale, x_offset);
-                stream << "*" << num_columns << " + ";
-                compile_index<T> (stream, registers[y.get()], num_columns,
-                                  y_scale, y_offset);
-                stream << "]";
-#endif
+                stream << " " << registers[this] << " = ";
+                if (thread_mem.contains(var.get())) {
+                    stream << thread_mem.at(var.get());
+                } else {
+                    stream << jit::to_string('v', var.get());
+                }
+                stream << "[" << registers[temp.get()] << "]";
+
                 this->endline(stream, usage);
             }
 
@@ -1988,12 +1946,11 @@ void compile_index(std::ostringstream &stream,
         virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
             auto x_cast = index_2D_cast(x);
 
-            if (x_cast.get()) {
-                return this->left->is_match(x_cast->get_left()) &&
-                       this->is_arg_match(x);
-            }
-
-            return false;
+            return x_cast.get()                                 &&
+                   this->left->is_match(x_cast->get_left())     &&
+                   this->middle->is_match(x_cast->get_middle()) &&
+                   this->right->is_match(x_cast->get_right())   &&
+                   this->num_columns == x_cast->get_num_columns();
         }
 
 //------------------------------------------------------------------------------
@@ -2036,24 +1993,6 @@ void compile_index(std::ostringstream &stream,
         }
 
 //------------------------------------------------------------------------------
-///  @brief Test if node is a constant.
-///
-///  @returns True if the node is a constant.
-//------------------------------------------------------------------------------
-        virtual bool is_constant() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if node acts like a variable.
-///
-///  @returns True if the node acts like a variable.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
-        }
-
-//------------------------------------------------------------------------------
 ///  @brief Test if the node acts like a power of variable.
 ///
 ///  @returns True.
@@ -2079,64 +2018,50 @@ void compile_index(std::ostringstream &stream,
 //------------------------------------------------------------------------------
         bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
             auto temp = index_2D_cast(x);
-
-            if (temp.get()) {
-                return this->right->is_match(temp->get_right()) &&
-                       (temp->get_size() == this->get_size())   &&
-                       (temp->get_x_scale() == this->x_scale)   &&
-                       (temp->get_x_offset() == this->x_offset) &&
-                       (temp->get_y_scale() == this->y_scale)   &&
-                       (temp->get_y_offset() == this->y_offset);
-            }
-
-            return false;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x argument scale.
-///
-///  @returns The scale factor for x.
-//------------------------------------------------------------------------------
-        T get_x_scale() const {
-            return x_scale;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get x argument offset.
-///
-///  @returns The offset factor for x.
-//------------------------------------------------------------------------------
-        T get_x_offset() const {
-            return x_offset;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get y argument scale.
-///
-///  @returns The scale factor for y.
-//------------------------------------------------------------------------------
-        T get_y_scale() const {
-            return y_scale;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get y argument offset.
-///
-///  @returns The offset factor for x.
-//------------------------------------------------------------------------------
-        T get_y_offset() const {
-            return y_offset;
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Get the size of the buffer.
-///
-///  @returns The size of the buffer.
-//------------------------------------------------------------------------------
-        size_t get_size() const {
-            return variable_cast(this->left)->size();
+            return temp.get()                                 &&
+                   this->middle->is_match(temp->get_middle()) &&
+                   this->right->is_match(temp->get_right());
         }
     };
+
+//------------------------------------------------------------------------------
+///  @brief Define index_2D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] v Variable to index.
+///  @param[in] n Number of columns.
+///  @param[in] x X argument.
+///  @param[in] y Argument.
+///  @returns A reduced sqrt node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> index_2D(shared_leaf<T, SAFE_MATH> v,
+                                       const size_t n,
+                                       shared_leaf<T, SAFE_MATH> x,
+                                       shared_leaf<T, SAFE_MATH> y) {
+        assert(argument_cast(x).get() &&
+               "index_2D requires a argument node for second arg.");
+        assert(argument_cast(y).get() &&
+               "index_2D requires a argument node for third arg.");
+        auto temp = std::make_shared<index_2D_node<T, SAFE_MATH>> (v, n, x, y)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
 
 //------------------------------------------------------------------------------
 ///  @brief Define index_2D convenience function.
@@ -2165,24 +2090,11 @@ void compile_index(std::ostringstream &stream,
                                        const T y_offset) {
         assert(variable_cast(v).get() &&
                "index_2D requires a variable node for first arg.");
-        auto temp = std::make_shared<index_2D_node<T, SAFE_MATH>> (v, n,
-                                                                   x, x_scale, x_offset,
-                                                                   y, y_scale, y_offset)->reduce();
-//  Test for hash collisions.
-        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
-            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
-                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
-                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
-                return temp;
-            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
-                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
-            }
-        }
-#if defined(__clang__) || defined(__GNUC__)
-        __builtin_unreachable();
-#else
-        assert(false && "Should never reach.");
-#endif
+        return index_2D<T, SAFE_MATH> (v, n,
+                                       argument(x, x_scale, x_offset,
+                                                variable_cast(v)->size()/n),
+                                       argument(y, y_scale,
+                                                y_offset, n))->reduce();
     }
 
 ///  Convenience type alias for shared index 2D nodes.
@@ -2201,6 +2113,318 @@ void compile_index(std::ostringstream &stream,
     template<jit::float_scalar T, bool SAFE_MATH=false>
     shared_index_2D<T, SAFE_MATH> index_2D_cast(shared_leaf<T, SAFE_MATH> x) {
         return std::dynamic_pointer_cast<index_2D_node<T, SAFE_MATH>> (x);
+    }
+
+//******************************************************************************
+//  1D Atomic Accumulate.
+//******************************************************************************
+//------------------------------------------------------------------------------
+///  @brief Class representing a 1D accumulated array.
+///
+///  This class is used to implement summation into an array. This uses atomic
+///  add to avoid race conditions when multiple threads try to accumulate.
+///
+///  Indicies are selected by
+///
+///    x_norm' = (x - xmin)/dx                                               (1)
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class atomic_accumulate_1D_node final : public triple_node<T, SAFE_MATH> {
+    private:
+//------------------------------------------------------------------------------
+///  @brief Convert node pointer to a string with the argument.
+///
+///  @param[in] v Array to accumulate to.
+///  @param[in] i Index of the array.
+///  @param[in] x Argument to add to the existing value.
+///  @returns A string rep of the node.
+//------------------------------------------------------------------------------
+        static std::string to_string(shared_leaf<T, SAFE_MATH> v,
+                                     shared_leaf<T, SAFE_MATH> i,
+                                     shared_leaf<T, SAFE_MATH> x) {
+            return jit::format_to_string(v->get_hash()) +
+                   jit::format_to_string(i->get_hash()) +
+                   jit::format_to_string(x->get_hash());
+        }
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a 1D index.
+///
+///  @param[in] var   Array node to accumulate to.
+///  @param[in] index Index into the array.
+///  @param[in] x     Argument to add the existing array value.
+//------------------------------------------------------------------------------
+        atomic_accumulate_1D_node(shared_leaf<T, SAFE_MATH> var,
+                                  shared_leaf<T, SAFE_MATH> index,
+                                  shared_leaf<T, SAFE_MATH> x) :
+        triple_node<T, SAFE_MATH> (var, index, x,
+                                   atomic_accumulate_1D_node::to_string(var, index, x)) {}
+
+//------------------------------------------------------------------------------
+///  @brief Evaluate the results of accumulate.
+///
+///  Evaluate functions are only used by the reduction. So this node does not
+///  evaluate the argument. Instead this only returns the data as if it were a
+///  constant.
+///
+///  @returns The evaluated value of the node.
+//------------------------------------------------------------------------------
+        virtual backend::buffer<T> evaluate() {
+            return this->left->evaluate();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Transform node to derivative.
+///
+///  This node is effectively.
+///
+///    y_i + x                                                               (1)
+///
+///  So its effective derivative is
+///
+///    ∂y_i/∂z + ∂x/dz
+///
+///  @param[in] x The variable to take the derivative to.
+///  @return The derivative of the node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> df(shared_leaf<T, SAFE_MATH> x) {
+            return constant<T, SAFE_MATH> (static_cast<T> (this->left->is_match(x))) +
+                   this->right->df(x);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Compile the node.
+///
+///  This node first evaluates the value of the argument then chooses the
+///  correct index of the variable.
+///
+///    x' = (x - xmin)/dx                                                    (1)
+///
+///  @note Since this node accumulates, the right hand side is basically.
+///
+///    y[i] = atomic_add(y[i], x)                                            (2)
+///
+///  @note The atomic add varies depending on the backend.
+///
+///  - <a href="https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf">Metal</a> atomic_fetch_add_explicit
+///  - <a href="https://docs.nvidia.com/cuda/pdf/CUDA_C_Programming_Guide.pdf">Cuda</a> atomic_add
+///  - <a href="https://en.cppreference.com/cpp/atomic/atomic_fetch_add">CPU</a> std::atomic_fetch_add_explicit
+///
+///  @note These functions only take atomic data types. This changes the type
+///        used the kernel argument.
+///
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH>
+        compile(std::ostringstream &stream,
+                jit::register_map &registers,
+                const jit::register_map &thread_mem,
+                const jit::register_usage &usage) {
+            if (registers.find(this) == registers.end()) {
+                auto a = this->left->compile(stream, registers,
+                                             thread_mem, usage);
+                auto index = this->middle->compile(stream, registers,
+                                                   thread_mem, usage);
+                auto r = this->right->compile(stream, registers,
+                                               thread_mem, usage);
+
+                registers[this] = jit::to_string('v', a.get())
+                                + " + "
+                                + registers[index.get()];
+                stream << "        atomic";
+                if constexpr (jit::use_cuda()) {
+                    stream << "Add(";
+                } else if constexpr (jit::use_metal<T> ()){
+                    stream << "_fetch_add_explicit(";
+                } else {
+                    stream << "_ref(*(";
+                }
+                stream << registers[this];
+                if constexpr (jit::use_cuda() ||
+                              jit::use_metal<T> ()) {
+                    stream << ", ";
+                } else {
+                    stream << ")).fetch_add(";
+                }
+                stream << registers[r.get()];
+                if constexpr (jit::use_cuda()) {
+                    stream << ")";
+                } else {
+                    stream << ", memory_order_relaxed)";
+                }
+                this->endline(stream, usage);
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes match.
+///
+///  Assumes both arguments are either set or not set.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_match(shared_leaf<T, SAFE_MATH> x) {
+            auto x_cast = atomic_accumulate_1D_cast(x);
+
+            return x_cast.get()                             &&
+                   this->left->is_match(x_cast->get_left()) &&
+                   this->is_arg_match(x)                    &&
+                   this->right->is_match(x_cast->get_right());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Query if the nodes arguments match.
+///
+///  The argument of this node can be deferred so we need to check if the
+///  arguments are null.
+///
+///  @param[in] x Other graph to check if it is a match.
+///  @returns True if the nodes are a match.
+//------------------------------------------------------------------------------
+        virtual bool is_arg_match(shared_leaf<T, SAFE_MATH> x) {
+            auto x_cast = atomic_accumulate_1D_cast(x);
+
+            return x_cast.get() &&
+                   this->middle->is_match(x_cast->get_middle());
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to latex.
+//------------------------------------------------------------------------------
+        virtual void to_latex() const {
+            std::cout << "v\\_" << reinterpret_cast<size_t> (this->left.get())
+                      << "\\left[i\\_"
+                      << reinterpret_cast<size_t> (this->middle.get())
+                      << "\\right] + ";
+            this->right->to_latex();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Convert the node to vizgraph.
+///
+///  @param[in,out] stream    String buffer stream.
+///  @param[in,out] registers List of defined registers.
+///  @returns The current node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> to_vizgraph(std::stringstream &stream,
+                                                      jit::register_map &registers) {
+            if (registers.find(this) == registers.end()) {
+                const std::string name = jit::to_string('r', this);
+                registers[this] = name;
+                stream << "    " << name
+                       << " [label = \"r_" << reinterpret_cast<size_t> (this->left.get())
+                       << "\", shape = hexagon, style = filled, fillcolor = black, fontcolor = white];" << std::endl;
+
+                auto l = this->left->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[l.get()] << ";" << std::endl;
+                auto m = this->middle->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[m.get()] << ";" << std::endl;
+                auto r = this->right->to_vizgraph(stream, registers);
+                stream << "    " << name << " -- " << registers[r.get()] << ";" << std::endl;
+            }
+
+            return this->shared_from_this();
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Get the exponent of a power.
+///
+///  @returns The exponent of a power like node.
+//------------------------------------------------------------------------------
+        virtual shared_leaf<T, SAFE_MATH> get_power_exponent() const {
+            return one<T, SAFE_MATH> ();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Define atomic_accumulate_1D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] v Variable to index.
+///  @param[in] i Index into the variable.
+///  @param[in] x Argument.
+///  @returns A reduced atomic_accumulate_1D node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> atomic_accumulate_1D(shared_leaf<T, SAFE_MATH> v,
+                                                   shared_leaf<T, SAFE_MATH> i,
+                                                   shared_leaf<T, SAFE_MATH> x) {
+        assert(argument_cast(i).get() &&
+               "atomic_accumulate_1D requires a argument node for second arg.");
+        auto temp = std::make_shared<atomic_accumulate_1D_node<T, SAFE_MATH>> (v, i, x)->reduce();
+//  Test for hash collisions.
+        for (size_t i = temp->get_hash(); i < std::numeric_limits<size_t>::max(); i++) {
+            if (leaf_node<T, SAFE_MATH>::caches.nodes.find(i) ==
+                leaf_node<T, SAFE_MATH>::caches.nodes.end()) {
+                leaf_node<T, SAFE_MATH>::caches.nodes[i] = temp;
+                return temp;
+            } else if (temp->is_match(leaf_node<T, SAFE_MATH>::caches.nodes[i])) {
+                return leaf_node<T, SAFE_MATH>::caches.nodes[i];
+            }
+        }
+#if defined(__clang__) || defined(__GNUC__)
+        __builtin_unreachable();
+#else
+        assert(false && "Should never reach.");
+#endif
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Define atomic_accumulate_1D convenience function.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] v      Variable to index.
+///  @param[in] x      Index Argument.
+///  @param[in] scale  Argument scale factor.
+///  @param[in] offset Argument offset factor.
+///  @param[in] y      Argument.
+///  @returns A reduced atomic_accumulate_1D node.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_leaf<T, SAFE_MATH> atomic_accumulate_1D(shared_leaf<T, SAFE_MATH> v,
+                                                   shared_leaf<T, SAFE_MATH> x,
+                                                   const T scale,
+                                                   const T offset,
+                                                   shared_leaf<T, SAFE_MATH> y) {
+        assert(variable_cast(v).get() &&
+               "atomic_accumulate_1D requires a variable node for first arg.");
+        auto index = argument(x, scale, offset, variable_cast(v)->size());
+        return atomic_accumulate_1D<T, SAFE_MATH> (v, index, y);
+    }
+
+///  Convenience type alias for shared atomic accumulate 1D nodes.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using shared_atomic_accumulate_1D =
+        std::shared_ptr<atomic_accumulate_1D_node<T, SAFE_MATH>>;
+
+//------------------------------------------------------------------------------
+///  @brief Cast to a atomic accumulate 1D node.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] x Leaf node to attempt cast.
+///  @returns An attempted dynamic cast.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    shared_atomic_accumulate_1D<T, SAFE_MATH>
+    atomic_accumulate_1D_cast(shared_leaf<T, SAFE_MATH> x) {
+        return std::dynamic_pointer_cast<atomic_accumulate_1D_node<T, SAFE_MATH>> (x);
     }
 }
 

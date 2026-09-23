@@ -95,6 +95,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -103,8 +104,15 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!pre_funcs.contains("random_state")) {
+                pre_funcs.insert("random_state");
+
+                random_state_node::compile_random_state(stream);
+            }
+
+            if (!visited.contains(this)) {
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
                 usage[this] = 1;
@@ -117,16 +125,16 @@ namespace graph {
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             return this->shared_from_this();
         }
@@ -155,15 +163,6 @@ namespace graph {
             }
 
             return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if all the sub-nodes terminate in variables.
-///
-///  @returns True if all the sub-nodes terminate in variables.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -312,31 +311,25 @@ namespace graph {
 ///  @param[in,out] stream String buffer stream.
 //------------------------------------------------------------------------------
         static void compile_random(std::ostringstream &stream) {
-            jit::add_type<T> (stream);
-            stream << " random(";
+            stream << "uint32_t random(";
             if constexpr (jit::use_metal<T> ()) {
                 stream << "device ";
             }
-            stream <<"mt_state &state) {"                                 << std::endl
-                   << "    uint16_t k = state.index;"                     << std::endl
-                   << "    uint16_t j = (k + 1) % 624;"                   << std::endl
-                   << "    uint32_t x = (state.array[k] & 0x80000000U) |" << std::endl
-                   << "                 (state.array[j] & 0x7fffffffU);"  << std::endl
-                   << "    uint32_t xA = x >> 1;"                         << std::endl
-                   << "    if (x & 0x00000001U) {"                        << std::endl
-                   << "        xA ^= 0x9908b0dfU;"                        << std::endl
-                   << "    }"                                             << std::endl
-                   << "    j = (k + 397) % 624;"                          << std::endl
-                   << "    x = state.array[j]^xA;"                        << std::endl
-                   << "    state.array[k] = x;"                           << std::endl
-                   << "    state.index = (k + 1) % 624;"                  << std::endl
-                   << "    uint32_t y = x^(x >> 11);"                     << std::endl
-                   << "    y = y^((y << 7) & 0x9d2c5680U);"               << std::endl
-                   << "    y = y^((y << 15) & 0xefc60000U);"              << std::endl
-                   << "    return static_cast<";
-            jit::add_type<T> (stream);
-            stream << "> (y^(y >> 18));"                                  << std::endl
-                   << "}"                                                 << std::endl;
+            stream << "mt_state &state) {"                                         << std::endl
+                   << "    const uint16_t k = state.index;"                        << std::endl
+                   << "    state.index = (k + 1) % 624;"                           << std::endl
+                   << "    uint32_t x = (state.array[k] & 0x80000000U) |"          << std::endl
+                   << "                 (state.array[state.index] & 0x7fffffffU);" << std::endl
+                   << "    uint32_t xA = x >> 1;"                                  << std::endl
+                   << "    xA = x & 0x1U ? xA^0x9908b0dfU : xA;"                   << std::endl
+                   << "    const uint16_t j = (k + 397) % 624;"                    << std::endl
+                   << "    x = state.array[j]^xA;"                                 << std::endl
+                   << "    state.array[k] = x;"                                    << std::endl
+                   << "    uint32_t y = x^(x >> 11);"                              << std::endl
+                   << "    y = y^((y << 7) & 0x9d2c5680U);"                        << std::endl
+                   << "    y = y^((y << 15) & 0xefc60000U);"                       << std::endl
+                   << "    return y^(y >> 18);"                                    << std::endl
+                   << "}"                                                          << std::endl;
         }
 
 //------------------------------------------------------------------------------
@@ -378,6 +371,7 @@ namespace graph {
 ///  @param[in,out] usage           List of register usage count.
 ///  @param[in,out] textures1d      List of 1D textures.
 ///  @param[in,out] textures2d      List of 2D textures.
+///  @param[in,out] pre_funcs       Set of preamble functions.
 ///  @param[in,out] avail_const_mem Available constant memory.
 //------------------------------------------------------------------------------
         virtual void compile_preamble(std::ostringstream &stream,
@@ -386,12 +380,13 @@ namespace graph {
                                       jit::register_usage &usage,
                                       jit::texture1d_list &textures1d,
                                       jit::texture2d_list &textures2d,
+                                      jit::preamble_map &pre_funcs,
                                       int &avail_const_mem) {
-            if (visited.find(this) == visited.end()) {
+            if (!visited.contains(this)) {
                 this->arg->compile_preamble(stream, registers,
                                             visited, usage,
                                             textures1d, textures2d,
-                                            avail_const_mem);
+                                            pre_funcs, avail_const_mem);
 
                 visited.insert(this);
 #ifdef SHOW_USE_COUNT
@@ -400,29 +395,42 @@ namespace graph {
                 ++usage[this];
 #endif
             }
+
+//  Need to do this after visited was checked so the random_state is created
+//  first.
+            if (!pre_funcs.contains("random")) {
+                pre_funcs.insert("random");
+
+                random_node::compile_random(stream);
+            }
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Compile the node.
 ///
-///  @param[in,out] stream    String buffer stream.
-///  @param[in,out] registers List of defined registers.
-///  @param[in,out] indices   List of defined indices.
-///  @param[in]     usage     List of register usage count.
+///  @param[in,out] stream     String buffer stream.
+///  @param[in,out] registers  List of defined registers.
+///  @param[in]     thread_mem List of defined thread memory registers.
+///  @param[in]     usage      List of register usage count.
 ///  @returns The current node.
 //------------------------------------------------------------------------------
         virtual shared_leaf<T, SAFE_MATH>
         compile(std::ostringstream &stream,
                 jit::register_map &registers,
-                jit::register_map &indices,
+                const jit::register_map &thread_mem,
                 const jit::register_usage &usage) {
             if (registers.find(this) == registers.end()) {
-                shared_leaf<T, SAFE_MATH> a = this->arg->compile(stream,
-                                                                 registers,
-                                                                 indices,
-                                                                 usage);
+                auto a = this->arg->compile(stream, registers,
+                                            thread_mem, usage);
 
-                registers[this] = "random(" + registers[a.get()] + ")";
+                if constexpr (jit::complex_scalar<T>) {
+                    registers[this] = "static_cast<"
+                                    + jit::get_type_string<T> ()
+                                    + "> (random("
+                                    + registers[a.get()] + "))";
+                } else {
+                    registers[this] = "random(" + registers[a.get()] + ")";
+                }
             }
 
             return this->shared_from_this();
@@ -472,15 +480,6 @@ namespace graph {
             }
 
             return this->shared_from_this();
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Test if all the sub-nodes terminate in variables.
-///
-///  @returns True if all the sub-nodes terminate in variables.
-//------------------------------------------------------------------------------
-        virtual bool is_all_variables() const {
-            return false;
         }
 
 //------------------------------------------------------------------------------
@@ -552,6 +551,25 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     constexpr shared_leaf<T, SAFE_MATH> random_scale() {
         return constant<T, SAFE_MATH> (static_cast<T> (std::numeric_limits<uint32_t>::max()));
+    }
+
+//------------------------------------------------------------------------------
+///  @brief Create a uniform random number.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+///
+///  @param[in] min   Minimum value.
+///  @param[in] max   Maximum value.
+///  @param[in] state Random state node.
+///  @returns A uniform random constant.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, jit::float_scalar R, bool SAFE_MATH=false>
+    constexpr shared_leaf<T, SAFE_MATH> uniform_random(const R min,
+                                                       const R max,
+                                                       shared_random_state<T, SAFE_MATH> state) {
+        auto random = graph::random<T> (state);
+        return (max - min)/graph::random_scale<T> ()*random + min;
     }
 }
 

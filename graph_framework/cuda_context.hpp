@@ -8,7 +8,6 @@
 #ifndef cuda_context_h
 #define cuda_context_h
 
-#include <unordered_set>
 #include <array>
 #include <cstring>
 
@@ -16,9 +15,11 @@
 #include <nvrtc.h>
 
 #include "random.hpp"
+#include "timing.hpp"
+#include "piecewise.hpp"
 
 ///  Maximum number of registers to use.
-#define MAX_REG 128
+#define MAX_REG 256
 
 namespace gpu {
 //------------------------------------------------------------------------------
@@ -79,10 +80,10 @@ namespace gpu {
 ///  The cuda code library.
         CUmodule module;
 ///  Argument map.
-        std::map<graph::leaf_node<T, SAFE_MATH> *, CUdeviceptr> kernel_arguments;
+        std::unordered_map<graph::leaf_node<T, SAFE_MATH> *, CUdeviceptr> kernel_arguments;
 #ifdef USE_CUDA_TEXTURES
 ///  Textures.
-        std::map<void *, CUtexObject> texture_arguments;
+        std::unordered_map<void *, CUtexObject> texture_arguments;
 #endif
 ///  Result buffer.
         CUdeviceptr result_buffer;
@@ -107,8 +108,10 @@ namespace gpu {
         }
 
     public:
+///  Random state size multiplyer.
+        constexpr static size_t random_state_scale = 3000;
 ///  Size of random state needed.
-        constexpr static size_t random_state_size = 1024;
+        constexpr static size_t random_state_size = 1024*random_state_scale;
 
 ///  Remaining constant memory in bytes.
         int remaining_const_memory;
@@ -225,6 +228,19 @@ namespace gpu {
             if (jit::verbose) {
                 std::cout << "CUDA GPU info." << std::endl;
                 std::cout << "  Major compute capability : " << compute_version << std::endl;
+
+                int value;
+                check_error(cuDeviceGetAttribute(&value,
+                                                 CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK,
+                                                 device), "cuDeviceGetAttribute");
+
+                std::cout << "  Max shared memory        : " << value << std::endl;
+
+                check_error(cuDeviceGetAttribute(&value,
+                                                 CU_DEVICE_ATTRIBUTE_WARP_SIZE,
+                                                 device), "cuDeviceGetAttribute");
+
+                std::cout << "  Warp size                : " << value << std::endl;
             }
 
             check_error(cuDeviceGetAttribute(&compute_version,
@@ -307,6 +323,7 @@ namespace gpu {
 ///  @param[in] kernel_name Name of the kernel for later reference.
 ///  @param[in] inputs      Input nodes of the kernel.
 ///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] atomics     Atomic nodes of the kernel.
 ///  @param[in] state       Random states.
 ///  @param[in] num_rays    Number of rays to trace.'
 ///  @param[in] tex1d_list  List of 1D textures.
@@ -316,6 +333,7 @@ namespace gpu {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
+                                                     graph::input_nodes<T, SAFE_MATH> atomics,
                                                      graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays,
                                                      const jit::texture1d_list &tex1d_list,
@@ -324,23 +342,20 @@ namespace gpu {
             check_error(cuModuleGetFunction(&function, module, kernel_name.c_str()), "cuModuleGetFunction");
 
             std::vector<void *> buffers;
-            std::set<graph::leaf_node<T, SAFE_MATH> *> needed_buffers;
+            std::unordered_set<graph::leaf_node<T, SAFE_MATH> *> needed_buffers;
 
             const size_t buffer_element_size = sizeof(T);
             for (auto &input : inputs) {
                 if (!kernel_arguments.contains(input.get())) {
                     kernel_arguments.try_emplace(input.get());
-                    const backend::buffer<T> backend = input->evaluate();
                     check_error(cuMemAllocManaged(&kernel_arguments[input.get()],
-                                                  backend.size()*sizeof(T),
+                                                  input->size()*sizeof(T),
                                                   CU_MEM_ATTACH_GLOBAL),
                                 "cuMemAllocManaged");
                     check_error(cuMemcpyHtoD(kernel_arguments[input.get()],
-                                             &backend[0],
-                                             backend.size()*sizeof(T)),
+                                             input->data(),
+                                             input->size()*sizeof(T)),
                                 "cuMemcpyHtoD");
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
-                    needed_buffers.insert(input.get());
                 }
                 if (!needed_buffers.contains(input.get())) {
                     buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[input.get()]));
@@ -348,18 +363,35 @@ namespace gpu {
                 }
             }
             for (auto &output : outputs) {
-                if (!kernel_arguments.contains(output.get())) {
-                    kernel_arguments.try_emplace(output.get());
-                    check_error(cuMemAllocManaged(&kernel_arguments[output.get()],
-                                                  num_rays*sizeof(T),
+                if (!graph::atomic_accumulate_1D_cast(output).get()) {
+                    if (!kernel_arguments.contains(output.get())) {
+                        kernel_arguments.try_emplace(output.get());
+                        check_error(cuMemAllocManaged(&kernel_arguments[output.get()],
+                                                      num_rays*sizeof(T),
+                                                      CU_MEM_ATTACH_GLOBAL),
+                                    "cuMemAllocManaged");
+                    }
+                    if (!needed_buffers.contains(output.get())) {
+                        buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
+                        needed_buffers.insert(output.get());
+                    }
+                }
+            }
+            for (auto &atomic : atomics) {
+                if (!kernel_arguments.contains(atomic.get())) {
+                    kernel_arguments.try_emplace(atomic.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[atomic.get()],
+                                                  atomic->size()*sizeof(T),
                                                   CU_MEM_ATTACH_GLOBAL),
                                 "cuMemAllocManaged");
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
-                    needed_buffers.insert(output.get());
+                    check_error(cuMemcpyHtoD(kernel_arguments[atomic.get()],
+                                             atomic->data(),
+                                             atomic->size()*sizeof(T)),
+                                "cuMemcpyHtoD");
                 }
-                if (!needed_buffers.contains(output.get())) {
-                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[output.get()]));
-                    needed_buffers.insert(output.get());
+                if (!needed_buffers.contains(atomic.get())) {
+                    buffers.push_back(reinterpret_cast<void *> (&kernel_arguments[atomic.get()]));
+                    needed_buffers.insert(atomic.get());
                 }
             }
 
@@ -490,42 +522,79 @@ namespace gpu {
             int value;
             check_error(cuFuncGetAttribute(&value, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                            function), "cuFuncGetAttribute");
-            unsigned int threads_per_group = value;
-            unsigned int thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+            int warp_size;
+            check_error(cuDeviceGetAttribute(&warp_size,
+                                             CU_DEVICE_ATTRIBUTE_WARP_SIZE,
+                                             device), "cuDeviceGetAttribute");
+
+            unsigned int total_parallel = state.get() ? state->size() : num_rays;
+            unsigned int threads_per_group = total_parallel < 1024 ? warp_size : value;
+            unsigned int thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 
             int min_grid;
             check_error(cuOccupancyMaxPotentialBlockSize(&min_grid, &value, function, 0, 0, 0),
                         "cuOccupancyMaxPotentialBlockSize");
 
             if (jit::verbose) {
-                std::cout << "  Kernel name              : " << kernel_name << std::endl;
+                std::cout << "  Kernel name            : " << kernel_name << std::endl;
                 std::cout << "    Threads per group    : " << threads_per_group << std::endl;
                 std::cout << "    Number of groups     : " << thread_groups << std::endl;
                 std::cout << "    Total problem size   : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "    Total parallel       : " << total_parallel << std::endl;
                 std::cout << "    Min grid size        : " << min_grid << std::endl;
                 std::cout << "    Suggested Block size : " << value << std::endl;
             }
-
+#ifdef PROFILE_KERNELS
+            timing::measure_diagnostic timer(kernel_name);
+#endif
             if (state.get()) {
-                return [this, num_rays, function, threads_per_group, buffers] () mutable {
-                    for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
+                return [this, num_rays, function, thread_groups, threads_per_group, buffers
+#ifdef PROFILE_KERNELS
+                        , timer
+#endif
+                ] () mutable {
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                        reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                    }, &timer), "cuLaunchHostFunc");
+#endif
+                    for (uint32_t i = 0, ie = threads_per_group*thread_groups; i < num_rays; i += ie) {
                         check_error_async(cuStreamWriteValue32(stream, offset_buffer, i,
                                                                CU_STREAM_WRITE_VALUE_DEFAULT),
                                           "cuStreamWriteValue32");
                         check_error_async(cuLaunchKernel(function,
-                                                         1, 1, 1,
+                                                         thread_groups, 1, 1,
                                                          threads_per_group, 1, 1,
                                                          0, stream,
                                                          buffers.data(), NULL),
                                           "cuLaunchKernel");
                     }
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                        reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                    }, &timer), "cuLaunchHostFunc");
+#endif
                 };
             } else {
-                return [this, function, thread_groups, threads_per_group, buffers] () mutable {
+                return [this, function, thread_groups, threads_per_group, buffers
+#ifdef PROFILE_KERNELS
+                        , timer
+#endif
+                ] () mutable {
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                        reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                    }, &timer), "cuLaunchHostFunc");
+#endif
                     check_error_async(cuLaunchKernel(function, thread_groups, 1, 1,
                                                      threads_per_group, 1, 1, 0, stream,
                                                      buffers.data(), NULL),
                                       "cuLaunchKernel");
+#ifdef PROFILE_KERNELS
+                    check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                        reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                    }, &timer), "cuLaunchHostFunc");
+#endif
                 };
             }
         }
@@ -576,11 +645,170 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Create kernel call that will be memset a buffer to zero.
+///
+///  @param[in] inputs Input nodes of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_zero_call(graph::input_nodes<T, SAFE_MATH> &inputs) {
+            std::vector<CUdeviceptr> buffers;
+            for (auto &input : inputs) {
+                if (!kernel_arguments.contains(input.get())) {
+                    kernel_arguments.try_emplace(input.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[input.get()],
+                                                  input->size()*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(kernel_arguments[input.get()],
+                                             input->data(),
+                                             input->size()*sizeof(T)),
+                                "cuMemcpyHtoD");
+                }
+                buffers.push_back(kernel_arguments[input.get()]);
+            }
+
+            std::vector<size_t> sizes;
+            for (CUdeviceptr &buffer : buffers) {
+                size_t size;
+                check_error(cuMemGetAddressRange(NULL, &size, buffer),
+                            "cuMemGetAddressRange");
+                sizes.push_back(size);
+            }
+#ifdef PROFILE_KERNELS
+            timing::measure_diagnostic timer("zero buffer");
+#endif
+            return [this, buffers, sizes
+#ifdef PROFILE_KERNELS
+                    , timer
+#endif
+            ] () mutable {
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                }, &timer), "cuLaunchHostFunc");
+#endif
+                for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                    check_error_async(cuMemsetD8Async(buffers[i], 0, sizes[i],
+                                                      stream),
+                                      "cuMemsetD8Async");
+                }
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                }, &timer), "cuLaunchHostFunc");
+#endif
+            };
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel call that will to copy one buffer to another.
+///
+///  @param[in] setters Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_copy_call(graph::copy_nodes<T, SAFE_MATH> &setters) {
+            std::vector<CUdeviceptr> sources;
+            std::vector<CUdeviceptr> destinations;
+
+            for (auto &[out, in] : setters) {
+                if (!kernel_arguments.contains(in.get())) {
+                    kernel_arguments.try_emplace(in.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[in.get()],
+                                                  in->size()*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(kernel_arguments[in.get()],
+                                             in->data(),
+                                             in->size()*sizeof(T)),
+                                "cuMemcpyHtoD");
+                }
+                destinations.push_back(kernel_arguments[in.get()]);
+
+                if (!kernel_arguments.contains(out.get())) {
+                    kernel_arguments.try_emplace(out.get());
+                    check_error(cuMemAllocManaged(&kernel_arguments[out.get()],
+                                                  out->size()*sizeof(T),
+                                                  CU_MEM_ATTACH_GLOBAL),
+                                "cuMemAllocManaged");
+                    check_error(cuMemcpyHtoD(kernel_arguments[out.get()],
+                                             out->data(),
+                                             out->size()*sizeof(T)),
+                                "cuMemcpyHtoD");
+                }
+                sources.push_back(kernel_arguments[out.get()]);
+            }
+
+            std::vector<size_t> sizes;
+            for (CUdeviceptr &buffer : sources) {
+                size_t size;
+                check_error(cuMemGetAddressRange(NULL, &size, buffer),
+                            "cuMemGetAddressRange");
+                sizes.push_back(size);
+            }
+#ifdef PROFILE_KERNELS
+            timing::measure_diagnostic timer("copy buffer");
+#endif
+            return [this, sources, destinations, sizes
+#ifdef PROFILE_KERNELS
+                    , timer
+#endif
+            ] () mutable {
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                }, &timer), "cuLaunchHostFunc");
+#endif
+                for (size_t i = 0, ie = sources.size(); i < ie; i++) {
+                    check_error_async(cuMemcpyDtoDAsync(destinations[i],
+                                                        sources[i],
+                                                        sizes[i], stream),
+                                      "cuMemcpyDtoDAsync");
+                }
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                }, &timer), "cuLaunchHostFunc");
+#endif
+            };
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Hold the current thread until the stream has completed.
 //------------------------------------------------------------------------------
         void wait() {
             check_error_async(cuStreamSynchronize(stream), "cuStreamSynchronize");
             check_error(cuCtxSynchronize(), "cuCtxSynchronize");
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run a callback function in the queue.
+///
+///  @param[in] callback The callback function to run.
+///  @returns Lambda to call the function.
+//------------------------------------------------------------------------------
+        std::function<void(void)> run_function(std::function<void(void)> callback) {
+#ifdef PROFILE_KERNELS
+            timing::measure_diagnostic timer("callback");
+#endif
+            return [this, callback
+#ifdef PROFILE_KERNELS
+                    , timer
+#endif
+            ]() mutable {
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->reset();
+                }, &timer), "cuLaunchHostFunc");
+#endif
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<std::function<void(void)> *> (arg)->operator()();
+                }, &callback), "cuLaunchHostFunc");
+#ifdef PROFILE_KERNELS
+                check_error_async(cuLaunchHostFunc(stream, [](void *arg) {
+                    reinterpret_cast<timing::measure_diagnostic *> (arg)->print();
+                }, &timer), "cuLaunchHostFunc");
+#endif
+            };
         }
 
 //------------------------------------------------------------------------------
@@ -651,6 +879,7 @@ namespace gpu {
             source_buffer << "typedef unsigned int uint32_t;"                << std::endl
                           << "typedef unsigned short uint16_t;"              << std::endl
                           << "typedef short int16_t;"                        << std::endl
+                          << "typedef unsigned char uint8_t;"                << std::endl
                           << "template<typename T, size_t S>"                << std::endl
                           << "class array {"                                 << std::endl
                           << "private:"                                      << std::endl
@@ -702,6 +931,7 @@ namespace gpu {
 ///  @param[in]     name          Name to call the kernel.
 ///  @param[in]     inputs        Input variables of the kernel.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     atomics       Input variables for atomic operations.
 ///  @param[in]     state         Random states.
 ///  @param[in]     size          Size of the input buffer.
 ///  @param[in]     is_constant   Flags if the input is read only.
@@ -709,24 +939,62 @@ namespace gpu {
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     textures1d    List of 1D kernel textures.
 ///  @param[in]     textures2d    List of 2D kernel textures.
+///  @param[out]    thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
+///  @param[in]     iterations    Number of loop iterations.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<T, SAFE_MATH> &inputs,
                                   graph::output_nodes<T, SAFE_MATH> &outputs,
+                                  graph::input_nodes<T, SAFE_MATH> atomics,
                                   graph::shared_random_state<T, SAFE_MATH> state,
                                   const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
                                   const jit::register_usage &usage,
                                   jit::texture1d_list &textures1d,
-                                  jit::texture2d_list &textures2d) {
+                                  jit::texture2d_list &textures2d,
+                                  jit::argument_set &thread_shared,
+                                  jit::register_map &thread_mem,
+                                  const size_t iterations=1) {
             source_buffer << std::endl;
             source_buffer << "extern \"C\" __global__ void "
                           << name << "(" << std::endl;
 
-            std::unordered_set<void *> used_args;
+            int used_thread_mem = 0;
+            int max_shared_mem;
+            check_error(cuDeviceGetAttribute(&max_shared_mem,
+                                             CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK,
+                                             device), "cuDeviceGetAttribute");
+
+            int warp_size;
+            check_error(cuDeviceGetAttribute(&warp_size,
+                                             CU_DEVICE_ATTRIBUTE_WARP_SIZE,
+                                             device), "cuDeviceGetAttribute");
+
+            jit::argument_set used_args;
             if (inputs.size()) {
+#ifdef USE_INPUT_CACHE
+                if (!is_constant[0] && iterations > 1) {
+                    const size_t needed_mem = inputs[0]->size() > 1024 ?
+                                              1024*sizeof(T)           :
+                                              warp_size*sizeof(T);
+                    if (used_thread_mem + needed_mem < max_shared_mem) {
+                        used_thread_mem += needed_mem;
+                        thread_shared.insert(inputs[0].get());
+                    }
+                } else if (is_constant[0]           &&
+                           inputs[0]->size() < size &&
+                           inputs[0]->size() < 1024) {
+                    const size_t needed_mem = inputs[0]->size()*sizeof(T);
+                    if (used_thread_mem + needed_mem < max_shared_mem) {
+                        used_thread_mem += needed_mem;
+                        thread_shared.insert(inputs[0].get());
+                        thread_mem[inputs[0].get()] = jit::to_string('t', inputs[0].get());
+                    }
+                }
+#endif
                 source_buffer << "    ";
                 if (is_constant[0]) {
                     source_buffer << "const ";
@@ -737,14 +1005,28 @@ namespace gpu {
                 used_args.insert(inputs[0].get());
             }
             for (size_t i = 1, ie = inputs.size(); i < ie; i++) {
+#ifdef USE_INPUT_CACHE
+                if (!is_constant[i] && iterations > 1) {
+                    const size_t needed_mem = inputs[i]->size() > 1024 ?
+                                              1024*sizeof(T)           :
+                                              warp_size*sizeof(T);
+                    if (used_thread_mem + needed_mem < max_shared_mem) {
+                        used_thread_mem += needed_mem;
+                        thread_shared.insert(inputs[i].get());
+                    }
+                } else if (is_constant[i]           &&
+                           inputs[i]->size() < size &&
+                           inputs[i]->size() < 1024) {
+                    const size_t needed_mem = inputs[i]->size()*sizeof(T);
+                    if (used_thread_mem + needed_mem < max_shared_mem) {
+                        used_thread_mem += needed_mem;
+                        thread_shared.insert(inputs[i].get());
+                        thread_mem[inputs[i].get()] = jit::to_string('t', inputs[i].get());
+                    }
+                }
+#endif
                 if (!used_args.contains(inputs[i].get())) {
-                    source_buffer << ", // " << inputs[i - 1]->get_symbol()
-#ifndef USE_INPUT_CACHE
-#ifdef SHOW_USE_COUNT
-                                  << " used " << usage.at(inputs[i - 1].get())
-#endif
-#endif
-                                  << std::endl;
+                    inputs[i]->endline(source_buffer, usage, ',');
                     source_buffer << "    ";
                     if (is_constant[i]) {
                         source_buffer << "const ";
@@ -756,18 +1038,12 @@ namespace gpu {
                 }
             }
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                if (!used_args.contains(outputs[i].get())) {
+                if (!used_args.contains(outputs[i].get()) &&
+                    !graph::atomic_accumulate_1D_cast(outputs[i]).get()) {
                     if (i == 0) {
                         if (inputs.size()) {
-                            source_buffer << ", // "
-                                          << inputs[inputs.size() - 1]->get_symbol();
-#ifndef USE_INPUT_CACHE
-#ifdef SHOW_USE_COUNT
-                            source_buffer << " used "
-                                        << usage.at(inputs[inputs.size() - 1].get());
-#endif
-#endif
-                            source_buffer << std::endl;
+                            inputs[inputs.size() - 1]->endline(source_buffer,
+                                                               usage, ',');
                         }
                     } else {
                         source_buffer << "," << std::endl;
@@ -778,6 +1054,27 @@ namespace gpu {
                     source_buffer << " *  __restrict__ "
                                   << jit::to_string('o', outputs[i].get());
                     used_args.insert(outputs[i].get());
+                }
+            }
+            for (size_t i = 0, ie = atomics.size(); i < ie; i++) {
+                if (!used_args.contains(atomics[i].get())) {
+                    if (i == 0) {
+                        if (outputs.size()) {
+                            outputs[outputs.size() - 1]->endline(source_buffer,
+                                                               usage, ',');
+                        } else if (inputs.size()) {
+                            inputs[inputs.size() - 1]->endline(source_buffer,
+                                                               usage, ',');
+                        }
+                    } else {
+                        source_buffer << "," << std::endl;
+                    }
+
+                    source_buffer << "    ";
+                    jit::add_type<T> (source_buffer);
+                    source_buffer << " *  __restrict__ "
+                                  << jit::to_string('v', atomics[i].get());
+                    used_args.insert(atomics[i].get());
                 }
             }
             if (state.get()) {
@@ -800,50 +1097,141 @@ namespace gpu {
                               << jit::to_string('a', key);
             }
 #endif
-            source_buffer << ") {" << std::endl
-                          << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
-                          << std::endl;
-            if (state.get()) {
-#ifdef USE_INPUT_CACHE
-                registers[state.get()] = jit::to_string('r', state.get());
-                source_buffer << "    mt_state &" << registers[state.get()] << " = "
-                              << jit::to_string('s', state.get())
-                              << "[threadIdx.x];"
-#ifdef SHOW_USE_COUNT
-                              << " // used " << usage.at(state.get())
-#endif
+            source_buffer << ") {" << std::endl;
+            if (thread_shared.size()) {
+                source_buffer << "    const int t_index = threadIdx.x;"
                               << std::endl;
-#else
-                registers[state.get()] = jit::to_string('s', state.get()) + "[threadIdx.x]";
-#endif
             }
+            source_buffer << "    const int index = blockIdx.x*blockDim.x + threadIdx.x;"
+                          << std::endl;
+
             source_buffer << "    if (";
             if (state.get()) {
                 source_buffer << "offset[0] + ";
             }
             source_buffer << "index < " << size << ") {" << std::endl;
 
-
-            for (auto &input : inputs) {
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                if (is_constant[i]) {
 #ifdef USE_INPUT_CACHE
-                if (usage.at(input.get())) {
-                    registers[input.get()] = jit::to_string('r', input.get());
-                    source_buffer << "        const ";
-                    jit::add_type<T> (source_buffer);
-                    source_buffer << " " << registers[input.get()] << " = "
-                                  << jit::to_string('v', input.get())
-                                  << "[";
-                    if (state.get()) {
-                        source_buffer << "offset[0] + ";
+                    if (usage.at(inputs[i].get()) && inputs[i]->size() == size) {
+                        registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+                        source_buffer << "        const ";
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " " << registers[inputs[i].get()] << " = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[index]";
+                        inputs[i]->endline(source_buffer, usage);
                     }
-                    source_buffer << "index]; // " << input->get_symbol()
-#ifdef SHOW_USE_COUNT
-                                  << " used " << usage.at(input.get())
-#endif
-                                  << std::endl;
-                }
 #else
-                registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get())
+                                               + "["
+                                               + (state.get() ? "offset[0] + " : "")
+                                               + "index]";
+#endif
+                }
+            }
+
+            if (thread_shared.size()) {
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "        __shared__ ";
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " " << jit::to_string('t', inputs[i].get())
+                                      << "[" << inputs[i]->size() << "]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "    for(int j = t_index; j < "
+                                      << inputs[i]->size()
+                                      << "; j += blockDim.x) {" << std::endl
+                                      << "        "
+                                      << jit::to_string('t', inputs[i].get())
+                                      << "[j] = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[j]";
+                        inputs[i]->endline(source_buffer, usage);
+                        source_buffer << "    }" << std::endl;
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "    __syncthreads();"
+                                      << std::endl;
+                        break;
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        thread_shared.erase(inputs[i].get());
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && !is_constant[i]) {
+                        source_buffer << "        __shared__ ";
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " " << jit::to_string('t', inputs[i].get())
+                                      << "["
+                                      << (inputs[i]->size() > 1024 ? 1024 : warp_size)
+                                      << "]";
+                        inputs[i]->endline(source_buffer, usage);
+                        source_buffer << "        "
+                                      << jit::to_string('t', inputs[i].get())
+                                      << "[t_index] = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[index]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+                }
+            }
+
+            if (iterations > 1) {
+                source_buffer << "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
+            }
+
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                if (!is_constant[i]) {
+#ifdef USE_INPUT_CACHE
+                    if (usage.at(inputs[i].get())) {
+                        registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+                        source_buffer << "        const ";
+                        jit::add_type<T> (source_buffer);
+                        source_buffer << " " << registers[inputs[i].get()] << " = ";
+                        if (thread_shared.contains(inputs[i].get())) {
+                            source_buffer << jit::to_string('t', inputs[i].get())
+                                          << "[t_index]";
+                        } else {
+                            source_buffer << jit::to_string('v', inputs[i].get())
+                                          << "[";
+                            if (state.get()) {
+                                source_buffer << "offset[0] + ";
+                            }
+                            source_buffer << "index]";
+                        }
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+#else
+                    if (thread_shared.contains(inputs[i].get())) {
+                        registers[inputs[i].get()] = jit::to_string('t', inputs[i].get()) + "[t_index]";
+                    } else {
+                        registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "["
+                                                   + (state.get() ? "offset[0] + " : "")
+                                                   + "index]";
+                    }
+#endif
+                }
+            }
+            if (state.get()) {
+#ifdef USE_INPUT_CACHE
+                registers[state.get()] = jit::to_string('r', state.get());
+                source_buffer << "    mt_state &" << registers[state.get()] << " = "
+                              << jit::to_string('s', state.get())
+                              << "[index]";
+                state->endline(source_buffer, usage);
+#else
+                registers[state.get()] = jit::to_string('s', state.get()) + "[threadIdx.x]";
 #endif
             }
         }
@@ -856,45 +1244,61 @@ namespace gpu {
 ///  @param[in]     setters       Map outputs back to input values.
 ///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
-///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
+///  @param[in]     thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
+///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<T, SAFE_MATH> &outputs,
                                    graph::map_nodes<T, SAFE_MATH> &setters,
                                    graph::shared_random_state<T, SAFE_MATH> state,
                                    jit::register_map &registers,
-                                   jit::register_map &indices,
-                                   const jit::register_usage &usage) {
+                                   const jit::register_usage &usage,
+                                   const jit::argument_set &thread_shared,
+                                   jit::register_map &thread_mem,
+                                   const size_t iterations=1) {
             std::unordered_set<void *> out_registers;
             for (auto &[out, in] : setters) {
                 if (!out->is_match(in)) {
-                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      indices,
-                                                                      usage);
-                    source_buffer << "        "
-                                  << jit::to_string('v',  in.get())
-                                  << "[";
-                    if (state.get()) {
-                        source_buffer << "offset[0] + ";
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
+                    source_buffer << "        ";
+                    if (thread_shared.contains(in.get())) {
+                        source_buffer << jit::to_string('t', in.get())
+                                      << "[t_index] = ";
+                    } else {
+                        source_buffer << jit::to_string('v', in.get())
+                                      << "[";
+                        if (state.get()) {
+                            source_buffer << "offset[0] + ";
+                        }
+                        source_buffer << "index] = ";
                     }
-                    source_buffer << "index] = ";
                     if constexpr (SAFE_MATH) {
                         if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (source_buffer);
                             source_buffer << " (";
-                            source_buffer << "isnan(real(" << registers[a.get()]
-                                          << ")) ? 0.0 : real("
-                                          << registers[a.get()]
-                                          << "), ";
-                            source_buffer << "isnan(imag(" << registers[a.get()]
-                                          << ")) ? 0.0 : imag("
-                                          << registers[a.get()]
-                                          << "));" << std::endl;
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(real("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : real("
+                                              << registers[a.get()]
+                                              << "), isnan(imag("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : imag("
+                                              << registers[a.get()]
+                                              << ")";
+                            } else {
+                                source_buffer << registers[a.get()];
+                            }
+                            source_buffer << ");" << std::endl;
                         } else {
-                            source_buffer << "isnan(" << registers[a.get()]
-                                          << ") ? 0.0 : " << registers[a.get()]
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(" << registers[a.get()]
+                                              << ") ? 0.0 : ";
+                            }
+                            source_buffer << registers[a.get()]
                                           << ";" << std::endl;
                         }
                     } else {
@@ -905,12 +1309,11 @@ namespace gpu {
             }
 
             for (auto &out : outputs) {
-                if (!graph::variable_cast(out).get() &&
+                if (!graph::variable_cast(out).get()             &&
+                    !graph::atomic_accumulate_1D_cast(out).get() &&
                     !out_registers.contains(out.get())) {
-                    graph::shared_leaf<T, SAFE_MATH> a = out->compile(source_buffer,
-                                                                      registers,
-                                                                      indices,
-                                                                      usage);
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
                     source_buffer << "        "
                                   << jit::to_string('o',  out.get())
                                   << "[";
@@ -922,17 +1325,26 @@ namespace gpu {
                         if constexpr (jit::complex_scalar<T>) {
                             jit::add_type<T> (source_buffer);
                             source_buffer << " (";
-                            source_buffer << "isnan(real(" << registers[a.get()]
-                                          << ")) ? 0.0 : real("
-                                          << registers[a.get()]
-                                          << "), ";
-                            source_buffer << "isnan(imag(" << registers[a.get()]
-                                          << ")) ? 0.0 : imag("
-                                          << registers[a.get()]
-                                          << "));" << std::endl;
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(real("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : real("
+                                              << registers[a.get()]
+                                              << "), isnan(imag("
+                                              << registers[a.get()]
+                                              << ")) ? 0.0 : imag("
+                                              << registers[a.get()]
+                                              << ")";
+                            } else {
+                                source_buffer << registers[a.get()];
+                            }
+                            source_buffer << ");" << std::endl;
                         } else {
-                            source_buffer << "isnan(" << registers[a.get()]
-                                          << ") ? 0.0 : " << registers[a.get()]
+                            if (!graph::random_cast(a).get()) {
+                                source_buffer << "isnan(" << registers[a.get()]
+                                              << ") ? 0.0 : ";
+                            }
+                            source_buffer << registers[a.get()]
                                           << ";" << std::endl;
                         }
                     } else {
@@ -942,6 +1354,22 @@ namespace gpu {
                 }
             }
 
+            if (iterations > 1) {
+                source_buffer << "    }" << std::endl;
+            }
+            for (auto &[out, in] : setters) {
+                if (thread_shared.contains(in.get())) {
+                    source_buffer << "        "
+                                  << jit::to_string('v',  in.get())
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset[0] + ";
+                    }
+                    source_buffer << "index] = "
+                                  << jit::to_string('t',  in.get())
+                                  << "[t_index];" << std::endl;
+                }
+            }
             source_buffer << "    }" << std::endl << "}" << std::endl;
         }
 

@@ -7,11 +7,12 @@ project (graph_framework CXX)
 #-------------------------------------------------------------------------------
 option (USE_PCH "Enable the use of precompiled headers" ON)
 option (SAVE_KERNEL_SOURCE "Writes the kernel source code to a file." OFF)
-option (USE_INPUT_CACHE "Cache the values kernel input values." OFF)
-option (USE_CONSTANT_CACHE "Cache the value of constants in kernel registers." OFF)
+option (USE_INPUT_CACHE "Cache the values kernel input values." ON)
+option (USE_CONSTANT_CACHE "Cache the value of constants in kernel registers." ON)
 option (SHOW_USE_COUNT "Add a comment showing the use count in kernel sources." OFF)
-option (USE_INDEX_CACHE "Cache index values instead of computing them every time." OFF)
+option (USE_INDEX_CACHE "Cache index values instead of computing them every time." ON)
 option (USE_VERBOSE "Verbose jit option." OFF)
+option (PROFILE_KERNELS "Display kernel timing information" OFF)
 option (BUILD_C_BINDING "Build C interface." OFF)
 option (BUILD_Fortran_BINDING "Build Fortran interface." OFF)
 
@@ -207,6 +208,7 @@ FetchContent_GetProperties (
 )
 
 #  Do not build llvm until pull command is finished.
+add_dependencies (CASPluginTest_exports pull_llvm)
 add_dependencies (gpu-resource-headers pull_llvm)
 add_dependencies (llvm-offload-resource-headers pull_llvm)
 add_dependencies (LLVMDemangle pull_llvm)
@@ -374,8 +376,12 @@ macro (add_tool_target target lang)
                            graph_framework
     )
 
-    if (${USE_PCH} AND ${BUILD_C_BINDING})
-        target_precompile_headers (${target} REUSE_FROM graph_c)
+    if (${USE_PCH})
+        if (${BUILD_C_BINDING})
+            target_precompile_headers (${target} REUSE_FROM graph_c)
+        elseif (NOT ${target} MATCHES xrays)
+            target_precompile_headers (${target} REUSE_FROM xrays)
+        endif ()
     endif ()
 endmacro ()
 
@@ -402,6 +408,20 @@ macro (add_test_target target lang)
             target_precompile_headers (${target} REUSE_FROM xrays)
         endif ()
     endif ()
+endmacro ()
+
+macro (add_compile_test target lang)
+    cmake_path (GET CMAKE_CXX_COMPILER FILENAME compiler_command)
+    add_test (NAME ${target}_off
+              COMMAND ${compiler_command} -std=c++23 -DUSE_VERBOSE=false -DCHECK_TEST -c ${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+    )
+    add_test (NAME ${target}_on
+              COMMAND ${compiler_command} -std=c++23 -DUSE_VERBOSE=false -c ${CMAKE_CURRENT_SOURCE_DIR}/${target}.${lang}
+    )
+    set_tests_properties (${target}_on
+                          PROPERTIES
+                          WILL_FAIL true
+    )
 endmacro ()
 
 add_subdirectory (graph_tests)

@@ -329,9 +329,7 @@ namespace solver {
                 {this->t_next,  graph::variable_cast(this->t)}
             };
 
-            work.add_item(inputs, outputs, setters,
-                          graph::shared_random_state<typename DISPERSION_FUNCTION::base,
-                                                     DISPERSION_FUNCTION::safe_math> (),
+            work.add_item(inputs, outputs, setters, {}, NULL,
                           "solver_kernel", inputs.back()->size());
             work.compile();
 
@@ -964,10 +962,10 @@ namespace solver {
                 graph::variable_cast(lambda)
             };
 
-            solver::newton(this->work, {
+            solver::newton<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> (this->work, {
                 var, graph::variable_cast(lambda)
-            }, inputs, loss, graph::shared_random_state<typename DISPERSION_FUNCTION::base,
-                                                        DISPERSION_FUNCTION::safe_math> ());
+            }, inputs, {}, loss, NULL);
 
             inputs = {
                 graph::variable_cast(this->t),
@@ -997,9 +995,7 @@ namespace solver {
                 {this->t_next, graph::variable_cast(this->t)}
             };
 
-            this->work.add_item(inputs, outputs, setters,
-                                graph::shared_random_state<typename DISPERSION_FUNCTION::base,
-                                                           DISPERSION_FUNCTION::safe_math> (),
+            this->work.add_item(inputs, outputs, setters, {}, NULL,
                                 "solver_kernel", inputs.back()->size());
             this->work.compile();
         }

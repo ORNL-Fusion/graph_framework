@@ -8,11 +8,11 @@
 #ifndef metal_context_h
 #define metal_context_h
 
-#include <unordered_set>
-
 #import <Metal/Metal.h>
 
 #include "random.hpp"
+#include "timing.hpp"
+#include "piecewise.hpp"
 
 ///  Name space for GPU backends.
 namespace gpu {
@@ -29,19 +29,21 @@ namespace gpu {
 ///  The metal command queue.
         id<MTLCommandQueue> queue;
 ///  Argument map.
-        std::map<graph::leaf_node<float, SAFE_MATH> *, id<MTLBuffer>> kernel_arguments;
+        std::unordered_map<graph::leaf_node<float, SAFE_MATH> *, id<MTLBuffer>> kernel_arguments;
 ///  Textures.
-        std::map<void *, id<MTLTexture>> texture_arguments;
+        std::unordered_map<void *, id<MTLTexture>> texture_arguments;
 ///  Metal command buffer.
         id<MTLCommandBuffer> command_buffer;
 ///  Metal library.
         id<MTLLibrary> library;
 ///  Buffer mutability descriptor.
-        std::map<std::string, std::vector<MTLMutability>> bufferMutability;
+        std::unordered_map<std::string, std::vector<MTLMutability>> bufferMutability;
 
     public:
+///  Random state size multiplier.
+        constexpr static size_t random_state_scale = 3000;
 ///  Size of random state needed.
-        constexpr static size_t random_state_size = 1024;
+        constexpr static size_t random_state_size = 1024*random_state_scale;
 
 ///  Remaining constant memory in bytes. NOT USED.
         int remaining_const_memory;
@@ -92,7 +94,13 @@ namespace gpu {
             }
 
             if (jit::verbose) {
-                std::cout << "Metal GPU info." << std::endl;
+                std::cout << "Metal GPU info." << std::endl
+                          << "  Max thread group memory : " << device.maxThreadgroupMemoryLength << std::endl
+                          << "  Max thread per group    : " << device.maxThreadsPerThreadgroup.width << std::endl
+                          << "  Device name             : " << [device.name cStringUsingEncoding:NSString.defaultCStringEncoding] << std::endl
+                          << "  Architecture            : " << [device.architecture.name cStringUsingEncoding:NSString.defaultCStringEncoding] << std::endl
+                          << "  Max buffer length       : " << device.maxBufferLength << std::endl
+                          << "  Max working set         : " << device.recommendedMaxWorkingSetSize << std::endl;
             }
         }
 
@@ -102,6 +110,7 @@ namespace gpu {
 ///  @param[in] kernel_name Name of the kernel for later reference.
 ///  @param[in] inputs      Input nodes of the kernel.
 ///  @param[in] outputs     Output nodes of the kernel.
+///  @param[in] atomics     Atomic nodes of the kernel.
 ///  @param[in] state       Random states.
 ///  @param[in] num_rays    Number of rays to trace.
 ///  @param[in] tex1d_list  List of 1D textures.
@@ -111,14 +120,20 @@ namespace gpu {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<float, SAFE_MATH> inputs,
                                                      graph::output_nodes<float, SAFE_MATH> outputs,
+                                                     graph::input_nodes<float, SAFE_MATH> atomics,
                                                      graph::shared_random_state<float, SAFE_MATH> state,
                                                      const size_t num_rays,
                                                      const jit::texture1d_list &tex1d_list,
                                                      const jit::texture2d_list &tex2d_list) {
             NSError *error;
 
-            id<MTLFunction> function = [library newFunctionWithName:[NSString stringWithCString:kernel_name.c_str()
-                                                                                       encoding:NSUTF8StringEncoding]];
+            MTLFunctionDescriptor *funcDesc = [MTLFunctionDescriptor new];
+            funcDesc.options = MTLFunctionOptionNone;
+            funcDesc.name = [NSString stringWithCString:kernel_name.c_str()
+                                               encoding:NSUTF8StringEncoding];
+
+            id<MTLFunction> function = [library newFunctionWithDescriptor:funcDesc
+                                                                    error:&error];
 
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
@@ -128,17 +143,17 @@ namespace gpu {
                 compute.buffers[i].mutability = bufferMutability[kernel_name][i];
             }
 
-            id<MTLComputePipelineState> pipline = [device newComputePipelineStateWithDescriptor:compute
-                                                                                        options:MTLPipelineOptionNone
-                                                                                     reflection:NULL
-                                                                                          error:&error];
+            id<MTLComputePipelineState> pipeline = [device newComputePipelineStateWithDescriptor:compute
+                                                                                         options:MTLPipelineOptionNone
+                                                                                      reflection:NULL
+                                                                                           error:&error];
 
             if (error) {
                 NSLog(@"%@", error);
             }
 
             std::vector<id<MTLBuffer>> buffers;
-            std::set<graph::leaf_node<float, SAFE_MATH> *> needed_buffers;
+            std::unordered_set<graph::leaf_node<float, SAFE_MATH> *> needed_buffers;
 
             const size_t buffer_element_size = sizeof(float);
             for (graph::shared_variable<float, SAFE_MATH> &input : inputs) {
@@ -147,8 +162,6 @@ namespace gpu {
                     kernel_arguments[input.get()] = [device newBufferWithBytes:buffer.data()
                                                                         length:buffer.size()*buffer_element_size
                                                                        options:MTLResourceStorageModeShared];
-                    buffers.push_back(kernel_arguments[input.get()]);
-                    needed_buffers.insert(input.get());
                 }
                 if (!needed_buffers.contains(input.get())) {
                     buffers.push_back(kernel_arguments[input.get()]);
@@ -156,15 +169,25 @@ namespace gpu {
                 }
             }
             for (graph::shared_leaf<float, SAFE_MATH> &output : outputs) {
-                if (!kernel_arguments.contains(output.get())) {
-                    kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
-                                                                         options:MTLResourceStorageModeShared];
-                    buffers.push_back(kernel_arguments[output.get()]);
-                    needed_buffers.insert(output.get());
+                if (!graph::atomic_accumulate_1D_cast(output).get()) {
+                    if (!kernel_arguments.contains(output.get())) {
+                        kernel_arguments[output.get()] = [device newBufferWithLength:num_rays*sizeof(float)
+                                                                             options:MTLResourceStorageModeShared];
+                    }
+                    if (!needed_buffers.contains(output.get())) {
+                        buffers.push_back(kernel_arguments[output.get()]);
+                        needed_buffers.insert(output.get());
+                    }
                 }
-                if (!needed_buffers.contains(output.get())) {
-                    buffers.push_back(kernel_arguments[output.get()]);
-                    needed_buffers.insert(output.get());
+            }
+            for (graph::shared_variable<float, SAFE_MATH> &atomic : atomics) {
+                if (!kernel_arguments.contains(atomic.get())) {
+                    kernel_arguments[atomic.get()] = [device newBufferWithLength:atomic->size()*buffer_element_size
+                                                                         options:MTLResourceStorageModeShared];
+                }
+                if (!needed_buffers.contains(atomic.get())) {
+                    buffers.push_back(kernel_arguments[atomic.get()]);
+                    needed_buffers.insert(atomic.get());
                 }
             }
             if (state.get()) {
@@ -187,7 +210,7 @@ namespace gpu {
                     descriptor.textureType = MTLTextureType1D;
                     descriptor.pixelFormat = MTLPixelFormatR32Float;
                     descriptor.width = size;
-                    descriptor.storageMode = MTLStorageModeManaged;
+                    descriptor.storageMode = MTLStorageModeShared;
                     descriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
                     descriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
                     descriptor.usage = MTLTextureUsageShaderRead;
@@ -208,7 +231,7 @@ namespace gpu {
                     descriptor.pixelFormat = MTLPixelFormatR32Float;
                     descriptor.width = size[1];
                     descriptor.height = size[0];
-                    descriptor.storageMode = MTLStorageModeManaged;
+                    descriptor.storageMode = MTLStorageModeShared;
                     descriptor.cpuCacheMode = MTLCPUCacheModeWriteCombined;
                     descriptor.hazardTrackingMode = MTLHazardTrackingModeUntracked;
                     descriptor.usage = MTLTextureUsageShaderRead;
@@ -229,29 +252,35 @@ namespace gpu {
             NSRange range = NSMakeRange(0, buffers.size());
             NSRange tex_range = NSMakeRange(0, textures.size());
 
-            NSUInteger threads_per_group = pipline.maxTotalThreadsPerThreadgroup;
-            NSUInteger thread_width = pipline.threadExecutionWidth;
-            NSUInteger thread_groups = num_rays/threads_per_group + (num_rays%threads_per_group ? 1 : 0);
+            NSUInteger total_parallel = state.get() ? state->size() : num_rays;
+            NSUInteger thread_width = pipeline.threadExecutionWidth;
+            NSUInteger threads_per_group = total_parallel < pipeline.maxTotalThreadsPerThreadgroup ?
+                                                            thread_width                           :
+                                                            pipeline.maxTotalThreadsPerThreadgroup;
+            NSUInteger thread_groups = total_parallel/threads_per_group + (total_parallel%threads_per_group ? 1 : 0);
 
             if (jit::verbose) {
-                std::cout << "  Kernel name : " << kernel_name << std::endl;
-                std::cout << "    Thread execution width : " << thread_width << std::endl;
-                std::cout << "    Threads per group      : " << threads_per_group << std::endl;
-                std::cout << "    Number of groups       : " << thread_groups << std::endl;
-                std::cout << "    Total problem size     : " << threads_per_group*thread_groups << std::endl;
+                std::cout << "  Kernel name : " << kernel_name << std::endl
+                          << "    Thread execution width  : " << thread_width << std::endl
+                          << "    Threads per group       : " << threads_per_group << std::endl
+                          << "    Number of groups        : " << thread_groups << std::endl
+                          << "    Total problem size      : " << threads_per_group*thread_groups << std::endl
+                          << "    Total parallel size     : " << total_parallel << std::endl
+                          << "    Current allocation size : " << device.currentAllocatedSize << std::endl;
             }
 
             if (state.get()) {
-                return [this, num_rays, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
+
+                return [this, num_rays, pipeline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
+#ifdef PROFILE_KERNELS
+                        , kernel_name
+#endif
+                ] () mutable {
                     command_buffer = [queue commandBuffer];
-                    for (uint32_t i = 0; i < num_rays; i += threads_per_group) {
+                    for (NSUInteger i = 0, ie = thread_groups*threads_per_group; i < num_rays; i += ie) {
                         id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
-                        for (size_t j = 0, je = buffers.size() - 1; j < je; j++) {
-                            offsets[j] = i*sizeof(float);
-                        }
-
-                        [encoder setComputePipelineState:pipline];
+                        [encoder setComputePipelineState:pipeline];
                         [encoder setBuffers:buffers.data()
                                     offsets:offsets.data()
                                   withRange:range];
@@ -261,19 +290,27 @@ namespace gpu {
                         [encoder setTextures:textures.data()
                                    withRange:tex_range];
 
-                        [encoder dispatchThreadgroups:MTLSizeMake(1, 1, 1)
+                        [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                                 threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                         [encoder endEncoding];
                     }
-
+#ifdef PROFILE_KERNELS
+                    [command_buffer addCompletedHandler:[kernel_name](id<MTLCommandBuffer> commandBuffer) {
+                        std::cout << std::endl << "  " << kernel_name << " : " << commandBuffer.GPUEndTime - commandBuffer.GPUStartTime << " s" << std::endl << std::endl;
+                    }];
+#endif
                     [command_buffer commit];
                 };
             } else {
-                return [this, pipline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures] () mutable {
+                return [this, pipeline, buffers, offsets, range, tex_range, thread_groups, threads_per_group, textures
+#ifdef PROFILE_KERNELS
+                        , kernel_name
+#endif
+                ] () mutable {
                     command_buffer = [queue commandBuffer];
                     id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoderWithDispatchType:MTLDispatchTypeSerial];
 
-                    [encoder setComputePipelineState:pipline];
+                    [encoder setComputePipelineState:pipeline];
                     [encoder setBuffers:buffers.data()
                                 offsets:offsets.data()
                               withRange:range];
@@ -283,7 +320,11 @@ namespace gpu {
                     [encoder dispatchThreadgroups:MTLSizeMake(thread_groups, 1, 1)
                             threadsPerThreadgroup:MTLSizeMake(threads_per_group, 1, 1)];
                     [encoder endEncoding];
-
+#ifdef PROFILE_KERNELS
+                    [command_buffer addCompletedHandler:[kernel_name](id<MTLCommandBuffer> commandBuffer) {
+                         std::cout << std::endl << "  " << kernel_name << " : " << commandBuffer.GPUEndTime - commandBuffer.GPUStartTime << " s" << std::endl << std::endl;
+                    }];
+#endif
                     [command_buffer commit];
                 };
             }
@@ -298,13 +339,21 @@ namespace gpu {
 //------------------------------------------------------------------------------
         std::function<float(void)> create_max_call(graph::shared_leaf<float, SAFE_MATH> &argument,
                                                    std::function<void(void)> run) {
+            NSError *error;
+
+            MTLFunctionDescriptor *funcDesc = [MTLFunctionDescriptor new];
+            funcDesc.options = MTLFunctionOptionNone;
+            funcDesc.name = @"max_reduction";
+
+            id<MTLFunction> function = [library newFunctionWithDescriptor:funcDesc
+                                                                    error:&error];
+
             MTLComputePipelineDescriptor *compute = [MTLComputePipelineDescriptor new];
             compute.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
-            compute.computeFunction = [library newFunctionWithName:@"max_reduction"];
+            compute.computeFunction = function;
             compute.maxTotalThreadsPerThreadgroup = 1024;
             compute.buffers[0].mutability = MTLMutabilityImmutable;
 
-            NSError *error;
             id<MTLComputePipelineState> max_state = [device newComputePipelineStateWithDescriptor:compute
                                                                                           options:MTLPipelineOptionNone
                                                                                        reflection:NULL
@@ -349,12 +398,102 @@ namespace gpu {
         }
 
 //------------------------------------------------------------------------------
+///  @brief Create kernel call that will be memset a buffer to zero.
+///
+///  @param[in] inputs Input nodes of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_zero_call(graph::input_nodes<float, SAFE_MATH> &inputs) {
+            std::vector<id<MTLBuffer>> buffers;
+            for (auto &input : inputs) {
+                if (!kernel_arguments.contains(input.get())) {
+                    kernel_arguments[input.get()] = [device newBufferWithBytes:input->data()
+                                                                        length:input->size()*sizeof(float)
+                                                                       options:MTLResourceStorageModeShared];
+                }
+                buffers.push_back(kernel_arguments[input.get()]);
+            }
+
+            std::vector<NSRange> ranges;
+            for (id<MTLBuffer> buffer : buffers) {
+                ranges.push_back(NSMakeRange(0, buffer.length));
+            }
+
+            return [this, buffers, ranges] () mutable {
+                command_buffer = [queue commandBuffer];
+                id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
+
+                for (size_t i = 0, ie = buffers.size(); i < ie; i++) {
+                    [encoder fillBuffer:buffers[i]
+                                  range:ranges[i]
+                                  value:0];
+                }
+                [encoder endEncoding];
+#ifdef PROFILE_KERNELS
+                [command_buffer addCompletedHandler:[](id<MTLCommandBuffer> commandBuffer) {
+                    std::cout << std::endl << "  zero buffer : " << commandBuffer.GPUEndTime - commandBuffer.GPUStartTime << " s" << std::endl << std::endl;
+                }];
+#endif
+                [command_buffer commit];
+            };
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Create kernel call that will to copy one buffer to another.
+///
+///  @param[in] setters Input variables of the kernel.
+///  @returns A lambda function to run the kernel.
+//------------------------------------------------------------------------------
+        std::function<void(void)> create_copy_call(graph::copy_nodes<float, SAFE_MATH> &setters) {
+            std::vector<id<MTLBuffer>> sources;
+            std::vector<id<MTLBuffer>> destinations;
+
+            for (auto &[out, in] : setters) {
+                if (!kernel_arguments.contains(in.get())) {
+                    kernel_arguments[in.get()] = [device newBufferWithBytes:in->data()
+                                                                     length:in->size()*sizeof(float)
+                                                                    options:MTLResourceStorageModeShared];
+                }
+                destinations.push_back(kernel_arguments[in.get()]);
+
+                if (!kernel_arguments.contains(out.get())) {
+                    kernel_arguments[out.get()] = [device newBufferWithBytes:out->data()
+                                                                      length:out->size()*sizeof(float)
+                                                                     options:MTLResourceStorageModeShared];
+                }
+                sources.push_back(kernel_arguments[out.get()]);
+            }
+
+            return [this, sources, destinations] () mutable {
+                command_buffer = [queue commandBuffer];
+                id<MTLBlitCommandEncoder> encoder = [command_buffer blitCommandEncoder];
+
+                for (size_t i = 0, ie = sources.size(); i < ie; i++) {
+                    [encoder copyFromBuffer:sources[i]
+                               sourceOffset:0
+                                   toBuffer:destinations[i]
+                          destinationOffset:0
+                                       size:sources[i].length];
+                }
+                [encoder endEncoding];
+#ifdef PROFILE_KERNELS
+                [command_buffer addCompletedHandler:[](id<MTLCommandBuffer> commandBuffer) {
+                    std::cout << std::endl << "  copy buffer : " << commandBuffer.GPUEndTime - commandBuffer.GPUStartTime << " s" << std::endl << std::endl;
+                }];
+#endif
+                [command_buffer commit];
+            };
+        }
+
+//------------------------------------------------------------------------------
 ///  @brief Get the compile options.
 //------------------------------------------------------------------------------
         MTLCompileOptions *compile_options() {
             MTLCompileOptions *options = [MTLCompileOptions new];
             options.mathMode = MTLMathModeFast;
             options.mathFloatingPointFunctions = MTLMathFloatingPointFunctionsFast;
+            options.optimizationLevel = MTLLibraryOptimizationLevelDefault;
+            options.languageVersion = MTLLanguageVersion3_2;
             return options;
         }
 
@@ -366,6 +505,30 @@ namespace gpu {
 
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run a callback function in the queue.
+///
+///  @param[in] callback The callback function to run.
+///  @returns Lambda to call the function.
+//------------------------------------------------------------------------------
+        std::function<void(void)> run_function(std::function<void(void)> callback) {
+            return [this, callback]() {
+                command_buffer = [queue commandBuffer];
+        
+                [command_buffer addCompletedHandler:[callback](id<MTLCommandBuffer> commandBuffer) {
+#ifdef PROFILE_KERNELS
+                    timing::measure_diagnostic timer("callback");
+#endif
+                    callback();
+#ifdef PROFILE_KERNELS
+                    timer.print();
+#endif
+                }];
+        
+                [command_buffer commit];
+            };
         }
 
 //------------------------------------------------------------------------------
@@ -445,6 +608,7 @@ namespace gpu {
 ///  @param[in]     name          Name to call the kernel.
 ///  @param[in]     inputs        Input variables of the kernel.
 ///  @param[in]     outputs       Output nodes of the graph to compute.
+///  @param[in]     atomics       Input variables for atomic operations.
 ///  @param[in]     state         Random states.
 ///  @param[in]     size          Size of the input buffer.
 ///  @param[in]     is_constant   Flags if the input is read only.
@@ -452,44 +616,71 @@ namespace gpu {
 ///  @param[in]     usage         List of register usage count.
 ///  @param[in]     textures1d    List of 1D kernel textures.
 ///  @param[in]     textures2d    List of 2D kernel textures.
+///  @param[out]    thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
+///  @param[in]     iterations    Number of loop iterations.
 //------------------------------------------------------------------------------
         void create_kernel_prefix(std::ostringstream &source_buffer,
                                   const std::string name,
                                   graph::input_nodes<float, SAFE_MATH> &inputs,
                                   graph::output_nodes<float, SAFE_MATH> &outputs,
-                                  graph::shared_random_state<float, SAFE_MATH> state,
+                                  graph::input_nodes<float, SAFE_MATH> atomics,
+                                  graph::shared_random_state<float, SAFE_MATH> &state,
                                   const size_t size,
                                   const std::vector<bool> &is_constant,
                                   jit::register_map &registers,
                                   const jit::register_usage &usage,
                                   jit::texture1d_list &textures1d,
-                                  jit::texture2d_list &textures2d) {
+                                  jit::texture2d_list &textures2d,
+                                  jit::argument_set &thread_shared,
+                                  jit::register_map &thread_mem,
+                                  const size_t iterations=1) {
             source_buffer << std::endl;
             source_buffer << "kernel void " << name << "(" << std::endl;
 
             bufferMutability[name] = std::vector<MTLMutability> ();
 
+            size_t used_thread_mem = 0;
+
             size_t buffer_count = 0;
-            std::unordered_set<void *> used_args;
+            jit::argument_set used_args;
             for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                 if (!used_args.contains(inputs[i].get())) {
+#ifdef USE_INPUT_CACHE
+                    if (!is_constant[i] && iterations > 1) {
+                        const size_t needed_mem = inputs[i]->size() > 1024 ?
+                                                  1024*4                   :
+                                                  32*4;
+                        if (used_thread_mem + needed_mem < device.maxThreadgroupMemoryLength) {
+                            used_thread_mem += needed_mem;
+                            thread_shared.insert(inputs[i].get());
+                        }
+                    } else if (is_constant[i]           &&
+                               inputs[i]->size() < size &&
+                               inputs[i]->size() < 1024) {
+                        const size_t needed_mem = inputs[i]->size()*4;
+                        if (used_thread_mem + needed_mem < device.maxThreadgroupMemoryLength) {
+                            used_thread_mem += needed_mem;
+                            thread_shared.insert(inputs[i].get());
+                            thread_mem[inputs[i].get()] = jit::to_string('t', inputs[i].get());
+                        }
+                    }
+#endif
                     bufferMutability[name].push_back(is_constant[i] ? MTLMutabilityMutable : MTLMutabilityImmutable);
                     source_buffer << "    " << (is_constant[i] ? "constant" : "device")
                                   << " float *"
                                   << jit::to_string('v', inputs[i].get())
-                                  << " [[buffer(" << buffer_count++ << ")]], // "
-                                  << inputs[i]->get_symbol()
-#ifndef USE_INPUT_CACHE
-#ifdef SHOW_USE_COUNT
-                                  << " used " << usage.at(inputs[i].get())
-#endif
-#endif
-                                  << std::endl;
+                                  << " [[buffer(" << buffer_count++ << ")]]";
+                    inputs[i]->endline(source_buffer, usage, ',');
                     used_args.insert(inputs[i].get());
                 }
             }
+            assert(used_args.size() == inputs.size() &&
+                   "Kernel inputs contain duplicates.");
+
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
-                if (!used_args.contains(outputs[i].get())) {
+                if (!used_args.contains(outputs[i].get()) &&
+                    !graph::atomic_accumulate_1D_cast(outputs[i]).get()) {
                     bufferMutability[name].push_back(MTLMutabilityMutable);
                     source_buffer << "    device float *"
                                   << jit::to_string('o', outputs[i].get())
@@ -498,6 +689,23 @@ namespace gpu {
                     used_args.insert(outputs[i].get());
                 }
             }
+            assert(used_args.size() == inputs.size() + outputs.size() &&
+                   "Kernel outputs contain duplicates.");
+
+            for (size_t i = 0, ie = atomics.size(); i < ie; i++) {
+                if (!used_args.contains(atomics[i].get())) {
+                    bufferMutability[name].push_back(MTLMutabilityMutable);
+                    source_buffer << "    device atomic_float *"
+                                  << jit::to_string('v', atomics[i].get())
+                                  << " [[buffer(" << buffer_count++ << ")]],"
+                                  << std::endl;
+                    used_args.insert(atomics[i].get());
+                }
+            }
+            assert(used_args.size() == inputs.size() + outputs.size() +
+                                       atomics.size() &&
+                   "Kernel atomics contain duplicates.");
+
             if (state.get()) {
                 bufferMutability[name].push_back(MTLMutabilityMutable);
                 source_buffer << "    device mt_state *"
@@ -521,47 +729,147 @@ namespace gpu {
                               << " [[texture(" << index++ << ")]],"
                               << std::endl;
             }
-            if (state.get()) {
-                source_buffer << "    uint thread_index [[thread_index_in_threadgroup]],"
-                              << std::endl;
+            if (thread_shared.size()) {
+                source_buffer << "    ushort t_index [[thread_position_in_threadgroup]]," << std::endl;
+                source_buffer << "    ushort t_total [[threads_per_threadgroup]]," << std::endl;
             }
-            source_buffer << "    uint index [[thread_position_in_grid]]) {" << std::endl
+            source_buffer << "    "
+                          << jit::smallest_uint_type<float> (size)
+                          << " index [[thread_position_in_grid]]) {" << std::endl
                           << "    if (";
             if (state.get()) {
                 source_buffer << "offset + ";
             }
             source_buffer << "index < "  << size << ") {" << std::endl;
 
-            for (auto &input : inputs) {
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                if (is_constant[i]) {
 #ifdef USE_INPUT_CACHE
-                if (usage.at(input.get())) {
-                    registers[input.get()] = jit::to_string('r', input.get());
-                    source_buffer << "        const ";
-                    jit::add_type<float> (source_buffer);
-                    source_buffer << " " << registers[input.get()] << " = "
-                                  << jit::to_string('v', input.get())
-                                  << "[index]; // " << input->get_symbol()
-#ifdef SHOW_USE_COUNT
-                                  << " used " << usage.at(input.get())
-#endif
-                                  << std::endl;
-                }
+                    if (usage.at(inputs[i].get()) && inputs[i]->size() == size) {
+                        registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+                        source_buffer << "        const ";
+                        jit::add_type<float> (source_buffer);
+                        source_buffer << " " << registers[inputs[i].get()] << " = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[";
+                        if (state.get()) {
+                            source_buffer << "offset + ";
+                        }
+                        source_buffer << "index]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
 #else
-                registers[input.get()] = jit::to_string('v', input.get()) + "[index]";
+                    registers[inputs[i].get()] = jit::to_string('v', inputs[i].get())
+                                               + "["
+                                               + (state.get() ? "offset + " : "")
+                                               + "index]";
 #endif
+                }
+            }
+
+            if (thread_shared.size()) {
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "        threadgroup float "
+                                      << jit::to_string('t', inputs[i].get())
+                                      << "[" << inputs[i]->size() << "]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "    for(int j = t_index; j < "
+                                      << inputs[i]->size()
+                                      << "; j += t_total) {" << std::endl
+                                      << "        "
+                                      << jit::to_string('t', inputs[i].get())
+                                      << "[j] = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[j]";
+                        inputs[i]->endline(source_buffer, usage);
+                        source_buffer << "    }" << std::endl;
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        source_buffer << "    threadgroup_barrier(mem_flags::mem_threadgroup);"
+                                      << std::endl;
+                        break;
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
+                        thread_shared.erase(inputs[i].get());
+                    }
+                }
+                for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                    if (thread_shared.contains(inputs[i].get()) && !is_constant[i]) {
+                        source_buffer << "        threadgroup float "
+                                      << jit::to_string('t', inputs[i].get())
+                                      << "["
+                                      << (inputs[i]->size() > 1024 ? 1024 : 32)
+                                      << "]";
+                        inputs[i]->endline(source_buffer, usage);
+                        source_buffer << "        "
+                                      << jit::to_string('t', inputs[i].get())
+                                      << "[t_index] = "
+                                      << jit::to_string('v', inputs[i].get())
+                                      << "[";
+                        if (state.get()) {
+                            source_buffer << "offset + ";
+                        }
+                        source_buffer << "index]";
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+                }
+            }
+
+            if (iterations > 1) {
+                source_buffer << "    for (size_t j = 0; j < " << iterations << "; j++) {" << std::endl;
+            }
+
+            for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
+                if (!is_constant[i]) {
+#ifdef USE_INPUT_CACHE
+                    if (usage.at(inputs[i].get())) {
+                        registers[inputs[i].get()] = jit::to_string('r', inputs[i].get());
+                        source_buffer << "        const ";
+                        jit::add_type<float> (source_buffer);
+                        source_buffer << " " << registers[inputs[i].get()] << " = ";
+                        if (thread_shared.contains(inputs[i].get())) {
+                            source_buffer << jit::to_string('t', inputs[i].get())
+                                          << "[t_index]";
+                        } else {
+                            source_buffer << jit::to_string('v', inputs[i].get())
+                                          << "[";
+                            if (state.get()) {
+                                source_buffer << "offset + ";
+                            }
+                            source_buffer << "index]";
+                        }
+                        inputs[i]->endline(source_buffer, usage);
+                    }
+#else
+                    if (thread_shared.contains(inputs[i].get())) {
+                        registers[inputs[i].get()] = jit::to_string('t', inputs[i].get()) + "[t_index]";
+                    } else {
+                        registers[inputs[i].get()] = jit::to_string('v', inputs[i].get()) + "["
+                                                   + (state.get() ? "offset + " : "")
+                                                   + "index]";
+                    }
+#endif
+                }
             }
             if (state.get()) {
 #ifdef USE_INPUT_CACHE
                 registers[state.get()] = jit::to_string('r', state.get());
                 source_buffer << "        device mt_state &" << registers[state.get()]
                               << " = " << jit::to_string('s', state.get())
-                              << "[thread_index];"
-#ifdef SHOW_USE_COUNT
-                              << " // used " << usage.at(input.get())
-#endif
-                              << std::endl;
+                              << "[index]";
+                state->endline(source_buffer, usage);
 #else
-                registers[state.get()] = jit::to_string('s', state.get()) + "[thread_index]";
+                registers[state.get()] = jit::to_string('s', state.get())
+                                       + "[index]";
 #endif
             }
         }
@@ -574,26 +882,37 @@ namespace gpu {
 ///  @param[in]     setters       Map outputs back to input values.
 ///  @param[in]     state         Random states.
 ///  @param[in,out] registers     Map of used registers.
-///  @param[in,out] indices       Map of used indices.
 ///  @param[in]     usage         List of register usage count.
+///  @param[in]     thread_shared Set of inputs that use thread shared memory.
+///  @param[out]    thread_mem    Registers of thread shared memory.
+///  @param[in]     iterations    Number of iterations of the loop.
 //------------------------------------------------------------------------------
         void create_kernel_postfix(std::ostringstream &source_buffer,
                                    graph::output_nodes<float, SAFE_MATH> &outputs,
                                    graph::map_nodes<float, SAFE_MATH> &setters,
                                    graph::shared_random_state<float, SAFE_MATH> state,
                                    jit::register_map &registers,
-                                   jit::register_map &indices,
-                                   const jit::register_usage &usage) {
-            std::unordered_set<void *> out_registers;
+                                   const jit::register_usage &usage,
+                                   const jit::argument_set &thread_shared,
+                                   jit::register_map &thread_mem,
+                                   const size_t iterations=1) {
+            jit::argument_set out_registers;
             for (auto &[out, in] : setters) {
                 if (!out->is_match(in)) {
-                    graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
-                                                                          registers,
-                                                                          indices,
-                                                                          usage);
-                    source_buffer << "        "
-                                  << jit::to_string('v',  in.get())
-                                  << "[index] = ";
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
+                    source_buffer << "        ";
+                    if (thread_shared.contains(in.get())) {
+                        source_buffer << jit::to_string('t',  in.get())
+                                      << "[t_index] = ";
+                    } else {
+                        source_buffer << jit::to_string('v',  in.get())
+                                      << "[";
+                        if (state.get()) {
+                            source_buffer << "offset + ";
+                        }
+                        source_buffer << "index] = ";
+                    }
                     if constexpr (SAFE_MATH) {
                         source_buffer << "isnan(" << registers[a.get()]
                                       << ") ? 0.0 : ";
@@ -604,23 +923,44 @@ namespace gpu {
             }
 
             for (auto &out : outputs) {
-                if (!graph::variable_cast(out).get() &&
+                if (!graph::variable_cast(out).get()             &&
+                    !graph::atomic_accumulate_1D_cast(out).get() &&
                     !out_registers.contains(out.get())) {
-                    graph::shared_leaf<float, SAFE_MATH> a = out->compile(source_buffer,
-                                                                          registers,
-                                                                          indices,
-                                                                          usage);
+                    auto a = out->compile(source_buffer, registers,
+                                          thread_mem, usage);
                     source_buffer << "        " << jit::to_string('o',  out.get())
-                                  << "[index] = ";
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset + ";
+                    }
+                    source_buffer << "index] = ";
                     if constexpr (SAFE_MATH) {
-                        source_buffer << "isnan(" << registers[a.get()]
-                                      << ") ? 0.0 : ";
+                        if (!graph::random_cast(a).get()) {
+                            source_buffer << "isnan(" << registers[a.get()]
+                                          << ") ? 0.0 : ";
+                        }
                     }
                     source_buffer << registers[a.get()] << ";" << std::endl;
                     out_registers.insert(out.get());
                 }
             }
 
+            if (iterations > 1) {
+                source_buffer << "    }" << std::endl;
+            }
+            for (auto &[out, in] : setters) {
+                if (thread_shared.contains(in.get())) {
+                    source_buffer << "        "
+                                  << jit::to_string('v',  in.get())
+                                  << "[";
+                    if (state.get()) {
+                        source_buffer << "offset + ";
+                    }
+                    source_buffer << "index] = "
+                                  << jit::to_string('t',  in.get())
+                                  << "[t_index];" << std::endl;
+                }
+            }
             source_buffer << "    }" << std::endl << "}" << std::endl;
         }
 

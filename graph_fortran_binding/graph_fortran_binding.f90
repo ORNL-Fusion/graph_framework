@@ -568,14 +568,16 @@
 !>  @brief Construct a random state node.
 !>
 !>  @param[in] c    The graph C context.
+!>  @param[in] size Number of randoms needed.
 !>  @param[in] seed Initial random seed.
 !>  @returns A random state node.
 !-------------------------------------------------------------------------------
-         TYPE(C_PTR) FUNCTION graph_random_state(c, seed)                      &
+         TYPE(C_PTR) FUNCTION graph_random_state(c, size, seed)                &
          BIND(C, NAME='graph_random_state')
          USE, INTRINSIC :: ISO_C_BINDING
          IMPLICIT NONE
          TYPE(C_PTR), VALUE        :: c
+         INTEGER(C_LONG), value    :: size
          INTEGER(C_INT32_T), VALUE :: seed
          END FUNCTION
 
@@ -742,6 +744,8 @@
 !>  @param[in] map_inputs    Array of map input nodes.
 !>  @param[in] map_outputs   Array of map output nodes.
 !>  @param[in] num_maps      Number of maps.
+!>  @param[in] atomics       Array of atomics nodes.
+!>  @param[in] num_atomics   Number of atomics.
 !>  @param[in] random_state  Optional random state, can be NULL if not used.
 !>  @param[in] name          Name for the kernel.
 !>  @param[in] num_particles Number of elements to operate on.
@@ -749,6 +753,7 @@
          SUBROUTINE graph_add_pre_item(c, inputs, num_inputs,                  &
                                        outputs, num_outputs,                   &
                                        map_inputs, map_outputs, num_maps,      &
+                                       atomics, num_atomics,                   &
                                        random_state, name, num_particles)      &
          BIND(C, NAME='graph_add_pre_item')
          USE, INTRINSIC :: ISO_C_BINDING
@@ -761,6 +766,8 @@
          INTEGER(C_INTPTR_T), VALUE           :: map_inputs
          INTEGER(C_INTPTR_T), VALUE           :: map_outputs
          INTEGER(C_LONG), VALUE               :: num_maps
+         INTEGER(C_INTPTR_T), VALUE           :: atomics
+         INTEGER(C_LONG), VALUE               :: num_atomics
          TYPE(C_PTR), VALUE                   :: random_state
          CHARACTER(kind=C_CHAR), DIMENSION(*) :: name
          INTEGER(C_LONG), VALUE               :: num_particles
@@ -777,6 +784,8 @@
 !>  @param[in] map_inputs    Array of map input nodes.
 !>  @param[in] map_outputs   Array of map output nodes.
 !>  @param[in] num_maps      Number of maps.
+!>  @param[in] atomics       Array of atomics nodes.
+!>  @param[in] num_atomics   Number of atomics.
 !>  @param[in] random_state  Optional random state, can be NULL if not used.
 !>  @param[in] name          Name for the kernel.
 !>  @param[in] num_particles Number of elements to operate on.
@@ -784,6 +793,7 @@
          SUBROUTINE graph_add_item(c, inputs, num_inputs,                      &
                                    outputs, num_outputs,                       &
                                    map_inputs, map_outputs, num_maps,          &
+                                   atomics, num_atomics,                       &
                                    random_state, name, num_particles)          &
          BIND(C, NAME='graph_add_item')
          USE, INTRINSIC :: ISO_C_BINDING
@@ -796,6 +806,8 @@
          INTEGER(C_INTPTR_T), VALUE           :: map_inputs
          INTEGER(C_INTPTR_T), VALUE           :: map_outputs
          INTEGER(C_LONG), VALUE               :: num_maps
+         INTEGER(C_INTPTR_T), VALUE           :: atomics
+         INTEGER(C_LONG), VALUE               :: num_atomics
          TYPE(C_PTR), VALUE                   :: random_state
          CHARACTER(kind=C_CHAR), DIMENSION(*) :: name
          INTEGER(C_LONG), VALUE               :: num_particles
@@ -812,6 +824,8 @@
 !>  @param[in] map_inputs    Array of map input nodes.
 !>  @param[in] map_outputs   Array of map output nodes.
 !>  @param[in] num_maps      Number of maps.
+!>  @param[in] atomics       Array of atomics nodes.
+!>  @param[in] num_atomics   Number of atomics.
 !>  @param[in] random_state  Optional random state, can be NULL if not used.
 !>  @param[in] name          Name for the kernel.
 !>  @param[in] num_particles Number of elements to operate on.
@@ -821,6 +835,7 @@
          SUBROUTINE graph_add_converge_item(c, inputs, num_inputs,             &
                                             outputs, num_outputs,              &
                                             map_inputs, map_outputs, num_maps, &
+                                            atomics, num_atomics,              &
                                             random_state, name, num_particles, &
                                             tol, max_iter)                     &
          BIND(C, NAME='graph_add_converge_item')
@@ -834,6 +849,8 @@
          INTEGER(C_INTPTR_T), VALUE           :: map_inputs
          INTEGER(C_INTPTR_T), VALUE           :: map_outputs
          INTEGER(C_LONG), VALUE               :: num_maps
+         INTEGER(C_INTPTR_T), VALUE           :: atomics
+         INTEGER(C_LONG), VALUE               :: num_atomics
          TYPE(C_PTR), VALUE                   :: random_state
          CHARACTER(kind=C_CHAR), DIMENSION(*) :: name
          INTEGER(C_LONG), VALUE               :: num_particles
@@ -1588,20 +1605,23 @@
 !>  @brief Get random size.
 !>
 !>  @param[in,out] this @ref graph_context instance.
+!>  @param[in]     size Number of random numbers needed.
 !>  @param[in]     seed Initial random seed.
 !>  @returns The random size.
 !-------------------------------------------------------------------------------
-      FUNCTION graph_context_random_state(this, seed)
+      FUNCTION graph_context_random_state(this, size, seed)
 
       IMPLICIT NONE
 
 !  Declare Arguments
       TYPE(C_PTR)                         :: graph_context_random_state
       CLASS(graph_context), INTENT(INOUT) :: this
+      INTEGER(C_LONG), INTENT(IN)         :: size
       INTEGER(C_INT32_T), INTENT(IN)      :: seed
 
 !  Start of executable.
-      graph_context_random_state = graph_random_state(this%c_context, seed)
+      graph_context_random_state = graph_random_state(this%c_context,          &
+                                                      size, seed)
 
       END FUNCTION
 
@@ -2030,13 +2050,15 @@
 !>  @param[in]     outputs       Array of output nodes.
 !>  @param[in]     map_inputs    Array of map input nodes.
 !>  @param[in]     map_outputs   Array of map output nodes.
+!>  @param[in]     atomics       Array of atomic nodes.
 !>  @param[in]     random_state  Optional random state, can be NULL if not used.
 !>  @param[in]     name          Name for the kernel.
 !>  @param[in]     num_particles Number of elements to operate on.
 !-------------------------------------------------------------------------------
       SUBROUTINE graph_context_add_pre_item(this, inputs, outputs,             &
                                             map_inputs, map_outputs,           &
-                                            random_state, name, num_particles)
+                                            atomics, random_state, name,       &
+                                            num_particles)
 
       IMPLICIT NONE
 
@@ -2046,6 +2068,7 @@
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: outputs
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_inputs
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_outputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: atomics
       TYPE(C_PTR), INTENT(IN)                       :: random_state
       CHARACTER(kind=C_CHAR,len=*), INTENT(IN)      :: name
       INTEGER(C_LONG), INTENT(IN)                   :: num_particles
@@ -2056,6 +2079,8 @@
                               LOC(outputs), INT(SIZE(outputs), KIND=C_LONG),   &
                               LOC(map_inputs), LOC(map_outputs),               &
                               INT(SIZE(map_inputs), KIND=C_LONG),              &
+                              LOC(atomics),                                    &
+                              INT(SIZE(atomics), KIND=C_LONG),                 &
                               random_state, name, num_particles)
 
       END SUBROUTINE
@@ -2068,13 +2093,15 @@
 !>  @param[in]     outputs       Array of output nodes.
 !>  @param[in]     map_inputs    Array of map input nodes.
 !>  @param[in]     map_outputs   Array of map output nodes.
+!>  @param[in]     atomics       Array of atomic nodes.
 !>  @param[in]     random_state  Optional random state, can be NULL if not used.
 !>  @param[in]     name          Name for the kernel.
 !>  @param[in]     num_particles Number of elements to operate on.
 !-------------------------------------------------------------------------------
       SUBROUTINE graph_context_add_item(this, inputs, outputs,                 &
                                         map_inputs, map_outputs,               &
-                                        random_state, name, num_particles)
+                                        atomics, random_state, name,           &
+                                        num_particles)
 
       IMPLICIT NONE
 
@@ -2084,6 +2111,7 @@
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: outputs
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_inputs
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_outputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: atomics
       TYPE(C_PTR), INTENT(IN)                       :: random_state
       CHARACTER(kind=C_CHAR,len=*), INTENT(IN)      :: name
       INTEGER(C_LONG), INTENT(IN)                   :: num_particles
@@ -2094,6 +2122,8 @@
                           LOC(outputs), INT(SIZE(outputs), KIND=C_LONG),       &
                           LOC(map_inputs), LOC(map_outputs),                   &
                           INT(SIZE(map_inputs), KIND=C_LONG),                  &
+                          LOC(atomics),                                        &
+                          INT(SIZE(atomics), KIND=C_LONG),                     &
                           random_state, name, num_particles)
 
       END SUBROUTINE
@@ -2106,6 +2136,7 @@
 !>  @param[in]     outputs       Array of output nodes.
 !>  @param[in]     map_inputs    Array of map input nodes.
 !>  @param[in]     map_outputs   Array of map output nodes.
+!>  @param[in]     atomics       Array of atomic nodes.
 !>  @param[in]     random_state  Optional random state, can be NULL if not used.
 !>  @param[in]     name          Name for the kernel.
 !>  @param[in]     num_particles Number of elements to operate on.
@@ -2114,7 +2145,7 @@
 !-------------------------------------------------------------------------------
       SUBROUTINE graph_context_add_converge_item(this, inputs, outputs,        &
                                                  map_inputs, map_outputs,      &
-                                                 random_state, name,           &
+                                                 atomics, random_state, name,  &
                                                  num_particles, tol, max_iter)
 
       IMPLICIT NONE
@@ -2125,6 +2156,7 @@
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: outputs
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_inputs
       INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: map_outputs
+      INTEGER(C_INTPTR_T), DIMENSION(:), INTENT(IN) :: atomics
       TYPE(C_PTR), INTENT(IN)                       :: random_state
       CHARACTER(kind=C_CHAR,len=*), INTENT(IN)      :: name
       INTEGER(C_LONG), INTENT(IN)                   :: num_particles
@@ -2138,6 +2170,8 @@
                                    INT(SIZE(outputs), KIND=C_LONG),            &
                                    LOC(map_inputs), LOC(map_outputs),          &
                                    INT(SIZE(map_inputs), KIND=C_LONG),         &
+                                   LOC(atomics),                               &
+                                   INT(SIZE(atomics), KIND=C_LONG),            &
                                    random_state, name, num_particles,          &
                                    tol, max_iter)
 

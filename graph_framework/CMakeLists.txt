@@ -17,7 +17,7 @@ execute_process (COMMAND ${Python_EXECUTABLE} get_includes.py --compiler=${CMAKE
 target_compile_definitions (graph_framework
                             INTERFACE
                             $<$<PLATFORM_ID:Darwin>:CXX_ARGS="-I${CMAKE_CURRENT_SOURCE_DIR}${jit_include_paths} -fgnuc-version=4.2.1 -std=gnu++2a">
-                            $<$<PLATFORM_ID:Linux>:CXX_ARGS="-I${CMAKE_CURRENT_SOURCE_DIR}${jit_include_paths} -std=gnu++2a -fno-use-cxa-atexit">
+                            $<$<PLATFORM_ID:Linux>:CXX_ARGS="-I${CMAKE_CURRENT_SOURCE_DIR}${jit_include_paths} -std=gnu++2a -fno-use-cxa-atexit -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1 -D__GCC_ATOMIC_POINTER_LOCK_FREE=2 -D__GCC_ATOMIC_CHAR_LOCK_FREE=2 -D__GCC_ATOMIC_SHORT_LOCK_FREE=2 -D__GCC_ATOMIC_INT_LOCK_FREE=2 -D__GCC_ATOMIC_LONG_LOCK_FREE=2 -D__GCC_ATOMIC_LLONG_LOCK_FREE -D__GCC_ATOMIC_CHAR8_T_LOCK_FREE=2 -D__GCC_ATOMIC_CHAR16_T_LOCK_FREE=2 -D__GCC_ATOMIC_CHAR32_T_LOCK_FREE=2 -D__GCC_ATOMIC_BOOL_LOCK_FREE=2 -D__GCC_ATOMIC_WCHAR_T_LOCK_FREE=2">
                             EFIT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/efit.nc"
                             VMEC_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../graph_tests/vmec.nc"
                             $<$<BOOL:${USE_CUDA}>:HEADER_DIR="$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>">
@@ -26,6 +26,7 @@ target_compile_definitions (graph_framework
                             $<$<BOOL:${SHOW_USE_COUNT}>:SHOW_USE_COUNT>
                             $<$<BOOL:${USE_INDEX_CACHE}>:USE_INDEX_CACHE>
                             $<IF:$<BOOL:${USE_VERBOSE}>,USE_VERBOSE=true,USE_VERBOSE=false>
+                            $<$<BOOL:${PROFILE_KERNELS}>:PROFILE_KERNELS>
 )
 
 target_include_directories (graph_framework
@@ -66,4 +67,6 @@ target_precompile_headers (graph_framework
                            $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/random.hpp>>
                            $<$<BOOL:${USE_PCH}>:$<$<BOOL:${USE_METAL}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/metal_context.hpp>>>
                            $<$<BOOL:${USE_PCH}>:$<$<BOOL:${USE_CUDA}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cuda_context.hpp>>>
+                           $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/particle_in_cell.hpp>>
+                           $<$<BOOL:${USE_PCH}>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/logical.hpp>>
 )

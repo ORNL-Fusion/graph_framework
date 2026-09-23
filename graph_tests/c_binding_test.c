@@ -98,7 +98,7 @@ void run_tests(const enum graph_type type,
         }
     }
 
-    graph_node state = graph_random_state(c_context, 0);
+    graph_node state = graph_random_state(c_context, 1, 0);
     graph_node rand = graph_random(c_context, state);
 
     const size_t max_device = graph_get_max_concurrency(c_context) - 1;
@@ -195,25 +195,29 @@ void run_tests(const enum graph_type type,
     graph_node *map_inputs2 = NULL;
     graph_node *map_outputs2 = NULL;
 
-    graph_add_pre_item(c_context,
-                       NULL, 0,
-                       &rand, 1,
-                       NULL, NULL, 0,
-                       state,
-                       "c_binding_pre_kernel", 1);
+    graph_add_item(c_context,
+                   NULL, 0,
+                   &rand, 1,
+                   NULL, NULL, 0,
+                   NULL, 0,
+                   state,
+                   "c_binding_pre_kernel", 1);
     graph_add_item(c_context,
                    inputs, 1,
                    outputs, 5,
                    map_inputs, map_outputs, 0,
+                   NULL, 0,
                    NULL, "c_binding", 1);
     graph_add_item(c_context,
                    inputs2, 4,
                    outputs2, 4,
                    map_inputs2, map_outputs2, 0,
+                   NULL, 0,
                    NULL, "c_binding_piecewise", 1);
     graph_add_converge_item(c_context, &z, 1,
                             &root2, 1,
                             &z, &dz, 1,
+                            NULL, 0,
                             NULL, "c_binding_converge", 1,
                             1.0E-30, 1000);
     graph_compile(c_context);
@@ -268,11 +272,7 @@ void run_tests(const enum graph_type type,
             assert(value[2] == 2.0f && "Value of dydm does not match.");
             assert(value[3] == 1.0f && "Value of dydb does not match.");
             assert(value[4] == 1.0f && "Value of dydy does not match.");
-            if (c_context->safe_math) {
-                assert(value[5] == 2546248192.0f && "Value of rand does not match.");
-            } else {
-                assert(value[5] == 2357136128.0f && "Value of rand does not match.");
-            }
+            assert(value[5] == (float)2357136044 && "Value of rand does not match.");
             assert(value[6] == 1.0f && "Value of root does not match.");
             assert(value[7] == 4.0f && "Value of p1 does not match.");
             assert(value[8] == 8.0f && "Value of p2 does not match.");
@@ -299,11 +299,7 @@ void run_tests(const enum graph_type type,
             assert(value[2] == 2.0 && "Value of dydm does not match.");
             assert(value[3] == 1.0 && "Value of dydb does not match.");
             assert(value[4] == 1.0 && "Value of dydy does not match.");
-            if (c_context->safe_math) {
-                assert(value[5] == 2546248239.0 && "Value of rand does not match.");
-            } else {
-                assert(value[5] == 2357136044.0 && "Value of rand does not match.");
-            }
+            assert(value[5] == (double)2357136044 && "Value of rand does not match.");
             assert(value[6] == 1.0 && "Value of root does not match.");
             assert(value[7] == 4.0 && "Value of p1 does not match.");
             assert(value[8] == 8.0 && "Value of p2 does not match.");
@@ -330,11 +326,7 @@ void run_tests(const enum graph_type type,
             assert(crealf(value[2]) == 2.0f && "Value of dydm does not match.");
             assert(crealf(value[3]) == 1.0f && "Value of dydb does not match.");
             assert(crealf(value[4]) == 1.0f && "Value of dydy does not match.");
-            if (c_context->safe_math) {
-                assert(crealf(value[5]) == 2546248192.0f && "Value of rand does not match.");
-            } else {
-                assert(crealf(value[5]) == 2357136128.0f && "Value of rand does not match.");
-            }
+            assert(crealf(value[5]) == crealf(2357136044) && "Value of rand does not match.");
             assert(crealf(value[6]) == 1.0f && "Value of root does not match.");
             assert(crealf(value[7]) == 4.0f && "Value of p1 does not match.");
             assert(crealf(value[8]) == 8.0f && "Value of p2 does not match.");
@@ -361,11 +353,7 @@ void run_tests(const enum graph_type type,
             assert(creal(value[2]) == 2.0 && "Value of dydm does not match.");
             assert(creal(value[3]) == 1.0 && "Value of dydb does not match.");
             assert(creal(value[4]) == 1.0 && "Value of dydy does not match.");
-            if (c_context->safe_math) {
-                assert(creal(value[5]) == 2546248239.0 && "Value of rand does not match.");
-            } else {
-                assert(creal(value[5]) == 2357136044.0 && "Value of rand does not match.");
-            }
+            assert(creal(value[5]) == creal(2357136044) && "Value of rand does not match.");
             assert(creal(value[6]) == 1.0 && "Value of root does not match.");
             assert(creal(value[7]) == 4.0 && "Value of p1 does not match.");
             assert(creal(value[8]) == 8.0 && "Value of p2 does not match.");

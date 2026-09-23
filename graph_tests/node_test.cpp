@@ -21,6 +21,26 @@
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T>
+void test_index() {
+    auto index = graph::index<T> ();
+    auto index_cast = graph::index_cast(index);
+    assert(index_cast.get() && "Expected a index type.");
+    auto dindex = index->df(index);
+    auto dindex_cast = graph::constant_cast(dindex);
+    assert(dindex_cast.get() && "Expected a constant type for derivative.");
+    assert(dindex_cast->is(1.0) && "Constant value expected one.");
+    auto dindex2 = index->df(graph::zero<T> ());
+    auto dindex2_cast = graph::constant_cast(dindex2);
+    assert(dindex2_cast.get() && "Expected a constant type for derivative.");
+    assert(dindex2_cast->is(0.0) && "Constant value expected one.");
+}
+
+//------------------------------------------------------------------------------
+///  @brief Tests for constant nodes.
+///
+///  @tparam T Base type of the calculation.
+//------------------------------------------------------------------------------
+template<jit::float_scalar T>
 void test_constant() {
     auto zero = graph::zero<T> ();
     auto zero_cast = graph::constant_cast(zero);
@@ -169,6 +189,7 @@ void test_pseudo_variable() {
 ///  @tparam T Base type of the calculation.
 //------------------------------------------------------------------------------
 template<jit::float_scalar T> void run_tests() {
+    test_index<T> ();
     test_constant<T> ();
     test_variable<T> ();
     test_pseudo_variable<T> ();

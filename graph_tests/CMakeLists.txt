@@ -13,6 +13,9 @@ add_test_target (erfi_test cpp)
 add_test_target (efit_test cpp)
 add_test_target (random_test cpp)
 add_test_target (workflow_test cpp)
+add_test_target (pic_test cpp)
+add_compile_test (no_derivative_test cpp)
+add_test_target (logical_test cpp)
 
 target_compile_definitions (erfi_test
                             PRIVATE

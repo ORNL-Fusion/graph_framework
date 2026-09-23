@@ -1461,10 +1461,11 @@ namespace dispersion {
             workflow::manager<typename DISPERSION_FUNCTION::base,
                               DISPERSION_FUNCTION::safe_math> work(index);
 
-            solver::newton(work, {x}, inputs, this->D,
-                           graph::shared_random_state<typename DISPERSION_FUNCTION::base,
-                                                      DISPERSION_FUNCTION::safe_math> (),
-                           tolerance, max_iterations);
+            solver::newton<typename DISPERSION_FUNCTION::base,
+                           DISPERSION_FUNCTION::safe_math> (work, {x}, inputs,
+                                                            {}, this->D, NULL,
+                                                            tolerance,
+                                                            max_iterations);
 
             work.compile();
             work.run();

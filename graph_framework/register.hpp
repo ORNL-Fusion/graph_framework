@@ -8,8 +8,8 @@
 
 #include <concepts>
 #include <cassert>
-#include <map>
-#include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <sstream>
 #include <complex>
 #include <type_traits>
@@ -17,6 +17,7 @@
 #include <charconv>
 #include <array>
 #include <utility>
+#include <unordered_set>
 
 namespace jit {
 ///  Complex scalar concept.
@@ -110,19 +111,19 @@ namespace jit {
             if constexpr (jit::use_metal<T> ()) {
                 return "ushort";
             } else {
-                return "unsigned char";
+                return "uint8_t";
             }
         } else if (max_size <= std::numeric_limits<unsigned short>::max()) {
             if constexpr (jit::use_metal<T> ()) {
                 return "ushort";
             } else {
-                return "unsigned short";
+                return "uint16_t";
             }
         } else if (max_size <= std::numeric_limits<unsigned int>::max()) {
             if constexpr (jit::use_metal<T> ()) {
                 return "uint";
             } else {
-                return "unsigned int";
+                return "uint32_t";
             }
         } else {
             if constexpr (jit::use_metal<T> ()) {
@@ -189,11 +190,11 @@ namespace jit {
 ///  @returns The maximum number of digits needed.
 //------------------------------------------------------------------------------
     template<float_scalar T>
-    constexpr int max_base() {
+    constexpr T max_base() {
         if constexpr (float_base<T>) {
-            return std::numeric_limits<float>::max();
+            return static_cast<T> (std::numeric_limits<float>::max());
         } else {
-            return std::numeric_limits<double>::max();
+            return static_cast<T> (std::numeric_limits<double>::max());
         }
     }
 
@@ -247,22 +248,27 @@ namespace jit {
                           const NODE *pointer) {
         assert((prefix == 'r' || prefix == 'v' ||
                 prefix == 'o' || prefix == 'a' ||
-                prefix == 'i' || prefix == 's') &&
-               "Expected a variable (v), register (r), output (o), array (a), index (i), or state (s) prefix.");
+                prefix == 'i' || prefix == 's' ||
+                prefix == 'l' || prefix == 't') &&
+               "Expected a variable (v), register (r), output (o), array (a), index (i), state (s), logical (l), or (t) thread prefix.");
         return std::string(1, prefix) +
                format_to_string(reinterpret_cast<size_t> (pointer));
     }
 
 ///  Type alias for mapping node pointers to register names.
-    typedef std::map<void *, std::string> register_map;
+    typedef std::unordered_map<void *, std::string> register_map;
 ///  Type alias for counting register usage.
-    typedef std::map<void *, size_t> register_usage;
+    typedef std::unordered_map<void *, size_t> register_usage;
 ///  Type alias for listing visited nodes.
-    typedef std::set<void *> visiter_map;
+    typedef std::unordered_set<void *> visiter_map;
 ///  Type alias for indexing 1D textures.
-    typedef std::map<void *, size_t> texture1d_list;
+    typedef std::unordered_map<void *, size_t> texture1d_list;
 ///  Type alias for indexing 2D textures.
-    typedef std::map<void *, std::array<size_t,2>> texture2d_list;
+    typedef std::unordered_map<void *, std::array<size_t,2>> texture2d_list;
+///  Type alias for preamble defined functions.
+    typedef std::unordered_set<std::string> preamble_map;
+///  Type for tacking thread shared memory.
+    typedef std::unordered_set<void *> argument_set;
 
 //------------------------------------------------------------------------------
 ///  @brief  Define a custom comparator class.

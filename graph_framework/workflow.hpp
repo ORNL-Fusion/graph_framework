@@ -12,6 +12,158 @@
 
 ///  Name space for workflows.
 namespace workflow {
+///  Items order
+    enum order {
+///  Pre items
+        pre_run_item,
+///  Items
+        run_item,
+///  Post items
+        post_run_item
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Interface class representing items.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class item {
+    public:
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) = 0;
+
+//------------------------------------------------------------------------------
+///  @brief Run the work item.
+//------------------------------------------------------------------------------
+        virtual void run() = 0;
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Callback item.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class callback_item : public item<T, SAFE_MATH> {
+    protected:
+///  Callback function.
+        std::function<void(void)> callback;
+///  Kernel function.
+        std::function<void(void)> kernel;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a workflow item.
+///
+///  @param[in] callback Lambda function to run.
+//------------------------------------------------------------------------------
+        callback_item(std::function<void(void)> callback) :
+        callback(callback) {}
+
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
+            kernel = context.run_function(callback);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run the work item.
+//------------------------------------------------------------------------------
+        virtual void run() {
+            kernel();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Clear buffer item.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class zero_item : public item<T, SAFE_MATH> {
+    protected:
+///  Kernel function.
+        std::function<void(void)> kernel;
+///  Input nodes.
+        graph::input_nodes<T, SAFE_MATH> inputs;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a workflow item.
+///
+///  @param[in] in Input variables.
+//------------------------------------------------------------------------------
+        zero_item(graph::input_nodes<T, SAFE_MATH> in) :
+        inputs(in) {}
+
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
+            kernel = context.create_zero_call(inputs);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run the work item.
+//------------------------------------------------------------------------------
+        virtual void run() {
+            kernel();
+        }
+    };
+
+//------------------------------------------------------------------------------
+///  @brief Copy one buffer item to another.
+///
+///  @tparam T         Base type of the calculation.
+///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
+//------------------------------------------------------------------------------
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    class copy_item : public item<T, SAFE_MATH> {
+    protected:
+///  Kernel function.
+        std::function<void(void)> kernel;
+///  Input nodes.
+        graph::copy_nodes<T, SAFE_MATH> maps;
+
+    public:
+//------------------------------------------------------------------------------
+///  @brief Construct a workflow item.
+///
+///  @param[in] maps Input variables to copy.
+//------------------------------------------------------------------------------
+        copy_item(graph::copy_nodes<T, SAFE_MATH> maps) :
+        maps(maps) {}
+
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
+            kernel = context.create_copy_call(maps);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Run the work item.
+//------------------------------------------------------------------------------
+        virtual void run() {
+            kernel();
+        }
+    };
+
 //------------------------------------------------------------------------------
 ///  @brief Class representing a work item.
 ///
@@ -19,20 +171,22 @@ namespace workflow {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    class work_item {
+    class work_item : public item<T, SAFE_MATH> {
     protected:
+///  Kernel function.
+        std::function<void(void)> kernel;
 ///  Name of the GPU kernel.
         const std::string kernel_name;
-///  Name of the GPU kernel.
+///  Size of the GPU kernel.
         const size_t kernel_size;
 ///  Input nodes.
         graph::input_nodes<T, SAFE_MATH> inputs;
 ///  Output nodes.
         graph::output_nodes<T, SAFE_MATH> outputs;
+///  Atomic nodes.
+        graph::input_nodes<T, SAFE_MATH> atomics;
 ///  Random state node.
         graph::shared_random_state<T, SAFE_MATH> state;
-///  Kernel function.
-        std::function<void(void)> kernel;
 
     public:
 //------------------------------------------------------------------------------
@@ -41,20 +195,22 @@ namespace workflow {
 ///  @param[in]     in      Input variables.
 ///  @param[in]     out     Output nodes.
 ///  @param[in]     maps    Setter maps.
+///  @param[in]     atomics Input variables for atomic operations.
 ///  @param[in]     state   Random state node.
 ///  @param[in]     name    Name of the work item.
 ///  @param[in]     size    Size of the work item.
 ///  @param[in,out] context Jit context.
 //------------------------------------------------------------------------------
-        work_item(graph::input_nodes<T, SAFE_MATH> in,
-                  graph::output_nodes<T, SAFE_MATH> out,
-                  graph::map_nodes<T, SAFE_MATH> maps,
-                  graph::shared_random_state<T, SAFE_MATH> state,
+        work_item(graph::input_nodes<T, SAFE_MATH> &in,
+                  graph::output_nodes<T, SAFE_MATH> &out,
+                  graph::map_nodes<T, SAFE_MATH> &maps,
+                  graph::input_nodes<T, SAFE_MATH> &atomics,
+                  graph::shared_random_state<T, SAFE_MATH> &state,
                   const std::string name, const size_t size,
                   jit::context<T, SAFE_MATH> &context) :
-        inputs(in), outputs(out), state(state),
+        inputs(in), outputs(out), atomics(atomics), state(state),
         kernel_name(name), kernel_size(size) {
-            context.add_kernel(name, in, out, maps, state, size);
+            context.add_kernel(name, in, out, maps, atomics, state, size);
         }
 
 //------------------------------------------------------------------------------
@@ -64,7 +220,7 @@ namespace workflow {
 //------------------------------------------------------------------------------
         virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
             kernel = context.create_kernel_call(kernel_name, inputs, outputs,
-                                                state, kernel_size);
+                                                atomics, state, kernel_size);
         }
 
 //------------------------------------------------------------------------------
@@ -82,40 +238,66 @@ namespace workflow {
 ///  @tparam SAFE_MATH Use @ref general_concepts_safe_math operations.
 //------------------------------------------------------------------------------
     template<jit::float_scalar T, bool SAFE_MATH=false>
-    class loop_item final : public work_item<T, SAFE_MATH> {
-///  Iterations.
-        const size_t num_iterations;
+    class loop_item final : public item<T, SAFE_MATH> {
+    protected:
+///  Kernel function.
+        std::function<void(void)> kernel;
+///  Name of the GPU kernel.
+        const std::string kernel_name;
+///  Size of the GPU kernel.
+        const size_t kernel_size;
+///  Input nodes.
+        graph::input_nodes<T, SAFE_MATH> inputs;
+///  Output nodes.
+        graph::output_nodes<T, SAFE_MATH> outputs;
+///  Atomic nodes.
+        graph::input_nodes<T, SAFE_MATH> atomics;
+///  Random state node.
+        graph::shared_random_state<T, SAFE_MATH> state;
 
     public:
 //------------------------------------------------------------------------------
 ///  @brief Construct a workflow item.
 ///
-///  @param[in]     inputs     Input variables.
-///  @param[in]     outputs    Output nodes.
-///  @param[in]     maps       Setter maps.
-///  @param[in]     state      Random state node.
-///  @param[in]     name       Name of the work item.
-///  @param[in]     size       Size of the work item.
-///  @param[in,out] context    Jit context.
+///  @param[in]     in      Input variables.
+///  @param[in]     out     Output nodes.
+///  @param[in]     maps    Setter maps.
+///  @param[in]     atomics Input variables for atomic operations.
+///  @param[in]     state   Random state node.
+///  @param[in]     name    Name of the work item.
+///  @param[in]     size    Size of the work item.
+///  @param[in,out] context Jit context.
 ///  @param[in]     iterations Number of iterations to run the loop.
 //------------------------------------------------------------------------------
-        loop_item(graph::input_nodes<T, SAFE_MATH> inputs,
-                  graph::output_nodes<T, SAFE_MATH> outputs,
-                  graph::map_nodes<T, SAFE_MATH> maps,
-                  graph::shared_random_state<T, SAFE_MATH> state,
+        loop_item(graph::input_nodes<T, SAFE_MATH> &in,
+                  graph::output_nodes<T, SAFE_MATH> &out,
+                  graph::map_nodes<T, SAFE_MATH> &maps,
+                  graph::input_nodes<T, SAFE_MATH> &atomics,
+                  graph::shared_random_state<T, SAFE_MATH> &state,
                   const std::string name, const size_t size,
                   jit::context<T, SAFE_MATH> &context,
                   const size_t iterations) :
-        work_item<T, SAFE_MATH> (inputs, outputs, maps, state, name, size, context),
-        num_iterations(iterations) {}
+        inputs(in), outputs(out), atomics(atomics),state(state),
+        kernel_name(name), kernel_size(size) {
+            context.add_kernel(name, in, out, maps, atomics,
+                               state, size, iterations);
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Set the kernel function.
+///
+///  @param[in,out] context Jit context.
+//------------------------------------------------------------------------------
+        virtual void create_kernel_call(jit::context<T, SAFE_MATH> &context) {
+            kernel = context.create_kernel_call(kernel_name, inputs, outputs,
+                                                atomics, state, kernel_size);
+        }
 
 //------------------------------------------------------------------------------
 ///  @brief Run the workitem.
 //------------------------------------------------------------------------------
         virtual void run() {
-            for (size_t i = 0; i < num_iterations; i++) {
-                work_item<T, SAFE_MATH>::run();
-            }
+            kernel();
         }
     };
 
@@ -142,6 +324,7 @@ namespace workflow {
 ///  @param[in]     inputs   Input variables.
 ///  @param[in]     outputs  Output nodes.
 ///  @param[in]     maps     Setter maps.
+///  @param[in]     atomics  Input variables for atomic operations.
 ///  @param[in]     state    Random state node.
 ///  @param[in]     name     Name of the work item.
 ///  @param[in]     size     Size of the work item.
@@ -149,15 +332,17 @@ namespace workflow {
 ///  @param[in]     tol      Tolerance to solve the dispersion function to.
 ///  @param[in]     max_iter Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
-        converge_item(graph::input_nodes<T, SAFE_MATH> inputs,
-                      graph::output_nodes<T, SAFE_MATH> outputs,
-                      graph::map_nodes<T, SAFE_MATH> maps,
-                      graph::shared_random_state<T, SAFE_MATH> state,
+        converge_item(graph::input_nodes<T, SAFE_MATH> &inputs,
+                      graph::output_nodes<T, SAFE_MATH> &outputs,
+                      graph::map_nodes<T, SAFE_MATH> &maps,
+                      graph::input_nodes<T, SAFE_MATH> &atomics,
+                      graph::shared_random_state<T, SAFE_MATH> &state,
                       const std::string name, const size_t size,
                       jit::context<T, SAFE_MATH> &context,
                       const T tol=1.0E-30,
                       const size_t max_iter=1000) :
-        work_item<T, SAFE_MATH> (inputs, outputs, maps, state, name, size, context),
+        work_item<T, SAFE_MATH> (inputs, outputs, maps, atomics,
+                                 state, name, size, context),
         tolerance(tol), max_iterations(max_iter) {
             context.add_max_reduction(size);
         }
@@ -217,9 +402,11 @@ namespace workflow {
 ///  JIT context.
         jit::context<T, SAFE_MATH> context;
 ///  List of pre work items.
-        std::vector<std::unique_ptr<work_item<T, SAFE_MATH>>> preitems;
+        std::vector<std::unique_ptr<item<T, SAFE_MATH>>> preitems;
 ///  List of work items.
-        std::vector<std::unique_ptr<work_item<T, SAFE_MATH>>> items;
+        std::vector<std::unique_ptr<item<T, SAFE_MATH>>> items;
+///  List of pre work items.
+        std::vector<std::unique_ptr<item<T, SAFE_MATH>>> postitems;
 ///  Use reduction.
         bool add_reduction;
 
@@ -238,96 +425,202 @@ namespace workflow {
         manager(const size_t index) : context(index), add_reduction(false) {}
 
 //------------------------------------------------------------------------------
-///  @brief Add a pre workflow item.
+///  @brief Add a pre callback function.
 ///
-///  @param[in] in    Input variables.
-///  @param[in] out   Output nodes.
-///  @param[in] maps  Setter maps.
-///  @param[in] state Random state node.
-///  @param[in] name  Name of the work item.
-///  @param[in] size  Size of the work item.
+///  @tparam O The @ref workflow::order
+///
+///  @param[in] callback Lambda function to run.
 //------------------------------------------------------------------------------
-        void add_preitem(graph::input_nodes<T, SAFE_MATH> in,
-                         graph::output_nodes<T, SAFE_MATH> out,
-                         graph::map_nodes<T, SAFE_MATH> maps,
-                         graph::shared_random_state<T, SAFE_MATH> state,
-                         const std::string name, const size_t size) {
-            preitems.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
-                                                                          maps, state,
-                                                                          name, size,
-                                                                          context));
+        template<order O=run_item>
+        void add_callback_item(std::function<void(void)> callback) {
+            if constexpr (O == pre_run_item) {
+                preitems.push_back(std::make_unique<callback_item<T, SAFE_MATH>> (callback));
+            } else if constexpr (O == run_item) {
+                items.push_back(std::make_unique<callback_item<T, SAFE_MATH>> (callback));
+            } else {
+                postitems.push_back(std::make_unique<callback_item<T, SAFE_MATH>> (callback));
+            }
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Add a workflow item.
 ///
-///  @param[in] in    Input variables.
-///  @param[in] out   Output nodes.
-///  @param[in] maps  Setter maps.
-///  @param[in] state Random state node.
-///  @param[in] name  Name of the work item.
-///  @param[in] size  Size of the work item.
+///  @tparam O The @ref workflow::order
+///
+///  @param[in] in      Input variables.
+///  @param[in] out     Output nodes.
+///  @param[in] maps    Setter maps.
+///  @param[in] atomics Input variables for atomic operations.
+///  @param[in] state   Random state node.
+///  @param[in] name    Name of the work item.
+///  @param[in] size    Size of the work item.
 //------------------------------------------------------------------------------
+        template<order O=run_item>
         void add_item(graph::input_nodes<T, SAFE_MATH> in,
                       graph::output_nodes<T, SAFE_MATH> out,
                       graph::map_nodes<T, SAFE_MATH> maps,
+                      graph::input_nodes<T, SAFE_MATH> atomics,
                       graph::shared_random_state<T, SAFE_MATH> state,
                       const std::string name, const size_t size) {
-            items.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
-                                                                       maps, state,
-                                                                       name, size,
-                                                                       context));
+            if constexpr (O == pre_run_item) {
+                preitems.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
+                                                                              maps,
+                                                                              atomics,
+                                                                              state,
+                                                                              name, size,
+                                                                              context));
+            } else if constexpr (O == run_item) {
+                items.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
+                                                                           maps,
+                                                                           atomics,
+                                                                           state,
+                                                                           name, size,
+                                                                           context));
+            } else {
+                postitems.push_back(std::make_unique<work_item<T, SAFE_MATH>> (in, out,
+                                                                               maps,
+                                                                               atomics,
+                                                                               state,
+                                                                               name, size,
+                                                                               context));
+            }
         }
 
 //------------------------------------------------------------------------------
-///  @brief Add a workflow item.
+///  @brief Add a zero item.
+///
+///  @tparam O The @ref workflow::order
+///
+///  @param[in] in Input variables.
+//------------------------------------------------------------------------------
+        template<order O=run_item>
+        void add_zero_item(graph::input_nodes<T, SAFE_MATH> in) {
+            if constexpr (O == pre_run_item) {
+                preitems.push_back(std::make_unique<zero_item<T, SAFE_MATH>> (in));
+            } else if constexpr (O == run_item) {
+                items.push_back(std::make_unique<zero_item<T, SAFE_MATH>> (in));
+            } else {
+                postitems.push_back(std::make_unique<zero_item<T, SAFE_MATH>> (in));
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add a copy item.
+///
+///  @tparam O The @ref workflow::order
+///
+///  @param[in] maps Copy maps.
+//------------------------------------------------------------------------------
+        template<order O=run_item>
+        void add_copy_item(graph::copy_nodes<T, SAFE_MATH> maps) {
+            if constexpr (O == pre_run_item) {
+                preitems.push_back(std::make_unique<copy_item<T, SAFE_MATH>> (maps));
+            } else if constexpr (O == run_item) {
+                items.push_back(std::make_unique<copy_item<T, SAFE_MATH>> (maps));
+            } else {
+                postitems.push_back(std::make_unique<copy_item<T, SAFE_MATH>> (maps));
+            }
+        }
+
+//------------------------------------------------------------------------------
+///  @brief Add a loop item.
+///
+///  @tparam O The @ref workflow::order
 ///
 ///  @param[in] in         Input variables.
 ///  @param[in] out        Output nodes.
 ///  @param[in] maps       Setter maps.
+///  @param[in] atomics    Input variables for atomic operations.
 ///  @param[in] state      Random state node.
 ///  @param[in] name       Name of the work item.
 ///  @param[in] size       Size of the work item.
 ///  @param[in] iterations Number of iterations.
 //------------------------------------------------------------------------------
+        template<order O=run_item>
         void add_loop_item(graph::input_nodes<T, SAFE_MATH> in,
                            graph::output_nodes<T, SAFE_MATH> out,
                            graph::map_nodes<T, SAFE_MATH> maps,
+                           graph::input_nodes<T, SAFE_MATH> atomics,
                            graph::shared_random_state<T, SAFE_MATH> state,
                            const std::string name, const size_t size,
                            const size_t iterations) {
-            items.push_back(std::make_unique<loop_item<T, SAFE_MATH>> (in, out,
-                                                                       maps, state,
-                                                                       name, size,
-                                                                       context,
-                                                                       iterations));
+            if constexpr (O == pre_run_item) {
+                preitems.push_back(std::make_unique<loop_item<T, SAFE_MATH>> (in, out,
+                                                                              maps,
+                                                                              atomics,
+                                                                              state,
+                                                                              name, size,
+                                                                              context,
+                                                                              iterations));
+            } else if constexpr (O == run_item) {
+                items.push_back(std::make_unique<loop_item<T, SAFE_MATH>> (in, out,
+                                                                           maps,
+                                                                           atomics,
+                                                                           state,
+                                                                           name, size,
+                                                                           context,
+                                                                           iterations));
+            } else {
+                postitems.push_back(std::make_unique<loop_item<T, SAFE_MATH>> (in, out,
+                                                                               maps,
+                                                                               atomics,
+                                                                               state,
+                                                                               name, size,
+                                                                               context,
+                                                                               iterations));
+            }
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Add a converge item.
 ///
+///  @tparam O The @ref workflow::order
+///
 ///  @param[in] in       Input variables.
 ///  @param[in] out      Output nodes.
 ///  @param[in] maps     Setter maps.
+///  @param[in] atomics  Input variables for atomic operations.
 ///  @param[in] state    Random state node.
 ///  @param[in] name     Name of the work item.
 ///  @param[in] size     Size of the work item.
 ///  @param[in] tol      Tolerance to converge the function to.
 ///  @param[in] max_iter Maximum number of iterations before giving up.
 //------------------------------------------------------------------------------
+        template<order O=run_item>
         void add_converge_item(graph::input_nodes<T, SAFE_MATH> in,
                                graph::output_nodes<T, SAFE_MATH> out,
                                graph::map_nodes<T, SAFE_MATH> maps,
+                               graph::input_nodes<T, SAFE_MATH> atomics,
                                graph::shared_random_state<T, SAFE_MATH> state,
                                const std::string name, const size_t size,
                                const T tol=1.0E-30,
                                const size_t max_iter=1000) {
             add_reduction = true;
-            items.push_back(std::make_unique<converge_item<T, SAFE_MATH>> (in, out,
-                                                                           maps, state,
-                                                                           name, size,
-                                                                           context, tol,
-                                                                           max_iter));
+            if constexpr (O == pre_run_item) {
+                items.push_back(std::make_unique<converge_item<T, SAFE_MATH>> (in, out,
+                                                                               maps,
+                                                                               atomics,
+                                                                               state,
+                                                                               name, size,
+                                                                               context, tol,
+                                                                               max_iter));
+            } else if constexpr (O == run_item) {
+                items.push_back(std::make_unique<converge_item<T, SAFE_MATH>> (in, out,
+                                                                               maps,
+                                                                               atomics,
+                                                                               state,
+                                                                               name, size,
+                                                                               context, tol,
+                                                                               max_iter));
+            } else {
+                postitems.push_back(std::make_unique<converge_item<T, SAFE_MATH>> (in, out,
+                                                                                   maps,
+                                                                                   atomics,
+                                                                                   state,
+                                                                                   name, size,
+                                                                                   context, tol,
+                                                                                   max_iter));
+            }
         }
 
 //------------------------------------------------------------------------------
@@ -342,23 +635,30 @@ namespace workflow {
             for (auto &item : items) {
                 item->create_kernel_call(context);
             }
-        }
-
-//------------------------------------------------------------------------------
-///  @brief Run pre work items.
-//------------------------------------------------------------------------------
-        void pre_run() {
-            for (auto &item : preitems) {
-                item->run();
+            for (auto &item : postitems) {
+                item->create_kernel_call(context);
             }
         }
 
 //------------------------------------------------------------------------------
 ///  @brief Run work items.
+///
+///  @tparam O The @ref workflow::order
 //------------------------------------------------------------------------------
+        template<order O=run_item>
         void run() {
-            for (auto &item : items) {
-                item->run();
+            if constexpr (O == pre_run_item) {
+                for (auto &item : preitems) {
+                    item->run();
+                }
+            } else if constexpr (O == run_item) {
+                for (auto &item : items) {
+                    item->run();
+                }
+            } else {
+                for (auto &item : postitems) {
+                    item->run();
+                }
             }
         }
 
