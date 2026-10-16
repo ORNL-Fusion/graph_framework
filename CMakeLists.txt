@@ -103,10 +103,6 @@ target_compile_definitions (gpu_lib
 #  Sanitizer options
 #-------------------------------------------------------------------------------
 add_library (sanitizer INTERFACE)
-target_compile_options (sanitizer
-                        INTERFACE
-                        $<$<CONFIG:Sanitized>:-g>
-)
 
 macro (register_sanitizer_option name)
     string (TOUPPER ${name} upper_name)
@@ -148,8 +144,14 @@ endif ()
 include (FetchContent)
 find_package (Git)
 
-function (register_project reg_name dir url default_tag sub_dir)
+# Note: LLVM internally defines a "name" variable so use reg_name to avoid this
+#       conflict.
+function (register_project reg_name default_host default_fork default_tag sub_dir)
+    string (TOUPPER ${reg_name} dir)
+
     set (BUILD_TAG_${dir} ${default_tag} CACHE STRING "Name of the tag to checkout.")
+    set (BUILD_HOST_${dir} ${default_host} CACHE STRING "Host of the git repository.")
+    set (BUILD_FORK_${dir} ${default_fork} CACHE STRING "Fork name for tool.")
 
 # Anything after the tag is assumed to be a project setting.
     foreach (i RANGE 6 ${ARGC} 3)
@@ -160,7 +162,7 @@ function (register_project reg_name dir url default_tag sub_dir)
 
     FetchContent_Declare (
         ${reg_name}
-        GIT_REPOSITORY ${url}
+        GIT_REPOSITORY ${URL_PROTO}${BUILD_HOST_${dir}}${URL_SEP}${BUILD_FORK_${dir}}/llvm-project.git
         GIT_TAG origin/${BUILD_TAG_${dir}}
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir}
         SOURCE_SUBDIR ${sub_dir}
@@ -190,8 +192,8 @@ function (register_project reg_name dir url default_tag sub_dir)
 endfunction ()
 
 register_project (llvm
-                  LLVM
-                  ${URL_PROTO}github.com${URL_SEP}llvm/llvm-project.git
+                  github.com
+                  llvm
                   main
                   llvm
                   LLVM_TARGETS_TO_BUILD Native STRING
@@ -259,6 +261,10 @@ add_dependencies (arm-common-resource-headers pull_llvm)
 add_dependencies (arm-resource-headers pull_llvm)
 add_dependencies (aarch64-resource-headers pull_llvm)
 add_dependencies (spirv-resource-headers pull_llvm)
+add_dependencies (mlgo_model_gen_inliner_inliner_Model1 pull_llvm)
+add_dependencies (mlgo_model_gen_regalloc_regalloc_Model1 pull_llvm)
+add_dependencies (mlgo_model_gen_regalloc_regalloc_Model1 pull_llvm)
+add_dependencies (mlgo_models_gen_inliner pull_llvm)
 
 add_library (llvm_dep INTERFACE)
 target_include_directories (llvm_dep
