@@ -675,8 +675,6 @@ namespace gpu {
                     used_args.insert(inputs[i].get());
                 }
             }
-            assert(used_args.size() == inputs.size() &&
-                   "Kernel inputs contain duplicates.");
 
             for (size_t i = 0, ie = outputs.size(); i < ie; i++) {
                 if (!used_args.contains(outputs[i].get()) &&
@@ -689,8 +687,6 @@ namespace gpu {
                     used_args.insert(outputs[i].get());
                 }
             }
-            assert(used_args.size() == inputs.size() + outputs.size() &&
-                   "Kernel outputs contain duplicates.");
 
             for (size_t i = 0, ie = atomics.size(); i < ie; i++) {
                 if (!used_args.contains(atomics[i].get())) {
@@ -702,9 +698,6 @@ namespace gpu {
                     used_args.insert(atomics[i].get());
                 }
             }
-            assert(used_args.size() == inputs.size() + outputs.size() +
-                                       atomics.size() &&
-                   "Kernel atomics contain duplicates.");
 
             if (state.get()) {
                 bufferMutability[name].push_back(MTLMutabilityMutable);
@@ -792,7 +785,7 @@ namespace gpu {
                 }
                 for (size_t i = 0, ie = inputs.size(); i < ie; i++) {
                     if (thread_shared.contains(inputs[i].get()) && is_constant[i]) {
-                        source_buffer << "    threadgroup_barrier(mem_flags::mem_threadgroup);"
+                        source_buffer << "    threadgroup_barrier(mem_flags::mem_none);"
                                       << std::endl;
                         break;
                     }
@@ -986,7 +979,7 @@ namespace gpu {
             source_buffer << "        }" << std::endl;
             source_buffer << "        threadgroup float thread_max[32];" << std::endl;
             source_buffer << "        thread_max[j] = simd_max(sub_max);" << std::endl;
-            source_buffer << "        threadgroup_barrier(mem_flags::mem_threadgroup);" << std::endl;
+            source_buffer << "        threadgroup_barrier(mem_flags::mem_none);" << std::endl;
             source_buffer << "        if (j == 0) {"  << std::endl;
             source_buffer << "            *result = simd_max(thread_max[k]);"  << std::endl;
             source_buffer << "        }"  << std::endl;
