@@ -1712,9 +1712,9 @@ namespace graph {
              class BASE_NODE=leaf_node<T, SAFE_MATH>, size_t N=1>
     class no_derivative : public BASE_NODE {
     public:
-        template<typename S=bool>
+        template<bool HAS_DF=false>
         std::shared_ptr<leaf_node<T, SAFE_MATH>>
-        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) requires(has_no_derivative<S>::value);
+        df(std::shared_ptr<leaf_node<T, SAFE_MATH>> x) requires(HAS_DF);
 
 //------------------------------------------------------------------------------
 ///  @brief Constructor for base leaf nodes base classes.

@@ -1165,33 +1165,6 @@ return a;
     }
 
 //------------------------------------------------------------------------------
-///  @brief Applies an associative function.
-///
-///  @param func The function to apply.
-//------------------------------------------------------------------------------
-#define build_assoc_func(func)                    \
-if (b.size() == 1) {                              \
-    const T right = b[0];                         \
-    for (T &l : a) {                              \
-        l = func(l, right);                       \
-    }                                             \
-    return a;                                     \
-} else if (a.size() == 1) {                       \
-    const T left = a[0];                          \
-    for (T &r : b) {                              \
-        r = func(r, left);                        \
-    }                                             \
-    return b;                                     \
-}                                                 \
-                                                  \
-assert(a.size() == b.size() &&                    \
-       "Left and right sizes are incompatible."); \
-for (size_t i = 0, ie = a.size(); i < ie; i++) {  \
-    a[i] = func(a[i], b[i]);                      \
-}                                                 \
-return a;
-
-//------------------------------------------------------------------------------
 ///  @brief hypot operation.
 ///
 ///  @tparam T Base type of the calculation.
