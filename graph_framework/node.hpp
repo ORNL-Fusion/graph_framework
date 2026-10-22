@@ -2155,6 +2155,9 @@ namespace graph {
     template<jit::float_scalar T, bool SAFE_MATH=false>
     using copy_nodes = std::vector<std::pair<shared_variable<T, SAFE_MATH>,
                                              shared_variable<T, SAFE_MATH>>>;
+///  Convenience type alias for atomic inputd.
+    template<jit::float_scalar T, bool SAFE_MATH=false>
+    using atomic_nodes = input_nodes<T, SAFE_MATH>;
 
 //------------------------------------------------------------------------------
 ///  @brief Cast to a variable node.

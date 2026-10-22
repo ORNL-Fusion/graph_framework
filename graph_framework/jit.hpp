@@ -131,7 +131,7 @@ namespace jit {
                         graph::input_nodes<T, SAFE_MATH> &inputs,
                         graph::output_nodes<T, SAFE_MATH> &outputs,
                         graph::map_nodes<T, SAFE_MATH> &setters,
-                        graph::input_nodes<T, SAFE_MATH> &atomics,
+                        graph::atomic_nodes<T, SAFE_MATH> &atomics,
                         graph::shared_random_state<T, SAFE_MATH> &state,
                         const size_t size,
                         const size_t iterations=1) {
@@ -304,7 +304,7 @@ namespace jit {
         std::function<void(void)> create_kernel_call(const std::string kernel_name,
                                                      graph::input_nodes<T, SAFE_MATH> inputs,
                                                      graph::output_nodes<T, SAFE_MATH> outputs,
-                                                     graph::input_nodes<T, SAFE_MATH> atomics,
+                                                     graph::atomic_nodes<T, SAFE_MATH> atomics,
                                                      graph::shared_random_state<T, SAFE_MATH> state,
                                                      const size_t num_rays) {
             return gpu_context.create_kernel_call(kernel_name, inputs, outputs,

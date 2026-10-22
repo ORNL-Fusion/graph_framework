@@ -56,7 +56,7 @@ template<jit::float_scalar T> void compile(graph::input_nodes<T> inputs,
                                            const T expected,
                                            const T tolerance) {
     jit::context<T> source(0);
-    graph::input_nodes<T> atomics;
+    graph::atomic_nodes<T> atomics;
     graph::shared_random_state<T, false> state;
     source.add_kernel("test_kernel", inputs, outputs, setters, atomics, state,
                       inputs.back()->size());

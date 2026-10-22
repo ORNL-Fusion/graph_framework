@@ -184,7 +184,7 @@ namespace workflow {
 ///  Output nodes.
         graph::output_nodes<T, SAFE_MATH> outputs;
 ///  Atomic nodes.
-        graph::input_nodes<T, SAFE_MATH> atomics;
+        graph::atomic_nodes<T, SAFE_MATH> atomics;
 ///  Random state node.
         graph::shared_random_state<T, SAFE_MATH> state;
 
@@ -204,7 +204,7 @@ namespace workflow {
         work_item(graph::input_nodes<T, SAFE_MATH> &in,
                   graph::output_nodes<T, SAFE_MATH> &out,
                   graph::map_nodes<T, SAFE_MATH> &maps,
-                  graph::input_nodes<T, SAFE_MATH> &atomics,
+                  graph::atomic_nodes<T, SAFE_MATH> &atomics,
                   graph::shared_random_state<T, SAFE_MATH> &state,
                   const std::string name, const size_t size,
                   jit::context<T, SAFE_MATH> &context) :
@@ -251,7 +251,7 @@ namespace workflow {
 ///  Output nodes.
         graph::output_nodes<T, SAFE_MATH> outputs;
 ///  Atomic nodes.
-        graph::input_nodes<T, SAFE_MATH> atomics;
+        graph::atomic_nodes<T, SAFE_MATH> atomics;
 ///  Random state node.
         graph::shared_random_state<T, SAFE_MATH> state;
 
@@ -272,7 +272,7 @@ namespace workflow {
         loop_item(graph::input_nodes<T, SAFE_MATH> &in,
                   graph::output_nodes<T, SAFE_MATH> &out,
                   graph::map_nodes<T, SAFE_MATH> &maps,
-                  graph::input_nodes<T, SAFE_MATH> &atomics,
+                  graph::atomic_nodes<T, SAFE_MATH> &atomics,
                   graph::shared_random_state<T, SAFE_MATH> &state,
                   const std::string name, const size_t size,
                   jit::context<T, SAFE_MATH> &context,
@@ -335,7 +335,7 @@ namespace workflow {
         converge_item(graph::input_nodes<T, SAFE_MATH> &inputs,
                       graph::output_nodes<T, SAFE_MATH> &outputs,
                       graph::map_nodes<T, SAFE_MATH> &maps,
-                      graph::input_nodes<T, SAFE_MATH> &atomics,
+                      graph::atomic_nodes<T, SAFE_MATH> &atomics,
                       graph::shared_random_state<T, SAFE_MATH> &state,
                       const std::string name, const size_t size,
                       jit::context<T, SAFE_MATH> &context,
@@ -459,7 +459,7 @@ namespace workflow {
         void add_item(graph::input_nodes<T, SAFE_MATH> in,
                       graph::output_nodes<T, SAFE_MATH> out,
                       graph::map_nodes<T, SAFE_MATH> maps,
-                      graph::input_nodes<T, SAFE_MATH> atomics,
+                      graph::atomic_nodes<T, SAFE_MATH> atomics,
                       graph::shared_random_state<T, SAFE_MATH> state,
                       const std::string name, const size_t size) {
             if constexpr (O == pre_run_item) {
@@ -540,7 +540,7 @@ namespace workflow {
         void add_loop_item(graph::input_nodes<T, SAFE_MATH> in,
                            graph::output_nodes<T, SAFE_MATH> out,
                            graph::map_nodes<T, SAFE_MATH> maps,
-                           graph::input_nodes<T, SAFE_MATH> atomics,
+                           graph::atomic_nodes<T, SAFE_MATH> atomics,
                            graph::shared_random_state<T, SAFE_MATH> state,
                            const std::string name, const size_t size,
                            const size_t iterations) {
@@ -590,7 +590,7 @@ namespace workflow {
         void add_converge_item(graph::input_nodes<T, SAFE_MATH> in,
                                graph::output_nodes<T, SAFE_MATH> out,
                                graph::map_nodes<T, SAFE_MATH> maps,
-                               graph::input_nodes<T, SAFE_MATH> atomics,
+                               graph::atomic_nodes<T, SAFE_MATH> atomics,
                                graph::shared_random_state<T, SAFE_MATH> state,
                                const std::string name, const size_t size,
                                const T tol=1.0E-30,

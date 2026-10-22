@@ -35,7 +35,7 @@ namespace solver {
     void newton(workflow::manager<T, SAFE_MATH> &work,
                 graph::output_nodes<T, SAFE_MATH> vars,
                 graph::input_nodes<T, SAFE_MATH> inputs,
-                graph::input_nodes<T, SAFE_MATH> atomics,
+                graph::atomic_nodes<T, SAFE_MATH> atomics,
                 graph::shared_leaf<T, SAFE_MATH> func,
                 graph::shared_random_state<T, SAFE_MATH> state,
                 const T tolerance = 1.0E-30,

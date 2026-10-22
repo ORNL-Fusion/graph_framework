@@ -265,6 +265,7 @@ add_dependencies (mlgo_model_gen_inliner_inliner_Model1 pull_llvm)
 add_dependencies (mlgo_model_gen_regalloc_regalloc_Model1 pull_llvm)
 add_dependencies (mlgo_model_gen_regalloc_regalloc_Model1 pull_llvm)
 add_dependencies (mlgo_models_gen_inliner pull_llvm)
+add_dependencies (MLIRTableGen pull_llvm)
 
 add_library (llvm_dep INTERFACE)
 target_include_directories (llvm_dep
