@@ -146,7 +146,7 @@ find_package (Git)
 
 # Note: LLVM internally defines a "name" variable so use reg_name to avoid this
 #       conflict.
-function (register_project reg_name default_host default_fork default_tag sub_dir)
+function (register_project reg_name default_host default_fork default_tag sub_dir patch)
     string (TOUPPER ${reg_name} dir)
 
     set (BUILD_TAG_${dir} ${default_tag} CACHE STRING "Name of the tag to checkout.")
@@ -160,12 +160,16 @@ function (register_project reg_name default_host default_fork default_tag sub_di
         set (${ARGV${key}} ${ARGV${i}} CACHE ${ARGV${type}} "" FORCE)
     endforeach ()
 
+    set (apply_patch TYPE STRING VALUE git apply patch)
+
     FetchContent_Declare (
         ${reg_name}
         GIT_REPOSITORY ${URL_PROTO}${BUILD_HOST_${dir}}${URL_SEP}${BUILD_FORK_${dir}}/llvm-project.git
         GIT_TAG origin/${BUILD_TAG_${dir}}
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir}
         SOURCE_SUBDIR ${sub_dir}
+        PATCH_COMMAND ${apply_patch}
+        UPDATE_DISCONNECTED 1
     )
 
     FetchContent_MakeAvailable (${reg_name})
@@ -196,6 +200,7 @@ register_project (llvm
                   llvm
                   main
                   llvm
+                  ${CURRENT_SOURCE_DIR}/cir_depends.patch
                   LLVM_TARGETS_TO_BUILD Native STRING
                   LLVM_ENABLE_PROJECTS clang STRING
 )
