@@ -193,13 +193,13 @@ work.add_item({
     graph::variable_cast(x)
 }, {
     y, dydx
-}, {}, NULL, "my_first_kernel", 3);
+}, {}, {}, NULL, "my_first_kernel", 3);
  @endcode
  * Here we have created a kernel which computes the outputs of @f$y@f$ and
  * @f$\frac{\partial y}{\partial x}@f$. The third and forth arguments are blank
- * because there are no maps and we are not using random numbers. The last
- * argument needs to match the dimensions of the inputs. Inputs need to be cast
- * from generic @ref graph::leaf_node to the specific
+ * because there are no maps, no atomics and we are not using random numbers.
+ * The last argument needs to match the dimensions of the inputs. Inputs need to
+ * be cast from generic @ref graph::leaf_node to the specific
  * @ref graph::variable_node.
  *
  * To evaluate the kernel, we need to first compile it. Then set the values for
@@ -213,7 +213,7 @@ work.add_item({
     graph::variable_cast(x)
 }, {
     y, dydx
-}, {}, NULL, "my_first_kernel", 3);
+}, {}, {}, NULL, "my_first_kernel", 3);
 work.compile();
 
 work.run();
@@ -238,7 +238,7 @@ work.add_item({
     graph::variable_cast(x)
 }, {
     y, dydx
-}, {}, NULL, "my_first_kernel", 3);
+}, {}, {}, NULL, "my_first_kernel", 3);
 work.compile();
 
 x->set({1.0, 2.0, 3.0});
@@ -286,7 +286,7 @@ work.add_item({
     graph::variable_cast(x)
 }, {}, {
     {y, graph::variable_cast(x)}
-}, NULL, "iteration_kernel", 3);
+}, {}, NULL, "iteration_kernel", 3);
 work.compile();
 
 for (size_t i = 0; i < 10; i++) {
@@ -334,7 +334,7 @@ void run_tutorial() {
         graph::variable_cast(x)
     }, {f}, {
         {x_new, graph::variable_cast(x)}
-    }, NULL, "newton_kernel", 3);
+    }, {}, NULL, "newton_kernel", 3);
     work.compile();
 
     std::array<T, 3> result;
@@ -378,7 +378,7 @@ work.add_converge_item({
     graph::variable_cast(x)
 }, {f*f}, {
     {x_new, graph::variable_cast(x)}
-}, NULL, "newton_kernel", 3, 1.0E-14);
+}, {}, NULL, "newton_kernel", 3, 1.0E-14);
 work.compile();
 
 work.run();
