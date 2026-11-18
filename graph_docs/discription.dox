@@ -91,7 +91,7 @@ work.add_item({
 }, {
     y,
     dydx
-}, {}, NULL, "example_kernel", 10);
+}, {}, {}, NULL, "example_kernel", 10);
  @endcode
  * Here we have defined a kernel called "example_kernel". It has one input
  * @f$x@f$, two outputs @f$y@f$ and @f$\frac{\partial y}{\partial x}@f$, and no

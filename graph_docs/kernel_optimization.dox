@@ -72,7 +72,7 @@ void field_solve_example() {
         graph::variable_cast(particle_positions)
     }, {}, {
         {random_real, variable_cast(particle_positions)}
-    }, graph::random_state_cast(state), "Initialize_x", num_particles);
+    }, {}, graph::random_state_cast(state), "Initialize_x", num_particles);
 
     work.add_item({
         graph::variable_cast(particle_positions),
@@ -82,7 +82,7 @@ void field_solve_example() {
     }, {}, {
         {next_index, graph::variable_cast(indexed_particle)},
         {next_grid_value, graph::variable_cast(grid_value)}
-    }, NULL, "Set_Grid", num_grid);
+    }, {}, NULL, "Set_Grid", num_grid);
 
     work.compile();
 
