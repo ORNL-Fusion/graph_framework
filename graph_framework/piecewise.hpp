@@ -1206,15 +1206,15 @@ namespace graph {
                         stream << "        const "
                         << jit::smallest_uint_type<T> (this->get_num_columns()*this->get_num_rows())
                         << " " << registers[temp.get()] << " = ";
-                        compile_2D_index<T> (stream, registers[x.get()], registers[y.get()],
+                        compile_2D_index<T> (stream, registers[x.get()],
+                                             registers[y.get()],
                                              this->get_num_columns());
                         this->endline(stream, usage);
 #else
                         std::ostringstream source_buffer;
-                        temp->compile(source_buffer,
-                                      registers,
-                                      thread_mem,
-                                      usage);
+                        compile_2D_index<T> (source_buffer, registers[x.get()],
+                                             registers[y.get()],
+                                             this->get_num_columns());
                         registers[temp.get()] = source_buffer.str();
 #endif
 #endif
